@@ -10,6 +10,14 @@ import logging
 from typing import List, Dict, Any, Optional
 from dataclasses import dataclass
 from enum import Enum
+from urllib.parse import urlparse
+import psycopg2
+from psycopg2.extras import RealDictCursor
+from dotenv import load_dotenv
+from datetime import datetime
+
+# Load environment variables
+load_dotenv()
 
 logger = logging.getLogger(__name__)
 
@@ -22,13 +30,13 @@ class DataSource(Enum):
 class PumpRepositoryConfig:
     """Configuration for pump repository"""
     # Data source configuration
-    data_source: DataSource = DataSource.JSON_FILE
+    data_source: DataSource = DataSource.POSTGRESQL
     
     # JSON file configuration
     catalog_path: str = "data/ape_catalog_database.json"
     
     # PostgreSQL configuration using DATABASE_URL format
-    database_url: str = "postgresql://postgres:password@localhost:5432/pump_selection"
+    database_url: str = os.getenv('DATABASE_URL', "postgresql://postgres:password@localhost:5432/pump_selection")
     
     # General configuration
     cache_enabled: bool = True
@@ -79,6 +87,44 @@ class PumpRepository:
             
             self._metadata = self._catalog_data.get('metadata', {})
             self._pump_models = self._catalog_data.get('pump_models', [])
+            
+            # Ensure metadata has both old and new field names for compatibility
+            if 'total_curves' in self._metadata and 'curve_count' not in self._metadata:
+                self._metadata['curve_count'] = self._metadata['total_curves']
+            elif 'curve_count' in self._metadata and 'total_curves' not in self._metadata:
+                self._metadata['total_curves'] = self._metadata['curve_count']
+            
+            # Ensure each pump model has the expected fields
+            for pump_model in self._pump_models:
+                if 'curve_count' not in pump_model:
+                    pump_model['curve_count'] = len(pump_model.get('curves', []))
+                if 'total_points' not in pump_model:
+                    pump_model['total_points'] = sum(len(curve.get('performance_points', [])) for curve in pump_model.get('curves', []))
+                if 'npsh_curves' not in pump_model:
+                    pump_model['npsh_curves'] = sum(1 for curve in pump_model.get('curves', []) if curve.get('has_npsh_data', False))
+                if 'power_curves' not in pump_model:
+                    pump_model['power_curves'] = sum(1 for curve in pump_model.get('curves', []) if curve.get('has_power_data', False))
+                
+                # Add additional fields for compatibility if not present
+                if 'description' not in pump_model:
+                    pump_model['description'] = f"{pump_model.get('pump_code', '')} - {pump_model.get('model_series', '')}"
+                if 'max_flow_m3hr' not in pump_model:
+                    specs = pump_model.get('specifications', {})
+                    pump_model['max_flow_m3hr'] = specs.get('max_flow_m3hr', 0)
+                if 'max_head_m' not in pump_model:
+                    specs = pump_model.get('specifications', {})
+                    pump_model['max_head_m'] = specs.get('max_head_m', 0)
+                if 'max_power_kw' not in pump_model:
+                    pump_model['max_power_kw'] = 0
+                if 'min_efficiency' not in pump_model:
+                    pump_model['min_efficiency'] = 0
+                if 'max_efficiency' not in pump_model:
+                    pump_model['max_efficiency'] = 0
+                if 'connection_size' not in pump_model:
+                    pump_model['connection_size'] = 'Standard'
+                if 'materials' not in pump_model:
+                    pump_model['materials'] = 'Cast Iron'
+            
             self._is_loaded = True
             
             logger.info(f"Repository: Loaded {len(self._pump_models)} pump models from JSON file")
@@ -94,50 +140,244 @@ class PumpRepository:
     def _load_from_postgresql(self) -> bool:
         """
         Load catalog data from PostgreSQL database using DATABASE_URL.
-        Currently a stub method - to be implemented when database is needed.
+        Maps existing database tables to catalog format.
         """
         try:
-            logger.info("Repository: PostgreSQL data source selected - stub method called")
-            logger.warning("Repository: PostgreSQL functionality not yet implemented")
-            logger.info(f"Repository: DATABASE_URL format: {self.config.database_url}")
+            logger.info("Repository: Loading data from PostgreSQL database")
             
-            # TODO: Implement PostgreSQL loading logic using DATABASE_URL
-            # This would include:
-            # 1. Parsing DATABASE_URL to extract connection parameters
-            # 2. Establishing database connection using psycopg2
-            # 3. Querying pump data from tables
-            # 4. Converting database rows to catalog format
-            # 5. Handling connection pooling and error recovery
-            
-            # Example DATABASE_URL parsing:
-            # from urllib.parse import urlparse
-            # parsed = urlparse(self.config.database_url)
-            # connection_params = {
-            #     'host': parsed.hostname,
-            #     'port': parsed.port,
-            #     'database': parsed.path[1:],  # Remove leading '/'
-            #     'user': parsed.username,
-            #     'password': parsed.password
-            # }
-            
-            # For now, return empty data structure
-            self._catalog_data = {
-                'metadata': {
-                    'total_curves': 0,
-                    'npsh_curves': 0,
-                    'source': 'postgresql',
-                    'status': 'not_implemented',
-                    'database_url': self.config.database_url
-                },
-                'pump_models': []
+            # Parse DATABASE_URL
+            parsed_url = urlparse(self.config.database_url)
+            connection_params = {
+                'host': parsed_url.hostname,
+                'port': parsed_url.port or 5432,
+                'database': parsed_url.path[1:],  # Remove leading '/'
+                'user': parsed_url.username,
+                'password': parsed_url.password
             }
-            self._metadata = self._catalog_data.get('metadata', {})
-            self._pump_models = self._catalog_data.get('pump_models', [])
-            self._is_loaded = True
             
-            logger.info("Repository: PostgreSQL stub loaded (no data)")
-            return True
+            logger.info(f"Repository: Connecting to PostgreSQL at {connection_params['host']}:{connection_params['port']}")
             
+            # Connect to database
+            with psycopg2.connect(**connection_params) as conn:
+                with conn.cursor(cursor_factory=RealDictCursor) as cursor:
+                    
+                    # Get database schema information
+                    cursor.execute("""
+                        SELECT table_name, column_name, data_type
+                        FROM information_schema.columns 
+                        WHERE table_schema = 'public'
+                        ORDER BY table_name, ordinal_position
+                    """)
+                    schema_info = cursor.fetchall()
+                    
+                    # Group columns by table
+                    tables = {}
+                    for row in schema_info:
+                        table_name = row['table_name']
+                        if table_name not in tables:
+                            tables[table_name] = []
+                        tables[table_name].append({
+                            'column_name': row['column_name'],
+                            'data_type': row['data_type']
+                        })
+                    
+                    logger.info(f"Repository: Found tables: {list(tables.keys())}")
+                    
+                    # Load pump models and curves based on actual database structure
+                    pump_models = []
+                    total_curves = 0
+                    total_points = 0
+                    npsh_curves = 0
+                    
+                    # Query pumps with specifications
+                    cursor.execute("""
+                        SELECT 
+                            p.id,
+                            p.pump_code,
+                            p.manufacturer,
+                            p.pump_type,
+                            p.series as model_series,
+                            p.application_category,
+                            p.construction_standard,
+                            p.impeller_type,
+                            ps.test_speed_rpm,
+                            ps.max_flow_m3hr,
+                            ps.max_head_m,
+                            ps.max_power_kw,
+                            ps.bep_flow_m3hr,
+                            ps.bep_head_m,
+                            ps.npshr_at_bep,
+                            ps.min_impeller_diameter_mm,
+                            ps.max_impeller_diameter_mm,
+                            ps.min_speed_rpm,
+                            ps.max_speed_rpm,
+                            ps.variable_speed,
+                            ps.variable_diameter
+                        FROM pumps p
+                        LEFT JOIN pump_specifications ps ON p.id = ps.pump_id
+                        ORDER BY p.pump_code
+                    """)
+                    
+                    pump_data = cursor.fetchall()
+                    logger.info(f"Repository: Found {len(pump_data)} pump records")
+                    
+                    # Process each pump record
+                    for pump_row in pump_data:
+                        pump_row_dict = dict(pump_row)
+                        
+                        # Map to standard format
+                        pump_code = pump_row_dict['pump_code']
+                        manufacturer = pump_row_dict.get('manufacturer', 'APE PUMPS')
+                        pump_type = pump_row_dict.get('pump_type', 'END SUCTION')
+                        model_series = pump_row_dict.get('model_series', '')
+                        pump_id = pump_row_dict['id']
+                        
+                        # Query curves for this pump
+                        cursor.execute("""
+                            SELECT 
+                                id as curve_id,
+                                impeller_diameter_mm,
+                                pump_id
+                            FROM pump_curves
+                            WHERE pump_id = %s
+                            ORDER BY impeller_diameter_mm
+                        """, (pump_id,))
+                        
+                        curves_data = cursor.fetchall()
+                        total_curves += len(curves_data)
+                        
+                        # Build curves with performance points
+                        curves = []
+                        for curve_row in curves_data:
+                            curve_row_dict = dict(curve_row)
+                            curve_id = curve_row_dict['curve_id']
+                            
+                            # Query performance points for this curve
+                            cursor.execute("""
+                                SELECT 
+                                    operating_point,
+                                    flow_rate as flow_m3hr,
+                                    head as head_m,
+                                    efficiency as efficiency_pct,
+                                    npshr as npshr_m
+                                FROM pump_performance_points
+                                WHERE curve_id = %s
+                                ORDER BY operating_point
+                            """, (curve_id,))
+                            
+                            points_data = cursor.fetchall()
+                            total_points += len(points_data)
+                            
+                            # Convert points to list of dicts
+                            performance_points = []
+                            for point in points_data:
+                                point_dict = dict(point)
+                                performance_points.append({
+                                    'flow_m3hr': float(point_dict['flow_m3hr']) if point_dict['flow_m3hr'] is not None else 0.0,
+                                    'head_m': float(point_dict['head_m']) if point_dict['head_m'] is not None else 0.0,
+                                    'efficiency_pct': float(point_dict['efficiency_pct']) if point_dict['efficiency_pct'] is not None else 0.0,
+                                    'power_kw': None,  # Not available in current schema
+                                    'npshr_m': float(point_dict['npshr_m']) if point_dict['npshr_m'] is not None else None
+                                })
+                            
+                            # Check if curve has NPSH data
+                            has_npsh_data = any(p.get('npshr_m') for p in performance_points)
+                            if has_npsh_data:
+                                npsh_curves += 1
+                            
+                            # Calculate ranges
+                            flows = [p['flow_m3hr'] for p in performance_points]
+                            heads = [p['head_m'] for p in performance_points]
+                            efficiencies = [p['efficiency_pct'] for p in performance_points]
+                            npshrs = [p['npshr_m'] for p in performance_points if p.get('npshr_m')]
+                            
+                            # Build curve object
+                            curve = {
+                                'curve_id': f"{pump_code}_C{len(curves)+1}_{curve_row_dict['impeller_diameter_mm']}mm",
+                                'curve_index': len(curves),
+                                'impeller_diameter_mm': float(curve_row_dict['impeller_diameter_mm']),
+                                'test_speed_rpm': int(pump_row_dict.get('test_speed_rpm', 0)) if pump_row_dict.get('test_speed_rpm') is not None else 0,
+                                'performance_points': performance_points,
+                                'point_count': len(performance_points),
+                                'flow_range_m3hr': f"{min(flows)}-{max(flows)}" if flows else "0.0-0.0",
+                                'head_range_m': f"{min(heads)}-{max(heads)}" if heads else "0.0-0.0",
+                                'efficiency_range_pct': f"{min(efficiencies)}-{max(efficiencies)}" if efficiencies else "0.0-0.0",
+                                'has_power_data': False,  # Not available in current schema
+                                'has_npsh_data': has_npsh_data,
+                                'npsh_range_m': f"{min(npshrs)}-{max(npshrs)}" if npshrs else "0.0-0.0"
+                            }
+                            curves.append(curve)
+                        
+                        # Build pump model object
+                        pump_model = {
+                            'pump_code': pump_code,
+                            'manufacturer': manufacturer,
+                            'pump_type': pump_type,
+                            'model_series': model_series,
+                            'specifications': {
+                                'max_flow_m3hr': float(pump_row_dict.get('max_flow_m3hr', 0)) if pump_row_dict.get('max_flow_m3hr') is not None else 0,
+                                'max_head_m': float(pump_row_dict.get('max_head_m', 0)) if pump_row_dict.get('max_head_m') is not None else 0,
+                                'min_impeller_mm': float(pump_row_dict.get('min_impeller_diameter_mm', 0)) if pump_row_dict.get('min_impeller_diameter_mm') is not None else 0,
+                                'max_impeller_mm': float(pump_row_dict.get('max_impeller_diameter_mm', 0)) if pump_row_dict.get('max_impeller_diameter_mm') is not None else 0,
+                                'test_speed_rpm': int(pump_row_dict.get('test_speed_rpm', 0)) if pump_row_dict.get('test_speed_rpm') is not None else 0,
+                                'min_speed_rpm': int(pump_row_dict.get('min_speed_rpm', 0)) if pump_row_dict.get('min_speed_rpm') is not None else 0,
+                                'max_speed_rpm': int(pump_row_dict.get('max_speed_rpm', 0)) if pump_row_dict.get('max_speed_rpm') is not None else 0
+                            },
+                            'curves': curves,
+                            # Add fields expected by catalog engine
+                            'curve_count': len(curves),
+                            'total_points': sum(len(curve['performance_points']) for curve in curves),
+                            'npsh_curves': sum(1 for curve in curves if curve['has_npsh_data']),
+                            'power_curves': sum(1 for curve in curves if curve['has_power_data']),
+                            # Add additional fields for compatibility
+                            'description': f"{pump_code} - {model_series}",
+                            'max_flow_m3hr': float(pump_row_dict.get('max_flow_m3hr', 0)) if pump_row_dict.get('max_flow_m3hr') is not None else 0,
+                            'max_head_m': float(pump_row_dict.get('max_head_m', 0)) if pump_row_dict.get('max_head_m') is not None else 0,
+                            'max_power_kw': float(pump_row_dict.get('max_power_kw', 0)) if pump_row_dict.get('max_power_kw') is not None else 0,
+                            'min_efficiency': min((p['efficiency_pct'] for curve in curves for p in curve['performance_points'] if p['efficiency_pct'] > 0), default=0),
+                            'max_efficiency': max((p['efficiency_pct'] for curve in curves for p in curve['performance_points']), default=0),
+                            'connection_size': 'Standard',
+                            'materials': 'Cast Iron'
+                        }
+                        pump_models.append(pump_model)
+                    
+                    # Build metadata with both old and new field names for compatibility
+                    metadata = {
+                        'build_date': datetime.now().isoformat(),
+                        'source': 'postgresql',
+                        'total_models': len(pump_models),
+                        'total_curves': total_curves,
+                        'curve_count': total_curves,  # Add for backward compatibility
+                        'total_points': total_points,
+                        'npsh_curves': npsh_curves,
+                        'power_curves': 0,  # Not available in current schema
+                        'last_updated': datetime.now().isoformat(),
+                        'database_url': self.config.database_url,
+                        'status': 'loaded',
+                        'tables_found': list(tables.keys())
+                    }
+                    
+                    # Build catalog data structure
+                    self._catalog_data = {
+                        'metadata': metadata,
+                        'pump_models': pump_models
+                    }
+                    
+                    self._metadata = metadata
+                    self._pump_models = pump_models
+                    self._is_loaded = True
+                    
+                    logger.info(f"Repository: Successfully loaded {len(pump_models)} pump models from PostgreSQL")
+                    logger.info(f"Repository: Total curves: {total_curves}")
+                    logger.info(f"Repository: Total points: {total_points}")
+                    logger.info(f"Repository: NPSH curves: {npsh_curves}")
+                    logger.info(f"Repository: Tables used: {list(tables.keys())}")
+                    
+                    return True
+                    
+        except psycopg2.Error as e:
+            logger.error(f"Repository: PostgreSQL error: {e}")
+            return False
         except Exception as e:
             logger.error(f"Repository: Error loading from PostgreSQL: {e}")
             return False

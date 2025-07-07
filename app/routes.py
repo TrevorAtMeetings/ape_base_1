@@ -28,9 +28,9 @@ logger = logging.getLogger(__name__)
 
 # SCG Processing imports
 try:
-    from app.scg_processor import SCGProcessor, ProcessingResult
-    from app.scg_catalog_adapter import SCGCatalogAdapter, CatalogEngineIntegrator
-    from app.batch_scg_processor import BatchSCGProcessor, BatchProcessingConfig, discover_scg_files, validate_scg_files
+    from .scg_processor import SCGProcessor, ProcessingResult
+    from .scg_catalog_adapter import SCGCatalogAdapter, CatalogEngineIntegrator
+    from .batch_scg_processor import BatchSCGProcessor, BatchProcessingConfig, discover_scg_files, validate_scg_files
     SCG_AVAILABLE = True
 except ImportError as e:
     logger.warning(f"SCG processing modules not available: {e}")
@@ -2124,89 +2124,7 @@ def ai_admin():
         safe_flash('Error accessing admin panel', 'error')
         return redirect(url_for('index'))
 
-@app.route('/admin/upload', methods=['POST'])
-def upload_document():
-    """Handle document upload to AI knowledge base"""
-    temp_path = None  # Initialize at function scope
-    try:
-        if 'document' not in request.files:
-            return jsonify({'error': 'No file selected'}), 400
-
-        file = request.files['document']
-        if file.filename == '':
-            return jsonify({'error': 'No file selected'}), 400
-
-        if file and file.filename and file.filename.lower().endswith('.pdf'):
-            filename = secure_filename(file.filename)
-
-            # Save to temp directory first
-            temp_dir = os.path.join(app.config.get('UPLOAD_FOLDER', 'app/static/temp'))
-            os.makedirs(temp_dir, exist_ok=True)
-            temp_path = os.path.join(temp_dir, filename)
-            file.save(temp_path)
-
-            # Process the document with AI knowledge base
-            try:
-                
-                kb = PumpKnowledgeBase()
-                result = kb.upload_document(temp_path, filename)
-
-                # Clean up temp file
-                os.remove(temp_path)
-
-                return jsonify({
-                    'success': True,
-                    'message': f'Document "{filename}" uploaded successfully',
-                    'file_id': result.get('file_id', 'N/A'),
-                    'tokens': result.get('token_count', 'N/A')
-                })
-
-            except Exception as e:
-                # Clean up temp file on error
-                if os.path.exists(temp_path):
-                    os.remove(temp_path)
-                logger.error(f"Error processing document upload: {str(e)}")
-                return jsonify({'error': f'Error processing document: {str(e)}'}), 500
-        else:
-            return jsonify({'error': 'Only PDF files are supported'}), 400
-
-    except Exception as e:
-        logger.error(f"Error in document upload: {str(e)}")
-        return jsonify({'error': f'Upload failed: {str(e)}'}), 500
-
-@app.route('/admin/documents')
-def list_documents():
-    """List all documents in the AI knowledge base"""
-    try:
-        
-        kb = PumpKnowledgeBase()
-        documents = kb.list_uploaded_files()
-        return jsonify({'documents': documents})
-    except Exception as e:
-        logger.error(f"Error listing documents: {str(e)}")
-        return jsonify({'error': f'Failed to list documents: {str(e)}'}), 500
-
-@app.route('/admin/test-query', methods=['POST'])
-def test_ai_query():
-    """Test AI query functionality"""
-    try:
-        query = request.json.get('query', '') if request.json else ''
-        if not query:
-            return jsonify({'error': 'No query provided'}), 400
-
-        
-        kb = PumpKnowledgeBase()
-        result = kb.query_documents(query)
-
-        return jsonify({
-            'response': result.get('response', 'No response'),
-            'sources': result.get('source_documents', []),
-            'processing_time': result.get('processing_time', 0)
-        })
-
-    except Exception as e:
-        logger.error(f"Error in AI query test: {str(e)}")
-        return jsonify({'error': f'Query failed: {str(e)}'}), 500
+# AI knowledge base routes removed - functionality no longer available
 
 # Missing API Routes for Deployment
 @app.route('/api/pumps', methods=['GET'])
@@ -2785,74 +2703,10 @@ Follow IEEE and manufacturer guidelines for installation procedures. Document ba
 # Pump Upload System Routes
 @app.route('/admin/pump_upload')
 def pump_upload():
-    """Pump data upload interface"""
-    try:
-        from app.pump_engine import load_all_pump_data
-        pump_data = load_all_pump_data()
-        pump_count = len(pump_data)
-        
-        try:
-            with open('data/ape_catalog_database.json', 'r') as f:
-                db = json.load(f)
-                last_updated = db.get('metadata', {}).get('last_updated', 'Unknown')
-        except:
-            last_updated = 'Unknown'
-        
-        return render_template('admin/pump_upload.html', 
-                             pump_count=pump_count, 
-                             last_updated=last_updated)
-    except Exception as e:
-        logger.error(f"Error loading pump upload page: {e}")
-        safe_flash('Error loading upload interface', 'error')
-        return redirect(url_for('index'))
+    """Pump upload interface"""
+    return render_template('admin/pump_upload.html')
 
-@app.route('/admin/upload_pump_data', methods=['POST'])
-def admin_upload_pump_data():
-    """Handle CSV/Excel pump data uploads"""
-    try:
-        if 'file' not in request.files:
-            return jsonify({'success': False, 'error': 'No file uploaded'})
-        
-        file = request.files['file']
-        if not file.filename:
-            return jsonify({'success': False, 'error': 'No file selected'})
-        
-        import tempfile
-        import os
-        # Ensure filename is not None before splitting extension
-        filename = file.filename or 'upload'
-        file_ext = os.path.splitext(filename)[1] or '.tmp'
-        with tempfile.NamedTemporaryFile(delete=False, suffix=file_ext) as temp_file:
-            file.save(temp_file.name)
-            temp_path = temp_file.name
-        
-        try:
-            
-            upload_system = PumpUploadSystem()
-            
-            if file.filename.endswith('.csv'):
-                new_pumps = upload_system.process_csv_file(temp_path)
-            else:
-                return jsonify({'success': False, 'error': 'Only CSV files supported currently'})
-            
-            pumps_added = upload_system.add_pumps_to_database(new_pumps)
-            
-            from app.pump_engine import load_all_pump_data
-            total_pumps = len(load_all_pump_data())
-            
-            return jsonify({
-                'success': True,
-                'pumps_added': pumps_added,
-                'total_pumps': total_pumps
-            })
-            
-        finally:
-            if os.path.exists(temp_path):
-                os.unlink(temp_path)
-            
-    except Exception as e:
-        logger.error(f"Error uploading pump data: {e}")
-        return jsonify({'success': False, 'error': str(e)})
+# PumpUploadSystem routes removed - functionality no longer available
 
 @app.route('/admin/add_single_pump', methods=['POST'])
 def add_single_pump():
@@ -2866,9 +2720,8 @@ def add_single_pump():
                 return jsonify({'success': False, 'error': f'Missing required field: {field}'})
         
         
-        upload_system = PumpUploadSystem()
-        
-        success = upload_system.add_single_pump(data)
+        # PumpUploadSystem removed - functionality no longer available
+        success = False
         
         if success:
             from app.pump_engine import load_all_pump_data
@@ -2915,8 +2768,9 @@ def validate_database():
     """Validate pump database integrity"""
     try:
         
-        upload_system = PumpUploadSystem()
-        validation = upload_system.validate_database()
+        # upload_system = PumpUploadSystem()
+        # validation = upload_system.validate_database()
+        validation = {'valid': False, 'errors': ['PumpUploadSystem removed - functionality no longer available']}
         
         return jsonify(validation)
         

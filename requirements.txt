@@ -8,4 +8,5 @@ markdown2
 python-dotenv
 scipy
 google-generativeai
-weasyprint 
+weasyprint
+psycopg2-binary 

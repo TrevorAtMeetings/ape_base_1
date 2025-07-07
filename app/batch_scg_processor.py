@@ -13,8 +13,8 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 from dataclasses import dataclass, field
 
-from scg_processor import SCGProcessor, ProcessingResult
-from scg_catalog_adapter import SCGCatalogAdapter, AdapterResult, CatalogEngineIntegrator
+from .scg_processor import SCGProcessor, ProcessingResult
+from .scg_catalog_adapter import SCGCatalogAdapter, AdapterResult, CatalogEngineIntegrator
 
 logger = logging.getLogger(__name__)
 
