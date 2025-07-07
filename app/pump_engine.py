@@ -9,6 +9,7 @@ import logging
 from typing import List, Dict, Any, Optional, Tuple
 import numpy as np
 from scipy import interpolate
+from .pump_repository import get_pump_repository
 
 logger = logging.getLogger(__name__)
 
@@ -72,13 +73,14 @@ class ParsedPumpData:
         return f"ParsedPumpData({self.pump_code}: {self.model})"
 
 # Utility Functions
-def load_catalog_data(catalog_path: str) -> List[ParsedPumpData]:
-    """Load pump data from new catalog format and convert to ParsedPumpData objects"""
+def load_catalog_data(catalog_path: str = None) -> List[ParsedPumpData]:
+    """Load pump data from repository and convert to ParsedPumpData objects"""
     try:
-        with open(catalog_path, 'r', encoding='utf-8') as f:
-            catalog_data = json.load(f)
-
+        # Use repository instead of direct file loading
+        repository = get_pump_repository()
+        catalog_data = repository.get_catalog_data()
         pump_models = catalog_data.get('pump_models', [])
+        
         parsed_pumps = []
 
         for pump_model in pump_models:
@@ -109,25 +111,20 @@ def load_catalog_data(catalog_path: str) -> List[ParsedPumpData]:
                 parsed_pump = ParsedPumpData(pump_model['pump_code'], pump_info)
                 parsed_pumps.append(parsed_pump)
 
-        logger.info(f"Loaded {len(parsed_pumps)} pump curves from catalog database")
+        logger.info(f"Pump Engine: Loaded {len(parsed_pumps)} pump curves from repository")
         return parsed_pumps
 
     except Exception as e:
-        logger.error(f"Error loading catalog data: {e}")
+        logger.error(f"Pump Engine: Error loading catalog data: {e}")
         return []
 
 def load_all_pump_data() -> List[ParsedPumpData]:
     """Load and parse pump database into a list of ParsedPumpData objects."""
     try:
-        # Use catalog format
-        catalog_path = os.path.join('data', 'ape_catalog_database.json')
-        if os.path.exists(catalog_path):
-            return load_catalog_data(catalog_path)
-        else:
-            logger.error(f"Catalog database file not found at {catalog_path}")
-            return []
+        # Use repository for data loading
+        return load_catalog_data()
     except Exception as e:
-        logger.error(f"Error loading pump data: {e}")
+        logger.error(f"Pump Engine: Error loading pump data: {e}")
         return []
 
 def _normalize_pump_data(pump_entry: Dict[str, Any]) -> Dict[str, Any]:

@@ -9,6 +9,7 @@ import logging
 from typing import List, Dict, Any, Optional, Tuple
 import numpy as np
 from scipy import interpolate
+from .pump_repository import get_pump_repository
 
 logger = logging.getLogger(__name__)
 
@@ -414,30 +415,34 @@ class CatalogEngine:
     """APE Catalog-based pump selection engine"""
 
     def __init__(self, catalog_path: str = "data/ape_catalog_database.json"):
-        self.catalog_path = catalog_path
+        # Use repository instead of direct file loading
+        self.repository = get_pump_repository()
         self.pumps = []
         self.metadata = {}
-        self.load_catalog()
+        self._load_from_repository()
 
-    def load_catalog(self):
-        """Load APE catalog database"""
+    def _load_from_repository(self):
+        """Load data from centralized repository"""
         try:
-            with open(self.catalog_path, 'r', encoding='utf-8') as f:
-                catalog_data = json.load(f)
-
+            # Get data from repository
+            catalog_data = self.repository.get_catalog_data()
             self.metadata = catalog_data.get('metadata', {})
             pump_models = catalog_data.get('pump_models', [])
 
             self.pumps = [CatalogPump(pump_data) for pump_data in pump_models]
 
-            logger.info(f"Loaded {len(self.pumps)} pump models from catalog")
-            logger.info(f"Total curves: {self.metadata.get('total_curves', 0)}")
-            logger.info(f"NPSH curves: {self.metadata.get('npsh_curves', 0)} ({self.metadata.get('npsh_curves', 0)/self.metadata.get('total_curves', 1)*100:.1f}%)")
+            logger.info(f"Catalog Engine: Loaded {len(self.pumps)} pump models from repository")
+            logger.info(f"Catalog Engine: Total curves: {self.metadata.get('total_curves', 0)}")
+            logger.info(f"Catalog Engine: NPSH curves: {self.metadata.get('npsh_curves', 0)} ({self.metadata.get('npsh_curves', 0)/self.metadata.get('total_curves', 1)*100:.1f}%)")
 
         except Exception as e:
-            logger.error(f"Error loading catalog database: {e}")
+            logger.error(f"Catalog Engine: Error loading from repository: {e}")
             self.pumps = []
             self.metadata = {}
+
+    def load_catalog(self):
+        """Reload catalog from repository (for compatibility)"""
+        self._load_from_repository()
 
     def select_pumps(self, flow_m3hr: float, head_m: float, max_results: int = 10, pump_type: str | None = None) -> List[Dict[str, Any]]:
         """Select pumps for given duty point with requirement-driven validation"""
