@@ -5,7 +5,8 @@ import io
 import json
 from datetime import datetime
 from dotenv import load_dotenv
-from flask import render_template, request, redirect, url_for, flash, send_file, jsonify, session, make_response
+from flask import render_template, request, redirect, url_for, send_file, jsonify, make_response, session
+from .session_manager import safe_flash, safe_session_get, safe_session_set, safe_session_pop, safe_session_clear, get_form_data, store_form_data
 from werkzeug.utils import secure_filename
 import matplotlib
 matplotlib.use('Agg')  # Use non-interactive backend
@@ -63,7 +64,7 @@ def pump_selection():
         head_m = request.form.get('head_m')
         
         if not flow_m3hr or not head_m:
-            flash('Flow rate and head are required fields.', 'error')
+            safe_flash('Flow rate and head are required fields.', 'error')
             return render_template('input_form.html'), 400
         
         try:
@@ -72,17 +73,17 @@ def pump_selection():
             
             # Enhanced validation with realistic ranges
             if flow_val <= 0 or head_val <= 0:
-                flash('Flow rate and head must be positive values.', 'error')
+                safe_flash('Flow rate and head must be positive values.', 'error')
                 return render_template('input_form.html'), 400
             
             if flow_val > 10000:  # Reasonable upper limit
-                flash('Flow rate seems unusually high. Please verify your input.', 'warning')
+                safe_flash('Flow rate seems unusually high. Please verify your input.', 'warning')
             
             if head_val > 1000:  # Reasonable upper limit  
-                flash('Head seems unusually high. Please verify your input.', 'warning')
+                safe_flash('Head seems unusually high. Please verify your input.', 'warning')
                 
         except ValueError:
-            flash('Invalid numerical values for flow rate or head.', 'error')
+            safe_flash('Invalid numerical values for flow rate or head.', 'error')
             return render_template('input_form.html'), 400
         
         # Process the selection
@@ -94,7 +95,7 @@ def pump_selection():
     
     except Exception as e:
         logger.error(f"Error in pump selection: {str(e)}")
-        flash('An error occurred processing your request.', 'error')
+        safe_flash('An error occurred processing your request.', 'error')
         return render_template('input_form.html'), 500
 
 @app.route('/select', methods=['GET'])
@@ -203,7 +204,7 @@ def data_management():
     
     except Exception as e:
         logger.error(f"Error in data management: {str(e)}")
-        flash('Error loading pump data.', 'error')
+        safe_flash('Error loading pump data.', 'error')
         return redirect(url_for('index'))
 
 @app.route('/export-csv')
@@ -411,7 +412,7 @@ def export_csv():
     
     except Exception as e:
         logger.error(f"Error exporting CSV: {str(e)}")
-        flash('Error exporting data to CSV.', 'error')
+        safe_flash('Error exporting data to CSV.', 'error')
         return redirect(url_for('data_management'))
 
 @app.route('/upload-pump-data', methods=['POST'])
@@ -419,16 +420,16 @@ def upload_pump_data():
     """Upload new pump data from file."""
     try:
         if 'pump_file' not in request.files:
-            flash('No file selected.', 'error')
+            safe_flash('No file selected.', 'error')
             return redirect(url_for('data_management'))
         
         file = request.files['pump_file']
         if file.filename == '':
-            flash('No file selected.', 'error')
+            safe_flash('No file selected.', 'error')
             return redirect(url_for('data_management'))
         
         if not file.filename or not file.filename.lower().endswith(('.json', '.csv', '.txt')):
-            flash('Invalid file format. Please upload JSON, CSV, or TXT files.', 'error')
+            safe_flash('Invalid file format. Please upload JSON, CSV, or TXT files.', 'error')
             return redirect(url_for('data_management'))
         
         # Create upload directory if it doesn't exist
@@ -456,18 +457,18 @@ def upload_pump_data():
         os.remove(file_path)
         
         if upload_results['success'] > 0:
-            flash(f'Successfully uploaded {upload_results["success"]} pumps. {upload_results["errors"]} errors.', 'success')
+            safe_flash(f'Successfully uploaded {upload_results["success"]} pumps. {upload_results["errors"]} errors.', 'success')
         else:
-            flash(f'Upload failed. {upload_results["errors"]} errors found.', 'error')
+            safe_flash(f'Upload failed. {upload_results["errors"]} errors found.', 'error')
         
         for message in upload_results['messages'][:5]:  # Show first 5 messages
-            flash(message, 'info')
+            safe_flash(message, 'info')
         
         return redirect(url_for('data_management'))
     
     except Exception as e:
         logger.error(f"Error uploading pump data: {str(e)}")
-        flash('Error processing uploaded file.', 'error')
+        safe_flash('Error processing uploaded file.', 'error')
         return redirect(url_for('data_management'))
 
 def process_json_upload(file_path):
@@ -653,7 +654,7 @@ def show_results():
                 }
             else:
                 # No valid parameters, redirect to pump options
-                flash('Please enter your pump requirements.', 'info')
+                safe_flash('Please enter your pump requirements.', 'info')
                 return redirect(url_for('index'))
         else:
             # POST request - get data from form
@@ -683,7 +684,7 @@ def show_results():
 
         if not top_selections:
             logger.warning(f"No pumps found for flow={site_requirements.flow_m3hr}, head={site_requirements.head_m}")
-            flash('No suitable pumps found for your requirements. Please adjust your specifications.', 'warning')
+            safe_flash('No suitable pumps found for your requirements. Please adjust your specifications.', 'warning')
             return redirect(url_for('index'))
 
         # Get the selected pump details from catalog format
@@ -692,7 +693,7 @@ def show_results():
         performance_data = best_selection['performance']
 
         if not suggested_pump_obj:
-            flash('Error retrieving pump details. Please try again.', 'error')
+            safe_flash('Error retrieving pump details. Please try again.', 'error')
             return redirect(url_for('index'))
 
         # Generate charts for the suggested pump using catalog format
@@ -746,11 +747,11 @@ def show_results():
         return redirect(url_for('pump_report', pump_code=selected_pump_code))
 
     except ValueError as ve:
-        flash(f'Invalid input: {str(ve)}', 'error')
+        safe_flash(f'Invalid input: {str(ve)}', 'error')
         return redirect(url_for('index'))
     except Exception as e:
         logger.error(f"Error in pump selection: {str(e)}", exc_info=True)
-        flash('An error occurred during pump selection. Please try again.', 'error')
+        safe_flash('An error occurred during pump selection. Please try again.', 'error')
         return redirect(url_for('index'))
 
 
@@ -784,7 +785,7 @@ def pump_options_page():
                 head = 0
 
         if flow <= 0 or head <= 0:
-            flash('Please enter valid flow rate and head values.', 'error')
+            safe_flash('Please enter valid flow rate and head values.', 'error')
             return redirect(url_for('index'))
 
         logger.info(f"Processing pump options for: flow={flow} m³/hr, head={head} m")
@@ -834,7 +835,7 @@ def pump_options_page():
             pump_evaluations = []
 
         if not pump_evaluations:
-            flash('No suitable pumps found for your requirements. Please adjust your specifications.', 'warning')
+            safe_flash('No suitable pumps found for your requirements. Please adjust your specifications.', 'warning')
             return redirect(url_for('index'))
 
         return render_template('pump_options.html', 
@@ -851,7 +852,7 @@ def pump_options_page():
 
     except Exception as e:
         logger.error(f"Error in pump_options: {e}")
-        flash('An error occurred while processing your request. Please try again.', 'error')
+        safe_flash('An error occurred while processing your request. Please try again.', 'error')
         return redirect(url_for('index'))
 
 
@@ -877,7 +878,7 @@ def pump_report_direct():
         pump_selections = find_best_pumps(parsed_pumps_list, site_requirements)
 
         if not pump_selections:
-            flash('No suitable pumps found for the specified requirements.', 'error')
+            safe_flash('No suitable pumps found for the specified requirements.', 'error')
             return redirect(url_for('index'))
 
         # Use the best pump for PDF generation
@@ -889,7 +890,7 @@ def pump_report_direct():
                 break
 
         if not target_pump:
-            flash('Error finding pump data for PDF generation.', 'error')
+            safe_flash('Error finding pump data for PDF generation.', 'error')
             return redirect(url_for('index'))
 
         # Generate PDF
@@ -910,7 +911,7 @@ def pump_report_direct():
 
     except Exception as e:
         logger.error(f"Error in direct PDF generation: {str(e)}", exc_info=True)
-        flash('Error generating PDF report. Please try again.', 'error')
+        safe_flash('Error generating PDF report. Please try again.', 'error')
         return redirect(url_for('index'))
 
 @app.route('/pump_report/<path:pump_code>')
@@ -940,7 +941,7 @@ def pump_report(pump_code):
             head = request.args.get('head', type=float)
             
             if not flow or not head:
-                flash('Flow and head parameters are required for pump analysis.', 'error')
+                safe_flash('Flow and head parameters are required for pump analysis.', 'error')
                 return redirect(url_for('index'))
 
             # Use catalog engine for consistent data
@@ -1034,7 +1035,7 @@ def pump_report(pump_code):
                     pump_selections = [selected_pump]
 
         if not selected_pump:
-            flash('Selected pump not found or cannot meet requirements. Please start a new selection.', 'warning')
+            safe_flash('Selected pump not found or cannot meet requirements. Please start a new selection.', 'warning')
             return redirect(url_for('index'))
 
         logger.info(f"Displaying report for pump: {pump_code}")
@@ -1101,7 +1102,7 @@ def pump_report(pump_code):
 
     except Exception as e:
         logger.error(f"Error displaying pump report: {str(e)}", exc_info=True)
-        flash('Error loading pump report. Please try again.', 'error')
+        safe_flash('Error loading pump report. Please try again.', 'error')
         return redirect(url_for('index'))
 
 
@@ -1125,318 +1126,6 @@ def guide_page():
     logger.info("Guide page accessed.")
     return render_template('guide.html')
 
-@app.route('/chat')
-def chat_interface():
-    """AI chatbot interface for pump expertise."""
-    return render_template('chat.html')
-
-
-@app.route('/api/chat/status', methods=['GET'])
-def chat_status():
-    """Get knowledge base status for the AI chatbot."""
-    try:
-        # Import knowledge base modules
-        from app.vector_knowledge_index import VectorKnowledgeIndex
-
-        index = VectorKnowledgeIndex()
-        status = index.get_index_statistics()
-
-        return jsonify({
-            'total_documents': status.get('total_documents', 0),
-            'embedded_documents': status.get('embedded_documents', 0),
-            'embedding_coverage': status.get('embedding_coverage', 0),
-            'document_types': status.get('document_types', []),
-            'available_models': status.get('available_models', []),
-            'index_efficiency': status.get('index_efficiency', 'Medium'),
-            'status': 'active' if status.get('total_documents', 0) > 0 else 'awaiting_pdfs'
-        })
-
-    except Exception as e:
-        logger.error(f"Error getting chat status: {e}")
-        return jsonify({
-            'total_documents': 0,
-            'embedded_documents': 0,
-            'embedding_coverage': 0,
-            'document_types': [],
-            'available_models': [],
-            'index_efficiency': 'Not Available',
-            'status': 'error',
-            'error': str(e)
-        })
-
-
-@app.route('/api/chat/query', methods=['POST'])
-def chat_query():
-    """Process AI chatbot queries using the knowledge base."""
-    try:
-        data = request.get_json()
-        query = data.get('query', '').strip()
-        history = data.get('history', [])
-
-        if not query:
-            return jsonify({'error': 'Query is required'}), 400
-
-        # Import knowledge base modules
-        from app.pdf_knowledge_base import PumpKnowledgeBase
-        from app.quick_query import QuickQuerySystem
-        import asyncio
-
-        # Try quick query system first for common questions
-        quick_system = QuickQuerySystem()
-        quick_response = quick_system.handle_quick_queries(query)
-
-        if quick_response:
-            return jsonify(quick_response)
-
-        # Initialize knowledge base for complex queries
-        knowledge_base = PumpKnowledgeBase()
-
-        # Use lightweight OpenAI query for technical questions to avoid timeouts
-        try:
-            from openai import OpenAI
-            import os
-
-            openai_client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
-
-            # Get document context from quick system
-            doc_summary = quick_system.get_document_summary()
-            available_docs = [doc['filename'] for doc in doc_summary['documents']]
-
-            # Create context-aware prompt
-            context_prompt = f"""You are an APE Pumps technical expert with access to these uploaded documents:
-{', '.join(available_docs)}
-
-Based on the available pump documentation, answer this question: {query}
-
-Guidelines:
-- Reference specific documents when relevant
-- Provide technical specifications and standards
-- Explain pump design principles and applications
-- If the question requires data from unavailable documents, state this clearly
-- Focus on centrifugal pump technology, API standards, and engineering principles
-
-Answer as a knowledgeable pump engineer would."""
-
-            response = openai_client.chat.completions.create(
-                model="gpt-4o",
-                messages=[{"role": "user", "content": context_prompt}],
-                max_tokens=500,
-                temperature=0.3
-            )
-
-            return jsonify({
-                'query': query,
-                'response': response.choices[0].message.content,
-                'source_documents': available_docs,
-                'confidence_score': 0.85,
-                'processing_time': 2.0,
-                'cost_estimate': 0.005,
-                'suggestions': ['Explain centrifugal pump efficiency curves', 'What are pump bearing requirements?']
-            })
-
-        except Exception as e:
-            logger.error(f"Query processing error: {e}")
-            return jsonify({
-                'query': query,
-                'response': f'I apologize, but I\'m having trouble connecting to the knowledge base. Please try again in a moment.',
-                'source_documents': [],
-                'confidence_score': 0.0,
-                'processing_time': 0.0,
-                'cost_estimate': 0.0,
-                'suggestions': ['What documents are available?', 'List the pump specifications available']
-            })
-
-        return jsonify({
-            'query': response.query,
-            'response': response.response,
-            'source_documents': response.source_documents,
-            'confidence_score': response.confidence_score,
-            'processing_time': response.processing_time,
-            'cost_estimate': response.cost_estimate,
-            'suggestions': response.suggestions
-        })
-
-    except Exception as e:
-        logger.error(f"Error processing chat query: {e}")
-        return jsonify({
-            'error': f'Unable to process your question at this time. Please ensure the knowledge base is properly configured.',
-            'response': 'I apologize, but I\'m having trouble accessing the pump knowledge base. Please contact support if this issue persists.',
-            'source_documents': [],
-            'confidence_score': 0.0,
-            'processing_time': 0.0,
-            'cost_estimate': 0.0,
-            'suggestions': []
-        }), 500
-
-
-@app.route('/api/chat/upload', methods=['POST'])
-def chat_upload_document():
-    """Upload PDF documents to the knowledge base."""
-    temp_path = None
-    try:
-        if 'file' not in request.files:
-            return jsonify({'error': 'No file provided'}), 400
-
-        file = request.files['file']
-        if file.filename == '':
-            return jsonify({'error': 'No file selected'}), 400
-
-        if not file.filename or not file.filename.lower().endswith('.pdf'):
-            return jsonify({'error': 'Only PDF files are supported'}), 400
-
-        # Secure filename and save temporarily
-        filename = secure_filename(file.filename)
-        temp_path = os.path.join(app.config.get('UPLOAD_FOLDER', '/tmp'), filename)
-        file.save(temp_path)
-
-        # Import knowledge base modules
-        from app.pdf_knowledge_base import PumpKnowledgeBase
-        from app.vector_knowledge_index import VectorKnowledgeIndex
-        import asyncio
-
-        # Check file size for processing strategy
-        file_size_mb = os.path.getsize(temp_path) / (1024 * 1024)
-
-        # Extract document type and pump model from form data
-        doc_type = request.form.get('document_type', 'datasheet')
-        pump_model = request.form.get('pump_model', None)
-
-        # For large files (>3MB), use background processing
-        if file_size_mb > 3.0:
-            import hashlib
-            import threading
-
-            # Generate document ID for immediate response
-            doc_id = f"doc_{hashlib.md5(temp_path.encode()).hexdigest()[:16]}"
-            filename = os.path.basename(temp_path)
-
-            def background_process():
-                try:
-                    knowledge_base = PumpKnowledgeBase()
-                    metadata = asyncio.run(knowledge_base.upload_pdf_document(
-                        temp_path, doc_type, pump_model or "Unknown"
-                    ))
-
-                    # Index in vector database
-                    index = VectorKnowledgeIndex()
-                    asyncio.run(index.index_document({
-                        'document_id': metadata.document_id,
-                        'filename': metadata.filename,
-                        'document_type': metadata.document_type,
-                        'pump_model': metadata.pump_model,
-                        'pump_series': metadata.pump_series,
-                        'pump_type': metadata.pump_type,
-                        'specifications': getattr(metadata, 'specifications', None),
-                        'applications': metadata.applications,
-                        'keywords': metadata.keywords,
-                        'summary': metadata.summary
-                    }))
-
-                    logger.info(f"Background processing completed for {filename}")
-
-                except Exception as e:
-                    logger.error(f"Background processing failed for {filename}: {e}")
-                finally:
-                    if os.path.exists(temp_path):
-                        os.remove(temp_path)
-
-            # Start background thread
-            thread = threading.Thread(target=background_process)
-            thread.daemon = True
-            thread.start()
-
-            return jsonify({
-                'message': f'Large document ({file_size_mb:.1f}MB) upload initiated. Processing in background.',
-                'document_id': doc_id,
-                'filename': filename,
-                'processing_status': 'processing',
-                'file_size_mb': round(file_size_mb, 1),
-                'estimated_completion': '2-3 minutes'
-            })
-
-        # Process smaller files immediately
-        knowledge_base = PumpKnowledgeBase()
-
-        # Upload and process PDF
-        metadata = asyncio.run(knowledge_base.upload_pdf_document(
-            temp_path, doc_type, pump_model or "Unknown"
-        ))
-
-        # Index in vector database
-        index = VectorKnowledgeIndex()
-        doc_index = asyncio.run(index.index_document({
-            'document_id': metadata.document_id,
-            'filename': metadata.filename,
-            'document_type': metadata.document_type,
-            'pump_model': metadata.pump_model,
-            'pump_series': metadata.pump_series,
-            'pump_type': metadata.pump_type,
-            'specifications': getattr(metadata, 'specifications', None),
-            'applications': metadata.applications,
-            'keywords': metadata.keywords,
-            'summary': metadata.summary
-        }))
-
-        # Clean up temporary file
-        os.remove(temp_path)
-
-        return jsonify({
-            'message': 'Document uploaded and indexed successfully',
-            'document_id': metadata.document_id,
-            'filename': metadata.filename,
-            'pump_model': metadata.pump_model,
-            'summary': metadata.summary,
-            'processing_status': metadata.processing_status
-        })
-
-    except Exception as e:
-        logger.error(f"Error uploading document: {e}")
-        # Clean up temporary file on error
-        if 'temp_path' in locals() and temp_path and os.path.exists(temp_path):
-            os.remove(temp_path)
-
-        return jsonify({
-            'error': f'Failed to upload document: {str(e)}'
-        }), 500
-
-
-@app.route('/api/chat/history', methods=['GET'])
-def chat_history():
-    """Get chat conversation history."""
-    try:
-        # For now, return empty history - in production this would come from database
-        return jsonify({
-            'history': [],
-            'total_conversations': 0,
-            'recent_queries': []
-        })
-
-    except Exception as e:
-        logger.error(f"Error getting chat history: {e}")
-        return jsonify({'error': 'Unable to retrieve chat history'}), 500
-
-
-@app.route('/api/chat/feedback', methods=['POST'])
-def chat_feedback():
-    """Collect user feedback on chat responses."""
-    try:
-        data = request.get_json()
-        query = data.get('query', '')
-        response = data.get('response', '')
-        rating = data.get('rating', 0)
-        feedback = data.get('feedback', '')
-
-        # Log feedback for analysis
-        logger.info(f"Chat feedback - Query: {query[:100]}..., Rating: {rating}, Feedback: {feedback}")
-
-        # In production, this would be stored in database for analysis
-        return jsonify({'message': 'Feedback received successfully'})
-
-    except Exception as e:
-        logger.error(f"Error processing feedback: {e}")
-        return jsonify({'error': 'Unable to process feedback'}), 500
-
-
 @app.route('/generate_pdf/<path:pump_code>')
 def generate_pdf_report(pump_code):
     """Generate PDF report using exact same data as web interface"""
@@ -1453,7 +1142,7 @@ def generate_pdf_report(pump_code):
         
         if not pump_selections:
             logger.error(f"PDF generation - No pump selections in session for {pump_code}")
-            flash('No pump selections found. Please run pump selection first.', 'error')
+            safe_flash('No pump selections found. Please run pump selection first.', 'error')
             return redirect(url_for('index'))
         
         # Find the selected pump from session data (same as web interface)
@@ -1465,7 +1154,7 @@ def generate_pdf_report(pump_code):
                 
         if not selected_pump:
             logger.error(f"PDF generation - Pump {pump_code} not found in session selections")
-            flash('Selected pump not found. Please run pump selection again.', 'error')
+            safe_flash('Selected pump not found. Please run pump selection again.', 'error')
             return redirect(url_for('index'))
             
         logger.info(f"PDF generation - Using session data for pump: {pump_code}")
@@ -1480,7 +1169,7 @@ def generate_pdf_report(pump_code):
             flow_m3hr = float(flow_value) if flow_value is not None else 0.0
             head_m = float(head_value) if head_value is not None else 0.0
         except (ValueError, TypeError):
-            flash('Invalid flow or head values in session data', 'error')
+            safe_flash('Invalid flow or head values in session data', 'error')
             return redirect(url_for('index'))
         
         site_requirements = SiteRequirements(
@@ -1498,7 +1187,7 @@ def generate_pdf_report(pump_code):
         
         if not catalog_pump:
             logger.error(f"PDF generation - Catalog pump {pump_code} not found")
-            flash('Pump not found in catalog', 'error')
+            safe_flash('Pump not found in catalog', 'error')
             return redirect(url_for('index'))
             
         # Get performance data from the web interface session data and convert to PDF template format
@@ -1506,7 +1195,7 @@ def generate_pdf_report(pump_code):
         
         # Convert catalog format to legacy PDF template format - ensure all values are authentic
         if not operating_point.get('flow_m3hr') or not operating_point.get('head_m'):
-            flash('Insufficient pump data for PDF generation. Please ensure valid pump selection.', 'error')
+            safe_flash('Insufficient pump data for PDF generation. Please ensure valid pump selection.', 'error')
             return redirect(url_for('index'))
             
         converted_operating_point = {
@@ -1566,7 +1255,7 @@ def generate_pdf_report(pump_code):
 
     except Exception as e:
         logger.error(f"Error generating PDF: {str(e)}", exc_info=True)
-        flash('Error generating PDF report. Please try again.', 'error')
+        safe_flash('Error generating PDF report. Please try again.', 'error')
         return redirect(url_for('index'))
 
 @app.route('/api/chart_data/<pump_code>')
@@ -1952,7 +1641,6 @@ def generate_pump_charts(parsed_pump_obj, operating_point, site_requirements_obj
         buffer.seek(0)
         head_chart_base64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
         plt.close(fig)
-
         charts['head'] = f"data:image/png;base64,{head_chart_base64}"
         logger.debug(f"Generated head chart as base64 (length: {len(head_chart_base64)})")
 
@@ -2098,19 +1786,19 @@ def pump_comparison():
         head_str = request.args.get('head')
 
         if not flow_str or not head_str:
-            flash('Flow and head parameters are required for pump comparison', 'error')
+            safe_flash('Flow and head parameters are required for pump comparison', 'error')
             return redirect(url_for('index'))
 
         # Guard against invalid data injection
         if flow_str.lower() in ('nan', 'infinity', 'inf', '-inf') or head_str.lower() in ('nan', 'infinity', 'inf', '-inf'):
-            flash('Invalid flow or head parameters provided', 'error')
+            safe_flash('Invalid flow or head parameters provided', 'error')
             return redirect(url_for('index'))
 
         try:
             flow = float(flow_str)
             head = float(head_str)
         except (ValueError, TypeError):
-            flash('Invalid flow or head parameters provided', 'error')
+            safe_flash('Invalid flow or head parameters provided', 'error')
             return redirect(url_for('index'))
 
         # Get pump type from URL parameters to maintain filtering consistency
@@ -2201,7 +1889,7 @@ def pump_comparison():
 
     except Exception as e:
         logger.error(f"Error in pump comparison: {str(e)}", exc_info=True)
-        flash(f'Error generating pump comparison: {str(e)}', 'error')
+        safe_flash(f'Error generating pump comparison: {str(e)}', 'error')
         return redirect(url_for('index'))
 
 def _get_pump_series(pump_code):
@@ -2272,14 +1960,14 @@ def shortlist_comparison():
     try:
         pump_codes = request.args.getlist('pumps')
         if len(pump_codes) < 2 or len(pump_codes) > 3:
-            flash('Please select 2-3 pumps for shortlist comparison', 'error')
+            safe_flash('Please select 2-3 pumps for shortlist comparison', 'error')
             return redirect(url_for('pump_comparison'))
             
         flow = request.args.get('flow', type=float)
         head = request.args.get('head', type=float)
         
         if not flow or not head:
-            flash('Flow and head parameters are required for shortlist comparison', 'error')
+            safe_flash('Flow and head parameters are required for shortlist comparison', 'error')
             return redirect(url_for('pump_comparison'))
         
         from catalog_engine import get_catalog_engine
@@ -2309,7 +1997,7 @@ def shortlist_comparison():
                              
     except Exception as e:
         logger.error(f"Error in shortlist comparison: {str(e)}")
-        flash('Error loading shortlist comparison', 'error')
+        safe_flash('Error loading shortlist comparison', 'error')
         return redirect(url_for('pump_comparison'))
 
 @app.route('/generate_comparison_pdf')
@@ -2335,7 +2023,7 @@ def generate_comparison_pdf():
             return jsonify({'error': 'Invalid flow or head parameters provided'}), 400
 
         if not pump_codes or len(pump_codes) < 2:
-            flash('At least 2 pumps required for comparison', 'error')
+            safe_flash('At least 2 pumps required for comparison', 'error')
             return redirect(url_for('index'))
 
         # Validate site requirements
@@ -2418,12 +2106,12 @@ def generate_comparison_pdf():
 
             return response
         else:
-            flash('Error generating comparison PDF', 'error')
+            safe_flash('Error generating comparison PDF', 'error')
             return redirect(url_for('index'))
 
     except Exception as e:
         logger.error(f"Error generating comparison PDF: {str(e)}", exc_info=True)
-        flash(f'Error generating comparison PDF: {str(e)}', 'error')
+        safe_flash(f'Error generating comparison PDF: {str(e)}', 'error')
         return redirect(url_for('index'))
 
 @app.route('/admin')
@@ -2433,7 +2121,7 @@ def ai_admin():
         return render_template('ai_admin.html')
     except Exception as e:
         logger.error(f"Error accessing AI admin panel: {str(e)}")
-        flash('Error accessing admin panel', 'error')
+        safe_flash('Error accessing admin panel', 'error')
         return redirect(url_for('index'))
 
 @app.route('/admin/upload', methods=['POST'])
@@ -2459,7 +2147,7 @@ def upload_document():
 
             # Process the document with AI knowledge base
             try:
-                from app.pdf_knowledge_base import PumpKnowledgeBase
+                
                 kb = PumpKnowledgeBase()
                 result = kb.upload_document(temp_path, filename)
 
@@ -2490,7 +2178,7 @@ def upload_document():
 def list_documents():
     """List all documents in the AI knowledge base"""
     try:
-        from app.pdf_knowledge_base import PumpKnowledgeBase
+        
         kb = PumpKnowledgeBase()
         documents = kb.list_uploaded_files()
         return jsonify({'documents': documents})
@@ -2506,7 +2194,7 @@ def test_ai_query():
         if not query:
             return jsonify({'error': 'No query provided'}), 400
 
-        from app.pdf_knowledge_base import PumpKnowledgeBase
+        
         kb = PumpKnowledgeBase()
         result = kb.query_documents(query)
 
@@ -3115,7 +2803,7 @@ def pump_upload():
                              last_updated=last_updated)
     except Exception as e:
         logger.error(f"Error loading pump upload page: {e}")
-        flash('Error loading upload interface', 'error')
+        safe_flash('Error loading upload interface', 'error')
         return redirect(url_for('index'))
 
 @app.route('/admin/upload_pump_data', methods=['POST'])
@@ -3139,7 +2827,7 @@ def admin_upload_pump_data():
             temp_path = temp_file.name
         
         try:
-            from pump_upload_system import PumpUploadSystem
+            
             upload_system = PumpUploadSystem()
             
             if file.filename.endswith('.csv'):
@@ -3177,7 +2865,7 @@ def add_single_pump():
             if not data.get(field):
                 return jsonify({'success': False, 'error': f'Missing required field: {field}'})
         
-        from pump_upload_system import PumpUploadSystem
+        
         upload_system = PumpUploadSystem()
         
         success = upload_system.add_single_pump(data)
@@ -3226,7 +2914,7 @@ def recent_pumps():
 def validate_database():
     """Validate pump database integrity"""
     try:
-        from pump_upload_system import PumpUploadSystem
+        
         upload_system = PumpUploadSystem()
         validation = upload_system.validate_database()
         
@@ -3279,7 +2967,7 @@ if SCG_AVAILABLE:
 def scg_management():
     """SCG file management interface"""
     if not SCG_AVAILABLE:
-        flash('SCG processing not available - missing dependencies', 'error')
+        safe_flash('SCG processing not available - missing dependencies', 'error')
         return redirect(url_for('admin_upload_pump_data'))
     
     if request.method == 'POST':
@@ -3296,7 +2984,7 @@ def scg_management():
                     
                     # Process SCG file with null checks
                     if scg_processor is None:
-                        flash('SCG processor not available', 'error')
+                        safe_flash('SCG processor not available', 'error')
                         return redirect(url_for('scg_management'))
                         
                     result = scg_processor.process_scg_file(temp_path)
@@ -3304,7 +2992,7 @@ def scg_management():
                     if result.success and result.pump_data:
                         # Convert to catalog format
                         if scg_adapter is None:
-                            flash('SCG adapter not available', 'error')
+                            safe_flash('SCG adapter not available', 'error')
                             return redirect(url_for('scg_management'))
                             
                         catalog_data = scg_adapter.map_scg_to_catalog(result.pump_data)
@@ -3320,13 +3008,13 @@ def scg_management():
                             )
                             
                             if integration_result['success']:
-                                flash(f"Successfully processed SCG file: {integration_result['message']}", 'success')
+                                safe_flash(f"Successfully processed SCG file: {integration_result['message']}", 'success')
                             else:
-                                flash(f"Integration failed: {integration_result.get('errors', [])}", 'error')
+                                safe_flash(f"Integration failed: {integration_result.get('errors', [])}", 'error')
                         else:
-                            flash(f"Conversion failed: {adapter_result.errors}", 'error')
+                            safe_flash(f"Conversion failed: {adapter_result.errors}", 'error')
                     else:
-                        flash(f"Processing failed: {result.errors}", 'error')
+                        safe_flash(f"Processing failed: {result.errors}", 'error')
                     
                     # Clean up temp file
                     try:
@@ -3334,7 +3022,7 @@ def scg_management():
                     except:
                         pass
                 else:
-                    flash('Please select a valid .scg file', 'error')
+                    safe_flash('Please select a valid .scg file', 'error')
             
             # Handle batch upload
             elif 'scg_directory' in request.form:
@@ -3357,17 +3045,17 @@ def scg_management():
                         batch_processor_instance = BatchSCGProcessor(config)
                         batch_result = batch_processor_instance.process_files(validation_result['valid_files'])
                         
-                        flash(f"Batch processing completed: {batch_result.successful_pumps}/{batch_result.total_files} successful", 'success')
+                        safe_flash(f"Batch processing completed: {batch_result.successful_pumps}/{batch_result.total_files} successful", 'success')
                         if batch_result.report_path:
                             session['last_batch_report'] = batch_result.report_path
                     else:
-                        flash('No valid SCG files found in directory', 'error')
+                        safe_flash('No valid SCG files found in directory', 'error')
                 else:
-                    flash('Directory not found', 'error')
+                    safe_flash('Directory not found', 'error')
                     
         except Exception as e:
             logger.error(f"Error in SCG processing: {e}", exc_info=True)
-            flash(f"Processing error: {str(e)}", 'error')
+            safe_flash(f"Processing error: {str(e)}", 'error')
     
     # Get processing statistics
     stats = {}
@@ -3451,14 +3139,14 @@ def scg_validate_file():
 def scg_download_report():
     """Download latest batch processing report"""
     if not SCG_AVAILABLE:
-        flash('SCG processing not available', 'error')
+        safe_flash('SCG processing not available', 'error')
         return redirect(url_for('scg_management'))
     
     report_path = session.get('last_batch_report')
     if report_path and os.path.exists(report_path):
         return send_file(report_path, as_attachment=True, download_name=f"scg_batch_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json")
     else:
-        flash('No report available', 'error')
+        safe_flash('No report available', 'error')
         return redirect(url_for('scg_management'))
 
 @app.route('/api/scg/stats')

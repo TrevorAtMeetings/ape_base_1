@@ -346,26 +346,29 @@ class DeploymentValidator:
     
     def _test_database_performance(self) -> Dict[str, Any]:
         """Test database operation performance"""
+        # Database manager removed - using catalog engine instead
         try:
-            from .database_manager import database_manager
+            from catalog_engine import get_catalog_engine
             
             start_time = time.time()
             
-            # Test database operations
-            analytics = database_manager.get_selection_analytics(days=30)
+            # Test catalog loading performance
+            catalog_engine = get_catalog_engine()
+            pump_count = len(catalog_engine.catalog_data.get('pump_models', []))
             
             db_time = time.time() - start_time
             
             return {
                 'status': 'PASS',
                 'query_time_seconds': round(db_time, 3),
-                'details': f"Database query completed in {db_time:.3f}s"
+                'pump_count': pump_count,
+                'details': f"Catalog loaded {pump_count} pumps in {db_time:.3f}s"
             }
         except Exception as e:
             return {
                 'status': 'FAIL',
                 'error': str(e),
-                'details': 'Database performance test failed'
+                'details': 'Catalog loading test failed'
             }
     
     def _test_concurrent_load(self) -> Dict[str, Any]:

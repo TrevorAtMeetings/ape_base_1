@@ -31,14 +31,16 @@ app = Flask(__name__,
 logger.info("Flask app instance created.")
 
 # 2. CONFIGURE THE APP
-app.secret_key = os.environ.get("SESSION_SECRET")
-if not app.secret_key:
-    raise RuntimeError("SESSION_SECRET environment variable must be set for production deployment")
 app.config['DEBUG'] = os.environ.get("FLASK_DEBUG", "True").lower() == "true"
 # Define UPLOAD_FOLDER relative to the app's static folder
 app.config['UPLOAD_FOLDER'] = os.path.join(app.root_path, 'static', 'temp')
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 logger.info(f"App configured. Upload folder: {app.config['UPLOAD_FOLDER']}")
+
+# Initialize session manager
+from .session_manager import init_session_manager
+session_manager = init_session_manager(app)
+logger.info("Session manager initialized.")
 
 # 3. IMPORT YOUR APPLICATION MODULES
 # Import routes *after* the app is created and configured
