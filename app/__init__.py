@@ -1,4 +1,3 @@
-
 """
 APE Pumps Selection Application Package
 This package initializes the Flask application and imports its components.
@@ -51,14 +50,14 @@ logger.info("Routes imported.")
 import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
-from pump_engine import (
+from app.pump_engine import (
     load_all_pump_data,
     validate_site_requirements,
     SiteRequirements,
     ParsedPumpData,
     parse_pump_data
 )
-from .selection_engine import find_best_pumps
+# selection_engine.py moved to archive - find_best_pumps is available in pump_engine.py
 
 __all__ = [
     'app',  # Expose the Flask app instance
@@ -67,5 +66,5 @@ __all__ = [
     'SiteRequirements',
     'ParsedPumpData',
     'parse_pump_data',
-    'find_best_pumps',
+    # 'find_best_pumps',  # Available in pump_engine.py
 ]

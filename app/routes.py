@@ -21,16 +21,16 @@ load_dotenv(os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env'))
 # Import the app instance FROM THE CURRENT PACKAGE (__init__.py)
 from . import app
 # Import pump engine functions as single source of truth
-from pump_engine import load_all_pump_data, find_best_pumps, validate_site_requirements, SiteRequirements, ParsedPumpData
+from app.pump_engine import load_all_pump_data, find_best_pumps, validate_site_requirements, SiteRequirements, ParsedPumpData
 
 # Initialize logger first
 logger = logging.getLogger(__name__)
 
 # SCG Processing imports
 try:
-    from scg_processor import SCGProcessor, ProcessingResult
-    from scg_catalog_adapter import SCGCatalogAdapter, CatalogEngineIntegrator
-    from batch_scg_processor import BatchSCGProcessor, BatchProcessingConfig, discover_scg_files, validate_scg_files
+    from app.scg_processor import SCGProcessor, ProcessingResult
+    from app.scg_catalog_adapter import SCGCatalogAdapter, CatalogEngineIntegrator
+    from app.batch_scg_processor import BatchSCGProcessor, BatchProcessingConfig, discover_scg_files, validate_scg_files
     SCG_AVAILABLE = True
 except ImportError as e:
     logger.warning(f"SCG processing modules not available: {e}")
@@ -150,7 +150,7 @@ def data_management():
             has_npsh = False
             
             # Parse curves from pump_info
-            from pump_engine import _parse_performance_curves
+            from app.pump_engine import _parse_performance_curves
             curves = _parse_performance_curves(pump.pump_info)
             curve_count = len(curves)
             
@@ -563,9 +563,9 @@ def process_csv_upload(file_path):
 def process_unified_pump_file(file_path):
     """Process pump file using unified processor for both SCG and TXT formats."""
     try:
-        from unified_pump_processor import UnifiedPumpProcessor
-        from scg_catalog_adapter import SCGCatalogAdapter
-        from catalog_engine import get_catalog_engine
+        from app.unified_pump_processor import UnifiedPumpProcessor
+        from app.scg_catalog_adapter import SCGCatalogAdapter
+        from app.catalog_engine import get_catalog_engine
         
         # Use unified processor
         processor = UnifiedPumpProcessor()
@@ -671,7 +671,7 @@ def show_results():
         logger.info(f"Pump type filter: {pump_type}")
 
         # Use catalog engine for pump selection
-        from catalog_engine import get_catalog_engine
+        from app.catalog_engine import get_catalog_engine
         catalog_engine = get_catalog_engine()
         
         # Find best pumps using catalog engine with pump type filtering
@@ -803,7 +803,7 @@ def pump_options_page():
         )
 
         # Use catalog engine for pump selection
-        from catalog_engine import get_catalog_engine
+        from app.catalog_engine import get_catalog_engine
         catalog_engine = get_catalog_engine()
         logger.info(f"Loaded {len(catalog_engine.pumps)} pumps from catalog")
 
@@ -894,7 +894,7 @@ def pump_report_direct():
             return redirect(url_for('index'))
 
         # Generate PDF
-        from pdf_generator import generate_pdf_report as generate_pdf
+        from app.pdf_generator import generate_pdf_report as generate_pdf
         pdf_content = generate_pdf(
             selected_pump_evaluation=selected_evaluation,
             parsed_pump=target_pump,
@@ -945,7 +945,7 @@ def pump_report(pump_code):
                 return redirect(url_for('index'))
 
             # Use catalog engine for consistent data
-            from catalog_engine import get_catalog_engine
+            from app.catalog_engine import get_catalog_engine
             catalog_engine = get_catalog_engine()
             
             try:
@@ -1002,7 +1002,7 @@ def pump_report(pump_code):
             head = request.args.get('head', 10.3, type=float)
             pump_type = request.args.get('pump_type', 'AXIAL_FLOW')
             
-            from catalog_engine import get_catalog_engine
+            from app.catalog_engine import get_catalog_engine
             catalog_engine = get_catalog_engine()
             
             # Get the specific pump and validate it can meet requirements
@@ -1041,7 +1041,7 @@ def pump_report(pump_code):
         logger.info(f"Displaying report for pump: {pump_code}")
 
         # Get complete pump data with curves for data table
-        from catalog_engine import get_catalog_engine
+        from app.catalog_engine import get_catalog_engine
         catalog_engine = get_catalog_engine()
         catalog_pump = catalog_engine.get_pump_by_code(pump_code)
         
@@ -1181,7 +1181,7 @@ def generate_pdf_report(pump_code):
         )
 
         # Get catalog pump for PDF generation compatibility
-        from catalog_engine import get_catalog_engine, convert_catalog_pump_to_legacy_format
+        from app.catalog_engine import get_catalog_engine, convert_catalog_pump_to_legacy_format
         catalog_engine = get_catalog_engine()
         catalog_pump = catalog_engine.get_pump_by_code(pump_code)
         
@@ -1237,7 +1237,7 @@ def generate_pdf_report(pump_code):
         logger.info(f"PDF generation - Performance data: impeller={performance_data.get('impeller_diameter_mm')}mm, power={performance_data.get('power_kw')}kW")
         
         # Generate PDF using the web interface data with converted format
-        from pdf_generator import generate_pdf_report as generate_pdf
+        from app.pdf_generator import generate_pdf_report as generate_pdf
         pdf_content = generate_pdf(
             selected_pump_evaluation=selected_pump_for_pdf,
             parsed_pump=legacy_pump,
@@ -1267,7 +1267,7 @@ def get_chart_data(pump_code):
         head = request.args.get('head', type=float, default=50)
 
         # Use catalog engine to get pump data
-        from catalog_engine import get_catalog_engine
+        from app.catalog_engine import get_catalog_engine
         catalog_engine = get_catalog_engine()
         target_pump = catalog_engine.get_pump_by_code(pump_code)
 
@@ -1460,7 +1460,7 @@ def get_chart_data_safe(safe_pump_code):
         logger.info(f"Chart API: Loading data for pump {pump_code}")
         data_load_start = time.time()
         
-        from catalog_engine import get_catalog_engine
+        from app.catalog_engine import get_catalog_engine
         catalog_engine = get_catalog_engine()
         target_pump = catalog_engine.get_pump_by_code(pump_code)
         
@@ -1821,7 +1821,7 @@ def pump_comparison():
         logger.info(f"Pump type filter: {pump_type}")
 
         # Use catalog engine for pump selection with pump type filtering
-        from catalog_engine import get_catalog_engine
+        from app.catalog_engine import get_catalog_engine
         catalog_engine = get_catalog_engine()
         logger.info(f"Successfully loaded {len(catalog_engine.pumps)} pumps from catalog")
 
@@ -1907,7 +1907,7 @@ def _get_pump_series(pump_code):
 def pump_details(pump_code):
     """Get detailed pump information for modal display"""
     try:
-        from catalog_engine import get_catalog_engine
+        from app.catalog_engine import get_catalog_engine
         catalog_engine = get_catalog_engine()
         
         pump = catalog_engine.get_pump_by_code(pump_code)
@@ -1970,7 +1970,7 @@ def shortlist_comparison():
             safe_flash('Flow and head parameters are required for shortlist comparison', 'error')
             return redirect(url_for('pump_comparison'))
         
-        from catalog_engine import get_catalog_engine
+        from app.catalog_engine import get_catalog_engine
         catalog_engine = get_catalog_engine()
         
         shortlist_pumps = []
@@ -2035,7 +2035,7 @@ def generate_comparison_pdf():
         })
 
         # Use catalog engine for pump data
-        from catalog_engine import get_catalog_engine
+        from app.catalog_engine import get_catalog_engine
         catalog_engine = get_catalog_engine()
 
         pump_evaluations = []
@@ -2070,7 +2070,7 @@ def generate_comparison_pdf():
                     pump_evaluations.append(evaluation)
 
         # Generate comparison PDF content
-        from pdf_generator import generate_pdf_report as generate_pdf
+        from app.pdf_generator import generate_pdf_report as generate_pdf
 
         # Use the first pump as the main selection for PDF template compatibility
         main_evaluation = pump_evaluations[0] if pump_evaluations else None
@@ -2078,7 +2078,7 @@ def generate_comparison_pdf():
 
         if main_evaluation and main_pump:
             # Convert catalog pump to legacy format for PDF compatibility
-            from catalog_engine import convert_catalog_pump_to_legacy_format
+            from app.catalog_engine import convert_catalog_pump_to_legacy_format
             main_performance = main_pump.get_performance_at_duty(flow, head)
             if main_performance is not None:
                 legacy_pump = convert_catalog_pump_to_legacy_format(main_pump, main_performance)
@@ -2335,7 +2335,7 @@ def generate_pdf_api():
             installation="standard"
         )
 
-        from pump_engine import evaluate_pump_for_requirements
+        from app.pump_engine import evaluate_pump_for_requirements
         evaluation = evaluate_pump_for_requirements(parsed_pump, site_requirements)
         pdf_content = generate_pdf_report(evaluation, parsed_pump, site_requirements)
 
@@ -2787,7 +2787,7 @@ Follow IEEE and manufacturer guidelines for installation procedures. Document ba
 def pump_upload():
     """Pump data upload interface"""
     try:
-        from pump_engine import load_all_pump_data
+        from app.pump_engine import load_all_pump_data
         pump_data = load_all_pump_data()
         pump_count = len(pump_data)
         
@@ -2837,7 +2837,7 @@ def admin_upload_pump_data():
             
             pumps_added = upload_system.add_pumps_to_database(new_pumps)
             
-            from pump_engine import load_all_pump_data
+            from app.pump_engine import load_all_pump_data
             total_pumps = len(load_all_pump_data())
             
             return jsonify({
@@ -2871,7 +2871,7 @@ def add_single_pump():
         success = upload_system.add_single_pump(data)
         
         if success:
-            from pump_engine import load_all_pump_data
+            from app.pump_engine import load_all_pump_data
             total_pumps = len(load_all_pump_data())
             
             return jsonify({
@@ -2890,7 +2890,7 @@ def add_single_pump():
 def recent_pumps():
     """Get recently added pumps"""
     try:
-        from pump_engine import load_all_pump_data
+        from app.pump_engine import load_all_pump_data
         pump_data = load_all_pump_data()
         
         recent_pumps = []

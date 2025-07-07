@@ -15,7 +15,8 @@ import os
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 from pump_engine import load_all_pump_data, validate_site_requirements, SiteRequirements
 from .selection_engine import find_best_pumps
-from .llm_reasoning import llm_reasoning
+# LLM reasoning module removed - AI functionality disabled
+llm_reasoning = None
 
 logger = logging.getLogger(__name__)
 

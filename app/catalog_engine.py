@@ -288,7 +288,7 @@ class CatalogPump:
             logger.debug(f"Pump {self.pump_code} cannot physically meet requirements: {flow_m3hr} m³/hr, {head_m} m")
             return None
         
-        from impeller_scaling import get_impeller_scaling_engine
+        from app.impeller_scaling import get_impeller_scaling_engine
         
         scaling_engine = get_impeller_scaling_engine()
         

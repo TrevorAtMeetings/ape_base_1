@@ -7,4 +7,5 @@ pytest
 markdown2
 python-dotenv
 scipy
-google-generativeai 
+google-generativeai
+weasyprint 

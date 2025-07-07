@@ -15,6 +15,7 @@ import matplotlib
 matplotlib.use('Agg')  # Use non-interactive backend
 import matplotlib.pyplot as plt
 import numpy as np
+from app.catalog_engine import CatalogPump
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +37,6 @@ def generate_pdf_report(selected_pump_evaluation: Dict[str, Any],
     """
     try:
         # Handle both CatalogPump, LegacyPumpData, and ParsedPumpData objects
-        from catalog_engine import CatalogPump
         
         # Check if we have a LegacyPumpData object from web interface
         if hasattr(parsed_pump, 'authentic_impeller_mm') and hasattr(parsed_pump, 'authentic_power_kw'):
@@ -823,6 +823,13 @@ def _generate_performance_chart_base64(parsed_pump: Any, operating_point: Dict[s
         
         if not curves_data:
             logger.warning(f"No curve data available for pump {parsed_pump.pump_code}")
+            # Extra logging for debugging
+            logger.warning(f"parsed_pump type: {type(parsed_pump)}")
+            logger.warning(f"parsed_pump attributes: {dir(parsed_pump)}")
+            if hasattr(parsed_pump, 'curves'):
+                logger.warning(f"parsed_pump.curves: {parsed_pump.curves}")
+            if hasattr(parsed_pump, 'pump_info'):
+                logger.warning(f"parsed_pump.pump_info: {parsed_pump.pump_info}")
             return ""
 
         # Operating point data
