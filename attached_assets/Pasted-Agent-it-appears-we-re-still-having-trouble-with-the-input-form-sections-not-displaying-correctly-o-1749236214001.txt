@@ -1,0 +1,42 @@
+Agent, it appears we're still having trouble with the input form sections not displaying correctly on input_form.html. The progressive reveal JavaScript seems to be causing persistent issues.
+Let's simplify the approach for displaying the input form sections to ensure they are reliably visible for now. We will revisit a more sophisticated JavaScript-driven progressive reveal in a later iteration once the core application is stable.
+Please perform the following steps to rebuild/refactor the input form display:
+Disable/Remove Current Progressive Reveal JavaScript:
+File: static/js/main.js (or wherever the current progressive reveal logic resides).
+Action: Comment out or completely remove the JavaScript functions responsible for hiding/showing the form sections (id="core-requirements-section", id="contact-section", etc.) based on "Next" button clicks or any other dynamic logic.
+Goal: Ensure no JavaScript is actively trying to manage the visibility of these main form sections at page load or through interaction for now. The form submission spinner logic can remain.
+Ensure HTML Sections are Present and Not Hidden by Default:
+File: templates/input_form.html
+Action:
+Verify that all the div elements for each form section (e.g., <div class="row section-card" id="core-requirements-section">...</div>, <div class="row section-card" id="contact-section">...</div>, etc.) are present in the HTML structure within the <form>.
+Remove any inline styles like style="display: none;" from these main section divs if they exist.
+Remove any CSS classes that might be causing them to be hidden by default (unless these classes are only for styling and not visibility control).
+CSS for Default Visibility (If Necessary):
+File: static/css/style.css
+Action:
+Remove any CSS rules that might be setting display: none; by default for the main form section containers (e.g., .section-card).
+If, after removing problematic JS and HTML attributes, sections are still not visible, you can add a very simple, explicit CSS rule to ensure they are block elements. Avoid using !important unless absolutely necessary as a last resort for overriding stubborn styles.
+/* In static/css/style.css - Add if sections are still hidden */
+.section-card {
+    display: block; /* Or flex, grid, depending on your layout needs */
+    visibility: visible;
+    margin-bottom: 20px; /* Or your preferred spacing */
+}
+Use code with caution.
+Css
+Goal: The CSS should support making all form sections visible by default in a stacked, scrollable manner.
+Remove "Next" Buttons for Section Navigation (For Now):
+File: templates/input_form.html
+Action: If there are "Next Section" or "Continue" buttons within the form designed to trigger the (now disabled) progressive reveal JS, comment them out or remove them for this iteration. The only primary action button at the bottom of the form should be "Find Best Pumps" (submit) and "Reset Form."
+Expected Outcome of These Steps:
+When input_form.html is loaded, all defined form sections (Core Requirements, Contact, Application, Liquid, System, Motor, Additional) should be visible on the page, one after the other, making it a single, long, scrollable form.
+The form should be fully usable: users can input data into all fields, and the "Find Best Pumps" button should submit the entire form.
+The "vanishing sections" issue should be resolved because we've removed the complex JS that was likely causing it.
+Instructions to the Agent After Implementing:
+"Agent, after you have:
+Disabled/removed the JavaScript in static/js/main.js that handles hiding/showing form sections.
+Ensured the HTML in templates/input_form.html for all form sections does not have default hiding styles.
+Adjusted static/css/style.css to ensure sections are visible by default.
+Removed any intermediate 'Next' buttons within the form (keeping only the final submit/reset).
+Please confirm that when you load the input_form.html page, all form sections are now visible and the page is scrollable to access all fields.
+Once this stable display is confirmed, we will proceed with testing the form submission and then focus on the backend logic for chart data and PDF generation."

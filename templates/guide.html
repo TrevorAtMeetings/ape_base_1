@@ -1,0 +1,571 @@
+{% extends "base.html" %}
+
+{% block title %}User Guide - APE Pumps AI Selection System{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="guide-hero" style="background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%); color: white; padding: 80px 0; position: relative;">
+    
+    <div class="container" style="position: relative; z-index: 2;">
+        <div class="row">
+            <div class="col s12 l8 offset-l2 center-align">
+                <h1 style="font-size: 3.5rem; font-weight: 300; margin-bottom: 24px; line-height: 1.1;">
+                    Complete User Guide
+                </h1>
+                <p style="font-size: 1.3rem; line-height: 1.5; opacity: 0.9; margin-bottom: 40px; max-width: 600px; margin-left: auto; margin-right: auto;">
+                    Master every feature of the APE AI Selection System with this comprehensive step-by-step guide
+                </p>
+                
+                <!-- Quick Navigation -->
+                <div class="guide-nav" style="background: rgba(255,255,255,0.1); padding: 24px; border-radius: 16px; backdrop-filter: blur(10px);">
+                    <h5 style="margin-bottom: 16px; font-weight: 500;">Jump to Section:</h5>
+                    <div style="display: flex; flex-wrap: wrap; gap: 16px; justify-content: center;">
+                        <a href="#getting-started" class="btn-small waves-effect" style="background: rgba(255,255,255,0.2); color: white; margin: 4px;">Getting Started</a>
+                        <a href="#pump-selection" class="btn-small waves-effect" style="background: rgba(255,255,255,0.2); color: white; margin: 4px;">Pump Selection</a>
+                        <a href="#charts-analysis" class="btn-small waves-effect" style="background: rgba(255,255,255,0.2); color: white; margin: 4px;">Charts & Analysis</a>
+                        <a href="#ai-expert" class="btn-small waves-effect" style="background: rgba(255,255,255,0.2); color: white; margin: 4px;">AI Expert</a>
+                        <a href="#document-library" class="btn-small waves-effect" style="background: rgba(255,255,255,0.2); color: white; margin: 4px;">Document Library</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Getting Started Section -->
+<section id="getting-started" class="guide-section" style="padding: 100px 0; background: white;">
+    <div class="container">
+        <div class="section-header" style="margin-bottom: 80px;">
+            <div class="row">
+                <div class="col s12 l4">
+                    <div class="section-number" style="background: #1976d2; color: white; width: 80px; height: 80px; border-radius: 20px; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: 600; margin-bottom: 24px;">01</div>
+                    <h2 style="font-size: 2.8rem; color: #1976d2; margin-bottom: 16px; font-weight: 400;">Getting Started</h2>
+                    <p style="font-size: 1.1rem; color: #666; line-height: 1.6;">Your journey begins here. Learn the basics and set yourself up for success with our AI-powered pump selection system.</p>
+                </div>
+                <div class="col s12 l8">
+                    <div class="getting-started-cards">
+                        <!-- Card 1: System Overview -->
+                        <div class="guide-card" style="background: #f8f9fa; padding: 32px; border-radius: 16px; margin-bottom: 24px; border-left: 4px solid #1976d2;">
+                            <h4 style="color: #1976d2; margin-bottom: 16px; display: flex; align-items: center;">
+                                <i class="material-icons" style="margin-right: 12px; background: #e3f2fd; color: #1976d2; padding: 8px; border-radius: 50%;">dashboard</i>
+                                System Overview
+                            </h4>
+                            <p style="color: #666; line-height: 1.6; margin-bottom: 16px;">The APE AI Selection System analyzes your requirements and recommends the optimal pump from our extensive database of 500+ models.</p>
+                            <ul style="color: #666; line-height: 1.8;">
+                                <li><strong>Input:</strong> Flow rate, head, application type</li>
+                                <li><strong>Processing:</strong> AI analyzes 15+ parameters</li>
+                                <li><strong>Output:</strong> Ranked recommendations with detailed analysis</li>
+                            </ul>
+                        </div>
+
+                        <!-- Card 2: First Steps -->
+                        <div class="guide-card" style="background: #f8f9fa; padding: 32px; border-radius: 16px; margin-bottom: 24px; border-left: 4px solid #4caf50;">
+                            <h4 style="color: #4caf50; margin-bottom: 16px; display: flex; align-items: center;">
+                                <i class="material-icons" style="margin-right: 12px; background: #e8f5e8; color: #4caf50; padding: 8px; border-radius: 50%;">play_circle</i>
+                                Your First Selection
+                            </h4>
+                            <div class="step-list">
+                                <div class="step-item" style="display: flex; align-items: start; margin-bottom: 16px;">
+                                    <div style="background: #4caf50; color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; margin-right: 16px; flex-shrink: 0;">1</div>
+                                    <div>
+                                        <strong>Navigate to Selection Page</strong><br>
+                                        <span style="color: #666;">Click "Selection" in the navigation or go to the home page</span>
+                                    </div>
+                                </div>
+                                <div class="step-item" style="display: flex; align-items: start; margin-bottom: 16px;">
+                                    <div style="background: #4caf50; color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; margin-right: 16px; flex-shrink: 0;">2</div>
+                                    <div>
+                                        <strong>Fill Basic Requirements</strong><br>
+                                        <span style="color: #666;">Enter flow rate (m³/hr) and total head (m)</span>
+                                    </div>
+                                </div>
+                                <div class="step-item" style="display: flex; align-items: start;">
+                                    <div style="background: #4caf50; color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; margin-right: 16px; flex-shrink: 0;">3</div>
+                                    <div>
+                                        <strong>Get Instant Results</strong><br>
+                                        <span style="color: #666;">Review AI recommendations and detailed analysis</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Card 3: Tips for Success -->
+                        <div class="guide-card" style="background: #fff3e0; padding: 32px; border-radius: 16px; border-left: 4px solid #ff9800;">
+                            <h4 style="color: #ff9800; margin-bottom: 16px; display: flex; align-items: center;">
+                                <i class="material-icons" style="margin-right: 12px; background: #fff3e0; color: #ff9800; padding: 8px; border-radius: 50%;">lightbulb</i>
+                                Tips for Success
+                            </h4>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px;">
+                                <div>
+                                    <strong style="color: #ff9800;">✓ Accurate Data</strong><br>
+                                    <span style="color: #666; font-size: 0.9rem;">Precise flow and head values ensure optimal recommendations</span>
+                                </div>
+                                <div>
+                                    <strong style="color: #ff9800;">✓ Complete Information</strong><br>
+                                    <span style="color: #666; font-size: 0.9rem;">Fill all optional fields for more targeted results</span>
+                                </div>
+                                <div>
+                                    <strong style="color: #ff9800;">✓ Review Alternatives</strong><br>
+                                    <span style="color: #666; font-size: 0.9rem;">Compare multiple options before making final selection</span>
+                                </div>
+                                <div>
+                                    <strong style="color: #ff9800;">✓ Use AI Expert</strong><br>
+                                    <span style="color: #666; font-size: 0.9rem;">Ask technical questions for deeper insights</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Pump Selection Section -->
+<section id="pump-selection" class="guide-section" style="padding: 100px 0; background: #fafbfc;">
+    <div class="container">
+        <div class="section-header" style="margin-bottom: 80px;">
+            <div class="row">
+                <div class="col s12 l4">
+                    <div class="section-number" style="background: #4caf50; color: white; width: 80px; height: 80px; border-radius: 20px; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: 600; margin-bottom: 24px;">02</div>
+                    <h2 style="font-size: 2.8rem; color: #4caf50; margin-bottom: 16px; font-weight: 400;">Pump Selection Process</h2>
+                    <p style="font-size: 1.1rem; color: #666; line-height: 1.6;">Master the core functionality with detailed guidance on making optimal pump selections.</p>
+                </div>
+                <div class="col s12 l8">
+                    <!-- Input Form Guide -->
+                    <div class="guide-card" style="background: white; padding: 40px; border-radius: 20px; box-shadow: 0 8px 32px rgba(0,0,0,0.08); margin-bottom: 32px;">
+                        <h3 style="color: #4caf50; margin-bottom: 24px; display: flex; align-items: center;">
+                            <i class="material-icons" style="margin-right: 12px; font-size: 2rem;">input</i>
+                            Input Form Guide
+                        </h3>
+                        
+                        <div class="input-guide-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px;">
+                            <div class="input-field-guide">
+                                <h5 style="color: #1976d2; margin-bottom: 12px;">Required Fields</h5>
+                                <div class="field-item" style="margin-bottom: 16px; padding: 16px; background: #f8f9fa; border-radius: 8px;">
+                                    <strong>Flow Rate (m³/hr)</strong><br>
+                                    <span style="color: #666; font-size: 0.9rem;">The volume of liquid the pump must move per hour</span><br>
+                                    <em style="color: #4caf50; font-size: 0.85rem;">Example: 342 m³/hr for large building HVAC</em>
+                                </div>
+                                <div class="field-item" style="margin-bottom: 16px; padding: 16px; background: #f8f9fa; border-radius: 8px;">
+                                    <strong>Total Head (m)</strong><br>
+                                    <span style="color: #666; font-size: 0.9rem;">Total pressure the pump must overcome</span><br>
+                                    <em style="color: #4caf50; font-size: 0.85rem;">Example: 27.4 m for 3-story building</em>
+                                </div>
+                            </div>
+
+                            <div class="input-field-guide">
+                                <h5 style="color: #1976d2; margin-bottom: 12px;">Optional Fields</h5>
+                                <div class="field-item" style="margin-bottom: 16px; padding: 16px; background: #f8f9fa; border-radius: 8px;">
+                                    <strong>Application Type</strong><br>
+                                    <span style="color: #666; font-size: 0.9rem;">Helps AI understand specific requirements</span><br>
+                                    <em style="color: #4caf50; font-size: 0.85rem;">Options: Axial Flow, End Suction, HSC, Multi-Stage, VTP</em>
+                                </div>
+                                <div class="field-item" style="margin-bottom: 16px; padding: 16px; background: #f8f9fa; border-radius: 8px;">
+                                    <strong>Project Details</strong><br>
+                                    <span style="color: #666; font-size: 0.9rem;">Customer and project information for reports</span><br>
+                                    <em style="color: #4caf50; font-size: 0.85rem;">Used in PDF documentation</em>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Results Interpretation -->
+                    <div class="guide-card" style="background: white; padding: 40px; border-radius: 20px; box-shadow: 0 8px 32px rgba(0,0,0,0.08);">
+                        <h3 style="color: #4caf50; margin-bottom: 24px; display: flex; align-items: center;">
+                            <i class="material-icons" style="margin-right: 12px; font-size: 2rem;">analytics</i>
+                            Understanding Your Results
+                        </h3>
+                        
+                        <div class="results-guide">
+                            <div class="result-metric" style="display: flex; align-items: start; margin-bottom: 24px; padding: 20px; background: #f8f9fa; border-radius: 12px;">
+                                <div style="background: #4caf50; color: white; width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-right: 20px; flex-shrink: 0;">
+                                    <i class="material-icons">stars</i>
+                                </div>
+                                <div>
+                                    <h5 style="margin: 0 0 8px 0; color: #4caf50;">Suitability Score</h5>
+                                    <p style="margin: 0; color: #666; line-height: 1.6;">
+                                        <strong>90-100%:</strong> Excellent match, highly recommended<br>
+                                        <strong>75-89%:</strong> Good match with minor compromises<br>
+                                        <strong>60-74%:</strong> Acceptable but consider alternatives<br>
+                                        <strong>Below 60%:</strong> Poor match, review requirements
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div class="result-metric" style="display: flex; align-items: start; margin-bottom: 24px; padding: 20px; background: #f8f9fa; border-radius: 12px;">
+                                <div style="background: #2196f3; color: white; width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-right: 20px; flex-shrink: 0;">
+                                    <i class="material-icons">speed</i>
+                                </div>
+                                <div>
+                                    <h5 style="margin: 0 0 8px 0; color: #2196f3;">Efficiency Rating</h5>
+                                    <p style="margin: 0; color: #666; line-height: 1.6;">
+                                        Shows pump efficiency at your operating point. Higher efficiency means lower energy costs. Look for values above 75% for optimal performance.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div class="result-metric" style="display: flex; align-items: start; padding: 20px; background: #f8f9fa; border-radius: 12px;">
+                                <div style="background: #ff9800; color: white; width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-right: 20px; flex-shrink: 0;">
+                                    <i class="material-icons">warning</i>
+                                </div>
+                                <div>
+                                    <h5 style="margin: 0 0 8px 0; color: #ff9800;">Operating Point Analysis</h5>
+                                    <p style="margin: 0; color: #666; line-height: 1.6;">
+                                        Green indicators show the pump operates within optimal range. Yellow indicates acceptable performance. Red warns of potential issues.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Charts and Analysis Section -->
+<section id="charts-analysis" class="guide-section" style="padding: 100px 0; background: white;">
+    <div class="container">
+        <div class="section-header" style="margin-bottom: 80px;">
+            <div class="row">
+                <div class="col s12 l4">
+                    <div class="section-number" style="background: #2196f3; color: white; width: 80px; height: 80px; border-radius: 20px; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: 600; margin-bottom: 24px;">03</div>
+                    <h2 style="font-size: 2.8rem; color: #2196f3; margin-bottom: 16px; font-weight: 400;">Charts & Analysis</h2>
+                    <p style="font-size: 1.1rem; color: #666; line-height: 1.6;">Understand performance curves and make data-driven decisions with interactive visualizations.</p>
+                </div>
+                <div class="col s12 l8">
+                    <!-- Chart Types -->
+                    <div class="charts-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; margin-bottom: 40px;">
+                        <div class="chart-guide" style="background: white; padding: 32px; border-radius: 16px; border: 2px solid #e3f2fd; text-align: center;">
+                            <div style="background: #e3f2fd; color: #2196f3; width: 64px; height: 64px; border-radius: 16px; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
+                                <i class="material-icons" style="font-size: 2rem;">show_chart</i>
+                            </div>
+                            <h4 style="color: #2196f3; margin-bottom: 12px;">Head-Flow Curve</h4>
+                            <p style="color: #666; font-size: 0.95rem; line-height: 1.6;">Shows how pump head varies with flow rate. Your operating point should fall within the efficient range of the curve.</p>
+                        </div>
+
+                        <div class="chart-guide" style="background: white; padding: 32px; border-radius: 16px; border: 2px solid #e8f5e8; text-align: center;">
+                            <div style="background: #e8f5e8; color: #4caf50; width: 64px; height: 64px; border-radius: 16px; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
+                                <i class="material-icons" style="font-size: 2rem;">trending_up</i>
+                            </div>
+                            <h4 style="color: #4caf50; margin-bottom: 12px;">Efficiency Curve</h4>
+                            <p style="color: #666; font-size: 0.95rem; line-height: 1.6;">Displays pump efficiency across different flow rates. Aim for the peak efficiency zone to minimize energy costs.</p>
+                        </div>
+
+                        <div class="chart-guide" style="background: white; padding: 32px; border-radius: 16px; border: 2px solid #fff3e0; text-align: center;">
+                            <div style="background: #fff3e0; color: #ff9800; width: 64px; height: 64px; border-radius: 16px; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
+                                <i class="material-icons" style="font-size: 2rem;">power</i>
+                            </div>
+                            <h4 style="color: #ff9800; margin-bottom: 12px;">Power Curve</h4>
+                            <p style="color: #666; font-size: 0.95rem; line-height: 1.6;">Shows power consumption at different operating points. Use this to estimate energy costs and motor sizing.</p>
+                        </div>
+
+                        <div class="chart-guide" style="background: white; padding: 32px; border-radius: 16px; border: 2px solid #f3e5f5; text-align: center;">
+                            <div style="background: #f3e5f5; color: #9c27b0; width: 64px; height: 64px; border-radius: 16px; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
+                                <i class="material-icons" style="font-size: 2rem;">water_drop</i>
+                            </div>
+                            <h4 style="color: #9c27b0; margin-bottom: 12px;">NPSHr Curve</h4>
+                            <p style="color: #666; font-size: 0.95rem; line-height: 1.6;">Net Positive Suction Head required. Ensure your system's NPSH available exceeds this value to prevent cavitation.</p>
+                        </div>
+                    </div>
+
+                    <!-- Interactive Features -->
+                    <div class="guide-card" style="background: #f8f9fa; padding: 40px; border-radius: 20px;">
+                        <h3 style="color: #2196f3; margin-bottom: 24px; display: flex; align-items: center;">
+                            <i class="material-icons" style="margin-right: 12px; font-size: 2rem;">touch_app</i>
+                            Interactive Features
+                        </h3>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 24px;">
+                            <div class="feature-item" style="padding: 20px; background: white; border-radius: 12px;">
+                                <h5 style="color: #2196f3; margin-bottom: 8px;">Zoom & Pan</h5>
+                                <p style="color: #666; font-size: 0.9rem; margin: 0;">Use mouse wheel to zoom and click-drag to pan around charts for detailed examination.</p>
+                            </div>
+                            <div class="feature-item" style="padding: 20px; background: white; border-radius: 12px;">
+                                <h5 style="color: #2196f3; margin-bottom: 8px;">Curve Selection</h5>
+                                <p style="color: #666; font-size: 0.9rem; margin: 0;">Click different impeller sizes to see how curves change and find the optimal size.</p>
+                            </div>
+                            <div class="feature-item" style="padding: 20px; background: white; border-radius: 12px;">
+                                <h5 style="color: #2196f3; margin-bottom: 8px;">Operating Point</h5>
+                                <p style="color: #666; font-size: 0.9rem; margin: 0;">Red dot shows your exact operating point on all curves for easy reference.</p>
+                            </div>
+                            <div class="feature-item" style="padding: 20px; background: white; border-radius: 12px;">
+                                <h5 style="color: #2196f3; margin-bottom: 8px;">Export Charts</h5>
+                                <p style="color: #666; font-size: 0.9rem; margin: 0;">Save charts as images or include them in PDF reports for presentations.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- AI Expert Section -->
+<section id="ai-expert" class="guide-section" style="padding: 100px 0; background: #fafbfc;">
+    <div class="container">
+        <div class="section-header" style="margin-bottom: 80px;">
+            <div class="row">
+                <div class="col s12 l4">
+                    <div class="section-number" style="background: #9c27b0; color: white; width: 80px; height: 80px; border-radius: 20px; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: 600; margin-bottom: 24px;">04</div>
+                    <h2 style="font-size: 2.8rem; color: #9c27b0; margin-bottom: 16px; font-weight: 400;">AI Expert Console</h2>
+                    <p style="font-size: 1.1rem; color: #666; line-height: 1.6;">Get instant answers to technical questions from our AI trained on hundreds of pump manuals and engineering standards.</p>
+                </div>
+                <div class="col s12 l8">
+                    <!-- AI Capabilities -->
+                    <div class="guide-card" style="background: white; padding: 40px; border-radius: 20px; box-shadow: 0 8px 32px rgba(0,0,0,0.08); margin-bottom: 32px;">
+                        <h3 style="color: #9c27b0; margin-bottom: 24px; display: flex; align-items: center;">
+                            <i class="material-icons" style="margin-right: 12px; font-size: 2rem;">psychology</i>
+                            What the AI Expert Can Help With
+                        </h3>
+                        
+                        <div class="ai-capabilities" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px;">
+                            <div class="capability-card" style="padding: 24px; background: #f3e5f5; border-radius: 12px; border-left: 4px solid #9c27b0;">
+                                <h5 style="color: #9c27b0; margin-bottom: 12px;">Technical Specifications</h5>
+                                <ul style="color: #666; line-height: 1.8; font-size: 0.95rem;">
+                                    <li>Material selection guidance</li>
+                                    <li>Bearing and seal specifications</li>
+                                    <li>Performance curve interpretation</li>
+                                    <li>Efficiency optimization strategies</li>
+                                </ul>
+                            </div>
+
+                            <div class="capability-card" style="padding: 24px; background: #e3f2fd; border-radius: 12px; border-left: 4px solid #2196f3;">
+                                <h5 style="color: #2196f3; margin-bottom: 12px;">Application Engineering</h5>
+                                <ul style="color: #666; line-height: 1.8; font-size: 0.95rem;">
+                                    <li>System design recommendations</li>
+                                    <li>NPSH calculations and analysis</li>
+                                    <li>Installation best practices</li>
+                                    <li>Troubleshooting guidance</li>
+                                </ul>
+                            </div>
+
+                            <div class="capability-card" style="padding: 24px; background: #e8f5e8; border-radius: 12px; border-left: 4px solid #4caf50;">
+                                <h5 style="color: #4caf50; margin-bottom: 12px;">Standards & Compliance</h5>
+                                <ul style="color: #666; line-height: 1.8; font-size: 0.95rem;">
+                                    <li>Industry standard references</li>
+                                    <li>Safety code compliance</li>
+                                    <li>Environmental regulations</li>
+                                    <li>Quality assurance protocols</li>
+                                </ul>
+                            </div>
+
+                            <div class="capability-card" style="padding: 24px; background: #fff3e0; border-radius: 12px; border-left: 4px solid #ff9800;">
+                                <h5 style="color: #ff9800; margin-bottom: 12px;">Optimization & Efficiency</h5>
+                                <ul style="color: #666; line-height: 1.8; font-size: 0.95rem;">
+                                    <li>Energy efficiency improvements</li>
+                                    <li>Variable speed drive benefits</li>
+                                    <li>Lifecycle cost analysis</li>
+                                    <li>Performance optimization tips</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sample Questions -->
+                    <div class="guide-card" style="background: white; padding: 40px; border-radius: 20px; box-shadow: 0 8px 32px rgba(0,0,0,0.08);">
+                        <h3 style="color: #9c27b0; margin-bottom: 24px; display: flex; align-items: center;">
+                            <i class="material-icons" style="margin-right: 12px; font-size: 2rem;">chat</i>
+                            Sample Questions to Try
+                        </h3>
+                        
+                        <div class="sample-questions" style="display: grid; grid-template-columns: 1fr; gap: 16px;">
+                            <div class="question-example" style="padding: 20px; background: #f8f9fa; border-radius: 12px; border-left: 4px solid #9c27b0;">
+                                <strong style="color: #9c27b0;">"What are the bearing requirements for centrifugal pumps?"</strong>
+                                <p style="color: #666; margin: 8px 0 0 0; font-size: 0.9rem;">Get detailed information about industry standards and compliance requirements.</p>
+                            </div>
+                            
+                            <div class="question-example" style="padding: 20px; background: #f8f9fa; border-radius: 12px; border-left: 4px solid #2196f3;">
+                                <strong style="color: #2196f3;">"How do I calculate NPSH available for my system?"</strong>
+                                <p style="color: #666; margin: 8px 0 0 0; font-size: 0.9rem;">Learn calculation methods and avoid cavitation issues in your pump system.</p>
+                            </div>
+                            
+                            <div class="question-example" style="padding: 20px; background: #f8f9fa; border-radius: 12px; border-left: 4px solid #4caf50;">
+                                <strong style="color: #4caf50;">"What materials should I use for seawater applications?"</strong>
+                                <p style="color: #666; margin: 8px 0 0 0; font-size: 0.9rem;">Get guidance on material selection for specific operating conditions.</p>
+                            </div>
+                            
+                            <div class="question-example" style="padding: 20px; background: #f8f9fa; border-radius: 12px; border-left: 4px solid #ff9800;">
+                                <strong style="color: #ff9800;">"How can I improve pump efficiency in my current system?"</strong>
+                                <p style="color: #666; margin: 8px 0 0 0; font-size: 0.9rem;">Discover optimization strategies to reduce energy costs and improve performance.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Document Library Section -->
+<section id="document-library" class="guide-section" style="padding: 100px 0; background: white;">
+    <div class="container">
+        <div class="section-header" style="margin-bottom: 80px;">
+            <div class="row">
+                <div class="col s12 l4">
+                    <div class="section-number" style="background: #ff6b35; color: white; width: 80px; height: 80px; border-radius: 20px; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: 600; margin-bottom: 24px;">05</div>
+                    <h2 style="font-size: 2.8rem; color: #ff6b35; margin-bottom: 16px; font-weight: 400;">Document Library</h2>
+                    <p style="font-size: 1.1rem; color: #666; line-height: 1.6;">Manage technical documents, datasheets, and manuals with intelligent organization and search capabilities.</p>
+                </div>
+                <div class="col s12 l8">
+                    <!-- Document Management -->
+                    <div class="guide-card" style="background: white; padding: 40px; border-radius: 20px; box-shadow: 0 8px 32px rgba(0,0,0,0.08); margin-bottom: 32px;">
+                        <h3 style="color: #ff6b35; margin-bottom: 24px; display: flex; align-items: center;">
+                            <i class="material-icons" style="margin-right: 12px; font-size: 2rem;">folder</i>
+                            Document Management Features
+                        </h3>
+                        
+                        <div class="document-features" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 24px;">
+                            <div class="feature-item" style="padding: 24px; background: #fff7f3; border-radius: 12px; text-align: center;">
+                                <div style="background: #ff6b35; color: white; width: 56px; height: 56px; border-radius: 14px; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
+                                    <i class="material-icons" style="font-size: 1.8rem;">upload_file</i>
+                                </div>
+                                <h5 style="color: #ff6b35; margin-bottom: 8px;">Upload & Store</h5>
+                                <p style="color: #666; font-size: 0.9rem; margin: 0; line-height: 1.5;">Securely upload PDF documents, datasheets, and technical manuals for centralized access.</p>
+                            </div>
+
+                            <div class="feature-item" style="padding: 24px; background: #fff7f3; border-radius: 12px; text-align: center;">
+                                <div style="background: #ff6b35; color: white; width: 56px; height: 56px; border-radius: 14px; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
+                                    <i class="material-icons" style="font-size: 1.8rem;">category</i>
+                                </div>
+                                <h5 style="color: #ff6b35; margin-bottom: 8px;">Auto-Categorization</h5>
+                                <p style="color: #666; font-size: 0.9rem; margin: 0; line-height: 1.5;">AI automatically categorizes documents by type, manufacturer, and application.</p>
+                            </div>
+
+                            <div class="feature-item" style="padding: 24px; background: #fff7f3; border-radius: 12px; text-align: center;">
+                                <div style="background: #ff6b35; color: white; width: 56px; height: 56px; border-radius: 14px; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
+                                    <i class="material-icons" style="font-size: 1.8rem;">search</i>
+                                </div>
+                                <h5 style="color: #ff6b35; margin-bottom: 8px;">Smart Search</h5>
+                                <p style="color: #666; font-size: 0.9rem; margin: 0; line-height: 1.5;">Find specific information within documents using natural language queries.</p>
+                            </div>
+
+                            <div class="feature-item" style="padding: 24px; background: #fff7f3; border-radius: 12px; text-align: center;">
+                                <div style="background: #ff6b35; color: white; width: 56px; height: 56px; border-radius: 14px; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
+                                    <i class="material-icons" style="font-size: 1.8rem;">share</i>
+                                </div>
+                                <h5 style="color: #ff6b35; margin-bottom: 8px;">Easy Sharing</h5>
+                                <p style="color: #666; font-size: 0.9rem; margin: 0; line-height: 1.5;">Share documents with team members and clients with controlled access permissions.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Best Practices -->
+                    <div class="guide-card" style="background: #f8f9fa; padding: 40px; border-radius: 20px;">
+                        <h3 style="color: #ff6b35; margin-bottom: 24px; display: flex; align-items: center;">
+                            <i class="material-icons" style="margin-right: 12px; font-size: 2rem;">tips_and_updates</i>
+                            Best Practices for Document Management
+                        </h3>
+                        
+                        <div class="best-practices" style="display: grid; grid-template-columns: 1fr; gap: 20px;">
+                            <div class="practice-item" style="display: flex; align-items: start; padding: 20px; background: white; border-radius: 12px;">
+                                <div style="background: #ff6b35; color: white; width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-right: 16px; flex-shrink: 0;">
+                                    <i class="material-icons" style="font-size: 1.2rem;">check</i>
+                                </div>
+                                <div>
+                                    <h5 style="color: #ff6b35; margin: 0 0 8px 0;">Use Descriptive Filenames</h5>
+                                    <p style="color: #666; margin: 0; font-size: 0.95rem; line-height: 1.6;">Include manufacturer, model, and document type in filename for easy identification (e.g., "APE_6x8_ALE_Datasheet.pdf")</p>
+                                </div>
+                            </div>
+
+                            <div class="practice-item" style="display: flex; align-items: start; padding: 20px; background: white; border-radius: 12px;">
+                                <div style="background: #ff6b35; color: white; width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-right: 16px; flex-shrink: 0;">
+                                    <i class="material-icons" style="font-size: 1.2rem;">check</i>
+                                </div>
+                                <div>
+                                    <h5 style="color: #ff6b35; margin: 0 0 8px 0;">Regular Updates</h5>
+                                    <p style="color: #666; margin: 0; font-size: 0.95rem; line-height: 1.6;">Keep documents current by replacing outdated versions and archiving obsolete materials</p>
+                                </div>
+                            </div>
+
+                            <div class="practice-item" style="display: flex; align-items: start; padding: 20px; background: white; border-radius: 12px;">
+                                <div style="background: #ff6b35; color: white; width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-right: 16px; flex-shrink: 0;">
+                                    <i class="material-icons" style="font-size: 1.2rem;">check</i>
+                                </div>
+                                <div>
+                                    <h5 style="color: #ff6b35; margin: 0 0 8px 0;">Quality Control</h5>
+                                    <p style="color: #666; margin: 0; font-size: 0.95rem; line-height: 1.6;">Ensure documents are clear, complete, and officially approved before uploading to maintain library quality</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Get Started CTA -->
+<section class="guide-cta" style="padding: 80px 0; background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%); color: white;">
+    <div class="container center-align">
+        <h2 style="font-size: 2.8rem; font-weight: 300; margin-bottom: 24px;">
+            Ready to Put This Knowledge to Work?
+        </h2>
+        <p style="font-size: 1.2rem; opacity: 0.9; margin-bottom: 40px; max-width: 600px; margin-left: auto; margin-right: auto;">
+            Now that you understand all the features, start using the APE AI Selection System to revolutionize your pump selection process.
+        </p>
+        <div style="display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;">
+            <a href="{{ url_for('index') }}" class="btn-large waves-effect waves-light" style="background: white; color: #1976d2; font-weight: 600; padding: 0 48px;">
+                Start Selecting Pumps
+                <i class="material-icons right">arrow_forward</i>
+            </a>
+            <a href="/chat" class="btn-large waves-effect waves-light" style="background: transparent; border: 2px solid white; color: white; font-weight: 600; padding: 0 48px;">
+                Ask the AI Expert
+                <i class="material-icons right">chat</i>
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Scroll to Top Button -->
+<div class="fixed-action-btn" style="bottom: 24px; right: 24px;">
+    <a class="btn-floating btn-large waves-effect waves-light" style="background: #1976d2;" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
+        <i class="material-icons">keyboard_arrow_up</i>
+    </a>
+</div>
+
+<!-- Smooth Scrolling JavaScript -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Smooth scrolling for navigation links
+    const navLinks = document.querySelectorAll('a[href^="#"]');
+    navLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const targetId = this.getAttribute('href').substring(1);
+            const targetElement = document.getElementById(targetId);
+            if (targetElement) {
+                targetElement.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
+        });
+    });
+    
+    // Add scroll effects
+    const sections = document.querySelectorAll('.guide-section');
+    const observerOptions = {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+    };
+    
+    const observer = new IntersectionObserver(function(entries) {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.style.opacity = '1';
+                entry.target.style.transform = 'translateY(0)';
+            }
+        });
+    }, observerOptions);
+    
+    sections.forEach(section => {
+        section.style.opacity = '0';
+        section.style.transform = 'translateY(20px)';
+        section.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+        observer.observe(section);
+    });
+});
+</script>
+
+{% endblock %}

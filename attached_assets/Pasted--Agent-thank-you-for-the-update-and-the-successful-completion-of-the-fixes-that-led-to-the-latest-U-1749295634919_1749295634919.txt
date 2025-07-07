@@ -1,0 +1,20 @@
+"Agent, thank you for the update and the successful completion of the fixes that led to the latest UI screenshots.
+I have reviewed the source objPump data for '6 K 6 VANE', '6/8 ALE', and '5 K'.
+It confirms that '6 K 6 VANE' and '5 K' indeed have all-zero values for their pM_NP (NPSH curve) data.
+It confirms that '6/8 ALE' has valid, non-zero NPSH data.
+Therefore, your current UI display on the summary cards:
+Showing "NPSH Required: N/A" for '6 K 6 VANE' and '5 K' is CORRECT and desired behavior, reflecting the absence of meaningful NPSH data in the source.
+Showing "NPSH Required: 2.8 m" for '6/8 ALE' is CORRECT.
+This validates that your NPSH Data Processing Enhancement (Task 2.3) is working well to handle these cases.
+Please continue with the previously outlined "Next Immediate Priorities":
+Mark Operating Point on Interactive Charts (Plotly.js):
+Ensure the calculated operating point is visually marked on all four interactive Plotly.js charts on the professional_pump_report.html page.
+This includes the green star/orange triangle indicators for extrapolation status.
+Resolve Power Discrepancy & Remove Hardcoding for "6/8 ALE" in Detailed Report (professional_pump_report.html):
+Ensure the detailed report text and metrics always use dynamically calculated values from pump_engine.py for all pumps, including removing the specific hardcoded override for "6/8 ALE" in the /pump_report route. All data displayed must be consistent.
+UI Indication for Extrapolated Values on Summary Cards AND Detailed Report:
+Ensure the asterisk * (or similar indicator) for extrapolated values is displayed next to the relevant metrics on both the summary cards (pump_options.html) and within the detailed professional_pump_report.html page.
+Static Matplotlib Charts on Detailed Report (professional_pump_report.html):
+Verify these are plotting actual curve data for the selected pump for Head, Efficiency, and Power.
+Ensure the NPSH chart for pumps with no data (like '6 K 6 VANE', '5 K') is handled gracefully (e.g., omitted or displays "NPSH Data Not Available").
+Focus on these items to ensure complete data accuracy and consistency across all user-facing displays. Great job so far!"

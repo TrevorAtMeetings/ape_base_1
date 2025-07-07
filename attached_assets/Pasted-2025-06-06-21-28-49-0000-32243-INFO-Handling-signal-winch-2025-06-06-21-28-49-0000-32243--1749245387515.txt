@@ -1,0 +1,35 @@
+2025-06-06 21:28:49 +0000] [32243] [INFO] Handling signal: winch
+[2025-06-06 21:28:49 +0000] [32243] [INFO] Handling signal: winch
+[2025-06-06 21:28:49 +0000] [32243] [INFO] Handling signal: winch
+[2025-06-06 21:28:49 +0000] [32243] [INFO] Handling signal: winch
+[2025-06-06 21:28:49 +0000] [32243] [INFO] Handling signal: winch
+[2025-06-06 21:28:50 +0000] [32243] [INFO] Handling signal: winch
+[2025-06-06 21:28:50 +0000] [32243] [INFO] Handling signal: winch
+INFO:app.routes:Processing requirements: SiteRequirements(flow=342.0 m³/hr, head=27.4 m, type=None)
+INFO:app.utils:Loaded 3 pumps from database
+INFO:app.routes:Successfully parsed 3 pumps
+INFO:app.selection_engine:Evaluating 3 pumps for requirements: SiteRequirements(flow=342.0 m³/hr, head=27.4 m, type=None)
+WARNING:app.performance_calculator:Interpolation failed for pump 5 K at flow 342.0
+WARNING:app.performance_calculator:Interpolation failed for pump 5 K at flow 342.0
+WARNING:app.performance_calculator:No suitable curve found for 5 K
+ERROR:app.selection_engine:Error generating reasoning: 'NoneType' object has no attribute 'get'
+WARNING:app.performance_calculator:Interpolation failed for pump 6 K 6 VANE at flow 342.0
+INFO:app.selection_engine:Found 2 suitable pumps, returning top 2
+INFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:app.routes:Generating charts for pump: 6/8 ALE
+INFO:app.routes:Displaying results for 2 pump selections
+INFO:app.utils:Loaded 3 pumps from database
+INFO:app.routes:PDF generation requested for pump: 6/8 ALE
+INFO:app.utils:Loaded 3 pumps from database
+INFO:app.selection_engine:Evaluating 3 pumps for requirements: SiteRequirements(flow=100 m³/hr, head=50 m, type=None)
+WARNING:app.performance_calculator:No suitable curve found for 6/8 ALE
+ERROR:app.selection_engine:Error generating reasoning: 'NoneType' object has no attribute 'get'
+WARNING:app.performance_calculator:No suitable curve found for 5 K
+ERROR:app.selection_engine:Error generating reasoning: 'NoneType' object has no attribute 'get'
+WARNING:app.performance_calculator:No suitable curve found for 6 K 6 VANE
+ERROR:app.selection_engine:Error generating reasoning: 'NoneType' object has no attribute 'get'
+INFO:app.selection_engine:Found 0 suitable pumps, returning top 0
+INFO:app.routes:Index route accessed.

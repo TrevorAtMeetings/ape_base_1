@@ -1,0 +1,20 @@
+=== APE Pumps Bulk Upload Report ===
+Upload completed: 2025-06-13 19:45:05
+Duration: 0:00:04.578174
+
+Summary:
+  Files processed: 384/386
+  Files failed: 2
+  Categories processed: 105
+  Initial pump count: 10
+  Final pump count: 870
+  Net pumps added: 860
+
+Errors encountered:
+  - Failed to process 8312_-10_b1431t.txt: Invalid control character at: line 41 column 35 (char 1386)
+  - Failed to process 8312_-10_b1433t.txt: Invalid control character at: line 41 column 35 (char 1373)
+
+Database validation:
+  Status: PASSED
+  Total pumps: 870
+  Performance curves: 870

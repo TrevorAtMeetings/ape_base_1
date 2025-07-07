@@ -1,0 +1,35 @@
+Agent, thank you for the update. The detailed logs from pdf_generator.py are extremely useful.
+We have two primary issues to resolve for the PDF generation:
+CRITICAL: jinja2.exceptions.UndefinedError: 'prepared_for' is undefined in templates/ape_report_template.html (line 391).
+Objective: Ensure the prepared_for variable (which should contain client/company contact information) is correctly defined and passed to the ape_report_template.html when generating the PDF.
+Action:
+In pdf_generator.py (or the /generate_pdf route in app/routes.py if it directly prepares the context for ape_report_template.html):
+The context dictionary (template_vars or context_data) being passed to render_template('ape_report_template.html', ...) must include a key named prepared_for.
+This prepared_for key should itself be a dictionary or an object containing details like contact_name and company.
+Source this information from site_requirements (which is available in the /generate_pdf route). For example:
+# In the function preparing context for ape_report_template.html
+prepared_for_data = {
+    'contact_name': site_requirements.customer_name or site_requirements.company or '', # Prioritize contact name
+    'company_name': site_requirements.company or '' # If you want to display company separately
+}
+# Add this to your main template_vars
+template_vars['prepared_for'] = prepared_for_data
+Use code with caution.
+Python
+Then, in ape_report_template.html (line 391 and similar for the cover page), you can access it:
+{{ prepared_for.contact_name or 'Valued Client' }} (if you want contact name)
+or for the cover page: Prepared for: {{ prepared_for.contact_name or prepared_for.company_name or 'Valued Client' }}
+PERSISTENT: WeasyPrint SVG Error (ERROR:weasyprint:Failed to load image at 'data:image/svg+xml;base64,')
+Objective: Ensure the APE logo SVG is correctly passed as a non-empty base64 string to the template and rendered, or conditionally omitted if the base64 string is truly empty.
+Agent's Finding: Your log INFO:pdf_generator:SVG reference 1: EMPTY shows the issue persists.
+Action:
+Re-examine pdf_generator.py -> _get_ape_logo_base64() (or equivalent). Ensure it never returns just an empty string if the intention is to have a valid data:image/svg+xml;base64,... URI. If the logo file cannot be read or an error occurs, it should either return None or a valid fallback placeholder SVG base64 string.
+In pdf_generator.py (or the route), when building template_vars, ensure the key for the logo (e.g., ape_logo_base64) is correctly populated with the (potentially fallback) non-empty base64 string from _get_ape_logo_base64().
+In ape_report_template.html, the conditional rendering {% if ape_logo_base64 %} is good, but it relies on ape_logo_base64 being correctly populated in the context and not being an empty string that still forms an invalid data: URI. If _get_ape_logo_base64() returns None on failure, the if condition will correctly skip rendering. If it returns an empty string for base64, the src becomes data:image/svg+xml;base64, which is the error.
+Please prioritize fixing the UndefinedError: 'prepared_for' is undefined (Issue #1) first, as this is a clear data context problem for the PDF. Then, re-verify the SVG logo embedding (Issue #2).
+After these fixes, generate the PDF for '6/8 ALE' (Flow=342, Head=27.4) and confirm:
+The prepared_for field on the cover and any contact details are populated.
+The WeasyPrint SVG error is gone from the console.
+The APE logo displays correctly.
+All performance charts (PNGs) display correctly.
+All other data (Operating Point, Alternatives, Score) remains accurate."

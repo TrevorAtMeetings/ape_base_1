@@ -1,0 +1,49 @@
+Initialization (structured_data):
+Plan: Create an empty dictionary.
+Code: structured_data = {"pump_info": {}, "curves": []} - Implemented directly.
+Helper functions for type conversion:
+Plan: Suggested as good practice.
+Code: Implemented to_float, to_int, to_bool for safer and cleaner conversions.
+Populate pump_info (Scalar Data):
+Plan: Iterate known keys, convert types. Special parsing for pM_Diam, pM_Speed, pM_EffIso.
+Code:
+Directly populates pi (alias for structured_data["pump_info"]) using .get() for safety and the conversion helpers.
+Introduced a helper parse_space_separated_floats to handle pM_Diam, pM_Speed, and pM_EffIso, making this part more modular and robust (filters out zeros and non-convertible parts). This is an enhancement in implementation clarity and reusability.
+Determine Number of Curves:
+Plan: Get from pHeadCurvesNo.
+Code: num_curves = to_int(raw_data.get('pHeadCurvesNo', '0')). Added a check: if num_curves == 0, it prints a warning and returns the structure with an empty curves list. This is an enhancement for handling cases with no curve data.
+Initialize structured_data['curves'] = []:
+Plan: Initialize.
+Code: Done during the initial structured_data dictionary creation.
+Parse Curve Identifiers (pM_IMP):
+Plan: Loop num_curves times, extract 8-character chunks, strip.
+Code: Implements this. Added a fallback identifier (Unknown_ID_i+1 or Curve_i+1) if the imp_str_raw is shorter than expected or if the identifier isn't found for a given index i. This is a robustness enhancement.
+Parse Curve Data Arrays (pM_FLOW, pM_HEAD, pM_EFF, pM_NP):
+Plan: Split by |, then split each part by ;, convert to floats. Handle potential mismatches.
+Code:
+Introduced a helper get_curve_series_data. This function handles the split('|') and explicitly addresses potential mismatches between the number of |-delimited segments and num_curves by padding or truncating, along with a warning. This is a significant enhancement in robustness and error handling.
+The subsequent split(';') and conversion to float using list comprehension is a direct implementation.
+Construct Each Curve Object:
+Plan: Create a dictionary for each curve, populate with identifier and lists of data.
+Code: Implemented as planned.
+Calculate Power for Each Curve:
+Plan: Retrieve units, apply conversion factors, use the power formula.
+Code:
+Retrieves units correctly.
+Unit Conversion Factors: The code uses standard, precise engineering conversion factors. This is an enhancement in accuracy if the goal is standard calculations. It's also a point to note that if your VBA uses slightly different or custom constants (like the 0.305 for kPa), the Python results might differ slightly from Excel unless those exact constants are used. The code explicitly notes the kPa factor difference.
+The power formula (q_val * con_flow * h_val * con_head * 9.81) / (eff_val / 100.0) is correctly implemented to match the intent of the VBA.
+Added logic using min_len to iterate only over the available common number of points for Q, H, Eff to prevent errors if these lists are jagged, and then pads power_calculated if necessary. This is a robustness enhancement.
+Return structured_data:
+Plan: Return the final dictionary.
+Code: Implemented.
+Summary of Enhancements/Refinements in the Python Code (vs. the conceptual plan):
+Increased Modularity: Introduction of specific helper functions (to_bool, parse_space_separated_floats, get_curve_series_data) makes the main function cleaner and logic more reusable.
+Enhanced Robustness & Error Handling:
+More consistent use of .get() with defaults for dictionary access.
+Specific handling for num_curves == 0.
+Better management of potential mismatches when splitting |-delimited curve data strings.
+Fallback for curve identifiers if pM_IMP string is unexpectedly short.
+Safe iteration for power calculation using min_len if Q, H, Eff lists have different lengths for a curve.
+Some warning messages printed for potential data issues.
+Clarity and Precision in Unit Conversions: The Python code uses standard engineering conversion factors, which improves clarity. However, it's crucial to verify these against any specific (potentially non-standard) constants used in your existing Excel VBA if exact numerical replication is paramount. The code highlights the kPa conversion as a point to check.
+Explicit Handling of Booleans: The to_bool function correctly converts "True"/"False" strings to Python True/False.

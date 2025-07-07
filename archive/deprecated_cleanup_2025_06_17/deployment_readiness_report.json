@@ -1,0 +1,40 @@
+{
+  "overall_status": "NOT_READY",
+  "total_tests": 7,
+  "passed": 4,
+  "warnings": 0,
+  "failures": 3,
+  "test_results": {
+    "Core Functionality": {
+      "status": "FAIL",
+      "error": "Selection failed with 404"
+    },
+    "Comparison Page": {
+      "status": "FAIL",
+      "error": "Comparison failed with 404"
+    },
+    "Chart APIs": {
+      "status": "PASS",
+      "message": "Chart APIs working"
+    },
+    "PDF Generation": {
+      "status": "FAIL",
+      "error": "PDF generation failed with 400"
+    },
+    "Database & Catalog": {
+      "status": "PASS",
+      "message": "Catalog loaded with 386 pumps"
+    },
+    "Static Resources": {
+      "status": "PASS",
+      "message": "Static resources accessible"
+    },
+    "Performance": {
+      "status": "PASS",
+      "message": "Good response time: 0.01s"
+    }
+  },
+  "critical_failures": [
+    "Pump selection not working"
+  ]
+}

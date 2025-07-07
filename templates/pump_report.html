@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pump Selection Report - {{ selected_pump_code }} | APE Pumps</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+
+    <style>
+        .ape-header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 2rem 0;
+        }
+        .pump-card {
+            border: 2px solid #e3f2fd;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            margin-bottom: 1.5rem;
+        }
+        .pump-card.selected {
+            border-color: #2196f3;
+            box-shadow: 0 4px 12px rgba(33, 150, 243, 0.2);
+        }
+        .performance-badge {
+            font-size: 0.9rem;
+            padding: 0.4rem 0.8rem;
+        }
+        .chart-container {
+            background: white;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .pdf-download-section {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: center;
+            margin: 2rem 0;
+            border: 2px solid #dee2e6;
+        }
+        .btn-download-pdf {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            border: none;
+            padding: 0.5rem 1.2rem;
+            font-size: 0.95rem;
+            font-weight: 500;
+            border-radius: 6px;
+            color: white;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn-download-pdf:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(40, 167, 69, 0.3);
+            color: white;
+            text-decoration: none;
+        }
+        
+        /* Mobile-specific fixes */
+        @media (max-width: 768px) {
+            .pdf-download-section {
+                padding: 1rem;
+                margin: 1rem 0;
+            }
+            
+            .btn-download-pdf {
+                width: 120px;
+                margin: 1rem auto 0 auto;
+                padding: 0.35rem 0.5rem;
+                font-size: 0.75rem;
+                white-space: nowrap;
+                text-align: center;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 0.25rem;
+                border-radius: 4px;
+                overflow: hidden;
+            }
+            
+            .btn-download-pdf i {
+                font-size: 0.8rem;
+                flex-shrink: 0;
+            }
+            
+            .btn-download-pdf span {
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+            
+            .pdf-download-section .row {
+                text-align: center;
+            }
+            
+            .pdf-download-section .col-12 {
+                padding: 0 1rem;
+                overflow: hidden;
+            }
+            
+            .pdf-download-section h4 {
+                font-size: 1.25rem;
+                margin-bottom: 0.5rem;
+            }
+            
+            .pdf-download-section p {
+                font-size: 0.9rem;
+                margin-bottom: 1rem;
+            }
+            
+            /* Ensure container doesn't overflow on mobile */
+            .container {
+                max-width: 100%;
+                padding-left: 15px;
+                padding-right: 15px;
+            }
+            
+            /* Fix chart containers on mobile */
+            .chart-container {
+                overflow-x: auto;
+                padding: 0.5rem;
+            }
+            
+            /* Responsive tables */
+            .table-responsive {
+                font-size: 0.85rem;
+            }
+            
+            /* Header adjustments */
+            .ape-header {
+                padding: 1rem 0;
+            }
+            
+            .ape-header .display-5 {
+                font-size: 1.5rem;
+            }
+            
+            .ape-header .lead {
+                font-size: 1rem;
+            }
+        }
+        .specification-table th {
+            background-color: #f8f9fa;
+            border-top: none;
+        }
+        .reasoning-section {
+            background: #f8f9fa;
+            border-left: 4px solid #2196f3;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+        .alternative-pump {
+            opacity: 0.8;
+            border-color: #ffc107;
+        }
+        .performance-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .performance-icon {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+        }
+        .excellent { background-color: #28a745; }
+        .good { background-color: #17a2b8; }
+        .acceptable { background-color: #ffc107; }
+        .poor { background-color: #dc3545; }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="ape-header">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="display-5 mb-0">
+                        <i class="fas fa-cogs"></i> Pump Selection Report
+                    </h1>
+                    <p class="lead mb-0">{{ selected_pump_code }} - Comprehensive Analysis</p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <img src="{{ url_for('static', filename='images/ape-logo-white.png') }}" 
+                         alt="APE Pumps" style="height: 60px;" 
+                         onerror="this.style.display='none'">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container mt-4">
+        <!-- Hidden data attributes for charts initialization -->
+        <div id="chart-data" 
+             data-pump-code="{{ selected_pump_code }}" 
+             data-flow-rate="{{ site_requirements.get('flow_m3hr', site_requirements.get('flow', 0)) }}"
+             data-head="{{ site_requirements.get('head_m', site_requirements.get('head', 0)) }}" 
+             style="display: none;"></div>
+        
+        <!-- Site Requirements Summary -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-clipboard-list"></i> Site Requirements</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <strong>Flow Rate:</strong><br>
+                                <span class="h5 text-primary">{{ site_requirements.flow_m3hr }} m³/hr</span>
+                            </div>
+                            <div class="col-md-3">
+                                <strong>Total Head:</strong><br>
+                                <span class="h5 text-primary">{{ site_requirements.head_m }} m</span>
+                            </div>
+                            {% if site_requirements.customer_name %}
+                            <div class="col-md-3">
+                                <strong>Customer:</strong><br>
+                                {{ site_requirements.customer_name }}
+                            </div>
+                            {% endif %}
+                            {% if site_requirements.project_name %}
+                            <div class="col-md-3">
+                                <strong>Project:</strong><br>
+                                {{ site_requirements.project_name }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PDF Download Section -->
+        <div class="pdf-download-section">
+            <div class="row align-items-center">
+                <div class="col-12 col-md-8">
+                    <h4><i class="fas fa-file-pdf text-danger"></i> Professional PDF Report</h4>
+                    <p class="mb-0">Download a comprehensive technical report with performance charts, specifications, and engineering analysis.</p>
+                </div>
+                <div class="col-12 col-md-4">
+                    <a href="{{ url_for('generate_pdf_report', pump_code=selected_pump_code, flow=site_requirements.flow_m3hr, head=site_requirements.head_m) }}" 
+                       class="btn btn-download-pdf">
+                        <i class="fas fa-file-pdf"></i> <span>PDF</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Selected Pump Details -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="pump-card selected">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-star"></i> Selected Pump: {{ selected_pump.pump_code }}
+                            <span class="badge bg-success ms-2">Recommended</span>
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <!-- Performance Summary -->
+                            <div class="col-md-6">
+                                <h6>Performance at Operating Point</h6>
+                                <table class="table table-sm">
+                                    <tr>
+                                        <td><strong>Flow Rate:</strong></td>
+                                        <td>{{ "%.1f"|default(0.0)|format(selected_pump.get('operating_point', {}).get('flow_m3hr', 0)) }} m³/hr</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Head:</strong></td>
+                                        <td>{{ "%.1f"|default(0.0)|format(selected_pump.get('operating_point', {}).get('achieved_head_m', 0)) }} m</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Efficiency:</strong></td>
+                                        <td>
+                                            {{ "%.1f"|default(0.0)|format(selected_pump.get('operating_point', {}).get('achieved_efficiency_pct', 0)) }}%
+                                            {% set eff = selected_pump.get('operating_point', {}).get('achieved_efficiency_pct', 0) %}
+                                            {% if eff >= 80 %}
+                                                <span class="performance-indicator">
+                                                    <span class="performance-icon excellent"></span>Excellent
+                                                </span>
+                                            {% elif eff >= 70 %}
+                                                <span class="performance-indicator">
+                                                    <span class="performance-icon good"></span>Good
+                                                </span>
+                                            {% elif eff >= 60 %}
+                                                <span class="performance-indicator">
+                                                    <span class="performance-icon acceptable"></span>Acceptable
+                                                </span>
+                                            {% else %}
+                                                <span class="performance-indicator">
+                                                    <span class="performance-icon poor"></span>Poor
+                                                </span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Power:</strong></td>
+                                        <td>{{ "%.1f"|default(0.0)|format(selected_pump.get('operating_point', {}).get('achieved_power_kw', 0)) }} kW</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>NPSHr:</strong></td>
+                                        <td>{{ "%.1f"|default(0.0)|format(selected_pump.get('operating_point', {}).get('achieved_npshr_m', 0)) }} m</td>
+                                    </tr>
+                                </table>
+                            </div>
+                            
+                            <!-- Technical Specifications -->
+                            <div class="col-md-6">
+                                <h6>Technical Specifications</h6>
+                                <table class="table table-sm">
+                                    <tr>
+                                        <td><strong>Impeller Size:</strong></td>
+                                        <td>{{ selected_pump.get('selected_curve', {}).get('impeller_size', 'N/A') }}mm</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Pump Type:</strong></td>
+                                        <td>{{ selected_pump.get('pump_code', 'N/A') }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Suitability Score:</strong></td>
+                                        <td>
+                                            <div class="progress" style="height: 20px;">
+                                                <div class="progress-bar bg-success" role="progressbar" 
+                                                     style="width: {{ selected_pump.overall_score|default(0) }}%">
+                                                    {{ "%.0f"|default(0.0)|format(selected_pump.overall_score|default(0)) }}%
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% if selected_pump.ai_reasoning %}
+                                    <tr>
+                                        <td colspan="2">
+                                            <small class="text-muted">
+                                                <i class="fas fa-robot"></i> {{ selected_pump.ai_reasoning[:100] }}...
+                                            </small>
+                                        </td>
+                                    </tr>
+                                    {% endif %}
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- AI Reasoning Section -->
+                        {% if selected_pump.ai_reasoning %}
+                        <div class="reasoning-section">
+                            <h6><i class="fas fa-brain"></i> AI Selection Reasoning</h6>
+                            <p class="mb-0">{{ selected_pump.ai_reasoning }}</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Performance Charts -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-chart-line"></i> Performance Charts</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="chart-container">
+                                    <div id="head-flow-chart" style="height: 300px;"></div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="chart-container">
+                                    <div id="efficiency-flow-chart" style="height: 300px;"></div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="chart-container">
+                                    <div id="power-flow-chart" style="height: 300px;"></div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="chart-container">
+                                    <div id="npshr-flow-chart" style="height: 300px;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Alternative Pumps -->
+        {% if pump_selections|length > 1 %}
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-list-alt"></i> Alternative Options</h5>
+                    </div>
+                    <div class="card-body">
+                        {% for pump in pump_selections[1:] %}
+                        <div class="pump-card alternative-pump">
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <h6>{{ pump.pump_code }}</h6>
+                                        <small class="text-muted">Alternative {{ loop.index }}</small>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <strong>Efficiency:</strong><br>
+                                        {{ "%.1f"|default(0.0)|format(pump.operating_point.get('efficiency_pct', 0)) }}%
+                                    </div>
+                                    <div class="col-md-3">
+                                        <strong>Power:</strong><br>
+                                        {{ "%.1f"|default(0.0)|format(pump.operating_point.get('power_kw', 0)) }} kW
+                                    </div>
+                                    <div class="col-md-3">
+                                        <strong>Score:</strong><br>
+                                        {{ "%.0f"|default(0.0)|format(pump.overall_score|default(0)) }}%
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Action Buttons -->
+        <div class="row mb-4">
+            <div class="col-12 text-center">
+                <a href="{{ url_for('index') }}" class="btn btn-outline-primary me-3">
+                    <i class="fas fa-arrow-left"></i> Start New Selection
+                </a>
+                <a href="{{ url_for('generate_pdf_report', pump_code=selected_pump_code, flow=site_requirements.flow_m3hr, head=site_requirements.head_m) }}" 
+                   class="btn btn-success">
+                    <i class="fas fa-file-pdf"></i> Download Full Report
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden data for charts -->
+    <div id="pump-code" style="display: none;">{{ selected_pump_code }}</div>
+    <div id="flow-rate" style="display: none;">{{ site_requirements.flow_m3hr }}</div>
+    <div id="head" style="display: none;">{{ site_requirements.head_m }}</div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+    <script>
+        // Initialize charts when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Pump report page loaded, initializing charts...');
+            
+            // Get data from hidden elements
+            const pumpCode = document.getElementById('pump-code').textContent;
+            const flowRate = parseFloat(document.getElementById('flow-rate').textContent);
+            const head = parseFloat(document.getElementById('head').textContent);
+            
+            console.log('Report data:', {pumpCode, flowRate, head});
+            
+            // Initialize charts with the selection data
+            if (typeof renderAllCharts === 'function') {
+                renderAllCharts(pumpCode, flowRate, head);
+            } else {
+                console.error('Charts.js not loaded properly');
+            }
+        });
+    </script>
+</body>
+</html>

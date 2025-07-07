@@ -1,0 +1,59 @@
+Agent, we have excellent new content and a foundational HTML structure for our 'Help Guide / Features Brochure' page. Your task is to integrate this into our existing Flask application.
+Objective: Create a new, accessible web page (/help-features) that displays the provided brochure content, styled professionally, and linked from the main navigation.
+Phase 1: Setup & Basic Content Integration
+Create New HTML Template:
+Action: Create a new file named help_brochure.html in the app/templates/ directory.
+Content: Use the full HTML structure provided (starting with <!DOCTYPE html> and ending with </html>) as the content for this new help_brochure.html file.
+Modification: Ensure this new template extends your existing base.html to inherit the site's navigation bar, common styling, and footer (if base.html provides these). You will need to adapt the provided HTML into Jinja2 blocks.
+For example, the content within the <body> tags of the provided HTML (from <header> to <footer>) should go into the {% block content %}{% endblock %} of your help_brochure.html.
+The <head> content (meta tags, title, Google Fonts link, inline styles) from the provided HTML should be reviewed. The Inter font and general styles are good. You might want to move the inline <style> block into your main static/css/style.css for better organization, or keep it in help_brochure.html if it's specific to this page. The <title> should be dynamic: {% block title %}APE Pumps AI - Features & Help{% endblock %}.
+Create Flask Route:
+File: app/routes.py
+Action: Add a new route to serve this page:
+@app.route('/help-features')
+def help_features_page():
+    logger.info("Help & Features page accessed.")
+    return render_template('help_brochure.html')
+Use code with caution.
+Python
+Add Navigation Link:
+File: app/templates/base.html (or wherever your main navigation bar is defined).
+Action: Add a new navigation link:
+<li><a href="{{ url_for('help_features_page') }}">Help & Features</a></li>
+Use code with caution.
+Html
+(Adjust the class and structure to match your existing navigation items).
+Phase 2: Content Placement & Styling Refinements
+Verify Content Integration:
+Action: After Phase 1, run the application and navigate to the /help-features page.
+Confirm that all the textual content sections (Hero, Why Engineers Love It, Key Benefits, 3-Step Journey, Testimonial, Advanced Tools, Final CTA) are present and readable.
+Styling Adjustments (if needed):
+Action: The provided HTML has inline styles. Review these:
+The global styles for body, header, footer, section, h1, h2, h3 are good starting points.
+The .hero, .cta-button, ul li::before, .testimonial, .highlight classes provide good specific styling.
+Consider moving these styles from the inline <style> block in help_brochure.html into your main static/css/style.css file. This is better for organization and caching. If you do this, ensure the class names don't conflict with existing styles, or scope them appropriately.
+Branding Alignment: Ensure the colors used (#003b6f for header/footer, #00aaff for CTA/accents) align with the APE Pumps branding (primary teal, secondary Mather+Platt blue). Adjust if necessary. The provided blue (#003b6f) is a good professional blue. The accent (#00aaff) is a lighter blue; consider if APE teal should be used here instead for CTAs.
+Responsiveness: Test the page on different screen sizes. The existing CSS doesn't have explicit media queries but relies on max-width: 960px and percentage-based widths. This might need refinement for smaller mobile screens.
+CTA Links:
+Action: The "Try the AI Selector Now" buttons currently link to #contact (for the first one) and https://www.apepumps.co.za (for the second).
+Update the first CTA in the Hero section to link to {{ url_for('index') }} (or your main pump selection input form route).
+The second CTA linking to the main APE Pumps website is fine.
+Consider if the optional "See a Sample Report" or "Request a Demo" CTAs should be implemented with actual links or placeholders.
+Placeholder Content:
+Action: The contact details in the final CTA section are placeholders ([Physical Address], etc.).
+"You will need to provide the actual contact information for APE Pumps (Pty) Ltd to replace these placeholders, or I can leave them as is for now."
+Hero Image:
+The hero section uses background-image: url('https://source.unsplash.com/featured/?industrial,engineering');. This will load a random image.
+Action: "For a more consistent brand experience, it's recommended to use a specific, high-quality image related to APE Pumps or the pump industry. If you provide an image URL or file (to be placed in static/images/), I can update this."
+Report Back After Phase 1 & Initial Phase 2:
+"Agent, after you have:
+Created help_brochure.html by adapting the provided HTML and extending base.html.
+Added the Flask route for /help-features.
+Added the "Help & Features" link to the main navigation.
+Moved the inline styles to static/css/style.css (recommended).
+Updated the primary CTA link in the Hero section.
+Please confirm that:
+The new page is accessible from the navigation.
+All textual content is displaying correctly.
+The basic styling is applied.
+We will then review and provide feedback for further styling refinements and content placeholders."

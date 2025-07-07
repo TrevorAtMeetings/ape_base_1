@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+
+{% block title %}About - APE Pumps Selection{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col s12">
+            <h3 class="blue-text text-darken-2">About APE Pumps Selection</h3>
+            
+            <div class="card">
+                <div class="card-content">
+                    <h5>AI-Powered Pump Engineering Platform</h5>
+                    <p>
+                        The APE Pumps Selection Application is an advanced engineering tool that provides 
+                        intelligent, data-driven pump recommendations through comprehensive technical analysis 
+                        and interactive performance modeling.
+                    </p>
+                    
+                    <h6>Key Features</h6>
+                    <ul class="collection">
+                        <li class="collection-item">
+                            <i class="material-icons left">settings</i>
+                            <strong>870 Authentic APE Pump Curves</strong> - Complete catalog with verified performance data
+                        </li>
+                        <li class="collection-item">
+                            <i class="material-icons left">analytics</i>
+                            <strong>Interactive Performance Charts</strong> - Real-time visualization with Plotly
+                        </li>
+                        <li class="collection-item">
+                            <i class="material-icons left">smart_toy</i>
+                            <strong>AI Technical Analysis</strong> - OpenAI and Google Gemini powered insights
+                        </li>
+                        <li class="collection-item">
+                            <i class="material-icons left">description</i>
+                            <strong>Professional PDF Reports</strong> - Engineering-grade documentation
+                        </li>
+                        <li class="collection-item">
+                            <i class="material-icons left">speed</i>
+                            <strong>Advanced Selection Logic</strong> - Quality scoring with extrapolation penalties
+                        </li>
+                    </ul>
+                    
+                    <h6>Technology Stack</h6>
+                    <div class="row">
+                        <div class="col s12 m6">
+                            <ul>
+                                <li>Python Flask Backend</li>
+                                <li>Material Design UI</li>
+                                <li>Plotly Interactive Charts</li>
+                                <li>MathJax Formula Rendering</li>
+                            </ul>
+                        </div>
+                        <div class="col s12 m6">
+                            <ul>
+                                <li>PostgreSQL Database</li>
+                                <li>Vector Knowledge Search</li>
+                                <li>Bulk Data Processing</li>
+                                <li>WeasyPrint PDF Generation</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <h6>Data Quality</h6>
+                    <p>
+                        Our system maintains a 90.0/100 golden source quality score with 100% parsing success 
+                        from authentic APE engineering specifications. Quality penalties ensure engineering 
+                        validity while preserving data integrity.
+                    </p>
+                </div>
+                
+                <div class="card-action">
+                    <a href="{{ url_for('index') }}" class="btn blue darken-2">
+                        <i class="material-icons left">engineering</i>
+                        Start Pump Selection
+                    </a>
+                    <a href="{{ url_for('help_page') }}" class="btn-flat">
+                        <i class="material-icons left">help</i>
+                        View Help Guide
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

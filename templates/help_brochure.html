@@ -1,0 +1,761 @@
+
+{% extends "base.html" %}
+
+{% block title %}Features - AI-Powered Pump Selection{% endblock %}
+
+{% block head %}
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Features Page Specific Styles */
+        .features-page {
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            overflow-x: hidden;
+        }
+
+        /* Hero Section */
+        .hero-section {
+            position: relative;
+            height: 70vh;
+            min-height: 600px;
+            background: linear-gradient(135deg, rgba(25, 118, 210, 0.9), rgba(13, 71, 161, 0.9)),
+                        url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 600"><rect fill="%23003b6f" width="100%" height="100%"/><circle cx="100" cy="100" r="50" fill="%23005a9f" opacity="0.3"/><circle cx="900" cy="500" r="80" fill="%23007acc" opacity="0.2"/><rect x="200" y="300" width="100" height="60" fill="%231976d2" opacity="0.4"/></svg>');
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            color: white;
+            margin-top: -20px;
+        }
+
+        .hero-content {
+            max-width: 900px;
+            padding: 0 20px;
+            z-index: 2;
+        }
+
+        .hero-title {
+            font-size: clamp(2.5rem, 5vw, 4rem);
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .hero-subtitle {
+            font-size: clamp(1.1rem, 2.5vw, 1.4rem);
+            font-weight: 300;
+            margin-bottom: 2rem;
+            opacity: 0.95;
+        }
+
+        .hero-cta {
+            display: inline-block;
+            background: #4CAF50;
+            color: white;
+            padding: 18px 40px;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 25px rgba(76, 175, 80, 0.3);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .hero-cta:hover {
+            background: #45a049;
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(76, 175, 80, 0.4);
+            color: white;
+            text-decoration: none;
+        }
+
+        /* Benefits Section */
+        .benefits-section {
+            padding: 100px 0;
+            background: #f8f9fa;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: clamp(2rem, 4vw, 3rem);
+            font-weight: 600;
+            color: #1976d2;
+            margin-bottom: 3rem;
+        }
+
+        .benefits-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 40px;
+            margin-top: 60px;
+        }
+
+        .benefit-card {
+            background: white;
+            border-radius: 20px;
+            padding: 40px 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            transition: all 0.3s ease;
+            border: 1px solid #e0e0e0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .benefit-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, #1976d2, #4CAF50);
+        }
+
+        .benefit-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.12);
+        }
+
+        .benefit-icon {
+            width: 70px;
+            height: 70px;
+            background: linear-gradient(135deg, #1976d2, #4CAF50);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 25px;
+            font-size: 2rem;
+        }
+
+        .benefit-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .benefit-description {
+            color: #666;
+            line-height: 1.6;
+            font-size: 1rem;
+        }
+
+        .benefit-metrics {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+            gap: 15px;
+        }
+
+        .benefit-stat {
+            background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+            color: #1976d2;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            flex: 1;
+        }
+
+        .benefit-number {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            min-width: 60px;
+            text-align: center;
+        }
+
+        /* Image Gallery Section */
+        .gallery-section {
+            padding: 100px 0;
+            background: white;
+        }
+
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-top: 60px;
+        }
+
+        .gallery-item {
+            position: relative;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            height: 250px;
+        }
+
+        .gallery-item:hover {
+            transform: scale(1.05);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+        }
+
+        .gallery-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .gallery-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(transparent, rgba(0,0,0,0.8));
+            color: white;
+            padding: 30px 20px 20px;
+        }
+
+        .gallery-title {
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-bottom: 5px;
+        }
+
+        .gallery-description {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        /* Demo Section */
+        .demo-section {
+            padding: 80px 0;
+            background: white;
+        }
+
+        .demo-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 50px;
+            margin-top: 50px;
+            align-items: center;
+        }
+
+        .demo-card {
+            background: linear-gradient(135deg, #f8f9fa, #e3f2fd);
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .demo-header {
+            background: #1976d2;
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .demo-title {
+            font-weight: 600;
+        }
+
+        .demo-badge {
+            background: #4CAF50;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .demo-body {
+            padding: 25px;
+        }
+
+        .demo-inputs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .demo-input {
+            background: white;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .demo-input label {
+            display: block;
+            font-size: 0.8rem;
+            color: #666;
+            margin-bottom: 4px;
+        }
+
+        .demo-input span {
+            font-weight: 600;
+            color: #1976d2;
+        }
+
+        .demo-result {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px solid #4CAF50;
+        }
+
+        .demo-pump strong {
+            display: block;
+            color: #4CAF50;
+            font-size: 1.1rem;
+            margin-bottom: 5px;
+        }
+
+        .demo-pump span {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .demo-try-btn {
+            display: inline-block;
+            background: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: 600;
+            margin-top: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .demo-try-btn:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+            text-decoration: none;
+            color: white;
+        }
+
+        .demo-feature-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .demo-feature-list li {
+            padding: 8px 0;
+            font-size: 1.1rem;
+            color: #333;
+        }
+
+        /* Technical Features Section */
+        .technical-section {
+            padding: 100px 0;
+            background: linear-gradient(135deg, #1976d2, #1565c0);
+            color: white;
+        }
+
+        .technical-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 40px;
+            margin-top: 60px;
+        }
+
+        .technical-card {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 30px;
+            border: 1px solid rgba(255,255,255,0.2);
+            transition: all 0.3s ease;
+        }
+
+        .technical-card:hover {
+            background: rgba(255,255,255,0.15);
+            transform: translateY(-5px);
+        }
+
+        .technical-icon {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+        }
+
+        .technical-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+
+        .technical-description {
+            line-height: 1.6;
+            opacity: 0.9;
+        }
+
+        /* Testimonials Section */
+        .testimonials-section {
+            padding: 80px 0;
+            background: linear-gradient(135deg, #f8f9fa, #e3f2fd);
+        }
+
+        .testimonials-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 30px;
+            margin-top: 50px;
+        }
+
+        .testimonial-card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+            border-left: 4px solid #1976d2;
+            transition: all 0.3s ease;
+        }
+
+        .testimonial-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.12);
+        }
+
+        .testimonial-content {
+            margin-bottom: 20px;
+        }
+
+        .testimonial-content p {
+            font-style: italic;
+            color: #555;
+            line-height: 1.6;
+            margin: 0;
+        }
+
+        .testimonial-author strong {
+            display: block;
+            color: #1976d2;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .testimonial-author span {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        /* CTA Section */
+        .cta-section {
+            padding: 100px 0;
+            background: #f8f9fa;
+            text-align: center;
+        }
+
+        .cta-content {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .cta-title {
+            font-size: clamp(2rem, 4vw, 2.5rem);
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .cta-subtitle {
+            font-size: 1.2rem;
+            color: #666;
+            margin-bottom: 40px;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .cta-button {
+            display: inline-block;
+            padding: 18px 35px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .cta-button.primary {
+            background: #1976d2;
+            color: white;
+            box-shadow: 0 8px 25px rgba(25, 118, 210, 0.3);
+        }
+
+        .cta-button.primary:hover {
+            background: #1565c0;
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(25, 118, 210, 0.4);
+            color: white;
+            text-decoration: none;
+        }
+
+        .cta-button.secondary {
+            background: white;
+            color: #1976d2;
+            border: 2px solid #1976d2;
+        }
+
+        .cta-button.secondary:hover {
+            background: #1976d2;
+            color: white;
+            text-decoration: none;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .hero-section {
+                height: 60vh;
+                min-height: 500px;
+            }
+            
+            .benefits-grid,
+            .gallery-grid,
+            .technical-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .cta-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .benefit-card,
+            .technical-card {
+                padding: 30px 20px;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<div class="features-page">
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="hero-content">
+            <h1 class="hero-title">Revolutionary AI-Powered Pump Selection</h1>
+            <p class="hero-subtitle">Transform your engineering workflow with intelligent pump selection, advanced analytics, and professional reporting - all powered by cutting-edge AI technology.</p>
+            <a href="{{ url_for('index') }}" class="hero-cta">Start Selecting Now</a>
+        </div>
+    </section>
+
+    <!-- Key Benefits Section -->
+    <section class="benefits-section">
+        <div class="container">
+            <h2 class="section-title">Key Benefits That Drive Results</h2>
+            
+            <div class="benefits-grid">
+                <div class="benefit-card">
+                    <div class="benefit-icon">⚡</div>
+                    <h3 class="benefit-title">75% Time Reduction</h3>
+                    <p class="benefit-description">Automated calculations eliminate manual spreadsheet work, transforming hours of analysis into minutes of intelligent selection.</p>
+                    <div class="benefit-metrics">
+                        <span class="benefit-stat">Hours → Minutes</span>
+                        <span class="benefit-number">75%</span>
+                    </div>
+                </div>
+
+                <div class="benefit-card">
+                    <div class="benefit-icon">🎯</div>
+                    <h3 class="benefit-title">Enhanced Accuracy</h3>
+                    <p class="benefit-description">AI-powered recommendations with detailed technical justification ensure optimal pump selection with 95%+ accuracy.</p>
+                    <span class="benefit-stat">95%+ Accuracy</span>
+                </div>
+
+                <div class="benefit-card">
+                    <div class="benefit-icon">💰</div>
+                    <h3 class="benefit-title">Cost Optimization</h3>
+                    <p class="benefit-description">Lifecycle cost analysis identifies the most economical solutions, considering initial costs, energy consumption, and maintenance.</p>
+                    <span class="benefit-stat">Optimal ROI</span>
+                </div>
+
+                <div class="benefit-card">
+                    <div class="benefit-icon">📊</div>
+                    <h3 class="benefit-title">Professional Presentation</h3>
+                    <p class="benefit-description">Branded reports that elevate your professional image with comprehensive technical analysis and visual performance charts.</p>
+                    <span class="benefit-stat">Publication Ready</span>
+                </div>
+
+                <div class="benefit-card">
+                    <div class="benefit-icon">🔬</div>
+                    <h3 class="benefit-title">Comprehensive Analysis</h3>
+                    <p class="benefit-description">BEP optimization, NPSH analysis, and energy efficiency ratings provide complete pump performance evaluation.</p>
+                    <span class="benefit-stat">Complete Analysis</span>
+                </div>
+
+                <div class="benefit-card">
+                    <div class="benefit-icon">📈</div>
+                    <h3 class="benefit-title">Real-time Insights</h3>
+                    <p class="benefit-description">Interactive charts with performance curve visualization and dynamic operating point analysis for instant understanding.</p>
+                    <span class="benefit-stat">Live Performance</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Demo Preview Section -->
+    <section class="demo-section">
+        <div class="container">
+            <h2 class="section-title">See It In Action</h2>
+            
+            <div class="demo-content">
+                <div class="demo-preview">
+                    <div class="demo-card">
+                        <div class="demo-header">
+                            <span class="demo-title">Live Selection Example</span>
+                            <span class="demo-badge">Interactive</span>
+                        </div>
+                        <div class="demo-body">
+                            <div class="demo-inputs">
+                                <div class="demo-input">
+                                    <label>Flow Rate:</label>
+                                    <span>342 m³/hr</span>
+                                </div>
+                                <div class="demo-input">
+                                    <label>Head:</label>
+                                    <span>27.4 m</span>
+                                </div>
+                            </div>
+                            <div class="demo-result">
+                                <div class="demo-pump">
+                                    <strong>Recommended: 6/8 ALE</strong>
+                                    <span>Efficiency: 82% | Power: 73 kW</span>
+                                </div>
+                                <a href="{{ url_for('index') }}" class="demo-try-btn">Try This Selection</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="demo-features">
+                    <h3>What You'll Get:</h3>
+                    <ul class="demo-feature-list">
+                        <li>✅ Instant AI-powered recommendations</li>
+                        <li>✅ Performance curve analysis</li>
+                        <li>✅ Lifecycle cost calculations</li>
+                        <li>✅ Professional PDF reports</li>
+                        <li>✅ Environmental impact assessment</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Technical Features Section -->
+    <section class="technical-section">
+        <div class="container">
+            <h2 class="section-title" style="color: white;">Advanced Engineering Capabilities</h2>
+            
+            <div class="technical-grid">
+                <div class="technical-card">
+                    <div class="technical-icon">🧠</div>
+                    <h3 class="technical-title">Dual AI Analysis</h3>
+                    <p class="technical-description">Powered by both OpenAI GPT-4 and Google Gemini for comprehensive technical reasoning and selection justification.</p>
+                </div>
+
+                <div class="technical-card">
+                    <div class="technical-icon">📋</div>
+                    <h3 class="technical-title">Performance Calculations</h3>
+                    <p class="technical-description">Advanced curve interpolation, BEP analysis, NPSH calculations, and efficiency optimization with scientific precision.</p>
+                </div>
+
+                <div class="technical-card">
+                    <div class="technical-icon">🌱</div>
+                    <h3 class="technical-title">Environmental Impact</h3>
+                    <p class="technical-description">CO₂ emissions tracking, energy efficiency ratings, and sustainability scoring for environmental compliance.</p>
+                </div>
+
+                <div class="technical-card">
+                    <div class="technical-icon">⚙️</div>
+                    <h3 class="technical-title">VFD Optimization</h3>
+                    <p class="technical-description">Variable frequency drive analysis with energy savings potential and part-load performance evaluation.</p>
+                </div>
+
+                <div class="technical-card">
+                    <div class="technical-icon">📊</div>
+                    <h3 class="technical-title">Interactive Charts</h3>
+                    <p class="technical-description">Dynamic Plotly visualizations showing head-flow curves, efficiency maps, power consumption, and NPSH requirements.</p>
+                </div>
+
+                <div class="technical-card">
+                    <div class="technical-icon">🔍</div>
+                    <h3 class="technical-title">Smart Filtering</h3>
+                    <p class="technical-description">Intelligent pump filtering by application, water type, installation requirements, and performance criteria.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials Section -->
+    <section class="testimonials-section">
+        <div class="container">
+            <h2 class="section-title">Trusted by Engineering Professionals</h2>
+            
+            <div class="testimonials-grid">
+                <div class="testimonial-card">
+                    <div class="testimonial-content">
+                        <p>"The AI-powered selection reduced our pump sizing time from 3 hours to 20 minutes. The accuracy and professional reports have transformed our workflow."</p>
+                    </div>
+                    <div class="testimonial-author">
+                        <strong>Senior Project Engineer</strong>
+                        <span>Water Infrastructure Firm</span>
+                    </div>
+                </div>
+
+                <div class="testimonial-card">
+                    <div class="testimonial-content">
+                        <p>"Finally, a tool that understands engineering requirements. The lifecycle cost analysis alone has saved us thousands in operational expenses."</p>
+                    </div>
+                    <div class="testimonial-author">
+                        <strong>Mechanical Engineer</strong>
+                        <span>Municipal Authority</span>
+                    </div>
+                </div>
+
+                <div class="testimonial-card">
+                    <div class="testimonial-content">
+                        <p>"The professional PDF reports with performance charts have elevated our client presentations. Our customers love the detailed technical analysis."</p>
+                    </div>
+                    <div class="testimonial-author">
+                        <strong>Consulting Engineer</strong>
+                        <span>Design Consultancy</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Call to Action Section -->
+    <section class="cta-section">
+        <div class="container">
+            <div class="cta-content">
+                <h2 class="cta-title">Ready to Transform Your Pump Selection Process?</h2>
+                <p class="cta-subtitle">Join hundreds of engineers who have already discovered the power of AI-driven pump selection.</p>
+                
+                <div class="cta-buttons">
+                    <a href="{{ url_for('index') }}" class="cta-button primary">Start Selecting Pumps</a>
+                    <a href="https://www.apepumps.co.za" class="cta-button secondary" target="_blank">Visit APE Pumps</a>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}

@@ -1,0 +1,10 @@
+flask
+numpy
+matplotlib
+requests
+openai
+pytest
+markdown2
+python-dotenv
+scipy
+google-generativeai 

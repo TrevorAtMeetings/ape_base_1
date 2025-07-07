@@ -1,0 +1,260 @@
+The Core Problem in app/__init__.py (Last Snippet Provided):
+# app/__init__.py (Problematic Version)
+"""
+APE Pumps Selection Application Package
+...
+"""
+# ... other imports ...
+
+# Import the Flask app instance from the root app.py file
+import sys
+import os
+# THIS IS VERY PROBLEMATIC AND THE SOURCE OF THE CIRCULAR IMPORT:
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from app import app # <<<<------ PROBLEM HERE
+
+# ... __all__ ...
+Use code with caution.
+Python
+Why this is wrong:
+sys.path.insert(...): This is a hacky way to try and modify Python's import search path. While sometimes necessary in complex scenarios, it's often a sign of an incorrect project structure or import strategy, especially for a package's __init__.py. It makes the code harder to understand and maintain.
+from app import app inside app/__init__.py: This is the direct cause of the circular import.
+When main.py does from app import app, Python starts executing app/__init__.py to define what the app package is.
+Inside app/__init__.py, it then encounters from app import app. At this point, the app package is still being initialized. It's trying to import a name (app) from a package (app) that hasn't finished loading yet. Python cannot resolve this.
+The Corrected Structure (Following Standard Flask Patterns):
+The Flask application instance (app = Flask(__name__)) should be created directly within app/__init__.py. Other modules within the app package (like routes.py, utils.py, etc.) will then import this app instance from the package's top level.
+Revised Files (Instructions for the Agent):
+1. /home/runner/workspace/app/__init__.py (Corrected):
+# /home/runner/workspace/app/__init__.py
+"""
+APE Pumps Selection Application Package
+This package initializes the Flask application and imports its components.
+"""
+import os
+from flask import Flask
+import logging
+
+__version__ = "1.0.0"
+__author__ = "APE Pumps"
+
+# Configure basic logging
+logging.basicConfig(level=logging.INFO) # Or DEBUG for more verbosity
+logger = logging.getLogger(__name__)
+
+# 1. CREATE THE FLASK APPLICATION INSTANCE HERE
+app = Flask(__name__)
+logger.info("Flask app instance created.")
+
+# 2. CONFIGURE THE APP
+app.secret_key = os.environ.get("SESSION_SECRET", "dev-secret-key-change-in-production")
+app.config['DEBUG'] = os.environ.get("FLASK_DEBUG", "True").lower() == "true" # Get from env or default
+# Define UPLOAD_FOLDER relative to the app's instance path or static folder
+app.config['UPLOAD_FOLDER'] = os.path.join(app.root_path, 'static', 'temp')
+os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+logger.info(f"App configured. Upload folder: {app.config['UPLOAD_FOLDER']}")
+
+# 3. IMPORT YOUR APPLICATION MODULES (blueprints, routes, models, utils etc.)
+# These modules can now safely 'from . import app' or 'from app import app'
+# if they need to access the app instance (e.g., for route decorators).
+# For clarity, let's assume routes are defined in app/routes.py
+# and other logic is in utils.py, pump_parser.py, selection_engine.py
+# which might be used by routes.py.
+
+# It's good practice to import routes *after* the app is created and configured.
+from . import routes  # This will execute app/routes.py
+logger.info("Routes imported.")
+
+# You might make some core functions available at the package level if desired,
+# but it's often cleaner for routes.py to import them directly from their modules.
+# If you want to expose them via `from app import load_all_pump_data`, do it here:
+from .utils import (
+    load_all_pump_data,
+    validate_site_requirements,
+    SiteRequirements,
+    ParsedPumpData
+)
+from .pump_parser import parse_pump_data
+from .selection_engine import find_best_pumps
+
+__all__ = [
+    'app', # Expose the Flask app instance
+    'load_all_pump_data',
+    'validate_site_requirements',
+    'SiteRequirements',
+    'ParsedPumpData',
+    'parse_pump_data',
+    'find_best_pumps',
+]
+Use code with caution.
+Python
+2. /home/runner/workspace/app/routes.py (Example - Move route logic here):
+Create this file if it doesn't exist. Move all your @app.route(...) definitions and associated helper functions (like generate_pump_charts, pump_code_safe, error handlers) from main.py (or the create_app function) into this app/routes.py file.
+# /home/runner/workspace/app/routes.py
+import os
+import logging
+from flask import render_template, request, redirect, url_for, flash, send_file, jsonify
+from werkzeug.utils import secure_filename
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+import numpy as np
+
+# Import the app instance FROM THE CURRENT PACKAGE (__init__.py)
+from . import app
+# Import your utility functions
+from .utils import load_all_pump_data, validate_site_requirements, SiteRequirements, ParsedPumpData
+from .pump_parser import parse_pump_data
+from .selection_engine import find_best_pumps
+
+logger = logging.getLogger(__name__)
+
+# --- PASTE ALL YOUR @app.route DEFINITIONS AND HELPER FUNCTIONS HERE ---
+# For example:
+@app.route('/')
+def index():
+    logger.info("Index route accessed.")
+    return render_template('input_form.html')
+
+@app.route('/select', methods=['GET'])
+def select_pump_route(): # Renamed to avoid conflict if 'select_pump' is a function name
+     return render_template('input_form.html')
+
+@app.route('/results', methods=['POST'])
+def show_results():
+    try:
+        form_data = request.form.to_dict()
+        logger.debug(f"Received form data: {form_data}")
+        site_requirements = validate_site_requirements(form_data) # This should use the imported one
+        # ... (rest of your show_results logic) ...
+        # Make sure to call your imported functions:
+        all_pump_data_list = load_all_pump_data() # Renamed to avoid conflict
+        # ...
+        parsed_pumps_list = [] # Renamed
+        for pump_data_item in all_pump_data_list: # Renamed
+            parsed_pumps_list.append(parse_pump_data(pump_data_item)) # Renamed
+        # ...
+        top_selections = find_best_pumps(parsed_pumps_list, site_requirements) # Renamed
+        # ...
+        suggested_pump_code = top_selections[0].get('pump_code', 'UNKNOWN')
+        # The 'suggested_pump' object needs to be one of the ParsedPumpData objects.
+        # Your find_best_pumps might need to return the full ParsedPumpData objects,
+        # or you'll need to fetch it again from parsed_pumps_list.
+        suggested_pump_obj = next((p for p in parsed_pumps_list if p.pump_code == suggested_pump_code), None)
+
+
+        chart_paths = generate_pump_charts( # Ensure this function is defined in this file or imported
+            suggested_pump_obj,
+            top_selections[0].get('operating_point', {}),
+            site_requirements
+        )
+        template_data = {
+            'site_requirements': site_requirements,
+            'top_selections': top_selections,
+            'suggested_pump': suggested_pump_obj, # Pass the actual ParsedPumpData object
+            'chart_paths': chart_paths,
+            'num_alternatives': len(top_selections) - 1
+        }
+        return render_template('results_page.html', **template_data)
+
+    except ValueError as ve:
+        flash(f'Invalid input: {str(ve)}', 'error')
+        return redirect(url_for('index'))
+    except Exception as e:
+        logger.error(f"Error in pump selection: {e}", exc_info=True) # Add exc_info for full traceback
+        flash('An error occurred during pump selection. Please try again.', 'error')
+        return redirect(url_for('index'))
+
+# --- Placeholder for generate_pump_charts and pump_code_safe ---
+# (These should be defined here or imported if they are in utils.py)
+def pump_code_safe(pump_code):
+    return "".join(c if c.isalnum() or c in '-_' else '_' for c in str(pump_code))
+
+def generate_pump_charts(parsed_pump_obj, operating_point, site_requirements_obj, chart_width=10, chart_height=6):
+    charts = {}
+    if not parsed_pump_obj: # Add check for parsed_pump_obj
+        logger.warning("generate_pump_charts called with None for parsed_pump_obj")
+        return charts
+    logger.info(f"Generating charts for pump: {parsed_pump_obj.pump_code}")
+    # ... (your matplotlib chart generation logic) ...
+    # Example for head chart
+    fig, ax = plt.subplots(figsize=(chart_width, chart_height))
+    # Replace with actual curve data from parsed_pump_obj.curves and operating_point
+    # This is still using placeholder data:
+    x_dummy = np.linspace(0, 200, 50)
+    y_dummy = 50 - 0.001 * x_dummy**2
+    ax.plot(x_dummy, y_dummy, 'b-', linewidth=2, label='Head Curve (Sample)')
+    ax.plot(site_requirements_obj.flow_m3hr, site_requirements_obj.head_m, 'ro', markersize=8, label='Operating Point')
+    ax.set_xlabel('Flow Rate (m³/hr)')
+    ax.set_ylabel('Head (m)')
+    ax.set_title(f'{parsed_pump_obj.model} - Head vs Flow')
+    ax.grid(True, alpha=0.3)
+    ax.legend()
+    
+    # Ensure UPLOAD_FOLDER is accessible, app.config might not be available directly if this func moves to utils
+    # It's better if UPLOAD_FOLDER is passed or retrieved from app.config
+    upload_folder = app.config.get('UPLOAD_FOLDER', os.path.join('static', 'temp'))
+    safe_code = pump_code_safe(parsed_pump_obj.pump_code)
+    head_chart_filename = f'head_chart_{safe_code}.png'
+    head_chart_path = os.path.join(upload_folder, head_chart_filename)
+    
+    try:
+        os.makedirs(upload_folder, exist_ok=True)
+        plt.savefig(head_chart_path, dpi=150, bbox_inches='tight')
+        plt.close(fig) # Important to close the figure
+        # Return path relative to static for use in templates
+        charts['head'] = os.path.join('temp', head_chart_filename).replace("\\", "/")
+        logger.debug(f"Generated head chart: {charts['head']}")
+    except Exception as e:
+        logger.error(f"Error saving head chart: {e}", exc_info=True)
+
+    # ... (generate other charts: efficiency, power, npsh) ...
+    # For now, returning just the head chart path
+    return charts
+
+
+# --- Error Handlers ---
+@app.errorhandler(404)
+def not_found_error(error):
+    return render_template('404.html'), 404
+
+@app.errorhandler(500)
+def internal_error(error):
+    logger.error(f"Internal server error: {error}", exc_info=True)
+    return render_template('500.html'), 500
+
+# ... (other routes: /generate_pdf, /api/chart_data) ...
+Use code with caution.
+Python
+3. /home/runner/workspace/main.py (Simplified Entry Point):
+This file now becomes very simple. Its main job is to import the app instance from your app package and run it (for development).
+# /home/runner/workspace/main.py
+import os
+from app import app # Import the app instance from app/__init__.py
+
+if __name__ == '__main__':
+    # Get port from environment variable PORT, default to 5000 for local dev
+    port = int(os.environ.get("PORT", 5000))
+    # Debug mode should be controlled by FLASK_DEBUG environment variable ideally
+    # app.run already considers app.config['DEBUG']
+    app.run(host='0.0.0.0', port=port)
+Use code with caution.
+Python
+4. replit.nix and .replit (Gunicorn Configuration):
+Your Gunicorn command in .replit:
+run = ["gunicorn", "--bind", "0.0.0.0:5000", "main:app"]
+This should now work correctly because main.py will have an app object at its top level (imported from the app package).
+Alternatively, and often cleaner for Gunicorn, you could change it to:
+run = ["gunicorn", "--bind", "0.0.0.0:5000", "app:app"]
+This tells Gunicorn to look for the app instance directly within the app package (which is defined in app/__init__.py). If you do this, main.py is purely for local development runs.
+Explanation of Fixes:
+Centralized App Creation: The Flask app instance is now unambiguously created in app/__init__.py.
+No Self-Import in __init__.py: The problematic from app import app within app/__init__.py is removed.
+Modular Routes: Routes are moved to app/routes.py (or a similar module) and are imported by app/__init__.py after app is created. app/routes.py then imports the app instance from its own package using from . import app.
+Clean Entry Point: main.py becomes a simple script to run the development server, importing the fully configured app from the app package.
+Further Debugging Steps for the Agent after these changes:
+Start with main.py: Run python main.py from the Replit shell. Check the console for any startup errors.
+Test Basic Routes: Try accessing / in the browser.
+Test Form Submission: Submit the form and carefully check the Replit console logs (especially logger.error messages with exc_info=True) if the /results page doesn't load or shows an error. The exc_info=True will give you the full traceback for runtime errors.
+Check static/temp directory: After submitting the form, see if chart PNGs are being created in static/temp. Check permissions if not.
+Inspect show_results carefully: Ensure that suggested_pump_obj is actually a ParsedPumpData instance and that chart_paths is being populated correctly. The placeholder chart generation logic in generate_pump_charts needs to be replaced with logic that uses the actual parsed_pump_obj.curves data.
+This restructuring should eliminate the circular import errors and provide a more robust and standard Flask application structure. The "crashing" is likely due to either runtime errors in the route logic (now moved to routes.py) or issues with data not being what's expected (e.g., suggested_pump_obj being None or chart paths being incorrect).

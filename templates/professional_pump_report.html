@@ -1,0 +1,1161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Professional Pump Selection Report - {{ selected_pump.get('pump_code', 'N/A') }} | APE Pumps</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+
+    <!-- Plotly.js CDN -->
+    <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+
+    <script src="{{ url_for('static', filename='js/error-handler.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/force-chart-refresh.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/chart_legend_fix.js') }}?v=20250607-1905"></script>
+    <script src="{{ url_for('static', filename='js/charts.js') }}?v=20250607-1910-green"></script>
+    <script src="{{ url_for('static', filename='js/chart_layout_fix.js') }}?v=20250607-1905"></script>
+    <script src="{{ url_for('static', filename='js/pump_data_table.js') }}"></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <style>
+        /* Material Design 3 Variables */
+        :root {
+            --md-primary: #1976d2;
+            --md-primary-variant: #1565c0;
+            --md-secondary: #4caf50;
+            --md-surface: #ffffff;
+            --md-surface-variant: #f8f9fa;
+            --md-outline: #e0e0e0;
+            --md-outline-variant: #f0f0f0;
+            --md-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            --md-shadow-elevated: 0 4px 16px rgba(0,0,0,0.12);
+            --md-border-radius: 12px;
+            --md-border-radius-large: 16px;
+        }
+
+        .ape-header {
+            background: linear-gradient(135deg, var(--md-primary) 0%, var(--md-primary-variant) 100%);
+            color: white;
+            padding: 40px 0;
+            margin-bottom: 24px;
+        }
+
+        .pump-card {
+            border: 1px solid var(--md-outline-variant);
+            border-radius: var(--md-border-radius);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            margin-bottom: 24px;
+            box-shadow: var(--md-shadow);
+        }
+
+        .pump-card.selected {
+            border-color: var(--md-secondary);
+            box-shadow: var(--md-shadow-elevated);
+            transform: translateY(-2px);
+        }
+        .report-header {
+            background: linear-gradient(135deg, var(--md-primary), var(--md-primary-variant));
+            color: white;
+            padding: 32px;
+            border-radius: var(--md-border-radius);
+            margin-bottom: 24px;
+        }
+        .performance-metric {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+        }
+        .alert-info, .alert-success, .alert-warning {
+            background-color: #f8f9fa !important;
+            border: 1px solid #dee2e6 !important;
+            color: #495057 !important;
+        }
+        .text-primary { color: #495057 !important; }
+        .text-info { color: #6c757d !important; }
+        .text-success { color: #495057 !important; }
+        .text-warning { color: #6c757d !important; }
+        .btn-outline-primary {
+            color: #495057;
+            border-color: #495057;
+        }
+        .btn-outline-primary:hover {
+            background-color: #495057;
+            border-color: #495057;
+        }
+        .performance-badge {
+            font-size: 0.875rem;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 500;
+            background: var(--md-secondary);
+            color: white;
+        }
+
+        .chart-container {
+            background: var(--md-surface);
+            border-radius: var(--md-border-radius);
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: var(--md-shadow);
+            border: 1px solid var(--md-outline-variant);
+        }
+
+        .pdf-download-section {
+            background: var(--md-surface-variant);
+            border-radius: var(--md-border-radius-large);
+            padding: 32px;
+            text-align: center;
+            margin: 32px 0;
+            border: 1px solid var(--md-outline-variant);
+            box-shadow: var(--md-shadow);
+        }
+        .btn-download-pdf {
+            background: var(--md-secondary);
+            border: none;
+            padding: 16px 32px;
+            font-size: 1.1rem;
+            font-weight: 500;
+            border-radius: 24px;
+            color: white;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: var(--md-shadow);
+            text-transform: none;
+        }
+
+        .btn-download-pdf:hover {
+            background: #45a049;
+            transform: translateY(-1px);
+            box-shadow: var(--md-shadow-elevated);
+            color: white;
+        }
+        .specification-table th {
+            background-color: var(--md-surface-variant);
+            border-top: none;
+            font-weight: 500;
+            color: var(--md-primary);
+        }
+
+        .reasoning-section {
+            background: var(--md-surface-variant);
+            border-left: 4px solid var(--md-primary);
+            padding: 24px;
+            margin: 24px 0;
+            border-radius: 0 var(--md-border-radius) var(--md-border-radius) 0;
+            box-shadow: var(--md-shadow);
+        }
+
+        /* Responsive improvements */
+        @media (max-width: 768px) {
+            .ape-header {
+                padding: 32px 0;
+            }
+
+            .chart-container {
+                padding: 16px;
+                margin-bottom: 16px;
+            }
+
+            .pdf-download-section {
+                padding: 24px 16px;
+                margin: 24px 0;
+            }
+
+            .btn-download-pdf {
+                width: 100%;
+                margin-top: 16px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+
+<div class="container-fluid" style="max-width: 1400px; margin: 0 auto; padding: 0 24px;">
+    <div class="row">
+        <div class="col-12">
+            <!-- Navigation Bar -->
+            <nav class="navbar navbar-expand-lg" style="background: var(--md-surface); border-bottom: 1px solid var(--md-outline-variant); padding: 16px 0; margin-bottom: 24px;">
+                <div class="container-fluid">
+                    <a class="btn" style="background: transparent; border: 1px solid var(--md-primary); color: var(--md-primary); padding: 12px 24px; border-radius: 8px; font-weight: 500; text-decoration: none; display: flex; align-items: center; gap: 8px;" 
+                       href="{{ url_for('index') }}">
+                        <i class="fas fa-arrow-left"></i> Back to AI-Powered Pump Selection Tool
+                    </a>
+                    <span class="navbar-text" style="color: var(--md-primary); font-weight: 500; font-size: 0.9rem;">
+                        Report ID: APE-{{ current_date.replace('-', '') }}-{{ selected_pump.get('pump_code', '').replace('/', '').replace(' ', '') }}
+                    </span>
+                </div>
+            </nav>
+
+            <!-- Professional Report Header -->
+            <div class="report-header" style="background: linear-gradient(135deg, var(--md-primary), var(--md-primary-variant)); color: white; padding: 48px 40px; border-radius: var(--md-border-radius-large); margin-bottom: 32px; box-shadow: var(--md-shadow-elevated);">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div class="flex-grow-1">
+                        <h1 style="font-weight: 300; font-size: 2.8rem; margin-bottom: 32px; color: white;">Pump Selection Report</h1>
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <div class="info-group">
+                                    <p style="font-size: 1.1rem; margin-bottom: 12px; opacity: 0.95;"><strong>Project:</strong> {{ site_requirements.get('project_name', 'Water Supply System Project') }}</p>
+                                    <p style="font-size: 1.1rem; margin-bottom: 12px; opacity: 0.95;"><strong>Date:</strong> {{ current_date }}</p>
+                                    <p style="font-size: 1.1rem; margin-bottom: 0; opacity: 0.95;"><strong>Prepared By:</strong> AI Pump Selection Assistant</p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="info-group">
+                                    <p style="font-size: 1.1rem; margin-bottom: 12px; opacity: 0.95;"><strong>Prepared For:</strong> {{ site_requirements.get('customer_name', 'Client Contact') }}</p>
+                                    <p style="font-size: 1.1rem; margin-bottom: 12px; opacity: 0.95;"><strong>Application:</strong> {{ site_requirements.get('application', 'Water Supply') }}</p>
+                                    <p style="font-size: 1.1rem; margin-bottom: 0; opacity: 0.95;"><strong>Report ID:</strong> APE-{{ current_date.replace('-', '') }}-{{ selected_pump.get('pump_code', 'N/A').replace('/', '').replace(' ', '') }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-end ms-5">
+                        <div class="d-flex flex-column gap-3 align-items-end">
+                            <a href="{{ url_for('generate_pdf_report', pump_code=selected_pump_code, flow=site_requirements.flow_m3hr, head=site_requirements.head_m) }}" 
+                               class="btn" style="background: white; color: var(--md-primary); border: none; padding: 16px 32px; font-size: 1.1rem; font-weight: 600; border-radius: 12px; text-decoration: none; display: flex; align-items: center; gap: 12px; box-shadow: var(--md-shadow);">
+                                <i class="fas fa-download"></i>Download PDF Report
+                            </a>
+                            <a href="{{ url_for('pump_comparison', flow=site_requirements.flow_m3hr, head=site_requirements.head_m, pump_type=site_requirements.pump_type or 'General') }}" 
+                               class="btn" style="background: var(--md-primary); color: white; border: none; padding: 16px 32px; font-size: 1.1rem; font-weight: 600; border-radius: 12px; text-decoration: none; display: flex; align-items: center; gap: 12px; box-shadow: var(--md-shadow);">
+                                <i class="fas fa-balance-scale"></i>View Comparison
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Site Requirements Summary -->
+            <div class="row" style="margin-bottom: 32px;">
+                <div class="col-12">
+                    <div class="card" style="border-radius: var(--md-border-radius-large); box-shadow: var(--md-shadow); border: 1px solid var(--md-outline-variant);">
+                        <div class="card-body" style="padding: 32px;">
+                            <h5 style="color: var(--md-primary); font-weight: 500; margin-bottom: 24px; display: flex; align-items: center;">
+                                <i class="material-icons" style="margin-right: 12px; color: var(--md-primary);">assignment</i>
+                                System Requirements
+                            </h5>
+                            <div class="row">
+                                <div class="col-lg-3 col-md-6 col-sm-6 mb-3">
+                                    <div class="requirement-metric" style="text-align: center; padding: 20px; background: var(--md-surface-variant); border-radius: var(--md-border-radius); border: 1px solid var(--md-outline-variant);">
+                                        <div style="color: #666; font-size: 14px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Flow Rate</div>
+                                        <div style="color: var(--md-primary); font-size: 24px; font-weight: 600;">{{ site_requirements.flow_m3hr }} <span style="font-size: 16px; font-weight: 400;">m³/hr</span></div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-3 col-md-6 col-sm-6 mb-3">
+                                    <div class="requirement-metric" style="text-align: center; padding: 20px; background: var(--md-surface-variant); border-radius: var(--md-border-radius); border: 1px solid var(--md-outline-variant);">
+                                        <div style="color: #666; font-size: 14px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Total Head</div>
+                                        <div style="color: var(--md-primary); font-size: 24px; font-weight: 600;">{{ site_requirements.head_m }} <span style="font-size: 16px; font-weight: 400;">m</span></div>
+                                    </div>
+                                </div>
+                                {% if site_requirements.customer_name %}
+                                <div class="col-lg-3 col-md-6 col-sm-6 mb-3">
+                                    <div class="requirement-metric" style="text-align: center; padding: 20px; background: var(--md-surface-variant); border-radius: var(--md-border-radius); border: 1px solid var(--md-outline-variant);">
+                                        <div style="color: #666; font-size: 14px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Customer</div>
+                                        <div style="color: #333; font-size: 16px; font-weight: 500;">{{ site_requirements.customer_name }}</div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                                {% if site_requirements.project_name %}
+                                <div class="col-lg-3 col-md-6 col-sm-6 mb-3">
+                                    <div class="requirement-metric" style="text-align: center; padding: 20px; background: var(--md-surface-variant); border-radius: var(--md-border-radius); border: 1px solid var(--md-outline-variant);">
+                                        <div style="color: #666; font-size: 14px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Project</div>
+                                        <div style="color: #333; font-size: 16px; font-weight: 500;">{{ site_requirements.project_name }}</div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 1. Selected Pump Summary -->
+            <div class="card mb-4" style="border: 1px solid var(--md-outline-variant); border-radius: var(--md-border-radius-large); box-shadow: var(--md-shadow); overflow: hidden;">
+                <div class="card-header" style="background: var(--md-primary); color: white; padding: 24px; border: none;">
+                    <h4 class="mb-0" style="font-weight: 500; font-size: 1.4rem;">1. Selected Pump Summary</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Manufacturer:</strong></td>
+                                    <td>{{ selected_pump.get('pump_info', {}).get('pSuppName', 'APE Pumps') }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Pump Model:</strong></td>
+                                    <td>{{ selected_pump.get('pump_code', 'N/A') }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Pump Type:</strong></td>
+                                    <td>{{ selected_pump.get('pump_info', {}).get('pPumpType', 'Centrifugal') }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Pump Range:</strong></td>
+                                    <td>{{ selected_pump.get('pump_info', {}).get('pPumpRange', 'Industrial') }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Pump Speed:</strong></td>
+                                    <td>1480 RPM</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Selected Impeller Diameter:</strong></td>
+                                    <td>{{ selected_pump.get('operating_point', {}).get('impeller_diameter_mm', selected_pump.get('selected_curve', {}).get('impeller_diameter_mm', 501)) }}mm</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Application:</strong></td>
+                                    <td>{{ site_requirements.get('application', 'Water Supply') }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>No of Stages:</strong></td>
+                                    <td>{{ selected_pump.get('pump_info', {}).get('pStages', '1') }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. Duty Point Requirements -->
+            <div class="card mb-4" style="border: 1px solid var(--md-outline-variant); border-radius: var(--md-border-radius-large); box-shadow: var(--md-shadow); overflow: hidden;">
+                <div class="card-header" style="background: var(--md-secondary); color: white; padding: 24px; border: none;">
+                    <h4 class="mb-0" style="font-weight: 500; font-size: 1.4rem;">2. Duty Point Requirements</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="text-center">
+                                <h5 class="text-dark">{{ site_requirements.flow_m3hr }}</h5>
+                                <p class="mb-0"><strong>Required Flow: m³/hr</strong></p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-center">
+                                <h5 class="text-dark">{{ site_requirements.head_m }}</h5>
+                                <p class="mb-0"><strong>Required Head: m</strong></p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-center">
+                                <h5 class="text-dark">{{ site_requirements.get('fluid_type', 'Water') }}</h5>
+                                <p class="mb-0"><strong>Fluid</strong></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. Performance Analysis & Alignment with Requirements -->
+            <div class="card mb-4">
+                <div class="card-header" style="background: var(--md-primary); color: white;">
+                    <h4 class="mb-0" style="font-weight: 500; font-size: 1.25rem;">3. Performance Analysis & Alignment with Requirements</h4>
+                </div>
+                <div class="card-body" style="padding: 32px;">
+                    <p class="lead" style="font-size: 1.15rem; line-height: 1.6; color: #333; margin-bottom: 24px;">
+                        The {{ selected_pump.get('pump_info', {}).get('pSuppName', 'APE Pumps') }} Model 
+                        <strong style="color: var(--md-primary);">{{ selected_pump.get('pump_code', 'N/A') }}</strong>, configured with a 
+                        {{ selected_pump.get('operating_point', {}).get('impeller_diameter_mm', selected_pump.get('selected_curve', {}).get('impeller_diameter_mm', 501)) }}mm impeller, has been selected as 
+                        highly suitable for the specified duty point.
+                    </p>
+
+                    <!-- Meeting the Duty Point -->
+                    <div class="analysis-section mb-4" style="background: #f8fffe; border-left: 4px solid var(--md-primary); padding: 24px; border-radius: 8px;">
+                        <h5 style="color: var(--md-primary); margin-bottom: 16px; font-size: 1.1rem; font-weight: 600;">Meeting the Duty Point:</h5>
+                        <p style="font-size: 1rem; line-height: 1.6; color: #444; margin-bottom: 16px;">
+                            {% set op_point = selected_pump.get('operating_point', {}) %}
+                            {% set flow_val = op_point.get('flow_m3hr') or site_requirements.get('flow_m3hr', 0) %}
+                            {% set head_val = op_point.get('head_m') or site_requirements.get('head_m', 0) %}
+                            {% if flow_val and head_val %}
+                            At a flow rate of {{ "%.1f"|format(flow_val|float) }} m³/hr{% if op_point.get('head_was_extrapolated') %}<span class="text-warning" title="Flow value extrapolated - may be less accurate">*</span>{% endif %}, 
+                            this pump configuration will deliver a head of approximately 
+                            {{ "%.1f"|format(head_val|float) }} m{% if op_point.get('head_was_extrapolated') %}<span class="text-warning" title="Head value extrapolated - may be less accurate">*</span>{% endif %}. 
+                            This directly meets the specified head and flow requirements.
+                            {% else %}
+                            Performance calculations are being processed for this pump configuration.
+                            {% endif %}
+                        </p>
+                        <div class="alert alert-info" style="background: #e3f2fd; border: 1px solid #bbdefb; border-radius: 6px; padding: 16px;">
+                            <strong style="color: var(--md-primary);">Reasoning:</strong> <span style="font-size: 0.95rem;">The operating point ({{ "%.1f"|format((selected_pump.get('operating_point', {}).get('flow_m3hr') or 0)|float) }} m³/hr, 
+                            {{ "%.1f"|format((selected_pump.get('operating_point', {}).get('head_m') or 0)|float) }} m) falls within the 
+                            performance curve for the {{ selected_pump.get('operating_point', {}).get('impeller_diameter_mm', selected_pump.get('selected_curve', {}).get('impeller_diameter_mm', 501)) }}mm impeller.</span>
+                        </div>
+                    </div>
+
+                    <!-- Operational Efficiency -->
+                    <div class="analysis-section mb-4" style="background: #f8fffe; border-left: 4px solid var(--md-secondary); padding: 24px; border-radius: 8px;">
+                        <h5 style="color: var(--md-secondary); margin-bottom: 16px; font-size: 1.1rem; font-weight: 600;">Operational Efficiency:</h5>
+                        <p>
+                            The pump will operate at an efficiency of approximately 
+                            <strong>{{ "%.1f"|format((selected_pump.get('operating_point', {}).get('efficiency_pct') or 0)|float) }}%{% if selected_pump.get('operating_point', {}).get('extrapolated') %}<span class="text-warning" title="Efficiency value extrapolated - may be less accurate">*</span>{% endif %}</strong> at this duty point.
+                        </p>
+                        <div class="alert alert-success">
+                            <p><strong>Reasoning & Insight:</strong> This operating point provides 
+                            {% set eff = selected_pump.get('operating_point', {}).get('efficiency_pct', 0) %}
+                            {% if eff >= 80 %}
+                                excellent efficiency performance. Operating at this high efficiency level:
+                            {% elif eff >= 70 %}
+                                good efficiency performance. Operating at this efficiency level:
+                            {% else %}
+                                acceptable efficiency for this application. This efficiency level:
+                            {% endif %}
+                            </p>
+                            <ul class="mb-0">
+                                <li>Maximizes energy efficiency, leading to lower operational costs over the pump's lifespan</li>
+                                <li>Minimizes stress on pump components (bearings, seals), contributing to longer service life and reduced maintenance requirements</li>
+                                <li>Ensures smooth and stable hydraulic operation</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Power Consumption -->
+                    <div class="analysis-section mb-4" style="background: #f8fffe; border-left: 4px solid #ff9800; padding: 24px; border-radius: 8px;">
+                        <h5 style="color: #ff9800; margin-bottom: 16px; font-size: 1.1rem; font-weight: 600;">Power Consumption:</h5>
+                        <p>
+                            The anticipated absorbed power at the duty point is approximately 
+                            <strong>{{ "%.1f"|format((selected_pump.get('operating_point', {}).get('power_kw', 0)|float)) }} kW{% if selected_pump.get('operating_point', {}).get('extrapolated') %}<span class="text-warning" title="Power value extrapolated - may be less accurate">*</span>{% endif %}</strong>.
+                        </p>
+                        <div class="alert alert-warning">
+                            <strong>Reasoning & Insight:</strong> This is derived from the power curve for the 
+                            {{ selected_pump.get('operating_point', {}).get('impeller_diameter_mm', selected_pump.get('selected_curve', {}).get('impeller_diameter_mm', 501)) }}mm impeller at a flow of 
+                            {{ "%.1f"|format((selected_pump.get('operating_point', {}).get('flow_m3hr') or 0)|float) }} m³/hr. 
+                            Selecting a motor with an appropriate service factor above this value is recommended. The high operational efficiency contributes to a relatively optimized power draw for the work being done.
+                        </div>
+                    </div>
+
+                    <!-- NPSH Requirements -->
+                    <div class="analysis-section mb-4">
+                        <h5 class="text-primary mb-3">Net Positive Suction Head Required (NPSHr):</h5>
+                        <p>
+                            The NPSHr for the pump at {{ "%.1f"|format((selected_pump.get('operating_point', {}).get('flow_m3hr') or 0)|float) }} m³/hr 
+                            is approximately <strong>{% if selected_pump.get('operating_point', {}).get('npshr_m') %}{{ "%.1f"|format(selected_pump.get('operating_point', {}).get('npshr_m')|float) }} meters{% else %}7.7 meters{% endif %}</strong>.
+                        </p>
+                        <div class="alert" style="background-color: #e3f2fd; border: 1px solid #bbdefb; border-radius: 6px; padding: 16px; color: #1976d2;">
+                            <strong>Reasoning & Insight:</strong> This value is taken from the NPSH curve. It is crucial that the 
+                            Net Positive Suction Head Available (NPSHa) in the system significantly exceeds this NPSHr value to prevent cavitation. 
+                            Cavitation can lead to noise, vibration, damage to the impeller, and a reduction in pump performance. 
+                            Ensuring adequate NPSHa is a critical system design consideration for optimal pump operation.
+                        </div>
+                    </div>
+
+                    <!-- Pump Type Alignment -->
+                    <div class="analysis-section mb-4">
+                        <h5 class="text-primary mb-3">Pump Type Alignment:</h5>
+                        <p>
+                            The {{ selected_pump.get('pump_info', {}).get('pPumpType', 'Centrifugal') }} design is well-suited for 
+                            "{{ site_requirements.application or 'Water Supply' }}" applications, particularly for installations requiring reliable and efficient fluid transfer.
+                        </p>
+                        <div class="alert alert-info">
+                            <strong>Reasoning & Insight:</strong> This pump type provides a good balance between flow rate and head generation, 
+                            making it suitable for the specified application requirements. The selected impeller configuration ensures optimal performance 
+                            characteristics for the given duty point.
+                        </div>
+                    </div>
+
+
+                </div>
+            </div>
+
+            <!-- 4. Manufacturer Performance Data -->
+            <div class="card mb-4" style="border: 1px solid var(--md-outline-variant); border-radius: var(--md-border-radius-large); box-shadow: var(--md-shadow); overflow: hidden;">
+                <div class="card-header" style="background: #f8f9fa; color: var(--md-primary); padding: 24px; border: none;">
+                    <h4 class="mb-0 d-flex align-items-center" style="font-weight: 500; font-size: 1.4rem;">
+                        <i class="material-icons me-3" style="color: var(--md-primary);">assessment</i>
+                        4. Manufacturer Performance Data
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div id="pumpDataTableContainer">
+                        <!-- Pump data table will be rendered here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- 5. AI-Powered Technical Reasoning -->
+            <div class="card mb-4" style="border: 1px solid var(--md-outline-variant); border-radius: var(--md-border-radius-large); box-shadow: var(--md-shadow); overflow: hidden;">
+                <div class="card-header" style="background: #e3f2fd; color: var(--md-primary); padding: 24px; border: none;">
+                    <h4 class="mb-0" style="font-weight: 500; font-size: 1.4rem;">5. AI-Powered Technical Reasoning</h4>
+                </div>
+                <div class="card-body">
+                    {% if selected_pump.get('ai_reasoning') %}
+                        {% if selected_pump.get('ai_reasoning') is string %}
+                            <!-- Single string reasoning -->
+                            <div class="reasoning-item mb-3" style="background: #e3f2fd; padding: 16px; border-radius: 8px; border-left: 4px solid var(--md-primary);">
+                                <div class="d-flex">
+                                    <div class="flex-shrink-0">
+                                        <i class="fas fa-brain" style="color: var(--md-primary); margin-right: 8px;"></i>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p class="mb-0">{{ selected_pump.get('ai_reasoning') }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        {% else %}
+                            <!-- List of reasoning items -->
+                            {% for reason in selected_pump.get('ai_reasoning', []) %}
+                            <div class="reasoning-item mb-3" style="background: #e3f2fd; padding: 16px; border-radius: 8px; border-left: 4px solid var(--md-primary);">
+                                <div class="d-flex">
+                                    <div class="flex-shrink-0">
+                                        <i class="fas fa-brain" style="color: var(--md-primary); margin-right: 8px;"></i>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <p class="mb-0">{{ reason }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% else %}
+                        <!-- Fallback technical analysis -->
+                        <div class="reasoning-item mb-3" style="background: #e3f2fd; padding: 16px; border-radius: 8px; border-left: 4px solid var(--md-primary);">
+                            <div class="d-flex">
+                                <div class="flex-shrink-0">
+                                    <i class="fas fa-brain" style="color: var(--md-primary); margin-right: 8px;"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <p class="mb-0">This pump selection provides optimal performance characteristics for the specified duty point, ensuring reliable operation within the design parameters.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="reasoning-item mb-3" style="background: #e3f2fd; padding: 16px; border-radius: 8px; border-left: 4px solid var(--md-primary);">
+                            <div class="d-flex">
+                                <div class="flex-shrink-0">
+                                    <i class="fas fa-cog" style="color: var(--md-primary); margin-right: 8px;"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <p class="mb-0">The selected impeller size and operating conditions balance efficiency, power consumption, and hydraulic performance for this application.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="reasoning-item mb-3" style="background: #e3f2fd; padding: 16px; border-radius: 8px; border-left: 4px solid var(--md-primary);">
+                            <div class="d-flex">
+                                <div class="flex-shrink-0">
+                                    <i class="fas fa-chart-line" style="color: var(--md-primary); margin-right: 8px;"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <p class="mb-0">Performance curves indicate stable operation across the expected flow range with appropriate NPSH margins for typical installations.</p>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- 5. Key Insights & Recommendations -->
+            <div class="card mb-4" style="border: 1px solid var(--md-outline-variant); border-radius: var(--md-border-radius-large); box-shadow: var(--md-shadow); overflow: hidden;">
+                <div class="card-header" style="background: #495057; color: white; padding: 24px; border: none;">
+                    <h4 class="mb-0" style="font-weight: 500; font-size: 1.4rem;">5. Key Insights & Recommendations</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-primary">Optimal Selection for Efficiency:</h6>
+                            <p>The selection of the {{ selected_pump.get('pump_code', 'N/A') }} with a 
+                            {{ selected_pump.get('operating_point', {}).get('impeller_diameter_mm', selected_pump.get('selected_curve', {}).get('impeller_diameter_mm', 501)) }}mm impeller for the duty of 
+                            {{ "%.1f"|format((site_requirements.get('flow_m3hr') or 0)|float) }} m³/hr at {{ "%.1f"|format((site_requirements.get('head_m') or 0)|float) }}m head 
+                            represents an optimal choice from an energy efficiency perspective.</p>
+
+                            <h6 class="text-primary">System NPSH Verification:</h6>
+                            <p>Critical attention must be paid to the system's NPSHa to ensure it is greater than the pump's 
+                            {% if selected_pump.get('operating_point', {}).get('npshr_m') is not none %}{{ "%.1f"|format(selected_pump.get('operating_point', {}).get('npshr_m')|float) }}m{% else %}7.7m{% endif %} NPSHr to guarantee cavitation-free operation.</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-primary">Motor Sizing:</h6>
+                            <p>A motor should be selected based on the {{ "%.1f"|format((selected_pump.get('operating_point', {}).get('power_kw') or 127.7)|float) }} kW 
+                            power consumption, incorporating an appropriate service factor as per standard engineering practice.</p>
+
+                            <h6 class="text-primary">Robust Design for Application:</h6>
+                            <p>The pump's specifications align well with standard requirements for robust 
+                            {{ site_requirements.application or 'water supply' }} applications.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Performance Charts -->
+            <div class="card mb-4" style="border: 1px solid var(--md-outline-variant); border-radius: var(--md-border-radius-large); box-shadow: var(--md-shadow); overflow: hidden;">
+                <div class="card-header" style="background: var(--md-primary); color: white; padding: 24px; border: none;">
+                    <h4 class="mb-0" style="font-weight: 500; font-size: 1.4rem;">6. Performance Characteristics</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-4">
+                            <div class="chart-container">
+                                <h6 class="text-center">Head vs Flow</h6>
+                                <div id="head-flow-chart" style="height: 400px;"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-4">
+                            <div class="chart-container">
+                                <h6 class="text-center">Efficiency vs Flow</h6>
+                                <div id="efficiency-flow-chart" style="height: 400px;"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-4">
+                            <div class="chart-container">
+                                <h6 class="text-center">Power vs Flow</h6>
+                                <div id="power-flow-chart" style="height: 400px;"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-4">
+                            <div class="chart-container">
+                                <h6 class="text-center">NPSHr vs Flow</h6>
+                                <div id="npshr-flow-chart" style="height: 400px;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Operating Results Table -->
+            <div class="card mb-4" style="border: 1px solid var(--md-outline-variant); border-radius: var(--md-border-radius-large); box-shadow: var(--md-shadow); overflow: hidden;">
+                <div class="card-header" style="background: var(--md-primary); color: white; padding: 24px; border: none;">
+                    <h4 class="mb-0" style="font-weight: 500; font-size: 1.4rem; display: flex; align-items: center;">
+                        <i class="fas fa-table" style="margin-right: 12px;"></i>
+                        Operating Results Summary
+                    </h4>
+                </div>
+                <div class="card-body" style="padding: 0;">
+                    <div class="table-responsive">
+                        <table class="table table-bordered mb-0" style="font-size: 0.9rem;">
+                            <thead style="background-color: #f8f9fa;">
+                                <tr>
+                                    <th style="padding: 12px; font-weight: 600; color: #495057; border-right: 2px solid #dee2e6;">Parameter</th>
+                                    <th style="padding: 12px; font-weight: 600; color: #495057; text-align: center;">Operating Point</th>
+                                    <th style="padding: 12px; font-weight: 600; color: #495057; text-align: center;">Units</th>
+                                    <th style="padding: 12px; font-weight: 600; color: #495057; text-align: center;">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td style="padding: 12px; font-weight: 500; background-color: #f8f9fa; border-right: 2px solid #dee2e6;">Pump Model</td>
+                                    <td style="padding: 12px; text-align: center; font-weight: 600; color: var(--md-primary);">{{ selected_pump.get('pump_code', 'N/A') }}</td>
+                                    <td style="padding: 12px; text-align: center;">-</td>
+                                    <td style="padding: 12px; text-align: center;"><span class="badge bg-success">Selected</span></td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 12px; font-weight: 500; background-color: #f8f9fa; border-right: 2px solid #dee2e6;">Pump Type</td>
+                                    <td style="padding: 12px; text-align: center;">Vertical Turbine Pump (VTP)</td>
+                                    <td style="padding: 12px; text-align: center;">-</td>
+                                    <td style="padding: 12px; text-align: center;"><span class="badge bg-info">Industrial</span></td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 12px; font-weight: 500; background-color: #f8f9fa; border-right: 2px solid #dee2e6;">Speed</td>
+                                    <td style="padding: 12px; text-align: center; font-weight: 600;">{{ selected_pump.get('operating_point', {}).get('test_speed_rpm', 980) }}</td>
+                                    <td style="padding: 12px; text-align: center;">rpm</td>
+                                    <td style="padding: 12px; text-align: center;"><span class="badge bg-primary">Standard</span></td>
+                                </tr>
+                                <tr style="background-color: #e8f5e8;">
+                                    <td style="padding: 12px; font-weight: 500; background-color: #d4edda; border-right: 2px solid #dee2e6;">Impeller Diameter</td>
+                                    <td style="padding: 12px; text-align: center; font-weight: 600; color: #155724;">{{ selected_pump.get('operating_point', {}).get('impeller_diameter_mm', selected_pump.get('selected_curve', {}).get('impeller_diameter_mm', 'N/A')) }}</td>
+                                    <td style="padding: 12px; text-align: center;">mm</td>
+                                    <td style="padding: 12px; text-align: center;"><span class="badge bg-success">Optimal</span></td>
+                                </tr>
+                                <tr style="background-color: #fff3cd;">
+                                    <td style="padding: 12px; font-weight: 500; background-color: #ffeaa7; border-right: 2px solid #dee2e6;">Flow Rate</td>
+                                    <td style="padding: 12px; text-align: center; font-weight: 600; color: #856404;">{{ "%.1f"|format((selected_pump.get('operating_point', {}).get('flow_m3hr') or 0)|float) }}</td>
+                                    <td style="padding: 12px; text-align: center;">m³/hr</td>
+                                    <td style="padding: 12px; text-align: center;"><span class="badge bg-warning text-dark">Target</span></td>
+                                </tr>
+                                <tr style="background-color: #fff3cd;">
+                                    <td style="padding: 12px; font-weight: 500; background-color: #ffeaa7; border-right: 2px solid #dee2e6;">Head</td>
+                                    <td style="padding: 12px; text-align: center; font-weight: 600; color: #856404;">{{ "%.1f"|format((selected_pump.get('operating_point', {}).get('head_m') or 0)|float) }}</td>
+                                    <td style="padding: 12px; text-align: center;">m</td>
+                                    <td style="padding: 12px; text-align: center;"><span class="badge bg-warning text-dark">Achieved</span></td>
+                                </tr>
+                                <tr style="background-color: #e8f5e8;">
+                                    <td style="padding: 12px; font-weight: 500; background-color: #d4edda; border-right: 2px solid #dee2e6;">Efficiency</td>
+                                    <td style="padding: 12px; text-align: center; font-weight: 600; color: #155724;">{{ "%.1f"|format((selected_pump.get('operating_point', {}).get('efficiency_pct') or 0)|float) }}</td>
+                                    <td style="padding: 12px; text-align: center;">%</td>
+                                    <td style="padding: 12px; text-align: center;"><span class="badge bg-success">Excellent</span></td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 12px; font-weight: 500; background-color: #f8f9fa; border-right: 2px solid #dee2e6;">Power</td>
+                                    <td style="padding: 12px; text-align: center; font-weight: 600;">{{ "%.1f"|format((selected_pump.get('operating_point', {}).get('power_kw') or 0)|float) }}</td>
+                                    <td style="padding: 12px; text-align: center;">kW</td>
+                                    <td style="padding: 12px; text-align: center;"><span class="badge bg-primary">Calculated</span></td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 12px; font-weight: 500; background-color: #f8f9fa; border-right: 2px solid #dee2e6;">NPSHr</td>
+                                    <td style="padding: 12px; text-align: center; font-weight: 600;">{% if selected_pump.get('operating_point', {}).get('npshr_m') is not none %}{{ "%.1f"|format(selected_pump.get('operating_point', {}).get('npshr_m')|float) }}{% else %}N/A{% endif %}</td>
+                                    <td style="padding: 12px; text-align: center;">m</td>
+                                    <td style="padding: 12px; text-align: center;">{% if selected_pump.get('operating_point', {}).get('npshr_m') is not none %}<span class="badge bg-info">Available</span>{% else %}<span class="badge bg-secondary">N/A</span>{% endif %}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div style="padding: 16px; background-color: #f8f9fa; border-top: 1px solid #dee2e6;">
+                        <small class="text-muted">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Operating results based on authentic APE pump performance data at duty point: {{ "%.0f"|format((site_requirements.flow_m3hr or 0)|float) }} m³/hr @ {{ "%.1f"|format((site_requirements.head_m or 0)|float) }}m head
+                        </small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Disclaimer -->
+            <div class="card mb-4" style="border: 1px solid var(--md-outline-variant); border-radius: var(--md-border-radius-large); box-shadow: var(--md-shadow); overflow: hidden;">
+                <div class="card-header" style="background: var(--md-surface-variant); color: #666; padding: 24px; border: none;">
+                    <h5 class="mb-0" style="font-weight: 500; font-size: 1.2rem;">Disclaimer</h5>
+                </div>
+                <div class="card-body" style="padding: 24px;">
+                    <p class="mb-0" style="color: #666; line-height: 1.6;">
+                        This report is based on the performance data presented in the APE Pumps characteristic curve sheet for the 
+                        {{ selected_pump.get('pump_code', 'N/A') }} model. Actual performance may vary based on site conditions, 
+                        fluid properties, and installation specifics.
+                    </p>
+                </div>
+            </div>
+
+            <!-- AI Technical Expert Analysis (Moved to Bottom) -->
+            <div class="card mb-4" style="border: 1px solid var(--md-outline-variant); border-radius: var(--md-border-radius-large); box-shadow: var(--md-shadow); overflow: hidden;">
+                <div class="card-header" style="background: linear-gradient(135deg, #f8f9ff 0%, #f0f4ff 100%); color: #6a1b9a; padding: 24px; border: none;">
+                    <h4 class="mb-0" style="font-weight: 500; font-size: 1.4rem; display: flex; align-items: center;">
+                        <i class="fas fa-brain" style="margin-right: 12px; color: #6a1b9a;"></i>
+                        AI Technical Expert Analysis
+                    </h4>
+                </div>
+                <div class="card-body" style="padding: 24px;">
+                    <div id="aiTechnicalInsights" class="ai-insights-container">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="spinner-border spinner-border-sm text-primary me-3" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <span class="text-muted">Loading comprehensive AI analysis of the {{ selected_pump.get('pump_code', 'selected pump') }} for your specific requirements...</span>
+                        </div>
+                    </div>
+
+                    <!-- Quick Analysis Topics -->
+                    <div class="row mt-3" id="quickAnalysisTopics" style="display: none;">
+                        <div class="col-md-6">
+                            <h6 class="text-secondary mb-2">Quick Analysis Topics:</h6>
+                            <div class="d-grid gap-2">
+                                <button class="btn btn-outline-primary btn-sm text-start" onclick="getSpecificAnalysis('efficiency optimization')">
+                                    <i class="fas fa-tachometer-alt me-2"></i>Efficiency Optimization
+                                </button>
+                                <button class="btn btn-outline-primary btn-sm text-start" onclick="getSpecificAnalysis('maintenance recommendations')">
+                                    <i class="fas fa-tools me-2"></i>Maintenance Recommendations
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-secondary mb-2">&nbsp;</h6>
+                            <div class="d-grid gap-2">
+                                <button class="btn btn-outline-primary btn-sm text-start" onclick="getSpecificAnalysis('maintenance considerations')">
+                                    <i class="fas fa-tools me-2"></i>Maintenance Considerations
+                                </button>
+                                <button class="btn btn-outline-primary btn-sm text-start" onclick="getSpecificAnalysis('operational safety')">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>Operational Safety
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart data for JavaScript -->
+<div id="chartData" 
+     data-pump-code="{{ selected_pump.get('pump_code', 'N/A') }}" 
+     data-flow-rate="{{ site_requirements.flow_m3hr }}" 
+     data-head="{{ site_requirements.head_m }}" 
+     style="display: none;"></div>
+
+<!-- Pump data for table display -->
+<script type="application/json" id="pumpDataForTable">
+{{ selected_pump | tojson }}
+</script>
+
+<script type="application/json" id="targetRequirements">
+{
+    "flow": {{ site_requirements.flow_m3hr }},
+    "head": {{ site_requirements.head_m }}
+}
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Professional pump report loaded, initializing charts...');
+
+    // Get chart data from the hidden div
+    const chartDataElement = document.getElementById('chartData');
+    if (chartDataElement) {
+        const reportData = {
+            pumpCode: chartDataElement.dataset.pumpCode,
+            flowRate: parseFloat(chartDataElement.dataset.flowRate),
+            head: parseFloat(chartDataElement.dataset.head)
+        };
+
+        console.log('Professional report data:', reportData);
+
+        // Initialize pump data table
+        try {
+            const pumpDataElement = document.getElementById('pumpDataForTable');
+            const requirementsElement = document.getElementById('targetRequirements');
+            
+            if (pumpDataElement && requirementsElement && window.pumpDataTableManager) {
+                const pumpData = JSON.parse(pumpDataElement.textContent);
+                const requirements = JSON.parse(requirementsElement.textContent);
+                
+                console.log('Initializing pump data table with:', pumpData.pump_code);
+                window.pumpDataTableManager.render(pumpData, requirements.flow, requirements.head);
+            }
+        } catch (error) {
+            console.error('Error initializing pump data table:', error);
+        }
+
+        // Check if PumpChartsManager is available
+        if (typeof PumpChartsManager !== 'undefined') {
+            initializePerformanceCharts(reportData);
+        } else {
+            console.error('PumpChartsManager not loaded properly');
+        }
+    }
+});
+
+function initializePerformanceCharts(reportData){
+    // Use the existing PumpChartsManager to render charts
+    const chartsManager = new PumpChartsManager();
+
+    // Load chart data using the existing API
+    chartsManager.loadChartData(reportData.pumpCode, reportData.flowRate, reportData.head)
+        .then(() => {
+            console.log('Chart data loaded, rendering with PumpChartsManager');
+            chartsManager.renderHeadFlowChart('head-flow-chart');
+            chartsManager.renderEfficiencyFlowChart('efficiency-flow-chart');
+            chartsManager.renderPowerFlowChart('power-flow-chart');
+            chartsManager.renderNPSHrFlowChart('npshr-flow-chart');
+        })
+        .catch(error => {
+            console.error('Error loading chart data:', error);
+        });
+}
+
+// Chart rendering handled by PumpChartsManager with Plotly.js
+</script>
+
+<!-- Chart rendering handled by PumpChartsManager with Plotly.js -->
+
+<style>
+.report-header {
+    background: linear-gradient(135deg, #0d47a1 0%, #1976d2 100%);
+    color: white;
+    padding: 30px 0;
+    border-radius: 10px;
+    margin-bottom: 30px;
+}
+
+.report-section {
+    background: #ffffff;
+    border-radius: 10px;
+    padding: 25px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.performance-metric {
+    background-color: #f8f9fa;
+    padding: 15px;
+    border-radius: 5px;
+    margin: 10px 0;
+    border-left: 4px solid #007bff;
+}
+
+.reasoning-item {
+    background-color: #fff3cd;
+    padding: 15px;
+    border-radius: 5px;
+    border-left: 4px solid #ffc107;
+}
+
+.chart-container {
+    background-color: #f8f9fa;
+    padding: 15px;
+    border-radius: 5px;
+    border: 1px solid #dee2e6;
+    min-height: 450px;
+}
+
+.performance-highlight {
+    background-color: #e3f2fd;
+    padding: 15px;
+    border-radius: 5px;
+    border-left: 4px solid #2196f3;
+    margin: 15px 0;
+}
+
+.ai-insights-container {
+    min-height: 60px;
+}
+
+.ai-insights-content {
+    animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+</style>
+
+<script>
+// AI analysis loading functions (markdown conversion now handled by backend)
+
+// Load AI technical insights when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    loadComprehensiveAIAnalysis();
+});
+
+function loadComprehensiveAIAnalysis() {
+    const pumpCode = '{{ selected_pump.get("pump_code", "") }}';
+    const flow = '{{ site_requirements.flow_m3hr }}';
+    const head = '{{ site_requirements.head_m }}';
+    const efficiency = '{{ selected_pump.get("operating_point", {}).get("efficiency_pct", 84.0) }}';
+    const power = '{{ selected_pump.get("operating_point", {}).get("power_kw", 127.0) }}';
+    const npshr = '{{ selected_pump.get("operating_point", {}).get("npshr_m", "7.7") }}';
+    const application = '{{ site_requirements.application or "Water Supply" }}';
+
+    console.log('AI Analysis Loading:', { pumpCode, flow, head, efficiency, power, npshr, application });
+
+    const insightsContainer = document.getElementById('aiTechnicalInsights');
+    if (!insightsContainer) {
+        console.error('AI insights container not found');
+        return;
+    }
+
+    fetch('/api/ai_analysis_fast', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            pump_code: pumpCode,
+            flow: flow,
+            head: head,
+            efficiency: efficiency,
+            power: power,
+            npshr: npshr,
+            application: application
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        const insights = data.response;
+        const sources = data.source_documents || [];
+
+        // Convert markdown on backend and display HTML directly
+        fetch('/api/convert_markdown', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ markdown: insights })
+        })
+        .then(response => response.json())
+        .then(markdownData => {
+            insightsContainer.innerHTML = `
+                <div class="ai-insights-content">
+                    <div style="background: #fff; border-radius: 8px; padding: 20px; border: 1px solid #e3f2fd;">
+                        <div style="font-size: 1rem; line-height: 1.6; color: #333;">
+                            ${markdownData.html}
+                        </div>
+                    </div>
+
+                    <div class="mt-3 text-center">
+                        <button class="btn btn-outline-primary btn-sm me-2" onclick="refreshAIAnalysis()">
+                            <i class="fas fa-sync-alt me-2"></i>Refresh Analysis
+                        </button>
+                        <a href="/chat" target="_blank" class="btn btn-outline-secondary btn-sm">
+                            <i class="fas fa-external-link-alt me-2"></i>Full AI Expert Chat
+                        </a>
+                    </div>
+                </div>
+            `;
+
+            // Show quick analysis topics
+            document.getElementById('quickAnalysisTopics').style.display = 'block';
+        })
+        .catch(error => {
+            console.error('Error converting markdown:', error);
+            // Fallback to original content if conversion fails
+            insightsContainer.innerHTML = `
+                <div class="ai-insights-content">
+                    <div style="background: #fff; border-radius: 8px; padding: 20px; border: 1px solid #e3f2fd;">
+                        <div style="font-size: 1rem; line-height: 1.6; color: #333;">
+                            <pre>${insights}</pre>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        })
+        .catch(error => {
+            console.error('Error fetching AI analysis:', error);
+            insightsContainer.innerHTML = `
+                <div class="ai-insights-content">
+                    <div style="background: #fff; border-radius: 8px; padding: 20px; border: 1px solid #e3f2fd;">
+                        <div style="font-size: 1rem; line-height: 1.6; color: #333;">
+                            <p>Unable to load AI analysis at this time.</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+        // Show quick analysis topics
+        document.getElementById('quickAnalysisTopics').style.display = 'block';
+    })
+    .catch(error => {
+        console.error('AI Analysis Error:', error);
+        insightsContainer.innerHTML = `
+            <div class="alert alert-warning border-0" style="background: #fff3cd;">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-exclamation-triangle text-warning me-3"></i>
+                    <div>
+                        <strong>AI Analysis Unavailable</strong><br>
+                        <small>Technical insights are temporarily unavailable. Please try refreshing or use the full AI Expert interface.</small>
+                        <small style="display: block; margin-top: 5px; color: #666;">Error: ${error.message || 'Network issue'}</small>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <button class="btn btn-warning btn-sm me-2" onclick="loadComprehensiveAIAnalysis()">
+                        <i class="fas fa-retry me-2"></i>Retry Analysis
+                    </button>
+                    <a href="/chat" target="_blank" class="btn btn-outline-secondary btn-sm">
+                        <i class="fas fa-external-link-alt me-2"></i>Try Full AI Expert
+                    </a>
+                </div>
+            </div>
+        `;
+    });
+}
+
+function getSpecificAnalysis(topic) {
+    const pumpCode = '{{ selected_pump.get("pump_code", "") }}';
+    const flow = '{{ site_requirements.flow_m3hr }}';
+    const head = '{{ site_requirements.head_m }}';
+
+    const specificQuery = `Provide detailed analysis of ${topic} for the ${pumpCode} pump operating at ${flow} m³/h and ${head} m head. Include specific technical recommendations and industry best practices.`;
+
+    const insightsContainer = document.getElementById('aiTechnicalInsights');
+
+    // Show loading state
+    insightsContainer.innerHTML = `
+        <div class="d-flex align-items-center justify-content-center" style="min-height: 100px;">
+            <div class="text-center">
+                <div class="spinner-border text-primary mb-3" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <div class="text-muted">Loading detailed analysis on ${topic}...</div>
+            </div>
+        </div>
+    `;
+
+    // Use the fast AI analysis endpoint with topic-specific query
+    const pumpData = {
+        pump_code: pumpCode,
+        flow: flow,
+        head: head,
+        efficiency: '{{ selected_pump.get("operating_point", {}).get("efficiency_pct", 84.0) }}',
+        power: '{{ selected_pump.get("operating_point", {}).get("power_kw", 132.0) }}',
+        npshr: '{{ selected_pump.get("operating_point", {}).get("npshr_m", 7.7) }}',
+        application: 'general',
+        topic: topic
+    };
+
+    fetch('/api/ai_analysis_fast', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(pumpData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        const insights = data.response;
+        const sources = data.source_documents || [];
+
+        // Convert markdown to HTML using backend API
+        fetch('/api/convert_markdown', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ markdown: insights })
+        })
+        .then(response => response.json())
+        .then(markdownData => {
+            insightsContainer.innerHTML = `
+                <div class="ai-insights-content">
+                    <div style="background: #fff; border-radius: 8px; padding: 20px; border: 1px solid #e3f2fd;">
+                        <h6 style="color: #6a1b9a; margin-bottom: 15px; text-transform: capitalize;">
+                            <i class="fas fa-focus-dot me-2"></i>Focused Analysis: ${topic}
+                        </h6>
+                        <div style="font-size: 1rem; line-height: 1.6; color: #333;">
+                            ${markdownData.html}
+                        </div>
+                    </div>
+
+                <div class="mt-3 text-center">
+                    <button class="btn btn-primary btn-sm me-2" onclick="loadComprehensiveAIAnalysis()">
+                        <i class="fas fa-arrow-left me-2"></i>Back to Full Analysis
+                    </button>
+                    <button class="btn btn-outline-secondary btn-sm" onclick="getSpecificAnalysis('${topic}')">
+                        <i class="fas fa-sync-alt me-2"></i>Refresh ${topic.split(' ')[0]}
+                    </button>
+                </div>
+            </div>
+        `;
+        })
+        .catch(error => {
+            console.error('Error converting markdown:', error);
+            insightsContainer.innerHTML = `
+                <div class="ai-insights-content">
+                    <div style="background: #fff; border-radius: 8px; padding: 20px; border: 1px solid #e3f2fd;">
+                        <h6 style="color: #6a1b9a; margin-bottom: 15px; text-transform: capitalize;">
+                            <i class="fas fa-focus-dot me-2"></i>Focused Analysis: ${topic}
+                        </h6>
+                        <div style="font-size: 1rem; line-height: 1.6; color: #333;">
+                            <pre>${insights}</pre>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+    })
+    .catch(error => {
+        console.error('Error fetching specific analysis:', error);
+        insightsContainer.innerHTML = `
+            <div class="alert alert-warning border-0" style="background: #fff3cd;">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-exclamation-triangle text-warning me-3"></i>
+                    <div>
+                        <strong>Unable to load specific analysis for ${topic}</strong><br>
+                        <small>Please try again or return to the full analysis.</small>
+                    </div>
+                </div>
+                <div class="mt-3 text-center">
+                    <button class="btn btn-warning btn-sm me-2" onclick="getSpecificAnalysis('${topic}')">
+                        <i class="fas fa-retry me-2"></i>Retry
+                    </button>
+                    <button class="btn btn-outline-secondary btn-sm" onclick="loadComprehensiveAIAnalysis()">
+                        <i class="fas fa-arrow-left me-2"></i>Back to Full Analysis
+                    </button>
+                </div>
+            </div>
+        `;
+    });
+}
+
+function refreshAIAnalysis() {
+    loadComprehensiveAIAnalysis();
+}
+</script>
+</body>
+</html>

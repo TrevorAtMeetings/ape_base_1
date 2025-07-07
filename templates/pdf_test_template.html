@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>APE Pumps Selection Report - Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .header { text-align: center; color: #2c5aa0; }
+        .section { margin: 20px 0; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>APE Pumps Selection Report</h1>
+        <h2>{{ report_data.customer_info.project_name }}</h2>
+    </div>
+    
+    <div class="section">
+        <h3>Selected Pump</h3>
+        <p>Pump Code: {{ report_data.selected_pump.pump_code }}</p>
+        <p>Site Requirements: {{ report_data.site_requirements.flow_m3hr }} m³/hr at {{ report_data.site_requirements.head_m }} m</p>
+        
+        {% if report_data.selected_pump.operating_point %}
+        <h4>Operating Point</h4>
+        <p>Flow: {{ report_data.selected_pump.operating_point.get('flow_m3hr', 'N/A') }} m³/hr</p>
+        <p>Head: {{ report_data.selected_pump.operating_point.get('head_m', 'N/A') }} m</p>
+        <p>Efficiency: {{ report_data.selected_pump.operating_point.get('efficiency_pct', 'N/A') }}%</p>
+        <p>Power: {{ report_data.selected_pump.operating_point.get('power_kw', 'N/A') }} kW</p>
+        {% endif %}
+    </div>
+    
+    <div class="section">
+        <p>Report generated on {{ report_data.generation_date }}</p>
+    </div>
+</body>
+</html>

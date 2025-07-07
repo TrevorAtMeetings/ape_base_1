@@ -1,0 +1,626 @@
+{% extends "base.html" %}
+
+{% block title %}AI Knowledge Base Admin - APE Pumps{% endblock %}
+
+{% block content %}
+<div class="container" style="margin-top: 30px;">
+    <div class="row">
+        <div class="col s12">
+            <div class="card">
+                <div class="card-content">
+                    <span class="card-title" style="color: var(--md-primary);">
+                        <i class="material-icons left">admin_panel_settings</i>
+                        AI Knowledge Base Administration
+                    </span>
+                    <p>Manage technical documents and test AI query functionality for the pump selection system.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Document Upload Section -->
+    <div class="row">
+        <div class="col s12 l6">
+            <div class="card">
+                <div class="card-content">
+                    <span class="card-title">
+                        <i class="material-icons left">cloud_upload</i>
+                        Upload Documents
+                    </span>
+                    
+                    <form id="upload-form" enctype="multipart/form-data">
+                        <div class="file-field input-field">
+                            <div class="btn waves-effect waves-light">
+                                <span><i class="material-icons left">attach_file</i>Select PDF</span>
+                                <input type="file" name="document" id="document-input" accept=".pdf">
+                            </div>
+                            <div class="file-path-wrapper">
+                                <input class="file-path validate" type="text" placeholder="Choose PDF document">
+                            </div>
+                        </div>
+                        
+                        <!-- Document Type Selection -->
+                        <div class="input-field">
+                            <select id="document-type" name="document_type">
+                                <optgroup label="Product Information">
+                                    <option value="datasheet">Product Datasheet</option>
+                                    <option value="performance_curve">Performance Curves</option>
+                                    <option value="technical_spec">Technical Specifications</option>
+                                    <option value="product_catalog">Product Catalog</option>
+                                    <option value="selection_guide">Selection Guide</option>
+                                </optgroup>
+                                <optgroup label="Installation & Operations">
+                                    <option value="installation_manual">Installation Manual</option>
+                                    <option value="operation_manual">Operation Manual</option>
+                                    <option value="maintenance_guide">Maintenance Guide</option>
+                                    <option value="troubleshooting">Troubleshooting Guide</option>
+                                    <option value="commissioning">Commissioning Procedures</option>
+                                </optgroup>
+                                <optgroup label="Engineering & Design">
+                                    <option value="engineering_drawing">Engineering Drawings</option>
+                                    <option value="dimensional_drawing">Dimensional Drawings</option>
+                                    <option value="cross_section">Cross-sectional Views</option>
+                                    <option value="assembly_drawing">Assembly Drawings</option>
+                                </optgroup>
+                                <optgroup label="Standards & Compliance">
+                                    <option value="iso_standard">ISO Standards</option>
+                                    <option value="api_standard">API Standards</option>
+                                    <option value="ansi_standard">ANSI Standards</option>
+                                    <option value="compliance_cert">Compliance Certificates</option>
+                                </optgroup>
+                                <optgroup label="Application Guidance">
+                                    <option value="application_note">Application Notes</option>
+                                    <option value="case_study">Case Studies</option>
+                                    <option value="best_practices">Best Practices</option>
+                                    <option value="sizing_guide">Sizing Guidelines</option>
+                                </optgroup>
+                                <optgroup label="Quality & Testing">
+                                    <option value="test_report">Test Reports</option>
+                                    <option value="quality_cert">Quality Certificates</option>
+                                    <option value="performance_test">Performance Test Data</option>
+                                    <option value="certification">Product Certifications</option>
+                                </optgroup>
+                            </select>
+                            <label>Document Type</label>
+                        </div>
+                        
+                        <!-- Pump Model (Optional) -->
+                        <div class="input-field">
+                            <input type="text" id="pump-model" name="pump_model" placeholder="e.g., 6-8 ALE, 5-K">
+                            <label for="pump-model">Pump Model (Optional)</label>
+                        </div>
+                        
+                        <button class="btn waves-effect waves-light blue" type="submit" id="upload-btn">
+                            <i class="material-icons left">send</i>
+                            Upload Document
+                        </button>
+                    </form>
+                    
+                    <div id="upload-progress" style="display: none; margin-top: 20px;">
+                        <div class="progress">
+                            <div class="indeterminate"></div>
+                        </div>
+                        <p class="center-align">Processing document...</p>
+                    </div>
+                    
+                    <div id="upload-status" style="margin-top: 20px;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI Query Testing Section -->
+        <div class="col s12 l6">
+            <div class="card">
+                <div class="card-content">
+                    <span class="card-title">
+                        <i class="material-icons left">psychology</i>
+                        Test AI Queries
+                    </span>
+                    
+                    <div class="input-field">
+                        <textarea id="test-query" class="materialize-textarea" placeholder="Enter your technical question..."></textarea>
+                        <label for="test-query">AI Query</label>
+                    </div>
+                    
+                    <button class="btn waves-effect waves-light deep-purple" onclick="testAIQuery()" id="query-btn">
+                        <i class="material-icons left">auto_awesome</i>
+                        Test Query
+                    </button>
+                    
+                    <div id="query-progress" style="display: none; margin-top: 20px;">
+                        <div class="progress">
+                            <div class="indeterminate deep-purple"></div>
+                        </div>
+                    </div>
+                    
+                    <div id="query-response" style="margin-top: 20px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Document Library Section -->
+    <div class="row">
+        <div class="col s12">
+            <div class="card">
+                <div class="card-content">
+                    <span class="card-title">
+                        <i class="material-icons left">library_books</i>
+                        Technical Document Library
+                    </span>
+                    
+                    <!-- Filtering Controls -->
+                    <div class="row" style="margin-bottom: 10px;">
+                        <div class="col s12 m3">
+                            <div class="input-field">
+                                <select id="category-filter" onchange="filterDocuments()">
+                                    <option value="" selected>All Categories</option>
+                                    <option value="product_info">Product Information</option>
+                                    <option value="technical_docs">Technical Documentation</option>
+                                    <option value="manuals">Manuals & Guides</option>
+                                    <option value="standards">Standards & Compliance</option>
+                                    <option value="applications">Applications & Case Studies</option>
+                                    <option value="quality">Quality & Testing</option>
+                                </select>
+                                <label>Filter by Category</label>
+                            </div>
+                        </div>
+                        <div class="col s12 m3">
+                            <div class="input-field">
+                                <select id="type-filter" onchange="filterDocuments()">
+                                    <option value="" selected>All Types</option>
+                                    <option value="datasheet">Datasheets</option>
+                                    <option value="performance_curve">Performance Curves</option>
+                                    <option value="installation_manual">Installation Manuals</option>
+                                    <option value="maintenance_guide">Maintenance Guides</option>
+                                    <option value="application_note">Application Notes</option>
+                                </select>
+                                <label>Filter by Type</label>
+                            </div>
+                        </div>
+                        <div class="col s12 m3">
+                            <div class="input-field">
+                                <input type="text" id="pump-filter" placeholder="e.g., 6-8 ALE" onkeyup="filterDocuments()">
+                                <label for="pump-filter">Filter by Pump Model</label>
+                            </div>
+                        </div>
+                        <div class="col s12 m3">
+                            <button class="btn waves-effect waves-light teal" onclick="loadDocuments()" id="refresh-btn" style="margin-top: 25px;">
+                                <i class="material-icons left">refresh</i>
+                                Refresh
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Document Statistics -->
+                    <div class="row">
+                        <div class="col s12">
+                            <div id="library-stats" class="card-panel grey lighten-4" style="padding: 15px;">
+                                <div class="row" style="margin-bottom: 0;">
+                                    <div class="col s6 m3">
+                                        <div class="statistic">
+                                            <h6 class="center-align" style="margin: 0;">Total Documents</h6>
+                                            <h4 class="center-align" style="margin: 5px 0; color: var(--md-primary);" id="total-docs">-</h4>
+                                        </div>
+                                    </div>
+                                    <div class="col s6 m3">
+                                        <div class="statistic">
+                                            <h6 class="center-align" style="margin: 0;">Categories</h6>
+                                            <h4 class="center-align" style="margin: 5px 0; color: var(--md-primary);" id="total-categories">-</h4>
+                                        </div>
+                                    </div>
+                                    <div class="col s6 m3">
+                                        <div class="statistic">
+                                            <h6 class="center-align" style="margin: 0;">Pump Models</h6>
+                                            <h4 class="center-align" style="margin: 5px 0; color: var(--md-primary);" id="total-pumps">-</h4>
+                                        </div>
+                                    </div>
+                                    <div class="col s6 m3">
+                                        <div class="statistic">
+                                            <h6 class="center-align" style="margin: 0;">Last Updated</h6>
+                                            <h4 class="center-align" style="margin: 5px 0; color: var(--md-primary);" id="last-update">-</h4>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="documents-list" style="margin-top: 20px;">
+                        <div class="progress" id="documents-loading">
+                            <div class="indeterminate teal"></div>
+                        </div>
+                        <p class="center-align">Loading technical document library...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Test Queries Section -->
+    <div class="row">
+        <div class="col s12">
+            <div class="card blue-grey lighten-5">
+                <div class="card-content">
+                    <span class="card-title">Quick Test Queries</span>
+                    <div class="collection">
+                        <a href="#!" class="collection-item" onclick="setTestQuery('What are the bearing requirements for centrifugal pumps?')">
+                            <i class="material-icons left">engineering</i>
+                            Bearing Standards Query
+                        </a>
+                        <a href="#!" class="collection-item" onclick="setTestQuery('How do I calculate NPSH for pump selection?')">
+                            <i class="material-icons left">calculate</i>
+                            NPSH Calculation Query
+                        </a>
+                        <a href="#!" class="collection-item" onclick="setTestQuery('What are the efficiency requirements for industrial pumps?')">
+                            <i class="material-icons left">trending_up</i>
+                            Efficiency Standards Query
+                        </a>
+                        <a href="#!" class="collection-item" onclick="setTestQuery('What materials are recommended for chemical pump applications?')">
+                            <i class="material-icons left">science</i>
+                            Materials Selection Query
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Materialize components
+    M.AutoInit();
+    
+    // Load documents on page load
+    loadDocuments();
+    
+    // Handle file upload form
+    document.getElementById('upload-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        uploadDocument();
+    });
+});
+
+function uploadDocument() {
+    const form = document.getElementById('upload-form');
+    const formData = new FormData(form);
+    const uploadBtn = document.getElementById('upload-btn');
+    const uploadProgress = document.getElementById('upload-progress');
+    const uploadStatus = document.getElementById('upload-status');
+    
+    // Show progress
+    uploadBtn.disabled = true;
+    uploadProgress.style.display = 'block';
+    uploadStatus.innerHTML = '';
+    
+    fetch('/admin/upload', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        uploadProgress.style.display = 'none';
+        uploadBtn.disabled = false;
+        
+        if (data.success) {
+            uploadStatus.innerHTML = `
+                <div class="card-panel green lighten-4 green-text text-darken-2">
+                    <i class="material-icons left">check_circle</i>
+                    ${data.message}
+                    <br><small>File ID: ${data.file_id} | Tokens: ${data.tokens}</small>
+                </div>
+            `;
+            form.reset();
+            M.updateTextFields();
+            loadDocuments(); // Refresh document list
+        } else {
+            uploadStatus.innerHTML = `
+                <div class="card-panel red lighten-4 red-text text-darken-2">
+                    <i class="material-icons left">error</i>
+                    ${data.error || 'Upload failed'}
+                </div>
+            `;
+        }
+    })
+    .catch(error => {
+        uploadProgress.style.display = 'none';
+        uploadBtn.disabled = false;
+        uploadStatus.innerHTML = `
+            <div class="card-panel red lighten-4 red-text text-darken-2">
+                <i class="material-icons left">error</i>
+                Upload failed: ${error.message}
+            </div>
+        `;
+    });
+}
+
+function testAIQuery() {
+    const query = document.getElementById('test-query').value.trim();
+    if (!query) {
+        M.toast({html: 'Please enter a query to test', classes: 'orange'});
+        return;
+    }
+    
+    const queryBtn = document.getElementById('query-btn');
+    const queryProgress = document.getElementById('query-progress');
+    const queryResponse = document.getElementById('query-response');
+    
+    // Show progress
+    queryBtn.disabled = true;
+    queryProgress.style.display = 'block';
+    queryResponse.innerHTML = '';
+    
+    fetch('/admin/test-query', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({query: query})
+    })
+    .then(response => response.json())
+    .then(data => {
+        queryProgress.style.display = 'none';
+        queryBtn.disabled = false;
+        
+        if (data.response) {
+            queryResponse.innerHTML = `
+                <div class="card blue-grey lighten-5">
+                    <div class="card-content">
+                        <span class="card-title">AI Response</span>
+                        <p>${data.response.replace(/\n/g, '<br>')}</p>
+                        
+                        ${data.sources && data.sources.length > 0 ? `
+                            <div style="margin-top: 15px;">
+                                <strong>Sources:</strong>
+                                <ul class="collection">
+                                    ${data.sources.map(source => `<li class="collection-item">${source}</li>`).join('')}
+                                </ul>
+                            </div>
+                        ` : ''}
+                        
+                        <div style="margin-top: 10px;">
+                            <small class="grey-text">Processing time: ${data.processing_time}s</small>
+                        </div>
+                    </div>
+                </div>
+            `;
+        } else {
+            queryResponse.innerHTML = `
+                <div class="card-panel red lighten-4 red-text text-darken-2">
+                    <i class="material-icons left">error</i>
+                    ${data.error || 'Query failed'}
+                </div>
+            `;
+        }
+    })
+    .catch(error => {
+        queryProgress.style.display = 'none';
+        queryBtn.disabled = false;
+        queryResponse.innerHTML = `
+            <div class="card-panel red lighten-4 red-text text-darken-2">
+                <i class="material-icons left">error</i>
+                Query failed: ${error.message}
+            </div>
+        `;
+    });
+}
+
+// Global variable to store all documents for filtering
+let allDocuments = [];
+
+function loadDocuments() {
+    const documentsList = document.getElementById('documents-list');
+    const documentsLoading = document.getElementById('documents-loading');
+    const refreshBtn = document.getElementById('refresh-btn');
+    
+    refreshBtn.disabled = true;
+    documentsLoading.style.display = 'block';
+    
+    fetch('/admin/documents')
+    .then(response => response.json())
+    .then(data => {
+        documentsLoading.style.display = 'none';
+        refreshBtn.disabled = false;
+        
+        if (data.documents && data.documents.length > 0) {
+            allDocuments = data.documents;
+            updateLibraryStatistics(allDocuments);
+            displayDocuments(allDocuments);
+        } else {
+            allDocuments = [];
+            updateLibraryStatistics([]);
+            documentsList.innerHTML = `
+                <div class="card-panel yellow lighten-4 yellow-text text-darken-2">
+                    <i class="material-icons left">info</i>
+                    No documents found in the knowledge base. Upload some PDF documents to get started.
+                </div>
+            `;
+        }
+    })
+    .catch(error => {
+        documentsLoading.style.display = 'none';
+        refreshBtn.disabled = false;
+        documentsList.innerHTML = `
+            <div class="card-panel red lighten-4 red-text text-darken-2">
+                <i class="material-icons left">error</i>
+                Failed to load documents: ${error.message}
+            </div>
+        `;
+    });
+}
+
+function updateLibraryStatistics(documents) {
+    const totalDocs = documents.length;
+    const categories = new Set();
+    const pumpModels = new Set();
+    let lastUpdate = null;
+    
+    documents.forEach(doc => {
+        if (doc.document_category) categories.add(doc.document_category);
+        if (doc.pump_model) pumpModels.add(doc.pump_model);
+        if (doc.upload_timestamp) {
+            const timestamp = new Date(doc.upload_timestamp);
+            if (!lastUpdate || timestamp > lastUpdate) {
+                lastUpdate = timestamp;
+            }
+        }
+    });
+    
+    document.getElementById('total-docs').textContent = totalDocs;
+    document.getElementById('total-categories').textContent = categories.size;
+    document.getElementById('total-pumps').textContent = pumpModels.size;
+    document.getElementById('last-update').textContent = lastUpdate 
+        ? lastUpdate.toLocaleDateString() 
+        : 'Never';
+}
+
+function displayDocuments(documents) {
+    const documentsList = document.getElementById('documents-list');
+    
+    if (documents.length === 0) {
+        documentsList.innerHTML = `
+            <div class="card-panel blue-grey lighten-4">
+                <i class="material-icons left">filter_list</i>
+                No documents match the current filters. Try adjusting your search criteria.
+            </div>
+        `;
+        return;
+    }
+    
+    const getDocumentIcon = (docType) => {
+        const iconMap = {
+            'datasheet': 'assignment',
+            'performance_curve': 'show_chart',
+            'installation_manual': 'build',
+            'maintenance_guide': 'settings',
+            'application_note': 'lightbulb',
+            'test_report': 'analytics',
+            'engineering_drawing': 'architecture',
+            'iso_standard': 'verified_user'
+        };
+        return iconMap[docType] || 'description';
+    };
+    
+    const getCategoryColor = (category) => {
+        const colorMap = {
+            'product_info': 'blue',
+            'technical_docs': 'green',
+            'manuals': 'orange',
+            'standards': 'purple',
+            'applications': 'teal',
+            'quality': 'red'
+        };
+        return colorMap[category] || 'grey';
+    };
+    
+    const getCategoryLabel = (category) => {
+        const labelMap = {
+            'product_info': 'Product Info',
+            'technical_docs': 'Technical Docs',
+            'manuals': 'Manuals',
+            'standards': 'Standards',
+            'applications': 'Applications',
+            'quality': 'Quality'
+        };
+        return labelMap[category] || category;
+    };
+    
+    documentsList.innerHTML = `
+        <div class="collection">
+            ${documents.map(doc => `
+                <div class="collection-item document-item" 
+                     data-category="${doc.document_category || ''}"
+                     data-type="${doc.document_type || ''}"
+                     data-pump="${doc.pump_model || ''}">
+                    <div class="row valign-wrapper" style="margin-bottom: 0;">
+                        <div class="col s1">
+                            <i class="material-icons ${getCategoryColor(doc.document_category)}-text">
+                                ${getDocumentIcon(doc.document_type)}
+                            </i>
+                        </div>
+                        <div class="col s7">
+                            <div class="document-title">
+                                <strong>${doc.filename || doc.display_name || 'Unknown Document'}</strong>
+                                ${doc.pump_model ? `<span class="new badge blue" data-badge-caption="${doc.pump_model}"></span>` : ''}
+                            </div>
+                            <div class="document-metadata">
+                                <small class="grey-text">
+                                    ${doc.document_category ? `${getCategoryLabel(doc.document_category)} • ` : ''}
+                                    ${doc.file_size_mb ? `${doc.file_size_mb} MB • ` : ''}
+                                    ${doc.upload_timestamp ? new Date(doc.upload_timestamp).toLocaleDateString() : 'Unknown date'}
+                                </small>
+                            </div>
+                            ${doc.summary ? `
+                                <div class="document-summary" style="margin-top: 5px;">
+                                    <small style="color: #666;">${doc.summary.substring(0, 120)}${doc.summary.length > 120 ? '...' : ''}</small>
+                                </div>
+                            ` : ''}
+                        </div>
+                        <div class="col s2">
+                            ${doc.document_category ? `
+                                <span class="chip ${getCategoryColor(doc.document_category)} lighten-3">
+                                    ${getCategoryLabel(doc.document_category)}
+                                </span>
+                            ` : ''}
+                        </div>
+                        <div class="col s2 right-align">
+                            <div class="document-actions">
+                                <a class="btn-small waves-effect waves-light blue tooltipped" 
+                                   data-position="top" data-tooltip="Query this document"
+                                   onclick="querySpecificDocument('${doc.document_id || doc.gemini_file_id}')">
+                                    <i class="material-icons">search</i>
+                                </a>
+                                ${doc.processing_status === 'indexed' 
+                                    ? '<span class="new badge green" data-badge-caption="ready"></span>'
+                                    : '<span class="new badge orange" data-badge-caption="processing"></span>'
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('')}
+        </div>
+    `;
+    
+    // Initialize tooltips
+    M.Tooltip.init(document.querySelectorAll('.tooltipped'));
+}
+
+function filterDocuments() {
+    const categoryFilter = document.getElementById('category-filter').value;
+    const typeFilter = document.getElementById('type-filter').value;
+    const pumpFilter = document.getElementById('pump-filter').value.toLowerCase();
+    
+    let filteredDocs = allDocuments.filter(doc => {
+        const categoryMatch = !categoryFilter || doc.document_category === categoryFilter;
+        const typeMatch = !typeFilter || doc.document_type === typeFilter;
+        const pumpMatch = !pumpFilter || (doc.pump_model && doc.pump_model.toLowerCase().includes(pumpFilter));
+        
+        return categoryMatch && typeMatch && pumpMatch;
+    });
+    
+    displayDocuments(filteredDocs);
+    updateLibraryStatistics(filteredDocs);
+}
+
+function querySpecificDocument(documentId) {
+    const query = prompt('Enter your question about this document:');
+    if (!query) return;
+    
+    // Set the query in the test area and run it with document context
+    document.getElementById('test-query').value = `[Document: ${documentId}] ${query}`;
+    M.updateTextFields();
+    testAIQuery();
+}
+
+function setTestQuery(query) {
+    document.getElementById('test-query').value = query;
+    M.updateTextFields();
+    M.textareaAutoResize(document.getElementById('test-query'));
+    
+    // Scroll to query section
+    document.getElementById('test-query').scrollIntoView({behavior: 'smooth'});
+}
+</script>
+{% endblock %}

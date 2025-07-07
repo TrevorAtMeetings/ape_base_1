@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ report_title }}</title>
+    <style>
+        /* APE Pumps PDF Report Styling - Material Design 3 Theme */
+        @page {
+            size: A4;
+            margin: 20mm;
+            @top-left {
+                content: "APE PUMPS - Pump Selection Report";
+                font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+                font-size: 9pt;
+                color: #1976d2;
+                font-weight: 500;
+            }
+            @top-right {
+                content: "Page " counter(page) " of " counter(pages);
+                font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+                font-size: 9pt;
+                color: #757575;
+            }
+            @bottom-center {
+                content: "APE Pumps Ltd. - Engineering Excellence in Fluid Handling";
+                font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+                font-size: 8pt;
+                color: #757575;
+                border-top: 1px solid #e0e0e0;
+                padding-top: 5pt;
+            }
+        }
+
+        /* Material Design Typography */
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
+
+        body {
+            font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            line-height: 1.6;
+            color: #212121;
+            margin: 0;
+            padding: 0;
+            background: #ffffff;
+        }
+
+        /* Header Section - APE Pumps Material Design */
+        .header {
+            background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%);
+            color: white;
+            padding: 40px 32px;
+            margin-bottom: 40px;
+            text-align: center;
+            border-radius: 0 0 16px 16px;
+            box-shadow: 0 4px 16px rgba(25, 118, 210, 0.2);
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 32pt;
+            font-weight: 300;
+            letter-spacing: -0.5px;
+        }
+
+        .header .subtitle {
+            font-size: 16pt;
+            margin: 12px 0 0 0;
+            opacity: 0.9;
+            font-weight: 400;
+        }
+
+        .logo-section {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .ape-logo {
+            height: 60px;
+            width: auto;
+            margin-bottom: 8px;
+        }
+
+        /* Company Info Section */
+        .company-info {
+            background: #f8f9fa;
+            padding: 24px;
+            border-left: 4px solid #1976d2;
+            margin-bottom: 32px;
+            border-radius: 0 12px 12px 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+
+        /* Section Styling */
+        .section {
+            margin-bottom: 32px;
+            page-break-inside: avoid;
+        }
+
+        .section-title {
+            color: #1976d2;
+            font-size: 20pt;
+            font-weight: 500;
+            border-bottom: 2px solid #1976d2;
+            padding-bottom: 8px;
+            margin-bottom: 20px;
+            letter-spacing: -0.25px;
+        }
+
+        .subsection-title {
+            color: #1565c0;
+            font-size: 16pt;
+            font-weight: 500;
+            margin: 24px 0 12px 0;
+            letter-spacing: -0.15px;
+        }
+
+        /* Recommendation Box - Material Design Card */
+        .recommendation-box {
+            background: #e3f2fd;
+            border: 2px solid #1976d2;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 24px 0;
+            box-shadow: 0 4px 16px rgba(25, 118, 210, 0.12);
+        }
+
+        .pump-model {
+            font-size: 24pt;
+            font-weight: 500;
+            color: #1976d2;
+            margin-bottom: 12px;
+            letter-spacing: -0.5px;
+        }
+
+        /* Performance Grid - Material Design */
+        .performance-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 16px;
+            margin: 24px 0;
+        }
+
+        .performance-item {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            transition: all 0.3s ease;
+        }
+
+        .performance-value {
+            font-size: 20pt;
+            font-weight: 600;
+            color: #1976d2;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .performance-label {
+            font-size: 10pt;
+            color: #757575;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 500;
+        }
+
+        /* Tables - Material Design */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        th, td {
+            border: none;
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        /* Column-specific alignment */
+        .value-column {
+            text-align: right;
+            font-weight: 500;
+        }
+
+        .units-column {
+            text-align: left;
+            color: #757575;
+            font-size: 10pt;
+        }
+
+        .number-column {
+            text-align: right;
+            font-family: 'Roboto Mono', monospace;
+        }
+
+        th {
+            background: #1976d2;
+            color: white;
+            font-weight: 500;
+            font-size: 11pt;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        td {
+            font-size: 10pt;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:nth-child(even) {
+            background: #fafafa;
+        }
+
+        .specs-table th {
+            background: #1565c0;
+        }
+
+        .requirements-table {
+            background: #f8f9fa;
+        }
+
+        /* Chart Container - Material Design */
+        .chart-container {
+            text-align: center;
+            margin: 24px 0;
+            page-break-inside: avoid;
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .chart-image {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+        }
+
+        /* Benefits List - Material Design */
+        .benefits-list {
+            list-style: none;
+            padding: 0;
+            margin: 16px 0;
+        }
+
+        .benefits-list li {
+            padding: 8px 0;
+            position: relative;
+            padding-left: 28px;
+            font-size: 11pt;
+            line-height: 1.5;
+        }
+
+        .benefits-list li:before {
+            content: "✓";
+            color: #4caf50;
+            font-weight: bold;
+            position: absolute;
+            left: 0;
+            top: 8px;
+            font-size: 12pt;
+        }
+
+        /* Reasoning Section - Material Design */
+        .reasoning-section {
+            background: #f8f9fa;
+            border-left: 4px solid #1565c0;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+            font-size: 11pt;
+            line-height: 1.6;
+        }
+
+        /* Recommendations Box */
+        .recommendations-box {
+            background: #fff3e0;
+            border: 1px solid #ff9800;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .recommendations-box h3 {
+            color: #f57c00;
+            margin-top: 0;
+            font-size: 14pt;
+            font-weight: 500;
+        }
+
+        /* Footer Section - APE Pumps Branding */
+        .footer-section {
+            background: linear-gradient(135deg, #1976d2, #1565c0);
+            color: white;
+            padding: 24px;
+            margin-top: 48px;
+            text-align: center;
+            border-radius: 16px 16px 0 0;
+        }
+
+        .footer-section h3 {
+            margin-top: 0;
+            font-size: 18pt;
+            font-weight: 500;
+            letter-spacing: -0.25px;
+        }
+
+        .contact-info {
+            font-size: 10pt;
+            margin-top: 12px;
+            opacity: 0.9;
+            line-height: 1.5;
+        }
+
+        /* Utility Classes */
+        .page-break {
+            page-break-before: always;
+        }
+
+        .no-break {
+            page-break-inside: avoid;
+        }
+
+        /* Status Badges */
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 9pt;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-met {
+            background: #e8f5e8;
+            color: #2e7d32;
+        }
+
+        .status-exceeded {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .status-optimized {
+            background: #fff3e0;
+            color: #f57c00;
+        }
+
+        /* Performance Highlights */
+        .performance-highlight {
+            background: linear-gradient(135deg, #e3f2fd, #f8f9fa);
+            border-radius: 8px;
+            padding: 16px;
+            margin: 16px 0;
+            border-left: 4px solid #4caf50;
+        }
+
+        /* Technical Data Styling */
+        .technical-data {
+            font-family: 'Roboto Mono', monospace;
+            font-size: 10pt;
+            background: #f5f5f5;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        /* Watermark */
+        .watermark {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-45deg);
+            font-size: 72pt;
+            color: rgba(25, 118, 210, 0.05);
+            font-weight: bold;
+            z-index: -1;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header Section -->
+    <div class="header">
+        <div class="logo-section">
+            <!-- Logos would be embedded here as base64 or external images -->
+        </div>
+        <h1>{{ report_title }}</h1>
+        <div class="subtitle">Professional Pump Selection Analysis</div>
+    </div>
+
+    <!-- Company and Project Information -->
+    <div class="company-info">
+        <h2 style="margin-top: 0; color: #006064;">Project Information</h2>
+        <table class="requirements-table">
+            <tr>
+                <td><strong>Prepared For:</strong></td>
+                <td>
+                {% if customer_info.customer_name and customer_info.customer_name != 'Valued Client' %}
+                    {{ customer_info.customer_name }}
+                {% elif site_requirements.company %}
+                    {{ site_requirements.company }}
+                {% else %}
+                    Valued Customer
+                {% endif %}
+                </td>
+            </tr>
+            {% if prepared_for.company %}
+            <tr>
+                <td><strong>Company:</strong></td>
+                <td>{{ prepared_for.company }}</td>
+            </tr>
+            {% endif %}
+            {% if prepared_for.project_name %}
+            <tr>
+                <td><strong>Project:</strong></td>
+                <td>{{ prepared_for.project_name }}</td>
+            </tr>
+            {% endif %}
+            {% if prepared_for.project_location %}
+            <tr>
+                <td><strong>Location:</strong></td>
+                <td>{{ prepared_for.project_location }}</td>
+            </tr>
+            {% endif %}
+            <tr>
+                <td><strong>Report Date:</strong></td>
+                <td>{{ customer_info.report_date or generated_date }}</td>
+            </tr>
+            <tr>
+                <td><strong>Generated By:</strong></td>
+                <td>{{ company_name }} AI Selection System</td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- Executive Summary -->
+    {% if executive_summary %}
+    <div class="section">
+        <h2 class="section-title">Executive Summary</h2>
+
+        <div class="recommendation-box">
+            <div class="pump-model">{{ executive_summary.recommendation }}</div>
+            <p><strong style="font-weight: 600;">Confidence Level:</strong> {{ executive_summary.confidence_level }}</p>
+            
+            {% if operating_point and operating_point.achieved_efficiency_pct %}
+            <p style="margin-top: 16px; font-size: 11pt; line-height: 1.5;">
+                The {{ selected_pump.pump_code }} with the {{ operating_point.impeller_size }}mm impeller is an excellent match, 
+                operating at {{ operating_point.achieved_efficiency_pct }}% efficiency for the required duty, 
+                ensuring optimal energy use and reliability.
+            </p>
+            {% endif %}
+
+            {% if executive_summary.performance_highlights %}
+            <div class="performance-grid">
+                {% if executive_summary.performance_highlights.efficiency %}
+                <div class="performance-item">
+                    <span class="performance-value">{{ executive_summary.performance_highlights.efficiency }}</span>
+                    <span class="performance-label">Efficiency</span>
+                </div>
+                {% endif %}
+                {% if executive_summary.performance_highlights.power %}
+                <div class="performance-item">
+                    <span class="performance-value">{{ executive_summary.performance_highlights.power }}</span>
+                    <span class="performance-label">Power</span>
+                </div>
+                {% endif %}
+                {% if executive_summary.performance_highlights.head %}
+                <div class="performance-item">
+                    <span class="performance-value">{{ executive_summary.performance_highlights.head }}</span>
+                    <span class="performance-label">Head</span>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            {% if executive_summary.key_benefits %}
+            <h3 class="subsection-title">Key Benefits</h3>
+            <ul class="benefits-list">
+                {% for benefit in executive_summary.key_benefits %}
+                <li>{{ benefit }}</li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Site Requirements -->
+    {% if site_requirements %}
+    <div class="section">
+        <h2 class="section-title">Site Requirements</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Parameter</th>
+                    <th>Value</th>
+                    <th>Units</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Flow Rate</td>
+                    <td class="value-column">{{ "%.1f"|format(site_requirements['flow_m3hr']) }}</td>
+                    <td class="units-column">m³/hr</td>
+                </tr>
+                <tr>
+                    <td>Total Head</td>
+                    <td class="value-column">{{ "%.1f"|format(site_requirements['head_m']) }}</td>
+                    <td class="units-column">m</td>
+                </tr>
+                <tr>
+                    <td>Liquid Type</td>
+                    <td class="value-column">{{ site_requirements.get('liquid_type', 'Clean Water') }}</td>
+                    <td class="units-column">-</td>
+                </tr>
+                <tr>
+                    <td>Application</td>
+                    <td class="value-column">{{ site_requirements.get('application_type', 'Water Supply') }}</td>
+                    <td class="units-column">-</td>
+                </tr>
+                <tr>
+                    <td>Temperature</td>
+                    <td class="value-column">{{ site_requirements.get('temperature_c', 20) }}</td>
+                    <td class="units-column">°C</td>
+                </tr>
+                <tr>
+                    <td>Specific Gravity</td>
+                    <td>{{ "%.2f"|format(site_requirements.get('density_kg_m3', 1000)/1000) }}</td>
+                    <td>-</td>
+                </tr>
+                {% if site_requirements.get('npsh_available') %}
+                <tr>
+                    <td>NPSH Available</td>
+                    <td>{{ site_requirements.get('npsh_available', '0') }}</td>
+                    <td>m</td>
+                </tr>
+                {% endif %}
+                {% if site_requirements.get('max_power') %}
+                <tr>
+                    <td>Maximum Power</td>
+                    <td>{{ site_requirements.get('max_power', '0') }}</td>
+                    <td>kW</td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    <!-- Selected Pump Details -->
+    {% if selected_pump %}
+    <div class="section">
+        <h2 class="section-title">Selected Pump Specification</h2>
+
+        <h3 class="subsection-title">General Information</h3>
+        <table>
+            <tbody>
+                <tr>
+                    <td><strong>Manufacturer:</strong></td>
+                    <td>{{ selected_pump.manufacturer }}</td>
+                </tr>
+                <tr>
+                    <td><strong>Model:</strong></td>
+                    <td>{{ selected_pump.model }}</td>
+                </tr>
+                <tr>
+                    <td><strong>Series:</strong></td>
+                    <td>{{ selected_pump.series }}</td>
+                </tr>
+                <tr>
+                    <td><strong>Pump Code:</strong></td>
+                    <td>{{ selected_pump.pump_code }}</td>
+                </tr>
+                <tr>
+                    <td><strong>Description:</strong></td>
+                    <td>{{ selected_pump.description }}</td>
+                </tr>
+                <tr>
+                    <td><strong>Construction Type:</strong></td>
+                    <td>{{ selected_pump.construction_type }}</td>
+                </tr>
+                <tr>
+                    <td><strong>Orientation:</strong></td>
+                    <td>{{ selected_pump.orientation }}</td>
+                </tr>
+                <tr>
+                    <td><strong>Impeller Size:</strong></td>
+                    <td>{{ selected_pump.impeller_size }}</td>
+                </tr>
+                <tr>
+                    <td><strong>Nominal Speed:</strong></td>
+                    <td>{{ selected_pump.nominal_speed }}</td>
+                </tr>
+                <tr>
+                    <td><strong>Quality Rating:</strong></td>
+                    <td>{{ selected_pump.quality_rating }}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    <!-- Performance Analysis -->
+    {% if performance_analysis %}
+    <div class="section page-break">
+        <h2 class="section-title">Performance Analysis</h2>
+
+        <h3 class="subsection-title">Operating Point Performance</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Parameter</th>
+                    <th>Required</th>
+                    <th>Achieved</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Flow Rate</td>
+                    <td>{{ "%.1f"|format(site_requirements['flow_m3hr']) }} m³/hr</td>
+                    <td>{{ "%.1f"|format(operating_point.get('flow_m3hr', 0)) }} m³/hr</td>
+                    <td>✓ Met</td>
+                </tr>
+                <tr>
+                    <td>Total Head</td>
+                    <td>{{ "%.1f"|format(site_requirements['head_m']) }} m</td>
+                    <td>{{ "%.1f"|format(operating_point.get('achieved_head_m', 0)) }} m</td>
+                    <td>✓ Met</td>
+                </tr>
+                <tr>
+                    <td>Efficiency</td>
+                    <td>-</td>
+                    <td>{{ "%.1f"|format(operating_point.get('achieved_efficiency_pct', 0)) }}%</td>
+                    <td>{{ 'Excellent' if operating_point.get('achieved_efficiency_pct', 0) > 80 else 'Good' if operating_point.get('achieved_efficiency_pct', 0) > 70 else 'Acceptable' }}</td>
+                </tr>
+                <tr>
+                    <td>Power Consumption</td>
+                    <td>-</td>
+                    <td>{{ "%.1f"|format(operating_point.get('achieved_power_kw', 0)) }} kW</td>
+                    <td>Optimized</td>
+                </tr>
+                <tr>
+                    <td>NPSHr</td>
+                    <td>< NPSHa</td>
+                    <td>{{ "%.1f"|format(operating_point.get('achieved_npshr_m') or 0) }} m</td>
+                    <td>{{ 'Adequate' if operating_point.get('achieved_npshr_m') else 'Not Available' }}</td>
+                </tr>
+            </tbody>
+        </table>
+
+        {% if performance_analysis and performance_analysis.get('bep_comparison') %}
+        <h3 class="subsection-title">Best Efficiency Point Comparison</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Parameter</th>
+                    <th>BEP Value</th>
+                    <th>Operating Point</th>
+                    <th>Difference</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Flow Rate</td>
+                    <td>{{ "%.1f"|format(operating_point.get('bep_flow_m3hr', 0)) }} m³/hr</td>
+                    <td>{{ "%.1f"|format(operating_point.get('flow_m3hr', 0)) }} m³/hr</td>
+                    <td>{{ "%.1f"|format((operating_point.get('flow_m3hr', 0) - operating_point.get('bep_flow_m3hr', 0))|abs) }}%</td>
+                </tr>
+                <tr>
+                    <td>Head</td>
+                    <td>{{ "%.1f"|format(operating_point.get('bep_head_m', 0)) }} m</td>
+                    <td>{{ "%.1f"|format(operating_point.get('achieved_head_m', 0)) }} m</td>
+                    <td>-</td>
+                </tr>
+                <tr>
+                    <td>Efficiency</td>
+                    <td>{{ "%.1f"|format(operating_point.get('bep_efficiency_pct', 0)) }}%</td>
+                    <td>{{ "%.1f"|format(operating_point.get('achieved_efficiency_pct', 0)) }}%</td>
+                    <td>-</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="reasoning-section">
+            <p><strong>BEP Analysis:</strong> 
+            {% if operating_point.get('flow_m3hr', 0) > operating_point.get('bep_flow_m3hr', 0) %}
+            The pump operates on the favorable (right) side of the BEP curve, which is preferred for stable operation and pump longevity.
+            {% else %}
+            The pump operates on the left side of the BEP curve. While still within acceptable range, operation on the right side would be preferred.
+            {% endif %}
+            </p>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Technical Reasoning & Selection Rationale -->
+    <div class="section">
+        <h2 class="section-title">Technical Reasoning & Selection Rationale</h2>
+
+        <!-- BEP Analysis -->
+        <div class="reasoning-section">
+            <h3 class="subsection-title">Best Efficiency Point (BEP) Analysis</h3>
+            {% if selected_pump.get('bep_analysis') and selected_pump.bep_analysis.get('bep_distance_pct') is not none %}
+            <p>The selected operating point for the {{ selected_pump.get('pump_code', 'Selected pump') }} ({{ operating_point.impeller_size }}mm impeller) is {{ "%.1f"|format(selected_pump.bep_analysis.get('bep_distance_pct', 0)) }}% away from the pump's Best Efficiency Point for the required duty of {{ "%.1f"|format(operating_point.flow_m3hr) }} m³/hr at {{ "%.1f"|format(operating_point.achieved_head_m) }} m. This ensures optimal hydraulic performance, maximizes energy efficiency (operating at {{ "%.1f"|format(operating_point.achieved_efficiency_pct) }}%), and contributes to extended pump life by minimizing operational stress.</p>
+            {% else %}
+            <p>The selected operating point for the {{ selected_pump.get('pump_code', 'Selected pump') }} ({{ operating_point.impeller_size }}mm impeller) operates at {{ "%.1f"|format(operating_point.achieved_efficiency_pct) }}% efficiency for the required duty of {{ "%.1f"|format(operating_point.flow_m3hr) }} m³/hr at {{ "%.1f"|format(operating_point.achieved_head_m) }} m. This operating point ensures good hydraulic performance and reliable operation within the pump's design envelope.</p>
+            {% endif %}
+        </div>
+
+        <!-- Selection Criteria Matching -->
+        <div class="reasoning-section">
+            <h3 class="subsection-title">Selection Criteria Matching</h3>
+            <p>{% if selected_pump.get('selection_reason') %}{{ selected_pump.selection_reason }}{% else %}This pump was selected based on comprehensive analysis of hydraulic performance, efficiency optimization, and application suitability.{% endif %} It achieves an excellent overall suitability score of {{ "%.1f"|format(selected_pump.get('overall_score', 0)) }}/100 for your specific requirements, making it our top recommendation. Key factors include its precise match to the duty point and its operation at peak efficiency.</p>
+        </div>
+
+        <!-- Application Suitability -->
+        <div class="reasoning-section">
+            <h3 class="subsection-title">Application Suitability</h3>
+            <p>The {{ selected_pump.get('pump_code', 'Selected pump') }} {% if 'ALE' in selected_pump.get('pump_code', '') %}(ALE Series - High Efficiency End Suction){% elif 'K' in selected_pump.get('pump_code', '') %}(K Series - Centrifugal End Suction){% endif %} is well-suited for {{ site_requirements.get('application_type', 'Water Supply') }} applications like yours. Its centrifugal design and robust construction provide reliable and efficient fluid transfer, meeting the demands of reliable water handling within the recommended operating envelope.</p>
+        </div>
+    </div>
+
+    <!-- Alternative Options -->
+    {% if alternatives %}
+    <div class="section">
+        <h2 class="section-title">Alternative Options Considered</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Model</th>
+                    <th>Manufacturer</th>
+                    <th>Efficiency</th>
+                    <th>Power</th>
+                    <th>Score</th>
+                    <th>Key Difference</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for alt in alternatives %}
+                <tr>
+                    <td>{{ alt.model }}</td>
+                    <td>{{ alt.manufacturer }}</td>
+                    <td>{{ alt.efficiency }}</td>
+                    <td>{{ alt.power }}</td>
+                    <td>{{ alt.score }}</td>
+                    <td>{{ alt.key_difference }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    <!-- Technical Specifications -->
+    {% if specifications %}
+    <div class="section">
+        <h2 class="section-title">Complete Technical Specifications</h2>
+
+        <table class="specs-table">
+            <thead>
+                <tr>
+                    <th>Parameter</th>
+                    <th>Value</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for spec in specifications %}
+                <tr>
+                    <td>{{ spec.parameter }}</td>
+                    <td>{{ spec.value }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    <!-- Recommendations -->
+    {% if recommendations %}
+    <div class="section">
+        <h2 class="section-title">Recommendations & Next Steps</h2>
+
+        <div class="recommendations-box">
+            <h3 style="margin-top: 0;">Important Recommendations:</h3>
+            <ol>
+                {% for recommendation in recommendations %}
+                <li>{{ recommendation }}</li>
+                {% endfor %}
+            </ol>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Performance Charts Section -->
+    {% if charts and charts.performance_curve %}
+    <div class="section page-break">
+        <h2>Performance Curves</h2>
+        <div class="chart-container">
+            <img src="{{ charts.performance_curve }}" alt="Pump Performance Curves" class="chart-image">
+            <p class="chart-caption">
+                Operating point for selected impeller ({{ operating_point.impeller_size }}mm) shown in red.
+                {% if operating_point.operating_point_overall_extrapolated %}
+                (* Operating point involves extrapolation beyond tested curve range)
+                {% endif %}
+                Comprehensive performance analysis showing head, efficiency, power, and NPSH characteristics
+                for the {{ selected_pump.pump_code }} pump at the specified operating conditions.
+            </p>
+        </div>
+    </div>
+    {% elif ape_logo_base64 %}
+    <div class="section page-break">
+        <h2>Performance Curves</h2>
+        <div class="chart-container">
+            <p>Performance charts will be included in the final report.</p>
+            <div class="logo-placeholder">
+                <img src="data:image/svg+xml;base64,{{ ape_logo_base64 }}" alt="APE Pumps Logo" style="max-width: 200px;">
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="section page-break">
+        <h2>Performance Curves</h2>
+        <p>Performance charts are being generated...</p>
+    </div>
+    {% endif %}
+
+    <!-- Footer -->
+    <div class="footer-section">
+        <h3 style="margin-top: 0;">{{ company_name }}</h3>
+        <p>Advanced Pump Engineering Solutions</p>
+        <div class="contact-info">
+            <p>For technical support and detailed quotations, please contact our engineering team.</p>
+            <p>This report was generated by the APE Pumps AI Selection System on {{ customer_info.report_date or generated_date }} at {{ customer_info.report_time or generated_time }}.</p>
+        </div>
+    </div>
+</body>
+</html>

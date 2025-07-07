@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SCG File Management | APE Pumps Selection</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --md-primary: #1976d2;
+            --md-secondary: #4caf50;
+            --md-surface: #ffffff;
+            --md-surface-variant: #f8f9fa;
+            --md-outline: #e0e0e0;
+            --md-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        
+        .ape-header {
+            background: linear-gradient(135deg, var(--md-primary) 0%, #1565c0 100%);
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+        }
+        
+        .feature-card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: var(--md-shadow);
+            transition: transform 0.2s ease;
+            height: 100%;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+        }
+        
+        .stats-card {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .upload-zone {
+            border: 2px dashed var(--md-outline);
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            background: var(--md-surface-variant);
+        }
+        
+        .upload-zone:hover {
+            border-color: var(--md-primary);
+            background: #e3f2fd;
+        }
+        
+        .upload-zone.dragover {
+            border-color: var(--md-secondary);
+            background: #e8f5e8;
+        }
+        
+        .btn-primary {
+            background: var(--md-primary);
+            border-color: var(--md-primary);
+        }
+        
+        .btn-success {
+            background: var(--md-secondary);
+            border-color: var(--md-secondary);
+        }
+        
+        .processing-status {
+            display: none;
+            margin-top: 1rem;
+        }
+        
+        .validation-result {
+            margin-top: 1rem;
+            padding: 1rem;
+            border-radius: 8px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="ape-header">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1><i class="fas fa-file-import me-3"></i>SCG File Management</h1>
+                    <p class="mb-0">Import authentic APE pump data from SCG files into the catalog database</p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <a href="{{ url_for('data_management') }}" class="btn btn-light">
+                        <i class="fas fa-arrow-left me-2"></i>Back to Data Management
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Status Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                        <i class="fas fa-{{ 'exclamation-triangle' if category == 'error' else 'check' if category == 'success' else 'info-circle' }} me-2"></i>
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        {% if not scg_available %}
+        <!-- SCG Not Available Notice -->
+        <div class="alert alert-warning" role="alert">
+            <h4 class="alert-heading"><i class="fas fa-exclamation-triangle me-2"></i>SCG Processing Unavailable</h4>
+            <p>SCG file processing modules are not available. Please ensure all dependencies are installed.</p>
+            <hr>
+            <p class="mb-0">Contact your administrator for assistance with SCG processing setup.</p>
+        </div>
+        {% else %}
+
+        <!-- Processing Statistics -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <h5 class="text-primary mb-2">Files Processed</h5>
+                    <h3 class="mb-0">{{ stats.scg_processor.files_processed if stats.scg_processor else 0 }}</h3>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <h5 class="text-primary mb-2">Pumps Added</h5>
+                    <h3 class="mb-0">{{ stats.scg_processor.pumps_processed if stats.scg_processor else 0 }}</h3>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <h5 class="text-primary mb-2">Curves Processed</h5>
+                    <h3 class="mb-0">{{ stats.scg_processor.curves_processed if stats.scg_processor else 0 }}</h3>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <h5 class="text-primary mb-2">Conversion Rate</h5>
+                    <h3 class="mb-0">{{ stats.catalog_adapter.pumps_converted if stats.catalog_adapter else 0 }}</h3>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content Tabs -->
+        <ul class="nav nav-tabs mb-4" id="scgTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="single-tab" data-bs-toggle="tab" data-bs-target="#single" type="button" role="tab">
+                    <i class="fas fa-file me-2"></i>Single File Upload
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="batch-tab" data-bs-toggle="tab" data-bs-target="#batch" type="button" role="tab">
+                    <i class="fas fa-files me-2"></i>Batch Processing
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="validation-tab" data-bs-toggle="tab" data-bs-target="#validation" type="button" role="tab">
+                    <i class="fas fa-check-circle me-2"></i>File Validation
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="scgTabContent">
+            <!-- Single File Upload Tab -->
+            <div class="tab-pane fade show active" id="single" role="tabpanel">
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="feature-card card">
+                            <div class="card-header bg-primary text-white">
+                                <h5 class="mb-0"><i class="fas fa-upload me-2"></i>Upload SCG File</h5>
+                            </div>
+                            <div class="card-body">
+                                <form method="POST" enctype="multipart/form-data" id="singleUploadForm">
+                                    <div class="upload-zone" id="uploadZone">
+                                        <i class="fas fa-cloud-upload-alt fa-3x text-muted mb-3"></i>
+                                        <h5>Drag & Drop SCG File Here</h5>
+                                        <p class="text-muted">or click to browse</p>
+                                        <input type="file" name="scg_file" id="scgFile" class="d-none" accept=".scg" required>
+                                    </div>
+                                    
+                                    <div class="mt-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="update_existing" id="updateExisting">
+                                            <label class="form-check-label" for="updateExisting">
+                                                Update existing pumps if duplicate codes found
+                                            </label>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mt-3">
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-cog me-2"></i>Process SCG File
+                                        </button>
+                                        <button type="button" class="btn btn-secondary ms-2" onclick="validateFile()">
+                                            <i class="fas fa-check me-2"></i>Validate Only
+                                        </button>
+                                    </div>
+                                </form>
+                                
+                                <div class="processing-status" id="processingStatus">
+                                    <div class="alert alert-info">
+                                        <i class="fas fa-spinner fa-spin me-2"></i>Processing SCG file...
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <div class="feature-card card">
+                            <div class="card-header bg-info text-white">
+                                <h6 class="mb-0"><i class="fas fa-info-circle me-2"></i>SCG File Format</h6>
+                            </div>
+                            <div class="card-body">
+                                <p><strong>Supported Format:</strong></p>
+                                <ul class="list-unstyled">
+                                    <li><i class="fas fa-check text-success me-2"></i>APE SCG files (.scg)</li>
+                                    <li><i class="fas fa-check text-success me-2"></i>Authentic pump data</li>
+                                    <li><i class="fas fa-check text-success me-2"></i>Performance curves</li>
+                                    <li><i class="fas fa-check text-success me-2"></i>Power calculations</li>
+                                </ul>
+                                
+                                <p><strong>Processing Steps:</strong></p>
+                                <ol class="small">
+                                    <li>Parse SCG file format</li>
+                                    <li>Validate pump data</li>
+                                    <li>Calculate power values</li>
+                                    <li>Convert to catalog format</li>
+                                    <li>Integrate with database</li>
+                                </ol>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Batch Processing Tab -->
+            <div class="tab-pane fade" id="batch" role="tabpanel">
+                <div class="feature-card card">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0"><i class="fas fa-layer-group me-2"></i>Batch Processing</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="POST" id="batchUploadForm">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="scgDirectory" class="form-label">SCG Files Directory</label>
+                                        <input type="text" class="form-control" name="scg_directory" id="scgDirectory" 
+                                               placeholder="/path/to/scg/files" required>
+                                        <div class="form-text">Specify the directory containing SCG files to process</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="mb-3">
+                                        <label for="maxWorkers" class="form-label">Concurrent Workers</label>
+                                        <select class="form-select" name="max_workers" id="maxWorkers">
+                                            <option value="1">1 (Sequential)</option>
+                                            <option value="2" selected>2 (Recommended)</option>
+                                            <option value="4">4 (Fast)</option>
+                                            <option value="8">8 (Maximum)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="mb-3">
+                                        <label class="form-label">&nbsp;</label>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="update_existing" id="batchUpdateExisting">
+                                            <label class="form-check-label" for="batchUpdateExisting">
+                                                Update existing
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-play me-2"></i>Start Batch Processing
+                            </button>
+                        </form>
+                        
+                        <div class="mt-4" id="batchStatus" style="display: none;">
+                            <h6>Batch Processing Status</h6>
+                            <div class="progress mb-2">
+                                <div class="progress-bar" role="progressbar" style="width: 0%" id="batchProgress"></div>
+                            </div>
+                            <div id="batchDetails"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- File Validation Tab -->
+            <div class="tab-pane fade" id="validation" role="tabpanel">
+                <div class="feature-card card">
+                    <div class="card-header bg-warning text-dark">
+                        <h5 class="mb-0"><i class="fas fa-shield-alt me-2"></i>File Validation</h5>
+                    </div>
+                    <div class="card-body">
+                        <p>Validate SCG files without processing to check data integrity and compatibility.</p>
+                        
+                        <form id="validationForm">
+                            <div class="upload-zone" id="validationUploadZone">
+                                <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                                <h5>Upload SCG File for Validation</h5>
+                                <p class="text-muted">File will be checked but not processed</p>
+                                <input type="file" name="scg_file" id="validationFile" class="d-none" accept=".scg" required>
+                            </div>
+                            
+                            <div class="mt-3">
+                                <button type="button" class="btn btn-warning" onclick="validateFile()">
+                                    <i class="fas fa-check-double me-2"></i>Validate File
+                                </button>
+                            </div>
+                        </form>
+                        
+                        <div class="validation-result" id="validationResult">
+                            <!-- Validation results will be populated here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reports Section -->
+        <div class="mt-4">
+            <div class="feature-card card">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Processing Reports</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p>Download detailed processing reports including statistics, errors, and validation results.</p>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <a href="{{ url_for('scg_download_report') }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-download me-2"></i>Download Latest Report
+                            </a>
+                            <button type="button" class="btn btn-outline-secondary ms-2" onclick="getProcessingStats()">
+                                <i class="fas fa-refresh me-2"></i>Refresh Stats
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% endif %}
+    </div>
+
+    <!-- JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // File upload drag and drop functionality
+        function setupUploadZone(zoneId, fileInputId) {
+            const zone = document.getElementById(zoneId);
+            const fileInput = document.getElementById(fileInputId);
+            
+            zone.addEventListener('click', () => fileInput.click());
+            
+            zone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                zone.classList.add('dragover');
+            });
+            
+            zone.addEventListener('dragleave', () => {
+                zone.classList.remove('dragover');
+            });
+            
+            zone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                zone.classList.remove('dragover');
+                const files = e.dataTransfer.files;
+                if (files.length > 0 && files[0].name.endsWith('.scg')) {
+                    fileInput.files = files;
+                    updateFileName(zoneId, files[0].name);
+                }
+            });
+            
+            fileInput.addEventListener('change', (e) => {
+                if (e.target.files.length > 0) {
+                    updateFileName(zoneId, e.target.files[0].name);
+                }
+            });
+        }
+        
+        function updateFileName(zoneId, fileName) {
+            const zone = document.getElementById(zoneId);
+            zone.innerHTML = `
+                <i class="fas fa-file-alt fa-3x text-success mb-3"></i>
+                <h5>${fileName}</h5>
+                <p class="text-success">File ready for processing</p>
+            `;
+        }
+        
+        // File validation
+        async function validateFile() {
+            const fileInput = document.getElementById('validationFile') || document.getElementById('scgFile');
+            const resultDiv = document.getElementById('validationResult');
+            
+            if (!fileInput.files[0]) {
+                alert('Please select a file first');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('scg_file', fileInput.files[0]);
+            
+            resultDiv.style.display = 'none';
+            resultDiv.innerHTML = '<div class="text-center"><i class="fas fa-spinner fa-spin"></i> Validating...</div>';
+            resultDiv.style.display = 'block';
+            
+            try {
+                const response = await fetch('/admin/scg/validate', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (result.valid) {
+                    resultDiv.className = 'validation-result alert alert-success';
+                    resultDiv.innerHTML = `
+                        <h6><i class="fas fa-check-circle me-2"></i>File Validation Successful</h6>
+                        <ul class="mb-0">
+                            <li><strong>Pump Code:</strong> ${result.pump_code}</li>
+                            <li><strong>Manufacturer:</strong> ${result.manufacturer}</li>
+                            <li><strong>Curves:</strong> ${result.num_curves}</li>
+                            <li><strong>Flow Unit:</strong> ${result.flow_unit}</li>
+                            <li><strong>Head Unit:</strong> ${result.head_unit}</li>
+                            <li><strong>File Size:</strong> ${(result.file_size / 1024).toFixed(1)} KB</li>
+                        </ul>
+                        ${result.warnings.length > 0 ? '<hr><h6>Warnings:</h6><ul>' + result.warnings.map(w => '<li>' + w + '</li>').join('') + '</ul>' : ''}
+                    `;
+                } else {
+                    resultDiv.className = 'validation-result alert alert-danger';
+                    resultDiv.innerHTML = `<h6><i class="fas fa-exclamation-triangle me-2"></i>Validation Failed</h6><p>${result.error}</p>`;
+                }
+            } catch (error) {
+                resultDiv.className = 'validation-result alert alert-danger';
+                resultDiv.innerHTML = `<h6><i class="fas fa-times-circle me-2"></i>Validation Error</h6><p>${error.message}</p>`;
+            }
+            
+            resultDiv.style.display = 'block';
+        }
+        
+        // Get processing statistics
+        async function getProcessingStats() {
+            try {
+                const response = await fetch('/api/scg/stats');
+                const stats = await response.json();
+                
+                if (stats.available) {
+                    // Update statistics display
+                    location.reload(); // Simple refresh for now
+                }
+            } catch (error) {
+                console.error('Error fetching stats:', error);
+            }
+        }
+        
+        // Form submission handlers
+        document.getElementById('singleUploadForm').addEventListener('submit', function(e) {
+            const statusDiv = document.getElementById('processingStatus');
+            statusDiv.style.display = 'block';
+        });
+        
+        // Initialize upload zones
+        document.addEventListener('DOMContentLoaded', function() {
+            setupUploadZone('uploadZone', 'scgFile');
+            setupUploadZone('validationUploadZone', 'validationFile');
+        });
+    </script>
+</body>
+</html>

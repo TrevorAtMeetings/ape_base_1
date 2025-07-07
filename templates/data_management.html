@@ -1,0 +1,321 @@
+{% extends 'base.html' %}
+
+{% block title %}Pump Data Management - APE Pumps Selection{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col s12">
+            <h3 class="blue-text text-darken-2">
+                <i class="material-icons left">storage</i>
+                Pump Database Management
+            </h3>
+            
+            <!-- Summary Cards -->
+            <div class="row">
+                <div class="col s12 m3">
+                    <div class="card blue darken-2 white-text center">
+                        <div class="card-content">
+                            <h4>{{ total }}</h4>
+                            <p>Total Pumps</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col s12 m3">
+                    <div class="card green darken-2 white-text center">
+                        <div class="card-content">
+                            <h4>870</h4>
+                            <p>Performance Curves</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col s12 m3">
+                    <div class="card orange darken-2 white-text center">
+                        <div class="card-content">
+                            <h4>90.0</h4>
+                            <p>Quality Score</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col s12 m3">
+                    <div class="card red darken-2 white-text center">
+                        <div class="card-content">
+                            <h4>100%</h4>
+                            <p>Parse Success</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Data Quality Alert -->
+            <div class="card orange lighten-4">
+                <div class="card-content">
+                    <div class="row">
+                        <div class="col s1">
+                            <i class="material-icons medium orange-text text-darken-2">warning</i>
+                        </div>
+                        <div class="col s11">
+                            <h6 class="orange-text text-darken-2">NPSH Data Availability Notice</h6>
+                            <p class="grey-text text-darken-2">
+                                <strong>Excellent:</strong> 612 of 869 curves (70.4%) contain authentic NPSH data from APE testing. 
+                                This represents comprehensive cavitation performance data across most pump models.
+                                NPSH data correlates precisely with flow, head, and efficiency at each operating point.
+                                Engineers should calculate NPSH requirements independently or contact APE for specific NPSH values.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Control Panel -->
+            <div class="card">
+                <div class="card-content">
+                    <div class="row">
+                        <!-- Search and Filter -->
+                        <div class="col s12 m8">
+                            <form method="GET" action="{{ url_for('data_management') }}">
+                                <div class="row">
+                                    <div class="col s12 m6">
+                                        <div class="input-field">
+                                            <i class="material-icons prefix">search</i>
+                                            <input type="text" id="search" name="search" value="{{ search }}">
+                                            <label for="search">Search Pump Code</label>
+                                        </div>
+                                    </div>
+                                    <div class="col s12 m4">
+                                        <div class="input-field">
+                                            <select name="category" id="category">
+                                                <option value="all" {% if category == 'all' %}selected{% endif %}>All Categories</option>
+                                                <option value="END_SUCTION" {% if category == 'END_SUCTION' %}selected{% endif %}>End Suction</option>
+                                                <option value="MULTI_STAGE" {% if category == 'MULTI_STAGE' %}selected{% endif %}>Multi-Stage</option>
+                                                <option value="AXIAL_FLOW" {% if category == 'AXIAL_FLOW' %}selected{% endif %}>Axial Flow</option>
+                                                <option value="HSC" {% if category == 'HSC' %}selected{% endif %}>High Speed Centrifugal</option>
+                                            </select>
+                                            <label>Category Filter</label>
+                                        </div>
+                                    </div>
+                                    <div class="col s12 m2">
+                                        <button class="btn blue darken-2" type="submit" style="margin-top: 25px;">
+                                            <i class="material-icons">filter_list</i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                        
+                        <!-- Export and Upload -->
+                        <div class="col s12 m4">
+                            <div class="right-align">
+                                <a href="{{ url_for('export_csv') }}" class="btn green darken-2 waves-effect">
+                                    <i class="material-icons left">download</i>
+                                    Export CSV
+                                </a>
+                                <br><br>
+                                <a href="#upload-modal" class="btn orange darken-2 waves-effect modal-trigger">
+                                    <i class="material-icons left">upload</i>
+                                    Upload Data
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Data Table -->
+            <div class="card">
+                <div class="card-content">
+                    <div class="table-container" style="overflow-x: auto;">
+                        <table class="striped responsive-table">
+                            <thead>
+                                <tr>
+                                    <th>Pump Code</th>
+                                    <th>Manufacturer</th>
+                                    <th>Model</th>
+                                    <th>Max Flow (m³/hr)</th>
+                                    <th>Max Head (m)</th>
+                                    <th>Max Efficiency (%)</th>
+                                    <th>Performance Curves</th>
+                                    <th>NPSH Data</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for pump in pumps %}
+                                <tr>
+                                    <td>
+                                        <strong class="blue-text">{{ pump.pump_code }}</strong>
+                                    </td>
+                                    <td>{{ pump.manufacturer }}</td>
+                                    <td>{{ pump.model or 'N/A' }}</td>
+                                    <td>
+                                        {% if pump.max_flow > 0 %}
+                                            <span class="chip green white-text">{{ "%.1f"|format(pump.max_flow) }}</span>
+                                        {% else %}
+                                            <span class="chip red white-text">N/A</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if pump.max_head > 0 %}
+                                            <span class="chip blue white-text">{{ "%.1f"|format(pump.max_head) }}</span>
+                                        {% else %}
+                                            <span class="chip red white-text">N/A</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if pump.max_efficiency > 0 %}
+                                            {% if pump.max_efficiency >= 80 %}
+                                                <span class="chip green white-text">{{ "%.1f"|format(pump.max_efficiency) }}%</span>
+                                            {% elif pump.max_efficiency >= 60 %}
+                                                <span class="chip orange white-text">{{ "%.1f"|format(pump.max_efficiency) }}%</span>
+                                            {% else %}
+                                                <span class="chip red white-text">{{ "%.1f"|format(pump.max_efficiency) }}%</span>
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="chip red white-text">N/A</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="chip {% if pump.curve_count > 0 %}green{% else %}red{% endif %} white-text">
+                                            {{ pump.curve_count }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if pump.has_npsh %}
+                                            <i class="material-icons green-text">check</i>
+                                        {% else %}
+                                            <i class="material-icons red-text">close</i>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="{{ url_for('pump_report', pump_code=pump.pump_code) }}" 
+                                           class="btn-small blue darken-2 waves-effect" title="View Report">
+                                            <i class="material-icons">description</i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Pagination -->
+                    {% if total_pages > 1 %}
+                    <div class="center-align" style="margin-top: 20px;">
+                        <ul class="pagination">
+                            {% if has_prev %}
+                                <li class="waves-effect">
+                                    <a href="{{ url_for('data_management', page=page-1, search=search, category=category) }}">
+                                        <i class="material-icons">chevron_left</i>
+                                    </a>
+                                </li>
+                            {% endif %}
+                            
+                            {% for p in range(1, total_pages + 1) %}
+                                {% if p == page %}
+                                    <li class="active blue darken-2">
+                                        <a href="#">{{ p }}</a>
+                                    </li>
+                                {% elif p <= 3 or p >= total_pages - 2 or (p >= page - 1 and p <= page + 1) %}
+                                    <li class="waves-effect">
+                                        <a href="{{ url_for('data_management', page=p, search=search, category=category) }}">{{ p }}</a>
+                                    </li>
+                                {% elif p == 4 and page > 6 %}
+                                    <li class="disabled"><a href="#">...</a></li>
+                                {% elif p == total_pages - 3 and page < total_pages - 5 %}
+                                    <li class="disabled"><a href="#">...</a></li>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if has_next %}
+                                <li class="waves-effect">
+                                    <a href="{{ url_for('data_management', page=page+1, search=search, category=category) }}">
+                                        <i class="material-icons">chevron_right</i>
+                                    </a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                        
+                        <p class="grey-text">
+                            Showing {{ ((page-1) * per_page + 1) }} to {{ [page * per_page, total]|min }} of {{ total }} entries
+                        </p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Upload Modal -->
+<div id="upload-modal" class="modal modal-fixed-footer">
+    <div class="modal-content">
+        <h4>
+            <i class="material-icons left">upload</i>
+            Upload Pump Data
+        </h4>
+        <p>Upload new pump data to the database. Supported formats: JSON, CSV, TXT</p>
+        
+        <form action="{{ url_for('upload_pump_data') }}" method="post" enctype="multipart/form-data">
+            <div class="file-field input-field">
+                <div class="btn blue darken-2">
+                    <span><i class="material-icons left">attach_file</i>Choose File</span>
+                    <input type="file" name="pump_file" accept=".json,.csv,.txt" required>
+                </div>
+                <div class="file-path-wrapper">
+                    <input class="file-path validate" type="text" placeholder="Select pump data file">
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col s12">
+                    <h6>Supported File Formats:</h6>
+                    <ul class="collection">
+                        <li class="collection-item">
+                            <strong>JSON (.json)</strong> - Standard APE pump data format with objPump structure
+                        </li>
+                        <li class="collection-item">
+                            <strong>CSV (.csv)</strong> - Comma-separated values with headers: Pump Code, Manufacturer, Model, etc.
+                        </li>
+                        <li class="collection-item">
+                            <strong>TXT (.txt)</strong> - Text files containing JSON formatted pump data
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col s12">
+                    <blockquote class="orange lighten-4">
+                        <strong>Note:</strong> Files will be validated before upload. Invalid entries will be reported but won't stop the process.
+                    </blockquote>
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                <a href="#!" class="modal-close waves-effect waves-red btn-flat">Cancel</a>
+                <button type="submit" class="waves-effect waves-green btn blue darken-2">
+                    <i class="material-icons left">cloud_upload</i>
+                    Upload Data
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize modals
+    var modals = document.querySelectorAll('.modal');
+    M.Modal.init(modals);
+    
+    // Initialize select elements
+    var selects = document.querySelectorAll('select');
+    M.FormSelect.init(selects);
+    
+    // Auto-submit search form on category change
+    document.getElementById('category').addEventListener('change', function() {
+        this.form.submit();
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,1046 @@
+{
+  "audit_timestamp": "2025-06-17T09:44:45.764751",
+  "summary": {
+    "total_pumps_checked": 386,
+    "total_issues_found": 71,
+    "data_integrity_score": 85.66,
+    "critical_issues": 24,
+    "error_issues": 47,
+    "warning_issues": 0
+  },
+  "missing_source_files": [
+    "100-200 2F 2P ",
+    "12/15 V.S.M.F.V",
+    "12 LC 9stg (Test Results)",
+    "14 MC 755  4P",
+    "14 MC 756  4P",
+    "14 MC 757  4P",
+    "18 HC + 18 XHC SPECIAL",
+    "1.5X2X10.5 H",
+    "1.5X2X8.5 H",
+    "20 D.S",
+    "2.5 K",
+    "2.5 KL",
+    "3X4X10.5 H SJA",
+    "4x6x13.25 H-SJA",
+    "4X6X13.25 L GSJH",
+    "4X6X8.5 L SJA",
+    "50-200 2F 2P ",
+    "5/6 CME ",
+    "MSD10x10x13.5 3 4",
+    "MSD 10x10x13.5 3(4)",
+    "PJ 80 ",
+    "VBK 35-22.5 3 STAGE",
+    "VBK 620/022-4S (Test Curve)",
+    "WVP-130-30 (P30)"
+  ],
+  "orphaned_database_entries": [],
+  "issues_by_type": {
+    "MISSING_SOURCE_FILE": [
+      {
+        "pump_code": "100-200 2F 2P ",
+        "field": "source_file",
+        "expected": "Source file exists",
+        "actual": "Source file not found",
+        "description": "No source data file found for pump"
+      },
+      {
+        "pump_code": "12/15 V.S.M.F.V",
+        "field": "source_file",
+        "expected": "Source file exists",
+        "actual": "Source file not found",
+        "description": "No source data file found for pump"
+      },
+      {
+        "pump_code": "12 LC 9stg (Test Results)",
+        "field": "source_file",
+        "expected": "Source file exists",
+        "actual": "Source file not found",
+        "description": "No source data file found for pump"
+      },
+      {
+        "pump_code": "14 MC 755  4P",
+        "field": "source_file",
+        "expected": "Source file exists",
+        "actual": "Source file not found",
+        "description": "No source data file found for pump"
+      },
+      {
+        "pump_code": "14 MC 756  4P",
+        "field": "source_file",
+        "expected": "Source file exists",
+        "actual": "Source file not found",
+        "description": "No source data file found for pump"
+      },
+      {
+        "pump_code": "14 MC 757  4P",
+        "field": "source_file",
+        "expected": "Source file exists",
+        "actual": "Source file not found",
+        "description": "No source data file found for pump"
+      },
+      {
+        "pump_code": "18 HC + 18 XHC SPECIAL",
+        "field": "source_file",
+        "expected": "Source file exists",
+        "actual": "Source file not found",
+        "description": "No source data file found for pump"
+      },
+      {
+        "pump_code": "1.5X2X10.5 H",
+        "field": "source_file",
+        "expected": "Source file exists",
+        "actual": "Source file not found",
+        "description": "No source data file found for pump"
+      },
+      {
+        "pump_code": "1.5X2X8.5 H",
+        "field": "source_file",
+        "expected": "Source file exists",
+        "actual": "Source file not found",
+        "description": "No source data file found for pump"
+      },
+      {
+        "pump_code": "20 D.S",
+        "field": "source_file",
+        "expected": "Source file exists",
+        "actual": "Source file not found",
+        "description": "No source data file found for pump"
+      },
+      {
+        "pump_code": "2.5 K",
+        "field": "source_file",
+        "expected": "Source file exists",
+        "actual": "Source file not found",
+        "description": "No source data file found for pump"
+      },
+      {
+        "pump_code": "2.5 KL",
+        "field": "source_file",
+        "expected": "Source file exists",
+        "actual": "Source file not found",
+        "description": "No source data file found for pump"
+      },
+      {
+        "pump_code": "3X4X10.5 H SJA",
+        "field": "source_file",
+        "expected": "Source file exists",
+        "actual": "Source file not found",
+        "description": "No source data file found for pump"
+      },
+      {
+        "pump_code": "4x6x13.25 H-SJA",
+        "field": "source_file",
+        "expected": "Source file exists",
+        "actual": "Source file not found",
+        "description": "No source data file found for pump"
+      },
+      {
+        "pump_code": "4X6X13.25 L GSJH",
+        "field": "source_file",
+        "expected": "Source file exists",
+        "actual": "Source file not found",
+        "description": "No source data file found for pump"
+      },
+      {
+        "pump_code": "4X6X8.5 L SJA",
+        "field": "source_file",
+        "expected": "Source file exists",
+        "actual": "Source file not found",
+        "description": "No source data file found for pump"
+      },
+      {
+        "pump_code": "50-200 2F 2P ",
+        "field": "source_file",
+        "expected": "Source file exists",
+        "actual": "Source file not found",
+        "description": "No source data file found for pump"
+      },
+      {
+        "pump_code": "5/6 CME ",
+        "field": "source_file",
+        "expected": "Source file exists",
+        "actual": "Source file not found",
+        "description": "No source data file found for pump"
+      },
+      {
+        "pump_code": "MSD10x10x13.5 3 4",
+        "field": "source_file",
+        "expected": "Source file exists",
+        "actual": "Source file not found",
+        "description": "No source data file found for pump"
+      },
+      {
+        "pump_code": "MSD 10x10x13.5 3(4)",
+        "field": "source_file",
+        "expected": "Source file exists",
+        "actual": "Source file not found",
+        "description": "No source data file found for pump"
+      },
+      {
+        "pump_code": "PJ 80 ",
+        "field": "source_file",
+        "expected": "Source file exists",
+        "actual": "Source file not found",
+        "description": "No source data file found for pump"
+      },
+      {
+        "pump_code": "VBK 35-22.5 3 STAGE",
+        "field": "source_file",
+        "expected": "Source file exists",
+        "actual": "Source file not found",
+        "description": "No source data file found for pump"
+      },
+      {
+        "pump_code": "VBK 620/022-4S (Test Curve)",
+        "field": "source_file",
+        "expected": "Source file exists",
+        "actual": "Source file not found",
+        "description": "No source data file found for pump"
+      },
+      {
+        "pump_code": "WVP-130-30 (P30)",
+        "field": "source_file",
+        "expected": "Source file exists",
+        "actual": "Source file not found",
+        "description": "No source data file found for pump"
+      }
+    ],
+    "PUMP_TYPE_MISMATCH": [
+      {
+        "pump_code": "10 WO 2P",
+        "field": "pump_type",
+        "expected": "VTP",
+        "actual": "MULTISTAGE",
+        "description": "Pump type mismatch: source indicates VTP, database has MULTISTAGE"
+      },
+      {
+        "pump_code": "10 WO 4P",
+        "field": "pump_type",
+        "expected": "VTP",
+        "actual": "MULTISTAGE",
+        "description": "Pump type mismatch: source indicates VTP, database has MULTISTAGE"
+      },
+      {
+        "pump_code": "11 MQ H 1100VLT 2P",
+        "field": "pump_type",
+        "expected": "VTP",
+        "actual": "MULTISTAGE",
+        "description": "Pump type mismatch: source indicates VTP, database has MULTISTAGE"
+      },
+      {
+        "pump_code": "12 HC 1133 4P",
+        "field": "pump_type",
+        "expected": "VTP",
+        "actual": "MULTISTAGE",
+        "description": "Pump type mismatch: source indicates VTP, database has MULTISTAGE"
+      },
+      {
+        "pump_code": "12 HC 1134 4P",
+        "field": "pump_type",
+        "expected": "VTP",
+        "actual": "MULTISTAGE",
+        "description": "Pump type mismatch: source indicates VTP, database has MULTISTAGE"
+      },
+      {
+        "pump_code": "12 HC 4P",
+        "field": "pump_type",
+        "expected": "VTP",
+        "actual": "MULTISTAGE",
+        "description": "Pump type mismatch: source indicates VTP, database has MULTISTAGE"
+      },
+      {
+        "pump_code": "12 LC 4P",
+        "field": "pump_type",
+        "expected": "VTP",
+        "actual": "MULTISTAGE",
+        "description": "Pump type mismatch: source indicates VTP, database has MULTISTAGE"
+      },
+      {
+        "pump_code": "12 MC 4P",
+        "field": "pump_type",
+        "expected": "VTP",
+        "actual": "MULTISTAGE",
+        "description": "Pump type mismatch: source indicates VTP, database has MULTISTAGE"
+      },
+      {
+        "pump_code": "14 HC 1203 4P",
+        "field": "pump_type",
+        "expected": "VTP",
+        "actual": "MULTISTAGE",
+        "description": "Pump type mismatch: source indicates VTP, database has MULTISTAGE"
+      },
+      {
+        "pump_code": "14 HC 1204 4P",
+        "field": "pump_type",
+        "expected": "VTP",
+        "actual": "MULTISTAGE",
+        "description": "Pump type mismatch: source indicates VTP, database has MULTISTAGE"
+      },
+      {
+        "pump_code": "14 MC 6970 4P",
+        "field": "pump_type",
+        "expected": "VTP",
+        "actual": "MULTISTAGE",
+        "description": "Pump type mismatch: source indicates VTP, database has MULTISTAGE"
+      },
+      {
+        "pump_code": "16 HC 1262 4P",
+        "field": "pump_type",
+        "expected": "VTP",
+        "actual": "MULTISTAGE",
+        "description": "Pump type mismatch: source indicates VTP, database has MULTISTAGE"
+      },
+      {
+        "pump_code": "16 HC 1262 6P",
+        "field": "pump_type",
+        "expected": "VTP",
+        "actual": "MULTISTAGE",
+        "description": "Pump type mismatch: source indicates VTP, database has MULTISTAGE"
+      },
+      {
+        "pump_code": "16 HC 1264 4P",
+        "field": "pump_type",
+        "expected": "VTP",
+        "actual": "MULTISTAGE",
+        "description": "Pump type mismatch: source indicates VTP, database has MULTISTAGE"
+      },
+      {
+        "pump_code": "16 HC 1264 6P",
+        "field": "pump_type",
+        "expected": "VTP",
+        "actual": "MULTISTAGE",
+        "description": "Pump type mismatch: source indicates VTP, database has MULTISTAGE"
+      },
+      {
+        "pump_code": "18 HC 1213 4P",
+        "field": "pump_type",
+        "expected": "VTP",
+        "actual": "MULTISTAGE",
+        "description": "Pump type mismatch: source indicates VTP, database has MULTISTAGE"
+      },
+      {
+        "pump_code": "18 HC 1213 4P SABS",
+        "field": "pump_type",
+        "expected": "VTP",
+        "actual": "MULTISTAGE",
+        "description": "Pump type mismatch: source indicates VTP, database has MULTISTAGE"
+      },
+      {
+        "pump_code": "18 HC 1213 6P",
+        "field": "pump_type",
+        "expected": "VTP",
+        "actual": "MULTISTAGE",
+        "description": "Pump type mismatch: source indicates VTP, database has MULTISTAGE"
+      },
+      {
+        "pump_code": "18 HC 1214 4P",
+        "field": "pump_type",
+        "expected": "VTP",
+        "actual": "MULTISTAGE",
+        "description": "Pump type mismatch: source indicates VTP, database has MULTISTAGE"
+      },
+      {
+        "pump_code": "18 HC 1214 4P 6ST SABS",
+        "field": "pump_type",
+        "expected": "VTP",
+        "actual": "MULTISTAGE",
+        "description": "Pump type mismatch: source indicates VTP, database has MULTISTAGE"
+      },
+      {
+        "pump_code": "18 HC 1214 4P SABS",
+        "field": "pump_type",
+        "expected": "VTP",
+        "actual": "MULTISTAGE",
+        "description": "Pump type mismatch: source indicates VTP, database has MULTISTAGE"
+      },
+      {
+        "pump_code": "18 HC 1214 6P",
+        "field": "pump_type",
+        "expected": "VTP",
+        "actual": "MULTISTAGE",
+        "description": "Pump type mismatch: source indicates VTP, database has MULTISTAGE"
+      },
+      {
+        "pump_code": "18 XHC 2185 4P",
+        "field": "pump_type",
+        "expected": "VTP",
+        "actual": "MULTISTAGE",
+        "description": "Pump type mismatch: source indicates VTP, database has MULTISTAGE"
+      },
+      {
+        "pump_code": "18 XHC 2185 6P",
+        "field": "pump_type",
+        "expected": "VTP",
+        "actual": "MULTISTAGE",
+        "description": "Pump type mismatch: source indicates VTP, database has MULTISTAGE"
+      },
+      {
+        "pump_code": "18 XHC 2186 4P",
+        "field": "pump_type",
+        "expected": "VTP",
+        "actual": "MULTISTAGE",
+        "description": "Pump type mismatch: source indicates VTP, database has MULTISTAGE"
+      },
+      {
+        "pump_code": "18 XHC 2186 6P",
+        "field": "pump_type",
+        "expected": "VTP",
+        "actual": "MULTISTAGE",
+        "description": "Pump type mismatch: source indicates VTP, database has MULTISTAGE"
+      },
+      {
+        "pump_code": "20 WLN 22A 6P",
+        "field": "pump_type",
+        "expected": "HSC",
+        "actual": "MULTISTAGE",
+        "description": "Pump type mismatch: source indicates HSC, database has MULTISTAGE"
+      },
+      {
+        "pump_code": "20 WLN 28B 6P",
+        "field": "pump_type",
+        "expected": "HSC",
+        "actual": "MULTISTAGE",
+        "description": "Pump type mismatch: source indicates HSC, database has MULTISTAGE"
+      },
+      {
+        "pump_code": "20 WLN 28B 8P",
+        "field": "pump_type",
+        "expected": "HSC",
+        "actual": "MULTISTAGE",
+        "description": "Pump type mismatch: source indicates HSC, database has MULTISTAGE"
+      },
+      {
+        "pump_code": "28 HC 6P",
+        "field": "pump_type",
+        "expected": "VTP",
+        "actual": "MULTISTAGE",
+        "description": "Pump type mismatch: source indicates VTP, database has MULTISTAGE"
+      },
+      {
+        "pump_code": "28 HC 8P",
+        "field": "pump_type",
+        "expected": "VTP",
+        "actual": "MULTISTAGE",
+        "description": "Pump type mismatch: source indicates VTP, database has MULTISTAGE"
+      },
+      {
+        "pump_code": "30 HC 6P",
+        "field": "pump_type",
+        "expected": "VTP",
+        "actual": "MULTISTAGE",
+        "description": "Pump type mismatch: source indicates VTP, database has MULTISTAGE"
+      },
+      {
+        "pump_code": "32 HC 6P",
+        "field": "pump_type",
+        "expected": "VTP",
+        "actual": "MULTISTAGE",
+        "description": "Pump type mismatch: source indicates VTP, database has MULTISTAGE"
+      },
+      {
+        "pump_code": "32 HC 8P",
+        "field": "pump_type",
+        "expected": "VTP",
+        "actual": "MULTISTAGE",
+        "description": "Pump type mismatch: source indicates VTP, database has MULTISTAGE"
+      },
+      {
+        "pump_code": "32 XHC 6P",
+        "field": "pump_type",
+        "expected": "VTP",
+        "actual": "MULTISTAGE",
+        "description": "Pump type mismatch: source indicates VTP, database has MULTISTAGE"
+      },
+      {
+        "pump_code": "32 XHC 8P",
+        "field": "pump_type",
+        "expected": "VTP",
+        "actual": "MULTISTAGE",
+        "description": "Pump type mismatch: source indicates VTP, database has MULTISTAGE"
+      },
+      {
+        "pump_code": "36 HC 6P",
+        "field": "pump_type",
+        "expected": "VTP",
+        "actual": "MULTISTAGE",
+        "description": "Pump type mismatch: source indicates VTP, database has MULTISTAGE"
+      },
+      {
+        "pump_code": "36 XHC 8P",
+        "field": "pump_type",
+        "expected": "VTP",
+        "actual": "MULTISTAGE",
+        "description": "Pump type mismatch: source indicates VTP, database has MULTISTAGE"
+      },
+      {
+        "pump_code": "4/5 ALE",
+        "field": "pump_type",
+        "expected": "HSC",
+        "actual": "AXIAL_FLOW",
+        "description": "Pump type mismatch: source indicates HSC, database has AXIAL_FLOW"
+      },
+      {
+        "pump_code": "5/6 ALE",
+        "field": "pump_type",
+        "expected": "HSC",
+        "actual": "AXIAL_FLOW",
+        "description": "Pump type mismatch: source indicates HSC, database has AXIAL_FLOW"
+      },
+      {
+        "pump_code": "5/6 MEDI 2P",
+        "field": "pump_type",
+        "expected": "HSC",
+        "actual": "MULTISTAGE",
+        "description": "Pump type mismatch: source indicates HSC, database has MULTISTAGE"
+      },
+      {
+        "pump_code": "5/6 MEDIVANE 2P",
+        "field": "pump_type",
+        "expected": "HSC",
+        "actual": "MULTISTAGE",
+        "description": "Pump type mismatch: source indicates HSC, database has MULTISTAGE"
+      },
+      {
+        "pump_code": "6/8 ALE",
+        "field": "pump_type",
+        "expected": "HSC",
+        "actual": "AXIAL_FLOW",
+        "description": "Pump type mismatch: source indicates HSC, database has AXIAL_FLOW"
+      },
+      {
+        "pump_code": "6 SLM 2P",
+        "field": "pump_type",
+        "expected": "VTP",
+        "actual": "MULTISTAGE",
+        "description": "Pump type mismatch: source indicates VTP, database has MULTISTAGE"
+      },
+      {
+        "pump_code": "700-600-710 6P",
+        "field": "pump_type",
+        "expected": "HSC",
+        "actual": "MULTISTAGE",
+        "description": "Pump type mismatch: source indicates HSC, database has MULTISTAGE"
+      },
+      {
+        "pump_code": "700-600-710 8P",
+        "field": "pump_type",
+        "expected": "HSC",
+        "actual": "MULTISTAGE",
+        "description": "Pump type mismatch: source indicates HSC, database has MULTISTAGE"
+      },
+      {
+        "pump_code": "8 SLH 2P",
+        "field": "pump_type",
+        "expected": "VTP",
+        "actual": "MULTISTAGE",
+        "description": "Pump type mismatch: source indicates VTP, database has MULTISTAGE"
+      }
+    ]
+  },
+  "issues_by_severity": {
+    "CRITICAL": [
+      {
+        "pump_code": "100-200 2F 2P ",
+        "field": "source_file",
+        "expected": "Source file exists",
+        "actual": "Source file not found",
+        "description": "No source data file found for pump"
+      },
+      {
+        "pump_code": "12/15 V.S.M.F.V",
+        "field": "source_file",
+        "expected": "Source file exists",
+        "actual": "Source file not found",
+        "description": "No source data file found for pump"
+      },
+      {
+        "pump_code": "12 LC 9stg (Test Results)",
+        "field": "source_file",
+        "expected": "Source file exists",
+        "actual": "Source file not found",
+        "description": "No source data file found for pump"
+      },
+      {
+        "pump_code": "14 MC 755  4P",
+        "field": "source_file",
+        "expected": "Source file exists",
+        "actual": "Source file not found",
+        "description": "No source data file found for pump"
+      },
+      {
+        "pump_code": "14 MC 756  4P",
+        "field": "source_file",
+        "expected": "Source file exists",
+        "actual": "Source file not found",
+        "description": "No source data file found for pump"
+      },
+      {
+        "pump_code": "14 MC 757  4P",
+        "field": "source_file",
+        "expected": "Source file exists",
+        "actual": "Source file not found",
+        "description": "No source data file found for pump"
+      },
+      {
+        "pump_code": "18 HC + 18 XHC SPECIAL",
+        "field": "source_file",
+        "expected": "Source file exists",
+        "actual": "Source file not found",
+        "description": "No source data file found for pump"
+      },
+      {
+        "pump_code": "1.5X2X10.5 H",
+        "field": "source_file",
+        "expected": "Source file exists",
+        "actual": "Source file not found",
+        "description": "No source data file found for pump"
+      },
+      {
+        "pump_code": "1.5X2X8.5 H",
+        "field": "source_file",
+        "expected": "Source file exists",
+        "actual": "Source file not found",
+        "description": "No source data file found for pump"
+      },
+      {
+        "pump_code": "20 D.S",
+        "field": "source_file",
+        "expected": "Source file exists",
+        "actual": "Source file not found",
+        "description": "No source data file found for pump"
+      },
+      {
+        "pump_code": "2.5 K",
+        "field": "source_file",
+        "expected": "Source file exists",
+        "actual": "Source file not found",
+        "description": "No source data file found for pump"
+      },
+      {
+        "pump_code": "2.5 KL",
+        "field": "source_file",
+        "expected": "Source file exists",
+        "actual": "Source file not found",
+        "description": "No source data file found for pump"
+      },
+      {
+        "pump_code": "3X4X10.5 H SJA",
+        "field": "source_file",
+        "expected": "Source file exists",
+        "actual": "Source file not found",
+        "description": "No source data file found for pump"
+      },
+      {
+        "pump_code": "4x6x13.25 H-SJA",
+        "field": "source_file",
+        "expected": "Source file exists",
+        "actual": "Source file not found",
+        "description": "No source data file found for pump"
+      },
+      {
+        "pump_code": "4X6X13.25 L GSJH",
+        "field": "source_file",
+        "expected": "Source file exists",
+        "actual": "Source file not found",
+        "description": "No source data file found for pump"
+      },
+      {
+        "pump_code": "4X6X8.5 L SJA",
+        "field": "source_file",
+        "expected": "Source file exists",
+        "actual": "Source file not found",
+        "description": "No source data file found for pump"
+      },
+      {
+        "pump_code": "50-200 2F 2P ",
+        "field": "source_file",
+        "expected": "Source file exists",
+        "actual": "Source file not found",
+        "description": "No source data file found for pump"
+      },
+      {
+        "pump_code": "5/6 CME ",
+        "field": "source_file",
+        "expected": "Source file exists",
+        "actual": "Source file not found",
+        "description": "No source data file found for pump"
+      },
+      {
+        "pump_code": "MSD10x10x13.5 3 4",
+        "field": "source_file",
+        "expected": "Source file exists",
+        "actual": "Source file not found",
+        "description": "No source data file found for pump"
+      },
+      {
+        "pump_code": "MSD 10x10x13.5 3(4)",
+        "field": "source_file",
+        "expected": "Source file exists",
+        "actual": "Source file not found",
+        "description": "No source data file found for pump"
+      },
+      {
+        "pump_code": "PJ 80 ",
+        "field": "source_file",
+        "expected": "Source file exists",
+        "actual": "Source file not found",
+        "description": "No source data file found for pump"
+      },
+      {
+        "pump_code": "VBK 35-22.5 3 STAGE",
+        "field": "source_file",
+        "expected": "Source file exists",
+        "actual": "Source file not found",
+        "description": "No source data file found for pump"
+      },
+      {
+        "pump_code": "VBK 620/022-4S (Test Curve)",
+        "field": "source_file",
+        "expected": "Source file exists",
+        "actual": "Source file not found",
+        "description": "No source data file found for pump"
+      },
+      {
+        "pump_code": "WVP-130-30 (P30)",
+        "field": "source_file",
+        "expected": "Source file exists",
+        "actual": "Source file not found",
+        "description": "No source data file found for pump"
+      }
+    ],
+    "ERROR": [
+      {
+        "pump_code": "10 WO 2P",
+        "field": "pump_type",
+        "expected": "VTP",
+        "actual": "MULTISTAGE",
+        "description": "Pump type mismatch: source indicates VTP, database has MULTISTAGE"
+      },
+      {
+        "pump_code": "10 WO 4P",
+        "field": "pump_type",
+        "expected": "VTP",
+        "actual": "MULTISTAGE",
+        "description": "Pump type mismatch: source indicates VTP, database has MULTISTAGE"
+      },
+      {
+        "pump_code": "11 MQ H 1100VLT 2P",
+        "field": "pump_type",
+        "expected": "VTP",
+        "actual": "MULTISTAGE",
+        "description": "Pump type mismatch: source indicates VTP, database has MULTISTAGE"
+      },
+      {
+        "pump_code": "12 HC 1133 4P",
+        "field": "pump_type",
+        "expected": "VTP",
+        "actual": "MULTISTAGE",
+        "description": "Pump type mismatch: source indicates VTP, database has MULTISTAGE"
+      },
+      {
+        "pump_code": "12 HC 1134 4P",
+        "field": "pump_type",
+        "expected": "VTP",
+        "actual": "MULTISTAGE",
+        "description": "Pump type mismatch: source indicates VTP, database has MULTISTAGE"
+      },
+      {
+        "pump_code": "12 HC 4P",
+        "field": "pump_type",
+        "expected": "VTP",
+        "actual": "MULTISTAGE",
+        "description": "Pump type mismatch: source indicates VTP, database has MULTISTAGE"
+      },
+      {
+        "pump_code": "12 LC 4P",
+        "field": "pump_type",
+        "expected": "VTP",
+        "actual": "MULTISTAGE",
+        "description": "Pump type mismatch: source indicates VTP, database has MULTISTAGE"
+      },
+      {
+        "pump_code": "12 MC 4P",
+        "field": "pump_type",
+        "expected": "VTP",
+        "actual": "MULTISTAGE",
+        "description": "Pump type mismatch: source indicates VTP, database has MULTISTAGE"
+      },
+      {
+        "pump_code": "14 HC 1203 4P",
+        "field": "pump_type",
+        "expected": "VTP",
+        "actual": "MULTISTAGE",
+        "description": "Pump type mismatch: source indicates VTP, database has MULTISTAGE"
+      },
+      {
+        "pump_code": "14 HC 1204 4P",
+        "field": "pump_type",
+        "expected": "VTP",
+        "actual": "MULTISTAGE",
+        "description": "Pump type mismatch: source indicates VTP, database has MULTISTAGE"
+      },
+      {
+        "pump_code": "14 MC 6970 4P",
+        "field": "pump_type",
+        "expected": "VTP",
+        "actual": "MULTISTAGE",
+        "description": "Pump type mismatch: source indicates VTP, database has MULTISTAGE"
+      },
+      {
+        "pump_code": "16 HC 1262 4P",
+        "field": "pump_type",
+        "expected": "VTP",
+        "actual": "MULTISTAGE",
+        "description": "Pump type mismatch: source indicates VTP, database has MULTISTAGE"
+      },
+      {
+        "pump_code": "16 HC 1262 6P",
+        "field": "pump_type",
+        "expected": "VTP",
+        "actual": "MULTISTAGE",
+        "description": "Pump type mismatch: source indicates VTP, database has MULTISTAGE"
+      },
+      {
+        "pump_code": "16 HC 1264 4P",
+        "field": "pump_type",
+        "expected": "VTP",
+        "actual": "MULTISTAGE",
+        "description": "Pump type mismatch: source indicates VTP, database has MULTISTAGE"
+      },
+      {
+        "pump_code": "16 HC 1264 6P",
+        "field": "pump_type",
+        "expected": "VTP",
+        "actual": "MULTISTAGE",
+        "description": "Pump type mismatch: source indicates VTP, database has MULTISTAGE"
+      },
+      {
+        "pump_code": "18 HC 1213 4P",
+        "field": "pump_type",
+        "expected": "VTP",
+        "actual": "MULTISTAGE",
+        "description": "Pump type mismatch: source indicates VTP, database has MULTISTAGE"
+      },
+      {
+        "pump_code": "18 HC 1213 4P SABS",
+        "field": "pump_type",
+        "expected": "VTP",
+        "actual": "MULTISTAGE",
+        "description": "Pump type mismatch: source indicates VTP, database has MULTISTAGE"
+      },
+      {
+        "pump_code": "18 HC 1213 6P",
+        "field": "pump_type",
+        "expected": "VTP",
+        "actual": "MULTISTAGE",
+        "description": "Pump type mismatch: source indicates VTP, database has MULTISTAGE"
+      },
+      {
+        "pump_code": "18 HC 1214 4P",
+        "field": "pump_type",
+        "expected": "VTP",
+        "actual": "MULTISTAGE",
+        "description": "Pump type mismatch: source indicates VTP, database has MULTISTAGE"
+      },
+      {
+        "pump_code": "18 HC 1214 4P 6ST SABS",
+        "field": "pump_type",
+        "expected": "VTP",
+        "actual": "MULTISTAGE",
+        "description": "Pump type mismatch: source indicates VTP, database has MULTISTAGE"
+      },
+      {
+        "pump_code": "18 HC 1214 4P SABS",
+        "field": "pump_type",
+        "expected": "VTP",
+        "actual": "MULTISTAGE",
+        "description": "Pump type mismatch: source indicates VTP, database has MULTISTAGE"
+      },
+      {
+        "pump_code": "18 HC 1214 6P",
+        "field": "pump_type",
+        "expected": "VTP",
+        "actual": "MULTISTAGE",
+        "description": "Pump type mismatch: source indicates VTP, database has MULTISTAGE"
+      },
+      {
+        "pump_code": "18 XHC 2185 4P",
+        "field": "pump_type",
+        "expected": "VTP",
+        "actual": "MULTISTAGE",
+        "description": "Pump type mismatch: source indicates VTP, database has MULTISTAGE"
+      },
+      {
+        "pump_code": "18 XHC 2185 6P",
+        "field": "pump_type",
+        "expected": "VTP",
+        "actual": "MULTISTAGE",
+        "description": "Pump type mismatch: source indicates VTP, database has MULTISTAGE"
+      },
+      {
+        "pump_code": "18 XHC 2186 4P",
+        "field": "pump_type",
+        "expected": "VTP",
+        "actual": "MULTISTAGE",
+        "description": "Pump type mismatch: source indicates VTP, database has MULTISTAGE"
+      },
+      {
+        "pump_code": "18 XHC 2186 6P",
+        "field": "pump_type",
+        "expected": "VTP",
+        "actual": "MULTISTAGE",
+        "description": "Pump type mismatch: source indicates VTP, database has MULTISTAGE"
+      },
+      {
+        "pump_code": "20 WLN 22A 6P",
+        "field": "pump_type",
+        "expected": "HSC",
+        "actual": "MULTISTAGE",
+        "description": "Pump type mismatch: source indicates HSC, database has MULTISTAGE"
+      },
+      {
+        "pump_code": "20 WLN 28B 6P",
+        "field": "pump_type",
+        "expected": "HSC",
+        "actual": "MULTISTAGE",
+        "description": "Pump type mismatch: source indicates HSC, database has MULTISTAGE"
+      },
+      {
+        "pump_code": "20 WLN 28B 8P",
+        "field": "pump_type",
+        "expected": "HSC",
+        "actual": "MULTISTAGE",
+        "description": "Pump type mismatch: source indicates HSC, database has MULTISTAGE"
+      },
+      {
+        "pump_code": "28 HC 6P",
+        "field": "pump_type",
+        "expected": "VTP",
+        "actual": "MULTISTAGE",
+        "description": "Pump type mismatch: source indicates VTP, database has MULTISTAGE"
+      },
+      {
+        "pump_code": "28 HC 8P",
+        "field": "pump_type",
+        "expected": "VTP",
+        "actual": "MULTISTAGE",
+        "description": "Pump type mismatch: source indicates VTP, database has MULTISTAGE"
+      },
+      {
+        "pump_code": "30 HC 6P",
+        "field": "pump_type",
+        "expected": "VTP",
+        "actual": "MULTISTAGE",
+        "description": "Pump type mismatch: source indicates VTP, database has MULTISTAGE"
+      },
+      {
+        "pump_code": "32 HC 6P",
+        "field": "pump_type",
+        "expected": "VTP",
+        "actual": "MULTISTAGE",
+        "description": "Pump type mismatch: source indicates VTP, database has MULTISTAGE"
+      },
+      {
+        "pump_code": "32 HC 8P",
+        "field": "pump_type",
+        "expected": "VTP",
+        "actual": "MULTISTAGE",
+        "description": "Pump type mismatch: source indicates VTP, database has MULTISTAGE"
+      },
+      {
+        "pump_code": "32 XHC 6P",
+        "field": "pump_type",
+        "expected": "VTP",
+        "actual": "MULTISTAGE",
+        "description": "Pump type mismatch: source indicates VTP, database has MULTISTAGE"
+      },
+      {
+        "pump_code": "32 XHC 8P",
+        "field": "pump_type",
+        "expected": "VTP",
+        "actual": "MULTISTAGE",
+        "description": "Pump type mismatch: source indicates VTP, database has MULTISTAGE"
+      },
+      {
+        "pump_code": "36 HC 6P",
+        "field": "pump_type",
+        "expected": "VTP",
+        "actual": "MULTISTAGE",
+        "description": "Pump type mismatch: source indicates VTP, database has MULTISTAGE"
+      },
+      {
+        "pump_code": "36 XHC 8P",
+        "field": "pump_type",
+        "expected": "VTP",
+        "actual": "MULTISTAGE",
+        "description": "Pump type mismatch: source indicates VTP, database has MULTISTAGE"
+      },
+      {
+        "pump_code": "4/5 ALE",
+        "field": "pump_type",
+        "expected": "HSC",
+        "actual": "AXIAL_FLOW",
+        "description": "Pump type mismatch: source indicates HSC, database has AXIAL_FLOW"
+      },
+      {
+        "pump_code": "5/6 ALE",
+        "field": "pump_type",
+        "expected": "HSC",
+        "actual": "AXIAL_FLOW",
+        "description": "Pump type mismatch: source indicates HSC, database has AXIAL_FLOW"
+      },
+      {
+        "pump_code": "5/6 MEDI 2P",
+        "field": "pump_type",
+        "expected": "HSC",
+        "actual": "MULTISTAGE",
+        "description": "Pump type mismatch: source indicates HSC, database has MULTISTAGE"
+      },
+      {
+        "pump_code": "5/6 MEDIVANE 2P",
+        "field": "pump_type",
+        "expected": "HSC",
+        "actual": "MULTISTAGE",
+        "description": "Pump type mismatch: source indicates HSC, database has MULTISTAGE"
+      },
+      {
+        "pump_code": "6/8 ALE",
+        "field": "pump_type",
+        "expected": "HSC",
+        "actual": "AXIAL_FLOW",
+        "description": "Pump type mismatch: source indicates HSC, database has AXIAL_FLOW"
+      },
+      {
+        "pump_code": "6 SLM 2P",
+        "field": "pump_type",
+        "expected": "VTP",
+        "actual": "MULTISTAGE",
+        "description": "Pump type mismatch: source indicates VTP, database has MULTISTAGE"
+      },
+      {
+        "pump_code": "700-600-710 6P",
+        "field": "pump_type",
+        "expected": "HSC",
+        "actual": "MULTISTAGE",
+        "description": "Pump type mismatch: source indicates HSC, database has MULTISTAGE"
+      },
+      {
+        "pump_code": "700-600-710 8P",
+        "field": "pump_type",
+        "expected": "HSC",
+        "actual": "MULTISTAGE",
+        "description": "Pump type mismatch: source indicates HSC, database has MULTISTAGE"
+      },
+      {
+        "pump_code": "8 SLH 2P",
+        "field": "pump_type",
+        "expected": "VTP",
+        "actual": "MULTISTAGE",
+        "description": "Pump type mismatch: source indicates VTP, database has MULTISTAGE"
+      }
+    ],
+    "WARNING": []
+  },
+  "top_issues": []
+}

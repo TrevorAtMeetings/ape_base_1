@@ -1,0 +1,179 @@
+/**
+ * Material Icons Comprehensive Fixes
+ * Resolves duplicate rendering and ensures proper icon display
+ */
+
+/* Force proper Material Icons font loading */
+@import url('https://fonts.googleapis.com/icon?family=Material+Icons');
+
+/* Ensure Material Icons base styles are properly applied */
+.material-icons {
+    font-family: 'Material Icons' !important;
+    font-weight: normal !important;
+    font-style: normal !important;
+    font-size: 24px !important;
+    line-height: 1 !important;
+    letter-spacing: normal !important;
+    text-transform: none !important;
+    display: inline-block !important;
+    white-space: nowrap !important;
+    word-wrap: normal !important;
+    direction: ltr !important;
+    -webkit-font-feature-settings: 'liga' !important;
+    -webkit-font-smoothing: antialiased !important;
+    text-rendering: optimizeLegibility !important;
+    -moz-osx-font-smoothing: grayscale !important;
+    font-feature-settings: 'liga' !important;
+}
+
+/* Prevent duplicate content from pseudo-elements */
+.material-icons:before,
+.material-icons:after {
+    content: none !important;
+    display: none !important;
+}
+
+/* Fix floating chat icon specifically */
+#chat-toggle-icon {
+    font-family: 'Material Icons' !important;
+    font-size: 28px !important;
+    color: white !important;
+    background: none !important;
+    background-image: none !important;
+}
+
+#chat-toggle-icon:before,
+#chat-toggle-icon:after {
+    content: none !important;
+    display: none !important;
+}
+
+/* Ensure proper rendering for all Material Icons variants */
+.material-icons-outlined,
+.material-icons-two-tone,
+.material-icons-round,
+.material-icons-sharp {
+    font-family: 'Material Icons' !important;
+    font-weight: normal !important;
+    font-style: normal !important;
+    line-height: 1 !important;
+    text-transform: none !important;
+    letter-spacing: normal !important;
+    word-wrap: normal !important;
+    white-space: nowrap !important;
+    direction: ltr !important;
+    -webkit-font-smoothing: antialiased !important;
+    text-rendering: optimizeLegibility !important;
+    -moz-osx-font-smoothing: grayscale !important;
+    font-feature-settings: 'liga' !important;
+}
+
+/* Remove any conflicting background images or content */
+.material-icons,
+.material-icons-outlined,
+.material-icons-two-tone,
+.material-icons-round,
+.material-icons-sharp {
+    background: none !important;
+    background-image: none !important;
+    background-repeat: no-repeat !important;
+    background-position: center !important;
+    background-size: contain !important;
+}
+
+/* Fix for Materialize CSS conflicts */
+.btn .material-icons,
+.btn-large .material-icons,
+.btn-small .material-icons {
+    font-family: 'Material Icons' !important;
+    line-height: inherit !important;
+}
+
+/* Floating action button icon fixes */
+.btn-floating .material-icons {
+    font-family: 'Material Icons' !important;
+    font-size: 24px !important;
+    line-height: 1 !important;
+}
+
+/* Navigation and sidebar icon fixes */
+.sidenav .material-icons,
+.navbar-fixed .material-icons {
+    font-family: 'Material Icons' !important;
+    vertical-align: middle !important;
+}
+
+/* Form field icon fixes */
+.input-field .material-icons {
+    font-family: 'Material Icons' !important;
+    font-size: 24px !important;
+    color: #9e9e9e !important;
+}
+
+.input-field .material-icons.active {
+    color: #26a69a !important;
+}
+
+/* Card and modal icon fixes */
+.card .material-icons,
+.modal .material-icons {
+    font-family: 'Material Icons' !important;
+    vertical-align: middle !important;
+}
+
+/* Dropdown and collection icon fixes */
+.dropdown-content .material-icons,
+.collection .material-icons {
+    font-family: 'Material Icons' !important;
+    margin-right: 10px !important;
+    vertical-align: middle !important;
+}
+
+/* Tab icon fixes */
+.tabs .material-icons {
+    font-family: 'Material Icons' !important;
+    font-size: 24px !important;
+    margin-right: 8px !important;
+}
+
+/* Preloader and progress icon fixes */
+.preloader-wrapper .material-icons,
+.progress .material-icons {
+    font-family: 'Material Icons' !important;
+    animation: none !important;
+}
+
+/* Force clean display for commonly used icons */
+.material-icons[data-icon],
+.material-icons[title] {
+    font-family: 'Material Icons' !important;
+    speak: none !important;
+}
+
+/* Fix for any remaining cached or conflicting styles */
+i.material-icons,
+span.material-icons,
+em.material-icons {
+    font-family: 'Material Icons' !important;
+    font-style: normal !important;
+}
+
+/* Accessibility improvements */
+.material-icons[aria-hidden="true"] {
+    speak: none !important;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .material-icons {
+        font-weight: bold !important;
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    .material-icons {
+        animation: none !important;
+        transition: none !important;
+    }
+}

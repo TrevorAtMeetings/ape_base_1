@@ -1,0 +1,608 @@
+{% extends "base.html" %}
+
+{% block title %}Pump Selection Results - APE Pumps{% endblock %}
+
+{% block content %}
+<div class="container" style="margin-top: 30px;">
+    <!-- Results Header -->
+    <div class="row fade-in-up">
+        <div class="col s12">
+            <div class="card-panel teal lighten-5">
+                <h4 class="teal-text text-darken-2">
+                    <i class="material-icons left">check_circle</i>
+                    Pump Selection Results
+                </h4>
+                <p class="flow-text">
+                    Based on your requirements, we've identified the best pump solutions for your application.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Requirements Summary -->
+    <div class="row stagger-item">
+        <div class="col s12 m6">
+            <div class="card">
+                <div class="card-content">
+                    <span class="card-title teal-text">
+                        <i class="material-icons left">assignment</i>
+                        Your Requirements
+                    </span>
+                    <table class="striped">
+                        <tbody>
+                            <tr>
+                                <td><strong>Flow Rate:</strong></td>
+                                <td>{{ site_requirements.flow_m3hr }} m³/hr</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Total Head:</strong></td>
+                                <td>{{ site_requirements.head_m }} m</td>
+                            </tr>
+                            {% if site_requirements.pump_type %}
+                            <tr>
+                                <td><strong>Pump Type:</strong></td>
+                                <td>{{ site_requirements.pump_type }}</td>
+                            </tr>
+                            {% endif %}
+                            {% if site_requirements.application %}
+                            <tr>
+                                <td><strong>Application:</strong></td>
+                                <td>{{ site_requirements.application|title }}</td>
+                            </tr>
+                            {% endif %}
+                            {% if site_requirements.liquid_type %}
+                            <tr>
+                                <td><strong>Liquid:</strong></td>
+                                <td>{{ site_requirements.liquid_type|title }}</td>
+                            </tr>
+                            {% endif %}
+                            {% if site_requirements.npsh_available_m %}
+                            <tr>
+                                <td><strong>NPSH Available:</strong></td>
+                                <td>{{ site_requirements.npsh_available_m }} m</td>
+                            </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col s12 m6">
+            <div class="card">
+                <div class="card-content">
+                    <span class="card-title teal-text">
+                        <i class="material-icons left">contact_page</i>
+                        Project Information
+                    </span>
+                    <table class="striped">
+                        <tbody>
+                            {% if site_requirements.contact_name and site_requirements.contact_name.strip() %}
+                            <tr>
+                                <td><strong>Contact:</strong></td>
+                                <td>{{ site_requirements.contact_name }}</td>
+                            </tr>
+                            {% endif %}
+                            {% if site_requirements.company %}
+                            <tr>
+                                <td><strong>Company:</strong></td>
+                                <td>{{ site_requirements.company }}</td>
+                            </tr>
+                            {% endif %}
+                            {% if site_requirements.project_name %}
+                            <tr>
+                                <td><strong>Project:</strong></td>
+                                <td>{{ site_requirements.project_name }}</td>
+                            </tr>
+                            {% endif %}
+                            {% if site_requirements.project_location %}
+                            <tr>
+                                <td><strong>Location:</strong></td>
+                                <td>{{ site_requirements.project_location }}</td>
+                            </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Recommendation -->
+    {% if top_selections %}
+    <div class="row">
+        <div class="col s12">
+            <div class="card recommended-pump">
+                <div class="card-content">
+                    <div class="row">
+                        <div class="col s12">
+                            <span class="card-title teal-text text-darken-2">
+                                <i class="material-icons left">star</i>
+                                Our Top Recommendation
+                            </span>
+                            <div class="chip green white-text">
+                                <i class="material-icons">verified</i>
+                                Best Match
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col s12 m8">
+                            <h5>{{ top_selections[0].manufacturer }} {{ top_selections[0].model }}</h5>
+                            <p class="grey-text">{{ suggested_pump_obj.description if suggested_pump_obj.description else 'High-efficiency pump solution' }}</p>
+
+                            <div class="row performance-summary">
+                                <div class="col s6 m3">
+                                    <div class="stat-box">
+                                        <h6 class="stat-value teal-text">{{ "%.1f"|default(0.0)|format(top_selections[0].operating_point.achieved_efficiency_pct) }}%</h6>
+                                        <p class="stat-label">Efficiency</p>
+                                    </div>
+                                </div>
+                                <div class="col s6 m3">
+                                    <div class="stat-box">
+                                        <h6 class="stat-value teal-text">{{ "%.1f"|default(0.0)|format(top_selections[0].operating_point.achieved_power_kw) }} kW</h6>
+                                        <p class="stat-label">Power</p>
+                                    </div>
+                                </div>
+                                <div class="col s6 m3">
+                                    <div class="stat-box">
+                                        <h6 class="stat-value teal-text">{{ "%.1f"|default(0.0)|format(top_selections[0].operating_point.achieved_head_m) }} m</h6>
+                                        <p class="stat-label">Head</p>
+                                    </div>
+                                </div>
+                                <div class="col s6 m3">
+                                    <div class="stat-box">
+                                        <h6 class="stat-value teal-text">{{ top_selections[0].overall_score|round }}</h6>
+                                        <p class="stat-label">Score</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- LLM-Enhanced Selection Reasoning -->
+                            <div class="selection-reasoning">
+                                <h6><i class="material-icons tiny">lightbulb</i> Expert Analysis:</h6>
+                                <p class="reasoning-text">{{ top_selections[0].selection_reason }}</p>
+                            </div>
+
+                            <!-- Technical Analysis Sections -->
+                            {% if top_selections[0].get('bep_explanation') or top_selections[0].get('npsh_explanation') or top_selections[0].get('power_explanation') %}
+                            <div class="technical-analysis">
+                                <h6><i class="material-icons tiny">analytics</i> Technical Analysis:</h6>
+
+                                {% if top_selections[0].get('bep_explanation') %}
+                                <div class="analysis-section">
+                                    <strong>Efficiency Performance:</strong> {{ top_selections[0].bep_explanation }}
+                                </div>
+                                {% endif %}
+
+                                {% if top_selections[0].get('npsh_explanation') %}
+                                <div class="analysis-section">
+                                    <strong>NPSH Requirements:</strong> {{ top_selections[0].npsh_explanation }}
+                                </div>
+                                {% endif %}
+
+                                {% if top_selections[0].get('power_explanation') %}
+                                <div class="analysis-section">
+                                    <strong>Power Analysis:</strong> {{ top_selections[0].power_explanation }}
+                                </div>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+
+                            <!-- Lifecycle Cost Analysis -->
+                            {% if top_selections[0].get('lifecycle_cost') %}
+                            <div class="lifecycle-analysis">
+                                <h6><i class="material-icons tiny">account_balance</i> Lifecycle Cost Analysis:</h6>
+                                <div class="row">
+                                    <div class="col s6">
+                                        <div class="cost-item">
+                                            <strong>Initial Cost:</strong> R{{ "{:,.0f}".default(0.0)|format(top_selections[0].lifecycle_cost.initial_cost) }}
+                                        </div>
+                                        <div class="cost-item">
+                                            <strong>Annual Energy:</strong> R{{ "{:,.0f}".default(0.0)|format(top_selections[0].lifecycle_cost.annual_energy_cost) }}
+                                        </div>
+                                    </div>
+                                    <div class="col s6">
+                                        <div class="cost-item">
+                                            <strong>10-Year Total:</strong> R{{ "{:,.0f}".default(0.0)|format(top_selections[0].lifecycle_cost.total_10_year_cost) }}
+                                        </div>
+                                        <div class="cost-item">
+                                            <strong>Cost per m³:</strong> R{{ "%.4f"|default(0.0)|format(top_selections[0].lifecycle_cost.cost_per_m3) }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            <!-- Environmental Impact -->
+                            {% if top_selections[0].get('environmental_impact') %}
+                            <div class="environmental-analysis">
+                                <h6><i class="material-icons tiny">eco</i> Environmental Impact:</h6>
+                                <div class="row">
+                                    <div class="col s6">
+                                        <div class="env-item">
+                                            <strong>Annual CO₂:</strong> {{ "{:,.0f}".default(0.0)|format(top_selections[0].environmental_impact.annual_co2_kg) }} kg
+                                        </div>
+                                        <div class="env-item">
+                                            <strong>Energy Rating:</strong> {{ top_selections[0].environmental_impact.efficiency_rating }}
+                                        </div>
+                                    </div>
+                                    <div class="col s6">
+                                        <div class="env-item">
+                                            <strong>Annual Energy:</strong> {{ "{:,.0f}".default(0.0)|format(top_selections[0].environmental_impact.annual_kwh) }} kWh
+                                        </div>
+                                        <div class="env-item">
+                                            <strong>Carbon Score:</strong> {{ top_selections[0].environmental_impact.carbon_footprint_score }}/100
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            <!-- VFD Analysis -->
+                            {% if top_selections[0].get('vfd_analysis') and top_selections[0].vfd_analysis.vfd_recommended %}
+                            <div class="vfd-analysis">
+                                <h6><i class="material-icons tiny">settings</i> Variable Speed Drive Recommendation:</h6>
+                                <div class="vfd-recommendation">
+                                    <p><strong>Recommended:</strong> Yes - Potential {{ top_selections[0].vfd_analysis.potential_savings_pct }}% energy savings</p>
+                                    {% for reason in top_selections[0].vfd_analysis.reasons %}
+                                    <p class="vfd-reason">• {{ reason }}</p>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="col s12 m4">
+                            <div class="center-align">
+                                <a href="{{ url_for('generate_pdf_report', pump_code=top_selections[0].pump_code) }}?flow={{ site_requirements.flow_m3hr }}&head={{ site_requirements.head_m }}&customer={{ site_requirements.contact_name|urlencode if site_requirements.contact_name else 'Customer' }}&project={{ site_requirements.project_name|urlencode if site_requirements.project_name else 'Project' }}" 
+                                   class="btn-large waves-effect waves-light blue darken-1">
+                                    <i class="material-icons left">picture_as_pdf</i>
+                                    Download Full Report
+                                </a>
+                                <p class="grey-text" style="margin-top: 10px;">
+                                    Complete technical analysis with performance charts
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Interactive Performance Charts -->
+    <div class="row">
+        <div class="col s12">
+            <div class="card">
+                <div class="card-content">
+                    <span class="card-title teal-text">
+                        <i class="material-icons left">analytics</i>
+                        Interactive Performance Analysis - {{ top_selections[0].pump_code }}
+                    </span>
+
+                    <!-- Hidden data elements for JavaScript -->
+                    <div style="display: none;">
+                        <span data-pump-code="{{ top_selections[0].pump_code }}"></span>
+                        <span data-flow-rate="{{ site_requirements.flow_m3hr }}"></span>
+                        <span data-head="{{ site_requirements.head_m }}"></span>
+                    </div>
+
+                    <div class="row">
+                        <div class="col s12 m6">
+                            <div class="chart-container">
+                                <div id="head-flow-chart" style="width:100%; height:400px;"></div>
+                            </div>
+                        </div>
+
+                        <div class="col s12 m6">
+                            <div class="chart-container">
+                                <div id="efficiency-flow-chart" style="width:100%; height:400px;"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col s12 m6">
+                            <div class="chart-container">
+                                <div id="power-flow-chart" style="width:100%; height:400px;"></div>
+                            </div>
+                        </div>
+
+                        <div class="col s12 m6">
+                            <div class="chart-container">
+                                <div id="npshr-flow-chart" style="width:100%; height:400px;"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Operating Point Legend -->
+                    <div class="row">
+                        <div class="col s12">
+                            <div class="card-panel light-blue lighten-5">
+                                <h6 class="blue-text text-darken-2">
+                                    <i class="material-icons tiny">scatter_plot</i>
+                                    Operating Point Legend
+                                </h6>
+                                <div class="row">
+                                    <div class="col s12 m6">
+                                        <p class="small">
+                                            <span style="color: #4caf50; font-size: 16px;">★</span>
+                                            <strong>Green Star:</strong> Operating point within pump curve range
+                                        </p>
+                                    </div>
+                                    <div class="col s12 m6">
+                                        <p class="small">
+                                            <span style="color: #ff9800; font-size: 16px;">▲</span>
+                                            <strong>Orange Triangle:</strong> Extrapolated operating point (outside curve range)
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col s12 center-align">
+                            <p class="grey-text">
+                                <i class="material-icons tiny">info</i>
+                                Interactive charts - hover for details, zoom, and pan to explore performance data
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alternative Options -->
+    {% if top_selections|length > 1 %}
+    <div class="row">
+        <div class="col s12">
+            <div class="card">
+                <div class="card-content">
+                    <span class="card-title teal-text">
+                        <i class="material-icons left">compare</i>
+                        Alternative Options
+                        {% if num_alternatives > 0 %}
+                        <span class="grey-text">({{ num_alternatives }} alternative{{ 's' if num_alternatives != 1 else '' }})</span>
+                        {% endif %}
+                    </span>
+
+                    <div class="row">
+                        {% for pump in top_selections[1:] %}
+                        <div class="col s12 m6">
+                            <div class="card alternative-pump">
+                                <div class="card-content">
+                                    <div class="row">
+                                        <div class="col s8">
+                                            <span class="card-title">{{ pump.manufacturer }} {{ pump.model }}</span>
+                                            <div class="chip orange white-text">
+                                                Rank {{ pump.rank }}
+                                            </div>
+                                        </div>
+                                        <div class="col s4 right-align">
+                                            <span class="score-badge">{{ pump.overall_score|round }}/100</span>
+                                        </div>
+                                    </div>
+
+                                    <table class="striped compact-table">
+                                        <tbody>
+                                            <tr>
+                                                <td>Efficiency:</td>
+                                                <td><strong>{{ "%.1f"|default(0.0)|format(pump.operating_point.achieved_efficiency_pct) }}%</strong></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Power:</td>
+                                                <td><strong>{{ "%.1f"|default(0.0)|format(pump.operating_point.achieved_power_kw) }} kW</strong></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Head:</td>
+                                                <td><strong>{{ "%.1f"|default(0.0)|format(pump.operating_point.achieved_head_m) }} m</strong></td>
+                                            </tr>
+                                            {% if pump.operating_point.achieved_npshr_m %}
+                                            <tr>
+                                                <td>NPSHr:</td>
+                                                <td><strong>{{ "%.2f"|default(0.0)|format(pump.operating_point.achieved_npshr_m) }} m</strong></td>
+                                            </tr>
+                                            {% endif %}
+                                        </tbody>
+                                    </table>
+
+                                    {% if pump.selection_reason %}
+                                    <p class="selection-reason">
+                                        <i class="material-icons tiny">info</i>
+                                        {{ pump.selection_reason }}
+                                    </p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Technical Details -->
+    {% if top_selections[0].bep_analysis or top_selections[0].npsh_analysis %}
+    <div class="row">
+        <div class="col s12">
+            <div class="card">
+                <div class="card-content">
+                    <span class="card-title teal-text">
+                        <i class="material-icons left">science</i>
+                        Technical Analysis
+                    </span>
+
+                    <div class="row">
+                        {% if top_selections[0].bep_analysis %}
+                        <div class="col s12 m6">
+                            <h6><i class="material-icons left">speed</i>Best Efficiency Point Analysis</h6>
+                            {% set bep = top_selections[0].bep_analysis %}
+                            <table class="striped">
+                                <tbody>
+                                    {% if bep.distance_from_bep_pct is not none %}
+                                    <tr>
+                                        <td>Distance from BEP:</td>
+                                        <td><strong>{{ "%.1f"|default(0.0)|format(bep.distance_from_bep_pct) }}%</strong></td>
+                                    </tr>
+                                    {% endif %}
+                                    {% if bep.on_favorable_side is not none %}
+                                    <tr>
+                                        <td>Position:</td>
+                                        <td>
+                                            <strong>
+                                                {% if bep.on_favorable_side %}
+                                                Right of BEP <i class="material-icons tiny green-text">check_circle</i>
+                                                {% else %}
+                                                Left of BEP <i class="material-icons tiny orange-text">warning</i>
+                                                {% endif %}
+                                            </strong>
+                                        </td>
+                                    </tr>
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% endif %}
+
+                        {% if top_selections[0].npsh_analysis %}
+                        <div class="col s12 m6">
+                            <h6><i class="material-icons left">bubble_chart</i>NPSH Analysis</h6>
+                            {% set npsh = top_selections[0].npsh_analysis %}
+                            <table class="striped">
+                                <tbody>
+                                    {% if npsh.npshr_at_duty %}
+                                    <tr>
+                                        <td>NPSHr Required:</td>
+                                        <td><strong>{{ "%.2f"|default(0.0)|format(npsh.npshr_at_duty) }} m</strong></td>
+                                    </tr>
+                                    {% endif %}
+                                    {% if npsh.npsha_available %}
+                                    <tr>
+                                        <td>NPSHa Available:</td>
+                                        <td><strong>{{ "%.2f"|default(0.0)|format(npsh.npsha_available) }} m</strong></td>
+                                    </tr>
+                                    {% endif %}
+                                    {% if npsh.npsh_margin is not none %}
+                                    <tr>
+                                        <td>Safety Margin:</td>
+                                        <td>
+                                            <strong>
+                                                {{ "%.2f"|default(0.0)|format(npsh.npsh_margin) }} m
+                                                {% if npsh.npsh_margin >= 2 %}
+                                                <i class="material-icons tiny green-text">check_circle</i>
+                                                {% elif npsh.npsh_margin >= 1 %}
+                                                <i class="material-icons tiny orange-text">warning</i>
+                                                {% else %}
+                                                <i class="material-icons tiny red-text">error</i>
+                                                {% endif %}
+                                            </strong>
+                                        </td>
+                                    </tr>
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Recommendations -->
+                    {% if top_selections[0].detailed_reasoning %}
+                    <div class="row">
+                        <div class="col s12">
+                            <h6><i class="material-icons left">lightbulb</i>Engineering Insights</h6>
+                            <ul class="collection">
+                                {% for reason in top_selections[0].detailed_reasoning %}
+                                <li class="collection-item">
+                                    <i class="material-icons teal-text">arrow_forward</i>
+                                    {{ reason }}
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Action Buttons -->
+    <div class="row">
+        <div class="col s12">
+            <div class="card-panel center-align">
+                <a href="{{ url_for('generate_pdf_report', pump_code=top_selections[0].pump_code) }}" 
+                   class="btn-large waves-effect waves-light blue darken-1" style="margin: 5px;">
+                    <i class="material-icons left">picture_as_pdf</i>
+                    Download Report
+                </a>
+
+                <a href="{{ url_for('pump_comparison') }}?flow={{ site_requirements.flow_m3hr }}&head={{ site_requirements.head_m }}&pump_type={{ site_requirements.pump_type or 'General' }}" 
+                   class="btn-large waves-effect waves-light teal darken-1" style="margin: 5px;">
+                    <i class="material-icons left">compare_arrows</i>
+                    Compare Options
+                </a>
+
+                <a href="{{ url_for('index') }}" 
+                   class="btn-large waves-effect waves-light grey darken-1" style="margin: 5px;">
+                    <i class="material-icons left">refresh</i>
+                    New Selection
+                </a>
+
+                <br><br>
+                <p class="grey-text">
+                    Need assistance? Contact our technical team for detailed support and customization options.
+                </p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize tooltips
+    M.AutoInit();
+
+    // Add smooth scrolling to charts
+    const chartImages = document.querySelectorAll('.chart-image');
+    chartImages.forEach(img => {
+        img.addEventListener('click', function() {
+            // Create modal overlay for larger chart view
+            const modal = document.createElement('div');
+            modal.className = 'chart-modal';
+            modal.innerHTML = `
+                <div class="chart-modal-content">
+                    <span class="chart-modal-close">&times;</span>
+                    <img src="${this.src}" alt="${this.alt}" class="chart-modal-image">
+                </div>
+            `;
+
+            document.body.appendChild(modal);
+            modal.style.display = 'block';
+
+            // Close modal functionality
+            const closeBtn = modal.querySelector('.chart-modal-close');
+            closeBtn.onclick = function() {
+                document.body.removeChild(modal);
+            };
+
+            modal.onclick = function(e) {
+                if (e.target === modal) {
+                    document.body.removeChild(modal);
+                }
+            };
+        });
+    });
+});
+</script>
+<script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+{% endblock %}

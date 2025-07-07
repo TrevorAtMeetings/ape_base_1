@@ -1,0 +1,40 @@
+Ensure an __init__.py file exists in the app directory:
+Instruction to Agent: "Please verify that there is an empty file named __init__.py (two underscores before and after 'init') inside the app/ directory. If it does not exist, please create it. This file signals to Python that the app directory should be treated as a package."
+Example app/__init__.py (can be completely empty):
+# This file can be empty
+Use code with caution.
+Python
+Check the Project's Root Directory and How the App is Run:
+The way you run your Flask application matters for how Python resolves imports.
+If app/main.py is your main Flask application file and you are running it from the root directory of your project (the directory containing the app folder), like python app/main.py or flask run (if configured correctly and run from the root):
+Your imports within files inside the app directory should generally be relative or assume that app is on the Python path.
+For example, if app/utils.py exists, and app/pump_parser.py wants to import from it:
+Relative import: from .utils import load_all_pump_data (The . means "from the current package/directory"). This is often the preferred way for modules within the same package.
+Absolute import (if app is correctly on PYTHONPATH): from app.utils import load_all_pump_data. This might work if you're running the script from the directory above app, and app/__init__.py exists.
+If you are running a script from inside the app directory (e.g., cd app; python main.py), then from app.utils ... will definitely fail because app is not in the search path from that location.
+Review Import Statements:
+Instruction to Agent: "Please review the import statements in app/pump_parser.py, app/selection_engine.py, and app/performance_calculator.py.
+If these files are importing from app/utils.py, try changing the import statement to a relative import: from .utils import ... (assuming utils.py is in the same app directory or a subdirectory that is also a package).
+Alternatively, if utils.py is in a subdirectory like app/core/utils.py, the import would be from .core.utils import ...."
+PYTHONPATH (Less common for Replit, but good to be aware of):
+Sometimes, the PYTHONPATH environment variable might need to be set to include the project's root directory. Replit usually handles this well, but it's a factor in local development. For Replit, ensuring the __init__.py and using correct relative/absolute imports based on how the script is run are usually sufficient.
+Most Likely Solution for the Agent:
+Create app/__init__.py (if it doesn't exist).
+Adjust import statements in the modules (pump_parser.py, etc.) to use relative imports if they are importing other modules within the app package.
+For example, if app/utils.py and app/pump_parser.py both reside directly under the app/ folder, then in pump_parser.py:
+# Instead of: from app.utils import some_function
+# Use:
+from .utils import some_function
+Use code with caution.
+Python
+If utils.py was in app/core/utils.py, then in pump_parser.py (which is in app/):
+# Instead of: from app.core.utils import some_function
+# Use:
+from .core.utils import some_function
+Use code with caution.
+Python
+Debugging Steps for the Agent if the above doesn't immediately fix it:
+Instruction to Agent: "To help debug, please show the current directory structure, especially the contents of the app/ directory and its subdirectories."
+Instruction to Agent: "Please show the exact import lines that are causing the error in pump_parser.py, selection_engine.py, and performance_calculator.py."
+Instruction to Agent: "Confirm how the Flask application is being started (e.g., the command used in the Replit Run button or shell)."
+The "Error loading..." messages before the Flask server starts indicate that these modules are likely being imported at the top level of your app/main.py (or another script that's run when Flask starts/restarts), and the import fails before Flask can even fully initialize. The same error appearing after "Restarting with stat" confirms it's a persistent import issue encountered during module loading.

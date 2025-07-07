@@ -1,0 +1,95 @@
+This Python script is designed to parse and process pump performance data files. These files, which may have .scg or .txt extensions, share an identical internal content format. This format originates from an Excel VBA application. The primary goal of this script is to:
+Read a data file (.scg or .txt): The file has a specific pseudo-JSON format (flat key-value pairs, string values, objPump. prefixes).
+Parse the data: Convert the raw string data from the file into an intermediate, flat Python dictionary.
+Process the data: Transform the intermediate dictionary into a final, well-structured Python dictionary. This involves:
+Converting string representations of numbers and booleans into their appropriate Python types (float, int, bool).
+Parsing multi-value strings representing pump curve data (Flow, Head, Efficiency, NPSH) for one or more impeller/speed configurations. These are typically delimited by | for different curves and by ; for data points within a curve.
+Parsing impeller/speed identifiers associated with each curve.
+Parsing lists of available diameters, speeds, and iso-efficiency lines from space-delimited strings.
+Crucially, calculating the pump shaft power (in kW) for each data point on each curve using Flow, Head, and Efficiency values. This calculation must apply unit conversions consistent with the logic observed in the source Excel VBA application.
+Output: Produce a final, structured Python dictionary containing pump_info (scalar data) and a list of curves (each with its data points including calculated power). This output should be ready for further analysis, plotting, or data storage.
+The script must accurately replicate the data interpretation and power calculation logic as understood from the provided Excel VBA macros (primarily ImportJsonToExcel for parsing logic and power calculation details, and SaveTxtFile_Click for understanding the .scg file generation).
+II. Specific Review Checklist:
+A. File Parsing Function (e.g., parse_scg_to_raw_dict):
+1. File Handling:
+Correctly opens and reads specified .scg or .txt data files.
+Handles FileNotFoundError robustly.
+Test with valid/invalid paths and both file extensions.
+2. Line Processing:
+Skips lines containing only {, }, or empty lines.
+Test with files containing such lines.
+3. Key-Value Extraction:
+Splits each data line at the first ":".
+Removes trailing commas from lines before processing.
+Test with lines with/without trailing commas.
+4. Key Cleaning:
+Removes "objPump." prefix and any surrounding " from keys (e.g., "objPump.pPumpCode" -> pPumpCode).
+5. Value Cleaning:
+Removes surrounding " from values. All values in the output of this function should be strings.
+6. Output (Raw Dictionary):
+Returns a flat Python dictionary: {cleaned_key_string: cleaned_value_string}.
+Verify against provided .scg examples that all key-value pairs are present and correctly de-quoted.
+B. Data Processing Function (e.g., process_pump_data):
+1. Input Handling:
+Accepts the raw dictionary from the parsing step.
+Handles None or empty input gracefully (e.g., returns None or valid empty structure with a warning).
+2. Type Conversion Utilities (if used):
+String-to-float, int, bool helpers handle ValueError/TypeError (e.g., return default).
+Test helpers with valid numbers, malformed numbers, empty strings, None.
+3. pump_info Population (Scalar Data):
+Extracts all known scalar fields, converts to correct Python types (string, float, int, bool), and stores in pump_info.
+Uses safe dictionary access (e.g., .get()).
+Test with .scg files of varying scalar field completeness.
+4. Parsing Space-Separated Lists (pM_Diam, pM_Speed, pM_EffIso):
+Strings split by space; segments trimmed, converted to float; non-zero/valid values collected into a list.
+Test with examples: " 0.0", "900 1100 0", " 40.0 50.0 0.0", empty strings.
+5. Number of Curves Determination:
+Number of curves correctly determined from pHeadCurvesNo (int).
+Handles "0", missing, or invalid pHeadCurvesNo (defaults to 0 curves, possibly warns).
+6. Curve Identifier Parsing (pM_IMP):
+pM_IMP string parsed into a list of curve identifiers (8-char segments, trimmed).
+Handles pM_IMP string shorter than expected for num_curves (e.g., fallback identifiers).
+Test with single curve (" 197.00"), multiple (" 451.00 501.00"), empty string.
+7. Curve Data Array Parsing (pM_FLOW, pM_HEAD, pM_EFF, pM_NP):
+Corresponding string split by | (for curves); resulting segments match num_curves (handles discrepancies gracefully with padding/truncating and warnings via e.g. get_curve_series_data).
+Each curve's segment string split by ; (for points); points trimmed and converted to float.
+Test with single/multiple curve data, varying point counts, empty points, all-zero NPSH data.
+8. Power Calculation:
+Shaft power (kW) calculated for each curve data point.
+pUnitFlow and pUnitHead correctly retrieved for unit conversion.
+Verify Unit Conversion Factors:
+m^3/hr to m^3/s: 1.0 / 3600.0
+l/sec to m^3/s: 1.0 / 1000.0
+US gpm to m^3/s: 1.0 / 15850.32 (or specified VBA constant if different and exact match needed).
+m (head): 1.0
+bar (head) to m: 10.19716
+kPa (head) to m: 0.1019716 (Flag if Excel VBA uses a different constant like 0.305 and exact replication is required).
+ft (head) to m: 0.3048
+Verify Power Formula: power_kw = (q_val_m3s * h_val_m * 9.81) / (eff_decimal) where eff_decimal = eff_percentage / 100.0.
+Handles zero/negative efficiency (power should be 0.0).
+Results rounded to 2 decimal places.
+Iterates safely over available data points (e.g., using min_len of Q, H, Eff lists).
+Manually calculate and compare power for test points. Test different units and zero efficiency.
+9. Output Structure (Processed Dictionary):
+Returns dictionary with pump_info (dict of scalars) and curves (list of dicts).
+Each curve dict: identifier (str), flow (list[float]), head (list[float]), efficiency (list[float]), npsh (list[float]), power_calculated (list[float]).
+Inspect final structure and types for sample .scg file.
+C. General Code Quality:
+1. Clarity & Readability: Code is well-commented, easy to understand; descriptive variable names.
+2. Modularity: Code reasonably broken into functions.
+3. Error Handling: Potential errors (file issues, invalid data) handled gracefully with informative messages.
+4. Efficiency: No obvious, major inefficiencies for this type of script.
+5. Consistency: Consistent naming conventions and formatting.
+D. Documentation:
+1. Docstrings: Main functions (e.g., parse_scg_to_raw_dict, process_pump_data) have clear docstrings (purpose, args, returns).
+III. Test Data Recommendations:
+The reviewer must use a diverse set of data files for testing, including:
+Files with both .scg and .txt extensions (containing identical content to ensure extension-agnostic parsing of content).
+The examples provided during development (illustrating single curves, multiple curves, varying NPSH data, different units if available).
+Files with some optional scalar fields missing.
+A deliberately malformed file (e.g., incorrect delimiters, non-numeric data where numbers expected) to test error handling robustness.
+IV. Final Sign-off Criteria:
+The build is considered successful if:
+All applicable checklist items above are marked as complete/passed.
+The script correctly processes all provided valid test data files, producing the expected structured output and accurately calculated power values (within acceptable rounding differences if unit constants are slightly different from a reference Excel sheet).
+The script handles invalid or malformed data gracefully without crashing, providing useful error messages.

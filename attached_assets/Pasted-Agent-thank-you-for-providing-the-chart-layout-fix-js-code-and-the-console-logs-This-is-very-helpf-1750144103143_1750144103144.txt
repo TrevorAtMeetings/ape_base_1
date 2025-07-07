@@ -1,0 +1,27 @@
+Agent, thank you for providing the chart_layout_fix.js code and the console logs. This is very helpful.
+Critical Findings from Console:
+There are SyntaxError: Unexpected token ')' in both static/js/chart_legend_fix.js (line 60) and static/js/chart_layout_fix.js (line 57). This means these two scripts are not executing, and therefore the layout/legend fixes they intend to apply are not working.
+Despite this, the main static/js/charts.js IS successfully fetching data from /api/chart_data_safe/... and rendering all four Plotly.js charts. This is excellent!
+The console logs also indicate that chart initialization or data loading logic might be running multiple times.
+Please implement the following fixes:
+Fix JavaScript Syntax Errors (HIGHEST PRIORITY):
+File: static/js/chart_legend_fix.js
+Action: Go to line 60 and identify the "Unexpected token ')'". Correct the JavaScript syntax.
+File: static/js/chart_layout_fix.js
+Action: Go to line 57 and identify the "Unexpected token ')'". Correct the JavaScript syntax.
+Also in chart_layout_fix.js: The script uses chartIds = ['headFlowChart', ...]. Our main charts.js and HTML templates are now successfully using hyphenated IDs like head-flow-chart. Please standardize the chartIds array in chart_layout_fix.js to use these hyphenated IDs: ['head-flow-chart', 'efficiency-flow-chart', 'power-flow-chart', 'npshr-flow-chart'].
+Ensure Single Chart Initialization (Address Agent Audit Issue #4 / Phase 3 Fix #2.1):
+File: static/js/charts.js and any HTML templates that might be calling its functions (e.g., professional_pump_report.html).
+Objective: Prevent the chart rendering logic from running multiple times for the same set of charts on a single page load.
+Action: Review how initializePumpCharts() or renderAllCharts() (or similar top-level functions in charts.js) are being called.
+If they are called from multiple places (e.g., once on DOMContentLoaded and again from another script block), consolidate to a single call.
+Consider adding a flag to charts.js, e.g., let chartsInitialized = false;, and only run the full initialization/rendering if !chartsInitialized, then set it to true.
+Alternatively, if renderAllCharts is designed to be callable multiple times with new data, ensure it properly clears/updates existing charts rather than trying to re-render them from scratch in a conflicting way. For now, let's aim for a single robust initialization on page load.
+Verify Chart Layout/Legend After Fixes:
+Objective: Once the syntax errors in chart_layout_fix.js and chart_legend_fix.js are fixed and single initialization is ensured, test the detailed report page (professional_pump_report.html) again.
+Action: Check if the Plotly.js chart legends are now positioned correctly (e.g., horizontally below the chart) and if the margins look good, as intended by these fix scripts.
+After these JavaScript fixes are implemented:
+Confirm there are no more JavaScript syntax errors in the browser console.
+Confirm that the chart initialization logic runs only once per page load.
+Provide screenshots of the detailed report page showing the interactive Plotly.js charts, specifically showing the legend position and overall layout.
+Confirm if the operating point markers (green star/orange triangle) are displaying correctly on these interactive charts for pumps with both normal and extrapolated operating points.

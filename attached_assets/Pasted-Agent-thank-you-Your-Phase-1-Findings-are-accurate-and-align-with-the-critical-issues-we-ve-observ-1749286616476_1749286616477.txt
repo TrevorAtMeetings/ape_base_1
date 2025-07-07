@@ -1,0 +1,27 @@
+Agent, thank you. Your Phase 1 Findings are accurate and align with the critical issues we've observed. You've correctly identified:
+The Dual App Initialization Pattern and its potential for conflict.
+The Port Binding Conflicts preventing reliable startup.
+The Data Structure Inconsistencies between raw JSON and expected normalized field names, which is a major source of errors.
+The Chart Data API Inconsistencies leading to chart rendering failures despite initial data loading.
+Your Phase 1 Summary accurately captures the critical path issues.
+Yes, please proceed to Phase 2: Deep Code Analysis.
+Please focus your Phase 2 investigation on the following, based on your plan and our discussions:
+pump_engine.py (or equivalent consolidated module) vs. Scattered Modules (utils.py, pump_parser.py, selection_engine.py):
+Determine the intended single source of truth for core logic (data classes, loading, parsing, calculation, selection).
+Identify any remaining conflicting or duplicate function/class definitions.
+Trace how data is passed to and from pump_engine.py and other modules.
+Specifically, investigate the data normalization: Where exactly does it happen (load_all_pump_data in pump_engine.py or utils.py)? And do all subsequent functions (like parse_pump_data within pump_engine.py and the ParsedPumpData class initializer) correctly expect and use these normalized field names? This is a prime suspect for "Data Structure Inconsistencies."
+Chart API Data Flow & results_page.html (or pump_options.html/professional_pump_report.html):
+Trace the data from the backend Python route (/api/chart_data/...) to the JavaScript (static/js/charts.js) that consumes it for Plotly.js.
+Verify the JSON structure returned by the API precisely matches what the renderPumpCurves (or similar) JS function expects.
+Identify why Error in renderAllCharts: {} might be occurring even if some data seems to load initially.
+Confirm that the HTML template displaying the results (the one that should show charts) correctly includes the div containers with the exact IDs that charts.js is targeting (e.g., head-flow-chart).
+Template Data Binding Investigation (for the main results/report page):
+When the results/report page is rendered (e.g., by the /pump_report or /pump-options route), precisely what data structure is being passed for top_selections, suggested_pump_obj (or selected_pump), and chart_paths?
+Compare this to how the template (results_page.html or professional_pump_report.html) is trying to access this data (e.g., top_selections[0].operating_point.achieved_efficiency_pct vs. top_selections[0]['operating_point']['achieved_efficiency_pct']). This is key to fixing incorrect data display (like 0.0 Power, N/A Impeller).
+Performance Calculation Error Paths (pump_engine.py):
+Re-examine interpolate_value and calculate_operating_point.
+Confirm the 20% extrapolation logic is correctly implemented and a flag indicating was_extrapolated is generated and propagated.
+Ensure that if interpolation/extrapolation truly fails (flow too far out of range), calculate_operating_point returns a clear error state or None for critical metrics.
+Verify that all downstream functions in pump_engine.py (e.g., _analyze_bep_performance, _analyze_npsh_requirements, LLM data prep) robustly handle these potential None values or error states from calculate_operating_point to prevent the 'NoneType' object has no attribute 'get' errors.
+Please provide your detailed findings from Phase 2 when ready. We are looking for specific file and line number references for the root causes and your proposed fixes for each identified problem.

@@ -1,0 +1,44 @@
+a NEW CRITICAL ERROR has surfaced in the Console Log:
+ERROR:app.routes:Error displaying pump report: must be real number, not NoneType
+TypeError: must be real number, not NoneType
+This error occurs when rendering templates/professional_pump_report.html at line 250:
+is approximately <strong>{{ "%.1f"|format(selected_pump.get('operating_point', {}).get('achieved_npshr_m', 0)) }} meters</strong>.
+Use code with caution.
+Html
+Analysis:
+This is happening on the detailed professional report page, not the summary card page.
+The selected_pump.get('operating_point', {}).get('achieved_npshr_m', 0) part is trying to get the NPSHr.
+For pumps like "6 K 6 VANE" or "5 K", achieved_npshr_m is correctly None in the backend operating_point data (as seen in the console logs: INFO:pump_engine:Operating point data: {..., 'achieved_npshr_m': None, ...}).
+The .get('achieved_npshr_m', 0) provides a default of 0 (an integer) if the key is missing, BUT if the key exists and its value is None (as it is for these pumps), then None is passed to the format filter.
+The Jinja2 format filter ("%.1f"|format(...)) cannot handle None as input when trying to format it as a float. It expects a real number.
+The agent's previous fix using (value or 0)|float was for the summary cards (likely pump_options.html). It seems this robust None handling was not applied to all numeric displays in professional_pump_report.html.
+Console Log Insights Relevant to the Error:
+For "6 K 6 VANE" when its detailed report is accessed (GET /professional_pump_report/6%20K%206%20VANE):
+INFO:app.routes:Template data - selected_pump operating_point: {..., 'achieved_npshr_m': None, ...}
+This None value for achieved_npshr_m is then passed to the template, causing the TypeError with the format filter.
+Instructions for the Agent:
+"Agent, excellent progress on the summary card display! The Impeller Size, NPSH (showing 'N/A' correctly), and dynamically calculated Power/Efficiency for the summary cards look great. Removing the redundant 'Performance Efficiency' bar is also good.
+However, a new critical TypeError: must be real number, not NoneType is occurring when trying to render the templates/professional_pump_report.html page.
+The console log clearly shows this happens at line 250 of professional_pump_report.html:
+{{ "%.1f"|format(selected_pump.get('operating_point', {}).get('achieved_npshr_m', 0)) }}
+This is because selected_pump.get('operating_point', {}).get('achieved_npshr_m', 0) is evaluating to None for pumps like '6 K 6 VANE' (which correctly have achieved_npshr_m: None in their backend data), and the format filter cannot handle None.
+Please implement the following fix:
+Robust None Handling in professional_pump_report.html:
+File: templates/professional_pump_report.html
+Action: For all numerical values fetched from selected_pump.operating_point (or other sources) that could potentially be None and are being passed to a Jinja2 format or round filter, you need to provide a safe default before the filter, or use conditional display.
+For the specific error at line 250 (NPSHr display):
+Change:
+{{ "%.1f"|format(selected_pump.get('operating_point', {}).get('achieved_npshr_m', 0)) }}
+To (Option A - Display 'N/A'):
+{{ "%.1f m"|format(selected_pump.get('operating_point', {}).get('achieved_npshr_m')) if selected_pump.get('operating_point', {}).get('achieved_npshr_m') is not none else 'N/A' }}
+Or (Option B - Display 0.0 for None, but 'N/A' is better for NPSHr):
+{{ "%.1f"|format(selected_pump.get('operating_point', {}).get('achieved_npshr_m') or 0.0) }}
+Preferred for NPSHr is 'N/A'.
+Action (General Audit): Review professional_pump_report.html for all other instances where operating_point metrics (like achieved_power_kw, achieved_efficiency_pct, etc.) are formatted and ensure similar robust None handling is in place. Use "N/A" for NPSH if None, and 0.0 or "N/A" for other metrics as appropriate if they can be None.
+Additionally, please verify and confirm the following from your latest implementation:
+Extrapolation Indicators on Summary Cards:
+You mentioned adding "extrapolation indicators (*) on summary cards." Please confirm if this is visually testable now. If so, provide a screenshot for a pump like "5 K" (which had extrapolated values for Flow=342, Head=27.4) showing these indicators on its summary card.
+Operating Point Markers on Interactive Charts:
+You stated: "Interactive charts already mark operating points with visual status indicators (Green stars / Orange triangles)."
+If the Plotly.js charts are now active on the professional_pump_report.html page, please confirm that the operating point (with the correct star/triangle indicator for extrapolated status) is indeed being plotted on all four curves for the selected pump. A screenshot would be helpful. (If only static Matplotlib charts are on this page for now, that's fine, just clarify).
+After addressing the TypeError in professional_pump_report.html and confirming the status of extrapolation indicators and chart markers, please report back. The immediate goal is to ensure the detailed report page renders correctly without errors for all pumps

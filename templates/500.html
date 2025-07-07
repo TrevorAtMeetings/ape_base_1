@@ -1,0 +1,26 @@
+
+{% extends "base.html" %}
+
+{% block title %}Server Error - APE Pumps{% endblock %}
+
+{% block content %}
+<div class="container" style="margin-top: 50px;">
+    <div class="row">
+        <div class="col s12 center-align">
+            <div class="card-panel red lighten-4">
+                <h1 class="red-text text-darken-2">
+                    <i class="material-icons large">error</i>
+                </h1>
+                <h3 class="red-text text-darken-2">Server Error</h3>
+                <p class="flow-text grey-text text-darken-1">
+                    An internal server error occurred. Please try again later.
+                </p>
+                <a href="{{ url_for('index') }}" class="btn-large waves-effect waves-light teal">
+                    <i class="material-icons left">refresh</i>
+                    Try Again
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

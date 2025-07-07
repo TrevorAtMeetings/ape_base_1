@@ -1,0 +1,105 @@
+Agent, thank you for your continued efforts. However, the critical issue with the markdown-to-HTML conversion for the 'AI Technical Expert Analysis' section persists. The screenshot clearly shows that the raw markdown text is being rendered as a single block, incorrectly styled as if it's all part of the first header. Subsequent headers, paragraphs, lists, and bold formatting are not being applied.
+Your custom regex-based markdown_to_html and process_section_content functions are not robustly parsing the markdown structure.
+We must now abandon the custom regex approach for this feature and switch to a more reliable method using a dedicated Python Markdown library.
+New Task: Rebuild markdown_to_html using the markdown2 Library
+Install markdown2 Library:
+Action: Add markdown2 to your requirements.txt file.
+Action: Ensure the library is installed in the Replit environment (e.g., by running pip install markdown2 in the shell, or letting Replit's package manager handle it).
+Refactor markdown_to_html Function:
+File: app/routes.py (or wherever markdown_to_html is currently defined).
+Action: Replace the entire existing markdown_to_html function (and its helper process_section_content if it's only used by the old markdown parser) with a new implementation that uses the markdown2 library.
+New markdown_to_html Implementation:
+import markdown2  # Add this import at the top of the file
+import logging
+
+logger = logging.getLogger(__name__) # Ensure logger is defined
+
+def markdown_to_html(text: str) -> str:
+    if not text or not isinstance(text, str):
+        logger.warning("markdown_to_html received empty or invalid input.")
+        return ""
+    try:
+        # Configure markdown2 to use specific extras if needed.
+        # For headers (like ##), paragraphs, bold, italic, and basic lists,
+        # the defaults are often sufficient.
+        # Common extras: 'fenced-code-blocks', 'tables', 'footnotes', 'cuddled-lists', 'strike'
+        # 'cuddled-lists' is good for lists without blank lines between items.
+        html = markdown2.markdown(text, extras=['cuddled-lists', 'strike'])
+        
+        # The markdown2 library will convert "## Header" to "<h2>Header</h2>".
+        # Your original styling was for <h4>. You can either:
+        #   a) Adjust your CSS to style h2 elements within this section.
+        #   b) Post-process the HTML to change <h2> to <h4> (less ideal but possible).
+        #      Example for changing h2 to h4 with your specific style:
+        #      html = html.replace("<h2>", '<h4 style="color: #1976d2; margin: 20px 0 10px 0; font-weight: 600;">')
+        #      html = html.replace("</h2>", "</h4>")
+        #      However, it's better to handle styling via CSS classes.
+
+        logger.debug("Markdown successfully converted to HTML using markdown2.")
+        return html
+    except Exception as e:
+        logger.error(f"Error converting markdown to HTML with markdown2: {e}", exc_info=True)
+        return "<p>Error: Could not display formatted technical analysis at this time.</p>" # Fallback HTML
+Use code with caution.
+Python
+CSS Styling for Generated HTML (Instead of Inline Styles from Python):
+File: static/css/style.css
+Action: The markdown2 library will generate standard HTML tags (e.g., <h2> for ##, <p> for paragraphs, <ul><li> for lists, <strong> for **bold**).
+Add CSS rules to static/css/style.css to style these standard tags within the context of the div that will display this AI-generated HTML. Let's assume the container div has the class ai-analysis-output.
+Example CSS:
+/* In static/css/style.css */
+.ai-analysis-output h1, 
+.ai-analysis-output h2, 
+.ai-analysis-output h3,
+.ai-analysis-output h4 { /* markdown2 uses H2 for ##. Adjust if you change it to H4. */
+    color: #1976d2; /* APE Pumps Blue/Teal */
+    margin-top: 20px;
+    margin-bottom: 10px;
+    font-weight: 600;
+}
+
+.ai-analysis-output p {
+    margin-bottom: 10px;
+    line-height: 1.6;
+    color: #333;
+}
+
+.ai-analysis-output ul,
+.ai-analysis-output ol {
+    margin: 10px 0 10px 20px; /* Add left margin for indentation */
+    padding-left: 20px;
+}
+
+.ai-analysis-output li {
+    margin-bottom: 5px;
+    color: #555;
+}
+
+.ai-analysis-output strong { /* For **bold** text */
+    font-weight: bold;
+    /* color: #105a8b; */ /* Optional: if you want bold text to also be colored */
+}
+
+.ai-analysis-output em { /* For *italic* text */
+    font-style: italic;
+}
+Use code with caution.
+Css
+Remove Old Inline Style Generation: Ensure the Python markdown_to_html function no longer attempts to inject inline styles itself.
+Template Usage:
+In your Jinja2 template where this AI analysis is displayed (e.g., professional_pump_report.html or results_page.html), ensure the container div has the class ai-analysis-output (or whatever class you use for CSS targeting).
+Render the HTML raw using the |safe filter, but only because we are now trusting markdown2 to produce safe HTML from the LLM's markdown output.
+<!-- In your template -->
+<div class="ai-analysis-output">
+    {{ llm_generated_markdown_html | safe }}
+</div>
+Use code with caution.
+Html
+Test with Sample Markdown:
+Action: "Agent, after implementing the markdown2 solution, please test it by passing the problematic LLM output (the one shown in the screenshot, starting with '1) Efficiency Characteristics...') to the new markdown_to_html function. Log the exact HTML output it produces."
+Then, integrate this into the actual route (/api/ai_analysis or /api/ai_analysis_fast) and visually verify in the browser that the "AI Technical Expert Analysis" section now has:
+Correctly rendered H2 (or H4 if you post-process) headings for each numbered section.
+Proper paragraphs.
+Correctly rendered bulleted lists.
+Correctly rendered bold text.
+This change in strategy is essential. Using a dedicated library is the standard best practice and will save a lot of time and frustration compared to debugging complex, custom regex parsers."

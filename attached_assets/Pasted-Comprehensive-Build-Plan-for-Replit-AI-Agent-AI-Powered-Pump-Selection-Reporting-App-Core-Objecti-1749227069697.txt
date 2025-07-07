@@ -1,0 +1,141 @@
+Comprehensive Build Plan for Replit AI Agent: AI-Powered Pump Selection & Reporting App
+Core Objective: Develop a web application on Replit, built by an AI agent using Python (with Flask/FastAPI for the backend and Jinja2 for templating), that allows users to input pump requirements, receive intelligent pump recommendations (Top 3 + Suggested), compare them with interactive charts, and generate a detailed, APE Pumps branded PDF report for the selected pump. The UI should be clean, user-friendly, and inspired by Google Material Design principles.
+Key Technologies & Libraries to Instruct the Agent On:
+Backend: Python
+Web Framework: Flask (simpler for initial AI build) or FastAPI (more modern if AI is proficient)
+Templating: Jinja2
+Data Handling: JSON (for pumps_database.json), Python dictionaries/lists
+Numerical Operations/Interpolation: NumPy, SciPy (if AI can integrate them, otherwise implement basic linear interpolation)
+Charting (Web - Iterative):
+Initial: Matplotlib (server-side generated PNGs)
+Target: Plotly.js (client-side interactive, using the detailed spec provided)
+PDF Generation: WeasyPrint (HTML/CSS to PDF)
+Frontend Styling:
+Basic CSS initially.
+Target: A lightweight Material Design CSS framework (e.g., Materialize CSS CDN) or custom CSS emulating Material principles.
+Frontend Interactivity (Progressive Reveal, Charting): Vanilla JavaScript or a very lightweight JS utility library if needed.
+Phase 1: Foundation & Core Backend Logic
+Goal: Establish the project structure, data loading, parsing, and core pump evaluation logic.
+Instructions for Replit AI Agent:
+Project Setup:
+"Initialize a new Python Replit project."
+"Create standard project directories: app/ (for main code), app/templates/ (for HTML), app/static/ (for CSS, JS, images), data/ (for pumps_database.json)."
+"Install necessary Python packages: Flask, Jinja2, numpy (for interpolation if not custom), WeasyPrint, matplotlib."
+Data Loading & Structures:
+"Create a sample pumps_database.json file in the data/ directory using the provided JSON examples for multiple pumps."
+"Implement a Python function load_all_pump_data() in app/utils.py (or similar) to read and parse pumps_database.json into a list of Python dictionaries."
+"Define Python data structures or classes to represent SiteRequirements and ParsedPumpData (including parsed curve data as lists of tuples: head_vs_flow, eff_vs_flow, power_vs_flow (calculated), npshr_vs_flow)."
+Data Parsing Module (app/pump_parser.py):
+"Implement the parse_pump_data(pump_json_obj) function as previously detailed. This function is critical and must:
+Take a raw pump JSON object (from pumps_database.json).
+Extract all static details (model, manufacturer, filters, units, BEP@std, etc.).
+Parse the string-encoded curve data (pM_FLOW, pM_HEAD, pM_EFF, pM_NP) for each impeller/curve defined by pHeadCurvesNo.
+Handle potential missing data or formatting issues in the source JSON gracefully.
+Crucially, calculate the power_vs_flow data points for each curve using Flow, Head, and Efficiency, as it's not directly provided in the pM_ fields. Remember to convert flow units (m³/hr to m³/s) for the power formula.
+Return a ParsedPumpData object/dictionary."
+Performance Calculation Module (app/performance_calculator.py):
+"Implement an interpolate_value(target_flow, curve_points_list) function. Use numpy.interp if available and instructed, otherwise implement linear interpolation. Handle edge cases (target flow outside curve range)."
+"Implement calculate_operating_point(parsed_pump_curve, target_flow) which uses interpolation to find achieved head, efficiency, NPSHr, and then calculates power at that target_flow for a specific parsed_pump_curve."
+Selection Logic Module (app/selection_engine.py):
+"Implement find_best_pumps(all_parsed_pumps, site_requirements):
+Iterate through all_parsed_pumps.
+For each pump, iterate through its parsed impeller curves.
+Calculate the operating point for each curve at site_requirements.flow_m3hr.
+Implement a scoring function:
+Primary: Must meet site_requirements.head_m (heavy penalty if not).
+Secondary: Maximize efficiency at the operating point.
+Tertiary: Proximity to the pump's BEP (use objPump.pBEPFlowStd and objPump.pBEPHeadStd as a reference, but prioritize actual operating efficiency).
+Consider objPump.pFilterX fields if site_requirements.pump_type is provided.
+(Future iteration) NPSH margin if site_requirements.npsh_available_m is available.
+Return a list of the Top 3 selections (each containing the ParsedPumpData object and its calculated operating_point details)."
+Phase 2: Web Application - Input Form & Basic Results
+Goal: Create the user-facing web interface for inputting requirements and seeing a basic list of recommended pumps with static charts.
+Instructions for Replit AI Agent:
+Flask Application Setup (app/main.py):
+"Initialize a Flask application."
+"Define a route for the main input form (e.g., / or /select)."
+"Define a route to handle form submission and display results (e.g., /results, method POST)."
+Requirements Input Form (app/templates/input_form.html):
+"Create an HTML form using Jinja2 templating."
+Initial Version (Simpler Progressive Reveal):
+"Structure the form with clear sections (Core Sizing, Contact, Application, Liquid, System, Motor, Additional) using <fieldset> and <legend>."
+"Initially, all sections are visible. Add JavaScript later for true progressive reveal if time/complexity allows for the AI."
+"Use appropriate HTML input types and placeholders. Mark required fields."
+"Style with basic CSS for readability. Link a Material Design CSS library (e.g., Materialize CDN) if feasible for the agent to manage."
+Results Display Page (app/templates/results_page.html):
+"This page will be rendered by the /results route."
+"It should receive the Top 3 pump selections from the backend."
+Layout:
+Display "Our Top Recommendation: [Suggested Pump Model]".
+Show key details and calculated operating point for the suggested pump.
+Static Charts (Matplotlib):
+"In the Python backend route, for the suggested pump, generate Head vs. Flow, Efficiency vs. Flow, and Power vs. Flow charts using Matplotlib. Save these as temporary PNG files in the static/ folder."
+"Embed these PNGs into results_page.html using <img> tags."
+"Mark the operating point on these Matplotlib charts."
+Display "Other Strong Candidates" (the two alternatives) with their key details and operating points.
+Include a "View Full Report for [Suggested Pump]" button/link that will trigger Phase 3.
+Backend Logic for /results route:
+Receive form data from input_form.html.
+Construct site_requirements object.
+Call load_all_pump_data().
+Create a list of ParsedPumpData objects by applying parse_pump_data to each raw pump object.
+Call find_best_pumps() to get the Top 3.
+Generate Matplotlib charts for the suggested pump.
+Pass the Top 3 data and chart paths to results_page.html for rendering.
+Phase 3: Detailed Report Generation (PDF - APE Pumps Template)
+Goal: Generate a professional, APE Pumps branded PDF report for the selected pump.
+Instructions for Replit AI Agent:
+Report Data Preparation Module (app/report_generator.py):
+"Implement generate_report_context(selected_pump_details, operating_point_details, site_requirements)."
+"This function will assemble all data and reasoning text needed for the full customer-facing report (as designed in our earlier discussions – executive summary, pump details, performance table, detailed rationale for BEP, NPSH, power, pump type alignment, next steps)."
+The reasoning should be dynamic, e.g., "The pump operates at {efficiency}% which is {close to/at/slightly off} its Best Efficiency Point, leading to {benefits}..."
+PDF Generation Route (e.g., /generate_pdf/<pump_code>):
+"This route will be triggered by the 'View Full Report' button."
+It will retrieve the details for the specified pump_code (which should have been part of the best_selection data).
+Call generate_report_context().
+HTML Template for PDF (app/templates/ape_report_template.html):
+"Create an HTML template specifically for PDF generation via WeasyPrint."
+"This template should be structured like a formal document."
+"Include placeholders for all data from report_context."
+Styling for APE Branding: "Add CSS within this HTML (or a linked CSS file for WeasyPrint) to:
+Include APE Pumps / Mather+Platt logos (place image files in static/images/).
+Use APE Pumps specified fonts (if web fonts are available or fall back to standards).
+Implement APE Pumps color scheme.
+Define headers, footers, page numbering."
+Charts in PDF: "Embed the static Matplotlib PNG chart images (generated in Phase 2 for the selected pump) into this HTML template."
+PDF Conversion:
+"In the PDF generation route, render ape_report_template.html with the report_context into an HTML string."
+"Use WeasyPrint to convert this HTML string into a PDF byte stream."
+"Return the PDF to the user as a file download."
+Phase 4: UI/UX Refinements & Advanced Features (Iterative)
+Goal: Enhance the user experience and add more sophisticated features.
+Instructions for Replit AI Agent (to be prompted for these as enhancements):
+Progressive Reveal for Input Form:
+"Modify input_form.html and add JavaScript to implement progressive reveal. Start with basic show/hide for sections based on 'Next' button clicks. Use simple IDs and JS to manage visibility."
+Interactive Charts on Web Results Page (Using Plotly.js Charting Component Spec):
+"Replace Matplotlib charts on results_page.html with interactive Plotly.js charts."
+"The Python backend needs to pass the structured curve_data (flow_rates, heads, efficiencies, powers, npshrs arrays) and performance_at_target (interpolated duty point) for the suggested pump (and potentially alternatives) as JSON to the template."
+"In results_page.html, include the Plotly.js library."
+"Add JavaScript based on the provided 'Pump Performance Charting Component Specification':
+Implement getOptimalChartWidth, handleWindowResize, commonLayout, config.
+Implement renderHeadCurveChart, renderEfficiencyCurveChart, renderPowerCurveChart, renderNPSHrCurveChart.
+Implement initializePumpCharts and renderPumpCurves.
+Call these functions with the data passed from Python."
+"Style the chart containers and surrounding page elements to align with Material Design."
+Enhanced Comparison Screen:
+"Improve the comparison table on results_page.html with better styling and visual highlights for key differences between the Top 3 pumps."
+Web View of Detailed Report:
+"Create a new route and HTML template (app/templates/web_report_view.html) to display the full detailed report content (from report_context) as a web page, styled with Material Design. This page should also have a 'Download PDF' button."
+Improved Error Handling:
+"Add more robust error handling throughout the Python backend (e.g., for file not found, bad data in JSON, no pumps matching criteria)."
+"Display user-friendly error messages on the web interface."
+Refine Scoring Logic:
+"Incorporate more nuanced scoring, e.g., better BEP proximity calculation, NPSH margin if NPSHa is provided, penalties for operating too far left/right on the curve."
+Build Strategy for the AI Agent:
+Modular Development: Instruct the agent to build each Python module (pump_parser.py, performance_calculator.py, selection_engine.py, report_generator.py, main.py) separately.
+Start with Backend Logic: Focus on getting the data parsing, calculations, and selection logic correct first. Test this with print statements or simple script runs.
+Build Basic Web Interface: Implement the input form and a very basic text-based results page.
+Integrate Static Charts: Add Matplotlib chart generation.
+Implement PDF Report: Focus on getting the WeasyPrint PDF generation working with static charts.
+Iterate on UI/UX: Gradually introduce Material Design styling, progressive reveal, and finally the interactive Plotly.js charts.
+This comprehensive plan provides a roadmap. The Replit AI agent can be prompted step-by-step for each phase and module, allowing for testing and refinement along the way. The most complex parts for the AI will likely be the nuanced parsing of the specific JSON format, robust interpolation, and the direct generation of the complex Plotly.js JavaScript from the specification. Providing the JS charting code as a separate file for the AI to integrate with might be a more reliable approach for that specific component.

@@ -1,0 +1,28 @@
+7Fixe79d4AAAAAAKBqInMhcwEAWBNPdAEAAPByAQEBmjJlinbs2KFVq1Z5bBzNmjXT1KlTdf3117v93s8++6x8fHw0bdo0t98bAAAAAABUTWQuZC4AAGviiS4AAAAWkJ+fr9jYWNWpU6fUe01XFWlpaWrVqpXGjRunl19+2dPDAQAAAAAAVQiZC5kLAMB6WOgCAAAAAAAAAAAAAAAAS2DrIgAAAAAAAAAAAAAAAFgCC10AAAAAAAAAAAAAAABgCSx0AQAAAAAAAAAAAAAAgCWw0AUAAAAAAAAAAAAAAACWwEIXAAAAAAAAAAAAAAAAWAILXQAAAAAAAAAAAAAAAGAJLHQBAAAAAAAAAAAAAACAJbDQBQAAAAAAAAAAAAAAAJbAQhcAAAAAAAAAAAAAAABYAgtdAAAAAAAAAAAAAAAAYAksdAEAAAAAAAAAAAAAAIAlsNAFAAAAAAAAAAAAAAAAlsBCFwAAAAAAAAAAAAAAAFgCC10AAAAAAAAAAAAAAABgCSx0AQAAAAAAAAAAAAAAgCX8P+u0KHmwAUJTAAAAAElFTkSuQmCC'}, performance_chart_available=True
+ERROR:pdf_generator:Error generating PDF report: 'dict object' has no attribute 'duty_point'
+ERROR:app.routes:Error generating PDF: 'dict object' has no attribute 'duty_point'
+Traceback (most recent call last):
+  File "/home/runner/workspace/app/routes.py", line 481, in generate_pdf_report
+    pdf_content = generate_pdf(
+                  ^^^^^^^^^^^^^
+  File "/home/runner/workspace/pdf_generator.py", line 115, in generate_pdf_report
+    html_content = render_template('ape_report_template.html', **template_vars)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/flask/templating.py", line 150, in render_template
+    return _render(app, template, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/flask/templating.py", line 131, in _render
+    rv = template.render(context)
+         ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/jinja2/environment.py", line 1295, in render
+    self.environment.handle_exception()
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/jinja2/environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "/home/runner/workspace/templates/ape_report_template.html", line 599, in top-level template code
+    <td>{{ performance_analysis.duty_point.required_flow }}</td>
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/jinja2/environment.py", line 490, in getattr
+    return getattr(obj, attribute)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+jinja2.exceptions.UndefinedError: 'dict object' has no attribute 'duty_point'
+INFO:app.routes:Index route accessed.

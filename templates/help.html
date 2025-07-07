@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+
+{% block title %}Help - APE Pumps Selection{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col s12">
+            <h3 class="blue-text text-darken-2">User Guide</h3>
+            
+            <div class="card">
+                <div class="card-content">
+                    <h5>Getting Started</h5>
+                    <p>Follow these steps to select the optimal pump for your application:</p>
+                    
+                    <div class="row">
+                        <div class="col s12 m6">
+                            <div class="card blue-grey lighten-5">
+                                <div class="card-content">
+                                    <h6><i class="material-icons left">looks_one</i>Enter Requirements</h6>
+                                    <ul>
+                                        <li>Flow Rate (m³/hr): Your required volumetric flow</li>
+                                        <li>Total Head (m): Total dynamic head including losses</li>
+                                        <li>Application Type: Water supply, industrial, etc.</li>
+                                        <li>Pump Type: End suction, multi-stage, axial flow</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col s12 m6">
+                            <div class="card blue-grey lighten-5">
+                                <div class="card-content">
+                                    <h6><i class="material-icons left">looks_two</i>Review Results</h6>
+                                    <ul>
+                                        <li>Top 3 pump recommendations</li>
+                                        <li>Performance scores and analysis</li>
+                                        <li>Interactive performance charts</li>
+                                        <li>Technical specifications</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <h6>Understanding Results</h6>
+                    <div class="collection">
+                        <div class="collection-item">
+                            <h6>Quality Scores</h6>
+                            <p>
+                                <span class="chip green white-text">70-100%</span> Excellent match<br>
+                                <span class="chip orange white-text">50-70%</span> Good match with considerations<br>
+                                <span class="chip red white-text">30-50%</span> Marginal - requires evaluation
+                            </p>
+                        </div>
+                        
+                        <div class="collection-item">
+                            <h6>Performance Charts</h6>
+                            <p>Interactive Plotly charts show head, efficiency, power, and NPSH curves with your operating point highlighted.</p>
+                        </div>
+                        
+                        <div class="collection-item">
+                            <h6>Technical Analysis</h6>
+                            <p>AI-powered insights provide engineering reasoning for pump selection and performance optimization.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card-action">
+                    <a href="{{ url_for('index') }}" class="btn blue darken-2">
+                        <i class="material-icons left">engineering</i>
+                        Start Selection
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

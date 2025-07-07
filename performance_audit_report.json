@@ -1,0 +1,372 @@
+{
+  "audit_timestamp": "2025-06-17T09:15:00",
+  "total_pumps": 386,
+  "total_curves": 869,
+  "total_data_points": 7043,
+  "total_issues": 50,
+  "performance_quality_score": 38,
+  "error_issues": 3,
+  "warning_issues": 47,
+  "issue_breakdown": {
+    "AFFINITY_LAW_VIOLATION_FLOW": 10,
+    "AFFINITY_LAW_VIOLATION_HEAD": 13,
+    "EXTREME_FLOW_VALUE": 9,
+    "BEP_AT_CURVE_EXTREME": 6,
+    "LOW_EFFICIENCY": 2,
+    "UNREALISTIC_EFFICIENCY": 1,
+    "EXTREME_HEAD_VALUE": 7,
+    "NON_MONOTONIC_FLOW": 2
+  },
+  "issues": [
+    {
+      "pump_code": "10 ADM",
+      "curve_id": "Scaling_330.0mm_to_406.0mm",
+      "type": "AFFINITY_LAW_VIOLATION_FLOW",
+      "description": "Flow scaling deviates 25.5% from affinity laws",
+      "severity": "WARNING"
+    },
+    {
+      "pump_code": "11 MQ H 1100VLT",
+      "curve_id": "Scaling_203.0mm_to_406.0mm",
+      "type": "AFFINITY_LAW_VIOLATION_FLOW",
+      "description": "Flow scaling deviates 43.3% from affinity laws",
+      "severity": "WARNING"
+    },
+    {
+      "pump_code": "11 MQ H 1100VLT",
+      "curve_id": "Scaling_203.0mm_to_406.0mm",
+      "type": "AFFINITY_LAW_VIOLATION_HEAD",
+      "description": "Head scaling deviates 68.1% from affinity laws",
+      "severity": "WARNING"
+    },
+    {
+      "pump_code": "1200MF",
+      "curve_id": "1200MF_C1_600mm",
+      "type": "EXTREME_FLOW_VALUE",
+      "description": "Maximum flow 28500.0 m\u00b3/hr is extremely high",
+      "severity": "WARNING"
+    },
+    {
+      "pump_code": "125-100-250",
+      "curve_id": "125-100-250_C1_226mm",
+      "type": "BEP_AT_CURVE_EXTREME",
+      "description": "BEP occurs at curve extreme (point 7 of 7)",
+      "severity": "WARNING"
+    },
+    {
+      "pump_code": "125-100-250",
+      "curve_id": "125-100-250_C3_276mm",
+      "type": "BEP_AT_CURVE_EXTREME",
+      "description": "BEP occurs at curve extreme (point 8 of 8)",
+      "severity": "WARNING"
+    },
+    {
+      "pump_code": "14/16 ADM",
+      "curve_id": "Scaling_482.6mm_to_533.4mm",
+      "type": "AFFINITY_LAW_VIOLATION_HEAD",
+      "description": "Head scaling deviates 23.1% from affinity laws",
+      "severity": "WARNING"
+    },
+    {
+      "pump_code": "14/16 BLE",
+      "curve_id": "Scaling_464.0mm_to_546.0mm",
+      "type": "AFFINITY_LAW_VIOLATION_FLOW",
+      "description": "Flow scaling deviates 16.1% from affinity laws",
+      "severity": "WARNING"
+    },
+    {
+      "pump_code": "18 HC + 18 XHC SPECIAL",
+      "curve_id": "18 HC + 18 XHC SPECIAL_C1_362mm",
+      "type": "LOW_EFFICIENCY",
+      "description": "Maximum efficiency 0.0% is unusually low",
+      "severity": "WARNING"
+    },
+    {
+      "pump_code": "18 HC + 18 XHC SPECIAL",
+      "curve_id": "18 HC + 18 XHC SPECIAL_C1_362mm",
+      "type": "BEP_AT_CURVE_EXTREME",
+      "description": "BEP occurs at curve extreme (point 1 of 10)",
+      "severity": "WARNING"
+    },
+    {
+      "pump_code": "20/24 CME",
+      "curve_id": "Scaling_540.0mm_to_740.0mm",
+      "type": "AFFINITY_LAW_VIOLATION_FLOW",
+      "description": "Flow scaling deviates 17.3% from affinity laws",
+      "severity": "WARNING"
+    },
+    {
+      "pump_code": "20/24 CME2",
+      "curve_id": "Scaling_540.0mm_to_740.0mm",
+      "type": "AFFINITY_LAW_VIOLATION_FLOW",
+      "description": "Flow scaling deviates 17.3% from affinity laws",
+      "severity": "WARNING"
+    },
+    {
+      "pump_code": "20/24 DV MEDI",
+      "curve_id": "20/24 DV MEDI_C1_780mm",
+      "type": "UNREALISTIC_EFFICIENCY",
+      "description": "Maximum efficiency 100.3% exceeds realistic limit of 95%",
+      "severity": "ERROR"
+    },
+    {
+      "pump_code": "24 WLN 42A",
+      "curve_id": "24 WLN 42A_C2_1041mm",
+      "type": "EXTREME_FLOW_VALUE",
+      "description": "Maximum flow 11366.0 m\u00b3/hr is extremely high",
+      "severity": "WARNING"
+    },
+    {
+      "pump_code": "24 WLN 42A",
+      "curve_id": "24 WLN 42A_C3_1102mm",
+      "type": "EXTREME_FLOW_VALUE",
+      "description": "Maximum flow 12284.0 m\u00b3/hr is extremely high",
+      "severity": "WARNING"
+    },
+    {
+      "pump_code": "2 KL",
+      "curve_id": "Scaling_210.0mm_to_260.0mm",
+      "type": "AFFINITY_LAW_VIOLATION_HEAD",
+      "description": "Head scaling deviates 42.4% from affinity laws",
+      "severity": "WARNING"
+    },
+    {
+      "pump_code": "30 WLN 41C",
+      "curve_id": "30 WLN 41C_C2_965mm",
+      "type": "EXTREME_FLOW_VALUE",
+      "description": "Maximum flow 10929.0 m\u00b3/hr is extremely high",
+      "severity": "WARNING"
+    },
+    {
+      "pump_code": "30 WLN 41C",
+      "curve_id": "30 WLN 41C_C3_1067mm",
+      "type": "EXTREME_FLOW_VALUE",
+      "description": "Maximum flow 12459.0 m\u00b3/hr is extremely high",
+      "severity": "WARNING"
+    },
+    {
+      "pump_code": "36 HC 6P",
+      "curve_id": "Scaling_600.0mm_to_660.4mm",
+      "type": "AFFINITY_LAW_VIOLATION_HEAD",
+      "description": "Head scaling deviates 49.9% from affinity laws",
+      "severity": "WARNING"
+    },
+    {
+      "pump_code": "4503-44648",
+      "curve_id": "4503-44648_C1_108mm",
+      "type": "LOW_EFFICIENCY",
+      "description": "Maximum efficiency 29.2% is unusually low",
+      "severity": "WARNING"
+    },
+    {
+      "pump_code": "48/48 LONOVANE",
+      "curve_id": "48/48 LONOVANE_C1_967mm",
+      "type": "EXTREME_FLOW_VALUE",
+      "description": "Maximum flow 14149.0 m\u00b3/hr is extremely high",
+      "severity": "WARNING"
+    },
+    {
+      "pump_code": "48/48 LONOVANE",
+      "curve_id": "48/48 LONOVANE_C2_1055mm",
+      "type": "EXTREME_FLOW_VALUE",
+      "description": "Maximum flow 17256.0 m\u00b3/hr is extremely high",
+      "severity": "WARNING"
+    },
+    {
+      "pump_code": "48/48 LONOVANE",
+      "curve_id": "48/48 LONOVANE_C3_1125mm",
+      "type": "EXTREME_FLOW_VALUE",
+      "description": "Maximum flow 19021.0 m\u00b3/hr is extremely high",
+      "severity": "WARNING"
+    },
+    {
+      "pump_code": "4/5",
+      "curve_id": "Scaling_288.0mm_to_360.0mm",
+      "type": "AFFINITY_LAW_VIOLATION_FLOW",
+      "description": "Flow scaling deviates 27.7% from affinity laws",
+      "severity": "WARNING"
+    },
+    {
+      "pump_code": "4/5",
+      "curve_id": "Scaling_288.0mm_to_360.0mm",
+      "type": "AFFINITY_LAW_VIOLATION_HEAD",
+      "description": "Head scaling deviates 46.9% from affinity laws",
+      "severity": "WARNING"
+    },
+    {
+      "pump_code": "4X6X13.25 L GSJH",
+      "curve_id": "4X6X13.25 L GSJH_C2_336mm",
+      "type": "EXTREME_HEAD_VALUE",
+      "description": "Maximum head 1040.0 m is extremely high",
+      "severity": "WARNING"
+    },
+    {
+      "pump_code": "5/6",
+      "curve_id": "Scaling_288.0mm_to_360.0mm",
+      "type": "AFFINITY_LAW_VIOLATION_FLOW",
+      "description": "Flow scaling deviates 28.6% from affinity laws",
+      "severity": "WARNING"
+    },
+    {
+      "pump_code": "5/6",
+      "curve_id": "Scaling_288.0mm_to_360.0mm",
+      "type": "AFFINITY_LAW_VIOLATION_HEAD",
+      "description": "Head scaling deviates 39.3% from affinity laws",
+      "severity": "WARNING"
+    },
+    {
+      "pump_code": "5/6 MEDI",
+      "curve_id": "Scaling_220.0mm_to_305.0mm",
+      "type": "AFFINITY_LAW_VIOLATION_HEAD",
+      "description": "Head scaling deviates 25.8% from affinity laws",
+      "severity": "WARNING"
+    },
+    {
+      "pump_code": "5/6 MEDI 2P",
+      "curve_id": "Scaling_220.0mm_to_305.0mm",
+      "type": "AFFINITY_LAW_VIOLATION_HEAD",
+      "description": "Head scaling deviates 25.8% from affinity laws",
+      "severity": "WARNING"
+    },
+    {
+      "pump_code": "5/6 MEDIVANE",
+      "curve_id": "Scaling_220.0mm_to_305.0mm",
+      "type": "AFFINITY_LAW_VIOLATION_HEAD",
+      "description": "Head scaling deviates 25.8% from affinity laws",
+      "severity": "WARNING"
+    },
+    {
+      "pump_code": "5/6 MEDIVANE 2P",
+      "curve_id": "Scaling_220.0mm_to_305.0mm",
+      "type": "AFFINITY_LAW_VIOLATION_HEAD",
+      "description": "Head scaling deviates 25.8% from affinity laws",
+      "severity": "WARNING"
+    },
+    {
+      "pump_code": "5 K",
+      "curve_id": "Scaling_268.0mm_to_356.0mm",
+      "type": "AFFINITY_LAW_VIOLATION_FLOW",
+      "description": "Flow scaling deviates 17.8% from affinity laws",
+      "severity": "WARNING"
+    },
+    {
+      "pump_code": "6 B/B",
+      "curve_id": "Scaling_330.0mm_to_387.0mm",
+      "type": "AFFINITY_LAW_VIOLATION_FLOW",
+      "description": "Flow scaling deviates 15.2% from affinity laws",
+      "severity": "WARNING"
+    },
+    {
+      "pump_code": "6 KL",
+      "curve_id": "Scaling_203.0mm_to_254.0mm",
+      "type": "AFFINITY_LAW_VIOLATION_HEAD",
+      "description": "Head scaling deviates 49.7% from affinity laws",
+      "severity": "WARNING"
+    },
+    {
+      "pump_code": "6X8X13H SJA",
+      "curve_id": "6X8X13H SJA_C2_342mm",
+      "type": "NON_MONOTONIC_FLOW",
+      "description": "Flow values are not monotonically increasing",
+      "severity": "ERROR"
+    },
+    {
+      "pump_code": "8211-30",
+      "curve_id": "8211-30_C1_635mm",
+      "type": "NON_MONOTONIC_FLOW",
+      "description": "Flow values are not monotonically increasing",
+      "severity": "ERROR"
+    },
+    {
+      "pump_code": "8312-14",
+      "curve_id": "8312-14_C1_350mm",
+      "type": "BEP_AT_CURVE_EXTREME",
+      "description": "BEP occurs at curve extreme (point 1 of 6)",
+      "severity": "WARNING"
+    },
+    {
+      "pump_code": "8 K",
+      "curve_id": "Scaling_330.2mm_to_406.4mm",
+      "type": "AFFINITY_LAW_VIOLATION_HEAD",
+      "description": "Head scaling deviates 20.3% from affinity laws",
+      "severity": "WARNING"
+    },
+    {
+      "pump_code": "8 KL",
+      "curve_id": "Scaling_248.0mm_to_292.0mm",
+      "type": "AFFINITY_LAW_VIOLATION_HEAD",
+      "description": "Head scaling deviates 23.5% from affinity laws",
+      "severity": "WARNING"
+    },
+    {
+      "pump_code": "8X10X13 2S",
+      "curve_id": "8X10X13 2S_C1_344mm",
+      "type": "EXTREME_HEAD_VALUE",
+      "description": "Maximum head 1027.0 m is extremely high",
+      "severity": "WARNING"
+    },
+    {
+      "pump_code": "8X10X13 2S NEW",
+      "curve_id": "8X10X13 2S NEW_C1_344mm",
+      "type": "EXTREME_HEAD_VALUE",
+      "description": "Maximum head 1036.0 m is extremely high",
+      "severity": "WARNING"
+    },
+    {
+      "pump_code": "8X10X13 3S",
+      "curve_id": "8X10X13 3S_C1_344mm",
+      "type": "EXTREME_HEAD_VALUE",
+      "description": "Maximum head 1540.0 m is extremely high",
+      "severity": "WARNING"
+    },
+    {
+      "pump_code": "8X10X13 3S NEW",
+      "curve_id": "8X10X13 3S NEW_C1_344mm",
+      "type": "EXTREME_HEAD_VALUE",
+      "description": "Maximum head 1545.0 m is extremely high",
+      "severity": "WARNING"
+    },
+    {
+      "pump_code": "8X10X13 4S2P",
+      "curve_id": "8X10X13 4S2P_C1_344mm",
+      "type": "EXTREME_HEAD_VALUE",
+      "description": "Maximum head 1257.0 m is extremely high",
+      "severity": "WARNING"
+    },
+    {
+      "pump_code": "8X10X13 4S NEW",
+      "curve_id": "8X10X13 4S NEW_C1_344mm",
+      "type": "EXTREME_HEAD_VALUE",
+      "description": "Maximum head 2073.0 m is extremely high",
+      "severity": "WARNING"
+    },
+    {
+      "pump_code": "KL 150-100",
+      "curve_id": "KL 150-100_C1_302mm",
+      "type": "BEP_AT_CURVE_EXTREME",
+      "description": "BEP occurs at curve extreme (point 5 of 5)",
+      "severity": "WARNING"
+    },
+    {
+      "pump_code": "PJ 100",
+      "curve_id": "Scaling_340.0mm_to_378.0mm",
+      "type": "AFFINITY_LAW_VIOLATION_FLOW",
+      "description": "Flow scaling deviates 18.8% from affinity laws",
+      "severity": "WARNING"
+    },
+    {
+      "pump_code": "WI-1414",
+      "curve_id": "WI-1414_C1_1499mm",
+      "type": "EXTREME_FLOW_VALUE",
+      "description": "Maximum flow 35500.0 m\u00b3/hr is extremely high",
+      "severity": "WARNING"
+    },
+    {
+      "pump_code": "WVP-130-30 (P30)",
+      "curve_id": "WVP-130-30 (P30)_C1_730mm",
+      "type": "BEP_AT_CURVE_EXTREME",
+      "description": "BEP occurs at curve extreme (point 9 of 9)",
+      "severity": "WARNING"
+    }
+  ]
+}

@@ -1,0 +1,854 @@
+{% extends "base.html" %}
+
+{% block title %}Features & Solutions - APE Pumps AI Selection System{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section" style="background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%); color: white; padding: 120px 0; position: relative; overflow: hidden; margin-top: 0;">
+    <!-- Clean geometric background -->
+    <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: #1976d2; opacity: 0.1;"></div>
+    
+    <div class="container" style="position: relative; z-index: 2;">
+        <div class="row">
+            <div class="col s12 l7">
+                <h1 class="hero-title" style="font-size: 4.2rem; font-weight: 300; margin-bottom: 24px; line-height: 1.05;">
+                    <span style="font-weight: 600;">Transform</span> Your Pump Selection Process
+                </h1>
+                <p class="hero-subtitle" style="font-size: 1.4rem; line-height: 1.5; margin-bottom: 40px; max-width: 600px;">
+                    The complete AI-powered solution for engineers, sales teams, and decision makers who demand precision, speed, and professional results.
+                </p>
+                
+                <!-- Value Proposition Grid -->
+                <div class="value-props" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 32px; margin-bottom: 48px;">
+                    <div class="value-item" style="text-align: left;">
+                        <div style="background: rgba(255,255,255,0.15); width: 60px; height: 60px; border-radius: 16px; display: flex; align-items: center; justify-content: center; margin-bottom: 16px;">
+                            <i class="material-icons" style="font-size: 2rem; color: white;">speed</i>
+                        </div>
+                        <h3 style="font-size: 1.8rem; font-weight: 600; margin-bottom: 8px;">75% Faster</h3>
+                        <p style="opacity: 0.9; font-size: 0.95rem; margin: 0;">Cut selection time from hours to minutes</p>
+                    </div>
+                    <div class="value-item" style="text-align: left;">
+                        <div style="background: rgba(255,255,255,0.15); width: 60px; height: 60px; border-radius: 16px; display: flex; align-items: center; justify-content: center; margin-bottom: 16px;">
+                            <i class="material-icons" style="font-size: 2rem; color: white;">verified</i>
+                        </div>
+                        <h3 style="font-size: 1.8rem; font-weight: 600; margin-bottom: 8px;">95% Accurate</h3>
+                        <p style="opacity: 0.9; font-size: 0.95rem; margin: 0;">AI-verified recommendations you can trust</p>
+                    </div>
+                    <div class="value-item" style="text-align: left;">
+                        <div style="background: rgba(255,255,255,0.15); width: 60px; height: 60px; border-radius: 16px; display: flex; align-items: center; justify-content: center; margin-bottom: 16px;">
+                            <i class="material-icons" style="font-size: 2rem; color: white;">inventory</i>
+                        </div>
+                        <h3 style="font-size: 1.8rem; font-weight: 600; margin-bottom: 8px;">500+ Models</h3>
+                        <p style="opacity: 0.9; font-size: 0.95rem; margin: 0;">Complete APE pump inventory access</p>
+                    </div>
+                </div>
+
+                <!-- CTA Buttons -->
+                <div style="display: flex; gap: 20px; flex-wrap: wrap; align-items: center;">
+                    <a href="{{ url_for('index') }}" class="btn-large waves-effect waves-light" style="background: rgba(255,255,255,0.2); color: white; font-weight: 600; border-radius: 12px; padding: 16px 32px; backdrop-filter: blur(10px); border: 2px solid rgba(255,255,255,0.3); text-decoration: none; display: flex; align-items: center; justify-content: center;">
+                        Try Live Demo
+                        <i class="material-icons" style="margin-left: 8px;">play_arrow</i>
+                    </a>
+                    <a href="#sales-tools" class="btn-large waves-effect waves-light" style="background: white; color: #1976d2; font-weight: 600; border-radius: 12px; padding: 16px 32px; text-decoration: none; display: flex; align-items: center; justify-content: center;">
+                        Sales Tools
+                        <i class="material-icons" style="margin-left: 8px;">trending_up</i>
+                    </a>
+                </div>
+            </div>
+            <div class="col s12 l5">
+                <!-- Professional Demo Card -->
+                <div class="demo-card" style="background: rgba(255,255,255,0.95); padding: 48px; border-radius: 24px; box-shadow: 0 20px 60px rgba(0,0,0,0.1); backdrop-filter: blur(20px); margin-top: 40px;">
+                    <div style="text-align: center; margin-bottom: 32px;">
+                        <h3 style="color: #1976d2; margin-bottom: 8px; font-weight: 600; font-size: 1.5rem;">Quick Selection Demo</h3>
+                        <p style="color: #666; font-size: 1rem; margin: 0;">Experience AI-powered pump selection</p>
+                    </div>
+                    
+                    <form id="quickSelectionForm" style="display: none;">
+                        <div style="margin-bottom: 24px;">
+                            <label style="display: block; color: #1976d2; font-size: 0.9rem; font-weight: 600; margin-bottom: 8px;">PUMP TYPE</label>
+                            <select id="pump_type_quick" style="width: 100%; background: white; border: 2px solid #e8eaed; border-radius: 12px; padding: 16px; font-size: 14px;">
+                                <option value="end_suction">End Suction</option>
+                                <option value="axial_flow">Axial Flow</option>
+                                <option value="hsc">HSC</option>
+                                <option value="multi_stage">Multi-Stage</option>
+                                <option value="vtp">VTP</option>
+                            </select>
+                        </div>
+                        <div style="margin-bottom: 24px;">
+                            <label style="display: block; color: #1976d2; font-size: 0.9rem; font-weight: 600; margin-bottom: 8px;">FLOW RATE (m³/hr)</label>
+                            <input type="number" id="flow_quick" value="342" style="width: 100%; background: white; border: 2px solid #e8eaed; border-radius: 12px; padding: 16px; font-size: 14px;" step="0.1">
+                        </div>
+                        <div style="margin-bottom: 32px;">
+                            <label style="display: block; color: #1976d2; font-size: 0.9rem; font-weight: 600; margin-bottom: 8px;">TOTAL HEAD (m)</label>
+                            <input type="number" id="head_quick" value="27.4" style="width: 100%; background: white; border: 2px solid #e8eaed; border-radius: 12px; padding: 16px; font-size: 14px;" step="0.1">
+                        </div>
+                        <button type="submit" class="btn-large waves-effect waves-light" style="background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%); width: 100%; font-weight: 600; border-radius: 12px; font-size: 16px; border: none;">
+                            Get AI Recommendations
+                            <i class="material-icons right">smart_toy</i>
+                        </button>
+                    </form>
+
+                    <!-- Demo Preview -->
+                    <div id="demoPreview">
+                        <div style="text-align: center; margin-bottom: 24px;">
+                            <div style="background: #f8f9fa; border-radius: 12px; padding: 24px; margin-bottom: 16px;">
+                                <i class="material-icons" style="font-size: 3rem; color: #1976d2; margin-bottom: 12px;">precision_manufacturing</i>
+                                <p style="color: #666; margin: 0; font-size: 0.95rem;">See how AI analyzes 500+ pump models to find your perfect match in seconds</p>
+                            </div>
+                        </div>
+                        <button type="button" onclick="document.getElementById('quickSelectionForm').style.display='block'; document.getElementById('demoPreview').style.display='none';" class="btn-large waves-effect waves-light" style="background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%); width: 100%; font-weight: 600; border-radius: 12px; font-size: 16px; border: none;">
+                            Start Demo
+                            <i class="material-icons right">rocket_launch</i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Core Features Section -->
+<section class="features-section" style="padding: 100px 0; background: white;">
+    <div class="container">
+        <div class="section-header center-align" style="margin-bottom: 80px;">
+            <h2 style="font-size: 3.2rem; color: #1976d2; margin-bottom: 24px; font-weight: 400;">
+                Everything Your Team Needs
+            </h2>
+            <p style="font-size: 1.3rem; color: #666; max-width: 750px; margin: 0 auto; line-height: 1.6;">
+                From engineering precision to sales excellence - one platform serves every role in your organization.
+            </p>
+        </div>
+
+        <div class="row">
+            <!-- Feature 1: Engineering Excellence -->
+            <div class="col s12 l4">
+                <div class="feature-card" style="background: white; padding: 48px 40px; text-align: center; border-radius: 20px; box-shadow: 0 8px 40px rgba(0,0,0,0.08); height: 100%; transition: all 0.3s ease;">
+                    <div class="feature-icon" style="background: linear-gradient(135deg, #1976d2, #42a5f5); color: white; width: 90px; height: 90px; border-radius: 24px; display: flex; align-items: center; justify-content: center; margin: 0 auto 32px;">
+                        <i class="material-icons" style="font-size: 3.2rem;">precision_manufacturing</i>
+                    </div>
+                    <h4 style="color: #1976d2; margin-bottom: 20px; font-weight: 600; font-size: 1.4rem;">Engineering Excellence</h4>
+                    <p style="color: #666; line-height: 1.7; font-size: 1.05rem; margin: 0;">
+                        AI analyzes 15+ parameters across 500+ pump models for precise, data-driven recommendations with full technical documentation.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Feature 2: Sales Enablement -->
+            <div class="col s12 l4">
+                <div class="feature-card" style="background: white; padding: 48px 40px; text-align: center; border-radius: 20px; box-shadow: 0 8px 40px rgba(0,0,0,0.08); height: 100%; transition: all 0.3s ease;">
+                    <div class="feature-icon" style="background: linear-gradient(135deg, #388e3c, #66bb6a); color: white; width: 90px; height: 90px; border-radius: 24px; display: flex; align-items: center; justify-content: center; margin: 0 auto 32px;">
+                        <i class="material-icons" style="font-size: 3.2rem;">trending_up</i>
+                    </div>
+                    <h4 style="color: #1976d2; margin-bottom: 20px; font-weight: 600; font-size: 1.4rem;">Sales Enablement</h4>
+                    <p style="color: #666; line-height: 1.7; font-size: 1.05rem; margin: 0;">
+                        Field-ready tools for sales teams including instant quotations, competitive analysis, and professional client presentations.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Feature 3: Expert Knowledge -->
+            <div class="col s12 l4">
+                <div class="feature-card" style="background: white; padding: 48px 40px; text-align: center; border-radius: 20px; box-shadow: 0 8px 40px rgba(0,0,0,0.08); height: 100%; transition: all 0.3s ease;">
+                    <div class="feature-icon" style="background: linear-gradient(135deg, #f57c00, #ffb74d); color: white; width: 90px; height: 90px; border-radius: 24px; display: flex; align-items: center; justify-content: center; margin: 0 auto 32px;">
+                        <i class="material-icons" style="font-size: 3.2rem;">psychology</i>
+                    </div>
+                    <h4 style="color: #1976d2; margin-bottom: 20px; font-weight: 600; font-size: 1.4rem;">Expert Knowledge</h4>
+                    <p style="color: #666; line-height: 1.7; font-size: 1.05rem; margin: 0;">
+                        24/7 AI expert trained on 300+ technical manuals, API standards, and engineering best practices.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Sales Tools Section -->
+<section id="sales-tools" class="sales-tools-section" style="padding: 100px 0; background: linear-gradient(135deg, #263238 0%, #37474f 100%); color: white;">
+    <div class="container">
+        <div class="section-header center-align" style="margin-bottom: 80px;">
+            <h2 style="font-size: 3.2rem; margin-bottom: 24px; font-weight: 400;">
+                Built for Sales Excellence
+            </h2>
+            <p style="font-size: 1.3rem; opacity: 0.9; max-width: 750px; margin: 0 auto; line-height: 1.6;">
+                Empower your field sales team with professional tools that close deals faster and build client confidence.
+            </p>
+        </div>
+
+        <div class="row">
+            <!-- Sales Tool 1: Instant Quotes -->
+            <div class="col s12 l6" style="margin-bottom: 40px;">
+                <div class="sales-tool-card" style="background: rgba(255,255,255,0.95); color: #333; padding: 48px; border-radius: 20px; height: 100%;">
+                    <div style="display: flex; align-items: center; margin-bottom: 24px;">
+                        <div style="background: linear-gradient(135deg, #4caf50 0%, #66bb6a 100%); width: 64px; height: 64px; border-radius: 16px; display: flex; align-items: center; justify-content: center; margin-right: 20px;">
+                            <i class="material-icons" style="font-size: 2rem; color: white;">request_quote</i>
+                        </div>
+                        <div>
+                            <h3 style="color: #1976d2; margin: 0; font-weight: 600; font-size: 1.5rem;">Instant Client Quotes</h3>
+                            <p style="color: #666; margin: 4px 0 0 0; font-size: 0.95rem;">Professional proposals in real-time</p>
+                        </div>
+                    </div>
+                    <ul style="color: #666; line-height: 1.8; margin-bottom: 24px;">
+                        <li><strong>On-site Selection:</strong> Generate recommendations during client meetings</li>
+                        <li><strong>Instant PDFs:</strong> Professional reports with APE branding and specifications</li>
+                        <li><strong>Pricing Integration:</strong> Real-time cost estimates with margin calculations</li>
+                        <li><strong>Competitive Analysis:</strong> Show why APE pumps outperform alternatives</li>
+                    </ul>
+                    <a href="{{ url_for('index') }}" class="btn waves-effect waves-light" style="background: #4caf50; color: white; font-weight: 600; border-radius: 8px;">
+                        Try Quote Generator
+                        <i class="material-icons right">arrow_forward</i>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Sales Tool 2: Group Inventory -->
+            <div class="col s12 l6" style="margin-bottom: 40px;">
+                <div class="sales-tool-card" style="background: rgba(255,255,255,0.95); color: #333; padding: 48px; border-radius: 20px; height: 100%;">
+                    <div style="display: flex; align-items: center; margin-bottom: 24px;">
+                        <div style="background: linear-gradient(135deg, #ff9800 0%, #ffb74d 100%); width: 64px; height: 64px; border-radius: 16px; display: flex; align-items: center; justify-content: center; margin-right: 20px;">
+                            <i class="material-icons" style="font-size: 2rem; color: white;">inventory_2</i>
+                        </div>
+                        <div>
+                            <h3 style="color: #1976d2; margin: 0; font-weight: 600; font-size: 1.5rem;">Group Inventory Access</h3>
+                            <p style="color: #666; margin: 4px 0 0 0; font-size: 0.95rem;">Complete product portfolio at your fingertips</p>
+                        </div>
+                    </div>
+                    <ul style="color: #666; line-height: 1.8; margin-bottom: 24px;">
+                        <li><strong>Live Availability:</strong> Real-time stock levels across all locations</li>
+                        <li><strong>Lead Times:</strong> Accurate delivery estimates for client planning</li>
+                        <li><strong>Alternative Options:</strong> Suggest in-stock alternatives when needed</li>
+                        <li><strong>Technical Library:</strong> Complete specifications and documentation</li>
+                    </ul>
+                    <a href="/admin" class="btn waves-effect waves-light" style="background: #ff9800; color: white; font-weight: 600; border-radius: 8px;">
+                        Access Inventory
+                        <i class="material-icons right">arrow_forward</i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sales Benefits Row -->
+        <div class="row" style="margin-top: 60px;">
+            <div class="col s12">
+                <div style="background: rgba(255,255,255,0.1); padding: 40px; border-radius: 16px; backdrop-filter: blur(10px);">
+                    <h3 style="text-align: center; margin-bottom: 32px; font-weight: 600; font-size: 1.6rem;">Why Sales Teams Choose APE AI</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 32px;">
+                        <div style="text-align: center;">
+                            <div style="font-size: 2.5rem; font-weight: 600; margin-bottom: 8px;">3x</div>
+                            <div style="opacity: 0.9; font-size: 0.95rem;">Faster Quote Generation</div>
+                        </div>
+                        <div style="text-align: center;">
+                            <div style="font-size: 2.5rem; font-weight: 600; margin-bottom: 8px;">85%</div>
+                            <div style="opacity: 0.9; font-size: 0.95rem;">Higher Close Rate</div>
+                        </div>
+                        <div style="text-align: center;">
+                            <div style="font-size: 2.5rem; font-weight: 600; margin-bottom: 8px;">60%</div>
+                            <div style="opacity: 0.9; font-size: 0.95rem;">Reduction in Follow-ups</div>
+                        </div>
+                        <div style="text-align: center;">
+                            <div style="font-size: 2.5rem; font-weight: 600; margin-bottom: 8px;">24/7</div>
+                            <div style="opacity: 0.9; font-size: 0.95rem;">Technical Support</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- How It Works Section -->
+<section class="how-it-works-section" style="padding: 100px 0; background: #fafbfc;">
+    <div class="container">
+        <div class="section-header center-align" style="margin-bottom: 80px;">
+            <h2 style="font-size: 3.2rem; color: #1976d2; margin-bottom: 24px; font-weight: 400;">
+                Simple. Fast. Professional.
+            </h2>
+            <p style="font-size: 1.3rem; color: #666; max-width: 650px; margin: 0 auto; line-height: 1.6;">
+                Three steps to transform how your team selects and sells pumps.
+            </p>
+        </div>
+
+        <div class="row">
+            <div class="col s12 l4">
+                <div class="step-card center-align" style="background: white; padding: 48px 32px; border-radius: 20px; box-shadow: 0 8px 32px rgba(0,0,0,0.08); height: 100%; position: relative;">
+                    <div class="step-number" style="background: linear-gradient(135deg, #1976d2 0%, #42a5f5 100%); color: white; width: 80px; height: 80px; border-radius: 20px; display: flex; align-items: center; justify-content: center; margin: 0 auto 32px; font-size: 2rem; font-weight: 600; box-shadow: 0 8px 24px rgba(25, 118, 210, 0.25);">1</div>
+                    <h4 style="color: #1976d2; margin-bottom: 20px; font-weight: 600; font-size: 1.4rem;">Input Requirements</h4>
+                    <p style="color: #666; line-height: 1.7; font-size: 1.05rem; margin-bottom: 24px;">
+                        Enter flow rate, head, and application type. Our intelligent form guides you through the process with helpful prompts and validation.
+                    </p>
+                    <div style="background: #f8f9fa; padding: 16px; border-radius: 12px; font-size: 0.9rem; color: #666;">
+                        <strong>Takes 30 seconds</strong><br>
+                        Smart validation prevents errors
+                    </div>
+                </div>
+            </div>
+            <div class="col s12 l4">
+                <div class="step-card center-align" style="background: white; padding: 48px 32px; border-radius: 20px; box-shadow: 0 8px 32px rgba(0,0,0,0.08); height: 100%; position: relative;">
+                    <div class="step-number" style="background: linear-gradient(135deg, #4caf50 0%, #66bb6a 100%); color: white; width: 80px; height: 80px; border-radius: 20px; display: flex; align-items: center; justify-content: center; margin: 0 auto 32px; font-size: 2rem; font-weight: 600; box-shadow: 0 8px 24px rgba(76, 175, 80, 0.25);">2</div>
+                    <h4 style="color: #1976d2; margin-bottom: 20px; font-weight: 600; font-size: 1.4rem;">AI Analysis</h4>
+                    <p style="color: #666; line-height: 1.7; font-size: 1.05rem; margin-bottom: 24px;">
+                        Advanced algorithms analyze 500+ pump models across 15+ parameters. AI evaluates efficiency, NPSH, power consumption, and compatibility.
+                    </p>
+                    <div style="background: #f8f9fa; padding: 16px; border-radius: 12px; font-size: 0.9rem; color: #666;">
+                        <strong>Processes in 2-3 seconds</strong><br>
+                        Ranks top 3 optimal matches
+                    </div>
+                </div>
+            </div>
+            <div class="col s12 l4">
+                <div class="step-card center-align" style="background: white; padding: 48px 32px; border-radius: 20px; box-shadow: 0 8px 32px rgba(0,0,0,0.08); height: 100%; position: relative;">
+                    <div class="step-number" style="background: linear-gradient(135deg, #ff9800 0%, #ffb74d 100%); color: white; width: 80px; height: 80px; border-radius: 20px; display: flex; align-items: center; justify-content: center; margin: 0 auto 32px; font-size: 2rem; font-weight: 600; box-shadow: 0 8px 24px rgba(255, 152, 0, 0.25);">3</div>
+                    <h4 style="color: #1976d2; margin-bottom: 20px; font-weight: 600; font-size: 1.4rem;">Professional Results</h4>
+                    <p style="color: #666; line-height: 1.7; font-size: 1.05rem; margin-bottom: 24px;">
+                        Receive interactive performance charts, detailed specifications, and client-ready PDF reports with APE branding and technical documentation.
+                    </p>
+                    <div style="background: #f8f9fa; padding: 16px; border-radius: 12px; font-size: 0.9rem; color: #666;">
+                        <strong>Instant download</strong><br>
+                        Ready for client presentation
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Final CTA Section -->
+<section class="final-cta-section" style="padding: 100px 0; background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%); color: white; position: relative;">
+    <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: url('data:image/svg+xml,<svg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><g fill="none" fill-rule="evenodd"><g fill="%23ffffff" fill-opacity="0.05"><circle cx="30" cy="30" r="1.5"/></g></svg>');"></div>
+    
+    <div class="container" style="position: relative; z-index: 2;">
+        <div class="row">
+            <div class="col s12 l8 offset-l2 center-align">
+                <h2 style="font-size: 3.5rem; font-weight: 300; margin-bottom: 24px; line-height: 1.1;">
+                    Ready to <span style="font-weight: 600;">Transform</span> Your Business?
+                </h2>
+                <p style="font-size: 1.3rem; line-height: 1.5; opacity: 0.95; margin-bottom: 48px; max-width: 600px; margin-left: auto; margin-right: auto;">
+                    Join engineering teams and sales professionals who've revolutionized their pump selection process with APE AI.
+                </p>
+                
+                <!-- Action Buttons -->
+                <div style="display: flex; gap: 24px; justify-content: center; flex-wrap: wrap; margin-bottom: 48px;">
+                    <a href="{{ url_for('index') }}" class="btn-large waves-effect waves-light" style="background: white; color: #1976d2; font-weight: 600; border-radius: 12px; padding: 18px 36px; text-decoration: none; font-size: 16px; display: flex; align-items: center; justify-content: center;">
+                        Start Free Demo
+                        <i class="material-icons" style="margin-left: 8px;">play_arrow</i>
+                    </a>
+                    <a href="/chat" class="btn-large waves-effect waves-light" style="background: rgba(255,255,255,0.2); color: white; font-weight: 600; border-radius: 12px; padding: 18px 36px; backdrop-filter: blur(10px); border: 2px solid rgba(255,255,255,0.3); text-decoration: none; font-size: 16px; display: flex; align-items: center; justify-content: center;">
+                        Ask AI Expert
+                        <i class="material-icons" style="margin-left: 8px;">psychology</i>
+                    </a>
+                </div>
+
+                <!-- Trust Indicators -->
+                <div style="background: rgba(255,255,255,0.1); padding: 32px; border-radius: 16px; backdrop-filter: blur(10px);">
+                    <p style="margin-bottom: 24px; font-size: 1.1rem; opacity: 0.9;">Trusted by engineering teams worldwide</p>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 24px; text-align: center;">
+                        <div>
+                            <div style="font-size: 2rem; font-weight: 600; margin-bottom: 4px;">500+</div>
+                            <div style="opacity: 0.8; font-size: 0.9rem;">Pump Models</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 2rem; font-weight: 600; margin-bottom: 4px;">95%</div>
+                            <div style="opacity: 0.8; font-size: 0.9rem;">Accuracy Rate</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 2rem; font-weight: 600; margin-bottom: 4px;">24/7</div>
+                            <div style="opacity: 0.8; font-size: 0.9rem;">AI Support</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 2rem; font-weight: 600; margin-bottom: 4px;">Instant</div>
+                            <div style="opacity: 0.8; font-size: 0.9rem;">PDF Reports</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- JavaScript for Demo Form -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Materialize components
+    M.FormSelect.init(document.querySelectorAll('select'));
+    
+    // Handle quick selection form
+    const quickForm = document.getElementById('quickSelectionForm');
+    if (quickForm) {
+        quickForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData();
+            formData.append('flow_m3hr', document.getElementById('flow_quick').value || 342);
+            formData.append('head_m', document.getElementById('head_quick').value || 27.4);
+            formData.append('pump_type', document.getElementById('pump_type_quick').value || 'end_suction');
+            formData.append('customer_name', 'Demo Customer');
+            formData.append('project_name', 'Quick Demo Project');
+            
+            // Submit to main selection form
+            const mainForm = document.createElement('form');
+            mainForm.method = 'POST';
+            mainForm.action = '/';
+            mainForm.style.display = 'none';
+            
+            for (let [key, value] of formData.entries()) {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = key;
+                input.value = value;
+                mainForm.appendChild(input);
+            }
+            
+            document.body.appendChild(mainForm);
+            mainForm.submit();
+        });
+    }
+    
+    // Add smooth scrolling for anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            const target = document.querySelector(this.getAttribute('href'));
+            if (target) {
+                target.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
+        });
+    });
+});
+</script>
+                </div>
+            </div>
+            <div class="col s12 m4">
+                <div class="guide-step" style="padding: 32px; background: #f8f9fa; border-radius: 12px; height: 100%;">
+                    <h4 style="color: var(--md-primary); margin-bottom: 20px;">2. Review AI Insights</h4>
+                    <ul style="color: var(--text-secondary); line-height: 1.8;">
+                        <li>Interactive curves (head, efficiency, power)</li>
+                        <li>Technical rationale behind selections</li>
+                        <li>Ranked alternatives</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="col s12 m4">
+                <div class="guide-step" style="padding: 32px; background: #f8f9fa; border-radius: 12px; height: 100%;">
+                    <h4 style="color: var(--md-primary); margin-bottom: 20px;">3. Generate Your Report</h4>
+                    <ul style="color: var(--text-secondary); line-height: 1.8;">
+                        <li>Executive summary with confidence scores</li>
+                        <li>Embedded charts & specifications</li>
+                        <li>Lifecycle and energy cost analysis</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Advanced Features Section -->
+<section class="advanced-features-section" style="padding: 80px 0; background: #f8f9fa;">
+    <div class="container">
+        <div class="section-header center-align" style="margin-bottom: 60px;">
+            <h2 style="font-size: 2.8rem; color: var(--md-primary); margin-bottom: 16px;">
+                Advanced Features
+            </h2>
+        </div>
+
+        <div class="row">
+            <div class="col s12 m6">
+                <div class="advanced-feature" style="display: flex; align-items: flex-start; margin-bottom: 32px; padding: 24px; background: white; border-radius: 12px;">
+                    <div style="background: #e3f2fd; color: var(--md-primary); width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 20px; flex-shrink: 0;">
+                        <i class="material-icons">psychology</i>
+                    </div>
+                    <div>
+                        <h5 style="color: var(--md-primary); margin: 0 0 8px 0;">🧠 AI Expert Console</h5>
+                        <p style="color: var(--text-secondary); margin: 0; line-height: 1.6;">Ask technical questions, API compliance, or performance queries—get instant answers.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col s12 m6">
+                <div class="advanced-feature" style="display: flex; align-items: flex-start; margin-bottom: 32px; padding: 24px; background: white; border-radius: 12px;">
+                    <div style="background: #e8f5e8; color: var(--success-green); width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 20px; flex-shrink: 0;">
+                        <i class="material-icons">compare</i>
+                    </div>
+                    <div>
+                        <h5 style="color: var(--md-primary); margin: 0 0 8px 0;">📊 Multi-Pump Comparison</h5>
+                        <p style="color: var(--text-secondary); margin: 0; line-height: 1.6;">Compare specs, cost, and efficiency side-by-side before selecting.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col s12 m6">
+                <div class="advanced-feature" style="display: flex; align-items: flex-start; margin-bottom: 32px; padding: 24px; background: white; border-radius: 12px;">
+                    <div style="background: #fff3e0; color: #ff9800; width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 20px; flex-shrink: 0;">
+                        <i class="material-icons">folder</i>
+                    </div>
+                    <div>
+                        <h5 style="color: var(--md-primary); margin: 0 0 8px 0;">📚 Document Library</h5>
+                        <p style="color: var(--text-secondary); margin: 0; line-height: 1.6;">Upload, store, and manage technical manuals and datasheets.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col s12 m6">
+                <div class="advanced-feature" style="display: flex; align-items: flex-start; margin-bottom: 32px; padding: 24px; background: white; border-radius: 12px;">
+                    <div style="background: #f3e5f5; color: #9c27b0; width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 20px; flex-shrink: 0;">
+                        <i class="material-icons">show_chart</i>
+                    </div>
+                    <div>
+                        <h5 style="color: var(--md-primary); margin: 0 0 8px 0;">📈 Interactive Performance Charts</h5>
+                        <p style="color: var(--text-secondary); margin: 0; line-height: 1.6;">Zoom, pan, and present curves with clarity using Plotly.js visualisations.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- FAQ Section -->
+<section class="faq-section" style="padding: 80px 0; background: white;">
+    <div class="container">
+        <div class="section-header center-align" style="margin-bottom: 60px;">
+            <h2 style="font-size: 2.8rem; color: var(--md-primary); margin-bottom: 16px;">
+                Frequently Asked Questions
+            </h2>
+        </div>
+
+        <div class="row">
+            <div class="col s12 l8 offset-l2">
+                <div class="faq-item" style="margin-bottom: 32px; padding: 24px; background: #f8f9fa; border-radius: 12px;">
+                    <h5 style="color: var(--md-primary); margin-bottom: 16px;">Q: How accurate are AI selections?</h5>
+                    <p style="color: var(--text-secondary); margin: 0; line-height: 1.6;">A: Our system maintains a 95% accuracy rate by analysing 15+ key parameters and manufacturer curves.</p>
+                </div>
+
+                <div class="faq-item" style="margin-bottom: 32px; padding: 24px; background: #f8f9fa; border-radius: 12px;">
+                    <h5 style="color: var(--md-primary); margin-bottom: 16px;">Q: What support is available?</h5>
+                    <p style="color: var(--text-secondary); margin: 0; line-height: 1.6;">A: You'll have 24/7 access to our AI Expert and real-time technical help via chat.</p>
+                </div>
+
+                <div class="faq-item" style="margin-bottom: 32px; padding: 24px; background: #f8f9fa; border-radius: 12px;">
+                    <h5 style="color: var(--md-primary); margin-bottom: 16px;">Q: Is my data secure?</h5>
+                    <p style="color: var(--text-secondary); margin: 0; line-height: 1.6;">A: Yes. Your inputs and reports are handled securely in compliance with industry standards.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Call to Action Section -->
+<section class="cta-section" style="padding: 80px 0; background: linear-gradient(135deg, var(--md-primary) 0%, var(--md-primary-variant) 100%); color: white;">
+    <div class="container center-align">
+        <h2 style="font-size: 2.8rem; font-weight: 300; margin-bottom: 24px;">
+            Ready to Transform Your Pump Selection Process?
+        </h2>
+        <p style="font-size: 1.2rem; opacity: 0.9; margin-bottom: 40px; max-width: 600px; margin-left: auto; margin-right: auto;">
+            Join engineers worldwide who are saving time and delivering better results with APE's AI Selection System.
+        </p>
+        <a href="{{ url_for('index') }}" class="btn-large waves-effect waves-light" style="background: white; color: var(--md-primary); font-weight: 600; padding: 0 48px; margin-right: 16px;">
+            Start Your Selection
+            <i class="material-icons right">arrow_forward</i>
+        </a>
+        <a href="/chat" class="btn-large waves-effect waves-light" style="background: transparent; border: 2px solid white; color: white; font-weight: 600; padding: 0 48px;">
+            Ask the AI Expert
+            <i class="material-icons right">chat</i>
+        </a>
+    </div>
+</section>
+
+<!-- JavaScript for Quick Selection Form -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Materialize select
+    var elems = document.querySelectorAll('select');
+    var instances = M.FormSelect.init(elems);
+    
+    // Handle example data loading
+    const loadExampleBtn = document.getElementById('loadExampleBtn');
+    if (loadExampleBtn) {
+        loadExampleBtn.addEventListener('click', function() {
+            // Fill form with example data
+            document.getElementById('flow_quick').value = 342;
+            document.getElementById('head_quick').value = 27.4;
+            document.getElementById('pump_type_quick').value = 'end_suction';
+            
+            // Reinitialize the select to show updated value
+            M.FormSelect.init(document.querySelectorAll('select'));
+            
+            // Add visual feedback
+            this.innerHTML = '<i class="material-icons left" style="font-size: 16px;">check</i>Example Loaded';
+            this.style.background = 'linear-gradient(135deg, #4caf50 0%, #66bb6a 100%)';
+            
+            // Reset button after 2 seconds
+            setTimeout(() => {
+                this.innerHTML = 'Load Example Project<i class="material-icons right" style="font-size: 16px;">play_arrow</i>';
+                this.style.background = 'linear-gradient(135deg, #ff6b35 0%, #f7931e 100%)';
+            }, 2000);
+        });
+    }
+    
+    // Handle form submission
+    const quickSelectionForm = document.getElementById('quickSelectionForm');
+    if (quickSelectionForm) {
+        quickSelectionForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const pumpType = document.getElementById('pump_type_quick').value;
+            const flow = document.getElementById('flow_quick').value;
+            const head = document.getElementById('head_quick').value;
+            
+            // Validate inputs
+            if (!flow || !head) {
+                M.toast({html: 'Please enter both flow rate and head values', classes: 'red'});
+                return;
+            }
+            
+            // Create URL with parameters
+            const params = new URLSearchParams({
+                flow_m3hr: flow,
+                head_m: head,
+                application_type: pumpType,
+                liquid_type: 'clean_water'
+            });
+            
+            // Redirect to main selection page with pre-filled values
+            window.location.href = `/?${params.toString()}`;
+        });
+    }
+    
+    // Add hover effects to feature cards
+    const featureCards = document.querySelectorAll('.feature-card');
+    featureCards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-8px)';
+            this.style.boxShadow = '0 16px 60px rgba(0,0,0,0.12)';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+            this.style.boxShadow = '0 8px 40px rgba(0,0,0,0.08)';
+        });
+    });
+    
+    // Add focus effects to form inputs
+    const inputs = document.querySelectorAll('#quickSelectionForm input, #quickSelectionForm select');
+    inputs.forEach(input => {
+        input.addEventListener('focus', function() {
+            this.style.borderColor = '#1976d2';
+            this.style.boxShadow = '0 0 0 3px rgba(25, 118, 210, 0.1)';
+        });
+        
+        input.addEventListener('blur', function() {
+            this.style.borderColor = '#e8eaed';
+            this.style.boxShadow = 'none';
+        });
+    });
+});
+</script>
+
+<!-- Enhanced CSS for Professional Layout -->
+<style>
+/* Reset and Base Styles */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif;
+    line-height: 1.6;
+    color: #333;
+    overflow-x: hidden;
+}
+
+/* Fix Navigation Issues */
+nav.teal {
+    background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%) !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+.brand-logo {
+    font-weight: 600 !important;
+    font-size: 1.6rem !important;
+    color: white !important;
+}
+
+/* Hero Section Fixes */
+.hero-section {
+    position: relative;
+    background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%);
+    color: white;
+    padding: 120px 0;
+    margin-top: 0;
+    overflow: hidden;
+}
+
+.hero-title {
+    font-size: 4.2rem;
+    font-weight: 300;
+    margin-bottom: 24px;
+    line-height: 1.05;
+}
+
+.hero-subtitle {
+    font-size: 1.4rem;
+    line-height: 1.5;
+    margin-bottom: 40px;
+    max-width: 600px;
+    opacity: 0.95;
+}
+
+/* Button Alignment Fixes */
+.btn-large {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    padding: 16px 32px !important;
+    border-radius: 12px !important;
+    font-weight: 600 !important;
+    text-decoration: none !important;
+    transition: all 0.3s ease !important;
+    border: none !important;
+    cursor: pointer !important;
+}
+
+.btn-large:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+}
+
+.btn-large i.material-icons {
+    margin-left: 8px !important;
+    margin-right: 0 !important;
+    font-size: 1.2rem !important;
+}
+
+/* Layout Container Fixes */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.row {
+    display: flex;
+    flex-wrap: wrap;
+    margin: 0 -12px;
+}
+
+.col {
+    padding: 0 12px;
+}
+
+/* Card Styling */
+.feature-card, .demo-card, .sales-tool-card {
+    background: white;
+    border-radius: 20px;
+    padding: 48px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.08);
+    transition: all 0.3s ease;
+    height: 100%;
+}
+
+.feature-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 16px 60px rgba(0,0,0,0.12);
+}
+
+/* Form Styling */
+#quickSelectionForm {
+    width: 100%;
+}
+
+#quickSelectionForm input,
+#quickSelectionForm select {
+    width: 100%;
+    background: white;
+    border: 2px solid #e8eaed;
+    border-radius: 12px;
+    padding: 16px;
+    font-size: 14px;
+    color: #333;
+    transition: all 0.3s ease;
+    margin-bottom: 16px;
+}
+
+#quickSelectionForm input:focus,
+#quickSelectionForm select:focus {
+    outline: none;
+    border-color: #1976d2;
+    box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.1);
+}
+
+/* Responsive Design */
+@media (max-width: 992px) {
+    .hero-title {
+        font-size: 3.2rem;
+    }
+    
+    .hero-subtitle {
+        font-size: 1.2rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .hero-title {
+        font-size: 2.8rem;
+    }
+    
+    .hero-subtitle {
+        font-size: 1.1rem;
+    }
+    
+    .demo-card {
+        margin-top: 40px;
+        padding: 32px;
+    }
+    
+    .feature-card {
+        margin-bottom: 32px;
+        padding: 32px;
+    }
+    
+    .btn-large {
+        width: 100%;
+        margin-bottom: 16px;
+    }
+}
+
+/* Section Spacing */
+section {
+    position: relative;
+    z-index: 1;
+}
+
+/* Fix Material Icons Alignment */
+i.material-icons {
+    display: inline-flex;
+    align-items: center;
+    vertical-align: middle;
+}
+
+/* Clean Up Floating Elements */
+.clearfix::after {
+    content: "";
+    display: table;
+    clear: both;
+}
+
+/* Prevent Text Overflow */
+* {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+/* Trust Indicators Grid */
+.trust-indicators {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 24px;
+    text-align: center;
+}
+</style>
+
+{% endblock %}

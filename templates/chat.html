@@ -1,0 +1,1235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Pump Expert - APE Pumps</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    
+    <!-- MathJax for LaTeX rendering -->
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['\\(', '\\)'], ['$', '$']],
+                displayMath: [['\\[', '\\]'], ['$$', '$$']],
+                processEscapes: true,
+                processEnvironments: true
+            },
+            startup: {
+                ready: () => {
+                    MathJax.startup.defaultReady();
+                    console.log('MathJax is loaded and ready');
+                }
+            },
+            options: {
+                skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+            }
+        };
+    </script>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    
+    <!-- Marked.js for markdown rendering -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        .chat-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            max-width: 1200px;
+            margin: 0 auto;
+            background: #f8fafc;
+        }
+
+        .chat-header {
+            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+            color: white;
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .chat-header h1 {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .chat-status {
+            font-size: 0.875rem;
+            opacity: 0.9;
+            margin-top: 0.25rem;
+        }
+
+        .chat-main {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+
+        .chat-sidebar {
+            width: 300px;
+            background: white;
+            border-right: 1px solid #e5e7eb;
+            padding: 1rem;
+            overflow-y: auto;
+        }
+
+        .knowledge-status {
+            background: #f0f9ff;
+            border: 1px solid #0ea5e9;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .knowledge-status h3 {
+            margin: 0 0 0.5rem 0;
+            color: #0369a1;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .knowledge-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            font-size: 0.75rem;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 0.5rem;
+            background: white;
+            border-radius: 4px;
+            border: 1px solid #bae6fd;
+        }
+
+        .stat-value {
+            font-weight: 600;
+            color: #0369a1;
+            display: block;
+        }
+
+        .suggested-queries {
+            margin-top: 1rem;
+        }
+
+        .suggested-queries h4 {
+            margin: 0 0 0.75rem 0;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .suggestion-btn {
+            display: block;
+            width: 100%;
+            text-align: left;
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            color: #374151;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .suggestion-btn:hover {
+            background: #f3f4f6;
+            border-color: #3b82f6;
+            transform: translateY(-1px);
+        }
+
+        .chat-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: white;
+        }
+
+        .messages-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+            scroll-behavior: smooth;
+        }
+
+        .message {
+            margin-bottom: 1.5rem;
+            animation: messageSlideIn 0.3s ease-out;
+        }
+
+        @keyframes messageSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.user {
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .message.assistant {
+            display: flex;
+            justify-content: flex-start;
+        }
+
+        .message-bubble {
+            max-width: 70%;
+            padding: 1rem 1.25rem;
+            border-radius: 18px;
+            font-size: 0.925rem;
+            line-height: 1.5;
+            position: relative;
+        }
+
+        .message.user .message-bubble {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: white;
+            border-bottom-right-radius: 6px;
+        }
+
+        .message.assistant .message-bubble {
+            background: #f8fafc;
+            color: #1f2937;
+            border: 1px solid #e5e7eb;
+            border-bottom-left-radius: 6px;
+        }
+
+        /* LaTeX and Mathematical Expression Styling */
+        .message-bubble .MathJax {
+            display: inline-block !important;
+            margin: 0.25rem 0;
+        }
+
+        .message-bubble .MathJax_Display {
+            margin: 0.75rem 0 !important;
+            text-align: center;
+        }
+
+        /* Code block styling */
+        .message-bubble pre {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin: 0.5rem 0;
+            overflow-x: auto;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 0.875rem;
+        }
+
+        .message-bubble code {
+            background: #f1f5f9;
+            padding: 0.125rem 0.25rem;
+            border-radius: 0.25rem;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 0.875rem;
+        }
+
+        /* Table styling */
+        .message-bubble table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 0.75rem 0;
+            font-size: 0.875rem;
+        }
+
+        .message-bubble th,
+        .message-bubble td {
+            border: 1px solid #e2e8f0;
+            padding: 0.5rem;
+            text-align: left;
+        }
+
+        .message-bubble th {
+            background: #f8fafc;
+            font-weight: 600;
+        }
+
+        /* List styling */
+        .message-bubble ul,
+        .message-bubble ol {
+            margin: 0.5rem 0;
+            padding-left: 1.5rem;
+        }
+
+        .message-bubble li {
+            margin: 0.25rem 0;
+        }
+
+        /* Header styling within messages */
+        .message-bubble h1,
+        .message-bubble h2,
+        .message-bubble h3 {
+            color: #1e40af;
+            margin: 1rem 0 0.5rem 0;
+            font-weight: 600;
+        }
+
+        .message-bubble h1 { font-size: 1.5rem; }
+        .message-bubble h2 { font-size: 1.25rem; }
+        .message-bubble h3 { font-size: 1.125rem; }
+
+        .message-meta {
+            font-size: 0.75rem;
+            margin-top: 0.5rem;
+            opacity: 0.7;
+        }
+
+        .message-sources {
+            margin-top: 0.75rem;
+            padding-top: 0.75rem;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .source-tag {
+            display: inline-block;
+            background: #dbeafe;
+            color: #1e40af;
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            margin-right: 0.5rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .confidence-score {
+            background: #10b981;
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .typing-indicator {
+            display: none;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 1rem 1.25rem;
+            color: #6b7280;
+            font-style: italic;
+        }
+
+        .typing-dots {
+            display: flex;
+            gap: 0.25rem;
+        }
+
+        .typing-dot {
+            width: 6px;
+            height: 6px;
+            background: #6b7280;
+            border-radius: 50%;
+            animation: typingPulse 1.4s infinite ease-in-out;
+        }
+
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes typingPulse {
+            0%, 80%, 100% { opacity: 0.3; }
+            40% { opacity: 1; }
+        }
+
+        .chat-input-container {
+            border-top: 1px solid #e5e7eb;
+            padding: 1rem;
+            background: white;
+            position: sticky;
+            bottom: 0;
+            z-index: 10;
+        }
+
+        .chat-input-wrapper {
+            display: flex;
+            gap: 12px;
+            align-items: flex-end;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+
+        .input-group {
+            flex: 1;
+            position: relative;
+            min-width: 0;
+        }
+
+        .chat-input {
+            width: 100%;
+            min-height: 44px;
+            max-height: 120px;
+            padding: 0.75rem 1rem;
+            padding-right: 1rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 22px;
+            font-size: 0.925rem;
+            font-family: inherit;
+            resize: none;
+            outline: none;
+            transition: border-color 0.2s ease;
+            overflow-y: auto;
+            line-height: 1.4;
+            box-sizing: border-box;
+        }
+
+        .chat-input:focus {
+            border-color: #3b82f6;
+        }
+
+        .chat-input::placeholder {
+            color: #9ca3af;
+        }
+
+        .send-button {
+            width: 44px;
+            height: 44px;
+            min-width: 44px;
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+            margin-left: auto;
+        }
+
+        .send-button:hover:not(:disabled) {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+        }
+
+        .send-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .welcome-message {
+            text-align: center;
+            padding: 3rem 2rem;
+            color: #6b7280;
+        }
+
+        .welcome-message h2 {
+            margin: 0 0 0.5rem 0;
+            color: #374151;
+            font-weight: 600;
+        }
+
+        .example-queries {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1rem;
+            margin-top: 2rem;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .example-query {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .example-query:hover {
+            border-color: #3b82f6;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .example-query h4 {
+            margin: 0 0 0.5rem 0;
+            color: #374151;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .example-query p {
+            margin: 0;
+            font-size: 0.825rem;
+            color: #6b7280;
+        }
+
+        @media (max-width: 768px) {
+            .chat-sidebar {
+                display: none;
+            }
+            
+            .chat-header {
+                padding: 1rem;
+            }
+            
+            .messages-container {
+                padding: 0.75rem;
+            }
+            
+            .message-bubble {
+                max-width: 85%;
+            }
+            
+            .example-queries {
+                grid-template-columns: 1fr;
+            }
+            
+            .chat-input-wrapper {
+                padding: 0 0.5rem;
+                gap: 8px;
+                max-width: none;
+            }
+            
+            .chat-input {
+                font-size: 16px; /* Prevents zoom on iOS */
+                padding: 0.75rem;
+                border-radius: 20px;
+            }
+            
+            .send-button {
+                width: 40px;
+                height: 40px;
+                min-width: 40px;
+            }
+        }
+
+        .error-message {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #dc2626;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem;
+            text-align: center;
+        }
+
+        .upload-prompt {
+            background: #fefce8;
+            border: 1px solid #fde047;
+            color: #a16207;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem;
+            text-align: center;
+        }
+
+        .upload-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .upload-section h4 {
+            margin: 0 0 0.75rem 0;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .upload-area {
+            border: 2px dashed #d1d5db;
+            border-radius: 8px;
+            padding: 1.5rem;
+            text-align: center;
+            background: #fafafa;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .upload-area:hover {
+            border-color: #3b82f6;
+            background: #f0f9ff;
+        }
+
+        .upload-area.drag-over {
+            border-color: #3b82f6;
+            background: #dbeafe;
+        }
+
+        .upload-area i {
+            font-size: 2rem;
+            color: #9ca3af;
+            margin-bottom: 0.5rem;
+        }
+
+        .upload-area p {
+            margin: 0 0 0.75rem 0;
+            color: #6b7280;
+            font-size: 0.875rem;
+        }
+
+        .upload-btn {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .upload-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .upload-progress {
+            margin-top: 1rem;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #e5e7eb;
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 0.5rem;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #10b981, #059669);
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+
+        #upload-status {
+            margin: 0;
+            font-size: 0.875rem;
+            color: #6b7280;
+            text-align: center;
+        }
+
+        .uploaded-files {
+            margin-top: 1rem;
+        }
+
+        .uploaded-file {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-radius: 6px;
+            padding: 0.5rem;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .uploaded-file i {
+            color: #10b981;
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <!-- Chat Header -->
+        <div class="chat-header">
+            <h1>
+                <span class="material-icons">auto_awesome</span>
+                AI Pump Expert
+            </h1>
+            <div class="chat-status" id="chat-status">
+                Ready to help with pump selection and technical questions
+            </div>
+        </div>
+
+        <!-- Main Chat Area -->
+        <div class="chat-main">
+            <!-- Sidebar -->
+            <div class="chat-sidebar">
+                <div class="knowledge-status">
+                    <h3>Knowledge Base Status</h3>
+                    <div class="knowledge-stats" id="knowledge-stats">
+                        <div class="stat-item">
+                            <span class="stat-value" id="doc-count">0</span>
+                            <span>Documents</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-value" id="pump-models">0</span>
+                            <span>Pump Models</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-value" id="coverage">0%</span>
+                            <span>Coverage</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-value" id="status">Ready</span>
+                            <span>Status</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="upload-section">
+                    <h4>Upload Documents</h4>
+                    <div class="upload-area" id="upload-area">
+                        <i class="material-icons">cloud_upload</i>
+                        <p>Drop PDF files here or click to browse</p>
+                        <input type="file" id="file-input" accept=".pdf" multiple style="display: none;">
+                        <button class="upload-btn" onclick="document.getElementById('file-input').click()">
+                            Select PDFs
+                        </button>
+                    </div>
+                    <div class="upload-progress" id="upload-progress" style="display: none;">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progress-fill"></div>
+                        </div>
+                        <p id="upload-status">Uploading...</p>
+                    </div>
+                </div>
+
+                <div class="suggested-queries">
+                    <h4>Quick Questions</h4>
+                    <button class="suggestion-btn" onclick="sendSuggestedQuery(this.textContent)">
+                        What pumps are suitable for water supply applications?
+                    </button>
+                    <button class="suggestion-btn" onclick="sendSuggestedQuery(this.textContent)">
+                        How do I calculate NPSH requirements?
+                    </button>
+                    <button class="suggestion-btn" onclick="sendSuggestedQuery(this.textContent)">
+                        What's the efficiency of the 6/8 ALE pump at 300 m³/hr?
+                    </button>
+                    <button class="suggestion-btn" onclick="sendSuggestedQuery(this.textContent)">
+                        Compare centrifugal vs positive displacement pumps
+                    </button>
+                    <button class="suggestion-btn" onclick="sendSuggestedQuery(this.textContent)">
+                        What maintenance is required for APE pumps?
+                    </button>
+                </div>
+            </div>
+
+            <!-- Chat Content -->
+            <div class="chat-content">
+                <div class="messages-container" id="messages-container">
+                    <div class="welcome-message" id="welcome-message">
+                        <h2>Welcome to AI Pump Expert</h2>
+                        <p>Ask me anything about pump selection, performance, applications, or technical specifications.</p>
+                        
+                        <div class="example-queries">
+                            <div class="example-query" onclick="sendSuggestedQuery('What is the maximum flow rate and efficiency of the 6/8 ALE pump?')">
+                                <h4>Performance Queries</h4>
+                                <p>Get detailed pump performance data, efficiency curves, and operating characteristics</p>
+                            </div>
+                            <div class="example-query" onclick="sendSuggestedQuery('Which pumps are suitable for cooling water in industrial applications?')">
+                                <h4>Application Guidance</h4>
+                                <p>Find the right pump for your specific application and operating conditions</p>
+                            </div>
+                            <div class="example-query" onclick="sendSuggestedQuery('How do I calculate the required NPSH for my installation?')">
+                                <h4>Technical Support</h4>
+                                <p>Get expert help with pump calculations, installation, and troubleshooting</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="typing-indicator" id="typing-indicator">
+                        <span>AI Expert is thinking</span>
+                        <div class="typing-dots">
+                            <div class="typing-dot"></div>
+                            <div class="typing-dot"></div>
+                            <div class="typing-dot"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chat Input -->
+                <div class="chat-input-container">
+                    <div class="chat-input-wrapper">
+                        <div class="input-group">
+                            <textarea 
+                                id="chat-input" 
+                                class="chat-input" 
+                                placeholder="Ask about pump specifications, performance, applications..."
+                                rows="1"
+                                maxlength="1000"></textarea>
+                        </div>
+                        <button id="send-button" class="send-button" onclick="sendMessage()">
+                            <span class="material-icons">send</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/micro-interactions.js') }}"></script>
+    <script>
+        let messageHistory = [];
+        let isProcessing = false;
+
+        // Initialize chat on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeChat();
+            setupInputHandlers();
+            loadKnowledgeBaseStatus();
+        });
+
+        function initializeChat() {
+            // Auto-resize textarea
+            const chatInput = document.getElementById('chat-input');
+            chatInput.addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+            });
+
+            // Focus input
+            chatInput.focus();
+        }
+
+        function setupInputHandlers() {
+            const chatInput = document.getElementById('chat-input');
+            
+            chatInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+        }
+
+        async function loadKnowledgeBaseStatus() {
+            try {
+                const response = await fetch('/api/chat/status');
+                const status = await response.json();
+                
+                document.getElementById('doc-count').textContent = status.total_documents || 0;
+                document.getElementById('pump-models').textContent = status.available_models?.length || 0;
+                document.getElementById('coverage').textContent = Math.round(status.embedding_coverage || 0) + '%';
+                
+                const statusElement = document.getElementById('status');
+                if (status.total_documents > 0) {
+                    statusElement.textContent = 'Active';
+                    statusElement.style.color = '#10b981';
+                } else {
+                    statusElement.textContent = 'Awaiting PDFs';
+                    statusElement.style.color = '#f59e0b';
+                    showUploadPrompt();
+                }
+                
+            } catch (error) {
+                console.error('Error loading knowledge base status:', error);
+                document.getElementById('status').textContent = 'Error';
+            }
+        }
+
+        function showUploadPrompt() {
+            const messagesContainer = document.getElementById('messages-container');
+            const welcomeMessage = document.getElementById('welcome-message');
+            
+            if (welcomeMessage) {
+                const uploadPrompt = document.createElement('div');
+                uploadPrompt.className = 'upload-prompt';
+                uploadPrompt.innerHTML = `
+                    <strong>Knowledge Base Ready</strong><br>
+                    Upload your pump expertise PDFs and datasheets to activate the AI chatbot with authentic technical knowledge.
+                `;
+                welcomeMessage.appendChild(uploadPrompt);
+            }
+        }
+
+        function sendSuggestedQuery(query) {
+            document.getElementById('chat-input').value = query;
+            sendMessage();
+        }
+
+        async function sendMessage() {
+            const chatInput = document.getElementById('chat-input');
+            const message = chatInput.value.trim();
+            
+            if (!message || isProcessing) return;
+            
+            // Clear input and reset height
+            chatInput.value = '';
+            chatInput.style.height = 'auto';
+            
+            // Add user message
+            addMessage('user', message);
+            hideWelcomeMessage();
+            showTypingIndicator();
+            
+            isProcessing = true;
+            document.getElementById('send-button').disabled = true;
+            
+            try {
+                const response = await fetch('/api/chat/query', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        query: message,
+                        history: messageHistory.slice(-10) // Send last 10 messages for context
+                    })
+                });
+                
+                const data = await response.json();
+                
+                hideTypingIndicator();
+                
+                if (data.error) {
+                    addMessage('assistant', `I apologize, but I encountered an error: ${data.error}`, null, 0, []);
+                } else {
+                    addMessage(
+                        'assistant', 
+                        data.response, 
+                        data.processing_time,
+                        data.confidence_score,
+                        data.source_documents || [],
+                        data.suggestions || []
+                    );
+                }
+                
+            } catch (error) {
+                console.error('Error sending message:', error);
+                hideTypingIndicator();
+                addMessage('assistant', 'I apologize, but I\'m having trouble connecting to the knowledge base. Please try again in a moment.', null, 0, []);
+            }
+            
+            isProcessing = false;
+            document.getElementById('send-button').disabled = false;
+            chatInput.focus();
+        }
+
+        function addMessage(sender, content, processingTime = null, confidence = null, sources = [], suggestions = []) {
+            const messagesContainer = document.getElementById('messages-container');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}`;
+            
+            const timestamp = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            
+            // Process content based on sender
+            let processedContent = content;
+            if (sender === 'assistant') {
+                // Parse markdown and prepare for LaTeX rendering
+                processedContent = parseMarkdownContent(content);
+            }
+            
+            let messageHTML = `
+                <div class="message-bubble">
+                    ${processedContent}
+            `;
+            
+            // Add metadata for assistant messages
+            if (sender === 'assistant') {
+                let metaHTML = '<div class="message-meta">';
+                
+                if (processingTime) {
+                    metaHTML += `Response time: ${processingTime.toFixed(2)}s`;
+                }
+                
+                if (confidence !== null) {
+                    metaHTML += ` • <span class="confidence-score">Confidence: ${Math.round(confidence * 100)}%</span>`;
+                }
+                
+                metaHTML += `</div>`;
+                messageHTML += metaHTML;
+                
+                // Add sources if available
+                if (sources && sources.length > 0) {
+                    messageHTML += '<div class="message-sources">';
+                    sources.forEach(source => {
+                        messageHTML += `<span class="source-tag">${source}</span>`;
+                    });
+                    messageHTML += '</div>';
+                }
+            }
+            
+            messageHTML += '</div>';
+            messageDiv.innerHTML = messageHTML;
+            
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            
+            // Store in history
+            messageHistory.push({
+                sender: sender,
+                content: content,
+                timestamp: timestamp
+            });
+            
+            // Render LaTeX expressions if this is an assistant message
+            if (sender === 'assistant' && window.MathJax && MathJax.typesetPromise) {
+                setTimeout(() => {
+                    MathJax.typesetPromise([messageDiv]).then(() => {
+                        console.log('LaTeX rendering completed for message');
+                    }).catch((err) => {
+                        console.warn('MathJax rendering error:', err);
+                        // Fallback: try again after a short delay
+                        setTimeout(() => {
+                            if (MathJax.typesetPromise) {
+                                MathJax.typesetPromise([messageDiv]).catch(e => console.warn('Second MathJax attempt failed:', e));
+                            }
+                        }, 500);
+                    });
+                }, 100);
+            }
+            
+            // Add suggested follow-up questions
+            if (suggestions && suggestions.length > 0 && sender === 'assistant') {
+                setTimeout(() => addSuggestions(suggestions), 500);
+            }
+        }
+
+        function parseMarkdownContent(content) {
+            // Protect LaTeX expressions from markdown processing
+            const latexPlaceholders = [];
+            let protectedContent = content;
+            
+            // Protect display math expressions \\[ ... \\]
+            protectedContent = protectedContent.replace(/\\\[([\s\S]*?)\\\]/g, (match, latex) => {
+                const placeholder = `LATEX_DISPLAY_${latexPlaceholders.length}`;
+                latexPlaceholders.push({ type: 'display', content: match });
+                return placeholder;
+            });
+            
+            // Protect inline math expressions \\( ... \\)
+            protectedContent = protectedContent.replace(/\\\(([\s\S]*?)\\\)/g, (match, latex) => {
+                const placeholder = `LATEX_INLINE_${latexPlaceholders.length}`;
+                latexPlaceholders.push({ type: 'inline', content: match });
+                return placeholder;
+            });
+            
+            // Configure marked for better markdown rendering
+            if (typeof marked !== 'undefined') {
+                marked.setOptions({
+                    breaks: true,
+                    gfm: true,
+                    tables: true,
+                    sanitize: false
+                });
+                
+                // Parse markdown to HTML
+                protectedContent = marked.parse(protectedContent);
+            } else {
+                // Fallback: basic text formatting
+                protectedContent = protectedContent
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                    .replace(/`(.*?)`/g, '<code style="background: #f1f5f9; padding: 0.125rem 0.25rem; border-radius: 0.25rem; font-family: monospace;">$1</code>')
+                    .replace(/###\s+(.*?)$/gm, '<h3 style="color: #1e40af; margin: 1rem 0 0.5rem 0; font-size: 1.125rem;">$1</h3>')
+                    .replace(/##\s+(.*?)$/gm, '<h2 style="color: #1e40af; margin: 1rem 0 0.5rem 0; font-size: 1.25rem;">$1</h2>')
+                    .replace(/\n/g, '<br>');
+            }
+            
+            // Restore LaTeX expressions
+            latexPlaceholders.forEach((latex, index) => {
+                if (latex.type === 'display') {
+                    protectedContent = protectedContent.replace(`LATEX_DISPLAY_${index}`, latex.content);
+                } else {
+                    protectedContent = protectedContent.replace(`LATEX_INLINE_${index}`, latex.content);
+                }
+            });
+            
+            return protectedContent;
+        }
+
+        function addSuggestions(suggestions) {
+            const messagesContainer = document.getElementById('messages-container');
+            const suggestionsDiv = document.createElement('div');
+            suggestionsDiv.className = 'message assistant';
+            suggestionsDiv.style.marginTop = '0.5rem';
+            
+            let suggestionsHTML = '<div class="message-bubble" style="background: #f0f9ff; border-color: #0ea5e9;">';
+            suggestionsHTML += '<strong style="color: #0369a1;">Related questions:</strong><br>';
+            
+            suggestions.forEach((suggestion, index) => {
+                suggestionsHTML += `<button class="suggestion-btn" style="margin: 0.25rem 0; padding: 0.5rem;" onclick="sendSuggestedQuery('${suggestion}')">${suggestion}</button>`;
+            });
+            
+            suggestionsHTML += '</div>';
+            suggestionsDiv.innerHTML = suggestionsHTML;
+            
+            messagesContainer.appendChild(suggestionsDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function hideWelcomeMessage() {
+            const welcomeMessage = document.getElementById('welcome-message');
+            if (welcomeMessage) {
+                welcomeMessage.style.display = 'none';
+            }
+        }
+
+        function showTypingIndicator() {
+            document.getElementById('typing-indicator').style.display = 'flex';
+            document.getElementById('messages-container').scrollTop = document.getElementById('messages-container').scrollHeight;
+        }
+
+        function hideTypingIndicator() {
+            document.getElementById('typing-indicator').style.display = 'none';
+        }
+
+        // Initialize upload functionality
+        setupFileUpload();
+
+        // Auto-refresh knowledge base status every 30 seconds
+        setInterval(loadKnowledgeBaseStatus, 30000);
+
+        function setupFileUpload() {
+            const uploadArea = document.getElementById('upload-area');
+            const fileInput = document.getElementById('file-input');
+            
+            // Drag and drop handlers
+            uploadArea.addEventListener('dragover', handleDragOver);
+            uploadArea.addEventListener('dragleave', handleDragLeave);
+            uploadArea.addEventListener('drop', handleDrop);
+            
+            // File input handler
+            fileInput.addEventListener('change', handleFileSelect);
+            
+            // Click handler for upload area
+            uploadArea.addEventListener('click', () => fileInput.click());
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            document.getElementById('upload-area').classList.add('drag-over');
+        }
+
+        function handleDragLeave(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            document.getElementById('upload-area').classList.remove('drag-over');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            document.getElementById('upload-area').classList.remove('drag-over');
+            
+            const files = Array.from(e.dataTransfer.files).filter(file => 
+                file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')
+            );
+            
+            if (files.length > 0) {
+                uploadFiles(files);
+            } else {
+                showUploadError('Please drop only PDF files');
+            }
+        }
+
+        function handleFileSelect(e) {
+            const files = Array.from(e.target.files);
+            if (files.length > 0) {
+                uploadFiles(files);
+            }
+        }
+
+        async function uploadFiles(files) {
+            const uploadProgress = document.getElementById('upload-progress');
+            const progressFill = document.getElementById('progress-fill');
+            const uploadStatus = document.getElementById('upload-status');
+            
+            uploadProgress.style.display = 'block';
+            
+            let totalFiles = files.length;
+            let uploadedFiles = 0;
+            let uploadedFilesList = [];
+
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                
+                try {
+                    uploadStatus.textContent = `Uploading ${file.name}... (${i + 1}/${totalFiles})`;
+                    progressFill.style.width = `${(i / totalFiles) * 100}%`;
+                    
+                    const result = await uploadSingleFile(file);
+                    uploadedFiles++;
+                    uploadedFilesList.push({
+                        name: file.name,
+                        result: result
+                    });
+                    
+                } catch (error) {
+                    console.error(`Error uploading ${file.name}:`, error);
+                    showUploadError(`Failed to upload ${file.name}: ${error.message}`);
+                }
+            }
+            
+            // Complete progress
+            progressFill.style.width = '100%';
+            uploadStatus.textContent = `Successfully uploaded ${uploadedFiles}/${totalFiles} files`;
+            
+            // Show uploaded files
+            displayUploadedFiles(uploadedFilesList);
+            
+            // Refresh knowledge base status
+            setTimeout(() => {
+                loadKnowledgeBaseStatus();
+                uploadProgress.style.display = 'none';
+                progressFill.style.width = '0%';
+            }, 2000);
+        }
+
+        async function uploadSingleFile(file) {
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('document_type', 'datasheet'); // Default type
+            
+            const response = await fetch('/api/chat/upload', {
+                method: 'POST',
+                body: formData
+            });
+            
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Upload failed');
+            }
+            
+            return await response.json();
+        }
+
+        function displayUploadedFiles(files) {
+            const sidebar = document.querySelector('.chat-sidebar');
+            let uploadedFilesDiv = document.querySelector('.uploaded-files');
+            
+            if (!uploadedFilesDiv) {
+                uploadedFilesDiv = document.createElement('div');
+                uploadedFilesDiv.className = 'uploaded-files';
+                uploadedFilesDiv.innerHTML = '<h4 style="margin: 1rem 0 0.5rem 0; font-size: 0.875rem; font-weight: 600; color: #374151;">Recently Uploaded</h4>';
+                sidebar.appendChild(uploadedFilesDiv);
+            }
+            
+            files.forEach(fileInfo => {
+                const fileDiv = document.createElement('div');
+                fileDiv.className = 'uploaded-file';
+                fileDiv.innerHTML = `
+                    <i class="material-icons">description</i>
+                    <span>${fileInfo.name}</span>
+                `;
+                uploadedFilesDiv.appendChild(fileDiv);
+            });
+        }
+
+        function showUploadError(message) {
+            const uploadStatus = document.getElementById('upload-status');
+            uploadStatus.textContent = message;
+            uploadStatus.style.color = '#dc2626';
+            
+            setTimeout(() => {
+                uploadStatus.style.color = '#6b7280';
+                document.getElementById('upload-progress').style.display = 'none';
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

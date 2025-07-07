@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>APE Pumps Selection Report</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 2cm;
+            @top-left {
+                content: "APE Pumps Selection Report";
+                font-family: Arial, sans-serif;
+                font-size: 10pt;
+                color: #004d40;
+            }
+            @top-right {
+                content: "Report ID: {{ report_context.report_id }}";
+                font-family: Arial, sans-serif;
+                font-size: 10pt;
+                color: #666;
+            }
+            @bottom-center {
+                content: "Page " counter(page) " of " counter(pages);
+                font-family: Arial, sans-serif;
+                font-size: 10pt;
+                color: #666;
+            }
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #004d40 0%, #00695c 100%);
+            color: white;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border-radius: 8px;
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 28pt;
+            font-weight: bold;
+        }
+        
+        .header .subtitle {
+            font-size: 14pt;
+            margin-top: 0.5rem;
+            opacity: 0.9;
+        }
+        
+        .company-info {
+            text-align: right;
+            margin-top: 1rem;
+        }
+        
+        .section {
+            margin-bottom: 2rem;
+            page-break-inside: avoid;
+        }
+        
+        .section h2 {
+            color: #004d40;
+            border-bottom: 2px solid #004d40;
+            padding-bottom: 0.5rem;
+            margin-bottom: 1rem;
+            font-size: 18pt;
+        }
+        
+        .section h3 {
+            color: #00695c;
+            margin-bottom: 0.8rem;
+            font-size: 14pt;
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .info-box {
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            padding: 1rem;
+            background-color: #fafafa;
+        }
+        
+        .info-box strong {
+            color: #004d40;
+        }
+        
+        .performance-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 1.5rem;
+        }
+        
+        .performance-table th,
+        .performance-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        
+        .performance-table th {
+            background-color: #004d40;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .performance-table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        
+        .highlight {
+            background-color: #e8f5e8;
+            padding: 1rem;
+            border-left: 4px solid #4caf50;
+            margin: 1rem 0;
+        }
+        
+        .warning {
+            background-color: #fff3e0;
+            padding: 1rem;
+            border-left: 4px solid #ff9800;
+            margin: 1rem 0;
+        }
+        
+        .chart-container {
+            text-align: center;
+            margin: 1.5rem 0;
+            page-break-inside: avoid;
+        }
+        
+        .chart-image {
+            max-width: 100%;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        .footer {
+            margin-top: 3rem;
+            padding-top: 1rem;
+            border-top: 1px solid #ddd;
+            font-size: 10pt;
+            color: #666;
+        }
+        
+        .page-break {
+            page-break-before: always;
+        }
+        
+        .recommendations {
+            background-color: #e3f2fd;
+            padding: 1.5rem;
+            border-radius: 8px;
+            border-left: 4px solid #2196f3;
+        }
+        
+        .recommendations ul {
+            margin: 0;
+            padding-left: 1.5rem;
+        }
+        
+        .recommendations li {
+            margin-bottom: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header Section -->
+    <div class="header">
+        <h1>Pump Selection Report</h1>
+        <div class="subtitle">Professional Engineering Analysis & Recommendations</div>
+        <div class="company-info">
+            <strong>APE Pumps</strong><br>
+            Industrial Pump Solutions<br>
+            Report Generated: {{ report_context.generation_date }}
+        </div>
+    </div>
+
+    <!-- Executive Summary -->
+    <div class="section">
+        <h2>Executive Summary</h2>
+        <div class="highlight">
+            <p><strong>Recommended Pump:</strong> {{ report_context.selected_pump.pump_code }} - {{ report_context.selected_pump.model }}</p>
+            <p><strong>Suitability Score:</strong> {{ "%.1f"|format(report_context.selected_pump.overall_score) }}%</p>
+            <p><strong>Operating Efficiency:</strong> {{ "%.1f"|format(report_context.selected_pump.operating_point.efficiency_pct) }}%</p>
+        </div>
+        
+        <p>{{ report_context.executive_summary.summary_text }}</p>
+        
+        <div class="info-grid">
+            <div class="info-box">
+                <h3>Site Requirements</h3>
+                <p><strong>Flow Rate:</strong> {{ report_context.site_requirements.flow_m3hr }} m³/hr</p>
+                <p><strong>Head:</strong> {{ report_context.site_requirements.head_m }} m</p>
+                {% if report_context.site_requirements.application %}
+                <p><strong>Application:</strong> {{ report_context.site_requirements.application }}</p>
+                {% endif %}
+            </div>
+            
+            <div class="info-box">
+                <h3>Selected Pump Performance</h3>
+                <p><strong>Operating Flow:</strong> {{ "%.1f"|format(report_context.selected_pump.operating_point.flow_m3hr) }} m³/hr</p>
+                <p><strong>Operating Head:</strong> {{ "%.1f"|format(report_context.selected_pump.operating_point.head_m) }} m</p>
+                <p><strong>Power Required:</strong> {{ "%.2f"|format(report_context.selected_pump.operating_point.power_kw) }} kW</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Technical Analysis -->
+    <div class="section">
+        <h2>Technical Analysis</h2>
+        
+        <h3>Performance Characteristics</h3>
+        <table class="performance-table">
+            <thead>
+                <tr>
+                    <th>Parameter</th>
+                    <th>Value</th>
+                    <th>Assessment</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Operating Efficiency</td>
+                    <td>{{ "%.1f"|format(report_context.selected_pump.operating_point.efficiency_pct) }}%</td>
+                    <td>{{ report_context.selected_pump.bep_analysis.performance_rating }}</td>
+                </tr>
+                <tr>
+                    <td>Power Consumption</td>
+                    <td>{{ "%.2f"|format(report_context.selected_pump.operating_point.power_kw) }} kW</td>
+                    <td>{{ report_context.selected_pump.power_analysis.power_rating }}</td>
+                </tr>
+                {% if report_context.selected_pump.npsh_analysis %}
+                <tr>
+                    <td>NPSH Margin</td>
+                    <td>{{ "%.1f"|format(report_context.selected_pump.npsh_analysis.npsh_margin) }} m</td>
+                    <td>{{ report_context.selected_pump.npsh_analysis.cavitation_risk }} Risk</td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
+        
+        {% if report_context.performance_chart %}
+        <div class="chart-container">
+            <h3>Performance Curves</h3>
+            <img src="data:image/png;base64,{{ report_context.performance_chart }}" alt="Pump Performance Curves" class="chart-image">
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Selection Reasoning -->
+    <div class="section">
+        <h2>Selection Reasoning</h2>
+        
+        {% for reason in report_context.technical_reasoning %}
+        <div class="info-box">
+            <h3>{{ reason.title }}</h3>
+            <p>{{ reason.explanation }}</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Alternative Options -->
+    {% if report_context.alternatives %}
+    <div class="section page-break">
+        <h2>Alternative Options</h2>
+        
+        {% for alt in report_context.alternatives %}
+        <div class="info-box">
+            <h3>{{ alt.pump_code }} - {{ alt.model }}</h3>
+            <p><strong>Suitability Score:</strong> {{ "%.1f"|format(alt.overall_score) }}%</p>
+            <p><strong>Key Difference:</strong> {{ alt.key_difference }}</p>
+            <p>{{ alt.selection_reason }}</p>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Recommendations -->
+    <div class="section">
+        <h2>Recommendations & Next Steps</h2>
+        
+        <div class="recommendations">
+            <h3>Engineering Recommendations</h3>
+            <ul>
+                {% for recommendation in report_context.recommendations %}
+                <li>{{ recommendation }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        
+        {% if report_context.selected_pump.npsh_analysis.cavitation_risk != 'Low' %}
+        <div class="warning">
+            <strong>NPSH Consideration:</strong> 
+            Please verify NPSHa calculations based on actual site conditions including suction lift, friction losses, and fluid temperature.
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <p><strong>Disclaimer:</strong> This report is based on theoretical calculations and manufacturer data. Actual pump performance may vary based on installation conditions, system configuration, and operating parameters. Final pump selection should be verified by a qualified engineer.</p>
+        
+        <p><strong>APE Pumps</strong> - Industrial Pump Solutions | Report ID: {{ report_context.report_id }} | Generated: {{ report_context.generation_date }}</p>
+    </div>
+</body>
+</html>
