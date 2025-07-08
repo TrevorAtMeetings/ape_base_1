@@ -30,7 +30,7 @@ class DataSource(Enum):
 class PumpRepositoryConfig:
     """Configuration for pump repository"""
     # Data source configuration
-    data_source: DataSource = DataSource.POSTGRESQL
+    data_source: DataSource = DataSource.POSTGRESQL # Change this to toggle between JSON and PostgreSQL
     
     # JSON file configuration
     catalog_path: str = "data/ape_catalog_database.json"
