@@ -36,7 +36,7 @@ class PumpRepositoryConfig:
     catalog_path: str = "data/ape_catalog_database.json"
     
     # PostgreSQL configuration using DATABASE_URL format
-    database_url: str = os.getenv('DATABASE_URL', "postgresql://postgres:password@localhost:5432/pump_selection")
+    database_url: str = os.getenv('DATABASE_URL')
     
     # General configuration
     cache_enabled: bool = True
