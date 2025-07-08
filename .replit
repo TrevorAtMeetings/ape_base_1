@@ -1,4 +1,4 @@
-modules = ["python-3.11"]
+modules = ["web", "python-3.11", "nodejs-20"]
 
 [nix]
 channel = "stable-24_05"
@@ -6,9 +6,10 @@ packages = ["cairo", "ffmpeg-full", "fontconfig", "freetype", "ghostscript", "gl
 
 [deployment]
 deploymentTarget = "autoscale"
-run = ["sh", "-c", "python -m app.app"]
+run = ["gunicorn", "--bind", "0.0.0.0:5000", "main:app"]
 
 [workflows]
+runButton = "Project"
 
 [[workflows.workflow]]
 name = "Start Flask App"
@@ -34,6 +35,24 @@ author = "agent"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "gunicorn --bind 0.0.0.0:5000 --workers 2 --timeout 120 app.app:app"
+
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Start application"
+
+[[workflows.workflow]]
+name = "Start application"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "gunicorn --bind 0.0.0.0:5000 --reuse-port --reload main:app"
+waitForPort = 5000
 
 [[ports]]
 localPort = 5000
