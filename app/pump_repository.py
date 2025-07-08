@@ -145,20 +145,16 @@ class PumpRepository:
         try:
             logger.info("Repository: Loading data from PostgreSQL database")
             
-            # Parse DATABASE_URL
+            if not self.config.database_url:
+                logger.error("Repository: DATABASE_URL not configured")
+                return False
+            
+            # Parse DATABASE_URL for logging purposes
             parsed_url = urlparse(self.config.database_url)
-            connection_params = {
-                'host': parsed_url.hostname,
-                'port': parsed_url.port or 5432,
-                'database': parsed_url.path[1:],  # Remove leading '/'
-                'user': parsed_url.username,
-                'password': parsed_url.password
-            }
+            logger.info(f"Repository: Connecting to PostgreSQL at {parsed_url.hostname}:{parsed_url.port or 5432}")
             
-            logger.info(f"Repository: Connecting to PostgreSQL at {connection_params['host']}:{connection_params['port']}")
-            
-            # Connect to database
-            with psycopg2.connect(**connection_params) as conn:
+            # Connect to database using DATABASE_URL directly
+            with psycopg2.connect(self.config.database_url) as conn:
                 with conn.cursor(cursor_factory=RealDictCursor) as cursor:
                     
                     # Get database schema information
