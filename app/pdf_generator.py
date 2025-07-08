@@ -15,7 +15,7 @@ import matplotlib
 matplotlib.use('Agg')  # Use non-interactive backend
 import matplotlib.pyplot as plt
 import numpy as np
-from app.catalog_engine import CatalogPump
+from .catalog_engine import CatalogPump
 
 logger = logging.getLogger(__name__)
 

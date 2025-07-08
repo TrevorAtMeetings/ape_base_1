@@ -19,7 +19,6 @@ logger = logging.getLogger(__name__)
 
 # 1. CREATE THE FLASK APPLICATION INSTANCE HERE
 # Set template and static folders relative to the project root
-import os
 project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 template_dir = os.path.join(project_root, 'templates')
 static_dir = os.path.join(project_root, 'static')
@@ -30,7 +29,11 @@ app = Flask(__name__,
 logger.info("Flask app instance created.")
 
 # 2. CONFIGURE THE APP
-app.config['DEBUG'] = os.environ.get("FLASK_DEBUG", "True").lower() == "true"
+# Standardized environment variable configuration
+app.config['DEBUG'] = os.environ.get("FLASK_DEBUG", "False").lower() == "true"
+app.config['HOST'] = os.environ.get("FLASK_HOST", "0.0.0.0")
+app.config['PORT'] = int(os.environ.get("FLASK_PORT", 5000))
+
 # Define UPLOAD_FOLDER relative to the app's static folder
 app.config['UPLOAD_FOLDER'] = os.path.join(app.root_path, 'static', 'temp')
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
@@ -47,10 +50,7 @@ from . import routes
 logger.info("Routes imported.")
 
 # Import core functions from pump_engine.py (single source of truth)
-import sys
-import os
-sys.path.append(os.path.dirname(os.path.dirname(__file__)))
-from app.pump_engine import (
+from .pump_engine import (
     load_all_pump_data,
     validate_site_requirements,
     SiteRequirements,
