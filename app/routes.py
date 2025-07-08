@@ -620,13 +620,9 @@ def process_unified_pump_file(file_path):
             'pump_data': None
         }
 
-# Legacy function for backward compatibility
-def process_txt_upload(file_path):
-    """Legacy TXT processing - now uses unified processor."""
-    return process_unified_pump_file(file_path)
 
 
-# Obsolete functions removed - now using UnifiedPumpProcessor
+
 
 
 @app.route('/pump-options')
@@ -2114,17 +2110,7 @@ def generate_comparison_pdf():
         safe_flash(f'Error generating comparison PDF: {str(e)}', 'error')
         return redirect(url_for('index'))
 
-@app.route('/admin')
-def ai_admin():
-    """AI Knowledge Base Administration Panel"""
-    try:
-        return render_template('ai_admin.html')
-    except Exception as e:
-        logger.error(f"Error accessing AI admin panel: {str(e)}")
-        safe_flash('Error accessing admin panel', 'error')
-        return redirect(url_for('index'))
 
-# AI knowledge base routes removed - functionality no longer available
 
 # Missing API Routes for Deployment
 @app.route('/api/pumps', methods=['GET'])
@@ -2706,38 +2692,9 @@ def pump_upload():
     """Pump upload interface"""
     return render_template('admin/pump_upload.html')
 
-# PumpUploadSystem routes removed - functionality no longer available
 
-@app.route('/admin/add_single_pump', methods=['POST'])
-def add_single_pump():
-    """Add a single pump to the database"""
-    try:
-        data = request.get_json()
-        
-        required_fields = ['pump_code', 'test_speed', 'flow_data', 'head_data', 'efficiency_data']
-        for field in required_fields:
-            if not data.get(field):
-                return jsonify({'success': False, 'error': f'Missing required field: {field}'})
-        
-        
-        # PumpUploadSystem removed - functionality no longer available
-        success = False
-        
-        if success:
-            from app.pump_engine import load_all_pump_data
-            total_pumps = len(load_all_pump_data())
-            
-            return jsonify({
-                'success': True,
-                'pumps_added': 1,
-                'total_pumps': total_pumps
-            })
-        else:
-            return jsonify({'success': False, 'error': 'Failed to add pump'})
-        
-    except Exception as e:
-        logger.error(f"Error adding single pump: {e}")
-        return jsonify({'success': False, 'error': str(e)})
+
+
 
 @app.route('/admin/recent_pumps')
 def recent_pumps():
@@ -2763,20 +2720,7 @@ def recent_pumps():
         logger.error(f"Error getting recent pumps: {e}")
         return jsonify({'pumps': []})
 
-@app.route('/admin/validate_database')
-def validate_database():
-    """Validate pump database integrity"""
-    try:
-        
-        # upload_system = PumpUploadSystem()
-        # validation = upload_system.validate_database()
-        validation = {'valid': False, 'errors': ['PumpUploadSystem removed - functionality no longer available']}
-        
-        return jsonify(validation)
-        
-    except Exception as e:
-        logger.error(f"Error validating database: {e}")
-        return jsonify({'valid': False, 'errors': [str(e)]})
+
 
 @app.route('/admin/download_template/<format_type>')
 def download_template(format_type):
