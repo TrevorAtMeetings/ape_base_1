@@ -39,7 +39,7 @@ class PumpRepositoryConfig:
     catalog_path: str = "data/ape_catalog_database.json"
     
     # PostgreSQL configuration using DATABASE_URL format
-    database_url: str = os.getenv('DATABASE_URL')
+    database_url: str = None  # Will be set dynamically
     
     # Connection pooling configuration
     pool_min_size: int = 1
@@ -70,10 +70,15 @@ class PumpRepository:
         """Get or create connection pool"""
         if self._connection_pool is None:
             try:
+                # Get DATABASE_URL dynamically if not set
+                database_url = self.config.database_url or os.getenv('DATABASE_URL')
+                if not database_url:
+                    raise ValueError("DATABASE_URL not configured")
+                
                 self._connection_pool = SimpleConnectionPool(
                     self.config.pool_min_size,
                     self.config.pool_max_size,
-                    self.config.database_url
+                    database_url
                 )
                 logger.info(f"Repository: Created connection pool with {self.config.pool_min_size}-{self.config.pool_max_size} connections")
             except Exception as e:
@@ -183,9 +188,14 @@ class PumpRepository:
         try:
             logger.info("Repository: Loading data from PostgreSQL database (optimized)")
             
-            if not self.config.database_url:
+            # Get DATABASE_URL dynamically when needed
+            database_url = self.config.database_url or os.getenv('DATABASE_URL')
+            if not database_url:
                 logger.error("Repository: DATABASE_URL not configured")
                 return False
+            
+            # Update config with the actual URL
+            self.config.database_url = database_url
             
             # Parse DATABASE_URL for logging purposes
             parsed_url = urlparse(self.config.database_url)
