@@ -46,7 +46,7 @@ logger.info("Session manager initialized.")
 
 # 3. IMPORT YOUR APPLICATION MODULES
 # Import routes *after* the app is created and configured
-from . import routes
+from .route_modules import routes
 logger.info("Routes imported.")
 
 # Import core functions from pump_engine.py (single source of truth)

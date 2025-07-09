@@ -1,4 +1,5 @@
 flask
+flask-sqlalchemy
 numpy
 matplotlib
 requests
@@ -9,9 +10,6 @@ python-dotenv
 scipy
 google-generativeai
 weasyprint
-psycopg2-binary 
-email_validator
-flask
-flask-sqlalchemy
-gunicorn
 psycopg2-binary
+email_validator
+gunicorn
