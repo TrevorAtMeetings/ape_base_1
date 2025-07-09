@@ -4,6 +4,48 @@
 
 {% block content %}
 <style>
+    .compact-card {
+        margin: 10px 0;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .compact-card .card-content {
+        padding: 16px;
+    }
+    .compact-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin-bottom: 8px;
+        color: #1976d2;
+    }
+    .upload-container {
+        background: #f9f9f9;
+        border: 2px dashed #ddd;
+        border-radius: 8px;
+        padding: 20px;
+        text-align: center;
+        transition: all 0.3s ease;
+        margin: 12px 0;
+    }
+    .upload-container:hover {
+        border-color: #1976d2;
+        background: #f5f7fa;
+    }
+    .upload-container.drag-over {
+        border-color: #1976d2;
+        background: #e3f2fd;
+    }
+    .status-section {
+        margin-top: 12px;
+        padding: 12px;
+        background: #f8f9fa;
+        border-radius: 6px;
+    }
+    .btn-compact {
+        margin: 6px 4px;
+        padding: 0 16px;
+        height: 36px;
+        line-height: 36px;
+    }
     .curve-section {
         border-left: 4px solid #1976d2;
         padding-left: 15px;
@@ -38,73 +80,74 @@
         margin-bottom: 10px;
         margin-top: 20px;
     }
+    .compact-data-table {
+        font-size: 0.85em;
+        margin: 0;
+    }
+    .compact-data-table td {
+        padding: 4px 8px !important;
+        line-height: 1.3;
+    }
+    .compact-data-table th {
+        padding: 6px 8px !important;
+        font-size: 0.9em;
+        font-weight: 600;
+    }
+    .data-section {
+        margin-bottom: 8px;
+    }
+    @media (max-width: 600px) {
+        .compact-data-table {
+            font-size: 0.8em;
+        }
+        .compact-data-table td,
+        .compact-data-table th {
+            padding: 3px 4px !important;
+        }
+    }
 </style>
 
 <div class="container" style="margin-top: 20px;">
+    <!-- Compact Upload Section -->
     <div class="row">
         <div class="col s12">
-            <div class="card">
+            <div class="card compact-card">
                 <div class="card-content">
-                    <span class="card-title">
+                    <div class="compact-title">
                         <i class="material-icons left" style="color: #1976d2;">auto_awesome</i>
                         AI PDF Extraction
-                    </span>
-                    <p class="grey-text text-darken-2">
-                        Upload a pump PDF to extract performance data using AI. The system will analyze the PDF and extract pump specifications and performance curves.
-                    </p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Upload Section -->
-    <div class="row">
-        <div class="col s12 m6">
-            <div class="card">
-                <div class="card-content">
-                    <span class="card-title">
-                        <i class="material-icons left" style="color: #1976d2;">cloud_upload</i>
-                        Upload PDF
-                    </span>
+                    </div>
+                    
                     <form id="ai-extract-form" enctype="multipart/form-data">
-                        <div class="file-field input-field">
-                            <div class="btn waves-effect waves-light" style="background-color: #1976d2;">
+                        <div class="upload-container" id="upload-container">
+                            <i class="material-icons" style="font-size: 2rem; color: #1976d2; margin-bottom: 8px;">cloud_upload</i>
+                            <p style="margin: 8px 0; font-weight: 500;">Upload PDF</p>
+                            <p style="margin: 4px 0; font-size: 0.9em; color: #666;">Select a PDF file to extract pump data</p>
+                            <input type="file" id="pdf-file" name="pdf_file" accept=".pdf" required style="display: none;">
+                            <button type="button" class="btn btn-compact waves-effect waves-light" style="background-color: #1976d2; margin-top: 8px;" onclick="document.getElementById('pdf-file').click();">
                                 <i class="material-icons left">attach_file</i>
                                 Choose PDF
-                                <input type="file" id="pdf-file" name="pdf_file" accept=".pdf" required>
-                            </div>
-                            <div class="file-path-wrapper">
-                                <input class="file-path validate" type="text" placeholder="Select a PDF file">
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col s12">
-                                <button type="submit" class="btn waves-effect waves-light" style="background-color: #1976d2;" id="extract-btn">
-                                    <i class="material-icons left">auto_awesome</i>
-                                    Extract Data
-                                </button>
-                            </div>
+                            </button>
+                            <button type="submit" class="btn btn-compact waves-effect waves-light" style="background-color: #1976d2; margin-top: 8px;" id="extract-btn">
+                                <i class="material-icons left">auto_awesome</i>
+                                Extract Data
+                            </button>
                         </div>
                     </form>
-                </div>
-            </div>
-        </div>
-        <!-- Status Section -->
-        <div class="col s12 m6">
-            <div class="card">
-                <div class="card-content">
-                    <span class="card-title">
-                        <i class="material-icons left" style="color: #1976d2;">info</i>
-                        Status
-                    </span>
-                    <div id="status-container">
-                        <p class="grey-text text-darken-2">Ready to extract data from PDF files.</p>
-                    </div>
-                    <div id="progress-container" style="display: none;">
-                        <div class="progress">
-                            <div class="indeterminate" style="background-color: #1976d2;"></div>
+                    
+                    <div class="status-section">
+                        <div id="status-container">
+                            <p class="grey-text text-darken-2" style="margin: 0;">
+                                <i class="material-icons left" style="font-size: 1.2rem;">info</i>
+                                Ready to extract data from PDF files.
+                            </p>
                         </div>
-                        <p class="grey-text text-darken-2">Processing PDF...</p>
+                        <div id="progress-container" style="display: none;">
+                            <div class="progress" style="margin: 8px 0;">
+                                <div class="indeterminate" style="background-color: #1976d2;"></div>
+                            </div>
+                            <p class="grey-text text-darken-2" style="margin: 0;">Processing PDF...</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -114,26 +157,26 @@
     <!-- Results Section -->
     <div class="row" id="results-section" style="display: none;">
         <div class="col s12">
-            <div class="card">
+            <div class="card compact-card">
                 <div class="card-content">
-                    <span class="card-title">
+                    <div class="compact-title">
                         <i class="material-icons left" style="color: #1976d2;">assessment</i>
                         Extracted Data
-                    </span>
+                    </div>
                     <div id="extracted-data">
                         <!-- Extracted data will be displayed here -->
                     </div>
-                    <div class="row" style="margin-top: 20px;">
+                    <div class="row" style="margin-top: 16px;">
                         <div class="col s12">
-                            <button class="btn waves-effect waves-light green" id="insert-btn" style="display: none;">
+                            <button class="btn btn-compact waves-effect waves-light green" id="insert-btn" style="display: none;">
                                 <i class="material-icons left">save</i>
                                 Insert into Database
                             </button>
-                            <button class="btn waves-effect waves-light blue" id="show-json-btn" style="display: none;">
+                            <button class="btn btn-compact waves-effect waves-light blue" id="show-json-btn" style="display: none;">
                                 <i class="material-icons left">code</i>
                                 View Raw JSON
                             </button>
-                            <button class="btn waves-effect waves-light grey" id="reset-btn">
+                            <button class="btn btn-compact waves-effect waves-light grey" id="reset-btn">
                                 <i class="material-icons left">refresh</i>
                                 Extract Another
                             </button>
@@ -187,12 +230,38 @@ document.addEventListener('DOMContentLoaded', function() {
     const jsonContent = document.getElementById('json-content');
     const jsonTableBody = document.getElementById('json-table-body');
     const jsonTableSection = document.getElementById('json-table-section');
+    const uploadContainer = document.getElementById('upload-container');
     let extractedData = null;
 
+    // Initialize modals
+    M.Modal.init(document.querySelectorAll('.modal'));
+
+    // File input change handler
     fileInput.addEventListener('change', function() {
         const file = this.files[0];
         if (file) {
-            statusContainer.innerHTML = `<p class="green-text text-darken-2"><i class="material-icons left">check_circle</i>File selected: ${file.name}</p>`;
+            statusContainer.innerHTML = `<p class="green-text text-darken-2" style="margin: 0;"><i class="material-icons left" style="font-size: 1.2rem;">check_circle</i>File selected: ${file.name}</p>`;
+        }
+    });
+
+    // Drag and drop functionality
+    uploadContainer.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        uploadContainer.classList.add('drag-over');
+    });
+
+    uploadContainer.addEventListener('dragleave', function(e) {
+        e.preventDefault();
+        uploadContainer.classList.remove('drag-over');
+    });
+
+    uploadContainer.addEventListener('drop', function(e) {
+        e.preventDefault();
+        uploadContainer.classList.remove('drag-over');
+        const files = e.dataTransfer.files;
+        if (files.length > 0 && files[0].type === 'application/pdf') {
+            fileInput.files = files;
+            statusContainer.innerHTML = `<p class="green-text text-darken-2" style="margin: 0;"><i class="material-icons left" style="font-size: 1.2rem;">check_circle</i>File selected: ${files[0].name}</p>`;
         }
     });
 
@@ -207,9 +276,13 @@ document.addEventListener('DOMContentLoaded', function() {
             M.toast({html: 'Please select a PDF file', classes: 'red'});
             return;
         }
+        
+        // Set processing state
         progressContainer.style.display = 'block';
         statusContainer.style.display = 'none';
         extractBtn.disabled = true;
+        extractBtn.innerHTML = '<i class="material-icons left">hourglass_empty</i>Processing...';
+        
         const formData = new FormData();
         formData.append('pdf_file', file);
         fetch('/ai_extract/extract', {
@@ -218,27 +291,32 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(response => response.json())
         .then(data => {
+            // Reset button state
             progressContainer.style.display = 'none';
             statusContainer.style.display = 'block';
             extractBtn.disabled = false;
+            extractBtn.innerHTML = '<i class="material-icons left">auto_awesome</i>Extract Data';
+            
             if (data.success) {
                 extractedData = data.data;
                 displayExtractedData(data.data);
-                statusContainer.innerHTML = `<p class="green-text text-darken-2"><i class="material-icons left">check_circle</i>Data extracted successfully!</p>`;
+                statusContainer.innerHTML = `<p class="green-text text-darken-2" style="margin: 0;"><i class="material-icons left" style="font-size: 1.2rem;">check_circle</i>Data extracted successfully!</p>`;
                 resultsSection.style.display = 'block';
                 insertBtn.style.display = 'inline-block';
                 showJsonBtn.style.display = 'inline-block';
                 renderJsonTable(data.data);
                 jsonTableSection.style.display = 'block';
             } else {
-                statusContainer.innerHTML = `<p class="red-text text-darken-2"><i class="material-icons left">error</i>Error: ${data.message || data.error}</p>`;
+                statusContainer.innerHTML = `<p class="red-text text-darken-2" style="margin: 0;"><i class="material-icons left" style="font-size: 1.2rem;">error</i>Error: ${data.message || data.error}</p>`;
             }
         })
         .catch(error => {
+            // Reset button state on error
             progressContainer.style.display = 'none';
             statusContainer.style.display = 'block';
             extractBtn.disabled = false;
-            statusContainer.innerHTML = `<p class="red-text text-darken-2"><i class="material-icons left">error</i>Error: ${error.message}</p>`;
+            extractBtn.innerHTML = '<i class="material-icons left">auto_awesome</i>Extract Data';
+            statusContainer.innerHTML = `<p class="red-text text-darken-2" style="margin: 0;"><i class="material-icons left" style="font-size: 1.2rem;">error</i>Error: ${error.message}</p>`;
         });
     });
 
@@ -294,7 +372,7 @@ document.addEventListener('DOMContentLoaded', function() {
         insertBtn.innerHTML = '<i class="material-icons left">save</i>Insert into Database';
         insertBtn.classList.remove('grey');
         insertBtn.classList.add('green');
-        statusContainer.innerHTML = '<p class="grey-text text-darken-2">Ready to extract data from PDF files.</p>';
+        statusContainer.innerHTML = '<p class="grey-text text-darken-2" style="margin: 0;"><i class="material-icons left" style="font-size: 1.2rem;">info</i>Ready to extract data from PDF files.</p>';
         statusContainer.style.display = 'block';
         jsonTableBody.innerHTML = '';
         jsonTableSection.style.display = 'none';
@@ -302,42 +380,74 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function displayExtractedData(data) {
         console.log('Full extracted data structure:', data);
+        console.log('Pump Details:', data.pumpDetails);
+        console.log('Technical Details:', data.technicalDetails);
+        console.log('Specifications:', data.specifications);
         console.log('Curves array:', data.curves);
         let html = '';
-        // 1. Pump Details
+        
+        // DEBUG: Check if technicalDetails should be rendered
+        if (data.technicalDetails) {
+            console.log('WARNING: technicalDetails found in data - should NOT be rendered as separate section:', data.technicalDetails);
+        }
+        
+        // Create 2-column layout
+        html += '<div class="row" style="margin-bottom: 0;">';
+        
+        // Left Column
+        html += '<div class="col s12 m6">';
+        
+        // 1. Pump Details (including impeller type right after pump type)
         if (data.pumpDetails && Object.keys(data.pumpDetails).length > 0) {
-            html += `<div class="card summary-card">
-                <div class="card-content">
-                    <span class="card-title"><i class="material-icons left" style="color: #1976d2;">info</i>Pump Details</span>
-                    <table class="striped data-table">
+            html += `<div class="card summary-card" style="margin: 8px 0;">
+                <div class="card-content" style="padding: 12px;">
+                    <div class="compact-title" style="margin-bottom: 8px;">
+                        <i class="material-icons left" style="color: #1976d2; font-size: 1.2rem;">info</i>Pump Details
+                    </div>
+                    <table class="striped compact-data-table">
                         <tbody>`;
+                        
+            // Get impeller type from various possible locations
+            let impellerType = null;
+            if (data.technicalDetails && data.technicalDetails.impellerType) {
+                impellerType = data.technicalDetails.impellerType;
+            } else if (data.technicalDetails && data.technicalDetails['Impeller Type']) {
+                impellerType = data.technicalDetails['Impeller Type'];
+            } else if (data.specifications && data.specifications.impellerType) {
+                impellerType = data.specifications.impellerType;
+            } else if (data.specifications && data.specifications['Impeller Type']) {
+                impellerType = data.specifications['Impeller Type'];
+            }
+            
+            // Loop through pump details and insert impeller type right after pump type
             for (const [key, value] of Object.entries(data.pumpDetails)) {
                 if (value !== undefined && value !== null && value !== "") {
                     html += `<tr><td style="font-weight:600;">${key}</td><td>${value}</td></tr>`;
+                    
+                    // Insert impeller type right after pump type
+                    if (key === 'pumpType' && impellerType) {
+                        html += `<tr><td style="font-weight:600;">Impeller Type</td><td>${impellerType}</td></tr>`;
+                    }
                 }
             }
             html += `</tbody></table></div></div>`;
         }
-        // 2. Technical Details
-        if (data.technicalDetails && Object.keys(data.technicalDetails).length > 0) {
-            html += `<div class="card summary-card">
-                <div class="card-content">
-                    <span class="card-title"><i class="material-icons left" style="color: #1976d2;">build</i>Technical Details</span>
-                    <table class="striped data-table">
-                        <tbody>`;
-            for (const [key, value] of Object.entries(data.technicalDetails)) {
-                if (value !== undefined && value !== null && value !== "") {
-                    html += `<tr><td style="font-weight:600;">${key}</td><td>${value}</td></tr>`;
-                }
-            }
-            html += `</tbody></table></div></div>`;
-        }
+        
+
+        
+        html += '</div>'; // End left column
+        
+        // Right Column
+        html += '<div class="col s12 m6">';
+        
         // 3. Specifications
         if (data.specifications && Object.keys(data.specifications).length > 0) {
-            html += `<div class="card summary-card">
-                <div class="card-content">
-                    <span class="card-title"><i class="material-icons left" style="color: #1976d2;">assessment</i>Specifications</span>
-                    <table class="striped data-table">
+            html += `<div class="card summary-card" style="margin: 8px 0;">
+                <div class="card-content" style="padding: 12px;">
+                    <div class="compact-title" style="margin-bottom: 8px;">
+                        <i class="material-icons left" style="color: #1976d2; font-size: 1.2rem;">assessment</i>Specifications
+                    </div>
+                    <table class="striped compact-data-table">
                         <tbody>`;
             for (const [key, value] of Object.entries(data.specifications)) {
                 if (value !== undefined && value !== null && value !== "") {
@@ -346,27 +456,37 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             html += `</tbody></table></div></div>`;
         }
-        // 4. Curves/impeller data below
+        
+        html += '</div>'; // End right column
+        html += '</div>'; // End row
+        // 4. Performance Curves (full width below the 2-column layout)
         if (data.curves && Array.isArray(data.curves) && data.curves.length > 0) {
             data.curves.forEach((curve, idx) => {
-                html += `<div class="card curve-section">
-                    <div class="card-content">
-                        <div class="impeller-title">
-                            <i class="material-icons left">show_chart</i>
+                console.log(`Processing curve ${idx + 1}:`, curve);
+                console.log(`Curve ${idx + 1} impeller diameter:`, curve.impellerDiameter);
+                console.log(`Curve ${idx + 1} all keys:`, Object.keys(curve));
+                console.log(`Curve ${idx + 1} efficiency array:`, curve.efficiency);
+                console.log(`Curve ${idx + 1} performancePoints:`, curve.performancePoints);
+                
+                html += `<div class="card curve-section" style="margin: 12px 0;">
+                    <div class="card-content" style="padding: 12px;">
+                        <div class="compact-title" style="margin-bottom: 8px;">
+                            <i class="material-icons left" style="color: #1976d2; font-size: 1.2rem;">show_chart</i>
                             Impeller ${curve.impellerDiameter ? curve.impellerDiameter + ' mm' : idx + 1}
                         </div>
-                        <table class="striped responsive-table data-table">
-                            <thead>
-                                <tr>
-                                    <th>Point</th>
-                                    <th>Flow</th>
-                                    <th>Head</th>
-                                    <th>Efficiency</th>
-                                    <th>Power</th>
-                                    <th>NPSH</th>
-                                </tr>
-                            </thead>
-                            <tbody>`;
+                                                 <div style="overflow-x: auto;">
+                             <table class="striped responsive-table compact-data-table">
+                                 <thead>
+                                     <tr>
+                                         <th>Point</th>
+                                         <th>Flow</th>
+                                         <th>Head</th>
+                                         <th>Efficiency</th>
+                                         <th>Power</th>
+                                         <th>NPSH</th>
+                                     </tr>
+                                 </thead>
+                                 <tbody>`;
                 
                 // Handle new performancePoints structure
                 if (curve.performancePoints && Array.isArray(curve.performancePoints)) {
@@ -378,13 +498,21 @@ document.addEventListener('DOMContentLoaded', function() {
                         console.log(`Point ${i+1} npshr:`, point.npshr, 'type:', typeof point.npshr);
                         console.log(`Point ${i+1} npsh:`, point.npsh, 'type:', typeof point.npsh);
                         
+                        // Better efficiency handling - check for null, undefined, and empty strings
+                        const efficiencyValue = (point.efficiency !== undefined && point.efficiency !== null && point.efficiency !== '') ? point.efficiency : '-';
+                        const flowValue = (point.flow !== undefined && point.flow !== null && point.flow !== '') ? point.flow : '-';
+                        const headValue = (point.head !== undefined && point.head !== null && point.head !== '') ? point.head : '-';
+                        const powerValue = (point.power !== undefined && point.power !== null && point.power !== '') ? point.power : '-';
+                        const npshValue = (point.npshr !== undefined && point.npshr !== null && point.npshr !== '') ? point.npshr : 
+                                         (point.npsh !== undefined && point.npsh !== null && point.npsh !== '') ? point.npsh : '-';
+                        
                         html += `<tr>
                             <td>${i + 1}</td>
-                            <td>${point.flow !== undefined ? point.flow : '-'}</td>
-                            <td>${point.head !== undefined ? point.head : '-'}</td>
-                            <td>${point.efficiency !== undefined ? point.efficiency : '-'}</td>
-                            <td>${point.power !== undefined ? point.power : '-'}</td>
-                            <td>${point.npshr !== undefined ? point.npshr : (point.npsh !== undefined ? point.npsh : '-')}</td>
+                            <td>${flowValue}</td>
+                            <td>${headValue}</td>
+                            <td>${efficiencyValue}</td>
+                            <td>${powerValue}</td>
+                            <td>${npshValue}</td>
                         </tr>`;
                     });
                 } else {
@@ -398,17 +526,24 @@ document.addEventListener('DOMContentLoaded', function() {
                         curve.npsh ? curve.npsh.length : 0
                     );
                     for (let i = 0; i < maxPoints; i++) {
+                        // Better efficiency handling for array structure
+                        const efficiencyValue = (curve.efficiency && curve.efficiency[i] !== undefined && curve.efficiency[i] !== null && curve.efficiency[i] !== '') ? curve.efficiency[i] : '-';
+                        const flowValue = (curve.flow && curve.flow[i] !== undefined && curve.flow[i] !== null && curve.flow[i] !== '') ? curve.flow[i] : '-';
+                        const headValue = (curve.head && curve.head[i] !== undefined && curve.head[i] !== null && curve.head[i] !== '') ? curve.head[i] : '-';
+                        const powerValue = (curve.power && curve.power[i] !== undefined && curve.power[i] !== null && curve.power[i] !== '') ? curve.power[i] : '-';
+                        const npshValue = (curve.npsh && curve.npsh[i] !== undefined && curve.npsh[i] !== null && curve.npsh[i] !== '') ? curve.npsh[i] : '-';
+                        
                         html += `<tr>
                             <td>${i + 1}</td>
-                            <td>${curve.flow && curve.flow[i] !== undefined ? curve.flow[i] : '-'}</td>
-                            <td>${curve.head && curve.head[i] !== undefined ? curve.head[i] : '-'}</td>
-                            <td>${curve.efficiency && curve.efficiency[i] !== undefined ? curve.efficiency[i] : '-'}</td>
-                            <td>${curve.power && curve.power[i] !== undefined ? curve.power[i] : '-'}</td>
-                            <td>${curve.npsh && curve.npsh[i] !== undefined ? curve.npsh[i] : '-'}</td>
+                            <td>${flowValue}</td>
+                            <td>${headValue}</td>
+                            <td>${efficiencyValue}</td>
+                            <td>${powerValue}</td>
+                            <td>${npshValue}</td>
                         </tr>`;
                     }
                 }
-                html += `</tbody></table></div></div>`;
+                html += `</tbody></table></div></div></div>`;
             });
         }
         extractedDataDiv.innerHTML = html;

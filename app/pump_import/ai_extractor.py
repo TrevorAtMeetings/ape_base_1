@@ -54,9 +54,11 @@ def extract_pump_data_from_pdf(pdf_path):
     
     # Use the robust, general prompt for impeller diameter-based curves
     comprehensive_prompt = """
-Your task is to act as an expert hydraulic engineer and data extraction specialist. Analyze the provided pump performance curve PDF where curves are distinguished by IMPELLER DIAMETER.
+Your task is to act as an expert hydraulic engineer and data extraction specialist. 
+Analyze the provided pump performance curve PDF where curves are distinguished by IMPELLER DIAMETER.
 
-Your final output MUST be a single, raw JSON object. Do NOT include any explanations, introductory text, or markdown formatting like ```json.
+Your final output MUST be a single, raw JSON object. Do NOT include any explanations, 
+introductory text, or markdown formatting like ```json.
 
 JSON STRUCTURE:
 {

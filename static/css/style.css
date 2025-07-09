@@ -53,6 +53,82 @@ body {
     -webkit-text-size-adjust: 100%;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    /* Flex layout for footer positioning */
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+/* Main content should expand to fill available space */
+main {
+    flex: 1;
+}
+
+/* Footer positioning fix */
+.page-footer {
+    margin-top: auto;
+}
+
+/* Admin Dropdown Fixes */
+#admin-dropdown {
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15) !important;
+    border-radius: 8px !important;
+    overflow: visible !important;
+    min-width: 200px !important;
+    max-height: none !important;
+    z-index: 999999 !important;
+    position: absolute !important;
+}
+
+#admin-dropdown li {
+    padding: 0 !important;
+    margin: 0 !important;
+    height: auto !important;
+    line-height: normal !important;
+}
+
+#admin-dropdown li a {
+    padding: 14px 16px !important;
+    display: flex !important;
+    align-items: center !important;
+    transition: background-color 0.2s ease !important;
+    color: #333 !important;
+    font-size: 14px !important;
+    line-height: 1.4 !important;
+    height: auto !important;
+    white-space: nowrap !important;
+}
+
+#admin-dropdown li a:hover {
+    background-color: #f5f5f5 !important;
+}
+
+#admin-dropdown li a .material-icons {
+    font-size: 18px !important;
+    margin-right: 12px !important;
+    color: var(--md-primary) !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 20px !important;
+    height: 20px !important;
+    vertical-align: middle !important;
+}
+
+#admin-dropdown li.divider {
+    margin: 2px 0 !important;
+    background-color: #e0e0e0 !important;
+    height: 1px !important;
+}
+
+/* Admin Dropdown Trigger Arrow Fix */
+.dropdown-trigger .material-icons.right {
+    font-size: 1.2em !important;
+    vertical-align: middle !important;
+    margin-left: 4px !important;
+    line-height: 1 !important;
+    display: inline-flex !important;
+    align-items: center !important;
 }
 
 /* Mobile-First Responsive Design */
@@ -922,6 +998,8 @@ nav.teal {
     font-size: 0.8rem;
     margin-left: 10px;
 }
+
+.chart-image {
     border-radius: 4px;
     cursor: pointer;
     transition: transform 0.3s ease;
