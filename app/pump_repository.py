@@ -495,19 +495,283 @@ class PumpRepository:
         """Get current data source"""
         return self.config.data_source
     
-    def switch_data_source(self, new_source: DataSource) -> bool:
-        """
-        Switch data source and reload data.
-        Useful for testing or runtime configuration changes.
-        """
-        logger.info(f"Repository: Switching data source from {self.config.data_source} to {new_source}")
-        self.config.data_source = new_source
-        return self.reload()
+
     
     def __del__(self):
         """Cleanup connection pool on deletion"""
         if self._connection_pool:
             self._connection_pool.closeall()
+
+def insert_extracted_pump_data(data: dict, filename: str = None) -> int:
+    """
+    Insert extracted pump data (from Gemini) into the database.
+    Returns the inserted pump ID.
+    """
+    from decimal import Decimal
+    logger.info("[PumpRepo] ===== STARTING DATABASE INSERTION =====")
+    logger.info(f"[PumpRepo] Inserting extracted pump data for file: {filename}")
+    logger.info(f"[PumpRepo] Data structure: {list(data.keys()) if isinstance(data, dict) else 'Not a dict'}")
+    
+    # Create a new repository instance for database operations
+    config = PumpRepositoryConfig()
+    config.database_url = os.getenv('DATABASE_URL')
+    repo = PumpRepository(config)
+    logger.info(f"[PumpRepo] New repository instance created for database operations")
+    
+    pool = repo._get_connection_pool()
+    logger.info(f"[PumpRepo] Got connection pool")
+    logger.info(f"[PumpRepo] Using DB URL: {repo.config.database_url}")
+    
+    def to_number_or_none(value):
+        if value is None or value == '' or str(value).lower() == 'n/a':
+            return None
+        if isinstance(value, (int, float, Decimal)):
+            return value
+        if isinstance(value, str):
+            import re
+            numeric_match = re.search(r'(\d+(?:\.\d+)?)', value)
+            if numeric_match:
+                try:
+                    return float(numeric_match.group(1))
+                except (ValueError, TypeError):
+                    return None
+        try:
+            return float(value)
+        except (ValueError, TypeError):
+            return None
+    
+    logger.info("[PumpRepo] Getting database connection...")
+    with pool.getconn() as conn:
+        try:
+            logger.info("[PumpRepo] Database connection established")
+            conn.autocommit = True
+            logger.info("[PumpRepo] Set autocommit to True")
+            
+            with conn.cursor() as cur:
+                logger.info("[PumpRepo] Database cursor created")
+                
+                # Verify database connection
+                logger.info("[PumpRepo] Database connection established")
+                
+                # Check current schema
+                cur.execute("SELECT current_schema()")
+                schema = cur.fetchone()[0]
+                logger.info(f"[PumpRepo] Current schema: {schema}")
+                
+                # Check if tables exist
+                cur.execute("""
+                    SELECT table_name FROM information_schema.tables 
+                    WHERE table_schema = 'public' 
+                    AND table_name IN ('pumps', 'pump_specifications', 'pump_curves', 'pump_performance_points')
+                """)
+                existing_tables = [row[0] for row in cur.fetchall()]
+                logger.info(f"[PumpRepo] Existing tables: {existing_tables}")
+                
+                # Extract data sections
+                pump_details = data.get('pumpDetails', {})
+                tech_details = data.get('technicalDetails', {})
+                specs = data.get('specifications', {})
+                
+                logger.info(f"[PumpRepo] Pump details: {pump_details}")
+                logger.info(f"[PumpRepo] Technical details: {tech_details}")
+                logger.info(f"[PumpRepo] Specifications: {specs}")
+                
+                # Prepare pump insertion data
+                pump_code = pump_details.get('pumpModel')
+                manufacturer = tech_details.get('manufacturer')
+                pump_type = pump_details.get('pumpType')
+                series = pump_details.get('pumpRange')
+                application_category = pump_details.get('pumpApplication')
+                impeller_type = tech_details.get('impellerType')
+                
+                logger.info(f"[PumpRepo] Inserting pump with code: {pump_code}")
+                logger.info(f"[PumpRepo] Manufacturer: {manufacturer}")
+                logger.info(f"[PumpRepo] Pump type: {pump_type}")
+                
+                # Insert into pumps table
+                cur.execute(
+                    """
+                    INSERT INTO pumps (pump_code, manufacturer, pump_type, series, application_category, impeller_type)
+                    VALUES (%s, %s, %s, %s, %s, %s)
+                    ON CONFLICT (pump_code) DO UPDATE SET manufacturer = EXCLUDED.manufacturer
+                    RETURNING id
+                    """,
+                    (pump_code, manufacturer, pump_type, series, application_category, impeller_type)
+                )
+                pump_id = cur.fetchone()[0]
+                conn.commit()  # Explicit commit after pump insert
+                logger.info(f"[PumpRepo] Pump inserted successfully, pump_id: {pump_id}")
+                
+                # Prepare specifications data
+                test_speed = to_number_or_none(specs.get('testSpeed'))
+                max_flow = to_number_or_none(specs.get('maxFlow'))
+                max_head = to_number_or_none(specs.get('maxHead'))
+                max_power = to_number_or_none(specs.get('maxPower'))
+                bep_flow = to_number_or_none(specs.get('bepFlow'))
+                bep_head = to_number_or_none(specs.get('bepHead'))
+                npshr_at_bep = to_number_or_none(specs.get('npshrAtBep'))
+                min_impeller = to_number_or_none(specs.get('minImpeller'))
+                max_impeller = to_number_or_none(specs.get('maxImpeller'))
+                
+                logger.info(f"[PumpRepo] Inserting specifications:")
+                logger.info(f"[PumpRepo]   Test speed: {test_speed}")
+                logger.info(f"[PumpRepo]   Max flow: {max_flow}")
+                logger.info(f"[PumpRepo]   Max head: {max_head}")
+                logger.info(f"[PumpRepo]   Max power: {max_power}")
+                logger.info(f"[PumpRepo]   BEP flow: {bep_flow}")
+                logger.info(f"[PumpRepo]   BEP head: {bep_head}")
+                logger.info(f"[PumpRepo]   NPSHR at BEP: {npshr_at_bep}")
+                logger.info(f"[PumpRepo]   Min impeller: {min_impeller}")
+                logger.info(f"[PumpRepo]   Max impeller: {max_impeller}")
+                
+                # Insert into pump_specifications
+                cur.execute(
+                    """
+                    INSERT INTO pump_specifications (
+                        pump_id, test_speed_rpm, max_flow_m3hr, max_head_m, max_power_kw, bep_flow_m3hr,
+                        bep_head_m, npshr_at_bep, min_impeller_diameter_mm, max_impeller_diameter_mm
+                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    ON CONFLICT (pump_id) DO NOTHING
+                    """,
+                    (pump_id, test_speed, max_flow, max_head, max_power, bep_flow, bep_head, npshr_at_bep, min_impeller, max_impeller)
+                )
+                conn.commit()  # Explicit commit after specifications insert
+                logger.info(f"[PumpRepo] Specifications inserted successfully")
+                
+                # Insert curves and performance points
+                curves_data = data.get('curves', [])
+                logger.info(f"[PumpRepo] Processing {len(curves_data)} curves")
+                
+                if curves_data and isinstance(curves_data, list):
+                    for i, curve in enumerate(curves_data):
+                        logger.info(f"[PumpRepo] Processing curve {i+1}: {curve}")
+                        
+                        impeller_diameter = to_number_or_none(curve.get('impellerDiameter'))
+                        logger.info(f"[PumpRepo] Curve {i+1} impeller diameter: {impeller_diameter}")
+                        
+                        if not impeller_diameter or impeller_diameter <= 0:
+                            logger.warning(f"[PumpRepo] Skipping curve {i+1} - invalid impeller diameter: {impeller_diameter}")
+                            continue
+                        
+                        # Insert curve
+                        cur.execute(
+                            "INSERT INTO pump_curves (pump_id, impeller_diameter_mm) VALUES (%s, %s) ON CONFLICT (pump_id, impeller_diameter_mm) DO NOTHING RETURNING id",
+                            (pump_id, impeller_diameter)
+                        )
+                        res = cur.fetchone()
+                        if res:
+                            curve_id = res[0]
+                            logger.info(f"[PumpRepo] New curve inserted, curve_id: {curve_id}")
+                        else:
+                            cur.execute("SELECT id FROM pump_curves WHERE pump_id = %s AND impeller_diameter_mm = %s", (pump_id, impeller_diameter))
+                            curve_id = cur.fetchone()[0]
+                            logger.info(f"[PumpRepo] Existing curve found, curve_id: {curve_id}")
+                        
+                        # Handle both old and new data structures
+                        performance_points = curve.get('performancePoints', [])
+                        
+                        if performance_points and isinstance(performance_points, list):
+                            # NEW STRUCTURE: performancePoints array
+                            logger.info(f"[PumpRepo] Using NEW structure: performancePoints with {len(performance_points)} points")
+                            
+                            points_inserted = 0
+                            for j, point in enumerate(performance_points):
+                                flow_rate = to_number_or_none(point.get('flow'))
+                                head = to_number_or_none(point.get('head'))
+                                efficiency = to_number_or_none(point.get('efficiency'))
+                                npshr = to_number_or_none(point.get('npshr'))
+                                power = to_number_or_none(point.get('power'))
+                                
+                                logger.info(f"[PumpRepo] Point {j+1}: flow={flow_rate}, head={head}, eff={efficiency}, npshr={npshr}")
+                                
+                                if flow_rate is not None and head is not None:
+                                    cur.execute(
+                                        "INSERT INTO pump_performance_points (curve_id, operating_point, flow_rate, head, efficiency, npshr) VALUES (%s, %s, %s, %s, %s, %s) ON CONFLICT (curve_id, operating_point) DO NOTHING",
+                                        (curve_id, j + 1, flow_rate, head, efficiency, npshr)
+                                    )
+                                    points_inserted += 1
+                            
+                            logger.info(f"[PumpRepo] Inserted {points_inserted} performance points for curve {i+1} (NEW structure)")
+                            
+                        else:
+                            # OLD STRUCTURE: separate arrays
+                            logger.info(f"[PumpRepo] Using OLD structure: separate arrays")
+                            
+                            flows = curve.get('flow', [])
+                            heads = curve.get('head', [])
+                            efficiencies = curve.get('efficiency', [])
+                            npshrs = curve.get('npsh', [])
+                            powers = curve.get('power', [])
+                            
+                            logger.info(f"[PumpRepo] Curve {i+1} data points:")
+                            logger.info(f"[PumpRepo]   Flows: {len(flows)} points")
+                            logger.info(f"[PumpRepo]   Heads: {len(heads)} points")
+                            logger.info(f"[PumpRepo]   Efficiencies: {len(efficiencies)} points")
+                            logger.info(f"[PumpRepo]   NPSHRs: {len(npshrs)} points")
+                            logger.info(f"[PumpRepo]   Powers: {len(powers)} points")
+                            
+                            max_len = max(len(flows), len(heads), len(efficiencies), len(npshrs), len(powers))
+                            logger.info(f"[PumpRepo] Processing {max_len} performance points for curve {i+1}")
+                            
+                            points_inserted = 0
+                            for j in range(max_len):
+                                flow_rate = flows[j] if j < len(flows) else None
+                                head = heads[j] if j < len(heads) else None
+                                efficiency = efficiencies[j] if j < len(efficiencies) else None
+                                npshr = npshrs[j] if j < len(npshrs) else None
+                                power = powers[j] if j < len(powers) else None
+                                
+                                if flow_rate is not None and head is not None:
+                                    cur.execute(
+                                        "INSERT INTO pump_performance_points (curve_id, operating_point, flow_rate, head, efficiency, npshr) VALUES (%s, %s, %s, %s, %s, %s) ON CONFLICT (curve_id, operating_point) DO NOTHING",
+                                        (curve_id, j + 1, flow_rate, head, efficiency, npshr)
+                                    )
+                                    points_inserted += 1
+                            
+                            logger.info(f"[PumpRepo] Inserted {points_inserted} performance points for curve {i+1} (OLD structure)")
+                        
+                        conn.commit()  # Explicit commit after each curve
+                else:
+                    logger.warning("[PumpRepo] No curves data found or invalid format")
+                
+                # Log the file as processed
+                if filename:
+                    logger.info(f"[PumpRepo] Logging processed file: {filename}")
+                    cur.execute("INSERT INTO processed_files (filename) VALUES (%s) ON CONFLICT (filename) DO NOTHING", (filename,))
+                    conn.commit()  # Explicit commit after file logging
+                    logger.info(f"[PumpRepo] File logged as processed")
+                
+                # Verify the insertion by querying the pumps table
+                cur.execute("SELECT * FROM pumps WHERE id = %s", (pump_id,))
+                row = cur.fetchone()
+                logger.info(f"[PumpRepo] Verification query - pumps table row for pump_id {pump_id}: {row}")
+                
+                # Count related records
+                cur.execute("SELECT COUNT(*) FROM pump_specifications WHERE pump_id = %s", (pump_id,))
+                spec_count = cur.fetchone()[0]
+                logger.info(f"[PumpRepo] Specifications count for pump_id {pump_id}: {spec_count}")
+                
+                cur.execute("SELECT COUNT(*) FROM pump_curves WHERE pump_id = %s", (pump_id,))
+                curve_count = cur.fetchone()[0]
+                logger.info(f"[PumpRepo] Curves count for pump_id {pump_id}: {curve_count}")
+                
+                cur.execute("SELECT COUNT(*) FROM pump_performance_points WHERE curve_id IN (SELECT id FROM pump_curves WHERE pump_id = %s)", (pump_id,))
+                point_count = cur.fetchone()[0]
+                logger.info(f"[PumpRepo] Performance points count for pump_id {pump_id}: {point_count}")
+                
+                logger.info(f"[PumpRepo] ===== DATABASE INSERTION COMPLETE =====")
+                logger.info(f"[PumpRepo] Final pump_id: {pump_id}")
+                return pump_id
+                
+        except Exception as e:
+            logger.error(f"[PumpRepo] Insert failed: {str(e)}")
+            logger.error(f"[PumpRepo] Exception type: {type(e).__name__}")
+            import traceback
+            logger.error(f"[PumpRepo] Full traceback: {traceback.format_exc()}")
+            raise
+        finally:
+            logger.info("[PumpRepo] Returning connection to pool")
+            pool.putconn(conn)
 
 # Global repository instance
 _repository = None
@@ -515,10 +779,13 @@ _repository = None
 def get_pump_repository(config: PumpRepositoryConfig = None) -> PumpRepository:
     """Get global pump repository instance (singleton pattern)"""
     global _repository
+    
     if _repository is None:
         _repository = PumpRepository(config)
-        _repository.load_catalog()
     return _repository
+
+
+
 
 def reload_pump_repository() -> bool:
     """Force reload of the global repository"""
@@ -527,9 +794,5 @@ def reload_pump_repository() -> bool:
         return _repository.reload()
     return False
 
-def switch_repository_data_source(new_source: DataSource) -> bool:
-    """Switch the global repository's data source"""
-    global _repository
-    if _repository:
-        return _repository.switch_data_source(new_source)
-    return False 
+
+ 

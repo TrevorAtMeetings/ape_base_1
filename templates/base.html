@@ -52,22 +52,19 @@
                 <li><a href="https://apepumps.projectapp.ai/" target="_blank">Features</a></li>
                 <li><a href="{{ url_for('guide_page') }}">Guide</a></li>
                 <li><a class="dropdown-trigger" href="#!" data-target="admin-dropdown">
-                    Admin<i class="material-icons right">arrow_drop_down</i>
+                    Admin <i class="material-icons right" style="font-size: 1.2em; vertical-align: middle; margin-left: 2px;">arrow_drop_down</i>
                 </a></li>
                 <li><a href="#about" onclick="showAboutModal()">About</a></li>
             </ul>
 
             <!-- Admin Dropdown Structure -->
-            <ul id="admin-dropdown" class="dropdown-content" style="min-width: 220px;">
-                <li><a href="{{ url_for('data_management') }}" style="font-size: 16px; padding: 14px 16px; white-space: nowrap; color: #1976d2; font-weight: 500;">
-                    <i class="material-icons left">storage</i>Database Management</a></li>
+            <ul id="admin-dropdown" class="dropdown-content">
+                <li><a href="/data-management"><i class="material-icons left">storage</i>Database</a></li>
                 <li class="divider"></li>
-                <li><a href="/admin" style="font-size: 16px; padding: 14px 16px; white-space: nowrap;">
-                    <i class="material-icons left">library_books</i>Document Library</a></li>
-                <li><a href="/admin/pump_upload" style="font-size: 16px; padding: 14px 16px; white-space: nowrap;">
-                    <i class="material-icons left">upload</i>Upload Pumps</a></li>
-                <li><a href="/chat" style="font-size: 16px; padding: 14px 16px; white-space: nowrap;">
-                    <i class="material-icons left">smart_toy</i>AI Expert Console</a></li>
+                <li><a href="/admin"><i class="material-icons left">library_books</i>Docs</a></li>
+                <li><a href="/admin/pump_upload"><i class="material-icons left">upload</i>Upload</a></li>
+                <li><a href="/ai-extract"><i class="material-icons left">auto_awesome</i>AI Extract</a></li>
+                <li><a href="/chat"><i class="material-icons left">smart_toy</i>AI Console</a></li>
             </ul>
 
             <!-- Mobile menu trigger -->

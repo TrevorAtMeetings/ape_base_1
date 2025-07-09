@@ -49,6 +49,14 @@ logger.info("Session manager initialized.")
 from .route_modules import routes
 logger.info("Routes imported.")
 
+# Register admin blueprint for admin routes
+from .route_modules.admin import admin_bp
+app.register_blueprint(admin_bp)
+
+# Register the AI Extract blueprint
+from .route_modules.ai_extract_routes import ai_extract_bp
+app.register_blueprint(ai_extract_bp)
+
 # Import core functions from pump_engine.py (single source of truth)
 from .pump_engine import (
     load_all_pump_data,

@@ -1,0 +1,444 @@
+{% extends "base.html" %}
+
+{% block title %}AI PDF Extraction - APE Pumps{% endblock %}
+
+{% block content %}
+<style>
+    .curve-section {
+        border-left: 4px solid #1976d2;
+        padding-left: 15px;
+        margin-bottom: 30px;
+    }
+    .data-table {
+        font-size: 0.95em;
+    }
+    .data-table th {
+        background-color: #f5f5f5;
+        font-weight: 600;
+    }
+    .data-table td {
+        padding: 8px 12px;
+    }
+    .summary-card {
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .chip {
+        margin: 4px;
+        font-size: 0.9em;
+    }
+    .card-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+    }
+    .impeller-title {
+        color: #1976d2;
+        font-size: 1.2rem;
+        font-weight: 500;
+        margin-bottom: 10px;
+        margin-top: 20px;
+    }
+</style>
+
+<div class="container" style="margin-top: 20px;">
+    <div class="row">
+        <div class="col s12">
+            <div class="card">
+                <div class="card-content">
+                    <span class="card-title">
+                        <i class="material-icons left" style="color: #1976d2;">auto_awesome</i>
+                        AI PDF Extraction
+                    </span>
+                    <p class="grey-text text-darken-2">
+                        Upload a pump PDF to extract performance data using AI. The system will analyze the PDF and extract pump specifications and performance curves.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upload Section -->
+    <div class="row">
+        <div class="col s12 m6">
+            <div class="card">
+                <div class="card-content">
+                    <span class="card-title">
+                        <i class="material-icons left" style="color: #1976d2;">cloud_upload</i>
+                        Upload PDF
+                    </span>
+                    <form id="ai-extract-form" enctype="multipart/form-data">
+                        <div class="file-field input-field">
+                            <div class="btn waves-effect waves-light" style="background-color: #1976d2;">
+                                <i class="material-icons left">attach_file</i>
+                                Choose PDF
+                                <input type="file" id="pdf-file" name="pdf_file" accept=".pdf" required>
+                            </div>
+                            <div class="file-path-wrapper">
+                                <input class="file-path validate" type="text" placeholder="Select a PDF file">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col s12">
+                                <button type="submit" class="btn waves-effect waves-light" style="background-color: #1976d2;" id="extract-btn">
+                                    <i class="material-icons left">auto_awesome</i>
+                                    Extract Data
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <!-- Status Section -->
+        <div class="col s12 m6">
+            <div class="card">
+                <div class="card-content">
+                    <span class="card-title">
+                        <i class="material-icons left" style="color: #1976d2;">info</i>
+                        Status
+                    </span>
+                    <div id="status-container">
+                        <p class="grey-text text-darken-2">Ready to extract data from PDF files.</p>
+                    </div>
+                    <div id="progress-container" style="display: none;">
+                        <div class="progress">
+                            <div class="indeterminate" style="background-color: #1976d2;"></div>
+                        </div>
+                        <p class="grey-text text-darken-2">Processing PDF...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results Section -->
+    <div class="row" id="results-section" style="display: none;">
+        <div class="col s12">
+            <div class="card">
+                <div class="card-content">
+                    <span class="card-title">
+                        <i class="material-icons left" style="color: #1976d2;">assessment</i>
+                        Extracted Data
+                    </span>
+                    <div id="extracted-data">
+                        <!-- Extracted data will be displayed here -->
+                    </div>
+                    <div class="row" style="margin-top: 20px;">
+                        <div class="col s12">
+                            <button class="btn waves-effect waves-light green" id="insert-btn" style="display: none;">
+                                <i class="material-icons left">save</i>
+                                Insert into Database
+                            </button>
+                            <button class="btn waves-effect waves-light blue" id="show-json-btn" style="display: none;">
+                                <i class="material-icons left">code</i>
+                                View Raw JSON
+                            </button>
+                            <button class="btn waves-effect waves-light grey" id="reset-btn">
+                                <i class="material-icons left">refresh</i>
+                                Extract Another
+                            </button>
+                        </div>
+                    </div>
+                    <!-- JSON Data Modal -->
+                    <div id="json-modal" class="modal">
+                        <div class="modal-content">
+                            <h4><i class="material-icons left">code</i>Raw Extracted Data</h4>
+                            <pre id="json-content" style="background-color: #f5f5f5; padding: 15px; border-radius: 4px; overflow-x: auto; max-height: 400px;"></pre>
+                        </div>
+                        <div class="modal-footer">
+                            <a href="#!" class="modal-close waves-effect waves-green btn-flat">Close</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row" id="json-table-section" style="display: none;">
+        <div class="col s12">
+            <ul class="collapsible">
+                <li>
+                    <div class="collapsible-header"><i class="material-icons">code</i>Full Extracted JSON (Table View)</div>
+                    <div class="collapsible-body">
+                        <table class="striped data-table">
+                            <tbody id="json-table-body"></tbody>
+                        </table>
+                    </div>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('ai-extract-form');
+    const fileInput = document.getElementById('pdf-file');
+    const extractBtn = document.getElementById('extract-btn');
+    const insertBtn = document.getElementById('insert-btn');
+    const showJsonBtn = document.getElementById('show-json-btn');
+    const resetBtn = document.getElementById('reset-btn');
+    const statusContainer = document.getElementById('status-container');
+    const progressContainer = document.getElementById('progress-container');
+    const resultsSection = document.getElementById('results-section');
+    const extractedDataDiv = document.getElementById('extracted-data');
+    const jsonModal = document.getElementById('json-modal');
+    const jsonContent = document.getElementById('json-content');
+    const jsonTableBody = document.getElementById('json-table-body');
+    const jsonTableSection = document.getElementById('json-table-section');
+    let extractedData = null;
+
+    fileInput.addEventListener('change', function() {
+        const file = this.files[0];
+        if (file) {
+            statusContainer.innerHTML = `<p class="green-text text-darken-2"><i class="material-icons left">check_circle</i>File selected: ${file.name}</p>`;
+        }
+    });
+
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const file = fileInput.files[0];
+        if (!file) {
+            M.toast({html: 'Please select a PDF file', classes: 'red'});
+            return;
+        }
+        if (!file.name.toLowerCase().endsWith('.pdf')) {
+            M.toast({html: 'Please select a PDF file', classes: 'red'});
+            return;
+        }
+        progressContainer.style.display = 'block';
+        statusContainer.style.display = 'none';
+        extractBtn.disabled = true;
+        const formData = new FormData();
+        formData.append('pdf_file', file);
+        fetch('/ai_extract/extract', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            progressContainer.style.display = 'none';
+            statusContainer.style.display = 'block';
+            extractBtn.disabled = false;
+            if (data.success) {
+                extractedData = data.data;
+                displayExtractedData(data.data);
+                statusContainer.innerHTML = `<p class="green-text text-darken-2"><i class="material-icons left">check_circle</i>Data extracted successfully!</p>`;
+                resultsSection.style.display = 'block';
+                insertBtn.style.display = 'inline-block';
+                showJsonBtn.style.display = 'inline-block';
+                renderJsonTable(data.data);
+                jsonTableSection.style.display = 'block';
+            } else {
+                statusContainer.innerHTML = `<p class="red-text text-darken-2"><i class="material-icons left">error</i>Error: ${data.message || data.error}</p>`;
+            }
+        })
+        .catch(error => {
+            progressContainer.style.display = 'none';
+            statusContainer.style.display = 'block';
+            extractBtn.disabled = false;
+            statusContainer.innerHTML = `<p class="red-text text-darken-2"><i class="material-icons left">error</i>Error: ${error.message}</p>`;
+        });
+    });
+
+    insertBtn.addEventListener('click', function() {
+        if (!extractedData) return;
+        insertBtn.disabled = true;
+        insertBtn.innerHTML = '<i class="material-icons left">hourglass_empty</i>Inserting...';
+        fetch('/ai_extract/insert', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                ...extractedData,
+                filename: fileInput.files[0]?.name
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                M.toast({html: 'Data inserted successfully!', classes: 'green'});
+                insertBtn.innerHTML = '<i class="material-icons left">check_circle</i>Inserted';
+                insertBtn.classList.remove('green');
+                insertBtn.classList.add('grey');
+                insertBtn.disabled = true;
+            } else {
+                M.toast({html: `Error: ${data.error}`, classes: 'red'});
+                insertBtn.disabled = false;
+                insertBtn.innerHTML = '<i class="material-icons left">save</i>Insert into Database';
+            }
+        })
+        .catch(error => {
+            M.toast({html: `Error: ${error.message}`, classes: 'red'});
+            insertBtn.disabled = false;
+            insertBtn.innerHTML = '<i class="material-icons left">save</i>Insert into Database';
+        });
+    });
+
+    showJsonBtn.addEventListener('click', function() {
+        if (extractedData) {
+            jsonContent.textContent = JSON.stringify(extractedData, null, 2);
+            M.Modal.init(jsonModal).open();
+        }
+    });
+
+    resetBtn.addEventListener('click', function() {
+        form.reset();
+        extractedData = null;
+        resultsSection.style.display = 'none';
+        insertBtn.style.display = 'none';
+        showJsonBtn.style.display = 'none';
+        insertBtn.disabled = false;
+        insertBtn.innerHTML = '<i class="material-icons left">save</i>Insert into Database';
+        insertBtn.classList.remove('grey');
+        insertBtn.classList.add('green');
+        statusContainer.innerHTML = '<p class="grey-text text-darken-2">Ready to extract data from PDF files.</p>';
+        statusContainer.style.display = 'block';
+        jsonTableBody.innerHTML = '';
+        jsonTableSection.style.display = 'none';
+    });
+
+    function displayExtractedData(data) {
+        console.log('Full extracted data structure:', data);
+        console.log('Curves array:', data.curves);
+        let html = '';
+        // 1. Pump Details
+        if (data.pumpDetails && Object.keys(data.pumpDetails).length > 0) {
+            html += `<div class="card summary-card">
+                <div class="card-content">
+                    <span class="card-title"><i class="material-icons left" style="color: #1976d2;">info</i>Pump Details</span>
+                    <table class="striped data-table">
+                        <tbody>`;
+            for (const [key, value] of Object.entries(data.pumpDetails)) {
+                if (value !== undefined && value !== null && value !== "") {
+                    html += `<tr><td style="font-weight:600;">${key}</td><td>${value}</td></tr>`;
+                }
+            }
+            html += `</tbody></table></div></div>`;
+        }
+        // 2. Technical Details
+        if (data.technicalDetails && Object.keys(data.technicalDetails).length > 0) {
+            html += `<div class="card summary-card">
+                <div class="card-content">
+                    <span class="card-title"><i class="material-icons left" style="color: #1976d2;">build</i>Technical Details</span>
+                    <table class="striped data-table">
+                        <tbody>`;
+            for (const [key, value] of Object.entries(data.technicalDetails)) {
+                if (value !== undefined && value !== null && value !== "") {
+                    html += `<tr><td style="font-weight:600;">${key}</td><td>${value}</td></tr>`;
+                }
+            }
+            html += `</tbody></table></div></div>`;
+        }
+        // 3. Specifications
+        if (data.specifications && Object.keys(data.specifications).length > 0) {
+            html += `<div class="card summary-card">
+                <div class="card-content">
+                    <span class="card-title"><i class="material-icons left" style="color: #1976d2;">assessment</i>Specifications</span>
+                    <table class="striped data-table">
+                        <tbody>`;
+            for (const [key, value] of Object.entries(data.specifications)) {
+                if (value !== undefined && value !== null && value !== "") {
+                    html += `<tr><td style="font-weight:600;">${key}</td><td>${value}</td></tr>`;
+                }
+            }
+            html += `</tbody></table></div></div>`;
+        }
+        // 4. Curves/impeller data below
+        if (data.curves && Array.isArray(data.curves) && data.curves.length > 0) {
+            data.curves.forEach((curve, idx) => {
+                html += `<div class="card curve-section">
+                    <div class="card-content">
+                        <div class="impeller-title">
+                            <i class="material-icons left">show_chart</i>
+                            Impeller ${curve.impellerDiameter ? curve.impellerDiameter + ' mm' : idx + 1}
+                        </div>
+                        <table class="striped responsive-table data-table">
+                            <thead>
+                                <tr>
+                                    <th>Point</th>
+                                    <th>Flow</th>
+                                    <th>Head</th>
+                                    <th>Efficiency</th>
+                                    <th>Power</th>
+                                    <th>NPSH</th>
+                                </tr>
+                            </thead>
+                            <tbody>`;
+                
+                // Handle new performancePoints structure
+                if (curve.performancePoints && Array.isArray(curve.performancePoints)) {
+                    console.log('Found performancePoints for impeller:', curve.impellerDiameter, curve.performancePoints);
+                    curve.performancePoints.forEach((point, i) => {
+                        console.log(`Point ${i+1} structure:`, point);
+                        console.log(`Point ${i+1} keys:`, Object.keys(point));
+                        console.log(`Point ${i+1} efficiency:`, point.efficiency, 'type:', typeof point.efficiency);
+                        console.log(`Point ${i+1} npshr:`, point.npshr, 'type:', typeof point.npshr);
+                        console.log(`Point ${i+1} npsh:`, point.npsh, 'type:', typeof point.npsh);
+                        
+                        html += `<tr>
+                            <td>${i + 1}</td>
+                            <td>${point.flow !== undefined ? point.flow : '-'}</td>
+                            <td>${point.head !== undefined ? point.head : '-'}</td>
+                            <td>${point.efficiency !== undefined ? point.efficiency : '-'}</td>
+                            <td>${point.power !== undefined ? point.power : '-'}</td>
+                            <td>${point.npshr !== undefined ? point.npshr : (point.npsh !== undefined ? point.npsh : '-')}</td>
+                        </tr>`;
+                    });
+                } else {
+                    console.log('No performancePoints found, using fallback for impeller:', curve.impellerDiameter, 'Available keys:', Object.keys(curve));
+                    // Fallback to old structure (separate arrays)
+                    const maxPoints = Math.max(
+                        curve.flow ? curve.flow.length : 0,
+                        curve.head ? curve.head.length : 0,
+                        curve.efficiency ? curve.efficiency.length : 0,
+                        curve.power ? curve.power.length : 0,
+                        curve.npsh ? curve.npsh.length : 0
+                    );
+                    for (let i = 0; i < maxPoints; i++) {
+                        html += `<tr>
+                            <td>${i + 1}</td>
+                            <td>${curve.flow && curve.flow[i] !== undefined ? curve.flow[i] : '-'}</td>
+                            <td>${curve.head && curve.head[i] !== undefined ? curve.head[i] : '-'}</td>
+                            <td>${curve.efficiency && curve.efficiency[i] !== undefined ? curve.efficiency[i] : '-'}</td>
+                            <td>${curve.power && curve.power[i] !== undefined ? curve.power[i] : '-'}</td>
+                            <td>${curve.npsh && curve.npsh[i] !== undefined ? curve.npsh[i] : '-'}</td>
+                        </tr>`;
+                    }
+                }
+                html += `</tbody></table></div></div>`;
+            });
+        }
+        extractedDataDiv.innerHTML = html;
+    }
+
+    function renderJsonTable(data) {
+        jsonTableBody.innerHTML = '';
+        function recurse(current, prefix = '') {
+            for (const key in current) {
+                const value = current[key];
+                const newKey = prefix ? `${prefix}.${key}` : key;
+                if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+                    html += `<tr><td colspan="2" style="padding-left: 20px;"><strong>${newKey}:</strong></td></tr>`;
+                    recurse(value, newKey);
+                } else if (Array.isArray(value)) {
+                    html += `<tr><td colspan="2" style="padding-left: 20px;"><strong>${newKey}:</strong></td></tr>`;
+                    value.forEach((item, index) => {
+                        html += `<tr style="padding-left: 20px;">`;
+                        recurse(item, `${newKey}[${index}]`);
+                        html += `</tr>`;
+                    });
+                } else {
+                    html += `<tr><td style="font-weight:600;">${newKey}</td><td>${value}</td></tr>`;
+                }
+            }
+        }
+        let html = '';
+        recurse(data);
+        jsonTableBody.innerHTML = html;
+    }
+});
+</script>
+{% endblock %} 

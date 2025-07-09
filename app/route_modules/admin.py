@@ -6,12 +6,14 @@ import os
 import logging
 import json
 from datetime import datetime
-from flask import render_template, request, redirect, url_for, send_file, jsonify, make_response
+from flask import render_template, request, redirect, url_for, send_file, jsonify, make_response, Blueprint
 from ..session_manager import safe_flash
 from werkzeug.utils import secure_filename
 from .. import app
 
 logger = logging.getLogger(__name__)
+
+admin_bp = Blueprint('admin', __name__)
 
 @app.route('/admin/pump_upload')
 def pump_upload():
@@ -266,3 +268,5 @@ def scg_stats():
     except Exception as e:
         logger.error(f"Error getting SCG stats: {str(e)}")
         return jsonify({'error': 'Failed to get statistics'}), 500 
+
+ 
