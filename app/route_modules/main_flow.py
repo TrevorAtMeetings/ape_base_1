@@ -173,9 +173,13 @@ def pump_options():
             'fluid_type': request.args.get('liquid_type', 'Water')
         })
 
-        # Redirect to the best pump's report page
+        # Redirect to the best pump's report page with flow and head parameters
         best_pump = pump_evaluations[0]
-        return redirect(url_for('pump_report', pump_code=best_pump['pump_code']))
+        return redirect(url_for('pump_report', 
+                              pump_code=best_pump['pump_code'],
+                              flow=site_requirements.flow_m3hr,
+                              head=site_requirements.head_m,
+                              pump_type=site_requirements.pump_type))
 
     except Exception as e:
         logger.error(f"Error in pump_options: {e}")
