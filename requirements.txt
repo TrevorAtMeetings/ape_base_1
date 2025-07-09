@@ -13,3 +13,9 @@ weasyprint
 psycopg2-binary
 email_validator
 gunicorn
+email_validator
+flask
+flask-sqlalchemy
+gunicorn
+psycopg2-binary
+python-dotenv
