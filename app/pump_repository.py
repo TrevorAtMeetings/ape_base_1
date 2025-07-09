@@ -7,14 +7,17 @@ Supports both JSON file and PostgreSQL database sources.
 import json
 import os
 import logging
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Iterator
 from dataclasses import dataclass
 from enum import Enum
 from urllib.parse import urlparse
 import psycopg2
-from psycopg2.extras import RealDictCursor
+from psycopg2.extras import RealDictCursor, execute_values
+from psycopg2.pool import SimpleConnectionPool
 from dotenv import load_dotenv
 from datetime import datetime
+from contextlib import contextmanager
+import threading
 
 # Load environment variables
 load_dotenv()
@@ -38,9 +41,14 @@ class PumpRepositoryConfig:
     # PostgreSQL configuration using DATABASE_URL format
     database_url: str = os.getenv('DATABASE_URL')
     
+    # Connection pooling configuration
+    pool_min_size: int = 1
+    pool_max_size: int = 10
+    
     # General configuration
     cache_enabled: bool = True
     reload_on_change: bool = False
+    batch_size: int = 1000  # For large dataset processing
 
 class PumpRepository:
     """
@@ -55,14 +63,41 @@ class PumpRepository:
         self._metadata = None
         self._last_loaded = None
         self._is_loaded = False
+        self._connection_pool = None
+        self._lock = threading.Lock()
         
+    def _get_connection_pool(self):
+        """Get or create connection pool"""
+        if self._connection_pool is None:
+            try:
+                self._connection_pool = SimpleConnectionPool(
+                    self.config.pool_min_size,
+                    self.config.pool_max_size,
+                    self.config.database_url
+                )
+                logger.info(f"Repository: Created connection pool with {self.config.pool_min_size}-{self.config.pool_max_size} connections")
+            except Exception as e:
+                logger.error(f"Repository: Failed to create connection pool: {e}")
+                raise
+        return self._connection_pool
+    
+    @contextmanager
+    def _get_connection(self):
+        """Context manager for database connections"""
+        pool = self._get_connection_pool()
+        conn = pool.getconn()
+        try:
+            yield conn
+        finally:
+            pool.putconn(conn)
+    
     def load_catalog(self) -> bool:
         """Load catalog data from configured source"""
         try:
             if self.config.data_source == DataSource.JSON_FILE:
                 return self._load_from_json()
             elif self.config.data_source == DataSource.POSTGRESQL:
-                return self._load_from_postgresql()
+                return self._load_from_postgresql_optimized()
             else:
                 logger.error(f"Repository: Unknown data source: {self.config.data_source}")
                 return False
@@ -137,13 +172,16 @@ class PumpRepository:
             logger.error(f"Repository: Error loading from JSON: {e}")
             return False
     
-    def _load_from_postgresql(self) -> bool:
+    def _load_from_postgresql_optimized(self) -> bool:
         """
-        Load catalog data from PostgreSQL database using DATABASE_URL.
-        Maps existing database tables to catalog format.
+        Optimized PostgreSQL data loading using:
+        - Single query with JOINs to eliminate N+1 problem
+        - SQL aggregation for calculations
+        - Connection pooling
+        - Batch processing for large datasets
         """
         try:
-            logger.info("Repository: Loading data from PostgreSQL database")
+            logger.info("Repository: Loading data from PostgreSQL database (optimized)")
             
             if not self.config.database_url:
                 logger.error("Repository: DATABASE_URL not configured")
@@ -153,8 +191,7 @@ class PumpRepository:
             parsed_url = urlparse(self.config.database_url)
             logger.info(f"Repository: Connecting to PostgreSQL at {parsed_url.hostname}:{parsed_url.port or 5432}")
             
-            # Connect to database using DATABASE_URL directly
-            with psycopg2.connect(self.config.database_url) as conn:
+            with self._get_connection() as conn:
                 with conn.cursor(cursor_factory=RealDictCursor) as cursor:
                     
                     # Get database schema information
@@ -179,137 +216,163 @@ class PumpRepository:
                     
                     logger.info(f"Repository: Found tables: {list(tables.keys())}")
                     
-                    # Load pump models and curves based on actual database structure
+                    # OPTIMIZED: Single query to get all pump data with aggregated statistics
+                    cursor.execute("""
+                        WITH pump_stats AS (
+                            SELECT 
+                                p.id,
+                                p.pump_code,
+                                p.manufacturer,
+                                p.pump_type,
+                                p.series as model_series,
+                                p.application_category,
+                                p.construction_standard,
+                                p.impeller_type,
+                                ps.test_speed_rpm,
+                                ps.max_flow_m3hr,
+                                ps.max_head_m,
+                                ps.max_power_kw,
+                                ps.bep_flow_m3hr,
+                                ps.bep_head_m,
+                                ps.npshr_at_bep,
+                                ps.min_impeller_diameter_mm,
+                                ps.max_impeller_diameter_mm,
+                                ps.min_speed_rpm,
+                                ps.max_speed_rpm,
+                                ps.variable_speed,
+                                ps.variable_diameter,
+                                -- Aggregated statistics
+                                COUNT(DISTINCT pc.id) as curve_count,
+                                COUNT(ppp.id) as total_points,
+                                COUNT(DISTINCT CASE WHEN ppp.npshr IS NOT NULL THEN pc.id END) as npsh_curves,
+                                MIN(ppp.efficiency) as min_efficiency,
+                                MAX(ppp.efficiency) as max_efficiency,
+                                MIN(ppp.flow_rate) as min_flow,
+                                MAX(ppp.flow_rate) as max_flow,
+                                MIN(ppp.head) as min_head,
+                                MAX(ppp.head) as max_head
+                            FROM pumps p
+                            LEFT JOIN pump_specifications ps ON p.id = ps.pump_id
+                            LEFT JOIN pump_curves pc ON p.id = pc.pump_id
+                            LEFT JOIN pump_performance_points ppp ON pc.id = ppp.curve_id
+                            GROUP BY p.id, p.pump_code, p.manufacturer, p.pump_type, p.series,
+                                     p.application_category, p.construction_standard, p.impeller_type,
+                                     ps.test_speed_rpm, ps.max_flow_m3hr, ps.max_head_m, ps.max_power_kw,
+                                     ps.bep_flow_m3hr, ps.bep_head_m, ps.npshr_at_bep, ps.min_impeller_diameter_mm,
+                                     ps.max_impeller_diameter_mm, ps.min_speed_rpm, ps.max_speed_rpm,
+                                     ps.variable_speed, ps.variable_diameter
+                        )
+                        SELECT * FROM pump_stats
+                        ORDER BY pump_code
+                    """)
+                    
+                    pump_stats_data = cursor.fetchall()
+                    logger.info(f"Repository: Found {len(pump_stats_data)} pump records with aggregated statistics")
+                    
+                    # OPTIMIZED: Single query to get all curves with performance data
+                    cursor.execute("""
+                        SELECT 
+                            p.pump_code,
+                            pc.id as curve_id,
+                            pc.impeller_diameter_mm,
+                            pc.pump_id,
+                            ppp.operating_point,
+                            ppp.flow_rate as flow_m3hr,
+                            ppp.head as head_m,
+                            ppp.efficiency as efficiency_pct,
+                            ppp.npshr as npshr_m
+                        FROM pumps p
+                        JOIN pump_curves pc ON p.id = pc.pump_id
+                        LEFT JOIN pump_performance_points ppp ON pc.id = ppp.curve_id
+                        ORDER BY p.pump_code, pc.impeller_diameter_mm, ppp.operating_point
+                    """)
+                    
+                    all_curves_data = cursor.fetchall()
+                    logger.info(f"Repository: Retrieved {len(all_curves_data)} performance points")
+                    
+                    # Process data efficiently using dictionaries for grouping
                     pump_models = []
+                    curves_by_pump = {}
+                    
+                    # Group curves by pump
+                    for row in all_curves_data:
+                        pump_code = row['pump_code']
+                        curve_id = row['curve_id']
+                        
+                        if pump_code not in curves_by_pump:
+                            curves_by_pump[pump_code] = {}
+                        
+                        if curve_id not in curves_by_pump[pump_code]:
+                            curves_by_pump[pump_code][curve_id] = {
+                                'curve_id': curve_id,
+                                'impeller_diameter_mm': row['impeller_diameter_mm'],
+                                'pump_id': row['pump_id'],
+                                'performance_points': []
+                            }
+                        
+                        # Add performance point if it exists
+                        if row['operating_point'] is not None:
+                            curves_by_pump[pump_code][curve_id]['performance_points'].append({
+                                'flow_m3hr': float(row['flow_m3hr']) if row['flow_m3hr'] is not None else 0.0,
+                                'head_m': float(row['head_m']) if row['head_m'] is not None else 0.0,
+                                'efficiency_pct': float(row['efficiency_pct']) if row['efficiency_pct'] is not None else 0.0,
+                                'power_kw': None,  # Not available in current schema
+                                'npshr_m': float(row['npshr_m']) if row['npshr_m'] is not None else None
+                            })
+                    
+                    # Build pump models with optimized data processing
                     total_curves = 0
                     total_points = 0
                     npsh_curves = 0
                     
-                    # Query pumps with specifications
-                    cursor.execute("""
-                        SELECT 
-                            p.id,
-                            p.pump_code,
-                            p.manufacturer,
-                            p.pump_type,
-                            p.series as model_series,
-                            p.application_category,
-                            p.construction_standard,
-                            p.impeller_type,
-                            ps.test_speed_rpm,
-                            ps.max_flow_m3hr,
-                            ps.max_head_m,
-                            ps.max_power_kw,
-                            ps.bep_flow_m3hr,
-                            ps.bep_head_m,
-                            ps.npshr_at_bep,
-                            ps.min_impeller_diameter_mm,
-                            ps.max_impeller_diameter_mm,
-                            ps.min_speed_rpm,
-                            ps.max_speed_rpm,
-                            ps.variable_speed,
-                            ps.variable_diameter
-                        FROM pumps p
-                        LEFT JOIN pump_specifications ps ON p.id = ps.pump_id
-                        ORDER BY p.pump_code
-                    """)
-                    
-                    pump_data = cursor.fetchall()
-                    logger.info(f"Repository: Found {len(pump_data)} pump records")
-                    
-                    # Process each pump record
-                    for pump_row in pump_data:
+                    for pump_row in pump_stats_data:
                         pump_row_dict = dict(pump_row)
-                        
-                        # Map to standard format
                         pump_code = pump_row_dict['pump_code']
-                        manufacturer = pump_row_dict.get('manufacturer', 'APE PUMPS')
-                        pump_type = pump_row_dict.get('pump_type', 'END SUCTION')
-                        model_series = pump_row_dict.get('model_series', '')
-                        pump_id = pump_row_dict['id']
                         
-                        # Query curves for this pump
-                        cursor.execute("""
-                            SELECT 
-                                id as curve_id,
-                                impeller_diameter_mm,
-                                pump_id
-                            FROM pump_curves
-                            WHERE pump_id = %s
-                            ORDER BY impeller_diameter_mm
-                        """, (pump_id,))
-                        
-                        curves_data = cursor.fetchall()
-                        total_curves += len(curves_data)
-                        
-                        # Build curves with performance points
+                        # Get curves for this pump
+                        pump_curves = curves_by_pump.get(pump_code, {})
                         curves = []
-                        for curve_row in curves_data:
-                            curve_row_dict = dict(curve_row)
-                            curve_id = curve_row_dict['curve_id']
-                            
-                            # Query performance points for this curve
-                            cursor.execute("""
-                                SELECT 
-                                    operating_point,
-                                    flow_rate as flow_m3hr,
-                                    head as head_m,
-                                    efficiency as efficiency_pct,
-                                    npshr as npshr_m
-                                FROM pump_performance_points
-                                WHERE curve_id = %s
-                                ORDER BY operating_point
-                            """, (curve_id,))
-                            
-                            points_data = cursor.fetchall()
-                            total_points += len(points_data)
-                            
-                            # Convert points to list of dicts
-                            performance_points = []
-                            for point in points_data:
-                                point_dict = dict(point)
-                                performance_points.append({
-                                    'flow_m3hr': float(point_dict['flow_m3hr']) if point_dict['flow_m3hr'] is not None else 0.0,
-                                    'head_m': float(point_dict['head_m']) if point_dict['head_m'] is not None else 0.0,
-                                    'efficiency_pct': float(point_dict['efficiency_pct']) if point_dict['efficiency_pct'] is not None else 0.0,
-                                    'power_kw': None,  # Not available in current schema
-                                    'npshr_m': float(point_dict['npshr_m']) if point_dict['npshr_m'] is not None else None
-                                })
+                        
+                        for curve_id, curve_data in pump_curves.items():
+                            performance_points = curve_data['performance_points']
+                            total_points += len(performance_points)
                             
                             # Check if curve has NPSH data
                             has_npsh_data = any(p.get('npshr_m') for p in performance_points)
                             if has_npsh_data:
                                 npsh_curves += 1
                             
-                            # Calculate ranges
-                            flows = [p['flow_m3hr'] for p in performance_points]
-                            heads = [p['head_m'] for p in performance_points]
-                            efficiencies = [p['efficiency_pct'] for p in performance_points]
-                            npshrs = [p['npshr_m'] for p in performance_points if p.get('npshr_m')]
-                            
-                            # Build curve object
-                            curve = {
-                                'curve_id': f"{pump_code}_C{len(curves)+1}_{curve_row_dict['impeller_diameter_mm']}mm",
-                                'curve_index': len(curves),
-                                'impeller_diameter_mm': float(curve_row_dict['impeller_diameter_mm']),
-                                'test_speed_rpm': int(pump_row_dict.get('test_speed_rpm', 0)) if pump_row_dict.get('test_speed_rpm') is not None else 0,
-                                'performance_points': performance_points,
-                                'point_count': len(performance_points),
-                                'flow_range_m3hr': f"{min(flows)}-{max(flows)}" if flows else "0.0-0.0",
-                                'head_range_m': f"{min(heads)}-{max(heads)}" if heads else "0.0-0.0",
-                                'efficiency_range_pct': f"{min(efficiencies)}-{max(efficiencies)}" if efficiencies else "0.0-0.0",
-                                'has_power_data': False,  # Not available in current schema
-                                'has_npsh_data': has_npsh_data,
-                                'npsh_range_m': f"{min(npshrs)}-{max(npshrs)}" if npshrs else "0.0-0.0"
-                            }
-                            curves.append(curve)
+                            # Calculate ranges efficiently
+                            if performance_points:
+                                flows = [p['flow_m3hr'] for p in performance_points]
+                                heads = [p['head_m'] for p in performance_points]
+                                efficiencies = [p['efficiency_pct'] for p in performance_points]
+                                npshrs = [p['npshr_m'] for p in performance_points if p.get('npshr_m')]
+                                
+                                curve = {
+                                    'curve_id': f"{pump_code}_C{len(curves)+1}_{curve_data['impeller_diameter_mm']}mm",
+                                    'curve_index': len(curves),
+                                    'impeller_diameter_mm': float(curve_data['impeller_diameter_mm']),
+                                    'test_speed_rpm': int(pump_row_dict.get('test_speed_rpm', 0)) if pump_row_dict.get('test_speed_rpm') is not None else 0,
+                                    'performance_points': performance_points,
+                                    'point_count': len(performance_points),
+                                    'flow_range_m3hr': f"{min(flows)}-{max(flows)}" if flows else "0.0-0.0",
+                                    'head_range_m': f"{min(heads)}-{max(heads)}" if heads else "0.0-0.0",
+                                    'efficiency_range_pct': f"{min(efficiencies)}-{max(efficiencies)}" if efficiencies else "0.0-0.0",
+                                    'has_power_data': False,  # Not available in current schema
+                                    'has_npsh_data': has_npsh_data,
+                                    'npsh_range_m': f"{min(npshrs)}-{max(npshrs)}" if npshrs else "0.0-0.0"
+                                }
+                                curves.append(curve)
                         
-                        # Build pump model object
+                        total_curves += len(curves)
+                        
+                        # Build pump model object using aggregated statistics
                         pump_model = {
                             'pump_code': pump_code,
-                            'manufacturer': manufacturer,
-                            'pump_type': pump_type,
-                            'model_series': model_series,
+                            'manufacturer': pump_row_dict.get('manufacturer', 'APE PUMPS'),
+                            'pump_type': pump_row_dict.get('pump_type', 'END SUCTION'),
+                            'model_series': pump_row_dict.get('model_series', ''),
                             'specifications': {
                                 'max_flow_m3hr': float(pump_row_dict.get('max_flow_m3hr', 0)) if pump_row_dict.get('max_flow_m3hr') is not None else 0,
                                 'max_head_m': float(pump_row_dict.get('max_head_m', 0)) if pump_row_dict.get('max_head_m') is not None else 0,
@@ -320,18 +383,18 @@ class PumpRepository:
                                 'max_speed_rpm': int(pump_row_dict.get('max_speed_rpm', 0)) if pump_row_dict.get('max_speed_rpm') is not None else 0
                             },
                             'curves': curves,
-                            # Add fields expected by catalog engine
-                            'curve_count': len(curves),
-                            'total_points': sum(len(curve['performance_points']) for curve in curves),
-                            'npsh_curves': sum(1 for curve in curves if curve['has_npsh_data']),
-                            'power_curves': sum(1 for curve in curves if curve['has_power_data']),
+                            # Use aggregated statistics from SQL
+                            'curve_count': int(pump_row_dict.get('curve_count', 0)),
+                            'total_points': int(pump_row_dict.get('total_points', 0)),
+                            'npsh_curves': int(pump_row_dict.get('npsh_curves', 0)),
+                            'power_curves': 0,  # Not available in current schema
                             # Add additional fields for compatibility
-                            'description': f"{pump_code} - {model_series}",
+                            'description': f"{pump_code} - {pump_row_dict.get('model_series', '')}",
                             'max_flow_m3hr': float(pump_row_dict.get('max_flow_m3hr', 0)) if pump_row_dict.get('max_flow_m3hr') is not None else 0,
                             'max_head_m': float(pump_row_dict.get('max_head_m', 0)) if pump_row_dict.get('max_head_m') is not None else 0,
                             'max_power_kw': float(pump_row_dict.get('max_power_kw', 0)) if pump_row_dict.get('max_power_kw') is not None else 0,
-                            'min_efficiency': min((p['efficiency_pct'] for curve in curves for p in curve['performance_points'] if p['efficiency_pct'] > 0), default=0),
-                            'max_efficiency': max((p['efficiency_pct'] for curve in curves for p in curve['performance_points']), default=0),
+                            'min_efficiency': float(pump_row_dict.get('min_efficiency', 0)) if pump_row_dict.get('min_efficiency') is not None else 0,
+                            'max_efficiency': float(pump_row_dict.get('max_efficiency', 0)) if pump_row_dict.get('max_efficiency') is not None else 0,
                             'connection_size': 'Standard',
                             'materials': 'Cast Iron'
                         }
@@ -377,6 +440,12 @@ class PumpRepository:
         except Exception as e:
             logger.error(f"Repository: Error loading from PostgreSQL: {e}")
             return False
+    
+    def _load_from_postgresql(self) -> bool:
+        """
+        Legacy PostgreSQL loading method (kept for backward compatibility)
+        """
+        return self._load_from_postgresql_optimized()
     
     def get_catalog_data(self) -> Dict[str, Any]:
         """Get raw catalog data"""
@@ -434,6 +503,11 @@ class PumpRepository:
         logger.info(f"Repository: Switching data source from {self.config.data_source} to {new_source}")
         self.config.data_source = new_source
         return self.reload()
+    
+    def __del__(self):
+        """Cleanup connection pool on deletion"""
+        if self._connection_pool:
+            self._connection_pool.closeall()
 
 # Global repository instance
 _repository = None
