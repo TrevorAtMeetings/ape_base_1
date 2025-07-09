@@ -10,7 +10,7 @@ from .. import app
 logger = logging.getLogger(__name__)
 
 # Import all route modules to register their routes
-# This approach maintains exact same route names and functionality
+# This approach maintains exact same route names and functionality MARK
 
 
 # No templates need to be updated - all url_for() calls work unchanged
