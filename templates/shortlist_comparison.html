@@ -194,12 +194,12 @@
     <!-- Navigation -->
     <nav class="nav-wrapper blue darken-2">
         <div class="container">
-            <a href="{{ url_for('index') }}" class="brand-logo">
+            <a href="{{ url_for('main_flow.index') }}" class="brand-logo">
                 <i class="material-icons left">water_damage</i>APE Pumps
             </a>
             <ul id="nav-mobile" class="right hide-on-med-and-down">
-                <li><a href="{{ url_for('index') }}">Home</a></li>
-                <li><a href="{{ url_for('pump_comparison') }}?pump_type={{ request.args.get('pump_type', 'General') }}">Compare</a></li>
+                <li><a href="{{ url_for('main_flow.index') }}">Home</a></li>
+                <li><a href="{{ url_for('comparison.pump_comparison') }}?pump_type={{ request.args.get('pump_type', 'General') }}">Compare</a></li>
                 <li class="active"><a href="#">Shortlist</a></li>
             </ul>
         </div>
@@ -330,7 +330,7 @@
 
         <!-- Action Buttons -->
         <div class="action-buttons">
-            <a href="{{ url_for('pump_comparison') }}?pump_type={{ request.args.get('pump_type', 'General') }}" class="btn blue lighten-1 waves-effect waves-light">
+            <a href="{{ url_for('comparison.pump_comparison') }}?pump_type={{ request.args.get('pump_type', 'General') }}" class="btn blue lighten-1 waves-effect waves-light">
                 <i class="material-icons left">arrow_back</i>
                 Back to Full Comparison
             </a>
@@ -341,7 +341,7 @@
             </button>
             
             {% if shortlist_pumps|length > 0 %}
-            <a href="{{ url_for('generate_pdf_report', pump_code=shortlist_pumps[0].pump_code) }}?flow={{ site_requirements.flow_m3hr }}&head={{ site_requirements.head_m }}" 
+            <a href="{{ url_for('reports.generate_pdf', pump_code=shortlist_pumps[0].pump_code) }}?flow={{ site_requirements.flow_m3hr }}&head={{ site_requirements.head_m }}" 
                class="btn blue darken-1 waves-effect waves-light">
                 <i class="material-icons left">description</i>
                 Best Pump Report
@@ -451,7 +451,7 @@
             }
             
             if (pumpCodes.length > 0) {
-                const url = `/generate_comparison_pdf?pumps=${pumpCodes.join(',')}&flow=${flow}&head=${head}`;
+                const url = `{{ url_for('comparison.generate_comparison_pdf') }}?pumps=${pumpCodes.join(',')}&flow=${flow}&head=${head}`;
                 window.open(url, '_blank');
             } else {
                 M.toast({html: 'No pumps selected for PDF generation'});

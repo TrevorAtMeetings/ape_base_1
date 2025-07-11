@@ -4,30 +4,48 @@ Core user flow routes for pump selection and results
 """
 import logging
 from datetime import datetime
-from flask import render_template, request, redirect, url_for, session, jsonify
+from flask import Blueprint, render_template, request, redirect, url_for, session, jsonify
 from ..session_manager import safe_flash, safe_session_get, safe_session_set, safe_session_pop, safe_session_clear, get_form_data, store_form_data
 from ..pump_engine import load_all_pump_data, find_best_pumps, validate_site_requirements, SiteRequirements, ParsedPumpData
-from .. import app
 
 logger = logging.getLogger(__name__)
 
-@app.route('/')
+# Create blueprint
+main_flow_bp = Blueprint('main_flow', __name__)
+
+@main_flow_bp.route('/')
 def index():
     """Main landing page with pump selection form."""
     logger.info("Index route accessed.")
     return render_template('input_form.html')
 
-@app.route('/about')
+@main_flow_bp.route('/about')
 def about():
     """About page."""
     return render_template('about.html')
 
-@app.route('/help')
+@main_flow_bp.route('/guide')
+def guide():
+    """Guide page."""
+    logger.info("Guide page accessed.")
+    return render_template('guide.html')
+
+@main_flow_bp.route('/help')
 def help():
     """Help page."""
     return render_template('help.html')
 
-@app.route('/pump_selection', methods=['POST', 'GET'])
+@main_flow_bp.route('/help-features')
+def help_features_page():
+    """Help features page."""
+    return render_template('help_brochure.html')
+
+@main_flow_bp.route('/docs')
+def docs_page():
+    """Documentation page."""
+    return render_template('docs.html')
+
+@main_flow_bp.route('/pump_selection', methods=['POST', 'GET'])
 def pump_selection():
     """Main pump selection endpoint."""
     if request.method == 'GET':
@@ -62,7 +80,7 @@ def pump_selection():
             return render_template('input_form.html'), 400
         
         # Process the selection
-        return redirect(url_for('show_results', 
+        return redirect(url_for('main_flow.show_results', 
                                flow=str(flow_val), 
                                head=str(head_val),
                                application_type=request.form.get('application_type', 'water_supply'),
@@ -73,12 +91,12 @@ def pump_selection():
         safe_flash('An error occurred processing your request.', 'error')
         return render_template('input_form.html'), 500
 
-@app.route('/select', methods=['GET'])
+@main_flow_bp.route('/select', methods=['GET'])
 def select():
     """Select pump page."""
     return render_template('input_form.html')
 
-@app.route('/pump_options')
+@main_flow_bp.route('/pump_options')
 def pump_options():
     """Show pump selection options page."""
     try:
@@ -109,8 +127,8 @@ def pump_options():
 
         if flow <= 0 or head <= 0:
             safe_flash('Please enter valid flow rate and head values.', 'error')
-            return redirect(url_for('index'))
-
+            return redirect(url_for('main_flow.index'))
+            
         logger.info(f"Processing pump options for: flow={flow} m³/hr, head={head} m")
 
         # Get additional form parameters
@@ -119,7 +137,7 @@ def pump_options():
         
         # Create site requirements using pump_engine
         site_requirements = SiteRequirements(
-            flow_m3hr=flow, 
+            flow_m3hr=flow,
             head_m=head,
             pump_type=pump_type,
             application_type=application_type
@@ -159,8 +177,8 @@ def pump_options():
 
         if not pump_evaluations:
             safe_flash('No suitable pumps found for your requirements. Please adjust your specifications.', 'warning')
-            return redirect(url_for('index'))
-
+            return redirect(url_for('main_flow.index'))
+            
         # Store results in session for detailed reports
         safe_session_set('pump_selections', pump_evaluations)
         safe_session_set('site_requirements', {
@@ -175,18 +193,18 @@ def pump_options():
 
         # Redirect to the best pump's report page with flow and head parameters
         best_pump = pump_evaluations[0]
-        return redirect(url_for('pump_report', 
+        return redirect(url_for('reports.pump_report', 
                               pump_code=best_pump['pump_code'],
                               flow=site_requirements.flow_m3hr,
                               head=site_requirements.head_m,
                               pump_type=site_requirements.pump_type))
-
+            
     except Exception as e:
         logger.error(f"Error in pump_options: {e}")
         safe_flash('An error occurred while processing your request. Please try again.', 'error')
-        return redirect(url_for('index'))
+        return redirect(url_for('main_flow.index'))
 
-@app.route('/show_results', methods=['POST', 'GET'])
+@main_flow_bp.route('/show_results', methods=['POST', 'GET'])
 def show_results():
     """Process pump selection and show results."""
     try:
@@ -208,7 +226,7 @@ def show_results():
             else:
                 # No valid parameters, redirect to pump options
                 safe_flash('Please enter your pump requirements.', 'info')
-                return redirect(url_for('index'))
+                return redirect(url_for('main_flow.index'))
         else:
             # POST request - get data from form
             form_data = request.form.to_dict()
@@ -237,7 +255,7 @@ def show_results():
 
         if not top_selections:
             safe_flash('No suitable pumps found for your requirements. Please adjust your specifications.', 'warning')
-            return redirect(url_for('index'))
+            return redirect(url_for('main_flow.index'))
 
         # Convert catalog engine format to template-compatible format
         pump_evaluations = []
@@ -289,4 +307,4 @@ def show_results():
     except Exception as e:
         logger.error(f"Error in show_results: {str(e)}")
         safe_flash('An error occurred while processing your request. Please try again.', 'error')
-        return redirect(url_for('index')) 
+        return redirect(url_for('main_flow.index')) 

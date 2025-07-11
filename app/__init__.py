@@ -57,6 +57,30 @@ app.register_blueprint(admin_bp)
 from .route_modules.ai_extract_routes import ai_extract_bp
 app.register_blueprint(ai_extract_bp)
 
+# Register the Data Management blueprint
+from .route_modules.data_management import data_management_bp
+app.register_blueprint(data_management_bp)
+
+# Register the Main Flow blueprint
+from .route_modules.main_flow import main_flow_bp
+app.register_blueprint(main_flow_bp)
+
+# Register the Reports blueprint
+from .route_modules.reports import reports_bp
+app.register_blueprint(reports_bp)
+
+# Register the Comparison blueprint
+from .route_modules.comparison import comparison_bp
+app.register_blueprint(comparison_bp)
+
+# Register the Chat blueprint
+from .route_modules.chat import chat_bp
+app.register_blueprint(chat_bp)
+
+# Register the API blueprint
+from .route_modules.api import api_bp
+app.register_blueprint(api_bp)
+
 # Import core functions from pump_engine.py (single source of truth)
 from .pump_engine import (
     load_all_pump_data,

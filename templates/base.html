@@ -44,13 +44,13 @@
     <!-- Navigation -->
     <nav class="teal">
         <div class="nav-wrapper container">
-            <a href="{{ url_for('index') }}" class="brand-logo" style="display: flex; align-items: center; font-size: 1.8rem; font-weight: 600;">
+            <a href="{{ url_for('main_flow.index') }}" class="brand-logo" style="display: flex; align-items: center; font-size: 1.8rem; font-weight: 600;">
                 APE AI Selection System
             </a>
             <ul id="nav-mobile" class="right hide-on-med-and-down" style="font-size: 18px;">
-                <li><a href="{{ url_for('index') }}">Selection</a></li>
+                <li><a href="{{ url_for('main_flow.index') }}">Selection</a></li>
                 <li><a href="https://apepumps.projectapp.ai/" target="_blank">Features</a></li>
-                <li><a href="{{ url_for('guide_page') }}">Guide</a></li>
+                <li><a href="{{ url_for('main_flow.guide') }}">Guide</a></li>
                 <li><a class="dropdown-trigger" href="#!" data-target="admin-dropdown">
                     Admin <i class="material-icons right" style="font-size: 1.2em; vertical-align: middle; margin-left: 2px;">arrow_drop_down</i>
                 </a></li>
@@ -62,7 +62,6 @@
                 <li><a href="/data-management"><i class="material-icons left">storage</i>Database</a></li>
                 <li class="divider"></li>
                 <li><a href="/admin"><i class="material-icons left">library_books</i>Docs</a></li>
-                <li><a href="/admin/pump_upload"><i class="material-icons left">upload</i>Upload</a></li>
                 <li><a href="/ai-extract"><i class="material-icons left">auto_awesome</i>AI Extract</a></li>
                 <li><a href="/chat"><i class="material-icons left">smart_toy</i>AI Console</a></li>
             </ul>
@@ -76,11 +75,10 @@
 
     <!-- Mobile Navigation -->
     <ul class="sidenav" id="mobile-demo">
-        <li><a href="{{ url_for('index') }}" style="font-size: 16px;">Selection</a></li>
+        <li><a href="{{ url_for('main_flow.index') }}" style="font-size: 16px;">Selection</a></li>
         <li><a href="https://apepumps.projectapp.ai/" target="_blank" style="font-size: 16px;">Features</a></li>
-        <li><a href="{{ url_for('guide_page') }}" style="font-size: 16px;">Guide</a></li>
+        <li><a href="{{ url_for('main_flow.guide') }}" style="font-size: 16px;">Guide</a></li>
         <li><a href="/admin" style="font-size: 16px;">Document Library</a></li>
-        <li><a href="/admin/pump_upload" style="font-size: 16px;">Upload Pumps</a></li>
         <li><a href="/chat" style="font-size: 16px;">AI Expert Console</a></li>
         <li><a href="#about" onclick="showAboutModal()" style="font-size: 16px;">About</a></li>
     </ul>
@@ -181,7 +179,7 @@
                 <div class="col l4 offset-l2 s12">
                     <h5 class="white-text">Quick Links</h5>
                     <ul>
-                        <li><a class="grey-text text-lighten-3" href="{{ url_for('index') }}">Pump Selection</a></li>
+                        <li><a class="grey-text text-lighten-3" href="{{ url_for('main_flow.index') }}">Pump Selection</a></li>
                         <li><a class="grey-text text-lighten-3" href="#technical">Technical Support</a></li>
                         <li><a class="grey-text text-lighten-3" href="#documentation">Documentation</a></li>
                     </ul>

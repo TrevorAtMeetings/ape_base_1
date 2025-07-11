@@ -23,7 +23,11 @@
     </div>
 
     <!-- Main Form -->
-    <form method="GET" action="{{ url_for('pump_options') }}" id="pumpSelectionForm">
+    <form id="pumpSelectionForm" 
+      action="{{ url_for('main_flow.pump_options') }}" 
+      method="GET" 
+      class="needs-validation" 
+      novalidate>
         <!-- Core Requirements Section -->
         <div class="row section-card stagger-item" id="core-requirements-section">
             <div class="col s12">

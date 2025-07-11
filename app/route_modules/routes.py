@@ -33,17 +33,6 @@ from .admin import *
 # Import comparison routes (pump comparison, shortlist)
 from .comparison import *
 
-# Additional routes that don't fit into the main modules
-@app.route('/help-features')
-def help_features_page():
-    """Help features page."""
-    return render_template('help_brochure.html')
-
-@app.route('/guide')
-def guide_page():
-    """Guide page."""
-    return render_template('guide.html')
-
 # Register all routes by importing the modules
 # This maintains the exact same route names and functionality
 # All templates continue to work without any changes

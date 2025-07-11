@@ -7,14 +7,17 @@ import time
 import base64
 import re
 import markdown2
-from flask import render_template, request, redirect, url_for, session, jsonify
+from flask import Blueprint, render_template, request, redirect, url_for, session, jsonify
 from ..session_manager import safe_flash
 from ..pump_engine import validate_site_requirements, SiteRequirements
 from .. import app
 
 logger = logging.getLogger(__name__)
 
-@app.route('/api/chart_data/<pump_code>')
+# Create blueprint
+api_bp = Blueprint('api', __name__)
+
+@api_bp.route('/api/chart_data/<pump_code>')
 def get_chart_data(pump_code):
     """API endpoint to get chart data for interactive Plotly.js charts."""
     try:
@@ -175,7 +178,7 @@ def get_chart_data(pump_code):
         error_response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
         return error_response, 500
 
-@app.route('/api/chart_data_safe/<safe_pump_code>')
+@api_bp.route('/api/chart_data_safe/<safe_pump_code>')
 def get_chart_data_safe(safe_pump_code):
     """Optimized API endpoint to get chart data using base64-encoded pump codes."""
     start_time = time.time()
@@ -337,7 +340,7 @@ def calculate_power_curve(performance_points):
             powers.append(max(0, estimated_power))
     return powers
 
-@app.route('/api/pumps', methods=['GET'])
+@api_bp.route('/api/pumps', methods=['GET'])
 def api_pumps():
     """API endpoint to get all pumps."""
     try:

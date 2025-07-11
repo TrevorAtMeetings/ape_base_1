@@ -1,10 +1,10 @@
 """
 Comparison Routes
-Routes for pump comparison and shortlist functionality
+Routes for pump comparison functionality
 """
 import logging
 from datetime import datetime
-from flask import render_template, request, redirect, url_for, session, jsonify
+from flask import Blueprint, render_template, request, redirect, url_for, session, jsonify
 from ..session_manager import safe_flash, safe_session_get, safe_session_set
 from ..pump_engine import load_all_pump_data, validate_site_requirements, SiteRequirements
 from .. import app
@@ -12,7 +12,10 @@ from flask import Response
 
 logger = logging.getLogger(__name__)
 
-@app.route('/compare')
+# Create blueprint
+comparison_bp = Blueprint('comparison', __name__)
+
+@comparison_bp.route('/compare')
 def pump_comparison():
     """Pump comparison interface with fallback to URL parameters if session is empty."""
     try:
@@ -132,7 +135,7 @@ def pump_comparison():
 
         if not pump_selections:
             safe_flash('No pump selections available for comparison. Please run pump selection first.', 'info')
-            return redirect(url_for('index'))
+            return redirect(url_for('main_flow.index'))
 
         return render_template('pump_comparison.html',
                              pump_comparisons=pump_selections,
@@ -140,14 +143,14 @@ def pump_comparison():
     except Exception as e:
         logger.error(f"Error in pump_comparison: {str(e)}")
         safe_flash('Error loading comparison data.', 'error')
-        return redirect(url_for('index'))
+        return redirect(url_for('main_flow.index'))
 
-@app.route('/pump_comparison')
+@comparison_bp.route('/pump_comparison')
 def pump_comparison_alias():
     """Alias for pump_comparison to maintain template compatibility."""
     return pump_comparison()
 
-@app.route('/pump_details/<path:pump_code>')
+@comparison_bp.route('/pump_details/<path:pump_code>')
 def pump_details(pump_code):
     """Get detailed pump information for modal display - returns JSON"""
     try:
@@ -222,21 +225,21 @@ def pump_details(pump_code):
         logger.error(f"Error fetching pump details for {pump_code}: {str(e)}")
         return jsonify({'error': 'Failed to load pump details'}), 500
 
-@app.route('/shortlist_comparison')
+@comparison_bp.route('/shortlist_comparison')
 def shortlist_comparison():
     """Display side-by-side comparison of selected pumps"""
     try:
         pump_codes = request.args.getlist('pumps')
         if len(pump_codes) < 2 or len(pump_codes) > 3:
             safe_flash('Please select 2-3 pumps for shortlist comparison', 'error')
-            return redirect(url_for('pump_comparison'))
+            return redirect(url_for('comparison.pump_comparison'))
             
         flow = request.args.get('flow', type=float)
         head = request.args.get('head', type=float)
         
         if not flow or not head:
             safe_flash('Flow and head parameters are required for shortlist comparison', 'error')
-            return redirect(url_for('pump_comparison'))
+            return redirect(url_for('comparison.pump_comparison'))
         
         from ..catalog_engine import get_catalog_engine
         catalog_engine = get_catalog_engine()
@@ -266,9 +269,9 @@ def shortlist_comparison():
     except Exception as e:
         logger.error(f"Error in shortlist comparison: {str(e)}")
         safe_flash('Error loading shortlist comparison', 'error')
-        return redirect(url_for('pump_comparison'))
+        return redirect(url_for('comparison.pump_comparison'))
 
-@app.route('/generate_comparison_pdf')
+@comparison_bp.route('/generate_comparison_pdf')
 def generate_comparison_pdf():
     """Generate PDF comparison report using URL parameters instead of session data."""
     try:
@@ -279,7 +282,7 @@ def generate_comparison_pdf():
         
         if not pump_codes or not flow or not head:
             safe_flash('Pump codes, flow, and head parameters are required for PDF generation.', 'error')
-            return redirect(url_for('pump_comparison'))
+            return redirect(url_for('comparison.pump_comparison'))
         
         logger.info(f"Comparison PDF generation - Pumps: {pump_codes}, Flow: {flow}, Head: {head}")
         
@@ -309,7 +312,7 @@ def generate_comparison_pdf():
         
         if not comparison_data:
             safe_flash('No valid pump data found for PDF generation.', 'error')
-            return redirect(url_for('pump_comparison'))
+            return redirect(url_for('comparison.pump_comparison'))
         
         # Create site requirements from URL parameters
         site_requirements = SiteRequirements(
@@ -358,9 +361,9 @@ def generate_comparison_pdf():
             return response
         else:
             safe_flash('Error generating comparison PDF', 'error')
-            return redirect(url_for('pump_comparison'))
+            return redirect(url_for('comparison.pump_comparison'))
     
     except Exception as e:
         logger.error(f"Error generating comparison PDF: {str(e)}")
         safe_flash('Error generating comparison PDF.', 'error')
-        return redirect(url_for('pump_comparison')) 
+        return redirect(url_for('comparison.pump_comparison')) 

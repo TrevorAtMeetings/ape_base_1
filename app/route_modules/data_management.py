@@ -8,15 +8,17 @@ import csv
 import io
 import json
 from datetime import datetime
-from flask import render_template, request, redirect, url_for, send_file, jsonify, make_response
+from flask import Blueprint, render_template, request, redirect, url_for, send_file, jsonify, make_response
 from ..session_manager import safe_flash
 from werkzeug.utils import secure_filename
-from .. import app
 from ..pump_engine import load_all_pump_data
 
 logger = logging.getLogger(__name__)
 
-@app.route('/data-management')
+# Create blueprint
+data_management_bp = Blueprint('data_management', __name__)
+
+@data_management_bp.route('/data-management')
 def data_management():
     """Pump data management interface with table view and export options."""
     try:
@@ -118,9 +120,9 @@ def data_management():
     except Exception as e:
         logger.error(f"Error in data management: {str(e)}")
         safe_flash('Error loading pump data.', 'error')
-        return redirect(url_for('index'))
+        return redirect(url_for('main_flow.index'))
 
-@app.route('/export-csv')
+@data_management_bp.route('/export-csv')
 def export_csv():
     """Export pump data to CSV format."""
     try:
@@ -328,7 +330,7 @@ def export_csv():
         safe_flash('Error exporting data to CSV.', 'error')
         return redirect(url_for('data_management'))
 
-@app.route('/upload-pump-data', methods=['POST'])
+@data_management_bp.route('/upload-pump-data', methods=['POST'])
 def upload_pump_data():
     """Upload new pump data from file."""
     try:

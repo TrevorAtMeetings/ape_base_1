@@ -73,7 +73,7 @@
                     <div class="row">
                         <!-- Search and Filter -->
                         <div class="col s12 m8">
-                            <form method="GET" action="{{ url_for('data_management') }}">
+                            <form method="GET" action="{{ url_for('data_management.data_management') }}">
                                 <div class="row">
                                     <div class="col s12 m6">
                                         <div class="input-field">
@@ -106,7 +106,7 @@
                         <!-- Export and Upload -->
                         <div class="col s12 m4">
                             <div class="right-align">
-                                <a href="{{ url_for('export_csv') }}" class="btn green darken-2 waves-effect">
+                                <a href="{{ url_for('data_management.export_csv') }}" class="btn green darken-2 waves-effect">
                                     <i class="material-icons left">download</i>
                                     Export CSV
                                 </a>
@@ -187,7 +187,7 @@
                                         {% endif %}
                                     </td>
                                     <td>
-                                        <a href="{{ url_for('pump_report', pump_code=pump.pump_code) }}" 
+                                        <a href="{{ url_for('reports.pump_report', pump_code=pump.pump_code) }}?flow={{ pump.max_flow }}&head={{ pump.max_head }}" 
                                            class="btn-small blue darken-2 waves-effect" title="View Report">
                                             <i class="material-icons">description</i>
                                         </a>
@@ -204,7 +204,7 @@
                         <ul class="pagination">
                             {% if has_prev %}
                                 <li class="waves-effect">
-                                    <a href="{{ url_for('data_management', page=page-1, search=search, category=category) }}">
+                                    <a href="{{ url_for('data_management.data_management', page=page-1, search=search, category=category) }}">
                                         <i class="material-icons">chevron_left</i>
                                     </a>
                                 </li>
@@ -217,7 +217,7 @@
                                     </li>
                                 {% elif p <= 3 or p >= total_pages - 2 or (p >= page - 1 and p <= page + 1) %}
                                     <li class="waves-effect">
-                                        <a href="{{ url_for('data_management', page=p, search=search, category=category) }}">{{ p }}</a>
+                                        <a href="{{ url_for('data_management.data_management', page=p, search=search, category=category) }}">{{ p }}</a>
                                     </li>
                                 {% elif p == 4 and page > 6 %}
                                     <li class="disabled"><a href="#">...</a></li>
@@ -228,7 +228,7 @@
                             
                             {% if has_next %}
                                 <li class="waves-effect">
-                                    <a href="{{ url_for('data_management', page=page+1, search=search, category=category) }}">
+                                    <a href="{{ url_for('data_management.data_management', page=page+1, search=search, category=category) }}">
                                         <i class="material-icons">chevron_right</i>
                                     </a>
                                 </li>
@@ -255,7 +255,7 @@
         </h4>
         <p>Upload new pump data to the database. Supported formats: JSON, CSV, TXT</p>
         
-        <form action="{{ url_for('upload_pump_data') }}" method="post" enctype="multipart/form-data">
+        <form action="{{ url_for('data_management.upload_pump_data') }}" method="post" enctype="multipart/form-data">
             <div class="file-field input-field">
                 <div class="btn blue darken-2">
                     <span><i class="material-icons left">attach_file</i>Choose File</span>

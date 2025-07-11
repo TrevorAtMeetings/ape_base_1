@@ -15,10 +15,7 @@ logger = logging.getLogger(__name__)
 
 admin_bp = Blueprint('admin', __name__)
 
-@app.route('/admin/pump_upload')
-def pump_upload():
-    """Admin pump upload interface."""
-    return render_template('admin/pump_upload.html')
+# Removed pump_upload route and function as requested
 
 @app.route('/admin/recent_pumps')
 def recent_pumps():
@@ -43,7 +40,7 @@ def download_template(format_type):
     try:
         if format_type not in ['csv', 'json', 'txt']:
             safe_flash('Invalid format type.', 'error')
-            return redirect(url_for('pump_upload'))
+            return redirect(url_for('admin.recent_pumps'))
         
         # Create template data
         template_data = {
@@ -64,7 +61,7 @@ def download_template(format_type):
     except Exception as e:
         logger.error(f"Error downloading template: {str(e)}")
         safe_flash('Error generating template.', 'error')
-        return redirect(url_for('pump_upload'))
+        return redirect(url_for('admin.recent_pumps'))
 
 def create_csv_template():
     """Create CSV template for pump data."""
@@ -268,5 +265,15 @@ def scg_stats():
     except Exception as e:
         logger.error(f"Error getting SCG stats: {str(e)}")
         return jsonify({'error': 'Failed to get statistics'}), 500 
+
+@admin_bp.route('/admin/ai')
+def ai_admin():
+    """AI Knowledge Base Admin page."""
+    return render_template('ai_admin.html')
+
+# Optionally, make this the admin landing page as well:
+@admin_bp.route('/admin')
+def admin_landing():
+    return render_template('ai_admin.html')
 
  

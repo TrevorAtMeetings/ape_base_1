@@ -4,30 +4,33 @@ Routes for pump reports and PDF generation
 """
 import logging
 from datetime import datetime
-from flask import render_template, request, redirect, url_for, session, jsonify, make_response, Response
+from flask import Blueprint, render_template, request, redirect, url_for, session, jsonify, make_response, Response
 from ..session_manager import safe_flash, safe_session_get, safe_session_set, safe_session_pop, safe_session_clear, get_form_data, store_form_data
 from ..pump_engine import load_all_pump_data, find_best_pumps, validate_site_requirements, SiteRequirements, ParsedPumpData
 from .. import app
 
 logger = logging.getLogger(__name__)
 
-@app.route('/pump_report', methods=['POST'])
+# Create blueprint
+reports_bp = Blueprint('reports', __name__)
+
+@reports_bp.route('/pump_report', methods=['POST'])
 def pump_report_post():
     """Handle POST requests for pump reports."""
     try:
         pump_code = request.form.get('pump_code')
         if not pump_code:
             safe_flash('Pump code is required.', 'error')
-            return redirect(url_for('index'))
+            return redirect(url_for('main_flow.index'))
         
-        return redirect(url_for('pump_report', pump_code=pump_code))
+        return redirect(url_for('reports.pump_report', pump_code=pump_code))
     
     except Exception as e:
         logger.error(f"Error in pump_report_post: {str(e)}")
         safe_flash('An error occurred processing your request.', 'error')
-        return redirect(url_for('index'))
+        return redirect(url_for('main_flow.index'))
 
-@app.route('/pump_report/<path:pump_code>')
+@reports_bp.route('/pump_report/<path:pump_code>')
 def pump_report(pump_code):
     """Display comprehensive pump selection report (modern UI)."""
     try:
@@ -52,7 +55,7 @@ def pump_report(pump_code):
             head = request.args.get('head', type=float)
             if not flow or not head:
                 safe_flash('Flow and head parameters are required for pump analysis.', 'error')
-                return redirect(url_for('index'))
+                return redirect(url_for('main_flow.index'))
             from ..catalog_engine import get_catalog_engine
             catalog_engine = get_catalog_engine()
             try:
@@ -132,7 +135,7 @@ def pump_report(pump_code):
 
         if not selected_pump:
             safe_flash('Selected pump not found or cannot meet requirements. Please start a new selection.', 'warning')
-            return redirect(url_for('index'))
+            return redirect(url_for('main_flow.index'))
 
         logger.info(f"Displaying report for pump: {pump_code}")
 
@@ -187,15 +190,15 @@ def pump_report(pump_code):
     except Exception as e:
         logger.error(f"Error displaying pump report: {str(e)}", exc_info=True)
         safe_flash('Error loading pump report. Please try again.', 'error')
-        return redirect(url_for('index'))
+        return redirect(url_for('main_flow.index'))
 
-@app.route('/professional_pump_report/<path:pump_code>')
+@reports_bp.route('/professional_pump_report/<path:pump_code>')
 def professional_pump_report(pump_code):
     """Generate professional pump report."""
     return pump_report(pump_code)
 
-@app.route('/generate_pdf/<path:pump_code>')
-def generate_pdf_report(pump_code):
+@reports_bp.route('/generate_pdf/<path:pump_code>')
+def generate_pdf(pump_code):  # Renamed to match template usage
     """Generate PDF report using URL parameters instead of session data"""
     try:
         # URL decode the pump code to handle special characters
@@ -211,7 +214,7 @@ def generate_pdf_report(pump_code):
         if not flow or not head:
             logger.error(f"PDF generation - Missing flow or head parameters")
             safe_flash('Flow and head parameters are required for PDF generation.', 'error')
-            return redirect(url_for('index'))
+            return redirect(url_for('main_flow.index'))
         
         logger.info(f"PDF generation - Parameters: flow={flow}, head={head}")
         
@@ -223,7 +226,7 @@ def generate_pdf_report(pump_code):
         if not catalog_pump:
             logger.error(f"PDF generation - Catalog pump {pump_code} not found")
             safe_flash('Pump not found in catalog', 'error')
-            return redirect(url_for('index'))
+            return redirect(url_for('main_flow.index'))
         
         # Calculate performance at duty point
         performance = catalog_pump.get_performance_at_duty(flow, head)
@@ -231,7 +234,7 @@ def generate_pdf_report(pump_code):
         if not performance:
             logger.error(f"PDF generation - No performance data for {pump_code} at flow={flow}, head={head}")
             safe_flash(f'Pump {pump_code} cannot operate at flow={flow} m³/hr, head={head} m', 'error')
-            return redirect(url_for('index'))
+            return redirect(url_for('main_flow.index'))
         
         logger.info(f"PDF generation - Performance calculated: efficiency={performance.get('efficiency_pct')}%, power={performance.get('power_kw')}kW")
         
@@ -298,10 +301,10 @@ def generate_pdf_report(pump_code):
     except Exception as e:
         logger.error(f"Error generating PDF: {str(e)}", exc_info=True)
         safe_flash('Error generating PDF report. Please try again.', 'error')
-        return redirect(url_for('index'))
+        return redirect(url_for('main_flow.index'))
 
-@app.route('/generate_pdf', methods=['POST'])
-def generate_pdf_api():
+@reports_bp.route('/generate_pdf', methods=['POST'])
+def generate_pdf_post():  # Renamed to be more descriptive
     """API endpoint for PDF report generation."""
     try:
         data = request.get_json() if request.is_json else {}
@@ -353,7 +356,7 @@ def generate_pdf_api():
 
         from ..pump_engine import evaluate_pump_for_requirements
         evaluation = evaluate_pump_for_requirements(parsed_pump, site_requirements)
-        pdf_content = generate_pdf_report(evaluation, parsed_pump, site_requirements)
+        pdf_content = generate_pdf(evaluation, parsed_pump, site_requirements)
 
         response = make_response(pdf_content)
         response.headers['Content-Type'] = 'application/pdf'
