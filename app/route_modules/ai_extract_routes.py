@@ -28,6 +28,14 @@ def ai_extract_extract():
     if not file.filename.lower().endswith('.pdf'):
         return jsonify({'success': False, 'message': 'Only PDF files are allowed'}), 400
     
+    # Check file size (limit to 10MB)
+    file.seek(0, 2)  # Seek to end
+    file_size = file.tell()
+    file.seek(0)  # Reset to beginning
+    
+    if file_size > 10 * 1024 * 1024:  # 10MB limit
+        return jsonify({'success': False, 'message': 'File too large. Maximum size is 10MB'}), 400
+    
     temp_dir = tempfile.gettempdir()
     file_path = os.path.join(temp_dir, file.filename)
     
@@ -57,6 +65,14 @@ def ai_extract_extract():
         import traceback
         logger.error(f"[AI Extract Routes] Full traceback: {traceback.format_exc()}")
         return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        # Clean up temporary file
+        if os.path.exists(file_path):
+            try:
+                os.remove(file_path)
+                logger.info(f"[AI Extract Routes] Cleaned up temporary file: {file_path}")
+            except Exception as cleanup_error:
+                logger.warning(f"[AI Extract Routes] Failed to clean up temporary file: {cleanup_error}")
 
 @ai_extract_bp.route('/ai_extract/insert', methods=['POST'])
 def ai_extract_insert():
