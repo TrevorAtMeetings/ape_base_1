@@ -123,7 +123,7 @@
                             <i class="material-icons" style="font-size: 2rem; color: #1976d2; margin-bottom: 8px;">cloud_upload</i>
                             <p style="margin: 8px 0; font-weight: 500;">Upload PDF</p>
                             <p style="margin: 4px 0; font-size: 0.9em; color: #666;">Select a PDF file to extract pump data</p>
-                            <input type="file" id="pdf-file" name="pdf_file" accept=".pdf" required style="display: none;">
+                            <input type="file" id="pdf-file" name="pdf_file" accept=".pdf" style="display: none;">
                             <button type="button" class="btn btn-compact waves-effect waves-light" style="background-color: #1976d2; margin-top: 8px;" onclick="document.getElementById('pdf-file').click();">
                                 <i class="material-icons left">attach_file</i>
                                 Choose PDF
@@ -133,6 +133,7 @@
                                 Extract Data
                             </button>
                         </div>
+
                     </form>
                     
                     <div class="status-section">
@@ -161,8 +162,25 @@
                 <div class="card-content">
                     <div class="compact-title">
                         <i class="material-icons left" style="color: #1976d2;">assessment</i>
-                        Extracted Data
+                        Extracted Data & Performance Analysis
                     </div>
+                    
+                    <!-- Split layout: PDF Preview + Performance Graph -->
+                    <div class="row" style="margin-bottom: 20px;">
+                        <div class="col s12 m4">
+                            <h6 style="color: #1976d2; margin-bottom: 5px;">PDF Preview</h6>
+                            <div id="results-pdf-preview" style="border: 1px solid #ddd; padding: 2px; min-height: 400px; text-align: center;">
+                                <!-- PDF preview will be copied here -->
+                            </div>
+                        </div>
+                        <div class="col s12 m8">
+                            <h6 style="color: #1976d2; margin-bottom: 5px;">Performance Curves</h6>
+                            <div id="performance-graph-container" style="border: 1px solid #ddd; padding: 5px; min-height: 400px;">
+                                <div id="performance-graph" style="width: 100%; height: 390px;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <div id="extracted-data">
                         <!-- Extracted data will be displayed here -->
                     </div>
@@ -182,38 +200,18 @@
                             </button>
                         </div>
                     </div>
-                    <!-- JSON Data Modal -->
-                    <div id="json-modal" class="modal">
-                        <div class="modal-content">
-                            <h4><i class="material-icons left">code</i>Raw Extracted Data</h4>
-                            <pre id="json-content" style="background-color: #f5f5f5; padding: 15px; border-radius: 4px; overflow-x: auto; max-height: 400px;"></pre>
-                        </div>
-                        <div class="modal-footer">
-                            <a href="#!" class="modal-close waves-effect waves-green btn-flat">Close</a>
-                        </div>
-                    </div>
                 </div>
             </div>
-        </div>
-    </div>
-    <div class="row" id="json-table-section" style="display: none;">
-        <div class="col s12">
-            <ul class="collapsible">
-                <li>
-                    <div class="collapsible-header"><i class="material-icons">code</i>Full Extracted JSON (Table View)</div>
-                    <div class="collapsible-body">
-                        <table class="striped data-table">
-                            <tbody id="json-table-body"></tbody>
-                        </table>
-                    </div>
-                </li>
-            </ul>
         </div>
     </div>
 </div>
 {% endblock %}
 
 {% block scripts %}
+<!-- PDF.js served locally -->
+<script src="{{ url_for('static', filename='js/pdf.min.js') }}"></script>
+<!-- Plotly.js for performance graphs -->
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('ai-extract-form');
@@ -226,23 +224,53 @@ document.addEventListener('DOMContentLoaded', function() {
     const progressContainer = document.getElementById('progress-container');
     const resultsSection = document.getElementById('results-section');
     const extractedDataDiv = document.getElementById('extracted-data');
-    const jsonModal = document.getElementById('json-modal');
-    const jsonContent = document.getElementById('json-content');
-    const jsonTableBody = document.getElementById('json-table-body');
-    const jsonTableSection = document.getElementById('json-table-section');
     const uploadContainer = document.getElementById('upload-container');
     let extractedData = null;
+    let currentPreviewImage = null; // Store the preview image
 
-    // Initialize modals
-    M.Modal.init(document.querySelectorAll('.modal'));
-
-    // File input change handler
-    fileInput.addEventListener('change', function() {
-        const file = this.files[0];
-        if (file) {
-            statusContainer.innerHTML = `<p class="green-text text-darken-2" style="margin: 0;"><i class="material-icons left" style="font-size: 1.2rem;">check_circle</i>File selected: ${file.name}</p>`;
-        }
-    });
+    // File input change handler for preview
+    if (fileInput) {
+        fileInput.addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                statusContainer.innerHTML = `<p class="green-text text-darken-2" style="margin: 0;"><i class="material-icons left" style="font-size: 1.2rem;">check_circle</i>File selected: ${file.name}</p>`;
+                
+                if (file.type === "application/pdf") {
+                    if (typeof pdfjsLib === "undefined") {
+                        console.error("PDF.js failed to load");
+                        return;
+                    }
+                    
+                    // Set worker source for PDF.js
+                    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+                    
+                    const fileReader = new FileReader();
+                    fileReader.onload = function() {
+                        const typedarray = new Uint8Array(this.result);
+                        pdfjsLib.getDocument(typedarray).promise.then(function(pdf) {
+                            pdf.getPage(1).then(function(page) {
+                                const viewport = page.getViewport({scale: 1.0});
+                                const canvas = document.createElement('canvas');
+                                const context = canvas.getContext('2d');
+                                canvas.height = viewport.height;
+                                canvas.width = viewport.width;
+                                page.render({canvasContext: context, viewport: viewport}).promise.then(function() {
+                                    const imgUrl = canvas.toDataURL();
+                                    currentPreviewImage = imgUrl; // Store the preview for results section
+                                    // No longer display preview in upload section
+                                });
+                            });
+                        }).catch(function(error) {
+                            console.error("Error loading PDF:", error.message);
+                        });
+                    };
+                    fileReader.readAsArrayBuffer(file);
+                } else {
+                    console.error("Please select a valid PDF file");
+                }
+            }
+        });
+    }
 
     // Drag and drop functionality
     uploadContainer.addEventListener('dragover', function(e) {
@@ -261,27 +289,30 @@ document.addEventListener('DOMContentLoaded', function() {
         const files = e.dataTransfer.files;
         if (files.length > 0 && files[0].type === 'application/pdf') {
             fileInput.files = files;
-            statusContainer.innerHTML = `<p class="green-text text-darken-2" style="margin: 0;"><i class="material-icons left" style="font-size: 1.2rem;">check_circle</i>File selected: ${files[0].name}</p>`;
+            fileInput.dispatchEvent(new Event('change'));
         }
     });
 
+    // Form submission handler
     form.addEventListener('submit', function(e) {
         e.preventDefault();
         const file = fileInput.files[0];
         if (!file) {
-            M.toast({html: 'Please select a PDF file', classes: 'red'});
+            statusContainer.innerHTML = '<p class="red-text text-darken-2" style="margin: 0;"><i class="material-icons left" style="font-size: 1.2rem;">error</i>Please select a PDF file first.</p>';
             return;
         }
         if (!file.name.toLowerCase().endsWith('.pdf')) {
-            M.toast({html: 'Please select a PDF file', classes: 'red'});
+            statusContainer.innerHTML = '<p class="red-text text-darken-2" style="margin: 0;"><i class="material-icons left" style="font-size: 1.2rem;">error</i>Please select a PDF file.</p>';
             return;
         }
         
-        // Set processing state
+        // Set processing state but preserve preview
         progressContainer.style.display = 'block';
         statusContainer.style.display = 'none';
         extractBtn.disabled = true;
         extractBtn.innerHTML = '<i class="material-icons left">hourglass_empty</i>Processing...';
+        
+        // Preview will be shown in results section after extraction
         
         const formData = new FormData();
         formData.append('pdf_file', file);
@@ -304,8 +335,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 resultsSection.style.display = 'block';
                 insertBtn.style.display = 'inline-block';
                 showJsonBtn.style.display = 'inline-block';
-                renderJsonTable(data.data);
-                jsonTableSection.style.display = 'block';
             } else {
                 statusContainer.innerHTML = `<p class="red-text text-darken-2" style="margin: 0;"><i class="material-icons left" style="font-size: 1.2rem;">error</i>Error: ${data.message || data.error}</p>`;
             }
@@ -320,51 +349,75 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
+    // Insert into Database button handler
     insertBtn.addEventListener('click', function() {
-        if (!extractedData) return;
+        if (!extractedData) {
+            statusContainer.innerHTML = '<p class="red-text text-darken-2" style="margin: 0;"><i class="material-icons left" style="font-size: 1.2rem;">error</i>No data to insert.</p>';
+            return;
+        }
+        
         insertBtn.disabled = true;
         insertBtn.innerHTML = '<i class="material-icons left">hourglass_empty</i>Inserting...';
+        
         fetch('/ai_extract/insert', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
             },
-            body: JSON.stringify({
-                ...extractedData,
-                filename: fileInput.files[0]?.name
-            })
+            body: JSON.stringify(extractedData)
         })
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                M.toast({html: 'Data inserted successfully!', classes: 'green'});
-                insertBtn.innerHTML = '<i class="material-icons left">check_circle</i>Inserted';
+                statusContainer.innerHTML = `<p class="green-text text-darken-2" style="margin: 0;"><i class="material-icons left" style="font-size: 1.2rem;">check_circle</i>Data inserted successfully! Pump ID: ${data.pump_id}</p>`;
+                insertBtn.innerHTML = '<i class="material-icons left">check</i>Inserted';
                 insertBtn.classList.remove('green');
                 insertBtn.classList.add('grey');
-                insertBtn.disabled = true;
             } else {
-                M.toast({html: `Error: ${data.error}`, classes: 'red'});
+                statusContainer.innerHTML = `<p class="red-text text-darken-2" style="margin: 0;"><i class="material-icons left" style="font-size: 1.2rem;">error</i>Error inserting data: ${data.error}</p>`;
                 insertBtn.disabled = false;
                 insertBtn.innerHTML = '<i class="material-icons left">save</i>Insert into Database';
             }
         })
         .catch(error => {
-            M.toast({html: `Error: ${error.message}`, classes: 'red'});
+            statusContainer.innerHTML = `<p class="red-text text-darken-2" style="margin: 0;"><i class="material-icons left" style="font-size: 1.2rem;">error</i>Error: ${error.message}</p>`;
             insertBtn.disabled = false;
             insertBtn.innerHTML = '<i class="material-icons left">save</i>Insert into Database';
         });
     });
 
+    // Show JSON button handler
     showJsonBtn.addEventListener('click', function() {
-        if (extractedData) {
-            jsonContent.textContent = JSON.stringify(extractedData, null, 2);
-            M.Modal.init(jsonModal).open();
+        if (!extractedData) {
+            statusContainer.innerHTML = '<p class="red-text text-darken-2" style="margin: 0;"><i class="material-icons left" style="font-size: 1.2rem;">error</i>No data to show.</p>';
+            return;
         }
+        
+        // Create a modal or new window to show JSON
+        const jsonWindow = window.open('', '_blank', 'width=800,height=600,scrollbars=yes');
+        jsonWindow.document.write(`
+            <html>
+                <head>
+                    <title>Raw JSON Data</title>
+                    <style>
+                        body { font-family: monospace; margin: 20px; }
+                        pre { background: #f5f5f5; padding: 15px; border-radius: 5px; overflow-x: auto; }
+                    </style>
+                </head>
+                <body>
+                    <h2>Extracted Pump Data (Raw JSON)</h2>
+                    <pre>${JSON.stringify(extractedData, null, 2)}</pre>
+                </body>
+            </html>
+        `);
+        jsonWindow.document.close();
     });
 
+    // Reset button handler
     resetBtn.addEventListener('click', function() {
         form.reset();
         extractedData = null;
+        currentPreviewImage = null;
         resultsSection.style.display = 'none';
         insertBtn.style.display = 'none';
         showJsonBtn.style.display = 'none';
@@ -374,237 +427,276 @@ document.addEventListener('DOMContentLoaded', function() {
         insertBtn.classList.add('green');
         statusContainer.innerHTML = '<p class="grey-text text-darken-2" style="margin: 0;"><i class="material-icons left" style="font-size: 1.2rem;">info</i>Ready to extract data from PDF files.</p>';
         statusContainer.style.display = 'block';
-        jsonTableBody.innerHTML = '';
-        jsonTableSection.style.display = 'none';
+        extractedDataDiv.innerHTML = '';
+        // Clear results section PDF preview
+        const resultsPdfPreview = document.getElementById('results-pdf-preview');
+        if (resultsPdfPreview) {
+            resultsPdfPreview.innerHTML = '';
+        }
     });
 
-    function displayExtractedData(data) {
-        console.log('Full extracted data structure:', data);
-        console.log('Pump Details:', data.pumpDetails);
-        console.log('Technical Details:', data.technicalDetails);
-        console.log('Specifications:', data.specifications);
-        console.log('Curves array:', data.curves);
-        let html = '';
-        
-        // DEBUG: Check if technicalDetails should be rendered
-        if (data.technicalDetails) {
-            console.log('WARNING: technicalDetails found in data - should NOT be rendered as separate section:', data.technicalDetails);
+    // Function to generate performance graph
+    function generatePerformanceGraph(data) {
+        if (!data || !data.curves || data.curves.length === 0) {
+            document.getElementById('performance-graph').innerHTML = '<p style="text-align: center; color: #666; padding: 50px;">No performance data available</p>';
+            return;
         }
-        
-        // Create 2-column layout
-        html += '<div class="row" style="margin-bottom: 0;">';
-        
-        // Left Column
-        html += '<div class="col s12 m6">';
-        
-        // 1. Pump Details (including impeller type right after pump type)
-        if (data.pumpDetails && Object.keys(data.pumpDetails).length > 0) {
-            html += `<div class="card summary-card" style="margin: 8px 0;">
-                <div class="card-content" style="padding: 12px;">
-                    <div class="compact-title" style="margin-bottom: 8px;">
-                        <i class="material-icons left" style="color: #1976d2; font-size: 1.2rem;">info</i>Pump Details
-                    </div>
-                    <table class="striped compact-data-table">
-                        <tbody>`;
-                        
-            // Get impeller type from various possible locations
-            let impellerType = null;
-            if (data.technicalDetails && data.technicalDetails.impellerType) {
-                impellerType = data.technicalDetails.impellerType;
-            } else if (data.technicalDetails && data.technicalDetails['Impeller Type']) {
-                impellerType = data.technicalDetails['Impeller Type'];
-            } else if (data.specifications && data.specifications.impellerType) {
-                impellerType = data.specifications.impellerType;
-            } else if (data.specifications && data.specifications['Impeller Type']) {
-                impellerType = data.specifications['Impeller Type'];
-            }
-            
-            // Loop through pump details and insert impeller type right after pump type
-            for (const [key, value] of Object.entries(data.pumpDetails)) {
-                if (value !== undefined && value !== null && value !== "") {
-                    html += `<tr><td style="font-weight:600;">${key}</td><td>${value}</td></tr>`;
-                    
-                    // Insert impeller type right after pump type
-                    if (key === 'pumpType' && impellerType) {
-                        html += `<tr><td style="font-weight:600;">Impeller Type</td><td>${impellerType}</td></tr>`;
-                    }
-                }
-            }
-            html += `</tbody></table></div></div>`;
-        }
-        
 
-        
-        html += '</div>'; // End left column
-        
-        // Right Column
-        html += '<div class="col s12 m6">';
-        
-        // 3. Specifications
-        if (data.specifications && Object.keys(data.specifications).length > 0) {
-            html += `<div class="card summary-card" style="margin: 8px 0;">
-                <div class="card-content" style="padding: 12px;">
-                    <div class="compact-title" style="margin-bottom: 8px;">
-                        <i class="material-icons left" style="color: #1976d2; font-size: 1.2rem;">assessment</i>Specifications
-                    </div>
-                    <table class="striped compact-data-table">
-                        <tbody>`;
-            for (const [key, value] of Object.entries(data.specifications)) {
-                if (value !== undefined && value !== null && value !== "") {
-                    html += `<tr><td style="font-weight:600;">${key}</td><td>${value}</td></tr>`;
-                }
-            }
-            html += `</tbody></table></div></div>`;
-        }
-        
-        html += '</div>'; // End right column
-        html += '</div>'; // End row
-        // 4. Performance Curves (full width below the 2-column layout)
-        if (data.curves && Array.isArray(data.curves) && data.curves.length > 0) {
-            data.curves.forEach((curve, idx) => {
-                console.log(`Processing curve ${idx + 1}:`, curve);
-                console.log(`Curve ${idx + 1} impeller diameter:`, curve.impellerDiameter);
-                console.log(`Curve ${idx + 1} all keys:`, Object.keys(curve));
-                console.log(`Curve ${idx + 1} efficiency array:`, curve.efficiency);
-                console.log(`Curve ${idx + 1} power array:`, curve.power);
-                console.log(`Curve ${idx + 1} performancePoints:`, curve.performancePoints);
-                
-                html += `<div class="card curve-section" style="margin: 12px 0;">
-                    <div class="card-content" style="padding: 12px;">
-                        <div class="compact-title" style="margin-bottom: 8px;">
-                            <i class="material-icons left" style="color: #1976d2; font-size: 1.2rem;">show_chart</i>
-                            Impeller ${curve.impellerDiameter ? curve.impellerDiameter + ' mm' : idx + 1}
-                        </div>
-                                                 <div style="overflow-x: auto;">
-                             <table class="striped responsive-table compact-data-table">
-                                 <thead>
-                                     <tr>
-                                         <th>Point</th>
-                                         <th>Flow</th>
-                                         <th>Head</th>
-                                         <th>Efficiency</th>
-                                         <th>Power</th>
-                                         <th>NPSH</th>
-                                     </tr>
-                                 </thead>
-                                 <tbody>`;
-                
-                // Handle new performancePoints structure
-                if (curve.performancePoints && Array.isArray(curve.performancePoints)) {
-                    console.log('Found performancePoints for impeller:', curve.impellerDiameter, curve.performancePoints);
-                    curve.performancePoints.forEach((point, i) => {
-                        console.log(`Point ${i+1} structure:`, point);
-                        console.log(`Point ${i+1} keys:`, Object.keys(point));
-                        console.log(`Point ${i+1} efficiency:`, point.efficiency, 'type:', typeof point.efficiency);
-                        console.log(`Point ${i+1} power:`, point.power, 'type:', typeof point.power);
-                        console.log(`Point ${i+1} npshr:`, point.npshr, 'type:', typeof point.npshr);
-                        console.log(`Point ${i+1} npsh:`, point.npsh, 'type:', typeof point.npsh);
-                        
-                        // Better efficiency handling - check for null, undefined, and empty strings
-                        const efficiencyValue = (point.efficiency !== undefined && point.efficiency !== null && point.efficiency !== '') ? point.efficiency : '-';
-                        const flowValue = (point.flow !== undefined && point.flow !== null && point.flow !== '') ? point.flow : '-';
-                        const headValue = (point.head !== undefined && point.head !== null && point.head !== '') ? point.head : '-';
-                        
-                        // Enhanced power value extraction - check multiple possible field names
-                        let powerValue = '-';
-                        if (point.power !== undefined && point.power !== null && point.power !== '') {
-                            powerValue = point.power;
-                        } else if (point.powerConsumption !== undefined && point.powerConsumption !== null && point.powerConsumption !== '') {
-                            powerValue = point.powerConsumption;
-                        } else if (point.kW !== undefined && point.kW !== null && point.kW !== '') {
-                            powerValue = point.kW;
-                        } else if (point.hp !== undefined && point.hp !== null && point.hp !== '') {
-                            powerValue = point.hp;
-                        } else if (point.horsepower !== undefined && point.horsepower !== null && point.horsepower !== '') {
-                            powerValue = point.horsepower;
-                        }
-                        console.log(`Point ${i+1} final powerValue:`, powerValue);
-                        
-                        const npshValue = (point.npshr !== undefined && point.npshr !== null && point.npshr !== '') ? point.npshr : 
-                                         (point.npsh !== undefined && point.npsh !== null && point.npsh !== '') ? point.npsh : '-';
-                        
-                        html += `<tr>
-                            <td>${i + 1}</td>
-                            <td>${flowValue}</td>
-                            <td>${headValue}</td>
-                            <td>${efficiencyValue}</td>
-                            <td>${powerValue}</td>
-                            <td>${npshValue}</td>
-                        </tr>`;
-                    });
-                } else {
-                    console.log('No performancePoints found, using fallback for impeller:', curve.impellerDiameter, 'Available keys:', Object.keys(curve));
-                    // Fallback to old structure (separate arrays)
-                    const maxPoints = Math.max(
-                        curve.flow ? curve.flow.length : 0,
-                        curve.head ? curve.head.length : 0,
-                        curve.efficiency ? curve.efficiency.length : 0,
-                        curve.power ? curve.power.length : 0,
-                        curve.npsh ? curve.npsh.length : 0
-                    );
-                    for (let i = 0; i < maxPoints; i++) {
-                        // Better efficiency handling for array structure
-                        const efficiencyValue = (curve.efficiency && curve.efficiency[i] !== undefined && curve.efficiency[i] !== null && curve.efficiency[i] !== '') ? curve.efficiency[i] : '-';
-                        const flowValue = (curve.flow && curve.flow[i] !== undefined && curve.flow[i] !== null && curve.flow[i] !== '') ? curve.flow[i] : '-';
-                        const headValue = (curve.head && curve.head[i] !== undefined && curve.head[i] !== null && curve.head[i] !== '') ? curve.head[i] : '-';
-                        
-                        // Enhanced power value extraction for array structure - check multiple possible field names
-                        let powerValue = '-';
-                        if (curve.power && curve.power[i] !== undefined && curve.power[i] !== null && curve.power[i] !== '') {
-                            powerValue = curve.power[i];
-                        } else if (curve.powerConsumption && curve.powerConsumption[i] !== undefined && curve.powerConsumption[i] !== null && curve.powerConsumption[i] !== '') {
-                            powerValue = curve.powerConsumption[i];
-                        } else if (curve.kW && curve.kW[i] !== undefined && curve.kW[i] !== null && curve.kW[i] !== '') {
-                            powerValue = curve.kW[i];
-                        } else if (curve.hp && curve.hp[i] !== undefined && curve.hp[i] !== null && curve.hp[i] !== '') {
-                            powerValue = curve.hp[i];
-                        } else if (curve.horsepower && curve.horsepower[i] !== undefined && curve.horsepower[i] !== null && curve.horsepower[i] !== '') {
-                            powerValue = curve.horsepower[i];
-                        }
-                        console.log(`Array structure - Point ${i+1} final powerValue:`, powerValue);
-                        
-                        const npshValue = (curve.npsh && curve.npsh[i] !== undefined && curve.npsh[i] !== null && curve.npsh[i] !== '') ? curve.npsh[i] : '-';
-                        
-                        html += `<tr>
-                            <td>${i + 1}</td>
-                            <td>${flowValue}</td>
-                            <td>${headValue}</td>
-                            <td>${efficiencyValue}</td>
-                            <td>${powerValue}</td>
-                            <td>${npshValue}</td>
-                        </tr>`;
-                    }
-                }
-                html += `</tbody></table></div></div></div>`;
+        const traces = [];
+        const colors = ['#1976d2', '#d32f2f', '#388e3c', '#f57c00', '#7b1fa2', '#00796b'];
+
+        // Create traces for each impeller curve
+        data.curves.forEach((curve, index) => {
+            const points = curve.performancePoints || [];
+            if (points.length === 0) return;
+
+            const flows = points.map(p => p.flow || 0);
+            const heads = points.map(p => p.head || 0);
+            const efficiencies = points.map(p => p.efficiency || 0);
+            const npsh = points.map(p => p.npshr || 0);
+
+            // Head curve
+            traces.push({
+                x: flows,
+                y: heads,
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: `Head - ${curve.impellerDiameter || 'N/A'}mm`,
+                line: { color: colors[index % colors.length], width: 2 },
+                marker: { size: 4 },
+                yaxis: 'y'
             });
-        }
-        extractedDataDiv.innerHTML = html;
+
+            // Efficiency curve
+            traces.push({
+                x: flows,
+                y: efficiencies,
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: `Efficiency - ${curve.impellerDiameter || 'N/A'}mm`,
+                line: { color: colors[index % colors.length], width: 2, dash: 'dash' },
+                marker: { size: 4 },
+                yaxis: 'y2'
+            });
+
+            // NPSH curve (if available)
+            if (npsh.some(n => n > 0)) {
+                traces.push({
+                    x: flows,
+                    y: npsh,
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    name: `NPSH - ${curve.impellerDiameter || 'N/A'}mm`,
+                    line: { color: colors[index % colors.length], width: 2, dash: 'dot' },
+                    marker: { size: 4 },
+                    yaxis: 'y3'
+                });
+            }
+        });
+
+        const layout = {
+            title: {
+                text: `${data.pumpDetails?.pumpModel || 'Pump'} Performance Curves`,
+                font: { size: 12 }
+            },
+            xaxis: {
+                title: { text: 'Flow Rate (m³/hr)', font: { size: 10 } },
+                showgrid: true,
+                gridcolor: '#e0e0e0',
+                tickfont: { size: 9 }
+            },
+            yaxis: {
+                title: { text: 'Head (m)', font: { size: 10 } },
+                side: 'left',
+                showgrid: true,
+                gridcolor: '#e0e0e0',
+                tickfont: { size: 9 }
+            },
+            yaxis2: {
+                title: { text: 'Efficiency (%)', font: { size: 10 } },
+                side: 'right',
+                overlaying: 'y',
+                showgrid: false,
+                tickfont: { size: 9 }
+            },
+            yaxis3: {
+                title: { text: 'NPSH (m)', font: { size: 10 } },
+                side: 'right',
+                overlaying: 'y',
+                position: 0.95,
+                showgrid: false,
+                tickfont: { size: 9 }
+            },
+            legend: {
+                x: 0.02,
+                y: 0.98,
+                bgcolor: 'rgba(255,255,255,0.9)',
+                bordercolor: '#ccc',
+                borderwidth: 1,
+                font: { size: 8 }
+            },
+            margin: { l: 45, r: 75, t: 35, b: 40 },
+            hovermode: 'closest',
+            showlegend: true
+        };
+
+        const config = {
+            responsive: true,
+            displayModeBar: false
+        };
+
+        Plotly.newPlot('performance-graph', traces, layout, config);
     }
 
-    function renderJsonTable(data) {
-        jsonTableBody.innerHTML = '';
-        function recurse(current, prefix = '') {
-            for (const key in current) {
-                const value = current[key];
-                const newKey = prefix ? `${prefix}.${key}` : key;
-                if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
-                    html += `<tr><td colspan="2" style="padding-left: 20px;"><strong>${newKey}:</strong></td></tr>`;
-                    recurse(value, newKey);
-                } else if (Array.isArray(value)) {
-                    html += `<tr><td colspan="2" style="padding-left: 20px;"><strong>${newKey}:</strong></td></tr>`;
-                    value.forEach((item, index) => {
-                        html += `<tr style="padding-left: 20px;">`;
-                        recurse(item, `${newKey}[${index}]`);
-                        html += `</tr>`;
-                    });
-                } else {
-                    html += `<tr><td style="font-weight:600;">${newKey}</td><td>${value}</td></tr>`;
-                }
-            }
+    // Placeholder for displayExtractedData function
+    function displayExtractedData(data) {
+        if (!data) {
+            extractedDataDiv.innerHTML = '<p class="red-text">No data to display</p>';
+            return;
         }
+
+        // Copy PDF preview to results section
+        const resultsPdfPreview = document.getElementById('results-pdf-preview');
+        if (currentPreviewImage && resultsPdfPreview) {
+            resultsPdfPreview.innerHTML = `<img src="${currentPreviewImage}" style="width: 100%; max-height: 390px; object-fit: contain;" alt="PDF Preview"/>`;
+        }
+
+        // Generate performance graph
+        generatePerformanceGraph(data);
+
         let html = '';
-        recurse(data);
-        jsonTableBody.innerHTML = html;
+        
+        // Pump Details Section
+        if (data.pumpDetails) {
+            html += `
+                <div class="curve-section">
+                    <h6 class="impeller-title">Pump Details</h6>
+                    <table class="striped compact-data-table">
+                        <tbody>
+                            <tr><td><strong>Model:</strong></td><td>${data.pumpDetails.pumpModel || 'N/A'}</td></tr>
+                            <tr><td><strong>Manufacturer:</strong></td><td>${data.pumpDetails.manufacturer || 'N/A'}</td></tr>
+                            <tr><td><strong>Type:</strong></td><td>${data.pumpDetails.pumpType || 'N/A'}</td></tr>
+                            <tr><td><strong>Range:</strong></td><td>${data.pumpDetails.pumpRange || 'N/A'}</td></tr>
+                            <tr><td><strong>Application:</strong></td><td>${data.pumpDetails.application || 'N/A'}</td></tr>
+                            <tr><td><strong>Construction Standard:</strong></td><td>${data.pumpDetails.constructionStandard || 'N/A'}</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        // Technical Details Section
+        if (data.technicalDetails) {
+            html += `
+                <div class="curve-section">
+                    <h6 class="impeller-title">Technical Details</h6>
+                    <table class="striped compact-data-table">
+                        <tbody>
+                            <tr><td><strong>Impeller Type:</strong></td><td>${data.technicalDetails.impellerType || 'N/A'}</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        // Specifications Section
+        if (data.specifications) {
+            html += `
+                <div class="curve-section">
+                    <h6 class="impeller-title">Specifications</h6>
+                    <table class="striped compact-data-table">
+                        <tbody>
+                            <tr><td><strong>Test Speed:</strong></td><td>${data.specifications.testSpeed || 0} rpm</td></tr>
+                            <tr><td><strong>Max Flow:</strong></td><td>${data.specifications.maxFlow || 0} m³/hr</td></tr>
+                            <tr><td><strong>Max Head:</strong></td><td>${data.specifications.maxHead || 0} m</td></tr>
+                            <tr><td><strong>BEP Flow:</strong></td><td>${data.specifications.bepFlow || 0} m³/hr</td></tr>
+                            <tr><td><strong>BEP Head:</strong></td><td>${data.specifications.bepHead || 0} m</td></tr>
+                            <tr><td><strong>NPSH at BEP:</strong></td><td>${data.specifications.npshrAtBep || 0} m</td></tr>
+                            <tr><td><strong>Min Impeller:</strong></td><td>${data.specifications.minImpeller || 0} mm</td></tr>
+                            <tr><td><strong>Max Impeller:</strong></td><td>${data.specifications.maxImpeller || 0} mm</td></tr>
+                            <tr><td><strong>Variable Diameter:</strong></td><td>${data.specifications.variableDiameter ? 'Yes' : 'No'}</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        // Performance Curves Section
+        if (data.curves && data.curves.length > 0) {
+            html += `
+                <div class="curve-section">
+                    <h6 class="impeller-title">Performance Curves (${data.curves.length} impeller${data.curves.length > 1 ? 's' : ''})</h6>
+            `;
+            
+            data.curves.forEach((curve, index) => {
+                const points = curve.performancePoints || [];
+                html += `
+                    <div style="margin-bottom: 20px;">
+                        <h6 style="color: #666; font-size: 1rem; margin-bottom: 8px;">
+                            Impeller ${curve.impellerDiameter || 'N/A'}mm (${points.length} points)
+                        </h6>
+                        <table class="striped compact-data-table">
+                            <thead>
+                                <tr>
+                                    <th>Point</th>
+                                    <th>Flow (m³/hr)</th>
+                                    <th>Head (m)</th>
+                                    <th>Efficiency (%)</th>
+                                    <th>NPSH (m)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                `;
+                
+                points.forEach((point, pointIndex) => {
+                    html += `
+                        <tr>
+                            <td>${pointIndex + 1}</td>
+                            <td>${point.flow || 0}</td>
+                            <td>${point.head || 0}</td>
+                            <td>${point.efficiency || 0}</td>
+                            <td>${point.npshr || 0}</td>
+                        </tr>
+                    `;
+                });
+                
+                html += `
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+        }
+
+        // Summary Statistics
+        if (data.curves && data.curves.length > 0) {
+            const totalPoints = data.curves.reduce((sum, curve) => sum + (curve.performancePoints?.length || 0), 0);
+            html += `
+                <div class="summary-card card" style="margin-top: 20px;">
+                    <div class="card-content">
+                        <h6 class="card-title">Extraction Summary</h6>
+                        <div class="row">
+                            <div class="col s6">
+                                <div class="center-align">
+                                    <div class="chip blue white-text">${data.curves.length}</div>
+                                    <p>Impeller Sizes</p>
+                                </div>
+                            </div>
+                            <div class="col s6">
+                                <div class="center-align">
+                                    <div class="chip green white-text">${totalPoints}</div>
+                                    <p>Data Points</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        extractedDataDiv.innerHTML = html;
     }
 });
 </script>

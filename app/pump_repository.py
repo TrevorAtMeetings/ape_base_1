@@ -36,7 +36,7 @@ class PumpRepositoryConfig:
     data_source: DataSource = DataSource.POSTGRESQL # Change this to toggle between JSON and PostgreSQL
     
     # JSON file configuration
-    catalog_path: str = "data/ape_catalog_database.json"
+    catalog_path: str = ""
     
     # PostgreSQL configuration using DATABASE_URL format
     database_url: str = None  # Will be set dynamically
@@ -790,8 +790,17 @@ def get_pump_repository(config: PumpRepositoryConfig = None) -> PumpRepository:
     """Get global pump repository instance (singleton pattern)"""
     global _repository
     
+    # Always check DATABASE_URL and force reload if different
+    current_db_url = os.getenv('DATABASE_URL')
+    
     if _repository is None:
+        logger.info(f"Repository: Creating new instance with DATABASE_URL: {current_db_url}")
         _repository = PumpRepository(config)
+    elif _repository.config.database_url != current_db_url:
+        logger.info(f"Repository: DATABASE_URL changed from {_repository.config.database_url} to {current_db_url}")
+        logger.info(f"Repository: Forcing recreation of repository instance")
+        _repository = PumpRepository(config)
+    
     return _repository
 
 
@@ -803,6 +812,12 @@ def reload_pump_repository() -> bool:
     if _repository:
         return _repository.reload()
     return False
+
+def clear_pump_repository() -> None:
+    """Clear the global repository cache to force recreation"""
+    global _repository
+    logger.info("Repository: Clearing global repository cache")
+    _repository = None
 
 
  

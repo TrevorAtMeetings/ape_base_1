@@ -11,10 +11,8 @@ logger = logging.getLogger(__name__)
 load_dotenv()
 
 def file_to_generative_part(path, mime_type):
-    logger.info(f"[AI Extractor] Converting file to generative part: {path}")
     with open(path, "rb") as f:
         data = f.read()
-        logger.info(f"[AI Extractor] File size: {len(data)} bytes")
         return {
             "inline_data": {
                 "data": base64.b64encode(data).decode("utf-8"),
@@ -26,8 +24,6 @@ def extract_pump_data_from_pdf(pdf_path):
     """
     Extract pump data from a PDF using Gemini API. Returns a Python dict.
     """
-    logger.info(f"[AI Extractor] ===== STARTING EXTRACTION PROCESS =====")
-    logger.info(f"[AI Extractor] PDF path: {pdf_path}")
     
     # Check if file exists
     if not os.path.exists(pdf_path):
@@ -36,21 +32,16 @@ def extract_pump_data_from_pdf(pdf_path):
     
     # Get file size
     file_size = os.path.getsize(pdf_path)
-    logger.info(f"[AI Extractor] PDF file size: {file_size} bytes")
     
     api_key = os.getenv("GOOGLE_API_KEY")
     if not api_key:
         logger.error("[AI Extractor] GOOGLE_API_KEY environment variable is not set.")
         raise ValueError("GOOGLE_API_KEY environment variable is not set.")
     
-    logger.info(f"[AI Extractor] API key found: {'*' * 10}{api_key[-4:] if len(api_key) > 4 else '****'}")
-    
     genai.configure(api_key=api_key)
     model = genai.GenerativeModel(model_name="gemini-2.0-flash-exp")
-    logger.info("[AI Extractor] Gemini model configured: gemini-2.0-flash-exp")
     
     pdf_file_part = file_to_generative_part(pdf_path, "application/pdf")
-    logger.info("[AI Extractor] PDF converted to generative part successfully")
     
     # Use the robust, general prompt for impeller diameter-based curves
     comprehensive_prompt = """
@@ -100,47 +91,23 @@ CRITICAL EXTRACTION METHODOLOGY:
 IMPORTANT: Never output efficiency values of 0 unless the chart explicitly shows 0% efficiency. Always extract meaningful efficiency data from the efficiency curves or contours.
 """
     
-    logger.info("[AI Extractor] Sending prompt to Gemini API...")
     try:
         response = model.generate_content([comprehensive_prompt, pdf_file_part])
-        logger.info("[AI Extractor] Gemini API response received successfully")
-        logger.info(f"[AI Extractor] Response length: {len(response.text)} characters")
         
         response_text = response.text.strip()
-        logger.info(f"[AI Extractor] Raw response starts with: {response_text[:200]}...")
         
         cleaned_response = response_text
         if cleaned_response.startswith('```json'):
             cleaned_response = cleaned_response[7:]
-            logger.info("[AI Extractor] Removed ```json prefix")
         if cleaned_response.startswith('```'):
             cleaned_response = cleaned_response[3:]
-            logger.info("[AI Extractor] Removed ``` prefix")
         if cleaned_response.endswith('```'):
             cleaned_response = cleaned_response[:-3]
-            logger.info("[AI Extractor] Removed ``` suffix")
         cleaned_response = cleaned_response.strip()
         
-        logger.info(f"[AI Extractor] Cleaned response starts with: {cleaned_response[:200]}...")
-        logger.info(f"[AI Extractor] FULL RAW CLEANED RESPONSE: {cleaned_response}")
         # Parse JSON
         parsed_data = json.loads(cleaned_response)
-        logger.info("[AI Extractor] JSON parsed successfully")
-        logger.info(f"[AI Extractor] Extracted data structure: {list(parsed_data.keys())}")
         
-        # Log key data points
-        if 'pumpDetails' in parsed_data:
-            logger.info(f"[AI Extractor] Pump model: {parsed_data['pumpDetails'].get('pumpModel', 'N/A')}")
-        if 'technicalDetails' in parsed_data:
-            logger.info(f"[AI Extractor] Manufacturer: {parsed_data['technicalDetails'].get('manufacturer', 'N/A')}")
-        if 'specifications' in parsed_data:
-            logger.info(f"[AI Extractor] Max flow: {parsed_data['specifications'].get('maxFlow', 'N/A')}")
-        if 'curves' in parsed_data:
-            logger.info(f"[AI Extractor] Number of curves: {len(parsed_data['curves'])}")
-            for i, curve in enumerate(parsed_data['curves']):
-                logger.info(f"[AI Extractor] Curve {i+1}: impeller diameter {curve.get('impellerDiameter', 'N/A')}, flow points: {len(curve.get('flow', []))}")
-        
-        logger.info("[AI Extractor] ===== EXTRACTION COMPLETE =====")
         return parsed_data
         
     except json.JSONDecodeError as e:
