@@ -86,22 +86,14 @@ app.register_blueprint(chat_bp)
 from .route_modules.api import api_bp
 app.register_blueprint(api_bp)
 
-# Import core functions from pump_engine.py (single source of truth)
-from .pump_engine import (
-    load_all_pump_data,
-    validate_site_requirements,
-    SiteRequirements,
-    ParsedPumpData,
-    parse_pump_data
-)
-# selection_engine.py moved to archive - find_best_pumps is available in pump_engine.py
+# Import core functions from appropriate modules
+from .data_models import SiteRequirements
+from .pump_repository import load_all_pump_data
+from .utils import validate_site_requirements
 
 __all__ = [
     'app',  # Expose the Flask app instance
     'load_all_pump_data',
     'validate_site_requirements',
-    'SiteRequirements',
-    'ParsedPumpData',
-    'parse_pump_data',
-    # 'find_best_pumps',  # Available in pump_engine.py
+    'SiteRequirements'
 ]

@@ -1,10 +1,9 @@
 """
 Centralized Pump Repository
 Single source of truth for pump data loading and management.
-Supports both JSON file and PostgreSQL database sources.
+Supports PostgreSQL database source.
 """
 
-import json
 import os
 import logging
 from typing import List, Dict, Any, Optional, Iterator
@@ -26,17 +25,13 @@ logger = logging.getLogger(__name__)
 
 class DataSource(Enum):
     """Enum for data source types"""
-    JSON_FILE = "json_file"
     POSTGRESQL = "postgresql"
 
 @dataclass
 class PumpRepositoryConfig:
     """Configuration for pump repository"""
     # Data source configuration
-    data_source: DataSource = DataSource.POSTGRESQL # Change this to toggle between JSON and PostgreSQL
-    
-    # JSON file configuration
-    catalog_path: str = ""
+    data_source: DataSource = DataSource.POSTGRESQL
     
     # PostgreSQL configuration using DATABASE_URL format
     database_url: str = None  # Will be set dynamically
@@ -53,7 +48,7 @@ class PumpRepositoryConfig:
 class PumpRepository:
     """
     Centralized repository for pump data management.
-    Supports both JSON file and PostgreSQL database sources.
+    Supports PostgreSQL database source.
     """
     
     def __init__(self, config: PumpRepositoryConfig = None):
@@ -99,9 +94,7 @@ class PumpRepository:
     def load_catalog(self) -> bool:
         """Load catalog data from configured source"""
         try:
-            if self.config.data_source == DataSource.JSON_FILE:
-                return self._load_from_json()
-            elif self.config.data_source == DataSource.POSTGRESQL:
+            if self.config.data_source == DataSource.POSTGRESQL:
                 return self._load_from_postgresql_optimized()
             else:
                 logger.error(f"Repository: Unknown data source: {self.config.data_source}")
@@ -113,68 +106,6 @@ class PumpRepository:
             self._pump_models = []
             self._metadata = {}
             self._is_loaded = False
-            return False
-    
-    def _load_from_json(self) -> bool:
-        """Load catalog data from JSON file"""
-        try:
-            if not os.path.exists(self.config.catalog_path):
-                logger.error(f"Repository: Catalog file not found: {self.config.catalog_path}")
-                return False
-                
-            with open(self.config.catalog_path, 'r', encoding='utf-8') as f:
-                self._catalog_data = json.load(f)
-            
-            self._metadata = self._catalog_data.get('metadata', {})
-            self._pump_models = self._catalog_data.get('pump_models', [])
-            
-            # Ensure metadata has both old and new field names for compatibility
-            if 'total_curves' in self._metadata and 'curve_count' not in self._metadata:
-                self._metadata['curve_count'] = self._metadata['total_curves']
-            elif 'curve_count' in self._metadata and 'total_curves' not in self._metadata:
-                self._metadata['total_curves'] = self._metadata['curve_count']
-            
-            # Ensure each pump model has the expected fields
-            for pump_model in self._pump_models:
-                if 'curve_count' not in pump_model:
-                    pump_model['curve_count'] = len(pump_model.get('curves', []))
-                if 'total_points' not in pump_model:
-                    pump_model['total_points'] = sum(len(curve.get('performance_points', [])) for curve in pump_model.get('curves', []))
-                if 'npsh_curves' not in pump_model:
-                    pump_model['npsh_curves'] = sum(1 for curve in pump_model.get('curves', []) if curve.get('has_npsh_data', False))
-                if 'power_curves' not in pump_model:
-                    pump_model['power_curves'] = sum(1 for curve in pump_model.get('curves', []) if curve.get('has_power_data', False))
-                
-                # Add additional fields for compatibility if not present
-                if 'description' not in pump_model:
-                    pump_model['description'] = f"{pump_model.get('pump_code', '')} - {pump_model.get('model_series', '')}"
-                if 'max_flow_m3hr' not in pump_model:
-                    specs = pump_model.get('specifications', {})
-                    pump_model['max_flow_m3hr'] = specs.get('max_flow_m3hr', 0)
-                if 'max_head_m' not in pump_model:
-                    specs = pump_model.get('specifications', {})
-                    pump_model['max_head_m'] = specs.get('max_head_m', 0)
-                if 'max_power_kw' not in pump_model:
-                    pump_model['max_power_kw'] = 0
-                if 'min_efficiency' not in pump_model:
-                    pump_model['min_efficiency'] = 0
-                if 'max_efficiency' not in pump_model:
-                    pump_model['max_efficiency'] = 0
-                if 'connection_size' not in pump_model:
-                    pump_model['connection_size'] = 'Standard'
-                if 'materials' not in pump_model:
-                    pump_model['materials'] = 'Cast Iron'
-            
-            self._is_loaded = True
-            
-            logger.info(f"Repository: Loaded {len(self._pump_models)} pump models from JSON file")
-            logger.info(f"Repository: Total curves: {self._metadata.get('total_curves', 0)}")
-            logger.info(f"Repository: NPSH curves: {self._metadata.get('npsh_curves', 0)}")
-            
-            return True
-            
-        except Exception as e:
-            logger.error(f"Repository: Error loading from JSON: {e}")
             return False
     
     def _load_from_postgresql_optimized(self) -> bool:
@@ -818,6 +749,39 @@ def clear_pump_repository() -> None:
     global _repository
     logger.info("Repository: Clearing global repository cache")
     _repository = None
+
+def load_all_pump_data() -> List[Dict[str, Any]]:
+    """Load and parse pump database into a list of pump data dictionaries."""
+    try:
+        # Use repository for data loading
+        repository = get_pump_repository()
+        catalog_data = repository.get_catalog_data()
+        pump_models = catalog_data.get('pump_models', [])
+        
+        # Convert to simple dictionary format for compatibility
+        pump_data_list = []
+        for pump_model in pump_models:
+            for curve in pump_model.get('curves', []):
+                pump_data = {
+                    'pump_code': pump_model['pump_code'],
+                    'manufacturer': pump_model['manufacturer'],
+                    'model': pump_model['pump_code'],
+                    'series': pump_model['model_series'],
+                    'pump_type': pump_model['pump_type'],
+                    'test_speed_rpm': curve['test_speed_rpm'],
+                    'max_flow_m3hr': pump_model['specifications'].get('max_flow_m3hr', 0),
+                    'max_head_m': pump_model['specifications'].get('max_head_m', 0),
+                    'impeller_diameter_mm': curve['impeller_diameter_mm'],
+                    'performance_points': curve['performance_points']
+                }
+                pump_data_list.append(pump_data)
+
+        logger.info(f"Repository: Loaded {len(pump_data_list)} pump curves for compatibility")
+        return pump_data_list
+
+    except Exception as e:
+        logger.error(f"Repository: Error loading pump data: {e}")
+        return []
 
 
  

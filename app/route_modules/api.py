@@ -9,7 +9,8 @@ import re
 import markdown2
 from flask import Blueprint, render_template, request, redirect, url_for, session, jsonify
 from ..session_manager import safe_flash
-from ..pump_engine import validate_site_requirements, SiteRequirements
+from ..data_models import SiteRequirements
+from ..utils import validate_site_requirements
 from .. import app
 
 logger = logging.getLogger(__name__)

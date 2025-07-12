@@ -6,7 +6,9 @@ import logging
 from datetime import datetime
 from flask import Blueprint, render_template, request, redirect, url_for, session, jsonify
 from ..session_manager import safe_flash, safe_session_get, safe_session_set, safe_session_pop, safe_session_clear, get_form_data, store_form_data
-from ..pump_engine import load_all_pump_data, find_best_pumps, validate_site_requirements, SiteRequirements, ParsedPumpData
+from ..data_models import SiteRequirements
+from ..pump_repository import load_all_pump_data
+from ..utils import validate_site_requirements
 
 logger = logging.getLogger(__name__)
 
@@ -40,10 +42,7 @@ def help_features_page():
     """Help features page."""
     return render_template('help_brochure.html')
 
-@main_flow_bp.route('/docs')
-def docs_page():
-    """Documentation page."""
-    return render_template('docs.html')
+
 
 @main_flow_bp.route('/pump_selection', methods=['POST', 'GET'])
 def pump_selection():
@@ -79,8 +78,8 @@ def pump_selection():
             safe_flash('Invalid numerical values for flow rate or head.', 'error')
             return render_template('input_form.html'), 400
         
-        # Process the selection
-        return redirect(url_for('main_flow.show_results', 
+        # Process the selection - redirect to pump options
+        return redirect(url_for('main_flow.pump_options', 
                                flow=str(flow_val), 
                                head=str(head_val),
                                application_type=request.form.get('application_type', 'water_supply'),
@@ -204,107 +203,4 @@ def pump_options():
         safe_flash('An error occurred while processing your request. Please try again.', 'error')
         return redirect(url_for('main_flow.index'))
 
-@main_flow_bp.route('/show_results', methods=['POST', 'GET'])
-def show_results():
-    """Process pump selection and show results."""
-    try:
-        # Handle GET requests (back button) vs POST requests (form submission)
-        if request.method == 'GET':
-            # Try to get parameters from URL for GET requests
-            flow = request.args.get('flow', type=float)
-            head = request.args.get('head', type=float)
-
-            if flow and head:
-                form_data = {
-                    'flow_m3hr': str(flow),
-                    'head_m': str(head),
-                    'pump_type': request.args.get('pump_type', 'General'),
-                    'customer_name': request.args.get('customer', ''),
-                    'project_name': request.args.get('project', ''),
-                    'application': request.args.get('application', 'Water Supply')
-                }
-            else:
-                # No valid parameters, redirect to pump options
-                safe_flash('Please enter your pump requirements.', 'info')
-                return redirect(url_for('main_flow.index'))
-        else:
-            # POST request - get data from form
-            form_data = request.form.to_dict()
-
-        logger.debug(f"Received form data: {form_data}")
-
-        # Convert form data to site requirements
-        site_requirements = validate_site_requirements(form_data)
-        logger.info(f"Processing requirements: {site_requirements}")
-
-        # Extract pump type from form data
-        pump_type = form_data.get('pump_type', 'General')
-        logger.info(f"Pump type filter: {pump_type}")
-
-        # Use catalog engine for pump selection
-        from ..catalog_engine import get_catalog_engine
-        catalog_engine = get_catalog_engine()
-        
-        # Find best pumps using catalog engine with pump type filtering
-        top_selections = catalog_engine.select_pumps(
-            site_requirements.flow_m3hr, 
-            site_requirements.head_m, 
-            max_results=10,
-            pump_type=pump_type
-        )
-
-        if not top_selections:
-            safe_flash('No suitable pumps found for your requirements. Please adjust your specifications.', 'warning')
-            return redirect(url_for('main_flow.index'))
-
-        # Convert catalog engine format to template-compatible format
-        pump_evaluations = []
-        for selection in top_selections:
-            pump = selection['pump']
-            performance = selection['performance']
-            
-            # Create standardized evaluation format
-            evaluation = {
-                'pump_code': pump.pump_code,
-                'overall_score': selection.get('suitability_score', 0),
-                'selection_reason': f'Efficiency: {performance.get("efficiency_pct", 0):.1f}%, Head error: {selection.get("head_error_pct", 0):.1f}%',
-                'operating_point': performance,
-                'pump_info': {
-                    'manufacturer': pump.manufacturer,
-                    'model_series': pump.model_series,
-                    'pump_type': pump.pump_type
-                },
-                'curve_index': 0,
-                'suitable': selection.get('suitability_score', 0) > 50
-            }
-            pump_evaluations.append(evaluation)
-
-        # Store results in session for detailed reports
-        safe_session_set('pump_selections', pump_evaluations)
-        safe_session_set('site_requirements', {
-            'flow_m3hr': site_requirements.flow_m3hr,
-            'head_m': site_requirements.head_m,
-            'pump_type': site_requirements.pump_type,
-            'customer_name': form_data.get('customer_name', 'Engineering Client'),
-            'project_name': form_data.get('project_name', 'Pump Selection Project'),
-            'application': form_data.get('application', 'Water Supply'),
-            'fluid_type': form_data.get('fluid_type', 'Water')
-        })
-
-        return render_template('results.html',
-                             pump_evaluations=pump_evaluations,
-                             site_requirements={
-                                 'flow_m3hr': site_requirements.flow_m3hr,
-                                 'head_m': site_requirements.head_m,
-                                 'pump_type': site_requirements.pump_type,
-                                 'customer_name': form_data.get('customer_name', 'Engineering Client'),
-                                 'project_name': form_data.get('project_name', 'Pump Selection Project'),
-                                 'application': form_data.get('application', 'Water Supply'),
-                                 'fluid_type': form_data.get('fluid_type', 'Water')
-                             },
-                             current_date=datetime.now().strftime('%Y-%m-%d'))
-
-    except Exception as e:
-        logger.error(f"Error in show_results: {str(e)}")
-        safe_flash('An error occurred while processing your request. Please try again.', 'error')
-        return redirect(url_for('main_flow.index')) 
+ 

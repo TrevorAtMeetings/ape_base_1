@@ -414,7 +414,7 @@ class CatalogPump:
 class CatalogEngine:
     """APE Catalog-based pump selection engine"""
 
-    def __init__(self, catalog_path: str = "data/ape_catalog_database.json"):
+    def __init__(self):
         # Use repository instead of direct file loading
         self.repository = get_pump_repository()
         self.pumps = []

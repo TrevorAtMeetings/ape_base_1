@@ -290,13 +290,15 @@
                     </div>
 
                     <div class="row">
-                        <div class="col s12 m6">
+                        <div class="col s12">
                             <div class="chart-container">
                                 <div id="head-flow-chart" style="width:100%; height:400px;"></div>
                             </div>
                         </div>
+                    </div>
 
-                        <div class="col s12 m6">
+                    <div class="row">
+                        <div class="col s12">
                             <div class="chart-container">
                                 <div id="efficiency-flow-chart" style="width:100%; height:400px;"></div>
                             </div>
@@ -304,13 +306,15 @@
                     </div>
 
                     <div class="row">
-                        <div class="col s12 m6">
+                        <div class="col s12">
                             <div class="chart-container">
                                 <div id="power-flow-chart" style="width:100%; height:400px;"></div>
                             </div>
                         </div>
+                    </div>
 
-                        <div class="col s12 m6">
+                    <div class="row">
+                        <div class="col s12">
                             <div class="chart-container">
                                 <div id="npshr-flow-chart" style="width:100%; height:400px;"></div>
                             </div>
@@ -543,13 +547,13 @@
                     Download Report
                 </a>
 
-                <a href="{{ url_for('pump_comparison') }}?flow={{ site_requirements.flow_m3hr }}&head={{ site_requirements.head_m }}&pump_type={{ site_requirements.pump_type or 'General' }}" 
+                <a href="{{ url_for('comparison.pump_comparison') }}?flow={{ site_requirements.flow_m3hr }}&head={{ site_requirements.head_m }}&pump_type={{ site_requirements.pump_type or 'General' }}" 
                    class="btn-large waves-effect waves-light teal darken-1" style="margin: 5px;">
                     <i class="material-icons left">compare_arrows</i>
                     Compare Options
                 </a>
 
-                <a href="{{ url_for('index') }}" 
+                <a href="{{ url_for('main_flow.index') }}" 
                    class="btn-large waves-effect waves-light grey darken-1" style="margin: 5px;">
                     <i class="material-icons left">refresh</i>
                     New Selection

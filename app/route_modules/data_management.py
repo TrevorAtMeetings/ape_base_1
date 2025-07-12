@@ -11,7 +11,7 @@ from datetime import datetime
 from flask import Blueprint, render_template, request, redirect, url_for, send_file, jsonify, make_response
 from ..session_manager import safe_flash
 from werkzeug.utils import secure_filename
-from ..pump_engine import load_all_pump_data
+from ..pump_repository import load_all_pump_data
 
 logger = logging.getLogger(__name__)
 
@@ -35,19 +35,19 @@ def data_management():
         filtered_pumps = all_pumps
         
         if search:
-            filtered_pumps = [p for p in filtered_pumps if search.lower() in p.pump_code.lower()]
+            filtered_pumps = [p for p in filtered_pumps if search.lower() in p.get('pump_code', '').lower()]
         
         if category != 'all':
             if category == 'END_SUCTION':
                 filtered_pumps = [p for p in filtered_pumps 
-                                if not any(x in p.pump_code.upper() for x in ['2F', '2P', '3P', '4P', '6P', '8P', 'ALE', 'HSC'])]
+                                if not any(x in p.get('pump_code', '').upper() for x in ['2F', '2P', '3P', '4P', '6P', '8P', 'ALE', 'HSC'])]
             elif category == 'MULTI_STAGE':
                 filtered_pumps = [p for p in filtered_pumps 
-                                if any(x in p.pump_code.upper() for x in ['2F', '2P', '3P', '4P', '6P', '8P'])]
+                                if any(x in p.get('pump_code', '').upper() for x in ['2F', '2P', '3P', '4P', '6P', '8P'])]
             elif category == 'AXIAL_FLOW':
-                filtered_pumps = [p for p in filtered_pumps if 'ALE' in p.pump_code.upper()]
+                filtered_pumps = [p for p in filtered_pumps if 'ALE' in p.get('pump_code', '').upper()]
             elif category == 'HSC':
-                filtered_pumps = [p for p in filtered_pumps if 'HSC' in p.pump_code.upper()]
+                filtered_pumps = [p for p in filtered_pumps if 'HSC' in p.get('pump_code', '').upper()]
         
         # Calculate pagination
         total = len(filtered_pumps)
@@ -64,9 +64,17 @@ def data_management():
             max_efficiency = 0
             has_npsh = False
             
-            # Parse curves from pump_info
-            from ..pump_engine import _parse_performance_curves
-            curves = _parse_performance_curves(pump.pump_info)
+            # Parse curves from pump data (now a dictionary)
+            from ..utils import _parse_performance_curves
+            # Convert pump data to legacy format for compatibility
+            pump_info = {
+                'pM_FLOW': ';'.join(str(p['flow_m3hr']) for p in pump.get('performance_points', [])),
+                'pM_HEAD': ';'.join(str(p['head_m']) for p in pump.get('performance_points', [])),
+                'pM_EFF': ';'.join(str(p['efficiency_pct']) for p in pump.get('performance_points', [])),
+                'pM_NP': ';'.join(str(p.get('npshr_m', 0)) for p in pump.get('performance_points', [])),
+                'pM_IMP': str(pump.get('impeller_diameter_mm', 0))
+            }
+            curves = _parse_performance_curves(pump_info)
             curve_count = len(curves)
             
             for curve in curves:
@@ -91,9 +99,9 @@ def data_management():
                     has_npsh = True
             
             pump_data.append({
-                'pump_code': pump.pump_code,
-                'manufacturer': pump.manufacturer,
-                'model': pump.model,
+                'pump_code': pump.get('pump_code', ''),
+                'manufacturer': pump.get('manufacturer', ''),
+                'model': pump.get('model', ''),
                 'max_flow': max_flow,
                 'max_head': max_head,
                 'max_efficiency': max_efficiency,
@@ -133,188 +141,63 @@ def export_csv():
         output = io.StringIO()
         writer = csv.writer(output)
         
-        # Write header with comprehensive performance data
+        # Write simplified header for new data format
         writer.writerow([
-            'Pump Code', 'Manufacturer', 'Model', 'Test Speed (RPM)', 'Curve Count',
+            'Pump Code', 'Manufacturer', 'Model', 'Test Speed (RPM)',
             'Max Flow (m³/hr)', 'Min Flow (m³/hr)', 'Flow Range (m³/hr)',
             'Max Head (m)', 'Min Head (m)', 'Head Range (m)',
             'Max Efficiency (%)', 'Min Efficiency (%)', 'Efficiency Range (%)',
-            'Max Power (kW)', 'Min Power (kW)', 'Power Range (kW)',
             'Has NPSH Data', 'Max NPSH (m)', 'Min NPSH (m)',
-            'BEP Flow (m³/hr)', 'BEP Head (m)', 'BEP Efficiency (%)', 'BEP Power (kW)',
-            'Flow Points Count', 'Head Points Count', 'Efficiency Points Count', 'Power Points Count',
-            'Impeller Sizes', 'Curve Quality Score', 'Data Completeness (%)',
-            'Performance Summary'
+            'Impeller Diameter (mm)', 'Performance Points Count'
         ])
         
-        # Write comprehensive pump performance data
+        # Write pump data in new format
         for pump in all_pumps:
-            # Initialize performance tracking variables
-            all_flows, all_heads, all_efficiencies, all_powers, all_npshr = [], [], [], [], []
-            curve_count = len(pump.curves) if pump.curves else 0
-            impeller_sizes = []
-            flow_points = head_points = eff_points = power_points = 0
+            # Extract basic data
+            pump_code = pump.get('pump_code', '')
+            manufacturer = pump.get('manufacturer', '')
+            model = pump.get('model', '')
+            test_speed = pump.get('test_speed_rpm', 'N/A')
+            impeller_diameter = pump.get('impeller_diameter_mm', 'N/A')
             
-            # Extract all performance data from curves
-            if pump.curves:
-                for curve in pump.curves:
-                    # Flow vs Head data
-                    flow_head_data = curve.get('flow_vs_head', [])
-                    if flow_head_data:
-                        curve_flows = [f for f, h in flow_head_data if f > 0]
-                        curve_heads = [h for f, h in flow_head_data if h > 0]
-                        all_flows.extend(curve_flows)
-                        all_heads.extend(curve_heads)
-                        flow_points += len(curve_flows)
-                        head_points += len(curve_heads)
-                    
-                    # Flow vs Efficiency data
-                    eff_data = curve.get('flow_vs_efficiency', [])
-                    if eff_data:
-                        curve_effs = [e for f, e in eff_data if e > 0 and e <= 100]
-                        all_efficiencies.extend(curve_effs)
-                        eff_points += len(curve_effs)
-                    
-                    # Flow vs Power data
-                    power_data = curve.get('flow_vs_power', [])
-                    if power_data:
-                        curve_powers = [p for f, p in power_data if p > 0]
-                        all_powers.extend(curve_powers)
-                        power_points += len(curve_powers)
-                    
-                    # NPSH data
-                    npshr_data = curve.get('flow_vs_npshr', [])
-                    if npshr_data:
-                        curve_npshr = [n for f, n in npshr_data if n > 0]
-                        all_npshr.extend(curve_npshr)
-                    
-                    # Impeller size
-                    impeller_size = curve.get('impeller_size', 'Standard')
-                    if impeller_size and impeller_size not in impeller_sizes:
-                        impeller_sizes.append(impeller_size)
+            # Extract performance points
+            performance_points = pump.get('performance_points', [])
             
-            # Calculate performance ranges and statistics
-            max_flow = max(all_flows) if all_flows else 0
-            min_flow = min(all_flows) if all_flows else 0
-            flow_range = max_flow - min_flow if all_flows else 0
+            # Calculate statistics
+            flows = [p['flow_m3hr'] for p in performance_points if p.get('flow_m3hr', 0) > 0]
+            heads = [p['head_m'] for p in performance_points if p.get('head_m', 0) > 0]
+            efficiencies = [p['efficiency_pct'] for p in performance_points if p.get('efficiency_pct', 0) > 0]
+            npshrs = [p.get('npshr_m', 0) for p in performance_points if p.get('npshr_m', 0) > 0]
             
-            max_head = max(all_heads) if all_heads else 0
-            min_head = min(all_heads) if all_heads else 0
-            head_range = max_head - min_head if all_heads else 0
+            # Calculate ranges
+            max_flow = max(flows) if flows else 0
+            min_flow = min(flows) if flows else 0
+            flow_range = max_flow - min_flow if flows else 0
             
-            max_efficiency = max(all_efficiencies) if all_efficiencies else 0
-            min_efficiency = min(all_efficiencies) if all_efficiencies else 0
-            eff_range = max_efficiency - min_efficiency if all_efficiencies else 0
+            max_head = max(heads) if heads else 0
+            min_head = min(heads) if heads else 0
+            head_range = max_head - min_head if heads else 0
             
-            max_power = max(all_powers) if all_powers else 0
-            min_power = min(all_powers) if all_powers else 0
-            power_range = max_power - min_power if all_powers else 0
+            max_efficiency = max(efficiencies) if efficiencies else 0
+            min_efficiency = min(efficiencies) if efficiencies else 0
+            eff_range = max_efficiency - min_efficiency if efficiencies else 0
             
-            max_npshr = max(all_npshr) if all_npshr else 0
-            min_npshr = min(all_npshr) if all_npshr else 0
+            max_npshr = max(npshrs) if npshrs else 0
+            min_npshr = min(npshrs) if npshrs else 0
             
-            # Calculate BEP (Best Efficiency Point)
-            bep_flow = bep_head = bep_efficiency = bep_power = 'N/A'
-            if all_efficiencies and pump.curves:
-                max_eff_idx = all_efficiencies.index(max_efficiency)
-                # Find corresponding flow point for max efficiency
-                for curve in pump.curves:
-                    eff_data = curve.get('flow_vs_efficiency', [])
-                    if eff_data:
-                        for i, (f, e) in enumerate(eff_data):
-                            if abs(e - max_efficiency) < 0.1:  # Close match
-                                bep_flow = f
-                                bep_efficiency = e
-                                # Find corresponding head and power
-                                flow_head_data = curve.get('flow_vs_head', [])
-                                power_data = curve.get('flow_vs_power', [])
-                                if flow_head_data and i < len(flow_head_data):
-                                    bep_head = flow_head_data[i][1]
-                                if power_data and i < len(power_data):
-                                    bep_power = power_data[i][1]
-                                break
-                    if bep_flow != 'N/A':
-                        break
-            
-            # Calculate data quality metrics
-            total_possible_points = curve_count * 4  # Flow, Head, Efficiency, Power
-            actual_points = flow_points + head_points + eff_points + power_points
-            data_completeness = (actual_points / total_possible_points * 100) if total_possible_points > 0 else 0
-            
-            # Quality score based on data completeness and ranges
-            quality_score = 0
-            if curve_count > 0:
-                quality_score += min(curve_count * 20, 40)  # Max 40 for curve count
-            if flow_range > 100:
-                quality_score += 20  # Good flow range
-            if eff_range > 10:
-                quality_score += 20  # Good efficiency range
-            if all_npshr:
-                quality_score += 20  # Has NPSH data
-            quality_score = min(quality_score, 100)
-            
-            # Performance summary
-            performance_summary = []
-            if max_efficiency > 85:
-                performance_summary.append("High Efficiency")
-            elif max_efficiency > 70:
-                performance_summary.append("Good Efficiency")
-            else:
-                performance_summary.append("Standard Efficiency")
-            
-            if flow_range > 1000:
-                performance_summary.append("Wide Flow Range")
-            elif flow_range > 500:
-                performance_summary.append("Moderate Flow Range")
-            else:
-                performance_summary.append("Narrow Flow Range")
-            
-            if all_npshr:
-                performance_summary.append("NPSH Available")
-            else:
-                performance_summary.append("NPSH Not Available")
-            
-            summary_text = "; ".join(performance_summary)
-            
-            # Format numeric values with proper handling
-            def format_value(val, decimals=1):
-                if isinstance(val, (int, float)) and val > 0:
-                    return f'{val:.{decimals}f}'
-                return 'N/A'
-            
+            # Write row
             writer.writerow([
-                pump.pump_code,
-                pump.manufacturer,
-                pump.model or 'N/A',
-                getattr(pump, 'test_speed', 'N/A'),
-                curve_count,
-                format_value(max_flow),
-                format_value(min_flow),
-                format_value(flow_range),
-                format_value(max_head),
-                format_value(min_head),
-                format_value(head_range),
-                format_value(max_efficiency),
-                format_value(min_efficiency),
-                format_value(eff_range),
-                format_value(max_power),
-                format_value(min_power),
-                format_value(power_range),
-                'Yes' if all_npshr else 'No',
-                format_value(max_npshr),
-                format_value(min_npshr),
-                format_value(bep_flow) if isinstance(bep_flow, (int, float)) else bep_flow,
-                format_value(bep_head) if isinstance(bep_head, (int, float)) else bep_head,
-                format_value(bep_efficiency) if isinstance(bep_efficiency, (int, float)) else bep_efficiency,
-                format_value(bep_power) if isinstance(bep_power, (int, float)) else bep_power,
-                flow_points,
-                head_points,
-                eff_points,
-                power_points,
-                '; '.join(impeller_sizes) if impeller_sizes else 'Standard',
-                f'{quality_score:.0f}',
-                f'{data_completeness:.1f}',
-                summary_text
+                pump_code,
+                manufacturer,
+                model,
+                test_speed,
+                max_flow, min_flow, flow_range,
+                max_head, min_head, head_range,
+                max_efficiency, min_efficiency, eff_range,
+                'Yes' if npshrs else 'No',
+                max_npshr, min_npshr,
+                impeller_diameter,
+                len(performance_points)
             ])
         
         # Create response
@@ -348,7 +231,7 @@ def upload_pump_data():
             return redirect(url_for('data_management'))
         
         # Create upload directory if it doesn't exist
-        upload_dir = os.path.join(app.config.get('UPLOAD_FOLDER', 'app/static/temp'), 'uploads')
+        upload_dir = os.path.join('app/static/temp', 'uploads')
         os.makedirs(upload_dir, exist_ok=True)
         
         # Save file

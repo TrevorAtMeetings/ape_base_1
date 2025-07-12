@@ -6,7 +6,9 @@ import logging
 from datetime import datetime
 from flask import Blueprint, render_template, request, redirect, url_for, session, jsonify, make_response, Response
 from ..session_manager import safe_flash, safe_session_get, safe_session_set, safe_session_pop, safe_session_clear, get_form_data, store_form_data
-from ..pump_engine import load_all_pump_data, find_best_pumps, validate_site_requirements, SiteRequirements, ParsedPumpData
+from ..data_models import SiteRequirements
+from ..pump_repository import load_all_pump_data
+from ..utils import validate_site_requirements
 from .. import app
 
 logger = logging.getLogger(__name__)
@@ -319,21 +321,17 @@ def generate_pdf_post():  # Renamed to be more descriptive
         if not all([pump_code, flow_rate, head]):
             return jsonify({'error': 'Missing required parameters: pump_code, flow_rate, head'}), 400
 
-        all_pump_data_list = load_all_pump_data()
-        target_pump = None
-
-        for pump_data in all_pump_data_list:
-            if pump_data.pump_code == pump_code:
-                target_pump = pump_data
-                break
-
-        if not target_pump:
+        # Use catalog_engine directly instead of legacy pump_engine
+        from ..catalog_engine import get_catalog_engine, convert_catalog_pump_to_legacy_format
+        catalog_engine = get_catalog_engine()
+        
+        if not pump_code:
+            return jsonify({'error': 'Pump code is required'}), 400
+            
+        catalog_pump = catalog_engine.get_pump_by_code(str(pump_code))
+        
+        if not catalog_pump:
             return jsonify({'error': f'Pump {pump_code} not found'}), 404
-
-        # target_pump is already a ParsedPumpData object
-        parsed_pump = target_pump
-        if not parsed_pump:
-            return jsonify({'error': 'Failed to find pump data'}), 500
 
         # Validate and convert parameters with safe fallbacks
         try:
@@ -354,9 +352,32 @@ def generate_pdf_post():  # Renamed to be more descriptive
             installation="standard"
         )
 
-        from ..pump_engine import evaluate_pump_for_requirements
-        evaluation = evaluate_pump_for_requirements(parsed_pump, site_requirements)
-        pdf_content = generate_pdf(evaluation, parsed_pump, site_requirements)
+        # Get performance at duty point
+        performance = catalog_pump.get_performance_at_duty(flow_val, head_val)
+        
+        if not performance:
+            return jsonify({'error': f'Pump {pump_code} cannot operate at flow={flow_val} m³/hr, head={head_val} m'}), 400
+
+        # Create evaluation data
+        evaluation = {
+            'pump_code': pump_code,
+            'overall_score': performance.get('efficiency_pct', 0),
+            'selection_reason': f"Efficiency: {performance.get('efficiency_pct', 0):.1f}%, Operating at duty point",
+            'operating_point': performance,
+            'pump_info': {
+                'manufacturer': catalog_pump.manufacturer,
+                'model_series': catalog_pump.model_series,
+                'pump_type': catalog_pump.pump_type
+            },
+            'curve_index': 0,
+            'suitable': performance.get('efficiency_pct', 0) > 40
+        }
+        
+        # Convert to legacy format for PDF compatibility
+        legacy_pump = convert_catalog_pump_to_legacy_format(catalog_pump, performance)
+        
+        from ..pdf_generator import generate_pdf_report
+        pdf_content = generate_pdf_report(evaluation, legacy_pump, site_requirements)
 
         response = make_response(pdf_content)
         response.headers['Content-Type'] = 'application/pdf'
