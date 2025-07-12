@@ -84,3 +84,12 @@ CREATE INDEX IF NOT EXISTS idx_pumps_pump_code ON pumps(pump_code);
 --     (1, 4, 100.7, 7.9, 70.0, 3.7),
 --     (1, 5, 125.9, 6.3, 65.0, 5.7),
 --     (1, 6, 133.1, 5.7, 62.0, 6.3); 
+
+-- AI Prompts Table (stores editable prompts for extraction)
+CREATE TABLE IF NOT EXISTS ai_prompts (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    prompt_text TEXT NOT NULL,
+    last_updated TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    label VARCHAR(255)
+); 

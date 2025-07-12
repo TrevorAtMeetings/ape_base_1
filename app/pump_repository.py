@@ -714,6 +714,109 @@ def insert_extracted_pump_data(data: dict, filename: str = None) -> int:
             logger.info("[PumpRepo] Returning connection to pool")
             pool.putconn(conn)
 
+def get_ai_prompt(name: str = 'default') -> Optional[Dict[str, Any]]:
+    """
+    Retrieve the AI extraction prompt by name from the database.
+    Returns a dict with keys: id, name, prompt_text, last_updated.
+    """
+    config = PumpRepositoryConfig()
+    config.database_url = os.getenv('DATABASE_URL')
+    repo = PumpRepository(config)
+    pool = repo._get_connection_pool()
+    with pool.getconn() as conn:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute("""
+                SELECT id, name, prompt_text, last_updated
+                FROM ai_prompts
+                WHERE name = %s
+                LIMIT 1
+            """, (name,))
+            row = cur.fetchone()
+            return dict(row) if row else None
+
+
+def upsert_ai_prompt(name: str, prompt_text: str) -> int:
+    """
+    Insert or update the AI extraction prompt in the database.
+    Returns the prompt id.
+    """
+    config = PumpRepositoryConfig()
+    config.database_url = os.getenv('DATABASE_URL')
+    repo = PumpRepository(config)
+    pool = repo._get_connection_pool()
+    with pool.getconn() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                INSERT INTO ai_prompts (name, prompt_text, last_updated)
+                VALUES (%s, %s, CURRENT_TIMESTAMP)
+                ON CONFLICT (name) DO UPDATE SET
+                    prompt_text = EXCLUDED.prompt_text,
+                    last_updated = CURRENT_TIMESTAMP
+                RETURNING id
+            """, (name, prompt_text))
+            prompt_id = cur.fetchone()[0]
+            conn.commit()
+            return prompt_id
+
+def insert_ai_prompt(prompt_text: str, label: str = None) -> int:
+    """
+    Insert a new AI extraction prompt into the database. Returns the new prompt id.
+    """
+    config = PumpRepositoryConfig()
+    config.database_url = os.getenv('DATABASE_URL')
+    repo = PumpRepository(config)
+    pool = repo._get_connection_pool()
+    with pool.getconn() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                INSERT INTO ai_prompts (name, prompt_text, last_updated, label)
+                VALUES (%s, %s, CURRENT_TIMESTAMP, %s)
+                RETURNING id
+            """, ('default', prompt_text, label))
+            prompt_id = cur.fetchone()[0]
+            conn.commit()
+            return prompt_id
+
+def get_latest_ai_prompt() -> Optional[Dict[str, Any]]:
+    """
+    Get the most recent AI extraction prompt (by last_updated DESC).
+    """
+    config = PumpRepositoryConfig()
+    config.database_url = os.getenv('DATABASE_URL')
+    repo = PumpRepository(config)
+    pool = repo._get_connection_pool()
+    with pool.getconn() as conn:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute("""
+                SELECT id, name, prompt_text, last_updated, label
+                FROM ai_prompts
+                WHERE name = %s
+                ORDER BY last_updated DESC
+                LIMIT 1
+            """, ('default',))
+            row = cur.fetchone()
+            return dict(row) if row else None
+
+def get_prompt_history(limit: int = 5) -> list:
+    """
+    Get the last N prompts (by last_updated DESC).
+    """
+    config = PumpRepositoryConfig()
+    config.database_url = os.getenv('DATABASE_URL')
+    repo = PumpRepository(config)
+    pool = repo._get_connection_pool()
+    with pool.getconn() as conn:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute("""
+                SELECT id, name, prompt_text, last_updated, label
+                FROM ai_prompts
+                WHERE name = %s
+                ORDER BY last_updated DESC
+                LIMIT %s
+            """, ('default', limit))
+            rows = cur.fetchall()
+            return [dict(row) for row in rows]
+
 # Global repository instance
 _repository = None
 

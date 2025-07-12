@@ -116,6 +116,9 @@
                     <div class="compact-title">
                         <i class="material-icons left" style="color: #1976d2;">auto_awesome</i>
                         AI PDF Extraction
+                        <button id="edit-prompt-btn" class="btn-flat right" style="margin-top: -8px;" title="Edit Extraction Prompt">
+                            <i class="material-icons">edit</i> Edit Prompt
+                        </button>
                     </div>
                     
                     <form id="ai-extract-form" enctype="multipart/form-data">
@@ -205,6 +208,89 @@
         </div>
     </div>
 </div>
+
+<!-- Edit Prompt Modal -->
+<style>
+#edit-prompt-modal .modal-content {
+    max-height: 70vh;
+    overflow-y: auto;
+    padding-bottom: 60px;
+    background: #fafbfc;
+    border-radius: 12px 12px 0 0;
+}
+#edit-prompt-modal .modal {
+    max-height: 90vh;
+    border-radius: 12px;
+}
+#prompt-textarea {
+    min-height: 40vh;
+    font-family: monospace;
+    resize: vertical;
+    font-size: 1.1em;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 12px;
+    margin-bottom: 16px;
+}
+#edit-prompt-modal .modal-footer {
+    position: sticky;
+    bottom: 0;
+    background: #fff;
+    z-index: 2;
+    border-top: 1px solid #eee;
+    padding-bottom: 12px;
+    border-radius: 0 0 12px 12px;
+}
+.prompt-history-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+.prompt-history-item {
+    background: #f5f7fa;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 10px 14px;
+    min-width: 180px;
+    max-width: 320px;
+    cursor: pointer;
+    transition: box-shadow 0.2s;
+    font-size: 0.98em;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+}
+.prompt-history-item.selected, .prompt-history-item:hover {
+    border-color: #1976d2;
+    box-shadow: 0 2px 8px rgba(25,118,210,0.08);
+    background: #e3f2fd;
+}
+.prompt-history-label {
+    font-weight: 600;
+    color: #1976d2;
+    font-size: 1em;
+}
+.prompt-history-date {
+    font-size: 0.85em;
+    color: #888;
+    margin-bottom: 4px;
+}
+</style>
+<div id="edit-prompt-modal" class="modal">
+    <div class="modal-content">
+        <h5 style="margin-bottom: 10px;">Edit AI Extraction Prompt</h5>
+        <label for="prompt-label" style="font-weight: 500; color: #1976d2;">Label (optional):</label>
+        <input id="prompt-label" type="text" maxlength="100" style="margin-bottom: 10px;">
+        <label for="prompt-textarea" style="font-weight: 500; color: #1976d2;">Prompt Text:</label>
+        <textarea id="prompt-textarea" style="width:100%;"></textarea>
+        <div style="margin: 18px 0 8px 0; font-weight: 500; color: #1976d2;">Prompt History (last 5):</div>
+        <div class="prompt-history-list" id="prompt-history-list"></div>
+    </div>
+    <div class="modal-footer">
+        <button id="save-prompt-btn" class="modal-close btn blue">Save</button>
+        <button class="modal-close btn-flat">Cancel</button>
+    </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
@@ -213,7 +299,17 @@
 <!-- Plotly.js for performance graphs -->
 <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
 <script>
+function formatPromptDate(dt) {
+    if (!dt) return '';
+    const d = new Date(dt);
+    return d.toLocaleString();
+}
 document.addEventListener('DOMContentLoaded', function() {
+    var elems = document.querySelectorAll('.modal');
+    var instances = M.Modal.init(elems);
+    let promptHistory = [];
+    let selectedPromptId = null;
+
     const form = document.getElementById('ai-extract-form');
     const fileInput = document.getElementById('pdf-file');
     const extractBtn = document.getElementById('extract-btn');
@@ -433,6 +529,68 @@ document.addEventListener('DOMContentLoaded', function() {
         if (resultsPdfPreview) {
             resultsPdfPreview.innerHTML = '';
         }
+    });
+
+    // Edit Prompt button click
+    document.getElementById('edit-prompt-btn').addEventListener('click', function() {
+        fetch('/ai_extract/prompt')
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('prompt-textarea').value = data.latest;
+                    document.getElementById('prompt-label').value = '';
+                    promptHistory = data.history || [];
+                    selectedPromptId = promptHistory.length > 0 ? promptHistory[0].id : null;
+                    renderPromptHistory();
+                } else {
+                    document.getElementById('prompt-textarea').value = '';
+                    document.getElementById('prompt-label').value = '';
+                    promptHistory = [];
+                    selectedPromptId = null;
+                    renderPromptHistory();
+                }
+                var modal = M.Modal.getInstance(document.getElementById('edit-prompt-modal'));
+                modal.open();
+            });
+    });
+
+    function renderPromptHistory() {
+        const list = document.getElementById('prompt-history-list');
+        list.innerHTML = '';
+        promptHistory.forEach(function(p) {
+            const div = document.createElement('div');
+            div.className = 'prompt-history-item' + (selectedPromptId === p.id ? ' selected' : '');
+            div.innerHTML =
+                `<div class='prompt-history-label'>${p.label ? p.label : '(no label)'}</div>` +
+                `<div class='prompt-history-date'>${formatPromptDate(p.last_updated)}</div>` +
+                `<div style='max-height: 4.5em; overflow: hidden; color: #444; font-size: 0.97em;'>${p.prompt_text.substring(0, 180)}${p.prompt_text.length > 180 ? '...' : ''}</div>`;
+            div.onclick = function() {
+                document.getElementById('prompt-textarea').value = p.prompt_text;
+                document.getElementById('prompt-label').value = p.label || '';
+                selectedPromptId = p.id;
+                renderPromptHistory();
+            };
+            list.appendChild(div);
+        });
+    }
+
+    // Save Prompt button click
+    document.getElementById('save-prompt-btn').addEventListener('click', function() {
+        var prompt = document.getElementById('prompt-textarea').value;
+        var label = document.getElementById('prompt-label').value;
+        fetch('/ai_extract/prompt', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ prompt: prompt, label: label })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                M.toast({html: 'Prompt saved successfully', classes: 'green'});
+            } else {
+                M.toast({html: 'Failed to save prompt', classes: 'red'});
+            }
+        });
     });
 
     // Function to generate performance graph

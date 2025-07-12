@@ -3,7 +3,10 @@ from flask import Blueprint, request, jsonify, render_template
 import os
 import tempfile
 from ..pump_import.ai_extractor import extract_pump_data_from_pdf
-from ..pump_repository import insert_extracted_pump_data
+from ..pump_repository import (
+    insert_extracted_pump_data, get_ai_prompt, upsert_ai_prompt,
+    insert_ai_prompt, get_latest_ai_prompt, get_prompt_history
+)
 import json
 
 logger = logging.getLogger(__name__)
@@ -105,3 +108,32 @@ def ai_extract_insert():
         import traceback
         logger.error(f"[AI Extract Routes] Full traceback: {traceback.format_exc()}")
         return jsonify({'success': False, 'error': str(e)}), 500 
+
+@ai_extract_bp.route('/ai_extract/prompt', methods=['GET'])
+def get_prompt():
+    """API endpoint to get the latest prompt and prompt history."""
+    latest = get_latest_ai_prompt()
+    history = get_prompt_history(limit=5)
+    return jsonify({
+        'success': True,
+        'latest': latest['prompt_text'] if latest else '',
+        'history': [
+            {
+                'id': p['id'],
+                'prompt_text': p['prompt_text'],
+                'last_updated': p['last_updated'],
+                'label': p.get('label')
+            } for p in history
+        ]
+    })
+
+@ai_extract_bp.route('/ai_extract/prompt', methods=['POST'])
+def save_prompt():
+    """API endpoint to insert a new prompt version."""
+    data = request.get_json()
+    prompt_text = data.get('prompt')
+    label = data.get('label')
+    if not prompt_text:
+        return jsonify({'success': False, 'message': 'Prompt text is required'}), 400
+    prompt_id = insert_ai_prompt(prompt_text, label)
+    return jsonify({'success': True, 'prompt_id': prompt_id}) 
