@@ -225,10 +225,7 @@ config.json
 secrets.json
 credentials.json
 
-# Test files
-test_*.py
-*_test.py
-tests/
+
 
 # Documentation builds
 docs/build/
