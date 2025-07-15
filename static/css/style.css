@@ -597,20 +597,11 @@ nav.teal {
     transform: translateY(-1px);
 }
 
-.btn.teal {
+.btn.teal, .btn-large.teal {
     background: linear-gradient(135deg, var(--md-primary), var(--md-primary-variant)) !important;
 }
 
-.btn.teal:hover {
-    background: linear-gradient(135deg, var(--md-primary-variant), var(--md-primary)) !important;
-}
-
-/* Ensure all primary buttons use professional blue */
-.btn-large.teal {
-    background: linear-gradient(135deg, var(--md-primary), var(--md-primary-variant)) !important;
-}
-
-.btn-large.teal:hover {
+.btn.teal:hover, .btn-large.teal:hover {
     background: linear-gradient(135deg, var(--md-primary-variant), var(--md-primary)) !important;
 }
 

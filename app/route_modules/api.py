@@ -158,6 +158,7 @@ def get_chart_data(pump_code):
             curve_data = {
                 'curve_index': i,
                 'impeller_size': curve.get('impeller_size', f'Curve {i+1}'),
+                'impeller_diameter_mm': curve.get('impeller_diameter_mm', curve.get('impeller_size', f'Curve {i+1}')),
                 'flow_data': flows,
                 'head_data': heads,
                 'efficiency_data': efficiencies,
@@ -299,6 +300,7 @@ def get_chart_data_safe(safe_pump_code):
             curve_data = {
                 'curve_index': i,
                 'impeller_size': curve.get('impeller_size', f'Curve {i+1}'),
+                'impeller_diameter_mm': curve.get('impeller_diameter_mm', curve.get('impeller_size', f'Curve {i+1}')),
                 'flow_data': flows,
                 'head_data': heads,
                 'efficiency_data': efficiencies,

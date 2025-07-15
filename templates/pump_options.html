@@ -263,7 +263,7 @@
     </section>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-    
+
     <script>
     // Load AI insights for all pumps when page loads
     document.addEventListener('DOMContentLoaded', function() {
@@ -274,10 +274,10 @@
 
     function loadAIInsights(pumpCode, cardIndex) {
         const insightsContainer = document.getElementById(`aiInsights_${cardIndex}`);
-        
+
         // Generate contextual query based on pump specifications
         const contextQuery = `Analyze the ${pumpCode} pump for {{ site_requirements.flow_m3hr }} m³/h flow and {{ site_requirements.head_m }} m head. What are the key technical considerations and efficiency optimization aspects?`;
-        
+
         fetch('/api/chat/query', {
             method: 'POST',
             headers: {
@@ -291,10 +291,10 @@
         .then(data => {
             const insights = data.response;
             const sources = data.source_documents || [];
-            
+
             // Extract key insights (first 2 sentences for summary)
             const summaryInsights = insights.split('.').slice(0, 2).join('.') + '.';
-            
+
             insightsContainer.innerHTML = `
                 <div class="ai-insights-content">
                     <div class="d-flex align-items-start mb-2">
@@ -326,9 +326,9 @@
 
     function getDetailedAIAnalysis(pumpCode, cardIndex) {
         const detailedQuery = `Provide a comprehensive technical analysis of the ${pumpCode} pump including efficiency characteristics, NPSH considerations, and suitability for {{ site_requirements.flow_m3hr }} m³/h at {{ site_requirements.head_m }} m head. Include maintenance and operational considerations.`;
-        
+
         const insightsContainer = document.getElementById(`aiInsights_${cardIndex}`);
-        
+
         // Show loading state
         insightsContainer.innerHTML = `
             <div class="d-flex align-items-center mb-2">
@@ -336,7 +336,7 @@
                 <small class="text-muted">Loading detailed AI analysis...</small>
             </div>
         `;
-        
+
         fetch('/api/chat/query', {
             method: 'POST',
             headers: {
@@ -350,7 +350,7 @@
         .then(data => {
             const insights = data.response;
             const sources = data.source_documents || [];
-            
+
             insightsContainer.innerHTML = `
                 <div class="ai-insights-detailed">
                     <div class="d-flex align-items-start mb-2">

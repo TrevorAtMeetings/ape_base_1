@@ -4,12 +4,12 @@
 // Override the original Plotly.newPlot function to apply legend fixes
 (function() {
     const originalNewPlot = Plotly.newPlot;
-    
+
     Plotly.newPlot = function(graphDiv, data, layout, config) {
         // Apply legend positioning fix for professional pump report charts
         if (typeof graphDiv === 'string' && 
             ['headFlowChart', 'efficiencyFlowChart', 'powerFlowChart', 'npshrFlowChart'].includes(graphDiv)) {
-            
+
             // Override layout to fix legend positioning
             layout = layout || {};
             layout.legend = {
@@ -26,7 +26,7 @@
                 r: 80
             };
         }
-        
+
         return originalNewPlot.apply(this, arguments);
     };
 })();
@@ -58,9 +58,11 @@ document.addEventListener('DOMContentLoaded', function() {
                                 }, 100);
                             }
                         }
+                    });
+                }
             });
         }
     });
-    
+
     observer.observe(document.body, { childList: true, subtree: true });
 });

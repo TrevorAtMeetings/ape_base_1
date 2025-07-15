@@ -129,31 +129,31 @@
 
                     <div class="row">
                         <div class="col s12 m8">
-                            <h5>{{ top_selections[0].manufacturer }} {{ top_selections[0].model }}</h5>
-                            <p class="grey-text">{{ suggested_pump_obj.description if suggested_pump_obj.description else 'High-efficiency pump solution' }}</p>
+                            <h5>{{ top_selections[0].manufacturer }} {{ top_selections[0].pump_code }}</h5>
+                            <p class="grey-text">{{ top_selections[0].pump.description if top_selections[0].pump and top_selections[0].pump.description else 'High-efficiency pump solution' }}</p>
 
                             <div class="row performance-summary">
                                 <div class="col s6 m3">
                                     <div class="stat-box">
-                                        <h6 class="stat-value teal-text">{{ "%.1f"|default(0.0)|format(top_selections[0].operating_point.achieved_efficiency_pct) }}%</h6>
+                                        <h6 class="stat-value teal-text">{{ "%.1f"|format(top_selections[0].operating_point.efficiency_pct|default(0.0)) }}%</h6>
                                         <p class="stat-label">Efficiency</p>
                                     </div>
                                 </div>
                                 <div class="col s6 m3">
                                     <div class="stat-box">
-                                        <h6 class="stat-value teal-text">{{ "%.1f"|default(0.0)|format(top_selections[0].operating_point.achieved_power_kw) }} kW</h6>
+                                        <h6 class="stat-value teal-text">{{ "%.1f"|format(top_selections[0].operating_point.power_kw|default(0.0)) }} kW</h6>
                                         <p class="stat-label">Power</p>
                                     </div>
                                 </div>
                                 <div class="col s6 m3">
                                     <div class="stat-box">
-                                        <h6 class="stat-value teal-text">{{ "%.1f"|default(0.0)|format(top_selections[0].operating_point.achieved_head_m) }} m</h6>
+                                        <h6 class="stat-value teal-text">{{ "%.1f"|format(top_selections[0].operating_point.head_m|default(0.0)) }} m</h6>
                                         <p class="stat-label">Head</p>
                                     </div>
                                 </div>
                                 <div class="col s6 m3">
                                     <div class="stat-box">
-                                        <h6 class="stat-value teal-text">{{ top_selections[0].overall_score|round }}</h6>
+                                        <h6 class="stat-value teal-text">{{ "%.1f"|format(top_selections[0].overall_score|default(0.0)) }}</h6>
                                         <p class="stat-label">Score</p>
                                     </div>
                                 </div>
@@ -381,13 +381,13 @@
                                 <div class="card-content">
                                     <div class="row">
                                         <div class="col s8">
-                                            <span class="card-title">{{ pump.manufacturer }} {{ pump.model }}</span>
+                                            <span class="card-title">{{ pump.manufacturer }} {{ pump.pump_code }}</span>
                                             <div class="chip orange white-text">
-                                                Rank {{ pump.rank }}
+                                                Rank {{ loop.index + 1 }}
                                             </div>
                                         </div>
                                         <div class="col s4 right-align">
-                                            <span class="score-badge">{{ pump.overall_score|round }}/100</span>
+                                            <span class="score-badge">{{ "%.1f"|format(pump.overall_score|default(0.0)) }}</span>
                                         </div>
                                     </div>
 
@@ -395,20 +395,20 @@
                                         <tbody>
                                             <tr>
                                                 <td>Efficiency:</td>
-                                                <td><strong>{{ "%.1f"|default(0.0)|format(pump.operating_point.achieved_efficiency_pct) }}%</strong></td>
+                                                <td><strong>{{ "%.1f"|format(pump.operating_point.efficiency_pct|default(0.0)) }}%</strong></td>
                                             </tr>
                                             <tr>
                                                 <td>Power:</td>
-                                                <td><strong>{{ "%.1f"|default(0.0)|format(pump.operating_point.achieved_power_kw) }} kW</strong></td>
+                                                <td><strong>{{ "%.1f"|format(pump.operating_point.power_kw|default(0.0)) }} kW</strong></td>
                                             </tr>
                                             <tr>
                                                 <td>Head:</td>
-                                                <td><strong>{{ "%.1f"|default(0.0)|format(pump.operating_point.achieved_head_m) }} m</strong></td>
+                                                <td><strong>{{ "%.1f"|format(pump.operating_point.head_m|default(0.0)) }} m</strong></td>
                                             </tr>
-                                            {% if pump.operating_point.achieved_npshr_m %}
+                                            {% if pump.operating_point.npshr_m %}
                                             <tr>
                                                 <td>NPSHr:</td>
-                                                <td><strong>{{ "%.2f"|default(0.0)|format(pump.operating_point.achieved_npshr_m) }} m</strong></td>
+                                                <td><strong>{{ "%.2f"|format(pump.operating_point.npshr_m|default(0.0)) }} m</strong></td>
                                             </tr>
                                             {% endif %}
                                         </tbody>
@@ -432,7 +432,7 @@
     {% endif %}
 
     <!-- Technical Details -->
-    {% if top_selections[0].bep_analysis or top_selections[0].npsh_analysis %}
+    {% if top_selections[0].get('bep_analysis') %}
     <div class="row">
         <div class="col s12">
             <div class="card">
@@ -443,24 +443,24 @@
                     </span>
 
                     <div class="row">
-                        {% if top_selections[0].bep_analysis %}
+                        {% if top_selections[0].get('bep_analysis') %}
                         <div class="col s12 m6">
                             <h6><i class="material-icons left">speed</i>Best Efficiency Point Analysis</h6>
                             {% set bep = top_selections[0].bep_analysis %}
                             <table class="striped">
                                 <tbody>
-                                    {% if bep.distance_from_bep_pct is not none %}
+                                    {% if bep.get('distance_pct') is not none %}
                                     <tr>
                                         <td>Distance from BEP:</td>
-                                        <td><strong>{{ "%.1f"|default(0.0)|format(bep.distance_from_bep_pct) }}%</strong></td>
+                                        <td><strong>{{ "%.1f"|format(bep.distance_pct|default(0.0)) }}%</strong></td>
                                     </tr>
                                     {% endif %}
-                                    {% if bep.on_favorable_side is not none %}
+                                    {% if bep.get('on_right_side') is not none %}
                                     <tr>
                                         <td>Position:</td>
                                         <td>
                                             <strong>
-                                                {% if bep.on_favorable_side %}
+                                                {% if bep.on_right_side %}
                                                 Right of BEP <i class="material-icons tiny green-text">check_circle</i>
                                                 {% else %}
                                                 Left of BEP <i class="material-icons tiny orange-text">warning</i>
@@ -469,38 +469,43 @@
                                         </td>
                                     </tr>
                                     {% endif %}
+                                    {% if bep.get('operating_zone') %}
+                                    <tr>
+                                        <td>Operating Zone:</td>
+                                        <td><strong>{{ bep.operating_zone.replace('_', ' ').title() }}</strong></td>
+                                    </tr>
+                                    {% endif %}
                                 </tbody>
                             </table>
                         </div>
                         {% endif %}
 
-                        {% if top_selections[0].npsh_analysis %}
                         <div class="col s12 m6">
                             <h6><i class="material-icons left">bubble_chart</i>NPSH Analysis</h6>
-                            {% set npsh = top_selections[0].npsh_analysis %}
                             <table class="striped">
                                 <tbody>
-                                    {% if npsh.npshr_at_duty %}
+                                    {% if top_selections[0].operating_point.npshr_m %}
                                     <tr>
                                         <td>NPSHr Required:</td>
-                                        <td><strong>{{ "%.2f"|default(0.0)|format(npsh.npshr_at_duty) }} m</strong></td>
+                                        <td><strong>{{ "%.2f"|format(top_selections[0].operating_point.npshr_m|default(0.0)) }} m</strong></td>
                                     </tr>
                                     {% endif %}
-                                    {% if npsh.npsha_available %}
+                                    {% if site_requirements.npsh_available_m %}
                                     <tr>
                                         <td>NPSHa Available:</td>
-                                        <td><strong>{{ "%.2f"|default(0.0)|format(npsh.npsha_available) }} m</strong></td>
+                                        <td><strong>{{ "%.2f"|format(site_requirements.npsh_available_m|default(0.0)) }} m</strong></td>
                                     </tr>
                                     {% endif %}
-                                    {% if npsh.npsh_margin is not none %}
+                                    {% if site_requirements.npsh_available_m and top_selections[0].operating_point.npshr_m %}
+                                    {% set npsh_margin = site_requirements.npsh_available_m - top_selections[0].operating_point.npshr_m %}
                                     <tr>
                                         <td>Safety Margin:</td>
                                         <td>
                                             <strong>
-                                                {{ "%.2f"|default(0.0)|format(npsh.npsh_margin) }} m
-                                                {% if npsh.npsh_margin >= 2 %}
+                                                {{ "%.2f"|format(npsh_margin) }} m
+                                                {% if npsh_margin >= 2 %}
                                                 <i class="material-icons tiny green-text">check_circle</i>
-                                                {% elif npsh.npsh_margin >= 1 %}
+                                                {% elif npsh_margin >= 1 %}
                                                 <i class="material-icons tiny orange-text">warning</i>
                                                 {% else %}
                                                 <i class="material-icons tiny red-text">error</i>
@@ -512,22 +517,25 @@
                                 </tbody>
                             </table>
                         </div>
-                        {% endif %}
                     </div>
 
                     <!-- Recommendations -->
-                    {% if top_selections[0].detailed_reasoning %}
+                    {% if top_selections[0].selection_reason %}
                     <div class="row">
                         <div class="col s12">
                             <h6><i class="material-icons left">lightbulb</i>Engineering Insights</h6>
-                            <ul class="collection">
-                                {% for reason in top_selections[0].detailed_reasoning %}
-                                <li class="collection-item">
+                            <div class="collection">
+                                <div class="collection-item">
                                     <i class="material-icons teal-text">arrow_forward</i>
-                                    {{ reason }}
-                                </li>
-                                {% endfor %}
-                            </ul>
+                                    {{ top_selections[0].selection_reason }}
+                                </div>
+                                {% if top_selections[0].get('bep_analysis') and top_selections[0].bep_analysis.get('operating_zone') %}
+                                <div class="collection-item">
+                                    <i class="material-icons teal-text">arrow_forward</i>
+                                    Operating in {{ top_selections[0].bep_analysis.operating_zone.replace('_', ' ').title() }} - {{ top_selections[0].bep_analysis.get('flow_ratio', 1.0) * 100 }}% of BEP flow rate
+                                </div>
+                                {% endif %}
+                            </div>
                         </div>
                     </div>
                     {% endif %}

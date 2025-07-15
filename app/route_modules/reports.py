@@ -150,9 +150,52 @@ def pump_report(pump_code):
             selected_pump['pump_type'] = catalog_pump.pump_type
             selected_pump['manufacturer'] = catalog_pump.manufacturer
 
+        # Generate alternative pumps using catalog engine
+        alternatives = []
+        try:
+            flow = site_requirements_data.get('flow_m3hr', 0)
+            head = site_requirements_data.get('head_m', 0)
+            pump_type = site_requirements_data.get('pump_type', 'General')
+            
+            if flow and head:
+                alternative_selections = catalog_engine.select_pumps(
+                    flow_m3hr=flow,
+                    head_m=head,
+                    max_results=5,
+                    pump_type=pump_type
+                )
+                
+                # Filter out the selected pump and create alternative data
+                for alt_pump in alternative_selections:
+                    if alt_pump.get('pump_code') != pump_code:
+                        alternatives.append({
+                            'pump_code': alt_pump.get('pump_code'),
+                            'overall_score': alt_pump.get('selection_score', 0),
+                            'efficiency_at_duty': alt_pump.get('efficiency_pct', 0),
+                            'operating_point': alt_pump.get('operating_point', {}),
+                            'suitable': alt_pump.get('efficiency_pct', 0) > 40,
+                            'manufacturer': alt_pump.get('manufacturer', 'APE PUMPS'),
+                            'pump_info': {
+                                'pPumpCode': alt_pump.get('pump_code'),
+                                'pSuppName': alt_pump.get('manufacturer', 'APE PUMPS'),
+                                'pPumpTestSpeed': str(alt_pump.get('test_speed_rpm', 1480)),
+                                'pFilter1': alt_pump.get('manufacturer', 'APE PUMPS'),
+                                'pStages': '1'
+                            },
+                            'key_difference': alt_pump.get('selection_reason', 'Alternative option')
+                        })
+                        
+                        # Limit to 3 alternatives
+                        if len(alternatives) >= 3:
+                            break
+        except Exception as e:
+            logger.warning(f"Failed to generate alternatives: {e}")
+            alternatives = []
+
         context_data = {
             'pump_selections': pump_selections,
             'selected_pump': selected_pump,
+            'alternatives': alternatives,
             'site_requirements': {
                 'flow_m3hr': site_requirements_data.get('flow_m3hr', 0),
                 'head_m': site_requirements_data.get('head_m', 0),
@@ -186,6 +229,8 @@ def pump_report(pump_code):
                 }
             logger.info(f"Template data - selected_pump operating_point: {selected_pump.get('operating_point')}")
             logger.info(f"Template data - selected_pump selected_curve: {selected_pump.get('selected_curve')}")
+            
+
 
         return render_template('professional_pump_report.html', **context_data)
 
