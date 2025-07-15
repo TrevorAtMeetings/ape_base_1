@@ -294,8 +294,8 @@
 {% endblock %}
 
 {% block scripts %}
-<!-- PDF.js served locally -->
-<script src="{{ url_for('static', filename='js/pdf.min.js') }}"></script>
+<!-- PDF.js for PDF preview functionality -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <!-- Plotly.js for performance graphs -->
 <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
 <script>
