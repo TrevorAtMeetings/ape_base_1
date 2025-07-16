@@ -83,3 +83,32 @@ def _parse_performance_curves(obj_pump: Dict[str, Any]) -> List[Dict[str, Any]]:
         logger.error(f"Error parsing performance curves: {e}")
     
     return curves
+
+def normalize_pump_data(raw_data: dict) -> dict:
+    """
+    Normalize legacy pump data keys to modern, consistent field names.
+    Accepts a dict with possible legacy keys and returns a dict with only normalized keys.
+    """
+    mapping = {
+        'pPumpCode': 'pump_code',
+        'pSuppName': 'manufacturer',
+        'pPumpType': 'pump_type',
+        'pPumpRange': 'model_series',
+        'pPumpTestSpeed': 'test_speed_rpm',
+        'pStages': 'stages',
+        'pFilter1': 'pump_type',
+        'pMaxQ': 'max_flow_m3hr',
+        'pMaxH': 'max_head_m',
+        'pMinImpD': 'min_impeller_mm',
+        'pMaxImpD': 'max_impeller_mm',
+        'pKWMax': 'max_power_kw',
+        'pBEPFlowStd': 'bep_flow_m3hr',
+        'pBEPHeadStd': 'bep_head_m',
+        'pNPSHEOC': 'npshr_at_bep',
+        # Add more mappings as needed
+    }
+    normalized = {}
+    for k, v in raw_data.items():
+        norm_key = mapping.get(k, k)
+        normalized[norm_key] = v
+    return normalized

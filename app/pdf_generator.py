@@ -10,7 +10,12 @@ import logging
 from datetime import datetime
 from typing import Dict, Any, List, Optional
 from flask import render_template
-from weasyprint import HTML, CSS
+try:
+    from weasyprint import HTML, CSS
+except ImportError:
+    # Fallback if weasyprint is not available
+    HTML = None
+    CSS = None
 import matplotlib
 matplotlib.use('Agg')  # Use non-interactive backend
 import matplotlib.pyplot as plt
@@ -22,7 +27,7 @@ logger = logging.getLogger(__name__)
 def generate_pdf_report(selected_pump_evaluation: Dict[str, Any],
                        parsed_pump: Any,
                        site_requirements: Any,
-                       alternatives: List[Dict[str, Any]] = None) -> bytes:
+                       alternatives: Optional[List[Dict[str, Any]]] = None) -> bytes:
     """
     Generate a comprehensive PDF report for pump selection.
 
@@ -68,26 +73,26 @@ def generate_pdf_report(selected_pump_evaluation: Dict[str, Any],
             logger.info(f"PDF Generator - Adapting CatalogPump object: {parsed_pump.pump_code}")
             # Create a compatible object structure for PDF generation
             class CompatiblePump:
-                def __init__(self, catalog_pump):
+                def __init__(self, catalog_pump, performance_data):
+                    # Build compatible pump object with normalized field names
                     self.pump_code = catalog_pump.pump_code
-                    specs = catalog_pump.specifications
-                    self.pump_info = {
-                        'pPumpCode': catalog_pump.pump_code,
-                        'pSuppName': catalog_pump.manufacturer,
-                        'pPumpType': catalog_pump.pump_type,
-                        'pPumpTestSpeed': str(specs.get('test_speed_rpm', '1450')),
-                        'pBEPFlow': str(specs.get('bep_flow_m3hr', '0')),
-                        'pBEPHead': str(specs.get('bep_head_m', '0')),
-                        'pBEPEff': str(specs.get('bep_efficiency_pct', '0')),
-                        'pMaxFlow': str(specs.get('max_flow_m3hr', '0')),
-                        'pMaxHead': str(specs.get('max_head_m', '0')),
-                        'pMinFlow': str(specs.get('min_flow_m3hr', '0')),
-                        'pKWMax': str(specs.get('max_power_kw', '0')),
-                        'pInletSize': str(specs.get('inlet_size_mm', '0')),
-                        'pOutletSize': str(specs.get('outlet_size_mm', '0'))
-                    }
+                    self.manufacturer = catalog_pump.manufacturer
+                    self.pump_type = catalog_pump.pump_type
+                    self.model_series = catalog_pump.model_series
+                    self.test_speed_rpm = performance_data.get('test_speed_rpm', 1480)
+                    self.max_flow_m3hr = catalog_pump.specifications.get('max_flow_m3hr', 0)
+                    self.max_head_m = catalog_pump.specifications.get('max_head_m', 0)
+                    self.min_impeller_mm = catalog_pump.specifications.get('min_impeller_mm', 0)
+                    self.max_impeller_mm = catalog_pump.specifications.get('max_impeller_mm', 0)
+                    self.impeller_diameter_mm = performance_data.get('impeller_diameter_mm', 501.0)
+                    self.power_kw = performance_data.get('power_kw', 0.0)
+                    self.efficiency_pct = performance_data.get('efficiency_pct', 0.0)
+                    self.npshr_m = performance_data.get('npshr_m', 0.0)
+                    self.stages = '1'
             
-            parsed_pump = CompatiblePump(parsed_pump)
+            # Get performance data from evaluation
+            performance_data = selected_pump_evaluation.get('operating_point', {})
+            parsed_pump = CompatiblePump(parsed_pump, performance_data)
             logger.info(f"PDF Generator - Created compatible pump object with code: {parsed_pump.pump_code}")
         
         # Extract authentic performance data before generating context
@@ -112,7 +117,7 @@ def generate_pdf_report(selected_pump_evaluation: Dict[str, Any],
 
         # Generate report context data
         report_context = _create_report_context(
-            selected_pump_evaluation, parsed_pump, site_requirements, alternatives
+            selected_pump_evaluation, parsed_pump, site_requirements, alternatives or []
         )
 
         # Generate performance chart as base64 encoded image
@@ -212,20 +217,22 @@ def generate_pdf_report(selected_pump_evaluation: Dict[str, Any],
             logger.info(f"PNG reference {i+1}: length={png_length}, preview={png_data[:50]}..." if png_data else f"PNG reference {i+1}: EMPTY")
 
         # Generate PDF using WeasyPrint
-        html_obj = HTML(string=html_content)
-        pdf_bytes = html_obj.write_pdf()
-
+        if HTML is None:
+            logger.error("WeasyPrint not available - cannot generate PDF")
+            return b"PDF generation not available"
+        
+        pdf = HTML(string=html_content).write_pdf()
         logger.info(f"Generated PDF report for pump: {parsed_pump.pump_code}")
-        return pdf_bytes
+        return pdf
 
     except Exception as e:
-        logger.error(f"Error generating PDF report: {str(e)}")
+        logger.error(f"Error generating PDF report: {e}")
         raise
 
 def _create_report_context(selected_pump_evaluation: Dict[str, Any],
                           parsed_pump: Any,
                           site_requirements: Any,
-                          alternatives: List[Dict[str, Any]] = None) -> Dict[str, Any]:
+                          alternatives: List[Dict[str, Any]]) -> Dict[str, Any]:
     """Create comprehensive report context data."""
 
     # Generate unique report ID
@@ -385,14 +392,14 @@ def _format_selected_pump_details(evaluation: Dict[str, Any], parsed_pump: Any, 
     return {
         'pump_code': parsed_pump.pump_code,
         'pump_type': pump_series,
-        'manufacturer': parsed_pump.pump_info.get('manufacturer', 'APE Pumps'),
+        'manufacturer': parsed_pump.manufacturer,
         'series': pump_series,
         'application_type': application_type,
-        'description': parsed_pump.pump_info.get('description', f'APE {pump_series} pump designed for reliable water handling applications'),
+        'description': parsed_pump.pump_type, # Use pump_type from parsed_pump
         'impeller_info': impeller_info,
         'impeller_size': impeller_display,
         'power_kw': power_display,
-        'nominal_speed': f"{parsed_pump.pump_info.get('rated_speed_rpm', parsed_pump.pump_info.get('pPumpTestSpeed', 1450))}",
+        'nominal_speed': f"{parsed_pump.test_speed_rpm}",
         'orientation': "Horizontal" if "ALE" in parsed_pump.pump_code else "Vertical" if "VANE" in parsed_pump.pump_code else "Horizontal",
         'operating_point': operating_point
     }
@@ -401,7 +408,7 @@ def _generate_specifications_table(evaluation: Dict[str, Any], parsed_pump: Any)
     """Generate technical specifications table."""
     operating_point = evaluation.get('operating_point', {})
     performance = evaluation.get('performance', {})
-    pump_info = parsed_pump.pump_info
+    pump_info = parsed_pump
 
     # Determine construction type and orientation from pump code
     construction_type = "End Suction" if "ALE" in parsed_pump.pump_code else "Multi-Stage" if "K" in parsed_pump.pump_code else "Centrifugal"
@@ -445,7 +452,7 @@ def _generate_specifications_table(evaluation: Dict[str, Any], parsed_pump: Any)
         },
         {
             'parameter': 'Nominal Speed',
-            'value': f"{pump_info.get('rated_speed_rpm', pump_info.get('pPumpTestSpeed', 1450))}",
+            'value': f"{parsed_pump.test_speed_rpm}",
             'units': 'rpm',
             'notes': 'Rated operating speed'
         },
@@ -487,7 +494,7 @@ def _generate_specifications_table(evaluation: Dict[str, Any], parsed_pump: Any)
         },
         {
             'parameter': 'Speed',
-            'value': f"{pump_info.get('rated_speed_rpm', 1450)}",
+            'value': f"{parsed_pump.test_speed_rpm}",
             'units': 'rpm',
             'notes': 'Nominal operating speed'
         },
@@ -585,44 +592,47 @@ def _generate_technical_reasoning(evaluation: Dict[str, Any], parsed_pump: Any) 
     return reasoning_sections
 
 def _format_alternatives(alternatives: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-    """Format alternative pump options."""
+    """Format alternative pump data for template display."""
+    if not alternatives:
+        return []
+    
     formatted_alternatives = []
-
-    for alt in alternatives[:2]:  # Limit to top 2 alternatives
+    for alt in alternatives:
         try:
-            # Extract data directly from pump selection evaluation
+            # Extract pump data
             pump_code = alt.get('pump_code', 'Unknown')
+            manufacturer = alt.get('manufacturer', 'APE PUMPS')
+            pump_type = alt.get('pump_type', 'Centrifugal')
+            
+            # Extract performance data
             operating_point = alt.get('operating_point', {})
-            overall_score = alt.get('overall_score', 0)
-            selection_reason = alt.get('selection_reason', 'Alternative option')
-
-            logger.info(f"Formatting alternative pump: {pump_code}")
-            logger.info(f"Alternative operating point: {operating_point}")
-            logger.info(f"Alternative overall score: {overall_score}")
-
-            formatted_alternatives.append({
-                'model': pump_code,
-                'manufacturer': 'APE Pumps',
+            efficiency_pct = operating_point.get('efficiency_pct', 0)
+            power_kw = operating_point.get('power_kw', 0)
+            head_m = operating_point.get('head_m', 0)
+            flow_m3hr = operating_point.get('flow_m3hr', 0)
+            
+            # Calculate lifecycle cost if available
+            lifecycle_cost = alt.get('lifecycle_cost', {})
+            annual_energy_cost = lifecycle_cost.get('annual_energy_cost', 0)
+            total_lifecycle_cost = lifecycle_cost.get('total_lifecycle_cost', 0)
+            
+            formatted_alt = {
                 'pump_code': pump_code,
-                'selection_reason': selection_reason,
-                'key_difference': _identify_key_difference(alt),
-                'performance_summary': (
-                    f"Flow: {operating_point.get('flow_m3hr', 0):.1f} m³/hr, "
-                    f"Head: {operating_point.get('achieved_head_m', 0):.1f} m, "
-                    f"Efficiency: {operating_point.get('achieved_efficiency_pct', 0):.1f}%, "
-                    f"Power: {operating_point.get('achieved_power_kw', 0):.1f} kW"
-                ),
-                'efficiency': f"{operating_point.get('achieved_efficiency_pct', 0):.1f}%",
-                'power': f"{operating_point.get('achieved_power_kw', 0):.1f} kW",
-                'head': f"{operating_point.get('achieved_head_m', 0):.1f} m",
-                'score': f"{overall_score:.1f}/100" if overall_score > 10 else f"{overall_score:.1f}/10"
-            })
-
+                'manufacturer': manufacturer,
+                'pump_type': pump_type,
+                'efficiency_pct': efficiency_pct,
+                'power_kw': power_kw,
+                'head_m': head_m,
+                'flow_m3hr': flow_m3hr,
+                'annual_energy_cost': annual_energy_cost,
+                'total_lifecycle_cost': total_lifecycle_cost,
+                'selection_reason': alt.get('selection_reason', 'Alternative option')
+            }
+            formatted_alternatives.append(formatted_alt)
         except Exception as e:
-            logger.error(f"Error formatting alternative pump: {str(e)}")
+            logger.warning(f"Error formatting alternative pump: {e}")
             continue
-
-    logger.info(f"Formatted {len(formatted_alternatives)} alternative pumps")
+    
     return formatted_alternatives
 
 def _format_lifecycle_cost_analysis(evaluation: Dict[str, Any]) -> Dict[str, Any]:
@@ -992,5 +1002,5 @@ def _get_ape_logo_base64() -> str:
             logger.warning(f"APE logo file not found at {logo_path}")
             return ""
     except Exception as e:
-        logger.error(f"Error loading APE logo: {str(e)}")
+        logger.error(f"Error loading APE logo: {e}")
         return ""

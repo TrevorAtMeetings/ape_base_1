@@ -158,7 +158,7 @@ def pump_options():
                 
                 standardized_eval = {
                     'pump_code': pump.pump_code,
-                    'overall_score': selection.get('suitability_score', 0),
+                    'overall_score': selection.get('overall_score', 0),
                     'selection_reason': f'Efficiency: {performance.get("efficiency_pct", 0):.1f}%, Head error: {selection.get("head_error_pct", 0):.1f}%',
                     'operating_point': performance,
                     'pump_info': {
@@ -167,7 +167,7 @@ def pump_options():
                         'pump_type': pump.pump_type
                     },
                     'curve_index': 0,  # Will be determined from performance data
-                    'suitable': selection.get('suitability_score', 0) > 50
+                    'suitable': selection.get('overall_score', 0) > 50
                 }
                 pump_evaluations.append(standardized_eval)
         except Exception as e:

@@ -79,13 +79,9 @@ def pump_report(pump_code):
                             'operating_point': performance,
                             'suitable': performance.get('efficiency_pct', 0) > 40,
                             'manufacturer': target_pump.manufacturer,
-                            'pump_info': {
-                                'pPumpCode': pump_code,
-                                'pSuppName': target_pump.manufacturer,
-                                'pPumpTestSpeed': str(performance.get('test_speed_rpm', 1480)),
-                                'pFilter1': target_pump.manufacturer,
-                                'pStages': '1'
-                            }
+                            'pump_type': target_pump.pump_type,
+                            'test_speed_rpm': performance.get('test_speed_rpm', 1480),
+                            'stages': '1'
                         }]
                     else:
                         pump_selections = []
@@ -115,18 +111,14 @@ def pump_report(pump_code):
                 if performance:
                     selected_pump = {
                         'pump_code': pump_code,
-                        'overall_score': performance.get('selection_score', performance.get('efficiency_pct', 0)),
+                        'overall_score': performance.get('overall_score', performance.get('efficiency_pct', 0)),
                         'efficiency_at_duty': performance.get('efficiency_pct', 0),
                         'operating_point': performance,
                         'suitable': performance.get('efficiency_pct', 0) > 40,
                         'manufacturer': target_pump.manufacturer,
-                        'pump_info': {
-                            'pPumpCode': pump_code,
-                            'pSuppName': target_pump.manufacturer,
-                            'pPumpTestSpeed': str(performance.get('test_speed_rpm', 1480)),
-                            'pFilter1': target_pump.manufacturer,
-                            'pStages': '1'
-                        }
+                        'pump_type': target_pump.pump_type,
+                        'test_speed_rpm': performance.get('test_speed_rpm', 1480),
+                        'stages': '1'
                     }
                     site_requirements_data = {
                         'flow_m3hr': flow,
@@ -170,19 +162,14 @@ def pump_report(pump_code):
                     if alt_pump.get('pump_code') != pump_code:
                         alternatives.append({
                             'pump_code': alt_pump.get('pump_code'),
-                            'overall_score': alt_pump.get('selection_score', 0),
+                            'overall_score': alt_pump.get('overall_score', 0),
                             'efficiency_at_duty': alt_pump.get('efficiency_pct', 0),
                             'operating_point': alt_pump.get('operating_point', {}),
                             'suitable': alt_pump.get('efficiency_pct', 0) > 40,
                             'manufacturer': alt_pump.get('manufacturer', 'APE PUMPS'),
-                            'pump_info': {
-                                'pPumpCode': alt_pump.get('pump_code'),
-                                'pSuppName': alt_pump.get('manufacturer', 'APE PUMPS'),
-                                'pPumpTestSpeed': str(alt_pump.get('test_speed_rpm', 1480)),
-                                'pFilter1': alt_pump.get('manufacturer', 'APE PUMPS'),
-                                'pStages': '1'
-                            },
-                            'key_difference': alt_pump.get('selection_reason', 'Alternative option')
+                            'pump_type': alt_pump.get('pump_type', 'Centrifugal'),
+                            'test_speed_rpm': alt_pump.get('test_speed_rpm', 1480),
+                            'stages': '1'
                         })
                         
                         # Limit to 3 alternatives
