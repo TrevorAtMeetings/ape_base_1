@@ -86,14 +86,18 @@ app.register_blueprint(chat_bp)
 from .route_modules.api import api_bp
 app.register_blueprint(api_bp)
 
+# Register the Pump Editor blueprint
+from .route_modules.pump_editor_routes import pump_editor_bp
+app.register_blueprint(pump_editor_bp)
+
 # Import core functions from appropriate modules
 from .data_models import SiteRequirements
-from .pump_repository import load_all_pump_data
+from .pump_repository import get_pump_repository
 from .utils import validate_site_requirements
 
 __all__ = [
     'app',  # Expose the Flask app instance
-    'load_all_pump_data',
+    'get_pump_repository',
     'validate_site_requirements',
     'SiteRequirements'
 ]

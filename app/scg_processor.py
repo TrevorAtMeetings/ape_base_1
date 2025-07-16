@@ -9,7 +9,6 @@ import logging
 from typing import Dict, List, Optional, Any, Tuple
 from dataclasses import dataclass
 from datetime import datetime
-from app.utils import normalize_pump_data
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -131,12 +130,15 @@ class SCGProcessor:
         """
         Process raw SCG data into structured format with validation
         Enhanced version of the provided function with additional safety checks
+        
+        Args:
+            raw_data: Raw dictionary from SCG file
+            
+        Returns:
+            Structured pump data dictionary
         """
         if not raw_data:
             raise ValueError("No raw_data provided to process_pump_data")
-
-        # Normalize legacy keys to modern field names
-        raw_data = normalize_pump_data(raw_data)
 
         structured_data = {
             "pump_info": {},
@@ -168,29 +170,40 @@ class SCGProcessor:
                 return value.strip().lower() in ('true', '1', 'yes')
             return bool(value) if value is not None else default
 
+        # Populate pump_info (scalar data)
         pi = structured_data["pump_info"]
-        # Now use only normalized field names
-        pi['pump_code'] = raw_data.get('pump_code', '').strip()
-        pi['manufacturer'] = raw_data.get('manufacturer', 'APE PUMPS').strip()
-        pi['max_power_kw'] = to_float(raw_data.get('max_power_kw'))
-        pi['bep_flow_m3hr'] = to_float(raw_data.get('bep_flow_m3hr'))
-        pi['bep_head_m'] = to_float(raw_data.get('bep_head_m'))
-        pi['npshr_at_bep'] = to_float(raw_data.get('npshr_at_bep'))
-        pi['pump_type'] = raw_data.get('pump_type', '').strip()
-        pi['model_series'] = raw_data.get('model_series', '').strip()
-        pi['test_speed_rpm'] = to_float(raw_data.get('test_speed_rpm'))
-        pi['min_impeller_mm'] = to_float(raw_data.get('min_impeller_mm'))
-        pi['max_impeller_mm'] = to_float(raw_data.get('max_impeller_mm'))
-        pi['min_speed_rpm'] = to_float(raw_data.get('min_speed_rpm'))
-        pi['max_speed_rpm'] = to_float(raw_data.get('max_speed_rpm'))
-        pi['unit_flow'] = raw_data.get('unit_flow', 'm^3/hr').strip()
-        pi['unit_head'] = raw_data.get('unit_head', 'm').strip()
-        pi['max_q_m3hr'] = to_float(raw_data.get('max_q_m3hr'))
-        pi['max_h_m'] = to_float(raw_data.get('max_h_m'))
-        pi['min_imp_d_mm'] = to_float(raw_data.get('min_imp_d_mm'))
-        pi['max_imp_d_mm'] = to_float(raw_data.get('max_imp_d_mm'))
-        pi['n_poly_order'] = to_int(raw_data.get('n_poly_order'))
-        pi['m_name'] = raw_data.get('m_name', '').strip()
+        
+        # Basic pump identification
+        pi['pPumpCode'] = raw_data.get('pPumpCode', '').strip()
+        pi['pSuppName'] = raw_data.get('pSuppName', 'APE PUMPS').strip()
+        pi['pKWMax'] = to_float(raw_data.get('pKWMax'))
+        pi['pBEPFlowStd'] = to_float(raw_data.get('pBEPFlowStd'))
+        pi['pBEPHeadStd'] = to_float(raw_data.get('pBEPHeadStd'))
+        pi['pNPSHEOC'] = to_float(raw_data.get('pNPSHEOC'))
+
+        # Filter fields (pump categories/specifications)
+        for i in range(1, 9):
+            pi[f'pFilter{i}'] = raw_data.get(f'pFilter{i}', '').strip()
+
+        # Boolean flags
+        pi['pVarN'] = to_bool(raw_data.get('pVarN'))
+        pi['pVarD'] = to_bool(raw_data.get('pVarD'))
+        pi['pImpImperial'] = to_bool(raw_data.get('pImpImperial'))
+        pi['pMotorImperial'] = to_bool(raw_data.get('pMotorImperial'))
+
+        # Units and ranges
+        pi['pUnitFlow'] = raw_data.get('pUnitFlow', 'm^3/hr').strip()
+        pi['pUnitHead'] = raw_data.get('pUnitHead', 'm').strip()
+        pi['pMaxQ'] = to_float(raw_data.get('pMaxQ'))
+        pi['pMaxH'] = to_float(raw_data.get('pMaxH'))
+        pi['pMinImpD'] = to_float(raw_data.get('pMinImpD'))
+        pi['pMaxImpD'] = to_float(raw_data.get('pMaxImpD'))
+        pi['pMinSpeed'] = to_float(raw_data.get('pMinSpeed'))
+        pi['pMaxSpeed'] = to_float(raw_data.get('pMaxSpeed'))
+        pi['pPumpTestSpeed'] = to_float(raw_data.get('pPumpTestSpeed'))
+        pi['pPumpImpDiam'] = to_float(raw_data.get('pPumpImpDiam'))
+        pi['nPolyOrder'] = to_int(raw_data.get('nPolyOrder'))
+        pi['pM_NAME'] = raw_data.get('pM_NAME', '').strip()
 
         # TASGRX performance data
         for param in ["Flow", "Head", "Eff", "Power", "NPSH"]:
@@ -211,7 +224,7 @@ class SCGProcessor:
         # Determine number of curves
         num_curves = to_int(raw_data.get('pHeadCurvesNo', '0'))
         if num_curves == 0:
-            logger.warning(f"No curves specified for pump {pi.get('pump_code')}")
+            logger.warning(f"No curves specified for pump {pi.get('pPumpCode')}")
             return structured_data
 
         # Parse curve identifiers
@@ -248,8 +261,8 @@ class SCGProcessor:
         all_curves_npsh_str = get_curve_series_data('pM_NP', num_curves)
 
         # Unit conversion factors matching current catalog engine
-        unit_flow = pi.get('unit_flow', 'm^3/hr')
-        unit_head = pi.get('unit_head', 'm')
+        unit_flow = pi.get('pUnitFlow', 'm^3/hr')
+        unit_head = pi.get('pUnitHead', 'm')
 
         con_flow = 1.0 / 3600.0  # m^3/hr to m^3/s
         if unit_flow == "l/sec":
@@ -268,7 +281,7 @@ class SCGProcessor:
         # Process each curve
         for i in range(num_curves):
             curve_data = {
-                "curve_id": f"{pi['pump_code']}_{curve_identifiers[i]}".replace(' ', '_'),
+                "curve_id": f"{pi['pPumpCode']}_{curve_identifiers[i]}".replace(' ', '_'),
                 "identifier": curve_identifiers[i],
                 "curve_index": i,
                 "flow_data": [],
@@ -289,7 +302,7 @@ class SCGProcessor:
             # Validate data consistency
             min_len = min(len(flow_points), len(head_points), len(eff_points))
             if min_len == 0:
-                logger.warning(f"No valid data points for curve {i} of pump {pi['pump_code']}")
+                logger.warning(f"No valid data points for curve {i} of pump {pi['pPumpCode']}")
                 continue
 
             # Truncate to consistent length
@@ -373,7 +386,7 @@ class SCGProcessor:
                 return result
             
             # Process pump data
-            pump_data = self.process_pump_data_legacy(raw_data)
+            pump_data = self.process_pump_data(raw_data)
             
             # Update statistics
             self.processing_stats['files_processed'] += 1
@@ -437,9 +450,9 @@ if __name__ == "__main__":
     }
     
     try:
-        processed_data = processor.process_pump_data_legacy(test_raw_data)
+        processed_data = processor.process_pump_data(test_raw_data)
         print("Test processing successful!")
-        print(f"Pump: {processed_data['pump_info']['pump_code']}")
+        print(f"Pump: {processed_data['pump_info']['pPumpCode']}")
         print(f"Curves: {len(processed_data['curves'])}")
         print(f"Validation status: {processed_data['metadata']['validation_status']}")
         

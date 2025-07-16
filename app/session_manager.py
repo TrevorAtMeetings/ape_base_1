@@ -13,20 +13,20 @@ SECRET_KEY_FALLBACK = "dev-secret-key-change-in-production"
 
 class SessionManager:
     """Centralized session management for the Flask application."""
-    
+
     def __init__(self, app: Flask):
         self.app = app
         self._configure_secret_key()
-    
+
     def _configure_secret_key(self):
         """Configure the Flask secret key with fallback."""
         secret_key = os.environ.get("SESSION_SECRET", SECRET_KEY_FALLBACK)
         self.app.secret_key = secret_key
-    
+
     def is_enabled(self) -> bool:
         """Check if sessions are enabled."""
         return SESSION_ENABLED and self.app.secret_key is not None
-    
+
     def safe_flash(self, message: str, category: str = 'info') -> None:
         """Safely flash a message, handling disabled sessions."""
         if self.is_enabled():
@@ -34,39 +34,39 @@ class SessionManager:
         else:
             # Log the message instead of flashing when sessions are disabled
             print(f"[{category.upper()}] {message}")
-    
+
     def safe_session_get(self, key: str, default: Any = None) -> Any:
         """Safely get a session value."""
         if self.is_enabled():
             return session.get(key, default)
         return default
-    
+
     def safe_session_set(self, key: str, value: Any) -> None:
         """Safely set a session value."""
         if self.is_enabled():
             session[key] = value
-    
+
     def safe_session_pop(self, key: str, default: Any = None) -> Any:
         """Safely pop a session value."""
         if self.is_enabled():
             return session.pop(key, default)
         return default
-    
+
     def safe_session_clear(self) -> None:
         """Safely clear all session data."""
         if self.is_enabled():
             session.clear()
-    
+
     def get_form_data(self, key: str, default: Any = None) -> Any:
         """Get form data with fallback to session if sessions are enabled."""
         form_value = request.form.get(key)
         if form_value is not None:
             return form_value
-        
+
         if self.is_enabled():
             return session.get(key, default)
         return default
-    
+
     def store_form_data(self, data: Dict[str, Any]) -> None:
         """Store form data in session if sessions are enabled."""
         if self.is_enabled():
@@ -141,4 +141,6 @@ def get_form_data(key: str, default: Any = None) -> Any:
 def store_form_data(data: Dict[str, Any]) -> None:
     """Store form data in session."""
     if _session_manager:
-        _session_manager.store_form_data(data) 
+        _session_manager.store_form_data(data)
+
+# Duplicate class definition removed - already defined above

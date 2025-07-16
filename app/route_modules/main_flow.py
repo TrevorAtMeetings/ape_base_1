@@ -1,3 +1,4 @@
+"""Adding error handling to the index route to prevent crashes."""
 """
 Main Flow Routes
 Core user flow routes for pump selection and results
@@ -7,7 +8,7 @@ from datetime import datetime
 from flask import Blueprint, render_template, request, redirect, url_for, session, jsonify
 from ..session_manager import safe_flash, safe_session_get, safe_session_set, safe_session_pop, safe_session_clear, get_form_data, store_form_data
 from ..data_models import SiteRequirements
-from ..pump_repository import load_all_pump_data
+from ..pump_repository import get_pump_repository
 from ..utils import validate_site_requirements
 
 logger = logging.getLogger(__name__)
@@ -17,9 +18,13 @@ main_flow_bp = Blueprint('main_flow', __name__)
 
 @main_flow_bp.route('/')
 def index():
-    """Main landing page with pump selection form."""
-    logger.info("Index route accessed.")
-    return render_template('input_form.html')
+    """Main selection page."""
+    try:
+        logger.info("Index route accessed.")
+        return render_template('input_form.html')
+    except Exception as e:
+        logger.error(f"Error in index route: {str(e)}")
+        return render_template('500.html'), 500
 
 @main_flow_bp.route('/about')
 def about():
@@ -49,42 +54,42 @@ def pump_selection():
     """Main pump selection endpoint."""
     if request.method == 'GET':
         return render_template('input_form.html')
-    
+
     try:
         # Validate required fields
         flow_m3hr = request.form.get('flow_m3hr')
         head_m = request.form.get('head_m')
-        
+
         if not flow_m3hr or not head_m:
             safe_flash('Flow rate and head are required fields.', 'error')
             return render_template('input_form.html'), 400
-        
+
         try:
             flow_val = float(flow_m3hr)
             head_val = float(head_m)
-            
+
             # Enhanced validation with realistic ranges
             if flow_val <= 0 or head_val <= 0:
                 safe_flash('Flow rate and head must be positive values.', 'error')
                 return render_template('input_form.html'), 400
-            
+
             if flow_val > 10000:  # Reasonable upper limit
                 safe_flash('Flow rate seems unusually high. Please verify your input.', 'warning')
-            
+
             if head_val > 1000:  # Reasonable upper limit  
                 safe_flash('Head seems unusually high. Please verify your input.', 'warning')
-                
+
         except ValueError:
             safe_flash('Invalid numerical values for flow rate or head.', 'error')
             return render_template('input_form.html'), 400
-        
+
         # Process the selection - redirect to pump options
         return redirect(url_for('main_flow.pump_options', 
                                flow=str(flow_val), 
                                head=str(head_val),
                                application_type=request.form.get('application_type', 'water_supply'),
                                pump_type=request.form.get('pump_type', 'General')))
-    
+
     except Exception as e:
         logger.error(f"Error in pump selection: {str(e)}")
         safe_flash('An error occurred processing your request.', 'error')
@@ -127,13 +132,13 @@ def pump_options():
         if flow <= 0 or head <= 0:
             safe_flash('Please enter valid flow rate and head values.', 'error')
             return redirect(url_for('main_flow.index'))
-            
+
         logger.info(f"Processing pump options for: flow={flow} m³/hr, head={head} m")
 
         # Get additional form parameters
         pump_type = request.args.get('pump_type', 'General')
         application_type = request.args.get('application_type', 'general')
-        
+
         # Create site requirements using pump_engine
         site_requirements = SiteRequirements(
             flow_m3hr=flow,
@@ -155,10 +160,10 @@ def pump_options():
                 # Convert catalog engine format to template-compatible format
                 pump = selection['pump']
                 performance = selection['performance']
-                
+
                 standardized_eval = {
                     'pump_code': pump.pump_code,
-                    'overall_score': selection.get('overall_score', 0),
+                    'overall_score': selection.get('suitability_score', 0),
                     'selection_reason': f'Efficiency: {performance.get("efficiency_pct", 0):.1f}%, Head error: {selection.get("head_error_pct", 0):.1f}%',
                     'operating_point': performance,
                     'pump_info': {
@@ -167,7 +172,7 @@ def pump_options():
                         'pump_type': pump.pump_type
                     },
                     'curve_index': 0,  # Will be determined from performance data
-                    'suitable': selection.get('overall_score', 0) > 50
+                    'suitable': selection.get('suitability_score', 0) > 50
                 }
                 pump_evaluations.append(standardized_eval)
         except Exception as e:
@@ -177,7 +182,7 @@ def pump_options():
         if not pump_evaluations:
             safe_flash('No suitable pumps found for your requirements. Please adjust your specifications.', 'warning')
             return redirect(url_for('main_flow.index'))
-            
+
         # Store results in session for detailed reports
         safe_session_set('pump_selections', pump_evaluations)
         safe_session_set('site_requirements', {
@@ -197,10 +202,8 @@ def pump_options():
                               flow=site_requirements.flow_m3hr,
                               head=site_requirements.head_m,
                               pump_type=site_requirements.pump_type))
-            
+
     except Exception as e:
         logger.error(f"Error in pump_options: {e}")
         safe_flash('An error occurred while processing your request. Please try again.', 'error')
         return redirect(url_for('main_flow.index'))
-
- 

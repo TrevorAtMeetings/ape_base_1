@@ -92,4 +92,21 @@ CREATE TABLE IF NOT EXISTS ai_prompts (
     prompt_text TEXT NOT NULL,
     last_updated TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     label VARCHAR(255)
-); 
+);
+
+-- Additional tables for enhanced functionality
+
+
+-- BEP markers table for storing extracted BEP data
+CREATE TABLE IF NOT EXISTS pump_bep_markers (
+    id SERIAL PRIMARY KEY,
+    pump_id INTEGER REFERENCES pumps(id) ON DELETE CASCADE,
+    impeller_diameter DECIMAL(10,2),
+    bep_flow DECIMAL(10,2),
+    bep_head DECIMAL(10,2),
+    bep_efficiency DECIMAL(5,2),
+    marker_label VARCHAR(50),
+    coordinate_x DECIMAL(10,2),
+    coordinate_y DECIMAL(10,2),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

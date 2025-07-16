@@ -7,7 +7,7 @@ from datetime import datetime
 from flask import Blueprint, render_template, request, redirect, url_for, session, jsonify
 from ..session_manager import safe_flash, safe_session_get, safe_session_set
 from ..data_models import SiteRequirements
-from ..pump_repository import load_all_pump_data
+from ..pump_repository import get_pump_repository
 from ..utils import validate_site_requirements
 from .. import app
 from flask import Response
@@ -116,7 +116,7 @@ def pump_comparison():
                     
                     evaluation = {
                         'pump_code': pump.pump_code,
-                        'overall_score': selection.get('overall_score', 0),
+                        'overall_score': selection.get('suitability_score', 0),
                         'selection_reason': f"Efficiency: {efficiency_pct:.1f}%, Head error: {selection.get('head_error_pct', 0):.1f}%",
                         'operating_point': mapped_performance,
                         'pump_info': {
@@ -125,7 +125,7 @@ def pump_comparison():
                             'pump_type': pump.pump_type
                         },
                         'curve_index': 0,
-                        'suitable': selection.get('overall_score', 0) > 50,
+                        'suitable': selection.get('suitability_score', 0) > 50,
                         'lifecycle_cost': lifecycle_cost
                     }
                     pump_selections.append(evaluation)
@@ -225,7 +225,7 @@ def pump_details(pump_code):
         
     except Exception as e:
         logger.error(f"Error fetching pump details for {pump_code}: {str(e)}")
-        return jsonify({'error': 'Failed to load pump details'}), 500
+        return jsonify({'error': 'Failed to load pump details'}), 50000
 
 @comparison_bp.route('/shortlist_comparison')
 def shortlist_comparison():

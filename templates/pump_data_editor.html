@@ -1,0 +1,873 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pump Data Editor - APE Pumps</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        .header-section {
+            background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%);
+            color: white;
+            padding: 12px 0;
+            margin-bottom: 15px;
+        }
+        
+        .charts-section {
+            background-color: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+        }
+        
+        .chart-container {
+            background-color: #f8f9fa;
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border: 1px solid #e9ecef;
+            min-height: 320px;
+        }
+        
+        .editing-section {
+            background-color: white;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+        }
+        
+        .specs-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        
+        .spec-card {
+            background-color: #f8f9fa;
+            border-radius: 6px;
+            padding: 10px;
+            border: 1px solid #e9ecef;
+        }
+        
+        .spec-label {
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 4px;
+            display: block;
+            font-size: 0.85em;
+        }
+        
+        .spec-input {
+            width: 100%;
+            padding: 6px 8px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            background-color: white;
+            font-size: 0.9em;
+        }
+        
+        .spec-input:focus {
+            border-color: #1976d2;
+            box-shadow: 0 0 0 0.2rem rgba(25, 118, 210, 0.25);
+            outline: none;
+        }
+        
+        .spec-unit {
+            font-size: 0.9em;
+            color: #6c757d;
+            margin-top: 4px;
+        }
+        
+        .data-table {
+            font-size: 0.85em;
+        }
+        
+        .data-table input {
+            width: 80px;
+            padding: 4px 6px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            text-align: center;
+            font-size: 0.85em;
+        }
+        
+        .data-table input:focus {
+            border-color: #1976d2;
+            box-shadow: 0 0 0 0.2rem rgba(25, 118, 210, 0.15);
+            outline: none;
+        }
+        
+        .modified {
+            background-color: #fff3cd !important;
+            border-color: #ffeaa7 !important;
+        }
+        
+        .save-indicator {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+        
+        .btn-primary {
+            background-color: #1976d2;
+            border-color: #1976d2;
+        }
+        
+        .btn-primary:hover {
+            background-color: #1565c0;
+            border-color: #1565c0;
+        }
+        
+        .back-button {
+            color: white;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            border: 1px solid rgba(255,255,255,0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .back-button:hover {
+            background-color: rgba(255,255,255,0.1);
+            color: white;
+            text-decoration: none;
+        }
+        
+        .chart-title {
+            font-size: 0.9em;
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 12px;
+            text-align: center;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #1976d2;
+        }
+        
+        .performance-tabs .nav-link {
+            border-radius: 8px 8px 0 0;
+            margin-right: 4px;
+        }
+        
+        .performance-tabs .nav-link.active {
+            background-color: #1976d2;
+            border-color: #1976d2;
+            color: white;
+        }
+        
+        /* Compact specifications layout */
+        .specs-section {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 12px;
+            border: 1px solid #e9ecef;
+            height: fit-content;
+            margin-bottom: 20px;
+        }
+        
+        .specs-grid-compact {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 8px;
+        }
+        
+        .spec-card-mini {
+            background-color: white;
+            border-radius: 4px;
+            padding: 8px;
+            border: 1px solid #e9ecef;
+            transition: all 0.3s ease;
+        }
+        
+        .spec-card-mini:hover {
+            box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+        }
+        
+        .spec-label-mini {
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 4px;
+            display: block;
+            font-size: 0.75em;
+            line-height: 1.2;
+        }
+        
+        .spec-input-mini {
+            width: 100%;
+            padding: 4px 6px;
+            border: 1px solid #ced4da;
+            border-radius: 3px;
+            background-color: white;
+            font-size: 0.8em;
+        }
+        
+        .spec-input-mini:focus {
+            border-color: #1976d2;
+            box-shadow: 0 0 0 0.15rem rgba(25, 118, 210, 0.25);
+            outline: none;
+        }
+        
+        .spec-unit-mini {
+            font-size: 0.7em;
+            color: #6c757d;
+            margin-top: 2px;
+            text-align: center;
+        }
+        
+        @media (max-width: 1200px) {
+            .specs-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            
+            .specs-grid-compact {
+                grid-template-columns: 1fr 1fr;
+                gap: 6px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .specs-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .specs-grid-compact {
+                grid-template-columns: 1fr;
+                gap: 6px;
+            }
+            
+            .specs-section {
+                margin-bottom: 20px;
+                padding: 8px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .specs-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+            
+            .chart-container {
+                padding: 15px;
+            }
+            
+            .data-table {
+                font-size: 0.85em;
+            }
+            
+            .data-table input {
+                width: 70px;
+                padding: 4px 6px;
+            }
+        }
+    </style>
+</head>
+<body class="bg-light">
+    <!-- Header Section -->
+    <div class="header-section">
+        <div class="container-fluid">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h2 class="mb-0">
+                        <i class="fas fa-edit me-2"></i>
+                        Pump Data Editor
+                    </h2>
+                    <p class="mb-0 mt-1 opacity-75">Edit and refine extracted pump performance data</p>
+                </div>
+                <div class="col-md-6 text-end">
+                    <a href="/ai-extract" class="back-button me-3">
+                        <i class="fas fa-arrow-left me-2"></i>
+                        Back to AI Extract
+                    </a>
+                    <button id="saveBtn" class="btn btn-light">
+                        <i class="fas fa-save me-2"></i>
+                        Save Changes
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container-fluid">
+        <!-- Charts Section -->
+        <div class="charts-section">
+            <h4 class="mb-4">
+                <i class="fas fa-chart-line me-2 text-primary"></i>
+                Performance Charts
+            </h4>
+            
+            <div class="row">
+                <div class="col-lg-4">
+                    <div class="chart-container">
+                        <div class="chart-title">Head vs Flow Performance</div>
+                        <div id="headChart" style="height: 280px;"></div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4">
+                    <div class="chart-container">
+                        <div class="chart-title">Efficiency vs Flow</div>
+                        <div id="efficiencyChart" style="height: 280px;"></div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4">
+                    <div class="chart-container">
+                        <div class="chart-title">NPSH vs Flow</div>
+                        <div id="npshChart" style="height: 280px;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Editing Section -->
+        <div class="editing-section">
+            <!-- Combined Performance Data and Specifications Layout -->
+            <div class="mb-3">
+                <h5 class="mb-3">
+                    <i class="fas fa-table me-2 text-primary"></i>
+                    Performance Curve Data & Specifications
+                </h5>
+                
+                <div class="row">
+                    <!-- Left Column: Pump Specifications -->
+                    <div class="col-lg-3 col-md-4">
+                        <div class="specs-section">
+                            <h6 class="mb-2">
+                                <i class="fas fa-cog me-2 text-primary"></i>
+                                Pump Specifications
+                            </h6>
+                            
+                            <div class="specs-grid-compact">
+                                <div class="spec-card-mini">
+                                    <label class="spec-label-mini">Pump Model</label>
+                                    <input type="text" id="pumpModel" class="spec-input-mini" value="{{ pump_data.model or '28 HC 6P' }}">
+                                </div>
+                                <div class="spec-card-mini">
+                                    <label class="spec-label-mini">Test Speed</label>
+                                    <input type="number" id="testSpeed" class="spec-input-mini" value="{{ pump_data.speed or 980 }}">
+                                    <div class="spec-unit-mini">rpm</div>
+                                </div>
+                                <div class="spec-card-mini">
+                                    <label class="spec-label-mini">Max Flow</label>
+                                    <input type="number" id="maxFlow" class="spec-input-mini" value="{{ pump_data.max_flow or 2500 }}">
+                                    <div class="spec-unit-mini">m³/hr</div>
+                                </div>
+                                <div class="spec-card-mini">
+                                    <label class="spec-label-mini">Max Head</label>
+                                    <input type="number" id="maxHead" class="spec-input-mini" value="{{ pump_data.max_head or 35 }}">
+                                    <div class="spec-unit-mini">m</div>
+                                </div>
+                                <div class="spec-card-mini">
+                                    <label class="spec-label-mini">BEP Flow</label>
+                                    <input type="number" id="bepFlow" class="spec-input-mini" value="{{ pump_data.bep_flow or 1500 }}">
+                                    <div class="spec-unit-mini">m³/hr</div>
+                                </div>
+                                <div class="spec-card-mini">
+                                    <label class="spec-label-mini">BEP Head</label>
+                                    <input type="number" id="bepHead" class="spec-input-mini" value="{{ pump_data.bep_head or 25 }}">
+                                    <div class="spec-unit-mini">m</div>
+                                </div>
+                                <div class="spec-card-mini">
+                                    <label class="spec-label-mini">BEP Efficiency</label>
+                                    <input type="number" id="bepEfficiency" class="spec-input-mini" value="{{ pump_data.bep_efficiency or 84.8 }}" step="0.1">
+                                    <div class="spec-unit-mini">%</div>
+                                </div>
+                                <div class="spec-card-mini">
+                                    <label class="spec-label-mini">Min Impeller</label>
+                                    <input type="number" id="minImpeller" class="spec-input-mini" value="{{ pump_data.min_impeller or 451 }}">
+                                    <div class="spec-unit-mini">mm</div>
+                                </div>
+                                <div class="spec-card-mini">
+                                    <label class="spec-label-mini">Max Impeller</label>
+                                    <input type="number" id="maxImpeller" class="spec-input-mini" value="{{ pump_data.max_impeller or 501 }}">
+                                    <div class="spec-unit-mini">mm</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Right Column: Performance Data Tables -->
+                    <div class="col-lg-9 col-md-8">
+                        <ul class="nav nav-tabs performance-tabs mb-3" id="impellerTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="impeller-501-tab" data-bs-toggle="tab" data-bs-target="#impeller-501" type="button" role="tab">
+                                    <i class="fas fa-circle me-2"></i>
+                                    501mm Impeller
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="impeller-451-tab" data-bs-toggle="tab" data-bs-target="#impeller-451" type="button" role="tab">
+                                    <i class="fas fa-circle me-2"></i>
+                                    451mm Impeller
+                                </button>
+                            </li>
+                        </ul>
+                        
+                        <div class="tab-content" id="impellerTabsContent">
+                            <!-- 501mm Impeller -->
+                            <div class="tab-pane fade show active" id="impeller-501" role="tabpanel">
+                                <div class="table-responsive">
+                                    <table class="table table-hover data-table">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th width="60">Point</th>
+                                                <th width="100">Flow (m³/hr)</th>
+                                                <th width="100">Head (m)</th>
+                                                <th width="100">Efficiency (%)</th>
+                                                <th width="100">NPSH (m)</th>
+                                                <th width="80">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="impeller-501-data">
+                                            <!-- Data will be populated by JavaScript -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            
+                            <!-- 451mm Impeller -->
+                            <div class="tab-pane fade" id="impeller-451" role="tabpanel">
+                                <div class="table-responsive">
+                                    <table class="table table-hover data-table">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th width="60">Point</th>
+                                                <th width="100">Flow (m³/hr)</th>
+                                                <th width="100">Head (m)</th>
+                                                <th width="100">Efficiency (%)</th>
+                                                <th width="100">NPSH (m)</th>
+                                                <th width="80">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="impeller-451-data">
+                                            <!-- Data will be populated by JavaScript -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="row">
+                <div class="col-md-6">
+                    <button id="addPointBtn" class="btn btn-outline-primary me-2">
+                        <i class="fas fa-plus me-2"></i>
+                        Add Data Point
+                    </button>
+                    <button id="resetBtn" class="btn btn-outline-secondary">
+                        <i class="fas fa-undo me-2"></i>
+                        Reset to Original
+                    </button>
+                </div>
+                <div class="col-md-6 text-end">
+                    <button id="exportBtn" class="btn btn-outline-success me-2">
+                        <i class="fas fa-download me-2"></i>
+                        Export Data
+                    </button>
+                    <button id="generateReportBtn" class="btn btn-primary">
+                        <i class="fas fa-file-pdf me-2"></i>
+                        Generate Report
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Save Indicator -->
+    <div id="saveIndicator" class="save-indicator" style="display: none;">
+        <div class="alert alert-success alert-dismissible">
+            <i class="fas fa-check me-2"></i>
+            Data saved successfully!
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js"></script>
+    <script>
+        // Initial pump data
+        let pumpData = {
+            impeller_501: [
+                {flow: 500, head: 30, efficiency: 75, npsh: 5},
+                {flow: 750, head: 28, efficiency: 80, npsh: 6},
+                {flow: 1000, head: 26, efficiency: 82, npsh: 7},
+                {flow: 1250, head: 24, efficiency: 84, npsh: 7.5},
+                {flow: 1500, head: 25, efficiency: 84.8, npsh: 8},
+                {flow: 1750, head: 23, efficiency: 84, npsh: 9},
+                {flow: 2000, head: 21, efficiency: 82, npsh: 10},
+                {flow: 2250, head: 19, efficiency: 80, npsh: 11},
+                {flow: 2500, head: 17, efficiency: 75, npsh: 12}
+            ],
+            impeller_451: [
+                {flow: 500, head: 25, efficiency: 70, npsh: 5},
+                {flow: 750, head: 23, efficiency: 75, npsh: 6},
+                {flow: 1000, head: 21, efficiency: 77, npsh: 7},
+                {flow: 1250, head: 19, efficiency: 79, npsh: 7.5},
+                {flow: 1500, head: 20, efficiency: 80, npsh: 8},
+                {flow: 1750, head: 18, efficiency: 79, npsh: 9},
+                {flow: 2000, head: 16, efficiency: 77, npsh: 10},
+                {flow: 2250, head: 14, efficiency: 75, npsh: 11},
+                {flow: 2500, head: 12, efficiency: 70, npsh: 12}
+            ]
+        };
+
+        // Initialize the interface
+        function initializeInterface() {
+            populateDataTables();
+            updateCharts();
+            attachEventListeners();
+        }
+
+        // Populate data tables
+        function populateDataTables() {
+            populateTable('impeller-501-data', pumpData.impeller_501, '501');
+            populateTable('impeller-451-data', pumpData.impeller_451, '451');
+        }
+
+        function populateTable(tableId, data, impellerId) {
+            const tbody = document.getElementById(tableId);
+            tbody.innerHTML = '';
+            
+            data.forEach((point, index) => {
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td class="fw-bold text-center">${index + 1}</td>
+                    <td><input type="number" class="form-control" value="${point.flow}" 
+                        data-impeller="${impellerId}" data-point="${index}" data-field="flow"></td>
+                    <td><input type="number" class="form-control" value="${point.head}" 
+                        data-impeller="${impellerId}" data-point="${index}" data-field="head" step="0.1"></td>
+                    <td><input type="number" class="form-control" value="${point.efficiency}" 
+                        data-impeller="${impellerId}" data-point="${index}" data-field="efficiency" step="0.1"></td>
+                    <td><input type="number" class="form-control" value="${point.npsh}" 
+                        data-impeller="${impellerId}" data-point="${index}" data-field="npsh" step="0.1"></td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-danger" onclick="removeDataPoint('${impellerId}', ${index})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                `;
+            });
+        }
+
+        // Update charts with better styling
+        function updateCharts() {
+            updateHeadChart();
+            updateEfficiencyChart();
+            updateNpshChart();
+        }
+
+        function updateHeadChart() {
+            const trace501 = {
+                x: pumpData.impeller_501.map(p => p.flow),
+                y: pumpData.impeller_501.map(p => p.head),
+                mode: 'lines+markers',
+                name: '501mm',
+                line: {color: '#1976d2', width: 3},
+                marker: {size: 2.4, color: '#1976d2'}
+            };
+            
+            const trace451 = {
+                x: pumpData.impeller_451.map(p => p.flow),
+                y: pumpData.impeller_451.map(p => p.head),
+                mode: 'lines+markers',
+                name: '451mm',
+                line: {color: '#ff7043', width: 3},
+                marker: {size: 2.4, color: '#ff7043'}
+            };
+
+            const layout = {
+                xaxis: {title: 'Flow Rate (m³/hr)', gridcolor: '#e0e0e0', titlefont: {size: 11}},
+                yaxis: {title: 'Head (m)', gridcolor: '#e0e0e0', titlefont: {size: 11}},
+                showlegend: true,
+                legend: {
+                    x: 0.5,
+                    y: -0.25,
+                    xanchor: 'center',
+                    yanchor: 'top',
+                    orientation: 'h',
+                    font: {size: 10}
+                },
+                margin: {l: 55, r: 25, t: 25, b: 90},
+                plot_bgcolor: 'white',
+                paper_bgcolor: 'transparent'
+            };
+
+            Plotly.newPlot('headChart', [trace501, trace451], layout, {responsive: true});
+        }
+
+        function updateEfficiencyChart() {
+            const trace501 = {
+                x: pumpData.impeller_501.map(p => p.flow),
+                y: pumpData.impeller_501.map(p => p.efficiency),
+                mode: 'lines+markers',
+                name: '501mm',
+                line: {color: '#4caf50', width: 3},
+                marker: {size: 2.4, color: '#4caf50'}
+            };
+            
+            const trace451 = {
+                x: pumpData.impeller_451.map(p => p.flow),
+                y: pumpData.impeller_451.map(p => p.efficiency),
+                mode: 'lines+markers',
+                name: '451mm',
+                line: {color: '#f44336', width: 3},
+                marker: {size: 2.4, color: '#f44336'}
+            };
+
+            const layout = {
+                xaxis: {title: 'Flow Rate (m³/hr)', gridcolor: '#e0e0e0', titlefont: {size: 11}},
+                yaxis: {title: 'Efficiency (%)', gridcolor: '#e0e0e0', titlefont: {size: 11}},
+                showlegend: true,
+                legend: {
+                    x: 0.5,
+                    y: -0.25,
+                    xanchor: 'center',
+                    yanchor: 'top',
+                    orientation: 'h',
+                    font: {size: 10}
+                },
+                margin: {l: 55, r: 25, t: 25, b: 90},
+                plot_bgcolor: 'white',
+                paper_bgcolor: 'transparent'
+            };
+
+            Plotly.newPlot('efficiencyChart', [trace501, trace451], layout, {responsive: true});
+        }
+
+        function updateNpshChart() {
+            const trace501 = {
+                x: pumpData.impeller_501.map(p => p.flow),
+                y: pumpData.impeller_501.map(p => p.npsh),
+                mode: 'lines+markers',
+                name: '501mm',
+                line: {color: '#9c27b0', width: 3},
+                marker: {size: 2.4, color: '#9c27b0'}
+            };
+            
+            const trace451 = {
+                x: pumpData.impeller_451.map(p => p.flow),
+                y: pumpData.impeller_451.map(p => p.npsh),
+                mode: 'lines+markers',
+                name: '451mm',
+                line: {color: '#ff9800', width: 3},
+                marker: {size: 2.4, color: '#ff9800'}
+            };
+
+            const layout = {
+                xaxis: {title: 'Flow Rate (m³/hr)', gridcolor: '#e0e0e0', titlefont: {size: 11}},
+                yaxis: {title: 'NPSH (m)', gridcolor: '#e0e0e0', titlefont: {size: 11}},
+                showlegend: true,
+                legend: {
+                    x: 0.5,
+                    y: -0.25,
+                    xanchor: 'center',
+                    yanchor: 'top',
+                    orientation: 'h',
+                    font: {size: 10}
+                },
+                margin: {l: 55, r: 25, t: 25, b: 90},
+                plot_bgcolor: 'white',
+                paper_bgcolor: 'transparent'
+            };
+
+            Plotly.newPlot('npshChart', [trace501, trace451], layout, {responsive: true});
+        }
+
+        // Attach event listeners
+        function attachEventListeners() {
+            // Listen for changes in data inputs
+            document.addEventListener('input', function(e) {
+                if (e.target.dataset.impeller) {
+                    const impeller = e.target.dataset.impeller;
+                    const point = parseInt(e.target.dataset.point);
+                    const field = e.target.dataset.field;
+                    const value = parseFloat(e.target.value);
+                    
+                    // Update data
+                    const dataKey = `impeller_${impeller}`;
+                    pumpData[dataKey][point][field] = value;
+                    
+                    // Mark as modified
+                    e.target.classList.add('modified');
+                    
+                    // Update charts
+                    updateCharts();
+                }
+            });
+
+            // Listen for spec changes
+            document.querySelectorAll('.spec-input').forEach(input => {
+                input.addEventListener('input', function() {
+                    this.classList.add('modified');
+                });
+            });
+
+            // Save button
+            document.getElementById('saveBtn').addEventListener('click', saveData);
+            
+            // Add point button
+            document.getElementById('addPointBtn').addEventListener('click', addDataPoint);
+            
+            // Reset button
+            document.getElementById('resetBtn').addEventListener('click', resetToOriginal);
+            
+            // Export button
+            document.getElementById('exportBtn').addEventListener('click', exportData);
+            
+            // Generate report button
+            document.getElementById('generateReportBtn').addEventListener('click', generateReport);
+        }
+
+        // Remove data point
+        function removeDataPoint(impellerId, pointIndex) {
+            if (confirm('Are you sure you want to remove this data point?')) {
+                const dataKey = `impeller_${impellerId}`;
+                pumpData[dataKey].splice(pointIndex, 1);
+                populateDataTables();
+                updateCharts();
+            }
+        }
+
+        // Save data
+        function saveData() {
+            const specifications = {
+                model: document.getElementById('pumpModel').value,
+                speed: parseFloat(document.getElementById('testSpeed').value),
+                max_flow: parseFloat(document.getElementById('maxFlow').value),
+                max_head: parseFloat(document.getElementById('maxHead').value),
+                bep_flow: parseFloat(document.getElementById('bepFlow').value),
+                bep_head: parseFloat(document.getElementById('bepHead').value),
+                bep_efficiency: parseFloat(document.getElementById('bepEfficiency').value),
+                min_impeller: parseFloat(document.getElementById('minImpeller').value),
+                max_impeller: parseFloat(document.getElementById('maxImpeller').value)
+            };
+
+            const dataToSave = {
+                specifications: specifications,
+                performance_curves: pumpData
+            };
+
+            // Show loading state
+            const saveBtn = document.getElementById('saveBtn');
+            saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Saving...';
+            saveBtn.disabled = true;
+
+            fetch('/api/save_pump_data', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(dataToSave)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showSaveIndicator();
+                    document.querySelectorAll('.modified').forEach(el => {
+                        el.classList.remove('modified');
+                    });
+                } else {
+                    alert('Error saving data: ' + data.error);
+                }
+            })
+            .catch(error => {
+                alert('Error saving data: ' + error);
+            })
+            .finally(() => {
+                saveBtn.innerHTML = '<i class="fas fa-save me-2"></i>Save Changes';
+                saveBtn.disabled = false;
+            });
+        }
+
+        // Show save indicator
+        function showSaveIndicator() {
+            const indicator = document.getElementById('saveIndicator');
+            indicator.style.display = 'block';
+            setTimeout(() => {
+                indicator.style.display = 'none';
+            }, 4000);
+        }
+
+        // Add data point
+        function addDataPoint() {
+            const activeTab = document.querySelector('.nav-link.active').id;
+            const impellerId = activeTab.includes('501') ? '501' : '451';
+            const dataKey = `impeller_${impellerId}`;
+            
+            const lastPoint = pumpData[dataKey][pumpData[dataKey].length - 1];
+            const newPoint = {
+                flow: lastPoint.flow + 250,
+                head: Math.max(0, lastPoint.head - 2),
+                efficiency: Math.max(0, lastPoint.efficiency - 2),
+                npsh: lastPoint.npsh + 1
+            };
+            
+            pumpData[dataKey].push(newPoint);
+            populateDataTables();
+            updateCharts();
+        }
+
+        // Reset to original
+        function resetToOriginal() {
+            if (confirm('Are you sure you want to reset all data to original values?')) {
+                location.reload();
+            }
+        }
+
+        // Export data
+        function exportData() {
+            const dataToExport = {
+                specifications: {
+                    model: document.getElementById('pumpModel').value,
+                    speed: document.getElementById('testSpeed').value,
+                    max_flow: document.getElementById('maxFlow').value,
+                    max_head: document.getElementById('maxHead').value,
+                    bep_flow: document.getElementById('bepFlow').value,
+                    bep_head: document.getElementById('bepHead').value,
+                    bep_efficiency: document.getElementById('bepEfficiency').value,
+                    min_impeller: document.getElementById('minImpeller').value,
+                    max_impeller: document.getElementById('maxImpeller').value
+                },
+                performance_curves: pumpData,
+                export_timestamp: new Date().toISOString()
+            };
+            
+            const blob = new Blob([JSON.stringify(dataToExport, null, 2)], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `pump_data_${dataToExport.specifications.model.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // Generate report
+        function generateReport() {
+            const reportBtn = document.getElementById('generateReportBtn');
+            reportBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Generating...';
+            reportBtn.disabled = true;
+            
+            // Implementation for report generation
+            setTimeout(() => {
+                alert('Report generation feature coming soon!');
+                reportBtn.innerHTML = '<i class="fas fa-file-pdf me-2"></i>Generate Report';
+                reportBtn.disabled = false;
+            }, 2000);
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', initializeInterface);
+        
+        // Handle window resize for responsive charts
+        window.addEventListener('resize', function() {
+            setTimeout(updateCharts, 100);
+        });
+    </script>
+</body>
+</html>

@@ -1,3 +1,54 @@
+
+import time
+import logging
+from functools import wraps
+
+logger = logging.getLogger(__name__)
+
+def monitor_performance(threshold_seconds=3.0):
+    """Decorator to monitor route performance and log slow responses."""
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            start_time = time.time()
+            try:
+                result = func(*args, **kwargs)
+                execution_time = time.time() - start_time
+                
+                if execution_time > threshold_seconds:
+                    logger.warning(f"SLOW ROUTE: {func.__name__} took {execution_time:.2f}s (threshold: {threshold_seconds}s)")
+                else:
+                    logger.info(f"Route {func.__name__} completed in {execution_time:.2f}s")
+                
+                return result
+            except Exception as e:
+                execution_time = time.time() - start_time
+                logger.error(f"ERROR in {func.__name__} after {execution_time:.2f}s: {str(e)}")
+                raise
+        return wrapper
+    return decorator
+
+def safe_float_conversion(value, default=0.0):
+    """Safely convert value to float with fallback."""
+    if value is None:
+        return default
+    try:
+        return float(value)
+    except (ValueError, TypeError):
+        logger.warning(f"Failed to convert {value} to float, using default {default}")
+        return default
+
+def safe_int_conversion(value, default=0):
+    """Safely convert value to int with fallback."""
+    if value is None:
+        return default
+    try:
+        return int(value)
+    except (ValueError, TypeError):
+        logger.warning(f"Failed to convert {value} to int, using default {default}")
+        return default
+
+
 """
 APE Pumps Utilities
 Validation and legacy compatibility utilities
@@ -83,32 +134,3 @@ def _parse_performance_curves(obj_pump: Dict[str, Any]) -> List[Dict[str, Any]]:
         logger.error(f"Error parsing performance curves: {e}")
     
     return curves
-
-def normalize_pump_data(raw_data: dict) -> dict:
-    """
-    Normalize legacy pump data keys to modern, consistent field names.
-    Accepts a dict with possible legacy keys and returns a dict with only normalized keys.
-    """
-    mapping = {
-        'pPumpCode': 'pump_code',
-        'pSuppName': 'manufacturer',
-        'pPumpType': 'pump_type',
-        'pPumpRange': 'model_series',
-        'pPumpTestSpeed': 'test_speed_rpm',
-        'pStages': 'stages',
-        'pFilter1': 'pump_type',
-        'pMaxQ': 'max_flow_m3hr',
-        'pMaxH': 'max_head_m',
-        'pMinImpD': 'min_impeller_mm',
-        'pMaxImpD': 'max_impeller_mm',
-        'pKWMax': 'max_power_kw',
-        'pBEPFlowStd': 'bep_flow_m3hr',
-        'pBEPHeadStd': 'bep_head_m',
-        'pNPSHEOC': 'npshr_at_bep',
-        # Add more mappings as needed
-    }
-    normalized = {}
-    for k, v in raw_data.items():
-        norm_key = mapping.get(k, k)
-        normalized[norm_key] = v
-    return normalized

@@ -14,10 +14,35 @@ from .pump_repository import get_pump_repository
 logger = logging.getLogger(__name__)
 
 class CatalogPump:
+    """Wrapper class for pump data from catalog"""
+    
+    def __init__(self, pump_data):
+        self.pump_data = pump_data
+        self.pump_code = pump_data.get('pump_code', '')
+        self.manufacturer = pump_data.get('manufacturer', 'APE PUMPS')
+        self.pump_type = pump_data.get('pump_type', 'END SUCTION')
+        self.model_series = pump_data.get('model_series', '')
+        self.curves = pump_data.get('curves', [])
+        
+    def get_performance_at_duty(self, flow_m3hr, head_m):
+        """Get performance data at specified duty point"""
+        # Implementation would go here
+        return {
+            'efficiency_pct': 75.0,
+            'power_kw': 50.0,
+            'npshr_m': 3.5,
+            'head_m': head_m,
+            'flow_m3hr': flow_m3hr,
+            'impeller_diameter_mm': 200.0,
+            'test_speed_rpm': 1480
+        }
+
+class CatalogPump:
     """Represents a pump model with multiple performance curves"""
 
     def __init__(self, pump_data: Dict[str, Any]):
         self.pump_code = pump_data['pump_code']
+        self.pump_id = pump_data.get('pump_id', None)  # Add pump_id for BEP markers
         self.manufacturer = pump_data['manufacturer']
         self.pump_type = pump_data['pump_type']
         self.model_series = pump_data['model_series']
@@ -85,6 +110,9 @@ class CatalogPump:
     
     def get_bep_point(self) -> Optional[Dict[str, Any]]:
         """Find the Best Efficiency Point (BEP) across all curves"""
+        # Find BEP from curve analysis
+        
+        # Fallback to curve analysis
         best_bep = None
         best_efficiency = 0.0
         
@@ -101,7 +129,8 @@ class CatalogPump:
                         'power_kw': point.get('power_kw'),
                         'npshr_m': point.get('npshr_m'),
                         'curve_id': curve['curve_id'],
-                        'impeller_diameter_mm': curve['impeller_diameter_mm']
+                        'impeller_diameter_mm': curve['impeller_diameter_mm'],
+                        'source': 'curve_analysis'
                     }
         
         return best_bep
@@ -537,7 +566,7 @@ class CatalogEngine:
                     result = {
                         'pump': pump,
                         'performance': performance,
-                        'overall_score': score,
+                        'suitability_score': score,
                         'head_margin_m': head_margin,
                         'head_margin_pct': head_margin_pct,
                         'efficiency_at_duty': efficiency,
@@ -551,8 +580,8 @@ class CatalogEngine:
                     }
                     suitable_pumps.append(result)
 
-        # Sort by overall score (descending)
-        suitable_pumps.sort(key=lambda x: x['overall_score'], reverse=True)
+        # Sort by suitability score (descending)
+        suitable_pumps.sort(key=lambda x: x['suitability_score'], reverse=True)
         
         # Log filtering results
         logger.info(f"Catalog Engine: Found {len(suitable_pumps)} suitable pumps from {total_pumps} total")
@@ -561,7 +590,7 @@ class CatalogEngine:
         
         # Log top results for debugging
         for i, pump in enumerate(suitable_pumps[:5]):
-            logger.info(f"  #{i+1}: {pump['pump'].pump_code} ({pump['pump'].pump_type}) - Score: {pump['overall_score']:.1f}")
+            logger.info(f"  #{i+1}: {pump['pump'].pump_code} ({pump['pump'].pump_type}) - Score: {pump['suitability_score']:.1f}")
 
         # Format results for web app compatibility
         formatted_results = []
@@ -574,7 +603,8 @@ class CatalogEngine:
                 'pump_code': pump_obj.pump_code,
                 'pump_type': pump_obj.pump_type,
                 'manufacturer': pump_obj.manufacturer,
-                'overall_score': result['overall_score'],
+                'selection_score': result['suitability_score'],
+                'overall_score': result['suitability_score'],  # Alias for compatibility
                 'efficiency_at_duty': result['efficiency_at_duty'],
                 'head_margin_m': result['head_margin_m'],
                 'head_margin_pct': result['head_margin_pct'],
@@ -585,6 +615,7 @@ class CatalogEngine:
                 'performance': performance,
                 
                 # Additional analysis data
+                'suitability_score': result['suitability_score'],
                 'bep_analysis': result['bep_analysis'],
                 'bep_score': result['bep_score'],
                 'efficiency_score': result['efficiency_score'],
@@ -680,6 +711,8 @@ def convert_catalog_pump_to_legacy_format(catalog_pump: CatalogPump, performance
     # Create a legacy-compatible object that preserves authentic data
     class LegacyPumpData:
         def __init__(self, catalog_pump, performance_data):
+            self.pump_code = catalog_pump.pump_code
+
             # Use actual calculated impeller diameter from scaling engine
             # Check if sizing info is available (from new requirement-driven approach)
             if 'sizing_info' in performance_data and performance_data['sizing_info']:
@@ -704,16 +737,16 @@ def convert_catalog_pump_to_legacy_format(catalog_pump: CatalogPump, performance
 
             # Build legacy format pump_info with authentic values
             self.pump_info = {
-                'pump_code': catalog_pump.pump_code,
-                'manufacturer': catalog_pump.manufacturer,
-                'model': catalog_pump.pump_code,
-                'series': catalog_pump.model_series,
-                'pump_type': catalog_pump.pump_type,
-                'test_speed_rpm': curve['test_speed_rpm'],
-                'max_flow_m3hr': catalog_pump.specifications.get('max_flow_m3hr', 0),
-                'max_head_m': catalog_pump.specifications.get('max_head_m', 0),
-                'min_impeller_mm': catalog_pump.specifications.get('min_impeller_mm', 0),
-                'max_impeller_mm': catalog_pump.specifications.get('max_impeller_mm', 0),
+                'pPumpCode': catalog_pump.pump_code,
+                'pSuppName': catalog_pump.manufacturer,
+                'pModel': catalog_pump.pump_code,
+                'pSeries': catalog_pump.model_series,
+                'pFilter1': catalog_pump.pump_type,
+                'pPumpTestSpeed': str(curve['test_speed_rpm']),
+                'pMaxQ': str(catalog_pump.specifications.get('max_flow_m3hr', 0)),
+                'pMaxH': str(catalog_pump.specifications.get('max_head_m', 0)),
+                'pMinImpD': str(catalog_pump.specifications.get('min_impeller_mm', 0)),
+                'pMaxImpD': str(catalog_pump.specifications.get('max_impeller_mm', 0)),
                 'manufacturer': catalog_pump.manufacturer,
                 'rated_speed_rpm': curve['test_speed_rpm'],
 

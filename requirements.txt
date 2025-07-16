@@ -19,3 +19,12 @@ flask-sqlalchemy
 gunicorn
 psycopg2-binary
 python-dotenv
+openai
+openai
+pdf2image
+Pillow
+pdf2image
+Pillow
+reportlab
+anthropic
+anthropic
