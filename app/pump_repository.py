@@ -226,6 +226,7 @@ class PumpRepository:
                         FROM pumps p
                         JOIN pump_curves pc ON p.id = pc.pump_id
                         LEFT JOIN pump_performance_points ppp ON pc.id = ppp.curve_id
+                        WHERE ppp.flow_rate > 0
                         ORDER BY p.pump_code, pc.impeller_diameter_mm, ppp.operating_point
                     """)
 
