@@ -62,10 +62,60 @@ ai_extract_bp = Blueprint('ai_extract', __name__)
 
 @ai_extract_bp.route('/ai-extract', methods=['GET'])
 def ai_extract_page():
-    """AI extraction page with model selection."""
+    """AI extraction page with model selection and previous data restoration."""
     router = get_ai_model_router()
     model_comparison = router.get_model_comparison()
-    return render_template('ai_extract.html', data=None, model_comparison=model_comparison)
+    
+    # Check if user is returning from editor (only restore data in this case)
+    from_editor = request.args.get('from_editor', 'false').lower() == 'true'
+    
+    # Check for previous extraction data in session
+    previous_data = None
+    extraction_id = session.get('last_extraction_id')
+    
+    logger.info(f"[AI Extract] Page load - from_editor: {from_editor}")
+    logger.info(f"[AI Extract] Page load - Session keys: {list(session.keys())}")
+    logger.info(f"[AI Extract] Page load - last_extraction_id: {extraction_id}")
+    
+    # Only restore data if coming from editor
+    if from_editor and extraction_id:
+        try:
+            # Try to load from file storage first
+            import os
+            import json
+            extraction_file = f"app/static/temp/extractions/{extraction_id}.json"
+            
+            logger.info(f"[AI Extract] Looking for extraction file: {extraction_file}")
+            
+            if os.path.exists(extraction_file):
+                with open(extraction_file, 'r') as f:
+                    previous_data = json.load(f)
+                logger.info(f"[AI Extract] Restored previous extraction data from file: {extraction_id}")
+                logger.info(f"[AI Extract] Data keys: {list(previous_data.keys()) if isinstance(previous_data, dict) else 'Not a dict'}")
+            else:
+                logger.warning(f"[AI Extract] Extraction file not found: {extraction_file}")
+                # Fallback to session storage
+                session_key = f'extraction_{extraction_id}'
+                if session_key in session:
+                    previous_data = session[session_key]
+                    logger.info(f"[AI Extract] Restored previous extraction data from session: {extraction_id}")
+                else:
+                    logger.warning(f"[AI Extract] Session key not found: {session_key}")
+        except Exception as e:
+            logger.warning(f"[AI Extract] Failed to restore previous extraction data: {e}")
+            logger.warning(f"[AI Extract] Full traceback: {traceback.format_exc()}")
+            # Clear invalid session data
+            session.pop('last_extraction_id', None)
+    else:
+        if not from_editor:
+            logger.info(f"[AI Extract] Not from editor - skipping session restoration")
+        else:
+            logger.info(f"[AI Extract] No previous extraction data found in session")
+    
+    logger.info(f"[AI Extract] Rendering template with data: {previous_data is not None}")
+    if previous_data:
+        logger.info(f"[AI Extract] Data keys: {list(previous_data.keys()) if isinstance(previous_data, dict) else 'Not a dict'}")
+    return render_template('ai_extract.html', data=previous_data, model_comparison=model_comparison)
 
 @ai_extract_bp.route('/ai_extract/extract', methods=['POST'])
 def ai_extract_extract():
@@ -381,6 +431,9 @@ def ai_extract_extract():
             temp_dir = "app/static/temp/extractions"
             os.makedirs(temp_dir, exist_ok=True)
             
+            # Add filename to extracted data for preview
+            extracted_data['filename'] = file.filename
+            
             extraction_file = os.path.join(temp_dir, f"{extraction_id}.json")
             with open(extraction_file, 'w') as f:
                 json.dump(extracted_data, f, indent=2)
@@ -388,6 +441,8 @@ def ai_extract_extract():
             # Store only the extraction ID in session
             session['last_extraction_id'] = extraction_id
             logger.info(f"[AI Extract] Stored extraction data in file: {extraction_file}")
+            logger.info(f"[AI Extract] Set session last_extraction_id: {extraction_id}")
+            logger.info(f"[AI Extract] Session keys after setting: {list(session.keys())}")
             
         except Exception as storage_error:
             logger.error(f"[AI Extract] Failed to store extraction data: {storage_error}")
@@ -402,7 +457,8 @@ def ai_extract_extract():
             'data': extracted_data, 
             'filename': file.filename,
             'extraction_id': extraction_id,
-            'edit_url': f'/pump_editor/{extraction_id}'
+            'edit_url': f'/pump_editor/{extraction_id}',
+            'preview_url': f'/ai_extract/preview/{extraction_id}'
         }
         return jsonify(response_data)
 
@@ -557,6 +613,61 @@ def get_model_comparison():
     except Exception as e:
         logger.error(f"[Model Comparison] Error: {str(e)}")
         return jsonify({'success': False, 'error': str(e)}), 500
+
+@ai_extract_bp.route('/ai_extract/store_preview', methods=['POST'])
+def store_pdf_preview():
+    """Store PDF preview image for an extraction."""
+    try:
+        data = request.get_json()
+        extraction_id = data.get('extraction_id')
+        preview_data = data.get('preview_data')  # Base64 image data
+        
+        if not extraction_id or not preview_data:
+            return jsonify({'success': False, 'message': 'Missing extraction_id or preview_data'}), 400
+        
+        # Store preview image
+        import os
+        import base64
+        preview_dir = "static/temp/previews"
+        os.makedirs(preview_dir, exist_ok=True)
+        
+        preview_file = os.path.join(preview_dir, f"{extraction_id}.png")
+        
+        # Remove data URL prefix if present
+        if preview_data.startswith('data:image/'):
+            preview_data = preview_data.split(',')[1]
+        
+        # Decode and save image
+        with open(preview_file, 'wb') as f:
+            f.write(base64.b64decode(preview_data))
+        
+        logger.info(f"[AI Extract] Stored PDF preview: {preview_file}")
+        return jsonify({'success': True, 'preview_url': f'/ai_extract/preview/{extraction_id}'})
+        
+    except Exception as e:
+        logger.error(f"[AI Extract] Failed to store preview: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@ai_extract_bp.route('/ai_extract/preview/<extraction_id>')
+def get_pdf_preview(extraction_id):
+    """Serve PDF preview image for an extraction."""
+    try:
+        import os
+        from flask import send_file
+        # Use absolute path to ensure correct file location
+        preview_file = os.path.abspath(f"static/temp/previews/{extraction_id}.png")
+        if os.path.exists(preview_file):
+            return send_file(preview_file, mimetype='image/png')
+        else:
+            # Return a placeholder image or 404
+            return jsonify({'error': 'Preview not found'}), 404
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"[AI Extract] Failed to serve preview: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
 
 def calculate_extraction_quality(extracted_data):
     """Calculate quality score for extracted data"""
