@@ -24,8 +24,8 @@
 
     <!-- Main Form -->
     <form id="pumpSelectionForm" 
-      action="{{ url_for('main_flow.pump_options') }}" 
-      method="GET" 
+      action="{{ url_for('main_flow.pump_selection') }}" 
+      method="POST" 
       class="needs-validation" 
       novalidate>
         <!-- Core Requirements Section -->
@@ -49,7 +49,7 @@
                             <div class="col s12 m6">
                                 <div class="input-field">
                                     <i class="material-icons prefix">water_drop</i>
-                                    <input id="flow_rate" name="flow" type="number" step="0.01" min="0.1" max="10000" required class="validate">
+                                    <input id="flow_rate" name="flow_m3hr" type="number" step="0.01" min="0.1" max="10000" required class="validate">
                                     <label for="flow_rate">Flow Rate (m³/hr) *</label>
                                     <span class="helper-text" data-error="Flow rate must be between 0.1 and 10000 m³/hr">Required volumetric flow rate - precise to 0.01 m³/hr</span>
                                 </div>
@@ -57,7 +57,7 @@
                             <div class="col s12 m6">
                                 <div class="input-field">
                                     <i class="material-icons prefix">height</i>
-                                    <input id="total_head" name="head" type="number" step="0.01" min="0.1" max="1000" required class="validate">
+                                    <input id="total_head" name="head_m" type="number" step="0.01" min="0.1" max="1000" required class="validate">
                                     <label for="total_head">Total Head (m) *</label>
                                     <span class="helper-text" data-error="Total head must be between 0.1 and 1000 m">Total dynamic head including friction and static losses</span>
                                 </div>
@@ -81,31 +81,31 @@
                                         <p>
                                             <label>
                                                 <input name="pump_type" type="radio" value="END_SUCTION" />
-                                                <span>END SUCTION - Single Stage Centrifugal</span>
-                                            </label>
-                                        </p>
-                                        <p>
-                                            <label>
-                                                <input name="pump_type" type="radio" value="MULTI_STAGE" />
-                                                <span>MULTI-STAGE - Multi-Stage Centrifugal</span>
+                                                <span>End-Suction - Single Stage Centrifugal</span>
                                             </label>
                                         </p>
                                         <p>
                                             <label>
                                                 <input name="pump_type" type="radio" value="HSC" />
-                                                <span>HSC - Horizontal Split Case</span>
-                                            </label>
-                                        </p>
-                                        <p>
-                                            <label>
-                                                <input name="pump_type" type="radio" value="AXIAL_FLOW" />
-                                                <span>AXIAL FLOW - Axial Flow Pumps</span>
+                                                <span>Horizontal Split Case</span>
                                             </label>
                                         </p>
                                         <p>
                                             <label>
                                                 <input name="pump_type" type="radio" value="VTP" />
-                                                <span>VTP - Vertical Turbine Pump</span>
+                                                <span>Vertical Turbine Pump</span>
+                                            </label>
+                                        </p>
+                                        <p>
+                                            <label>
+                                                <input name="pump_type" type="radio" value="MULTI_STAGE" />
+                                                <span>Multistage Centrifugal</span>
+                                            </label>
+                                        </p>
+                                        <p>
+                                            <label>
+                                                <input name="pump_type" type="radio" value="AXIAL_FLOW" />
+                                                <span>Axial Flow</span>
                                             </label>
                                         </p>
                                     </div>
@@ -163,6 +163,49 @@
                                         </p>
                                     </div>
                                     <span class="helper-text">Application context affects pump selection criteria</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Variable Flow Requirements -->
+                        <div class="row">
+                            <div class="col s12">
+                                <div class="input-group">
+                                    <label class="form-label" style="color: var(--md-primary); font-size: 14px; font-weight: 600; margin-bottom: 10px; display: block;">
+                                        <i class="material-icons" style="font-size: 16px; vertical-align: middle; margin-right: 8px;">tune</i>
+                                        Variable Flow Requirements
+                                    </label>
+                                    <div class="radio-group">
+                                        <p>
+                                            <label>
+                                                <input name="variable_flow" type="radio" value="no" checked />
+                                                <span>Fixed Flow Rate</span>
+                                            </label>
+                                        </p>
+                                        <p>
+                                            <label>
+                                                <input name="variable_flow" type="radio" value="yes" />
+                                                <span>Variable Flow Required</span>
+                                            </label>
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row" id="flow-range-section" style="display: none;">
+                            <div class="col s12 m6">
+                                <div class="input-field">
+                                    <i class="material-icons prefix">trending_down</i>
+                                    <input id="min_flow_rate" name="min_flow_rate" type="number" step="0.01" min="0.1">
+                                    <label for="min_flow_rate">Minimum Flow Rate (m³/hr)</label>
+                                </div>
+                            </div>
+                            <div class="col s12 m6">
+                                <div class="input-field">
+                                    <i class="material-icons prefix">trending_up</i>
+                                    <input id="max_flow_rate" name="max_flow_rate" type="number" step="0.01" min="0.1">
+                                    <label for="max_flow_rate">Maximum Flow Rate (m³/hr)</label>
                                 </div>
                             </div>
                         </div>
@@ -364,6 +407,33 @@
                                     <span class="helper-text">Net Positive Suction Head available</span>
                                 </div>
                             </div>
+                            <div class="col s12 m6">
+                                <div class="input-field">
+                                    <i class="material-icons prefix">terrain</i>
+                                    <input id="site_altitude" name="site_altitude" type="number" step="0.1" min="0">
+                                    <label for="site_altitude">Site Altitude (m above sea level)</label>
+                                    <span class="helper-text">Affects NPSH and vapor pressure calculations</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col s12 m6">
+                                <div class="input-field">
+                                    <i class="material-icons prefix">vertical_align_top</i>
+                                    <input id="discharge_pressure" name="discharge_pressure" type="number" step="0.1">
+                                    <label for="discharge_pressure">Discharge Pressure (bar gauge)</label>
+                                    <span class="helper-text">System discharge pressure</span>
+                                </div>
+                            </div>
+                            <div class="col s12 m6">
+                                <div class="input-field">
+                                    <i class="material-icons prefix">compress</i>
+                                    <input id="vapor_pressure" name="vapor_pressure" type="number" step="0.001" value="3.074">
+                                    <label for="vapor_pressure">Vapor Pressure (kPa)</label>
+                                    <span class="helper-text">Liquid vapor pressure at operating temperature</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -387,6 +457,100 @@
                                     <input id="max_power" name="max_power" type="number" step="0.1" min="0">
                                     <label for="max_power">Maximum Power (kW)</label>
                                     <span class="helper-text">Maximum allowable motor power</span>
+                                </div>
+                            </div>
+                            <div class="col s12 m6">
+                                <div class="input-field">
+                                    <i class="material-icons prefix">settings</i>
+                                    <input id="motor_speed" name="motor_speed" type="number" step="1" value="2960">
+                                    <label for="motor_speed">Motor Speed (rpm)</label>
+                                    <span class="helper-text">Required motor speed</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col s12 m4">
+                                <div class="input-field">
+                                    <i class="material-icons prefix">electrical_services</i>
+                                    <input id="voltage" name="voltage" type="number" step="1" value="380">
+                                    <label for="voltage">Voltage (V)</label>
+                                </div>
+                            </div>
+                            <div class="col s12 m4">
+                                <div class="input-field">
+                                    <i class="material-icons prefix">waves</i>
+                                    <input id="frequency" name="frequency" type="number" step="1" value="50">
+                                    <label for="frequency">Frequency (Hz)</label>
+                                </div>
+                            </div>
+                            <div class="col s12 m4">
+                                <div class="input-group">
+                                    <label class="form-label" style="color: var(--md-primary); font-size: 14px; font-weight: 600; margin-bottom: 10px; display: block;">
+                                        <i class="material-icons" style="font-size: 16px; vertical-align: middle; margin-right: 8px;">electrical_services</i>
+                                        Phase
+                                    </label>
+                                    <div class="radio-group">
+                                        <p style="margin: 5px 0;">
+                                            <label>
+                                                <input name="motor_phase" type="radio" value="three_phase" checked />
+                                                <span>Three Phase</span>
+                                            </label>
+                                        </p>
+                                        <p style="margin: 5px 0;">
+                                            <label>
+                                                <input name="motor_phase" type="radio" value="single_phase" />
+                                                <span>Single Phase</span>
+                                            </label>
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col s12 m6">
+                                <div class="input-group">
+                                    <label class="form-label" style="color: var(--md-primary); font-size: 14px; font-weight: 600; margin-bottom: 10px; display: block;">
+                                        <i class="material-icons" style="font-size: 16px; vertical-align: middle; margin-right: 8px;">security</i>
+                                        Sealing Arrangement
+                                    </label>
+                                    <div class="radio-group">
+                                        <p>
+                                            <label>
+                                                <input name="sealing" type="radio" value="mechanical_seal" checked />
+                                                <span>Mechanical Seal</span>
+                                            </label>
+                                        </p>
+                                        <p>
+                                            <label>
+                                                <input name="sealing" type="radio" value="gland_packing" />
+                                                <span>Gland Packing</span>
+                                            </label>
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col s12 m6">
+                                <div class="input-group">
+                                    <label class="form-label" style="color: var(--md-primary); font-size: 14px; font-weight: 600; margin-bottom: 10px; display: block;">
+                                        <i class="material-icons" style="font-size: 16px; vertical-align: middle; margin-right: 8px;">warning</i>
+                                        ATEX/Hazardous Area
+                                    </label>
+                                    <div class="radio-group">
+                                        <p>
+                                            <label>
+                                                <input name="atex_required" type="radio" value="no" checked />
+                                                <span>Standard Motor</span>
+                                            </label>
+                                        </p>
+                                        <p>
+                                            <label>
+                                                <input name="atex_required" type="radio" value="yes" />
+                                                <span>ATEX Motor Required</span>
+                                            </label>
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -448,6 +612,20 @@ function initializeFormComponents() {
             }
         });
     }
+    
+    // Variable flow handling
+    const variableFlowRadios = document.querySelectorAll('input[name="variable_flow"]');
+    const flowRangeSection = document.getElementById('flow-range-section');
+    
+    variableFlowRadios.forEach(radio => {
+        radio.addEventListener('change', function() {
+            if (this.value === 'yes') {
+                flowRangeSection.style.display = 'block';
+            } else {
+                flowRangeSection.style.display = 'none';
+            }
+        });
+    });
     
     console.log('Form components initialized - radio buttons ready');
 }

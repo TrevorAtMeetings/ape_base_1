@@ -24,9 +24,9 @@ def pump_report_post():
         if not pump_code:
             safe_flash('Pump code is required.', 'error')
             return redirect(url_for('main_flow.index'))
-        
+
         return redirect(url_for('reports.pump_report', pump_code=pump_code))
-    
+
     except Exception as e:
         logger.error(f"Error in pump_report_post: {str(e)}")
         safe_flash('An error occurred processing your request.', 'error')
@@ -42,7 +42,7 @@ def pump_report(pump_code):
         # Get stored results from session with validation
         pump_selections = session.get('pump_selections', [])
         site_requirements_data = session.get('site_requirements', {})
-        
+
         # Validate session data integrity
         if pump_selections and not isinstance(pump_selections, list):
             logger.warning("Invalid pump_selections data in session, resetting")
@@ -72,12 +72,21 @@ def pump_report(pump_code):
                 if target_pump:
                     performance = target_pump.get_performance_at_duty(flow, head)
                     if performance:
+                        # Calculate proper suitability score to match catalog engine scoring
+                        efficiency_pct = performance.get('efficiency_pct', 0)
+                        efficiency_score = min(efficiency_pct, 80)  # Max 80 points for efficiency
+                        bep_score = 15  # Default BEP proximity score
+                        head_margin_bonus = 20 if performance.get('head_m', 0) >= head else 0
+                        raw_suitability_score = efficiency_score + bep_score + head_margin_bonus
+                        # Normalize to 0-100% scale (115 is the maximum possible score)
+                        suitability_score = min(100.0, (raw_suitability_score / 115.0) * 100.0)
+
                         pump_selections = [{
                             'pump_code': pump_code,
-                            'overall_score': performance.get('efficiency_pct', 0),
-                            'efficiency_at_duty': performance.get('efficiency_pct', 0),
+                            'overall_score': suitability_score,
+                            'efficiency_at_duty': efficiency_pct,
                             'operating_point': performance,
-                            'suitable': performance.get('efficiency_pct', 0) > 40,
+                            'suitable': efficiency_pct > 40,
                             'manufacturer': target_pump.manufacturer,
                             'pump_type': target_pump.pump_type,
                             'test_speed_rpm': performance.get('test_speed_rpm', 1480),
@@ -107,14 +116,23 @@ def pump_report(pump_code):
             catalog_engine = get_catalog_engine()
             target_pump = catalog_engine.get_pump_by_code(pump_code)
             if target_pump:
-                performance = target_pump.get_performance_at_duty(flow, head)
+                performance = catalog_pump.get_performance_at_duty(flow, head)
                 if performance:
+                    # Calculate proper suitability score to match catalog engine scoring
+                    efficiency_pct = performance.get('efficiency_pct', 0)
+                    efficiency_score = min(efficiency_pct, 80)  # Max 80 points for efficiency
+                    bep_score = 15  # Default BEP proximity score
+                    head_margin_bonus = 20 if performance.get('head_m', 0) >= head else 0
+                    raw_suitability_score = efficiency_score + bep_score + head_margin_bonus
+                    # Normalize to 0-100% scale (115 is the maximum possible score)
+                    suitability_score = min(100.0, (raw_suitability_score / 115.0) * 100.0)
+
                     selected_pump = {
                         'pump_code': pump_code,
-                        'overall_score': performance.get('overall_score', performance.get('efficiency_pct', 0)),
-                        'efficiency_at_duty': performance.get('efficiency_pct', 0),
+                        'overall_score': suitability_score,
+                        'efficiency_at_duty': efficiency_pct,
                         'operating_point': performance,
-                        'suitable': performance.get('efficiency_pct', 0) > 40,
+                        'suitable': efficiency_pct > 40,
                         'manufacturer': target_pump.manufacturer,
                         'pump_type': target_pump.pump_type,
                         'test_speed_rpm': performance.get('test_speed_rpm', 1480),
@@ -148,7 +166,7 @@ def pump_report(pump_code):
             flow = site_requirements_data.get('flow_m3hr', 0)
             head = site_requirements_data.get('head_m', 0)
             pump_type = site_requirements_data.get('pump_type', 'General')
-            
+
             if flow and head:
                 alternative_selections = catalog_engine.select_pumps(
                     flow_m3hr=flow,
@@ -156,13 +174,17 @@ def pump_report(pump_code):
                     max_results=5,
                     pump_type=pump_type
                 )
-                
+
                 # Filter out the selected pump and create alternative data
                 for alt_pump in alternative_selections:
                     if alt_pump.get('pump_code') != pump_code:
+                        # Normalize alternative pump score to 0-100% scale
+                        raw_alt_score = alt_pump.get('overall_score', 0)
+                        normalized_alt_score = min(100.0, (raw_alt_score / 115.0) * 100.0)
+                        
                         alternatives.append({
                             'pump_code': alt_pump.get('pump_code'),
-                            'overall_score': alt_pump.get('overall_score', 0),
+                            'overall_score': normalized_alt_score,
                             'efficiency_at_duty': alt_pump.get('efficiency_pct', 0),
                             'operating_point': alt_pump.get('operating_point', {}),
                             'suitable': alt_pump.get('efficiency_pct', 0) > 40,
@@ -171,7 +193,7 @@ def pump_report(pump_code):
                             'test_speed_rpm': alt_pump.get('test_speed_rpm', 1480),
                             'stages': '1'
                         })
-                        
+
                         # Limit to 3 alternatives
                         if len(alternatives) >= 3:
                             break
@@ -216,7 +238,7 @@ def pump_report(pump_code):
                 }
             logger.info(f"Template data - selected_pump operating_point: {selected_pump.get('operating_point')}")
             logger.info(f"Template data - selected_pump selected_curve: {selected_pump.get('selected_curve')}")
-            
+
 
 
         return render_template('professional_pump_report.html', **context_data)
@@ -240,38 +262,38 @@ def generate_pdf(pump_code):  # Renamed to match template usage
         pump_code = unquote(pump_code)
 
         logger.info(f"PDF generation requested for pump: {pump_code}")
-        
+
         # Get parameters from URL instead of session
         flow = request.args.get('flow', type=float)
         head = request.args.get('head', type=float)
-        
+
         if not flow or not head:
             logger.error(f"PDF generation - Missing flow or head parameters")
             safe_flash('Flow and head parameters are required for PDF generation.', 'error')
             return redirect(url_for('main_flow.index'))
-        
+
         logger.info(f"PDF generation - Parameters: flow={flow}, head={head}")
-        
+
         # Get catalog pump and calculate performance
         from ..catalog_engine import get_catalog_engine, convert_catalog_pump_to_legacy_format
         catalog_engine = get_catalog_engine()
         catalog_pump = catalog_engine.get_pump_by_code(pump_code)
-        
+
         if not catalog_pump:
             logger.error(f"PDF generation - Catalog pump {pump_code} not found")
             safe_flash('Pump not found in catalog', 'error')
             return redirect(url_for('main_flow.index'))
-        
+
         # Calculate performance at duty point
         performance = catalog_pump.get_performance_at_duty(flow, head)
-        
+
         if not performance:
             logger.error(f"PDF generation - No performance data for {pump_code} at flow={flow}, head={head}")
             safe_flash(f'Pump {pump_code} cannot operate at flow={flow} m³/hr, head={head} m', 'error')
             return redirect(url_for('main_flow.index'))
-        
+
         logger.info(f"PDF generation - Performance calculated: efficiency={performance.get('efficiency_pct')}%, power={performance.get('power_kw')}kW")
-        
+
         # Create site requirements from URL parameters
         site_requirements = SiteRequirements(
             flow_m3hr=flow,
@@ -295,7 +317,7 @@ def generate_pdf(pump_code):  # Renamed to match template usage
             'impeller_size': performance.get('impeller_diameter_mm', 0),
             'test_speed_rpm': performance.get('test_speed_rpm', 1480)
         }
-        
+
         # Create evaluation data for PDF
         evaluation = {
             'pump_code': pump_code,
@@ -310,12 +332,12 @@ def generate_pdf(pump_code):  # Renamed to match template usage
             'curve_index': 0,
             'suitable': performance.get('efficiency_pct', 0) > 40
         }
-        
+
         # Convert to legacy format for PDF compatibility
         legacy_pump = convert_catalog_pump_to_legacy_format(catalog_pump, performance)
-        
+
         logger.info(f"PDF generation - Legacy pump converted, generating PDF")
-        
+
         # Generate PDF using the calculated data
         from ..pdf_generator import generate_pdf_report as generate_pdf
         pdf_content = generate_pdf(
@@ -356,12 +378,12 @@ def generate_pdf_post():  # Renamed to be more descriptive
         # Use catalog_engine directly instead of legacy pump_engine
         from ..catalog_engine import get_catalog_engine, convert_catalog_pump_to_legacy_format
         catalog_engine = get_catalog_engine()
-        
+
         if not pump_code:
             return jsonify({'error': 'Pump code is required'}), 400
-            
+
         catalog_pump = catalog_engine.get_pump_by_code(str(pump_code))
-        
+
         if not catalog_pump:
             return jsonify({'error': f'Pump {pump_code} not found'}), 404
 
@@ -386,7 +408,7 @@ def generate_pdf_post():  # Renamed to be more descriptive
 
         # Get performance at duty point
         performance = catalog_pump.get_performance_at_duty(flow_val, head_val)
-        
+
         if not performance:
             return jsonify({'error': f'Pump {pump_code} cannot operate at flow={flow_val} m³/hr, head={head_val} m'}), 400
 
@@ -404,10 +426,10 @@ def generate_pdf_post():  # Renamed to be more descriptive
             'curve_index': 0,
             'suitable': performance.get('efficiency_pct', 0) > 40
         }
-        
+
         # Convert to legacy format for PDF compatibility
         legacy_pump = convert_catalog_pump_to_legacy_format(catalog_pump, performance)
-        
+
         from ..pdf_generator import generate_pdf_report
         pdf_content = generate_pdf_report(evaluation, legacy_pump, site_requirements)
 
@@ -420,4 +442,4 @@ def generate_pdf_post():  # Renamed to be more descriptive
 
     except Exception as e:
         logger.error(f"Error in PDF generation API: {str(e)}")
-        return jsonify({'error': f'PDF generation failed: {str(e)}'}), 500 
+        return jsonify({'error': f'PDF generation failed: {str(e)}'}), 500

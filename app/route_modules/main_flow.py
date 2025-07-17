@@ -87,7 +87,7 @@ def pump_selection():
         return redirect(url_for('main_flow.pump_options', 
                                flow=str(flow_val), 
                                head=str(head_val),
-                               application_type=request.form.get('application_type', 'water_supply'),
+                               application_type=request.form.get('application', 'water'),
                                pump_type=request.form.get('pump_type', 'General')))
 
     except Exception as e:
