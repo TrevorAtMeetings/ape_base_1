@@ -1,17 +1,20 @@
 """
 AI Configuration for Pump Data Extraction
-Simple configuration file for the AI extraction system
+Generic configuration file supporting multiple AI providers
 """
 
 import os
 from typing import Dict, Any
 
 class AIConfig:
-    """Configuration for AI model and extraction settings"""
+    """Generic configuration for AI model and extraction settings"""
     
-    # Model Configuration
+    # Model Configuration - Generic and flexible
     MODEL_NAME = os.getenv('AI_MODEL_NAME', 'gpt-4o')
     API_KEY_ENV = os.getenv('AI_API_KEY_ENV', 'OPENAI_API_KEY')
+    
+    # Provider Configuration
+    AI_PROVIDER = os.getenv('AI_PROVIDER', 'openai').lower()
     
     # Extraction Settings
     MAX_TOKENS = int(os.getenv('AI_MAX_TOKENS', '3500'))
@@ -31,6 +34,7 @@ class AIConfig:
         return {
             'model_name': cls.MODEL_NAME,
             'api_key_env': cls.API_KEY_ENV,
+            'provider': cls.AI_PROVIDER,
             'max_tokens': cls.MAX_TOKENS,
             'temperature': cls.TEMPERATURE,
             'timeout_seconds': cls.TIMEOUT_SECONDS
@@ -42,4 +46,13 @@ class AIConfig:
         api_key = os.getenv(cls.API_KEY_ENV)
         if not api_key:
             raise ValueError(f"API key not found in environment variable: {cls.API_KEY_ENV}")
-        return api_key 
+        return api_key
+    
+    @classmethod
+    def get_provider_info(cls) -> Dict[str, str]:
+        """Get provider information for client initialization"""
+        return {
+            'provider': cls.AI_PROVIDER,
+            'model_name': cls.MODEL_NAME,
+            'api_key_env': cls.API_KEY_ENV
+        } 

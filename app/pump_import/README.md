@@ -1,21 +1,14 @@
-# Simplified AI Extraction System
+# Generic AI Extraction System
 
-This directory contains a simplified AI extraction system for pump data from PDF files. The system has been streamlined to use a single configurable OpenAI model with a customizable prompt.
+This directory contains a generic AI extraction system for pump data from PDF files. The system supports multiple AI providers (OpenAI, Anthropic, Google) and uses a configurable model with a customizable prompt.
 
 ## Files
 
 ### Core Files
-- `config.py` - Configuration settings for the AI model and extraction parameters
-- `simple_ai_extractor.py` - Main extraction logic using OpenAI
+- `config.py` - Generic configuration settings for AI providers and extraction parameters
+- `simple_ai_extractor.py` - Main extraction logic supporting multiple AI providers
 - `extraction_prompt.txt` - The prompt used for AI extraction (easily modifiable)
 - `pdf_to_image_converter.py` - Converts PDF pages to images for AI processing
-
-### Legacy Files (Kept for Reference)
-- `ai_extractor.py` - Original complex multi-model extractor
-- `ai_query_manager.py` - Original query management system
-- `specialist_prompts.py` - Original specialized prompts
-- `curve_synthesizer.py` - Original curve synthesis logic
-- `ape_data_processor.py` - Original APE data processing
 
 ## Configuration
 
@@ -23,10 +16,20 @@ This directory contains a simplified AI extraction system for pump data from PDF
 Set these environment variables to configure the system:
 
 ```bash
-# AI Model Configuration
-AI_MODEL_NAME=gpt-4o                    # OpenAI model to use
-AI_API_KEY_ENV=OPENAI_API_KEY          # Environment variable name for API key
-OPENAI_API_KEY=your_api_key_here       # Your OpenAI API key
+# AI Provider Configuration
+AI_PROVIDER=openai                     # AI provider: openai, anthropic, google
+AI_MODEL_NAME=gpt-4o                   # Model name for the selected provider
+AI_API_KEY_ENV=AI_API_KEY             # Environment variable name for API key
+
+# API Keys (set the one you need)
+# Default uses OPENAI_API_KEY for backward compatibility
+OPENAI_API_KEY=your_openai_key        # OpenAI API key (default)
+# OR use generic variable:
+# AI_API_KEY_ENV=AI_API_KEY           # Custom environment variable name
+# AI_API_KEY=your_api_key_here        # Generic API key variable
+# OR use provider-specific variables:
+# ANTHROPIC_API_KEY=your_anthropic_key # Anthropic API key
+# GOOGLE_API_KEY=your_google_key       # Google API key
 
 # Extraction Settings
 AI_MAX_TOKENS=3500                     # Maximum tokens for AI response
@@ -36,6 +39,32 @@ AI_TIMEOUT_SECONDS=120                 # Timeout for API calls
 # Validation Settings
 AI_ENABLE_VALIDATION=true              # Enable data validation
 AI_ENABLE_FALLBACK=true                # Enable fallback data on failure
+```
+
+### Supported AI Providers
+
+#### OpenAI
+```bash
+AI_PROVIDER=openai
+AI_MODEL_NAME=gpt-4o
+AI_API_KEY_ENV=OPENAI_API_KEY
+OPENAI_API_KEY=your_openai_key
+```
+
+#### Anthropic
+```bash
+AI_PROVIDER=anthropic
+AI_MODEL_NAME=claude-3-5-sonnet-20241022
+AI_API_KEY_ENV=ANTHROPIC_API_KEY
+ANTHROPIC_API_KEY=your_anthropic_key
+```
+
+#### Google
+```bash
+AI_PROVIDER=google
+AI_MODEL_NAME=gemini-2.0-flash-exp
+AI_API_KEY_ENV=GOOGLE_API_KEY
+GOOGLE_API_KEY=your_google_key
 ```
 
 ### Prompt Customization

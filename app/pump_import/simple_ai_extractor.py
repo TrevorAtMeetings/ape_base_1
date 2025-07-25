@@ -1,6 +1,7 @@
 """
-Simplified AI Extractor for Pump Data Extraction
-Uses a single configurable OpenAI model with a prompt from a text file
+Generic AI Extractor for Pump Data Extraction
+Uses a configurable AI model with a prompt from a text file
+Supports multiple AI providers (OpenAI, Anthropic, etc.)
 """
 
 import logging
@@ -10,7 +11,6 @@ import os
 import time
 import traceback
 from typing import Dict, Any, List, Optional
-from openai import OpenAI
 from PIL import Image
 import io
 import tempfile
@@ -31,11 +31,27 @@ class SimpleAIExtractor:
         self._initialize_client()
     
     def _initialize_client(self):
-        """Initialize OpenAI client with configuration"""
+        """Initialize AI client with configuration based on provider"""
         try:
             api_key = self.config.get_api_key()
-            self.client = OpenAI(api_key=api_key)
-            logger.info(f"[Simple AI Extractor] Initialized with model: {self.config.MODEL_NAME}")
+            provider_info = self.config.get_provider_info()
+            
+            if provider_info['provider'] == 'openai':
+                from openai import OpenAI
+                self.client = OpenAI(api_key=api_key)
+                logger.info(f"[Simple AI Extractor] Initialized OpenAI client with model: {self.config.MODEL_NAME}")
+            elif provider_info['provider'] == 'anthropic':
+                import anthropic
+                self.client = anthropic.Anthropic(api_key=api_key)
+                logger.info(f"[Simple AI Extractor] Initialized Anthropic client with model: {self.config.MODEL_NAME}")
+            elif provider_info['provider'] == 'google':
+                import google.generativeai as genai
+                genai.configure(api_key=api_key)
+                self.client = genai
+                logger.info(f"[Simple AI Extractor] Initialized Google client with model: {self.config.MODEL_NAME}")
+            else:
+                raise ValueError(f"Unsupported AI provider: {provider_info['provider']}")
+                
         except Exception as e:
             logger.error(f"[Simple AI Extractor] Failed to initialize client: {e}")
             raise
@@ -87,22 +103,48 @@ class SimpleAIExtractor:
                     }
                 })
             
-            # Make API call
-            logger.info(f"[Simple AI Extractor] Making API call to {self.config.MODEL_NAME}")
+            # Make API call based on provider
+            provider_info = self.config.get_provider_info()
+            logger.info(f"[Simple AI Extractor] Making API call to {provider_info['provider']} model: {self.config.MODEL_NAME}")
             logger.info(f"[Simple AI Extractor] Content length: {len(content)} items")
             logger.info(f"[Simple AI Extractor] Max tokens: {self.config.MAX_TOKENS}")
             logger.info(f"[Simple AI Extractor] Temperature: {self.config.TEMPERATURE}")
             
-            response = self.client.chat.completions.create(
-                model=self.config.MODEL_NAME,
-                messages=[{"role": "user", "content": content}],
-                max_tokens=self.config.MAX_TOKENS,
-                temperature=self.config.TEMPERATURE,
-                timeout=self.config.TIMEOUT_SECONDS
-            )
-            
-            # Extract response text
-            response_text = response.choices[0].message.content.strip()
+            if provider_info['provider'] == 'openai':
+                response = self.client.chat.completions.create(
+                    model=self.config.MODEL_NAME,
+                    messages=[{"role": "user", "content": content}],
+                    max_tokens=self.config.MAX_TOKENS,
+                    temperature=self.config.TEMPERATURE,
+                    timeout=self.config.TIMEOUT_SECONDS
+                )
+                response_text = response.choices[0].message.content.strip()
+                
+            elif provider_info['provider'] == 'anthropic':
+                # Anthropic uses different message format
+                messages = [{"role": "user", "content": content}]
+                response = self.client.messages.create(
+                    model=self.config.MODEL_NAME,
+                    max_tokens=self.config.MAX_TOKENS,
+                    temperature=self.config.TEMPERATURE,
+                    messages=messages
+                )
+                response_text = response.content[0].text.strip()
+                
+            elif provider_info['provider'] == 'google':
+                # Google uses different format
+                prompt_text = content[0]["text"]  # Get the text prompt
+                response = self.client.generate_content(
+                    prompt_text,
+                    generation_config={
+                        'max_output_tokens': self.config.MAX_TOKENS,
+                        'temperature': self.config.TEMPERATURE
+                    }
+                )
+                response_text = response.text.strip()
+                
+            else:
+                raise ValueError(f"Unsupported provider for API call: {provider_info['provider']}")
             logger.info(f"[Simple AI Extractor] API response received, length: {len(response_text)} characters")
             logger.info(f"[Simple AI Extractor] Response preview: {response_text[:200]}...")
             
