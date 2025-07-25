@@ -125,56 +125,16 @@
                             <p style="margin: 4px 0; font-size: 0.9em; color: #666;">Select a PDF file to extract pump data</p>
                             <input type="file" id="pdf-file" name="pdf_file" accept=".pdf" style="display: none;">
 
-                            <!-- Enhanced Model Selection -->
+                            <!-- Simplified AI System Info -->
                             <div style="margin: 12px 0; text-align: left;">
-                                <label style="font-weight: 500; color: #1976d2; margin-bottom: 8px; display: block;">AI Model Selection:</label>
-                                <p>
-                                    <label style="margin-right: 20px;">
-                                        <input name="model_choice" type="radio" value="auto" checked />
-                                        <span>Auto-Select (Recommended)</span>
-                                    </label>
-                                    <label style="margin-right: 20px;">
-                                        <input name="model_choice" type="radio" value="openai" />
-                                        <span>OpenAI GPT-4o (High Accuracy)</span>
-                                    </label>
-                                    <label style="margin-right: 20px;">
-                                        <input name="model_choice" type="radio" value="gemini" />
-                                        <span>Google Gemini 2.0 (Fast & Cost-Effective)</span>
-                                    </label>
-                                     <label>
-                                        <input name="model_choice" type="radio" value="anthropic" />
-                                        <span>Anthropic Claude (Balanced Performance)</span>
-                                    </label>
-                                </p>
-
-                                <!-- Priority Selection -->
-                                <label style="font-weight: 500; color: #1976d2; margin: 12px 0 8px 0; display: block;">Processing Priority:</label>
-                                <p>
-                                    <label style="margin-right: 20px;">
-                                        <input name="priority" type="radio" value="balanced" checked />
-                                        <span>Balanced</span>
-                                    </label>
-                                    <label style="margin-right: 20px;">
-                                        <input name="priority" type="radio" value="accuracy" />
-                                        <span>Accuracy</span>
-                                    </label>
-                                    <label style="margin-right: 20px;">
-                                        <input name="priority" type="radio" value="speed" />
-                                        <span>Speed</span>
-                                    </label>
-                                    <label>
-                                        <input name="priority" type="radio" value="cost" />
-                                        <span>Cost</span>
-                                    </label>
-                                </p>
-
-                                <!-- Model Performance Display -->
-                                <div id="model-performance" style="margin-top: 12px; padding: 8px; background: #f9f9f9; border-radius: 4px; display: none;">
-                                    <small style="color: #666;">Model Performance:</small>
-                                    <div id="performance-metrics" style="font-size: 0.85em; margin-top: 4px;">
-                                        <!-- Performance metrics will be displayed here -->
+                                <div style="padding: 8px; background: #f0f8ff; border-radius: 4px; border-left: 4px solid #1976d2;">
+                                    <small style="color: #1976d2; font-weight: 500;">AI System:</small>
+                                    <div style="font-size: 0.85em; margin-top: 4px; color: #666;">
+                                        Using OpenAI GPT-4o for high-accuracy pump data extraction
                                     </div>
                                 </div>
+
+
                             </div>
 
                             <button type="button" class="btn btn-compact waves-effect waves-light" style="background-color: #1976d2; margin-top: 8px;" onclick="document.getElementById('pdf-file').click();">
@@ -391,10 +351,8 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        // Get selected model and priority
-        const selectedModel = document.querySelector('input[name="model_choice"]:checked').value;
-        const selectedPriority = document.querySelector('input[name="priority"]:checked').value;
-        const modelName = selectedModel === 'gemini' ? 'Google Gemini 2.0 Flash' : 'OpenAI GPT-4 Vision';
+        // Simplified processing - no model selection needed
+        const modelName = 'OpenAI GPT-4o';
 
         // Set processing state but preserve preview
         progressContainer.style.display = 'block';
@@ -406,8 +364,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const formData = new FormData();
         formData.append('pdf_file', file);
-        formData.append('model_choice', selectedModel);
-        formData.append('priority', selectedPriority);
         fetch('/ai_extract/extract', {
             method: 'POST',
             body: formData
@@ -1095,110 +1051,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Load and display model performance data
-    function loadModelPerformanceData() {
-        // Load model comparison data from the server
-        fetch('/ai_extract/model_comparison')
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    window.modelComparisonData = data.data;
-                    updateModelPerformanceDisplay();
-                }
-            })
-            .catch(error => {
-                console.log('Model performance data not available:', error);
-            });
-    }
+    // Model performance loading removed - using simplified system
 
-    function updateModelPerformanceDisplay() {
-        const modelChoice = document.querySelector('input[name="model_choice"]:checked')?.value;
-        const priority = document.querySelector('input[name="priority"]:checked')?.value;
-        const performanceDiv = document.getElementById('model-performance');
-        const metricsDiv = document.getElementById('performance-metrics');
-
-        if (!window.modelComparisonData || !modelChoice) {
-            performanceDiv.style.display = 'none';
-            return;
-        }
-
-        if (modelChoice === 'auto') {
-            // Show recommendation based on priority
-            const recommendation = getModelRecommendation(priority);
-            metricsDiv.innerHTML = `
-                <div style="color: #1976d2; font-weight: 500;">Auto-Selection: ${recommendation.model}</div>
-                <div>Reason: ${recommendation.reason}</div>
-                <div style="margin-top: 4px;">
-                    <span style="color: #666;">Est. Time: ${recommendation.time}s</span> | 
-                    <span style="color: #666;">Est. Cost: $${recommendation.cost}</span> | 
-                    <span style="color: #666;">Accuracy: ${recommendation.accuracy}%</span>
-                </div>
-            `;
-            performanceDiv.style.display = 'block';
-        } else {
-            // Show specific model performance
-            const modelData = window.modelComparisonData.models[modelChoice];
-            if (modelData) {
-                const statusColor = modelData.available ? '#4caf50' : '#f44336';
-                const statusText = modelData.available ? 'Available' : 'Unavailable';
-
-                metricsDiv.innerHTML = `
-                    <div style="color: ${statusColor}; font-weight: 500;">${modelChoice.toUpperCase()}: ${statusText}</div>
-                    <div style="margin-top: 4px;">
-                        <span style="color: #666;">Avg. Time: ${modelData.avg_time}s</span> | 
-                        <span style="color: #666;">Cost: $${modelData.cost.toFixed(3)}</span> | 
-                        <span style="color: #666;">Accuracy: ${(modelData.accuracy * 100).toFixed(1)}%</span>
-                    </div>
-                    <div style="margin-top: 2px;">
-                        <span style="color: #666;">Success Rate: ${(modelData.success_rate * 100).toFixed(1)}%</span> | 
-                        <span style="color: #666;">Total Runs: ${modelData.total_runs}</span>
-                    </div>
-                `;
-                performanceDiv.style.display = 'block';
-            }
-        }
-    }
-
-    function getModelRecommendation(priority) {
-        const models = window.modelComparisonData.models;
-
-        // Simple recommendation logic based on priority
-        if (priority === 'accuracy' && models.openai?.available) {
-            return {
-                model: 'OpenAI GPT-4o',
-                reason: 'Highest accuracy for APE pump extraction',
-                time: models.openai.avg_time,
-                cost: models.openai.cost.toFixed(3),
-                accuracy: (models.openai.accuracy * 100).toFixed(1)
-            };
-        } else if (priority === 'speed' && models.gemini?.available) {
-            return {
-                model: 'Google Gemini 2.0',
-                reason: 'Fastest processing time',
-                time: models.gemini.avg_time,
-                cost: models.gemini.cost.toFixed(3),
-                accuracy: (models.gemini.accuracy * 100).toFixed(1)
-            };
-        } else if (priority === 'cost' && models.gemini?.available) {
-            return {
-                model: 'Google Gemini 2.0',
-                reason: 'Most cost-effective option',
-                time: models.gemini.avg_time,
-                cost: models.gemini.cost.toFixed(3),
-                accuracy: (models.gemini.accuracy * 100).toFixed(1)
-            };
-        } else {
-            // Balanced recommendation
-            const bestModel = models.openai?.available ? 'openai' : 'gemini';
-            const modelData = models[bestModel];
-            return {
-                model: bestModel === 'openai' ? 'OpenAI GPT-4o' : 'Google Gemini 2.0',
-                reason: 'Best balanced performance',
-                time: modelData.avg_time,
-                cost: modelData.cost.toFixed(3),
-                accuracy: (modelData.accuracy * 100).toFixed(1)
-            };
-        }
-    }
+    // Model performance display functions removed - using simplified system
 
     // Check for and display previous extraction data (moved outside initialization check)
     console.log('Template data check - data exists: {{ "true" if data else "false" }}');
@@ -1300,29 +1155,7 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('No previous data found in template');
     {% endif %}
 
-    // Initialize model selection functionality
-    if (!window.aiExtractInitialized) {
-        window.aiExtractInitialized = true;
-        
-        document.addEventListener('DOMContentLoaded', function() {
-            if (!window.formComponentsInitialized) {
-                window.formComponentsInitialized = true;
-                console.log('Form components initialized - radio buttons ready');
-
-                // Load and display model performance data
-                loadModelPerformanceData();
-
-                // Add event listeners for model selection changes
-                document.querySelectorAll('input[name="model_choice"]').forEach(radio => {
-                    radio.addEventListener('change', updateModelPerformanceDisplay);
-                });
-
-                document.querySelectorAll('input[name="priority"]').forEach(radio => {
-                    radio.addEventListener('change', updateModelPerformanceDisplay);
-                });
-            }
-        });
-    }
+    // Model selection initialization removed - using simplified system
 });
 </script>
 {% endblock %}

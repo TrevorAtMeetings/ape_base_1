@@ -7,10 +7,10 @@ import threading
 import signal
 import traceback
 import time
-from ..pump_import.ai_extractor import extract_pump_data_from_pdf
+# Import removed - using simplified AI extractor instead
 from ..pump_repository import insert_extracted_pump_data
 
-def get_user_friendly_error_message(exception, model_choice):
+def get_user_friendly_error_message(exception):
     """
     Convert technical exceptions into user-friendly error messages
     """
@@ -19,19 +19,19 @@ def get_user_friendly_error_message(exception, model_choice):
 
     # Timeout errors
     if exception_type == "TimeoutError" or "timeout" in error_str:
-        return f"The {model_choice.upper()} AI model timed out while processing your PDF. This usually happens with complex technical diagrams. The system automatically tried an alternative approach, but both failed. Please try with a simpler PDF or contact support."
+        return "The AI model timed out while processing your PDF. This usually happens with complex technical diagrams. Please try with a simpler PDF or contact support."
 
     # Rate limiting errors
     if "rate limit" in error_str or "429" in error_str:
-        return f"The {model_choice.upper()} AI service is currently experiencing high demand. Please wait a moment and try again. The system attempted automatic fallback but both AI models are currently rate-limited."
+        return "The AI service is currently experiencing high demand. Please wait a moment and try again."
 
-    # JSON parsing errors (the main issue we're fixing)
+    # JSON parsing errors
     if "json" in error_str and "token" in error_str:
-        return f"The {model_choice.upper()} AI model returned an invalid response format. This typically occurs when the AI service is experiencing issues or the PDF content is too complex. The system attempted to use an alternative AI model but both failed. Please try again in a few minutes."
+        return "The AI model returned an invalid response format. This typically occurs when the AI service is experiencing issues or the PDF content is too complex. Please try again in a few minutes."
 
     # Content policy errors
     if "content policy" in error_str or "safety" in error_str:
-        return f"The {model_choice.upper()} AI model flagged this content for review. This sometimes happens with technical documents. The system tried an alternative AI model but was unable to process this PDF. Please ensure the PDF contains standard pump performance data."
+        return "The AI model flagged this content for review. This sometimes happens with technical documents. Please ensure the PDF contains standard pump performance data."
 
     # API key or authentication errors
     if "api key" in error_str or "unauthorized" in error_str or "authentication" in error_str:
@@ -41,12 +41,8 @@ def get_user_friendly_error_message(exception, model_choice):
     if "file" in error_str or "pdf" in error_str:
         return "There was an issue processing your PDF file. Please ensure the file is a valid PDF containing pump performance curves and try again."
 
-    # Generic AI extraction errors
-    if "both models failed" in error_str:
-        return "Both OpenAI and Google AI models were unable to process this PDF. This may be due to high API demand, complex diagram content, or temporary service issues. Please try again in a few minutes or contact support if the issue persists."
-
     # Default fallback
-    return f"AI extraction encountered an unexpected error. The system tried multiple approaches but was unable to process this PDF. Error details: {str(exception)[:200]}... Please try again or contact support if the issue persists."
+    return f"AI extraction encountered an unexpected error. Error details: {str(exception)[:200]}... Please try again or contact support if the issue persists."
 
 
 import json
@@ -55,16 +51,14 @@ import time
 
 logger = logging.getLogger(__name__)
 
-# Import the new AI model router
-from ..ai_model_router import get_ai_model_router, ModelProvider, ExtractionRequest
+# AI model router import removed - using simplified system
 
 ai_extract_bp = Blueprint('ai_extract', __name__)
 
 @ai_extract_bp.route('/ai-extract', methods=['GET'])
 def ai_extract_page():
-    """AI extraction page with model selection and previous data restoration."""
-    router = get_ai_model_router()
-    model_comparison = router.get_model_comparison()
+    """AI extraction page with simplified system."""
+    # Simplified system - no model comparison needed
     
     # Check if user is returning from editor (only restore data in this case)
     from_editor = request.args.get('from_editor', 'false').lower() == 'true'
@@ -115,7 +109,7 @@ def ai_extract_page():
     logger.info(f"[AI Extract] Rendering template with data: {previous_data is not None}")
     if previous_data:
         logger.info(f"[AI Extract] Data keys: {list(previous_data.keys()) if isinstance(previous_data, dict) else 'Not a dict'}")
-    return render_template('ai_extract.html', data=previous_data, model_comparison=model_comparison)
+    return render_template('ai_extract.html', data=previous_data)
 
 @ai_extract_bp.route('/ai_extract/extract', methods=['POST'])
 def ai_extract_extract():
@@ -139,53 +133,8 @@ def ai_extract_extract():
         if file_size > 10 * 1024 * 1024:  # 10MB limit
             return jsonify({'success': False, 'message': 'File too large. Maximum size is 10MB'}), 400
 
-        # Get extraction parameters from form data
-        user_model_choice = request.form.get('model_choice', 'auto')
-        extraction_priority = request.form.get('priority', 'balanced')
-        
-        # Use AI model router for intelligent model selection
-        try:
-            router = get_ai_model_router()
-        except Exception as router_error:
-            logger.error(f"[AI Extract] Router initialization failed: {router_error}")
-            return jsonify({
-                'success': False,
-                'message': 'AI model router initialization failed',
-                'error_type': 'router_error',
-                'retry_suggestion': 'Try again in a moment'
-            }), 500
-        
-        # Map form values to router enums
-        model_preference = ModelProvider.AUTO
-        if user_model_choice == 'openai':
-            model_preference = ModelProvider.OPENAI
-        elif user_model_choice == 'gemini':
-            model_preference = ModelProvider.GEMINI
-        elif user_model_choice == 'anthropic':
-            model_preference = ModelProvider.ANTHROPIC
-        
-        # Create extraction request context
-        try:
-            extraction_request = ExtractionRequest(
-                file_size=file_size,
-                file_type='pdf',
-                user_preference=model_preference,
-                priority=extraction_priority
-            )
-        except Exception as request_error:
-            logger.error(f"[AI Extract] Request creation failed: {request_error}")
-            return jsonify({
-                'success': False,
-                'message': 'Request creation failed',
-                'error_type': 'request_error',
-                'retry_suggestion': 'Try again in a moment'
-            }), 500
-        
-        # Get model recommendation
-        selected_model, selection_reason = router.select_model(extraction_request)
-        model_choice = selected_model.value
-        
-        logger.info(f"[AI Extract] Model selection: {model_choice} - {selection_reason}")
+        # Simplified extraction - no model selection needed
+        logger.info(f"[AI Extract] Using simplified AI extraction system")
 
         import os
         import tempfile
@@ -215,9 +164,9 @@ def ai_extract_extract():
             def timeout_handler(signum, frame):
                 raise TimeoutError("Extraction timed out after 120 seconds")
             
-            # Set up timeout for the extraction process - reduced to prevent Gunicorn worker timeout
-            extraction_timeout = 60  # Increased to 60 seconds to allow more time for extraction
-            logger.info(f"[AI Extract] Starting extraction with {extraction_timeout}s timeout using {model_choice}")
+            # Set up timeout for the extraction process - increased for AI processing
+            extraction_timeout = 180  # Increased to 180 seconds to allow more time for AI extraction
+            logger.info(f"[AI Extract] Starting extraction with {extraction_timeout}s timeout using simplified AI system")
             
             try:
                 # Use threading for better timeout control
@@ -226,7 +175,9 @@ def ai_extract_extract():
                 
                 def extraction_thread():
                     try:
-                        result[0] = extract_pump_data_from_pdf(file_path, model_choice)
+                        # Import the simplified extraction function
+                        from app.pump_import.simple_ai_extractor import extract_pump_data_from_pdf
+                        result[0] = extract_pump_data_from_pdf(file_path)
                     except Exception as e:
                         logger.error(f"[AI Extract] Exception in extraction thread: {e}")
                         logger.error(f"[AI Extract] Full traceback: {traceback.format_exc()}")
@@ -250,35 +201,13 @@ def ai_extract_extract():
                 # Calculate quality metrics for performance tracking
                 if isinstance(extracted_data, dict):
                     accuracy_score = calculate_extraction_quality(extracted_data)
-                    estimated_cost = estimate_extraction_cost(model_choice, file_size)
+                    estimated_cost = 0.0  # Simplified cost estimation
                 
                 processing_time = time.time() - start_time
-                
-                # Update router performance metrics
-                router.update_performance_metrics(
-                    selected_model,
-                    extraction_success,
-                    processing_time,
-                    accuracy_score,
-                    estimated_cost
-                )
                 
             except TimeoutError:
-                # Update router with timeout failure
-                processing_time = time.time() - start_time
-                router.update_performance_metrics(
-                    selected_model, False, processing_time, 0.0, 0.0
-                )
                 raise  # Re-raise timeout errors
         except Exception as e:
-            # Update router with general failure
-            try:
-                processing_time = time.time() - start_time
-                router.update_performance_metrics(
-                    selected_model, False, processing_time, 0.0, 0.0
-                )
-            except Exception as perf_error:
-                logger.warning(f"[AI Extract] Performance tracking failed: {perf_error}")
             logger.error(f"[AI Extract] Extraction failed: {e}")
             logger.error(f"[AI Extract] Full traceback: {traceback.format_exc()}")
             raise
@@ -286,13 +215,14 @@ def ai_extract_extract():
         # Log summary of extracted data with safe access - CHECK FOR APE PROCESSOR OUTPUT
         pump_model = "Unknown"
         
-        # Check if this is processed data from APE processor (new structure)
-        if isinstance(extracted_data, dict) and 'pump_details' in extracted_data:
+        # Check for pump details in the extracted data
+        if isinstance(extracted_data, dict) and 'pumpDetails' in extracted_data:
+            pump_details = extracted_data.get('pumpDetails', {})
+            pump_model = pump_details.get('pumpModel', 'Unknown')
+        elif isinstance(extracted_data, dict) and 'pump_details' in extracted_data:
+            # Fallback for snake_case structure
             pump_details = extracted_data.get('pump_details', {})
             pump_model = pump_details.get('pumpModel', 'Unknown')
-        # Fallback to old structure
-        elif isinstance(extracted_data, dict) and 'pumpDetails' in extracted_data:
-            pump_model = extracted_data['pumpDetails'].get('pumpModel', 'Unknown')
 
         logger.info(f"[AI Extract] Successfully extracted pump: {pump_model}")
 
@@ -300,15 +230,15 @@ def ai_extract_extract():
         curves = []
         total_points = 0
         
-        # Check for APE processor output structure first
+        # Check for curves in the extracted data
         if isinstance(extracted_data, dict) and 'curves' in extracted_data:
             curves = extracted_data.get('curves', [])
             
             if curves:
                 logger.info(f"[AI Extract] Processing {len(curves)} curves")
                 for i, curve in enumerate(curves):
-                    # APE processor uses 'performance_points' (underscore, not camelCase)
-                    performance_points = curve.get('performance_points', [])
+                    # Check for both camelCase and snake_case performance points
+                    performance_points = curve.get('performancePoints', curve.get('performance_points', []))
                     
                     points_count = len(performance_points)
                     total_points += points_count
@@ -464,7 +394,7 @@ def ai_extract_extract():
 
     except Exception as extraction_error:
         # Handle extraction-specific errors with enhanced error details
-        logger.error(f"[AI Extract] Extraction failed with {model_choice}: {extraction_error}")
+        logger.error(f"[AI Extract] Extraction failed: {extraction_error}")
         logger.error(f"[AI Extract] Full traceback: {traceback.format_exc()}")
 
         # Try to categorize the error for better user feedback
@@ -482,10 +412,9 @@ def ai_extract_extract():
             # Handle generic extraction errors with JSON response
             return jsonify({
                 'success': False,
-                'message': get_user_friendly_error_message(extraction_error, model_choice),
+                'message': get_user_friendly_error_message(extraction_error),
                 'error_type': 'extraction_error',
-                'retry_suggestion': 'Try with a different AI model or check PDF quality',
-                'fallback_model': 'gemini' if model_choice == 'openai' else 'openai'
+                'retry_suggestion': 'Try again or check PDF quality'
             }), 500
 
     except TimeoutError as e:
@@ -495,8 +424,7 @@ def ai_extract_extract():
             'success': False, 
             'message': error_message,
             'error_type': 'timeout',
-            'retry_suggestion': 'Try reducing the PDF size or try again in a few minutes',
-            'fallback_model': 'gemini' if model_choice == 'openai' else 'openai'
+            'retry_suggestion': 'Try reducing the PDF size or try again in a few minutes'
         }), 408
 
     except ValueError as e:
@@ -504,39 +432,34 @@ def ai_extract_extract():
         error_str = str(e).lower()
 
         if "rate_limit" in error_str or "429" in error_str or "quota" in error_str:
-            # Check if it's Gemini quota exhaustion
-            if "gemini" in error_str.lower() or "google" in error_str.lower():
+            # Check if it's API quota exhaustion
+            if "quota" in error_str.lower():
                 return jsonify({
                     'success': False,
-                    'message': 'Gemini API daily quota (50 requests) exceeded. Automatic fallback to OpenAI failed.',
+                    'message': 'API daily quota exceeded. Please try again tomorrow.',
                     'error_type': 'quota_exhausted',
-                    'retry_suggestion': 'Try again tomorrow when Gemini quota resets, or upgrade to Gemini Pro',
-                    'fallback_model': 'openai',
-                    'quota_info': 'Free Gemini tier: 50 requests/day limit reached'
+                    'retry_suggestion': 'Try again tomorrow when quota resets'
                 }), 429
             else:
                 return jsonify({
                     'success': False,
                     'message': 'API rate limit exceeded. Please wait a moment and try again.',
                     'error_type': 'rate_limit',
-                    'retry_suggestion': 'Wait 30-60 seconds before retrying',
-                    'fallback_model': 'gemini' if model_choice == 'openai' else 'openai'
+                    'retry_suggestion': 'Wait 30-60 seconds before retrying'
                 }), 429
         elif "content_policy" in error_str or "safety" in error_str:
             return jsonify({
                 'success': False,
                 'message': 'Content policy restriction detected. Technical documents should be allowed.',
                 'error_type': 'content_policy',
-                'retry_suggestion': 'Try with a different AI model or contact support',
-                'fallback_model': 'gemini' if model_choice == 'openai' else 'openai'
+                'retry_suggestion': 'Try again or contact support'
             }), 400
         elif "json" in error_str or "parsing" in error_str:
             return jsonify({
                 'success': False,
                 'message': 'AI response parsing failed. The model may have returned malformed data.',
                 'error_type': 'parsing_error',
-                'retry_suggestion': 'Try again with a different model or simpler PDF',
-                'fallback_model': 'gemini' if model_choice == 'openai' else 'openai'
+                'retry_suggestion': 'Try again with a simpler PDF'
             }), 400
         else:
             logger.error(f"Extraction error: {str(e)}")
@@ -545,8 +468,7 @@ def ai_extract_extract():
                 'success': False,
                 'message': f'Extraction error: {str(e)[:200]}...',
                 'error_type': 'extraction_error',
-                'retry_suggestion': 'Try with a different AI model or check PDF quality',
-                'fallback_model': 'gemini' if model_choice == 'openai' else 'openai'
+                'retry_suggestion': 'Try again or check PDF quality'
             }), 400
 
     except Exception as e:
@@ -556,8 +478,7 @@ def ai_extract_extract():
             'success': False,
             'message': f'Unexpected error during extraction: {str(e)[:200]}...',
             'error_type': 'unexpected_error',
-            'retry_suggestion': 'Please try again or contact support if the issue persists',
-            'fallback_model': 'gemini' if model_choice == 'openai' else 'openai'
+            'retry_suggestion': 'Please try again or contact support if the issue persists'
         }), 500
     
     except Exception as e:
@@ -602,17 +523,7 @@ def ai_extract_insert():
         logger.error(f"[AI Extract Routes] Full traceback: {traceback.format_exc()}")
         return jsonify({'success': False, 'error': str(e)}), 500 
 
-@ai_extract_bp.route('/ai_extract/model_comparison', methods=['GET'])
-def get_model_comparison():
-    """API endpoint to get model performance comparison data."""
-    try:
-        from app.ai_model_router import get_ai_model_router
-        router = get_ai_model_router()
-        comparison_data = router.get_model_comparison()
-        return jsonify({'success': True, 'data': comparison_data})
-    except Exception as e:
-        logger.error(f"[Model Comparison] Error: {str(e)}")
-        return jsonify({'success': False, 'error': str(e)}), 500
+# Model comparison route removed - using simplified system
 
 @ai_extract_bp.route('/ai_extract/store_preview', methods=['POST'])
 def store_pdf_preview():
@@ -701,15 +612,12 @@ def calculate_extraction_quality(extracted_data):
     
     return score / total_checks if total_checks > 0 else 0.0
 
-def estimate_extraction_cost(model_choice, file_size_bytes):
-    """Estimate cost based on model and file size"""
-    base_costs = {
-        'openai': 0.15,  # Base cost for OpenAI
-        'gemini': 0.08   # Base cost for Gemini
-    }
+def estimate_extraction_cost(file_size_bytes):
+    """Estimate cost based on file size"""
+    base_cost = 0.15  # Base cost for OpenAI
     
     # Adjust for file size (larger files cost more)
     size_mb = file_size_bytes / (1024 * 1024)
     size_multiplier = 1.0 + (size_mb / 10.0)  # 10% increase per MB
     
-    return base_costs.get(model_choice, 0.10) * size_multiplier
+    return base_cost * size_multiplier
