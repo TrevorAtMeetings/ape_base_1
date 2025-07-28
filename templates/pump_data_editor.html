@@ -566,6 +566,8 @@
         function updateCharts() {
             try {
                 console.log('Updating charts...');
+                console.log('Current pumpData:', pumpData);
+                console.log('Performance curves:', pumpData.performance_curves);
                 updateHeadChart();
                 updateEfficiencyChart();
                 updateNpshChart();
@@ -584,6 +586,7 @@
                 
                 const performanceCurves = pumpData.performance_curves || {};
                 console.log('Updating head chart with curves:', Object.keys(performanceCurves));
+                console.log('Performance curves data:', performanceCurves);
                 
                 const traces = [];
                 const colors = ['#1976d2', '#ff7043', '#4caf50', '#ff9800', '#9c27b0', '#f44336'];
@@ -659,9 +662,13 @@
         }
 
         function updateEfficiencyChart() {
-            const performanceCurves = pumpData.performance_curves || {};
-            const traces = [];
-            const colors = ['#4caf50', '#f44336', '#1976d2', '#ff9800', '#9c27b0', '#ff7043'];
+            try {
+                const performanceCurves = pumpData.performance_curves || {};
+                console.log('Updating efficiency chart with curves:', Object.keys(performanceCurves));
+                console.log('Performance curves data for efficiency:', performanceCurves);
+                
+                const traces = [];
+                const colors = ['#4caf50', '#f44336', '#1976d2', '#ff9800', '#9c27b0', '#ff7043'];
             
             Object.keys(performanceCurves).forEach((curveKey, index) => {
                 const impellerId = curveKey.replace('impeller_', '');
@@ -716,6 +723,9 @@
                 };
 
             Plotly.newPlot('efficiencyChart', traces, layout, {responsive: true});
+            } catch (error) {
+                console.error('Error updating efficiency chart:', error);
+            }
         }
 
         function updateNpshChart() {
@@ -768,9 +778,23 @@
                     const field = e.target.dataset.field;
                     const value = parseFloat(e.target.value);
                     
+                    console.log(`Updating ${field} for impeller ${impeller}, point ${point} to value ${value}`);
+                    
                     // Update data
                     const dataKey = `impeller_${impeller}`;
-                    pumpData[dataKey][point][field] = value;
+                    if (!pumpData.performance_curves) {
+                        pumpData.performance_curves = {};
+                    }
+                    if (!pumpData.performance_curves[dataKey]) {
+                        pumpData.performance_curves[dataKey] = [];
+                    }
+                    if (!pumpData.performance_curves[dataKey][point]) {
+                        pumpData.performance_curves[dataKey][point] = {};
+                    }
+                    
+                    pumpData.performance_curves[dataKey][point][field] = value;
+                    
+                    console.log(`Updated data:`, pumpData.performance_curves[dataKey][point]);
                     
                     // Mark as modified
                     e.target.classList.add('modified');
