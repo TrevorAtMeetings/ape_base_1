@@ -48,6 +48,8 @@ def pump_editor_with_id(extraction_id):
     """
     try:
         logger.info(f"[Pump Editor] Loading extraction {extraction_id} for editing")
+        logger.info(f"[Pump Editor] Extraction ID type: {type(extraction_id)}")
+        logger.info(f"[Pump Editor] Extraction ID value: '{extraction_id}'")
         
         # Load extraction data from storage
         pump_data = load_extraction_data(extraction_id)
@@ -226,6 +228,8 @@ def load_extraction_data(extraction_id: str) -> Dict[str, Any]:
     Load extraction data from storage with multiple fallback sources
     """
     try:
+        logger.info(f"[Pump Editor] Attempting to load extraction data for ID: '{extraction_id}'")
+        
         # Check in-memory storage first
         if extraction_id in edited_pump_data:
             logger.info(f"[Pump Editor] Found extraction {extraction_id} in memory")
@@ -233,10 +237,16 @@ def load_extraction_data(extraction_id: str) -> Dict[str, Any]:
         
         # Check file storage in temp/extractions
         storage_path = f"app/static/temp/extractions/{extraction_id}.json"
+        logger.info(f"[Pump Editor] Checking file storage at: {storage_path}")
+        logger.info(f"[Pump Editor] File exists: {os.path.exists(storage_path)}")
         if os.path.exists(storage_path):
             logger.info(f"[Pump Editor] Found extraction {extraction_id} in file storage")
             with open(storage_path, 'r') as f:
-                return json.load(f)
+                raw_data = json.load(f)
+                # Convert AI extraction format to pump editor format
+                converted_data = convert_ai_extraction_to_editor_format(raw_data)
+                logger.info(f"[Pump Editor] Converted data structure: {list(converted_data.keys())}")
+                return converted_data
         
         # Check session storage as fallback
         from ..session_manager import safe_session_get
@@ -261,6 +271,66 @@ def load_extraction_data(extraction_id: str) -> Dict[str, Any]:
     except Exception as e:
         logger.error(f"[Pump Editor] Error loading extraction {extraction_id}: {e}")
         return None
+
+def convert_ai_extraction_to_editor_format(ai_data: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Convert AI extraction data format to pump editor format
+    """
+    try:
+        logger.info(f"[Pump Editor] Converting AI extraction data to editor format")
+        logger.info(f"[Pump Editor] AI data keys: {list(ai_data.keys())}")
+        
+        # Extract pump details
+        pump_details = ai_data.get('pumpDetails', {})
+        specs = ai_data.get('specifications', {})
+        curves = ai_data.get('curves', [])
+        
+        # Convert to editor format
+        editor_data = {
+            'model': pump_details.get('pumpModel', 'Unknown'),
+            'manufacturer': pump_details.get('manufacturer', 'Unknown'),
+            'pump_type': pump_details.get('pumpType', ''),
+            'speed': specs.get('testSpeed', 0),
+            'max_flow': specs.get('maxFlow', 0),
+            'max_head': specs.get('maxHead', 0),
+            'bep_flow': specs.get('bepFlow', 0),
+            'bep_head': specs.get('bepHead', 0),
+            'bep_efficiency': specs.get('bepMarkers', [{}])[0].get('bepEfficiency', 0) if specs.get('bepMarkers') else 0,
+            'min_impeller': specs.get('minImpeller', 0),
+            'max_impeller': specs.get('maxImpeller', 0),
+            'npsh_at_bep': specs.get('npshrAtBep', 0)
+        }
+        
+        # Convert curves to editor format
+        performance_curves = {}
+        for curve in curves:
+            impeller_diameter = curve.get('impellerDiameter', 0)
+            curve_key = f"impeller_{impeller_diameter}"
+            
+            performance_points = curve.get('performancePoints', [])
+            converted_points = []
+            
+            for point in performance_points:
+                converted_point = {
+                    'flow': point.get('flow', 0),
+                    'head': point.get('head', 0),
+                    'efficiency': point.get('efficiency', 0),
+                    'npsh': point.get('npshr', 0)
+                }
+                converted_points.append(converted_point)
+            
+            performance_curves[curve_key] = converted_points
+        
+        editor_data['performance_curves'] = performance_curves
+        
+        logger.info(f"[Pump Editor] Converted data - Model: {editor_data['model']}, Speed: {editor_data['speed']}")
+        logger.info(f"[Pump Editor] Performance curves: {list(performance_curves.keys())}")
+        
+        return editor_data
+        
+    except Exception as e:
+        logger.error(f"[Pump Editor] Error converting AI extraction data: {e}")
+        return get_default_pump_data()
 
 def validate_pump_data(data: Dict[str, Any]) -> Dict[str, Any]:
     """

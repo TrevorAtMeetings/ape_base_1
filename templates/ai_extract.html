@@ -427,6 +427,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     const editBtn = document.getElementById('edit-data-btn');
                     editBtn.style.display = 'inline-block';
                     editBtn.onclick = function() {
+                        console.log('Edit button clicked - using edit_url:', data.edit_url);
+                        console.log('Extraction ID from data:', data.extraction_id);
                         window.location.href = data.edit_url;
                     };
                 }
@@ -1118,10 +1120,20 @@ document.addEventListener('DOMContentLoaded', function() {
                     // Hide the preview section before navigating to editor
                     hidePreviewSection();
                     
-                    // Get the extraction ID from the data or generate a URL
-                    const extractionId = '{{ session.get("last_extraction_id", "") }}';
+                    // Get the extraction ID from the current data or session
+                    let extractionId = '';
+                    if (extractedData && extractedData.extraction_id) {
+                        extractionId = extractedData.extraction_id;
+                    } else {
+                        extractionId = '{{ session.get("last_extraction_id", "") }}';
+                    }
+                    
                     if (extractionId) {
+                        console.log('Navigating to editor with extraction ID:', extractionId);
                         window.location.href = `/pump_editor/${extractionId}`;
+                    } else {
+                        console.error('No extraction ID available for editing');
+                        alert('No extraction data available for editing. Please run a new extraction.');
                     }
                 };
             }
