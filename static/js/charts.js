@@ -385,6 +385,27 @@ class PumpChartsManager {
                 opPoint.efficiency_pct >= 70 ? 'Good' :
                     opPoint.efficiency_pct >= 60 ? 'Acceptable' : 'Poor';
 
+            // Format impeller sizing information
+            let impellerInfo = 'N/A';
+            if (opPoint.impeller_diameter_mm) {
+                const baseDiameter = opPoint.impeller_diameter_mm;
+                if (opPoint.sizing_info && opPoint.sizing_info.required_diameter_mm && 
+                    opPoint.sizing_info.required_diameter_mm !== baseDiameter) {
+                    // Show scaled/trimmed diameter
+                    const requiredDiameter = opPoint.sizing_info.required_diameter_mm;
+                    const trimPercent = opPoint.sizing_info.trim_percent || 
+                        ((requiredDiameter / baseDiameter) * 100);
+                    impellerInfo = baseDiameter.toFixed(0) + 'mm (Base) → ' + 
+                        requiredDiameter.toFixed(0) + 'mm (' + trimPercent.toFixed(0) + '% Trim)';
+                } else {
+                    // Standard diameter, no scaling
+                    impellerInfo = baseDiameter.toFixed(0) + 'mm Diameter';
+                }
+            } else if (opPoint.curve && opPoint.curve.impeller_diameter_mm) {
+                // Fallback to curve diameter
+                impellerInfo = opPoint.curve.impeller_diameter_mm.toFixed(0) + 'mm Diameter';
+            }
+
             traces.push({
                 x: [opPoint.flow_m3hr],
                 y: [opPoint.head_m],
@@ -403,6 +424,7 @@ class PumpChartsManager {
                     '<b>Efficiency:</b> ' + (opPoint.efficiency_pct || 0).toFixed(1) + '% (' + efficiencyRating + ')<br>' +
                     '<b>Power:</b> ' + (opPoint.power_kw ? opPoint.power_kw.toFixed(1) + ' kW' : 'Calculated') + '<br>' +
                     '<b>NPSH Required:</b> ' + (opPoint.npshr_m ? opPoint.npshr_m.toFixed(1) + ' m' : 'N/A') + '<br>' +
+                    '<b>Impeller:</b> ' + impellerInfo + '<br>' +
                     '<b>BEP Position:</b> ' + bepPercentage + '% of optimal flow<br>' +
                     '<b>Status:</b> ' + (opPoint.extrapolated ? 'Extrapolated' : 'Within Curve') + '<extra></extra>'
             });
