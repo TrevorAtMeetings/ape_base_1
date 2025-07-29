@@ -112,10 +112,11 @@
         gap: 12px !important;
     }
     
-    #direct_search_button {
+    #direct_search_button[style*="display: flex"] {
         width: 100% !important;
         min-width: auto !important;
         justify-content: center !important;
+        display: flex !important;
     }
     
     #direct_search_button .btn-text {
@@ -128,8 +129,9 @@
         display: none !important;
     }
     
-    #direct_search_button {
+    #direct_search_button[style*="display: flex"] {
         min-width: 60px !important;
+        display: flex !important;
     }
 }
 </style>
@@ -264,7 +266,7 @@
                                             <button type="button" id="direct_search_button" 
                                                     onclick="searchDirectPump()" 
                                                     class="btn waves-effect waves-light" 
-                                                    style="background: var(--md-primary); height: 48px; min-width: 100px; border-radius: 8px; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 0 16px; transition: all 0.3s ease;"
+                                                    style="background: var(--md-primary); height: 48px; min-width: 100px; border-radius: 8px; display: none; align-items: center; justify-content: center; gap: 8px; padding: 0 16px; transition: all 0.3s ease;"
                                                     title="Search for this specific pump model">
                                                 <i class="material-icons" style="font-size: 18px;">search</i>
                                                 <span class="btn-text" style="font-size: 14px; font-weight: 500;">Search</span>
@@ -590,6 +592,16 @@ function initializeEnhancedAutocomplete() {
     cleanInput.addEventListener('input', function() {
         clearTimeout(searchTimeout);
         const query = this.value.trim();
+        const searchButton = document.getElementById('direct_search_button');
+        
+        // Show/hide search button based on input content
+        if (searchButton) {
+            if (query.length > 0) {
+                searchButton.style.display = 'flex';
+            } else {
+                searchButton.style.display = 'none';
+            }
+        }
         
         // Reset UI state
         selectedIndex = -1;
@@ -779,12 +791,18 @@ function selectPump(pumpCode) {
     const input = document.getElementById('direct_pump_search');
     const suggestions = document.getElementById('pump_search_suggestions');
     const statusSpan = document.getElementById('pump-search-status');
+    const searchButton = document.getElementById('direct_search_button');
     
     if (input) {
         input.value = pumpCode;
         input.setAttribute('data-search-status', 'ready');
         // Trigger change event for any listeners
         input.dispatchEvent(new Event('change'));
+    }
+    
+    // Show search button since there's now content in the input
+    if (searchButton && pumpCode.trim().length > 0) {
+        searchButton.style.display = 'flex';
     }
     
     if (suggestions) {
