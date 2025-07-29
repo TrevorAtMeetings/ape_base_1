@@ -169,7 +169,7 @@ class PumpChartsManager {
                     width: 2,
                     dash: 'dash'
                 },
-                hovertemplate: "<b>80% BEP Minimum</b><br>Flow: " + bep80Flow.toFixed(0) + " m³/hr<extra></extra>",
+                hovertemplate: "<b>80% BEP Minimum</b><br>Flow: " + (bep80Flow || 0).toFixed(0) + " m³/hr<extra></extra>",
                 showlegend: true
             });
 
@@ -185,7 +185,7 @@ class PumpChartsManager {
                     width: 2,
                     dash: 'dash'
                 },
-                hovertemplate: "<b>110% BEP Maximum</b><br>Flow: " + bep110Flow.toFixed(0) + " m³/hr<extra></extra>",
+                hovertemplate: "<b>110% BEP Maximum</b><br>Flow: " + (bep110Flow || 0).toFixed(0) + " m³/hr<extra></extra>",
                 showlegend: true
             });
 
@@ -268,7 +268,7 @@ class PumpChartsManager {
                             width: 2,
                             dash: 'dashdot'
                         },
-                        hovertemplate: '<b>System Curve</b><br>Flow: %{x:.0f} m³/hr<br>Head: %{y:.1f} m<br><i>Static: ' + staticHead.toFixed(1) + 'm + Friction</i><extra></extra>',
+                        hovertemplate: '<b>System Curve</b><br>Flow: %{x:.0f} m³/hr<br>Head: %{y:.1f} m<br><i>Static: ' + (staticHead || 0).toFixed(1) + 'm + Friction</i><extra></extra>',
                         showlegend: true
                     });
                 } else {
@@ -299,7 +299,7 @@ class PumpChartsManager {
                             width: 2,
                             dash: 'dashdot'
                         },
-                        hovertemplate: '<b>System Curve</b><br>Flow: %{x:.0f} m³/hr<br>Head: %{y:.1f} m<br><i>Static: ' + staticHead.toFixed(1) + 'm + Friction</i><extra></extra>',
+                        hovertemplate: '<b>System Curve</b><br>Flow: %{x:.0f} m³/hr<br>Head: %{y:.1f} m<br><i>Static: ' + (staticHead || 0).toFixed(1) + 'm + Friction</i><extra></extra>',
                         showlegend: true
                     });
                 }
@@ -398,9 +398,9 @@ class PumpChartsManager {
                     line: { color: '#d32f2f', width: 3 }
                 },
                 hovertemplate: '<b>🎯 OPERATING POINT ANALYSIS</b><br>' +
-                    '<b>Flow Rate:</b> ' + opPoint.flow_m3hr.toFixed(1) + ' m³/hr<br>' +
-                    '<b>Head:</b> ' + opPoint.head_m.toFixed(1) + ' m<br>' +
-                    '<b>Efficiency:</b> ' + opPoint.efficiency_pct.toFixed(1) + '% (' + efficiencyRating + ')<br>' +
+                    '<b>Flow Rate:</b> ' + (opPoint.flow_m3hr || 0).toFixed(1) + ' m³/hr<br>' +
+                    '<b>Head:</b> ' + (opPoint.head_m || 0).toFixed(1) + ' m<br>' +
+                    '<b>Efficiency:</b> ' + (opPoint.efficiency_pct || 0).toFixed(1) + '% (' + efficiencyRating + ')<br>' +
                     '<b>Power:</b> ' + (opPoint.power_kw ? opPoint.power_kw.toFixed(1) + ' kW' : 'Calculated') + '<br>' +
                     '<b>NPSH Required:</b> ' + (opPoint.npshr_m ? opPoint.npshr_m.toFixed(1) + ' m' : 'N/A') + '<br>' +
                     '<b>BEP Position:</b> ' + bepPercentage + '% of optimal flow<br>' +
