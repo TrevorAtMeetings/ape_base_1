@@ -720,8 +720,7 @@ class PumpChartsManager {
             },
             paper_bgcolor: '#ffffff',
             plot_bgcolor: '#fafafa',
-            ```tool_code
-margin: { l: 90, r: 90, t: 100, b: 140 },
+            margin: { l: 90, r: 90, t: 100, b: 140 },
             showlegend: true,
             legend: {
                 orientation: 'h',
