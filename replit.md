@@ -106,6 +106,8 @@ The application follows a modular Flask architecture with clear separation of co
 
 ## Changelog
 
+- July 29, 2025: Completed deployment readiness fixes - production configuration, security headers, error handling, health checks
+- July 29, 2025: Added "Find Best Pump" search button that appears when essential requirements are completed
 - July 29, 2025: Created comprehensive build specification document (Spec.md) in docs folder
 - July 08, 2025: Initial setup
 

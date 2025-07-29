@@ -29,10 +29,22 @@ app = Flask(__name__,
 logger.info("Flask app instance created.")
 
 # 2. CONFIGURE THE APP
-# Standardized environment variable configuration
+# Production-ready configuration
 app.config['DEBUG'] = os.environ.get("FLASK_DEBUG", "False").lower() == "true"
 app.config['HOST'] = os.environ.get("FLASK_HOST", "0.0.0.0")
 app.config['PORT'] = int(os.environ.get("FLASK_PORT", 5000))
+
+# Security configuration
+app.config['SECRET_KEY'] = os.environ.get('SESSION_SECRET', 'change-me-in-production')
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
+app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 31536000 if not app.config['DEBUG'] else 1
+
+# Production logging
+if not app.config['DEBUG']:
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'
+    )
 
 # Define UPLOAD_FOLDER relative to the app's static folder
 app.config['UPLOAD_FOLDER'] = os.path.join(app.root_path, 'static', 'temp')
@@ -61,6 +73,14 @@ app.register_blueprint(admin_bp)
 # Register the AI Extract blueprint
 from .route_modules.ai_extract_routes import ai_extract_bp
 app.register_blueprint(ai_extract_bp)
+
+# Import error handlers and health checks for production
+try:
+    import error_handlers
+    import health_check
+except ImportError:
+    # Graceful fallback if modules don't exist
+    pass
 
 # Register the Data Management blueprint
 from .route_modules.data_management import data_management_bp
