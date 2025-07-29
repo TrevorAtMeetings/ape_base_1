@@ -145,9 +145,18 @@ def pump_report(pump_code):
                     }
                     pump_selections = [selected_pump]
 
+        # Check if this is a direct search to determine validation behavior
+        direct_search = request.args.get('direct_search', 'false').lower() == 'true'
+        
         if not selected_pump:
-            safe_flash('Selected pump not found or cannot meet requirements. Please start a new selection.', 'warning')
-            return redirect(url_for('main_flow.index'))
+            if direct_search:
+                # For direct searches, provide more specific feedback but still try to show results
+                safe_flash(f'Pump "{pump_code}" not found in database. Please check the model name and try again.', 'error')
+                return redirect(url_for('main_flow.index'))
+            else:
+                # For algorithm selections, this shouldn't happen, so redirect
+                safe_flash('Selected pump not found or cannot meet requirements. Please start a new selection.', 'warning')
+                return redirect(url_for('main_flow.index'))
 
         logger.info(f"Displaying report for pump: {pump_code}")
 
