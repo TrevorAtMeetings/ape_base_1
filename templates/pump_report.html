@@ -265,6 +265,19 @@
                         </h5>
                     </div>
                     <div class="card-body">
+                        <!-- Direct Search Warnings Section -->
+                        {% if selected_pump.get('forced_analysis') and selected_pump.get('warnings') %}
+                        <div class="alert alert-warning mb-3">
+                            <h6><i class="fas fa-exclamation-triangle"></i> Direct Search Analysis - Review Warnings</h6>
+                            <ul class="mb-0">
+                                {% for warning in selected_pump.warnings %}
+                                <li>{{ warning }}</li>
+                                {% endfor %}
+                            </ul>
+                            <small class="text-muted">This pump was analyzed at your specified operating point regardless of optimal performance.</small>
+                        </div>
+                        {% endif %}
+
                         <div class="row">
                             <!-- Performance Summary -->
                             <div class="col-md-6">

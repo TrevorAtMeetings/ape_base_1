@@ -148,11 +148,121 @@ def pump_report(pump_code):
         # Check if this is a direct search to determine validation behavior
         direct_search = request.args.get('direct_search', 'false').lower() == 'true'
         
+        # CRITICAL FIX: Direct search should NEVER redirect away - always show analysis
         if not selected_pump:
             if direct_search:
-                # For direct searches, provide more specific feedback but still try to show results
-                safe_flash(f'Pump "{pump_code}" not found in database. Please check the model name and try again.', 'error')
-                return redirect(url_for('main_flow.index'))
+                # For direct searches, try to force analysis even if pump not initially found
+                flow = request.args.get('flow', 200.0, type=float)
+                head = request.args.get('head', 10.0, type=float)
+                pump_type = request.args.get('pump_type', 'GENERAL')
+                
+                # Force refresh catalog engine to ensure data sync
+                from ..catalog_engine import get_catalog_engine
+                catalog_engine = get_catalog_engine()
+                catalog_engine.load_catalog()  # Force reload to sync with database
+                
+                # Try again with refreshed catalog
+                target_pump = catalog_engine.get_pump_by_code(pump_code)
+                if target_pump:
+                    logger.info(f"Direct search: Found pump {pump_code} after catalog refresh")
+                    # Force performance calculation at any operating point
+                    performance = target_pump.get_performance_at_duty(flow, head)
+                    if not performance:
+                        # If no performance at exact duty, find ANY performance point to analyze
+                        performance = target_pump.get_any_performance_point(flow, head)
+                    
+                    if performance:
+                        # Calculate suitability score even for poor performance
+                        efficiency_pct = performance.get('efficiency_pct', 0)
+                        efficiency_score = min(efficiency_pct, 80)
+                        bep_score = 15  # Default BEP proximity score
+                        head_margin_bonus = 20 if performance.get('head_m', 0) >= head else 0
+                        raw_suitability_score = efficiency_score + bep_score + head_margin_bonus
+                        suitability_score = min(100.0, (raw_suitability_score / 115.0) * 100.0)
+
+                        selected_pump = {
+                            'pump_code': pump_code,
+                            'overall_score': suitability_score,
+                            'efficiency_at_duty': efficiency_pct,
+                            'operating_point': performance,
+                            'suitable': efficiency_pct > 20,  # Lower threshold for direct search
+                            'manufacturer': target_pump.manufacturer,
+                            'pump_type': target_pump.pump_type,
+                            'test_speed_rpm': performance.get('test_speed_rpm', 1480),
+                            'stages': '1',
+                            'forced_analysis': True,  # Flag to indicate this is forced analysis
+                            'warnings': []  # Initialize warnings list
+                        }
+                        
+                        # Add warnings for off-BEP operation
+                        bep_point = target_pump.get_bep_point()
+                        if bep_point:
+                            bep_flow = bep_point['flow_m3hr']
+                            bep_head = bep_point['head_m']
+                            flow_deviation = abs((flow - bep_flow) / bep_flow * 100) if bep_flow > 0 else 0
+                            head_deviation = abs((head - bep_head) / bep_head * 100) if bep_head > 0 else 0
+                            
+                            if flow_deviation > 15:
+                                selected_pump['warnings'].append(f"Operating flow ({flow:.1f} m³/h) deviates {flow_deviation:.1f}% from BEP flow ({bep_flow:.1f} m³/h)")
+                            if head_deviation > 15:
+                                selected_pump['warnings'].append(f"Operating head ({head:.1f} m) deviates {head_deviation:.1f}% from BEP head ({bep_head:.1f} m)")
+                            if efficiency_pct < 60:
+                                selected_pump['warnings'].append(f"Low efficiency ({efficiency_pct:.1f}%) at specified operating point")
+                        
+                        site_requirements_data = {
+                            'flow_m3hr': flow,
+                            'head_m': head,
+                            'pump_type': pump_type,
+                            'direct_search': True
+                        }
+                        pump_selections = [selected_pump]
+                        safe_flash(f'Direct search analysis for pump "{pump_code}" - Review warnings below', 'warning')
+                    else:
+                        # Create minimal analysis even if no performance calculation possible
+                        selected_pump = {
+                            'pump_code': pump_code,
+                            'overall_score': 0,
+                            'efficiency_at_duty': 0,
+                            'operating_point': {'flow_m3hr': flow, 'head_m': 0, 'efficiency_pct': 0, 'power_kw': 0},
+                            'suitable': False,
+                            'manufacturer': target_pump.manufacturer,
+                            'pump_type': target_pump.pump_type,
+                            'test_speed_rpm': 1480,
+                            'stages': '1',
+                            'forced_analysis': True,
+                            'warnings': ['Unable to calculate performance at specified operating point', 'Pump may not be suitable for this application']
+                        }
+                        site_requirements_data = {
+                            'flow_m3hr': flow,
+                            'head_m': head,
+                            'pump_type': pump_type,
+                            'direct_search': True
+                        }
+                        pump_selections = [selected_pump]
+                        safe_flash(f'Pump "{pump_code}" found but performance cannot be calculated at {flow} m³/h, {head} m head', 'error')
+                else:
+                    # Pump truly not found - create error analysis
+                    selected_pump = {
+                        'pump_code': pump_code,
+                        'overall_score': 0,
+                        'efficiency_at_duty': 0,
+                        'operating_point': {'flow_m3hr': flow, 'head_m': 0, 'efficiency_pct': 0, 'power_kw': 0},
+                        'suitable': False,
+                        'manufacturer': 'Unknown',
+                        'pump_type': 'Unknown',
+                        'test_speed_rpm': 0,
+                        'stages': '1',
+                        'forced_analysis': True,
+                        'warnings': [f'Pump model "{pump_code}" not found in database', 'Please verify the pump model name and try again']
+                    }
+                    site_requirements_data = {
+                        'flow_m3hr': flow,
+                        'head_m': head,
+                        'pump_type': pump_type,
+                        'direct_search': True
+                    }
+                    pump_selections = [selected_pump]
+                    safe_flash(f'Pump "{pump_code}" not found in database. Showing error analysis.', 'error')
             else:
                 # For algorithm selections, this shouldn't happen, so redirect
                 safe_flash('Selected pump not found or cannot meet requirements. Please start a new selection.', 'warning')

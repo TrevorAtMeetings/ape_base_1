@@ -416,6 +416,104 @@ class CatalogPump:
             logger.debug(f"Performance calculation error for {self.pump_code}: {e}")
             return None
 
+    def get_any_performance_point(self, target_flow: float, target_head: float) -> Optional[Dict[str, Any]]:
+        """Force performance calculation at any operating point for direct search analysis"""
+        if not self.curves:
+            return None
+
+        # Try to find the best available curve, even if outside normal operating range
+        best_curve = None
+        best_match_score = -1
+
+        for curve in self.curves:
+            points = curve['performance_points']
+            if not points:
+                continue
+
+            # Calculate how well this curve might work for the target conditions
+            flows = [p['flow_m3hr'] for p in points]
+            heads = [p['head_m'] for p in points]
+            
+            # Check if we can extrapolate to target flow
+            min_flow, max_flow = min(flows), max(flows)
+            flow_coverage = 1.0 if min_flow <= target_flow <= max_flow else 0.5
+            
+            # Prefer curves with higher efficiency potential
+            avg_efficiency = sum(p['efficiency_pct'] for p in points) / len(points)
+            
+            match_score = flow_coverage * avg_efficiency
+            
+            if match_score > best_match_score:
+                best_match_score = match_score
+                best_curve = curve
+
+        if not best_curve:
+            # Return the first available curve as fallback
+            best_curve = self.curves[0]
+
+        points = best_curve['performance_points']
+        flows = [p['flow_m3hr'] for p in points]
+        heads = [p['head_m'] for p in points]
+        effs = [p['efficiency_pct'] for p in points]
+
+        try:
+            # Use linear extrapolation (allow bounds_error=False for extrapolation)
+            head_interp = interpolate.interp1d(flows, heads, kind='linear', bounds_error=False, fill_value='extrapolate')
+            eff_interp = interpolate.interp1d(flows, effs, kind='linear', bounds_error=False, fill_value='extrapolate')
+
+            predicted_head = float(head_interp(target_flow))
+            efficiency = float(eff_interp(target_flow))
+            
+            # Ensure reasonable bounds for extrapolated values
+            efficiency = max(0, min(100, efficiency))  # Clamp efficiency to 0-100%
+            predicted_head = max(0, predicted_head)    # Ensure positive head
+
+            # Calculate power
+            if efficiency > 0:
+                efficiency_decimal = efficiency / 100.0
+                sg = 1.0  # Specific gravity for water
+                power_kw = (target_flow * predicted_head * sg * 9.81) / (efficiency_decimal * 3600)
+                power_kw = round(power_kw, 3)
+            else:
+                power_kw = 0.0
+
+            # Calculate NPSH if available
+            npshr_m = None
+            npshs = [p['npshr_m'] for p in points if p['npshr_m'] and p['npshr_m'] > 0]
+            if npshs and len(npshs) == len(flows):
+                try:
+                    npsh_interp = interpolate.interp1d(flows, npshs, kind='linear', bounds_error=False, fill_value='extrapolate')
+                    npshr_m = max(0, float(npsh_interp(target_flow)))  # Ensure positive NPSH
+                except:
+                    npshr_m = None
+
+            return {
+                'curve': best_curve,
+                'flow_m3hr': target_flow,
+                'head_m': predicted_head,
+                'efficiency_pct': efficiency,
+                'power_kw': power_kw,
+                'npshr_m': npshr_m,
+                'impeller_diameter_mm': best_curve['impeller_diameter_mm'],
+                'test_speed_rpm': best_curve['test_speed_rpm'],
+                'extrapolated': True  # Flag to indicate this is extrapolated data
+            }
+
+        except Exception as e:
+            logger.warning(f"Forced performance calculation failed for {self.pump_code}: {e}")
+            # Return minimal data to allow analysis to continue
+            return {
+                'curve': best_curve,
+                'flow_m3hr': target_flow,
+                'head_m': 0,
+                'efficiency_pct': 0,
+                'power_kw': 0,
+                'npshr_m': None,
+                'impeller_diameter_mm': best_curve['impeller_diameter_mm'],
+                'test_speed_rpm': best_curve['test_speed_rpm'],
+                'calculation_error': True
+            }
+
 class CatalogEngine:
     """APE Catalog-based pump selection engine"""
 
@@ -447,6 +545,8 @@ class CatalogEngine:
 
     def load_catalog(self):
         """Reload catalog from repository (for compatibility)"""
+        # Force repository to reload data
+        self.repository.reload_catalog()
         self._load_from_repository()
 
     def select_pumps(self, flow_m3hr: float, head_m: float, max_results: int = 10, pump_type: str | None = None) -> List[Dict[str, Any]]:

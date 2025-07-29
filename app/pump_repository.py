@@ -109,6 +109,15 @@ class PumpRepository:
             self._is_loaded = False
             return False
 
+    def reload_catalog(self) -> bool:
+        """Force reload catalog data clearing cache"""
+        logger.info("Repository: Force reloading catalog data")
+        self._catalog_data = None
+        self._pump_models = None
+        self._metadata = None
+        self._is_loaded = False
+        return self.load_catalog()
+
     def _load_from_postgresql_optimized(self) -> bool:
         """
         Optimized PostgreSQL data loading using:
