@@ -345,17 +345,52 @@ class PumpChartsManager {
         const title = this.currentChartData.pump_code + " - " + config.title;
         const yAxisTitle = config.yAxis;
 
-        // Calculate proper y-axis range based on actual data
+        // Calculate Y-axis range centered on operating point requirements
         let maxHead = 60;
         let minHead = 0;
-        if (this.currentChartData.curves.length > 0) {
-            const allHeads = this.currentChartData.curves.flatMap(c => c.head_data || []);
-            if (allHeads.length > 0) {
-                const dataMin = Math.min(...allHeads);
-                const dataMax = Math.max(...allHeads);
-                const range = dataMax - dataMin;
-                minHead = Math.max(0, dataMin - range * 0.05); // 5% padding below minimum, but not below 0
-                maxHead = dataMax + range * 0.05; // 5% padding above maximum
+        
+        if (opPoint && opPoint.head_m) {
+            // Primary: Center around the actual operating requirement
+            const operatingHead = opPoint.head_m;
+            
+            // Get curve data range for context
+            let dataMin = operatingHead;
+            let dataMax = operatingHead;
+            if (this.currentChartData.curves.length > 0) {
+                const allHeads = this.currentChartData.curves.flatMap(c => c.head_data || []);
+                if (allHeads.length > 0) {
+                    dataMin = Math.min(...allHeads);
+                    dataMax = Math.max(...allHeads);
+                }
+            }
+            
+            // Calculate intelligent range that centers on operating point
+            const curveRange = dataMax - dataMin;
+            const centeringRange = Math.max(curveRange * 0.4, operatingHead * 0.3, 10); // Minimum meaningful range
+            
+            minHead = Math.max(0, operatingHead - centeringRange);
+            maxHead = operatingHead + centeringRange;
+            
+            // Ensure all curve data remains visible with slight extension
+            if (dataMin < minHead) {
+                const extension = (minHead - dataMin) * 1.1;
+                minHead = Math.max(0, dataMin - extension * 0.1);
+            }
+            if (dataMax > maxHead) {
+                const extension = (dataMax - maxHead) * 1.1;
+                maxHead = dataMax + extension * 0.1;
+            }
+        } else {
+            // Fallback: Use curve data range if no operating point
+            if (this.currentChartData.curves.length > 0) {
+                const allHeads = this.currentChartData.curves.flatMap(c => c.head_data || []);
+                if (allHeads.length > 0) {
+                    const dataMin = Math.min(...allHeads);
+                    const dataMax = Math.max(...allHeads);
+                    const range = dataMax - dataMin;
+                    minHead = Math.max(0, dataMin - range * 0.05);
+                    maxHead = dataMax + range * 0.05;
+                }
             }
         }
 
@@ -594,17 +629,52 @@ class PumpChartsManager {
         const title = this.currentChartData.pump_code + " - " + config.title;
         const yAxisTitle = config.yAxis;
 
-        // Calculate proper y-axis range based on actual efficiency data
+        // Calculate Y-axis range centered on operating point efficiency
         let maxEfficiency = 100;
         let minEfficiency = 0;
-        if (this.currentChartData.curves.length > 0) {
-            const allEfficiencies = this.currentChartData.curves.flatMap(c => c.efficiency_data || []);
-            if (allEfficiencies.length > 0) {
-                const dataMin = Math.min(...allEfficiencies);
-                const dataMax = Math.max(...allEfficiencies);
-                const range = dataMax - dataMin;
-                minEfficiency = Math.max(0, dataMin - range * 0.05); // 5% padding below minimum, but not below 0
-                maxEfficiency = Math.min(100, dataMax + range * 0.05); // 5% padding above maximum, but not above 100%
+        
+        if (opPoint && opPoint.efficiency_pct != null && opPoint.efficiency_pct > 0) {
+            // Primary: Center around the actual operating efficiency
+            const operatingEff = opPoint.efficiency_pct;
+            
+            // Get curve data range for context
+            let dataMin = operatingEff;
+            let dataMax = operatingEff;
+            if (this.currentChartData.curves.length > 0) {
+                const allEfficiencies = this.currentChartData.curves.flatMap(c => c.efficiency_data || []);
+                if (allEfficiencies.length > 0) {
+                    dataMin = Math.min(...allEfficiencies);
+                    dataMax = Math.max(...allEfficiencies);
+                }
+            }
+            
+            // Calculate intelligent range that centers on operating point
+            const curveRange = dataMax - dataMin;
+            const centeringRange = Math.max(curveRange * 0.4, operatingEff * 0.3, 15); // Minimum meaningful range
+            
+            minEfficiency = Math.max(0, operatingEff - centeringRange);
+            maxEfficiency = Math.min(100, operatingEff + centeringRange);
+            
+            // Ensure all curve data remains visible with slight extension
+            if (dataMin < minEfficiency) {
+                const extension = (minEfficiency - dataMin) * 1.1;
+                minEfficiency = Math.max(0, dataMin - extension * 0.1);
+            }
+            if (dataMax > maxEfficiency) {
+                const extension = (dataMax - maxEfficiency) * 1.1;
+                maxEfficiency = Math.min(100, dataMax + extension * 0.1);
+            }
+        } else {
+            // Fallback: Use curve data range if no operating point
+            if (this.currentChartData.curves.length > 0) {
+                const allEfficiencies = this.currentChartData.curves.flatMap(c => c.efficiency_data || []);
+                if (allEfficiencies.length > 0) {
+                    const dataMin = Math.min(...allEfficiencies);
+                    const dataMax = Math.max(...allEfficiencies);
+                    const range = dataMax - dataMin;
+                    minEfficiency = Math.max(0, dataMin - range * 0.05);
+                    maxEfficiency = Math.min(100, dataMax + range * 0.05);
+                }
             }
         }
 
@@ -839,17 +909,52 @@ class PumpChartsManager {
         const title = this.currentChartData.pump_code + " - " + config.title;
         const yAxisTitle = config.yAxis;
 
-        // Calculate proper y-axis range based on actual power data
+        // Calculate Y-axis range centered on operating point power
         let maxPower = 200;
         let minPower = 0;
-        if (this.currentChartData.curves.length > 0) {
-            const allPowers = this.currentChartData.curves.flatMap(c => c.power_data || []).filter(p => p != null && p > 0);
-            if (allPowers.length > 0) {
-                const dataMin = Math.min(...allPowers);
-                const dataMax = Math.max(...allPowers);
-                const range = dataMax - dataMin;
-                minPower = Math.max(0, dataMin - range * 0.05); // 5% padding below minimum, but not below 0
-                maxPower = dataMax + range * 0.05; // 5% padding above maximum
+        
+        if (opPoint && opPoint.power_kw != null && opPoint.power_kw > 0) {
+            // Primary: Center around the actual operating power
+            const operatingPower = opPoint.power_kw;
+            
+            // Get curve data range for context
+            let dataMin = operatingPower;
+            let dataMax = operatingPower;
+            if (this.currentChartData.curves.length > 0) {
+                const allPowers = this.currentChartData.curves.flatMap(c => c.power_data || []).filter(p => p != null && p > 0);
+                if (allPowers.length > 0) {
+                    dataMin = Math.min(...allPowers);
+                    dataMax = Math.max(...allPowers);
+                }
+            }
+            
+            // Calculate intelligent range that centers on operating point
+            const curveRange = dataMax - dataMin;
+            const centeringRange = Math.max(curveRange * 0.4, operatingPower * 0.3, 20); // Minimum meaningful range
+            
+            minPower = Math.max(0, operatingPower - centeringRange);
+            maxPower = operatingPower + centeringRange;
+            
+            // Ensure all curve data remains visible with slight extension
+            if (dataMin < minPower) {
+                const extension = (minPower - dataMin) * 1.1;
+                minPower = Math.max(0, dataMin - extension * 0.1);
+            }
+            if (dataMax > maxPower) {
+                const extension = (dataMax - maxPower) * 1.1;
+                maxPower = dataMax + extension * 0.1;
+            }
+        } else {
+            // Fallback: Use curve data range if no operating point
+            if (this.currentChartData.curves.length > 0) {
+                const allPowers = this.currentChartData.curves.flatMap(c => c.power_data || []).filter(p => p != null && p > 0);
+                if (allPowers.length > 0) {
+                    const dataMin = Math.min(...allPowers);
+                    const dataMax = Math.max(...allPowers);
+                    const range = dataMax - dataMin;
+                    minPower = Math.max(0, dataMin - range * 0.05);
+                    maxPower = dataMax + range * 0.05;
+                }
             }
         }
 
@@ -1073,17 +1178,52 @@ class PumpChartsManager {
         const title = this.currentChartData.pump_code + " - " + config.title;
         const yAxisTitle = config.yAxis;
 
-        // Calculate proper y-axis range based on actual NPSH data
+        // Calculate Y-axis range centered on operating point NPSH
         let maxNpsh = 20;
         let minNpsh = 0;
-        if (this.currentChartData.curves.length > 0) {
-            const allNpsh = this.currentChartData.curves.flatMap(c => c.npshr_data || []).filter(n => n != null && n > 0);
-            if (allNpsh.length > 0) {
-                const dataMin = Math.min(...allNpsh);
-                const dataMax = Math.max(...allNpsh);
-                const range = dataMax - dataMin;
-                minNpsh = Math.max(0, dataMin - range * 0.05); // 5% padding below minimum, but not below 0
-                maxNpsh = dataMax + range * 0.05; // 5% padding above maximum
+        
+        if (opPoint && opPoint.npshr_m != null && opPoint.npshr_m > 0 && hasNpshData) {
+            // Primary: Center around the actual operating NPSH
+            const operatingNpsh = opPoint.npshr_m;
+            
+            // Get curve data range for context
+            let dataMin = operatingNpsh;
+            let dataMax = operatingNpsh;
+            if (this.currentChartData.curves.length > 0) {
+                const allNpsh = this.currentChartData.curves.flatMap(c => c.npshr_data || []).filter(n => n != null && n > 0);
+                if (allNpsh.length > 0) {
+                    dataMin = Math.min(...allNpsh);
+                    dataMax = Math.max(...allNpsh);
+                }
+            }
+            
+            // Calculate intelligent range that centers on operating point
+            const curveRange = dataMax - dataMin;
+            const centeringRange = Math.max(curveRange * 0.4, operatingNpsh * 0.4, 3); // Minimum meaningful range
+            
+            minNpsh = Math.max(0, operatingNpsh - centeringRange);
+            maxNpsh = operatingNpsh + centeringRange;
+            
+            // Ensure all curve data remains visible with slight extension
+            if (dataMin < minNpsh) {
+                const extension = (minNpsh - dataMin) * 1.1;
+                minNpsh = Math.max(0, dataMin - extension * 0.1);
+            }
+            if (dataMax > maxNpsh) {
+                const extension = (dataMax - maxNpsh) * 1.1;
+                maxNpsh = dataMax + extension * 0.1;
+            }
+        } else {
+            // Fallback: Use curve data range if no operating point
+            if (this.currentChartData.curves.length > 0) {
+                const allNpsh = this.currentChartData.curves.flatMap(c => c.npshr_data || []).filter(n => n != null && n > 0);
+                if (allNpsh.length > 0) {
+                    const dataMin = Math.min(...allNpsh);
+                    const dataMax = Math.max(...allNpsh);
+                    const range = dataMax - dataMin;
+                    minNpsh = Math.max(0, dataMin - range * 0.05);
+                    maxNpsh = dataMax + range * 0.05;
+                }
             }
         }
 
