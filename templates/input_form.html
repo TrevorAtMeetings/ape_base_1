@@ -104,6 +104,34 @@
     color: white;
     transform: scale(1.05);
 }
+
+/* Mobile responsive styles for direct search button */
+@media (max-width: 600px) {
+    .custom-input-wrapper div[style*="display: flex"] {
+        flex-direction: column !important;
+        gap: 12px !important;
+    }
+    
+    #direct_search_button {
+        width: 100% !important;
+        min-width: auto !important;
+        justify-content: center !important;
+    }
+    
+    #direct_search_button .btn-text {
+        display: inline !important;
+    }
+}
+
+@media (max-width: 400px) {
+    #direct_search_button .btn-text {
+        display: none !important;
+    }
+    
+    #direct_search_button {
+        min-width: 60px !important;
+    }
+}
 </style>
 {% endblock %}
 
@@ -226,11 +254,22 @@
                                         Direct Pump Selection (Optional)
                                     </label>
                                     <div class="custom-input-wrapper" style="margin-top: 0; position: relative;">
-                                        <input type="text" id="direct_pump_search" name="direct_pump_search" 
-                                               class="enhanced-autocomplete" autocomplete="off" 
-                                               placeholder="e.g., 6/8 ALE, 10 WLN 26A"
-                                               data-search-status="ready"
-                                               style="border: 2px solid #e0e0e0; border-radius: 8px; padding: 12px 16px; width: 100%; box-sizing: border-box;">
+                                        <div style="display: flex; gap: 8px; align-items: flex-start;">
+                                            <input type="text" id="direct_pump_search" name="direct_pump_search" 
+                                                   class="enhanced-autocomplete" autocomplete="off" 
+                                                   placeholder="e.g., 6/8 ALE, 10 WLN 26A"
+                                                   data-search-status="ready"
+                                                   onkeydown="handleDirectSearchKeydown(event)"
+                                                   style="border: 2px solid #e0e0e0; border-radius: 8px; padding: 12px 16px; flex: 1; box-sizing: border-box;">
+                                            <button type="button" id="direct_search_button" 
+                                                    onclick="searchDirectPump()" 
+                                                    class="btn waves-effect waves-light" 
+                                                    style="background: var(--md-primary); height: 48px; min-width: 100px; border-radius: 8px; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 0 16px; transition: all 0.3s ease;"
+                                                    title="Search for this specific pump model">
+                                                <i class="material-icons" style="font-size: 18px;">search</i>
+                                                <span class="btn-text" style="font-size: 14px; font-weight: 500;">Search</span>
+                                            </button>
+                                        </div>
                                         <span class="helper-text" style="display: block; margin-top: 8px;">
                                             <span id="pump-search-status">Skip selection algorithm and analyze a specific pump model</span>
                                             <span id="pump-count-status" style="display: none; color: var(--md-primary); font-weight: 500;"></span>
@@ -801,6 +840,58 @@ function toggleAdvancedOptions() {
         arrow.style.transform = 'rotate(0deg)';
         status.textContent = 'Click to expand detailed parameters';
     }
+}
+
+// Handle Enter key in direct search input
+function handleDirectSearchKeydown(event) {
+    if (event.key === 'Enter') {
+        event.preventDefault();
+        searchDirectPump();
+    }
+}
+
+// Direct pump search function
+function searchDirectPump() {
+    const input = document.getElementById('direct_pump_search');
+    const flowInput = document.getElementById('flow_rate');
+    const headInput = document.getElementById('total_head');
+    const button = document.getElementById('direct_search_button');
+    
+    if (!input || !flowInput || !headInput) {
+        alert('Please make sure all required fields are filled');
+        return;
+    }
+    
+    const pumpCode = input.value.trim();
+    const flow = flowInput.value;
+    const head = headInput.value;
+    
+    if (!pumpCode) {
+        alert('Please enter a pump code to search');
+        input.focus();
+        return;
+    }
+    
+    if (!flow || !head) {
+        alert('Please enter both flow rate and total head before searching');
+        if (!flow) flowInput.focus();
+        else if (!head) headInput.focus();
+        return;
+    }
+    
+    // Show loading state
+    if (button) {
+        button.style.opacity = '0.7';
+        const buttonText = button.querySelector('.btn-text');
+        if (buttonText) buttonText.textContent = 'Searching...';
+        button.disabled = true;
+    }
+    
+    // Construct the direct search URL
+    const url = `/pump_report/${encodeURIComponent(pumpCode)}?flow=${flow}&head=${head}&direct_search=true`;
+    
+    // Navigate to the pump report
+    window.location.href = url;
 }
 
 // Pump suggestion selection
