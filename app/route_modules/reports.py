@@ -427,17 +427,24 @@ def pump_report(pump_code):
                         pump_type=pump_type
                     )
 
-                    # Calculate performance for the direct search pump
+                    # Calculate performance for the direct search pump with FORCED ANALYSIS
                     try:
+                        # Try normal performance calculation first
                         performance_result = target_pump.get_performance_at_duty(flow, head)
 
-                        if performance_result and not performance_result.get('error'):
+                        if not performance_result or performance_result.get('error'):
+                            # FORCE ANALYSIS: Try forced performance calculation for ANY operating point
+                            logger.info(f"Normal performance calculation failed for {pump_code}, forcing analysis at ANY operating point")
+                            performance_result = target_pump.get_any_performance_point(flow, head)
+
+                        if performance_result:
                             operating_point = performance_result
                             suitable_pumps = [target_pump]
                             
                             # Performance validation checks
                             efficiency = performance_result.get('efficiency_pct', 0)
                             power_kw = performance_result.get('power_kw', 0)
+                            head_delivered = performance_result.get('head_m', 0)
                             
                             # Check if pump operates in reasonable efficiency range
                             is_efficient = efficiency >= 50  # Minimum acceptable efficiency
@@ -453,9 +460,27 @@ def pump_report(pump_code):
                                     optimal_rank = i + 1
                                     break
                             
+                            # Generate warnings for forced analysis
+                            warnings = []
+                            if performance_result.get('extrapolated'):
+                                warnings.append("Performance extrapolated beyond normal operating range")
+                            if performance_result.get('calculation_error'):
+                                warnings.append("Performance calculation encountered errors")
+                            if efficiency < 40:
+                                warnings.append(f"Very low efficiency ({efficiency:.1f}%) at specified operating point")
+                            if head_delivered < head * 0.9:  # Less than 90% of required head
+                                warnings.append(f"Pump delivers {head_delivered:.1f}m but {head:.1f}m required")
+                            if not is_optimal_choice and optimal_selections:
+                                best_alt = optimal_selections[0]
+                                best_efficiency = best_alt.get('efficiency_pct', 0)
+                                if best_efficiency > efficiency + 15:  # 15% efficiency difference
+                                    warnings.append(f"Alternative pump {best_alt.get('pump_code')} offers {best_efficiency:.1f}% efficiency vs {efficiency:.1f}%")
+                            
                             # Store validation data for warning banner
                             validation_data = {
                                 'is_direct_selection': True,
+                                'forced_analysis': bool(warnings),
+                                'warnings': warnings,
                                 'efficiency_pct': efficiency,
                                 'is_efficient': is_efficient,
                                 'is_very_efficient': is_very_efficient,
@@ -483,16 +508,78 @@ def pump_report(pump_code):
                             
                             logger.info(f"Direct search successful for pump: {pump_code}")
                             logger.info(f"Direct selection validation: efficiency={efficiency}%, optimal_rank={optimal_rank}, is_optimal={is_optimal_choice}")
+                            if warnings:
+                                logger.warning(f"Direct search warnings for {pump_code}: {', '.join(warnings)}")
                             
                         else:
-                            logger.error(f"Performance calculation failed for pump: {pump_code}")
-                            safe_flash(f'Error calculating performance for pump "{pump_code}".', 'error')
-                            return redirect(url_for('main_flow.index'))
+                            # Even forced analysis failed - create minimal error analysis
+                            logger.error(f"Both normal and forced performance calculation failed for pump: {pump_code}")
+                            
+                            # Create minimal analysis to show something to user
+                            performance_result = {
+                                'flow_m3hr': flow,
+                                'head_m': 0,
+                                'efficiency_pct': 0,
+                                'power_kw': 0,
+                                'npshr_m': 0,
+                                'calculation_error': True
+                            }
+                            operating_point = performance_result
+                            suitable_pumps = [target_pump]
+                            
+                            warnings = [
+                                "Unable to calculate performance at specified operating point",
+                                "Pump may not be suitable for this application",
+                                "Consider alternative pump models or operating conditions"
+                            ]
+                            
+                            validation_data = {
+                                'is_direct_selection': True,
+                                'forced_analysis': True,
+                                'warnings': warnings,
+                                'efficiency_pct': 0,
+                                'is_efficient': False,
+                                'is_very_efficient': False,
+                                'is_optimal_choice': False,
+                                'optimal_rank': None,
+                                'optimal_selections_count': len(optimal_selections),
+                                'best_alternative': optimal_selections[0] if optimal_selections else None
+                            }
+                            
+                            globals()['current_validation_data'] = validation_data
+                            logger.warning(f"Created minimal error analysis for {pump_code}")
 
                     except Exception as e:
-                        logger.error(f"Error calculating performance for direct search pump {pump_code}: {str(e)}")
-                        safe_flash(f'Error calculating performance for pump "{pump_code}".', 'error')
-                        return redirect(url_for('main_flow.index'))
+                        logger.error(f"Error in direct search analysis for pump {pump_code}: {str(e)}")
+                        
+                        # Even exception handling - create basic error analysis
+                        performance_result = {
+                            'flow_m3hr': flow,
+                            'head_m': 0,
+                            'efficiency_pct': 0,
+                            'power_kw': 0,
+                            'npshr_m': 0,
+                            'calculation_error': True
+                        }
+                        operating_point = performance_result
+                        suitable_pumps = [target_pump]
+                        
+                        warnings = [
+                            f"Analysis error: {str(e)[:100]}",
+                            "Unable to calculate pump performance",
+                            "Please verify pump model and operating conditions"
+                        ]
+                        
+                        validation_data = {
+                            'is_direct_selection': True,
+                            'forced_analysis': True,
+                            'warnings': warnings,
+                            'efficiency_pct': 0,
+                            'calculation_error': True
+                        }
+                        
+                        globals()['current_validation_data'] = validation_data
+                        logger.warning(f"Exception-based error analysis created for {pump_code}")
                 else:
                     # Normal pump selection process
                     alternative_selections = catalog_engine.select_pumps(
@@ -565,6 +652,11 @@ def pump_report(pump_code):
                 'is_selected': True,
                 'curve_index': op_point.get('curve_index', 0)
             }
+            
+            # Add validation data warnings to selected_pump for template access
+            if validation_data and validation_data.get('warnings'):
+                selected_pump['forced_analysis'] = validation_data.get('forced_analysis', False)
+                selected_pump['warnings'] = validation_data.get('warnings', [])
             if 'pump_info' not in selected_pump:
                 selected_pump['pump_info'] = {
                     'pPumpCode': pump_code,
