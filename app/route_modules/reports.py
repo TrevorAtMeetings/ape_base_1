@@ -187,7 +187,7 @@ def pump_report(pump_code):
                     target_pump = None
                     search_code = pump_code.lower().strip()
 
-                    # Enhanced search logic with better matching
+                    # Enhanced search logic with better matching for pump codes like "28 HC 6P"
                     best_match = None
                     best_match_score = 0
                     
@@ -203,30 +203,67 @@ def pump_report(pump_code):
                         # Calculate similarity score for fuzzy matching
                         match_score = 0
                         
-                        # Check if search term is contained in pump code
+                        # Method 1: Direct substring matching
                         if search_code in pump_code_lower:
-                            match_score += 50
+                            match_score += 80
+                        elif pump_code_lower in search_code:
+                            match_score += 70
                         
-                        # Check normalized versions (remove spaces, hyphens, slashes)
-                        normalized_search = search_code.replace('/', '').replace('-', '').replace(' ', '').replace('_', '')
-                        normalized_pump = pump_code_lower.replace('/', '').replace('-', '').replace(' ', '').replace('_', '')
+                        # Method 2: Normalized matching (remove spaces, hyphens, slashes, underscores)
+                        normalized_search = search_code.replace('/', '').replace('-', '').replace(' ', '').replace('_', '').replace('.', '')
+                        normalized_pump = pump_code_lower.replace('/', '').replace('-', '').replace(' ', '').replace('_', '').replace('.', '')
                         
                         if normalized_search == normalized_pump:
                             match_score += 100  # Perfect normalized match
                         elif normalized_search in normalized_pump:
-                            match_score += 75   # Partial normalized match
+                            match_score += 90   # Partial normalized match
                         elif normalized_pump in normalized_search:
-                            match_score += 60   # Reverse partial match
+                            match_score += 85   # Reverse partial match
                         
-                        # Check word-by-word matching
-                        search_words = search_code.split()
-                        pump_words = pump_code_lower.split()
-                        matching_words = sum(1 for word in search_words if any(word in pump_word for pump_word in pump_words))
-                        if matching_words > 0:
-                            match_score += matching_words * 20
+                        # Method 3: Word-by-word matching with fuzzy tolerance
+                        search_words = [w for w in search_code.split() if len(w) > 0]
+                        pump_words = [w for w in pump_code_lower.split() if len(w) > 0]
                         
-                        # Update best match if this is better
-                        if match_score > best_match_score and match_score >= 50:  # Minimum threshold
+                        word_matches = 0
+                        for search_word in search_words:
+                            for pump_word in pump_words:
+                                # Exact word match
+                                if search_word == pump_word:
+                                    word_matches += 2
+                                # Partial word match
+                                elif search_word in pump_word or pump_word in search_word:
+                                    word_matches += 1
+                                # Handle common variations (e.g., "6P" vs "6")
+                                elif len(search_word) > 1 and len(pump_word) > 1:
+                                    if search_word[:-1] == pump_word or pump_word[:-1] == search_word:
+                                        word_matches += 1
+                        
+                        if word_matches > 0:
+                            match_score += word_matches * 15
+                        
+                        # Method 4: Handle common pump code patterns (e.g., "28 HC 6P" should match "28HC6P")
+                        # Create compact versions for pattern matching
+                        compact_search = ''.join(search_code.split())
+                        compact_pump = ''.join(pump_code_lower.split())
+                        
+                        if compact_search == compact_pump:
+                            match_score += 95
+                        elif compact_search in compact_pump or compact_pump in compact_search:
+                            match_score += 75
+                        
+                        # Method 5: Character-level similarity for very close matches
+                        if len(search_code) > 2 and len(pump_code_lower) > 2:
+                            common_chars = sum(1 for char in search_code if char in pump_code_lower)
+                            char_similarity = (common_chars / max(len(search_code), len(pump_code_lower))) * 100
+                            if char_similarity > 70:
+                                match_score += int(char_similarity * 0.3)
+                        
+                        # Bonus for starts-with matching
+                        if pump_code_lower.startswith(search_code[:3]) or search_code.startswith(pump_code_lower[:3]):
+                            match_score += 10
+                        
+                        # Update best match if this is better (lowered threshold to 40)
+                        if match_score > best_match_score and match_score >= 40:
                             best_match = pump
                             best_match_score = match_score
                     
@@ -239,10 +276,35 @@ def pump_report(pump_code):
                         # Enhanced debugging - show pumps that start with similar patterns
                         search_prefix = pump_code.split()[0] if ' ' in pump_code else pump_code[:3]
                         similar_pumps = [p.pump_code for p in catalog_engine.pumps if p.pump_code.lower().startswith(search_prefix.lower())][:10]
-                        logger.warning(f"Direct search failed for pump code: '{pump_code}'")
-                        logger.warning(f"Pumps starting with '{search_prefix}': {similar_pumps}")
-                        logger.warning(f"Total pumps in catalog: {len(catalog_engine.pumps)}")
-                        logger.warning(f"Sample pump codes: {[p.pump_code for p in catalog_engine.pumps[:20]]}")
+                        
+                        # Additional debugging - look for pumps containing key parts
+                        search_parts = [part.lower() for part in pump_code.split() if len(part) > 0]
+                        partial_matches = []
+                        for pump in catalog_engine.pumps[:50]:  # Check first 50 pumps
+                            pump_code_lower = pump.pump_code.lower()
+                            if any(part in pump_code_lower for part in search_parts):
+                                partial_matches.append(pump.pump_code)
+                        
+                        # Look for pumps with similar patterns
+                        pattern_matches = []
+                        normalized_search = pump_code.replace(' ', '').replace('-', '').lower()
+                        for pump in catalog_engine.pumps[:100]:  # Check first 100 pumps
+                            normalized_pump = pump.pump_code.replace(' ', '').replace('-', '').lower()
+                            if normalized_search in normalized_pump or normalized_pump in normalized_search:
+                                pattern_matches.append(pump.pump_code)
+                        
+                        logger.error(f"Direct search failed for pump code: '{pump_code}'")
+                        logger.error(f"Search parts: {search_parts}")
+                        logger.error(f"Pumps starting with '{search_prefix}': {similar_pumps}")
+                        logger.error(f"Partial matches (contains search parts): {partial_matches[:10]}")
+                        logger.error(f"Pattern matches (normalized): {pattern_matches[:10]}")
+                        logger.error(f"Total pumps in catalog: {len(catalog_engine.pumps)}")
+                        logger.error(f"Sample pump codes: {[p.pump_code for p in catalog_engine.pumps[:20]]}")
+                        
+                        # Show the best scoring pump even if it didn't meet threshold
+                        if best_match:
+                            logger.error(f"Best match found: '{best_match.pump_code}' (score: {best_match_score}, threshold: 40)")
+                        
                         safe_flash(f'Pump "{pump_code}" not found in database. Please check the model name and try again.', 'error')
                         return redirect(url_for('main_flow.index'))
 
