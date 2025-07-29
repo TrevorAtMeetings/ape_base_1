@@ -404,10 +404,17 @@ class PumpChartsManager {
                         // Impeller trimming is applied
                         impellerInfo = `${baseDiameter.toFixed(0)}mm (Base) → ${requiredDiameter.toFixed(0)}mm (${trimPercent.toFixed(0)}% Trim)`;
                     } else if (sizingMethod === 'speed_variation') {
-                        // Speed variation with impeller diameter info
+                        // Speed variation with effective impeller sizing
                         const speedInfo = this.currentChartData.speed_scaling;
-                        if (speedInfo && speedInfo.applied) {
-                            impellerInfo = `${actualDiameter.toFixed(0)}mm @ ${speedInfo.required_speed_rpm.toFixed(0)} RPM (scaled from ${speedInfo.base_speed_rpm.toFixed(0)} RPM)`;
+                        const effectiveDiameter = sizingInfo.effective_diameter_mm || actualDiameter;
+                        
+                        if (speedInfo && speedInfo.applied && Math.abs(speedInfo.speed_ratio - 1.0) > 0.01) {
+                            if (effectiveDiameter !== actualDiameter) {
+                                // Show both actual and equivalent diameter
+                                impellerInfo = `${actualDiameter.toFixed(0)}mm @ ${speedInfo.required_speed_rpm.toFixed(0)} RPM (equiv. ${effectiveDiameter.toFixed(0)}mm @ ${speedInfo.base_speed_rpm.toFixed(0)} RPM)`;
+                            } else {
+                                impellerInfo = `${actualDiameter.toFixed(0)}mm @ ${speedInfo.required_speed_rpm.toFixed(0)} RPM (scaled from ${speedInfo.base_speed_rpm.toFixed(0)} RPM)`;
+                            }
                         } else {
                             impellerInfo = `${actualDiameter.toFixed(0)}mm Diameter`;
                         }

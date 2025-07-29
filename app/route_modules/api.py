@@ -347,14 +347,42 @@ def get_chart_data_safe(safe_pump_code):
                 'meets_requirements': sizing_info.get('meets_requirements', False)
             }
             
-            # Get the actual impeller diameter for this operating point
-            if sizing_info.get('required_diameter_mm'):
-                op_point['impeller_diameter_mm'] = sizing_info['required_diameter_mm']
-            elif operating_point_data.get('impeller_diameter_mm'):
-                op_point['impeller_diameter_mm'] = operating_point_data['impeller_diameter_mm']
+            # Calculate effective impeller diameter for the operating point
+            base_diameter = sizing_info.get('base_diameter_mm', 0)
+            required_diameter = sizing_info.get('required_diameter_mm', 0)
+            sizing_method = sizing_info.get('sizing_method')
+            
+            if sizing_method == 'speed_variation' and speed_scaling_applied:
+                # For speed variation, calculate equivalent impeller size
+                # Using affinity laws: D₂ = D₁ × (N₁/N₂) to get equivalent diameter at standard speed
+                # This shows what impeller size at base speed would give same performance
+                speed_ratio = actual_speed_ratio
+                if speed_ratio != 1.0:
+                    # Equivalent diameter at base speed that would give same performance
+                    equivalent_diameter = base_diameter / speed_ratio
+                    op_point['impeller_diameter_mm'] = equivalent_diameter
+                    op_point['sizing_info']['effective_diameter_mm'] = equivalent_diameter
+                    op_point['sizing_info']['equivalent_info'] = f"Equivalent to {equivalent_diameter:.0f}mm at base speed"
+                else:
+                    op_point['impeller_diameter_mm'] = base_diameter
+            elif sizing_method == 'impeller_trimming':
+                # For trimming, use the required (trimmed) diameter
+                op_point['impeller_diameter_mm'] = required_diameter
+            else:
+                # Standard operation - use base diameter
+                op_point['impeller_diameter_mm'] = base_diameter
+                
         elif operating_point_data and operating_point_data.get('impeller_diameter_mm'):
             # Fallback to impeller diameter from performance data
-            op_point['impeller_diameter_mm'] = operating_point_data['impeller_diameter_mm']
+            base_diameter = operating_point_data['impeller_diameter_mm']
+            
+            # Apply speed scaling correction if needed
+            if speed_scaling_applied and actual_speed_ratio != 1.0:
+                # Calculate equivalent diameter
+                equivalent_diameter = base_diameter / actual_speed_ratio
+                op_point['impeller_diameter_mm'] = equivalent_diameter
+            else:
+                op_point['impeller_diameter_mm'] = base_diameter
 
         # Prepare chart data
         chart_data = {
