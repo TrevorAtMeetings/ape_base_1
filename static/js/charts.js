@@ -39,7 +39,7 @@ class PumpChartsManager {
 
             // Use base64 encoding for pump codes with special characters
             const safePumpCode = btoa(pumpCode).replace(/[+/=]/g, function(match) {
-                return {'+': '-', '/': '_', '=': ''}[match];
+                return { '+': '-', '/': '_', '=': '' }[match];
             });
             console.log('Charts.js: Encoded pump code:', safePumpCode);
 
@@ -97,6 +97,12 @@ class PumpChartsManager {
                         impellerName = curve.impeller_size + "mm Impeller";
                     } else {
                         impellerName = "Impeller " + (index + 1);
+                    }
+
+                    // Add speed scaling information to selected curve if applied
+                    if (this.currentChartData.speed_scaling && this.currentChartData.speed_scaling.applied && curve.is_selected) {
+                        const requiredSpeed = this.currentChartData.speed_scaling.required_speed_rpm;
+                        impellerName += ` (${requiredSpeed} RPM)`;
                     }
 
                     traces.push({
@@ -204,39 +210,99 @@ class PumpChartsManager {
                 });
             } else {
                 // Generate a more realistic system curve if none provided
-                // Typical system curve: H = H_static + K * Q^2
-                // Where H_static is typically 30-60% of total head at duty point
-                const staticHead = opPoint.head_m * 0.4; // 40% static head assumption
-                const frictionHead = opPoint.head_m - staticHead;
+                // System curve should intersect with pump curve at operating point
+                // Use the actual pump curve data to find the intersection point
 
-                // Calculate friction coefficient from duty point
-                const frictionCoeff = frictionHead / (opPoint.flow_m3hr * opPoint.flow_m3hr);
-
-                // Generate system curve points from 0 to 150% of duty flow
-                const systemFlows = [];
-                const systemHeads = [];
-
-                for (let i = 0; i <= 15; i++) {
-                    const flow = (opPoint.flow_m3hr * i) / 10; // 0% to 150% in 10% increments
-                    const head = staticHead + frictionCoeff * flow * flow;
-                    systemFlows.push(flow);
-                    systemHeads.push(head);
+                // Find the pump curve that contains the operating point
+                let pumpCurve = null;
+                for (const curve of this.currentChartData.curves) {
+                    if (curve.is_selected && Array.isArray(curve.flow_data) && Array.isArray(curve.head_data)) {
+                        pumpCurve = curve;
+                        break;
+                    }
                 }
 
-                traces.push({
-                    x: systemFlows,
-                    y: systemHeads,
-                    type: 'scatter',
-                    mode: 'lines',
-                    name: 'System Curve (Estimated)',
-                    line: {
-                        color: '#666666',
-                        width: 2,
-                        dash: 'dashdot'
-                    },
-                    hovertemplate: '<b>System Curve</b><br>Flow: %{x:.0f} m³/hr<br>Head: %{y:.1f} m<br><i>Static: ' + staticHead.toFixed(1) + 'm + Friction</i><extra></extra>',
-                    showlegend: true
-                });
+                if (pumpCurve) {
+                    // Find the pump head at operating flow rate
+                    let pumpHeadAtOpFlow = opPoint.head_m;
+
+                    // Interpolate to find exact pump head at operating flow
+                    for (let i = 0; i < pumpCurve.flow_data.length - 1; i++) {
+                        if (pumpCurve.flow_data[i] <= opPoint.flow_m3hr && pumpCurve.flow_data[i + 1] >= opPoint.flow_m3hr) {
+                            const flow1 = pumpCurve.flow_data[i];
+                            const flow2 = pumpCurve.flow_data[i + 1];
+                            const head1 = pumpCurve.head_data[i];
+                            const head2 = pumpCurve.head_data[i + 1];
+
+                            // Linear interpolation
+                            const ratio = (opPoint.flow_m3hr - flow1) / (flow2 - flow1);
+                            pumpHeadAtOpFlow = head1 + ratio * (head2 - head1);
+                            break;
+                        }
+                    }
+
+                    // Calculate system curve parameters to intersect at operating point
+                    const staticHead = pumpHeadAtOpFlow * 0.3; // 30% static head
+                    const frictionHead = pumpHeadAtOpFlow - staticHead;
+                    const frictionCoeff = frictionHead / (opPoint.flow_m3hr * opPoint.flow_m3hr);
+
+                    // Generate system curve points from 0 to 150% of duty flow
+                    const systemFlows = [];
+                    const systemHeads = [];
+
+                    for (let i = 0; i <= 15; i++) {
+                        const flow = (opPoint.flow_m3hr * i) / 10; // 0% to 150% in 10% increments
+                        const head = staticHead + frictionCoeff * flow * flow;
+                        systemFlows.push(flow);
+                        systemHeads.push(head);
+                    }
+
+                    traces.push({
+                        x: systemFlows,
+                        y: systemHeads,
+                        type: 'scatter',
+                        mode: 'lines',
+                        name: 'System Curve (Estimated)',
+                        line: {
+                            color: '#666666',
+                            width: 2,
+                            dash: 'dashdot'
+                        },
+                        hovertemplate: '<b>System Curve</b><br>Flow: %{x:.0f} m³/hr<br>Head: %{y:.1f} m<br><i>Static: ' + staticHead.toFixed(1) + 'm + Friction</i><extra></extra>',
+                        showlegend: true
+                    });
+                } else {
+                    // Fallback to original calculation if no pump curve found
+                    const staticHead = opPoint.head_m * 0.4; // 40% static head assumption
+                    const frictionHead = opPoint.head_m - staticHead;
+                    const frictionCoeff = frictionHead / (opPoint.flow_m3hr * opPoint.flow_m3hr);
+
+                    // Generate system curve points from 0 to 150% of duty flow
+                    const systemFlows = [];
+                    const systemHeads = [];
+
+                    for (let i = 0; i <= 15; i++) {
+                        const flow = (opPoint.flow_m3hr * i) / 10; // 0% to 150% in 10% increments
+                        const head = staticHead + frictionCoeff * flow * flow;
+                        systemFlows.push(flow);
+                        systemHeads.push(head);
+                    }
+
+                    traces.push({
+                        x: systemFlows,
+                        y: systemHeads,
+                        type: 'scatter',
+                        mode: 'lines',
+                        name: 'System Curve (Estimated)',
+                        line: {
+                            color: '#666666',
+                            width: 2,
+                            dash: 'dashdot'
+                        },
+                        hovertemplate: '<b>System Curve</b><br>Flow: %{x:.0f} m³/hr<br>Head: %{y:.1f} m<br><i>Static: ' + staticHead.toFixed(1) + 'm + Friction</i><extra></extra>',
+                        showlegend: true
+                    });
+                }
             }
         }
 
@@ -246,32 +312,32 @@ class PumpChartsManager {
             const pointSymbol = 'triangle-up'; // Red triangle marker
 
             // Get chart data ranges for proper reference line scaling
-            let maxFlow = 500;
-            let maxHead = 50;
-            let minFlow = 0;
-            let minHead = 0;
+            let refMaxFlow = 500;
+            let refMaxHead = 50;
+            let refMinFlow = 0;
+            let refMinHead = 0;
             if (this.currentChartData.curves.length > 0) {
                 const allFlows = this.currentChartData.curves.flatMap(c => c.flow_data || []);
                 const allHeads = this.currentChartData.curves.flatMap(c => c.head_data || []);
                 if (allFlows.length > 0) {
-                    minFlow = Math.min(...allFlows);
-                    maxFlow = Math.max(...allFlows);
+                    refMinFlow = Math.min(...allFlows);
+                    refMaxFlow = Math.max(...allFlows);
                 }
                 if (allHeads.length > 0) {
-                    minHead = Math.min(...allHeads);
-                    maxHead = Math.max(...allHeads);
+                    refMinHead = Math.min(...allHeads);
+                    refMaxHead = Math.max(...allHeads);
                 }
             }
 
             // Calculate reference line boundaries extending beyond chart boundaries
-            const flowRange = maxFlow - minFlow;
-            const headRange = maxHead - minHead;
+            const flowRange = refMaxFlow - refMinFlow;
+            const headRange = refMaxHead - refMinHead;
 
             // Extended boundaries well beyond chart limits
-            const extendedMinFlow = Math.max(0, minFlow - flowRange * 0.6);
-            const extendedMaxFlow = maxFlow + flowRange * 0.6;
-            const extendedMinHead = Math.max(0, minHead - headRange * 0.6);
-            const extendedMaxHead = maxHead + headRange * 0.6;
+            const extendedMinFlow = Math.max(0, refMinFlow - flowRange * 0.6);
+            const extendedMaxFlow = refMaxFlow + flowRange * 0.6;
+            const extendedMinHead = Math.max(0, refMinHead - headRange * 0.6);
+            const extendedMaxHead = refMaxHead + headRange * 0.6;
 
             // Reference line extensions beyond chart boundaries - Vertical (flow)
             traces.push({
@@ -315,9 +381,9 @@ class PumpChartsManager {
                 }
             }
 
-            const efficiencyRating = opPoint.efficiency_pct >= 80 ? 'Excellent' : 
-                                   opPoint.efficiency_pct >= 70 ? 'Good' : 
-                                   opPoint.efficiency_pct >= 60 ? 'Acceptable' : 'Poor';
+            const efficiencyRating = opPoint.efficiency_pct >= 80 ? 'Excellent' :
+                opPoint.efficiency_pct >= 70 ? 'Good' :
+                    opPoint.efficiency_pct >= 60 ? 'Acceptable' : 'Poor';
 
             traces.push({
                 x: [opPoint.flow_m3hr],
@@ -332,69 +398,30 @@ class PumpChartsManager {
                     line: { color: '#d32f2f', width: 3 }
                 },
                 hovertemplate: '<b>🎯 OPERATING POINT ANALYSIS</b><br>' +
-                              '<b>Flow Rate:</b> ' + opPoint.flow_m3hr.toFixed(1) + ' m³/hr<br>' +
-                              '<b>Head:</b> ' + opPoint.head_m.toFixed(1) + ' m<br>' +
-                              '<b>Efficiency:</b> ' + opPoint.efficiency_pct.toFixed(1) + '% (' + efficiencyRating + ')<br>' +
-                              '<b>Power:</b> ' + (opPoint.power_kw ? opPoint.power_kw.toFixed(1) + ' kW' : 'Calculated') + '<br>' +
-                              '<b>NPSH Required:</b> ' + (opPoint.npshr_m ? opPoint.npshr_m.toFixed(1) + ' m' : 'N/A') + '<br>' +
-                              '<b>BEP Position:</b> ' + bepPercentage + '% of optimal flow<br>' +
-                              '<b>Status:</b> ' + (opPoint.extrapolated ? 'Extrapolated' : 'Within Curve') + '<extra></extra>'
+                    '<b>Flow Rate:</b> ' + opPoint.flow_m3hr.toFixed(1) + ' m³/hr<br>' +
+                    '<b>Head:</b> ' + opPoint.head_m.toFixed(1) + ' m<br>' +
+                    '<b>Efficiency:</b> ' + opPoint.efficiency_pct.toFixed(1) + '% (' + efficiencyRating + ')<br>' +
+                    '<b>Power:</b> ' + (opPoint.power_kw ? opPoint.power_kw.toFixed(1) + ' kW' : 'Calculated') + '<br>' +
+                    '<b>NPSH Required:</b> ' + (opPoint.npshr_m ? opPoint.npshr_m.toFixed(1) + ' m' : 'N/A') + '<br>' +
+                    '<b>BEP Position:</b> ' + bepPercentage + '% of optimal flow<br>' +
+                    '<b>Status:</b> ' + (opPoint.extrapolated ? 'Extrapolated' : 'Within Curve') + '<extra></extra>'
             });
         }
 
-        // Enhanced title with performance envelope information
-        let envelopeInfo = '';
-        // Note: Multi-curve envelope info will be implemented when curve range data is available
-
-        const title = this.currentChartData.pump_code + " - " + config.title + envelopeInfo;
+        const title = this.currentChartData.pump_code + " - " + config.title;
         const yAxisTitle = config.yAxis;
 
-        // Calculate Y-axis range centered on operating point requirements
-        let maxHead = 60;
-        let minHead = 0;
-
-        if (opPoint && opPoint.head_m) {
-            // Primary: Center around the actual operating requirement
-            const operatingHead = opPoint.head_m;
-
-            // Get curve data range for context
-            let dataMin = operatingHead;
-            let dataMax = operatingHead;
-            if (this.currentChartData.curves.length > 0) {
-                const allHeads = this.currentChartData.curves.flatMap(c => c.head_data || []);
-                if (allHeads.length > 0) {
-                    dataMin = Math.min(...allHeads);
-                    dataMax = Math.max(...allHeads);
-                }
-            }
-
-            // Calculate intelligent range that centers on operating point
-            const curveRange = dataMax - dataMin;
-            const centeringRange = Math.max(curveRange * 0.4, operatingHead * 0.3, 10); // Minimum meaningful range
-
-            minHead = Math.max(0, operatingHead - centeringRange);
-            maxHead = operatingHead + centeringRange;
-
-            // Ensure all curve data remains visible with slight extension
-            if (dataMin < minHead) {
-                const extension = (minHead - dataMin) * 1.1;
-                minHead = Math.max(0, dataMin - extension * 0.1);
-            }
-            if (dataMax > maxHead) {
-                const extension = (dataMax - maxHead) * 1.1;
-                maxHead = dataMax + extension * 0.1;
-            }
-        } else {
-            // Fallback: Use curve data range if no operating point
-            if (this.currentChartData.curves.length > 0) {
-                const allHeads = this.currentChartData.curves.flatMap(c => c.head_data || []);
-                if (allHeads.length > 0) {
-                    const dataMin = Math.min(...allHeads);
-                    const dataMax = Math.max(...allHeads);
-                    const range = dataMax - dataMin;
-                    minHead = Math.max(0, dataMin - range * 0.05);
-                    maxHead = dataMax + range * 0.05;
-                }
+        // Calculate proper y-axis range based on actual data
+        let chartMaxHead = 60;
+        let chartMinHead = 0;
+        if (this.currentChartData.curves.length > 0) {
+            const allHeads = this.currentChartData.curves.flatMap(c => c.head_data || []);
+            if (allHeads.length > 0) {
+                const dataMin = Math.min(...allHeads);
+                const dataMax = Math.max(...allHeads);
+                const range = dataMax - dataMin;
+                chartMinHead = Math.max(0, dataMin - range * 0.05); // 5% padding below minimum, but not below 0
+                chartMaxHead = dataMax + range * 0.05; // 5% padding above maximum
             }
         }
 
@@ -426,7 +453,7 @@ class PumpChartsManager {
                 showline: true,
                 linecolor: '#ccc',
                 linewidth: 1,
-                range: [minHead, maxHead] // Explicitly set y-axis range to match BEP zone
+                range: [chartMinHead, chartMaxHead] // Explicitly set y-axis range to match BEP zone
             },
             font: {
                 family: 'Roboto, sans-serif',
@@ -550,36 +577,36 @@ class PumpChartsManager {
             const pointSymbol = 'triangle-up'; // Red triangle marker
 
             // Get chart data ranges for proper reference line scaling
-            let maxFlow = 500;
-            let minFlow = 0;
-            let maxEff = 100;
-            let minEff = 0;
+            let chartMaxFlow = 500;
+            let chartMinFlow = 0;
+            let chartMaxEff = 100;
+            let chartMinEff = 0;
             if (Array.isArray(this.currentChartData.curves) && this.currentChartData.curves.length > 0) {
                 const allFlows = this.currentChartData.curves.flatMap(c => Array.isArray(c?.flow_data) ? c.flow_data : []);
                 const allEffs = this.currentChartData.curves.flatMap(c => Array.isArray(c?.efficiency_data) ? c.efficiency_data : []).filter(e => e != null && e > 0);
                 if (allFlows.length > 0) {
-                    minFlow = Math.min(...allFlows);
-                    maxFlow = Math.max(...allFlows);
+                    chartMinFlow = Math.min(...allFlows);
+                    chartMaxFlow = Math.max(...allFlows);
                 }
                 if (allEffs.length > 0) {
-                    minEff = Math.min(...allEffs);
-                    maxEff = Math.max(...allEffs);
+                    chartMinEff = Math.min(...allEffs);
+                    chartMaxEff = Math.max(...allEffs);
                 }
             }
 
             // Calculate reference line boundaries using robust logic
-            const flowRange = maxFlow - minFlow;
-            const effRange = maxEff - minEff;
+            const flowRange = chartMaxFlow - chartMinFlow;
+            const effRange = chartMaxEff - chartMinEff;
 
             // Ensure minimum extension values for small ranges
             const minFlowExtension = Math.max(flowRange * 0.4, 100); // At least 100 units or 40% of range
             const minEffExtension = Math.max(effRange * 0.4, 10);    // At least 10 units or 40% of range
 
             // Calculate extended boundaries with proper bounds checking
-            const extendedMinFlow = Math.max(0, minFlow - minFlowExtension);
-            const extendedMaxFlow = maxFlow + minFlowExtension;
-            const extendedMinEff = Math.max(0, minEff - minEffExtension);
-            const extendedMaxEff = maxEff + minEffExtension;
+            const extendedMinFlow = Math.max(0, chartMinFlow - minFlowExtension);
+            const extendedMaxFlow = chartMaxFlow + minFlowExtension;
+            const extendedMinEff = Math.max(0, chartMinEff - minEffExtension);
+            const extendedMaxEff = chartMaxEff + minEffExtension;
 
             // Vertical reference line (flow) - extends from bottom to top of chart
             traces.push({
@@ -630,56 +657,20 @@ class PumpChartsManager {
             });
         }
 
-        // Enhanced title
         const title = this.currentChartData.pump_code + " - " + config.title;
         const yAxisTitle = config.yAxis;
 
-        // Calculate Y-axis range centered on operating point efficiency
+        // Calculate proper y-axis range based on actual efficiency data
         let maxEfficiency = 100;
         let minEfficiency = 0;
-
-        if (opPoint && opPoint.efficiency_pct != null && opPoint.efficiency_pct > 0) {
-            // Primary: Center around the actual operating efficiency
-            const operatingEff = opPoint.efficiency_pct;
-
-            // Get curve data range for context
-            let dataMin = operatingEff;
-            let dataMax = operatingEff;
-            if (this.currentChartData.curves.length > 0) {
-                const allEfficiencies = this.currentChartData.curves.flatMap(c => c.efficiency_data || []);
-                if (allEfficiencies.length > 0) {
-                    dataMin = Math.min(...allEfficiencies);
-                    dataMax = Math.max(...allEfficiencies);
-                }
-            }
-
-            // Calculate intelligent range that centers on operating point
-            const curveRange = dataMax - dataMin;
-            const centeringRange = Math.max(curveRange * 0.4, operatingEff * 0.3, 15); // Minimum meaningful range
-
-            minEfficiency = Math.max(0, operatingEff - centeringRange);
-            maxEfficiency = Math.min(100, operatingEff + centeringRange);
-
-            // Ensure all curve data remains visible with slight extension
-            if (dataMin < minEfficiency) {
-                const extension = (minEfficiency - dataMin) * 1.1;
-                minEfficiency = Math.max(0, dataMin - extension * 0.1);
-            }
-            if (dataMax > maxEfficiency) {
-                const extension = (dataMax - maxEfficiency) * 1.1;
-                maxEfficiency = Math.min(100, dataMax + extension * 0.1);
-            }
-        } else {
-            // Fallback: Use curve data range if no operating point
-            if (this.currentChartData.curves.length > 0) {
-                const allEfficiencies = this.currentChartData.curves.flatMap(c => c.efficiency_data || []);
-                if (allEfficiencies.length > 0) {
-                    const dataMin = Math.min(...allEfficiencies);
-                    const dataMax = Math.max(...allEfficiencies);
-                    const range = dataMax - dataMin;
-                    minEfficiency = Math.max(0, dataMin - range * 0.05);
-                    maxEfficiency = Math.min(100, dataMax + range * 0.05);
-                }
+        if (this.currentChartData.curves.length > 0) {
+            const allEfficiencies = this.currentChartData.curves.flatMap(c => c.efficiency_data || []);
+            if (allEfficiencies.length > 0) {
+                const dataMin = Math.min(...allEfficiencies);
+                const dataMax = Math.max(...allEfficiencies);
+                const range = dataMax - dataMin;
+                minEfficiency = Math.max(0, dataMin - range * 0.05); // 5% padding below minimum, but not below 0
+                maxEfficiency = Math.min(100, dataMax + range * 0.05); // 5% padding above maximum, but not above 100%
             }
         }
 
@@ -911,56 +902,20 @@ class PumpChartsManager {
             });
         }
 
-        // Enhanced title
         const title = this.currentChartData.pump_code + " - " + config.title;
         const yAxisTitle = config.yAxis;
 
-        // Calculate Y-axis range centered on operating point power
+        // Calculate proper y-axis range based on actual power data
         let maxPower = 200;
         let minPower = 0;
-
-        if (opPoint && opPoint.power_kw != null && opPoint.power_kw > 0) {
-            // Primary: Center around the actual operating power
-            const operatingPower = opPoint.power_kw;
-
-            // Get curve data range for context
-            let dataMin = operatingPower;
-            let dataMax = operatingPower;
-            if (this.currentChartData.curves.length > 0) {
-                const allPowers = this.currentChartData.curves.flatMap(c => c.power_data || []).filter(p => p != null && p > 0);
-                if (allPowers.length > 0) {
-                    dataMin = Math.min(...allPowers);
-                    dataMax = Math.max(...allPowers);
-                }
-            }
-
-            // Calculate intelligent range that centers on operating point
-            const curveRange = dataMax - dataMin;
-            const centeringRange = Math.max(curveRange * 0.4, operatingPower * 0.3, 20); // Minimum meaningful range
-
-            minPower = Math.max(0, operatingPower - centeringRange);
-            maxPower = operatingPower + centeringRange;
-
-            // Ensure all curve data remains visible with slight extension
-            if (dataMin < minPower) {
-                const extension = (minPower - dataMin) * 1.1;
-                minPower = Math.max(0, dataMin - extension * 0.1);
-            }
-            if (dataMax > maxPower) {
-                const extension = (dataMax - maxPower) * 1.1;
-                maxPower = dataMax + extension * 0.1;
-            }
-        } else {
-            // Fallback: Use curve data range if no operating point
-            if (this.currentChartData.curves.length > 0) {
-                const allPowers = this.currentChartData.curves.flatMap(c => c.power_data || []).filter(p => p != null && p > 0);
-                if (allPowers.length > 0) {
-                    const dataMin = Math.min(...allPowers);
-                    const dataMax = Math.max(...allPowers);
-                    const range = dataMax - dataMin;
-                    minPower = Math.max(0, dataMin - range * 0.05);
-                    maxPower = dataMax + range * 0.05;
-                }
+        if (this.currentChartData.curves.length > 0) {
+            const allPowers = this.currentChartData.curves.flatMap(c => c.power_data || []).filter(p => p != null && p > 0);
+            if (allPowers.length > 0) {
+                const dataMin = Math.min(...allPowers);
+                const dataMax = Math.max(...allPowers);
+                const range = dataMax - dataMin;
+                minPower = Math.max(0, dataMin - range * 0.05); // 5% padding below minimum, but not below 0
+                maxPower = dataMax + range * 0.05; // 5% padding above maximum
             }
         }
 
@@ -1078,8 +1033,8 @@ class PumpChartsManager {
 
         // Add operating point with red triangle marker and reference lines (only if NPSH data exists)
         const opPoint = this.currentChartData.operating_point;
-        const hasNpshData = Array.isArray(this.currentChartData.curves) && 
-            this.currentChartData.curves.some(curve => 
+        const hasNpshData = Array.isArray(this.currentChartData.curves) &&
+            this.currentChartData.curves.some(curve =>
                 curve && Array.isArray(curve.npshr_data) && curve.npshr_data.length > 0 && curve.npshr_data.some(val => val > 0)
             );
 
@@ -1181,56 +1136,20 @@ class PumpChartsManager {
             });
         }
 
-        // Enhanced title
         const title = this.currentChartData.pump_code + " - " + config.title;
         const yAxisTitle = config.yAxis;
 
-        // Calculate Y-axis range centered on operating point NPSH
+        // Calculate proper y-axis range based on actual NPSH data
         let maxNpsh = 20;
         let minNpsh = 0;
-
-        if (opPoint && opPoint.npshr_m != null && opPoint.npshr_m > 0 && hasNpshData) {
-            // Primary: Center around the actual operating NPSH
-            const operatingNpsh = opPoint.npshr_m;
-
-            // Get curve data range for context
-            let dataMin = operatingNpsh;
-            let dataMax = operatingNpsh;
-            if (this.currentChartData.curves.length > 0) {
-                const allNpsh = this.currentChartData.curves.flatMap(c => c.npshr_data || []).filter(n => n != null && n > 0);
-                if (allNpsh.length > 0) {
-                    dataMin = Math.min(...allNpsh);
-                    dataMax = Math.max(...allNpsh);
-                }
-            }
-
-            // Calculate intelligent range that centers on operating point
-            const curveRange = dataMax - dataMin;
-            const centeringRange = Math.max(curveRange * 0.4, operatingNpsh * 0.4, 3); // Minimum meaningful range
-
-            minNpsh = Math.max(0, operatingNpsh - centeringRange);
-            maxNpsh = operatingNpsh + centeringRange;
-
-            // Ensure all curve data remains visible with slight extension
-            if (dataMin < minNpsh) {
-                const extension = (minNpsh - dataMin) * 1.1;
-                minNpsh = Math.max(0, dataMin - extension * 0.1);
-            }
-            if (dataMax > maxNpsh) {
-                const extension = (dataMax - maxNpsh) * 1.1;
-                maxNpsh = dataMax + extension * 0.1;
-            }
-        } else {
-            // Fallback: Use curve data range if no operating point
-            if (this.currentChartData.curves.length > 0) {
-                const allNpsh = this.currentChartData.curves.flatMap(c => c.npshr_data || []).filter(n => n != null && n > 0);
-                if (allNpsh.length > 0) {
-                    const dataMin = Math.min(...allNpsh);
-                    const dataMax = Math.max(...allNpsh);
-                    const range = dataMax - dataMin;
-                    minNpsh = Math.max(0, dataMin - range * 0.05);
-                    maxNpsh = dataMax + range * 0.05;
-                }
+        if (this.currentChartData.curves.length > 0) {
+            const allNpsh = this.currentChartData.curves.flatMap(c => c.npshr_data || []).filter(n => n != null && n > 0);
+            if (allNpsh.length > 0) {
+                const dataMin = Math.min(...allNpsh);
+                const dataMax = Math.max(...allNpsh);
+                const range = dataMax - dataMin;
+                minNpsh = Math.max(0, dataMin - range * 0.05); // 5% padding below minimum, but not below 0
+                maxNpsh = dataMax + range * 0.05; // 5% padding above maximum
             }
         }
 
@@ -1306,7 +1225,7 @@ class PumpChartsManager {
     }
 
     renderAllCharts(pumpCode, flowRate, head) {
-        console.log('Charts.js: Starting renderAllCharts for:', {pumpCode, flowRate, head});
+        console.log('Charts.js: Starting renderAllCharts for:', { pumpCode, flowRate, head });
 
         // Prevent multiple initializations for the same pump
         const chartKey = pumpCode + '_' + flowRate + '_' + head;
@@ -1317,9 +1236,9 @@ class PumpChartsManager {
 
         // Ensure chart containers are visible and show loading state
         const chartContainers = [
-            'head-flow-chart', 
-            'efficiency-flow-chart', 
-            'power-flow-chart', 
+            'head-flow-chart',
+            'efficiency-flow-chart',
+            'power-flow-chart',
             'npshr-flow-chart'
         ];
 
@@ -1412,7 +1331,7 @@ class PumpChartsManager {
 
 // Cache for chart data to avoid redundant API calls
 let chartDataCache = {};
-const CACHE_DURATION =300000; // 5 minutes
+const CACHE_DURATION = 300000; // 5 minutes
 
 // Global chart manager instance
 window.pumpChartsManager = new PumpChartsManager();
@@ -1423,7 +1342,7 @@ let initializationAttempts = 0;
 
 // Force chart refresh function
 window.forceChartRefresh = function(pumpCode, flowRate, head) {
-    console.log('Force refreshing charts for:', {pumpCode, flowRate, head});
+    console.log('Force refreshing charts for:', { pumpCode, flowRate, head });
 
     // Clear existing charts
     const chartIds = ['head-flow-chart', 'efficiency-flow-chart', 'power-flow-chart', 'npshr-flow-chart'];
@@ -1464,9 +1383,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Look for chart containers first
     const chartContainers = [
-        'head-flow-chart', 
-        'efficiency-flow-chart', 
-        'power-flow-chart', 
+        'head-flow-chart',
+        'efficiency-flow-chart',
+        'power-flow-chart',
         'npshr-flow-chart'
     ];
 
@@ -1521,11 +1440,11 @@ document.addEventListener('DOMContentLoaded', function() {
         chartsInitialized = true;
         window.pumpChartsManager.renderAllCharts(pumpCode, flowRate, head);
     } else {
-        console.log('Charts.js: Missing or invalid chart data:', { 
-            pumpCode, 
-            flowRate, 
-            head, 
-            alreadyInitialized: chartsInitialized 
+        console.log('Charts.js: Missing or invalid chart data:', {
+            pumpCode,
+            flowRate,
+            head,
+            alreadyInitialized: chartsInitialized
         });
     }
 });

@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 # Create blueprint
 api_bp = Blueprint('api', __name__)
 
+
 @api_bp.route('/chart_data/<pump_code>')
 def get_chart_data(pump_code):
     """API endpoint to get chart data for interactive Plotly.js charts."""
@@ -34,19 +35,25 @@ def get_chart_data(pump_code):
         if not target_pump:
             logger.error(f"Chart API: Pump {pump_code} not found in catalog")
             response = jsonify({
-                'error': f'Pump {pump_code} not found',
-                'available_pumps': len(catalog_engine.pumps),
-                'suggestion': 'Please verify the pump code and try again'
+                'error':
+                f'Pump {pump_code} not found',
+                'available_pumps':
+                len(catalog_engine.pumps),
+                'suggestion':
+                'Please verify the pump code and try again'
             })
-            response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+            response.headers[
+                'Cache-Control'] = 'no-cache, no-store, must-revalidate'
             return response, 404
 
         # Use catalog pump curves directly
         curves = target_pump.curves
 
         if not curves:
-            response = jsonify({'error': f'No curve data available for pump {pump_code}'})
-            response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+            response = jsonify(
+                {'error': f'No curve data available for pump {pump_code}'})
+            response.headers[
+                'Cache-Control'] = 'no-cache, no-store, must-revalidate'
             return response, 404
 
         # Create site requirements for operating point calculation
@@ -56,7 +63,8 @@ def get_chart_data(pump_code):
         best_curve = target_pump.get_best_curve_for_duty(flow_rate, head)
 
         # Calculate performance at duty point with detailed analysis
-        performance_result = target_pump.get_performance_at_duty(flow_rate, head)
+        performance_result = target_pump.get_performance_at_duty(
+            flow_rate, head)
 
         # Extract operating point details from performance calculation
         operating_point = None
@@ -68,15 +76,22 @@ def get_chart_data(pump_code):
 
             # Check for speed variation in the performance calculation
             sizing_info = performance_result.get('sizing_info')
-            if sizing_info and sizing_info.get('sizing_method') == 'speed_variation':
+            if sizing_info and sizing_info.get(
+                    'sizing_method') == 'speed_variation':
                 speed_scaling_applied = True
                 required_speed = sizing_info.get('required_speed_rpm', 980)
                 base_speed = 980
                 actual_speed_ratio = required_speed / base_speed
-                logger.info(f"Chart API: Speed variation detected - {base_speed}→{required_speed} RPM (ratio: {actual_speed_ratio:.3f})")
-                logger.info(f"Chart API: Performance at scaled speed - power: {performance_result.get('power_kw')}kW")
+                logger.info(
+                    f"Chart API: Speed variation detected - {base_speed}→{required_speed} RPM (ratio: {actual_speed_ratio:.3f})"
+                )
+                logger.info(
+                    f"Chart API: Performance at scaled speed - power: {performance_result.get('power_kw')}kW"
+                )
 
-        logger.info(f"Chart API: Final scaling status - applied: {speed_scaling_applied}, ratio: {actual_speed_ratio:.3f}")
+        logger.info(
+            f"Chart API: Final scaling status - applied: {speed_scaling_applied}, ratio: {actual_speed_ratio:.3f}"
+        )
 
         # Prepare chart data with enhanced operating point including sizing info
         operating_point_data = {}
@@ -91,7 +106,8 @@ def get_chart_data(pump_code):
                 'curve_index': operating_point.get('curve_index'),
                 'extrapolated': operating_point.get('extrapolated', False),
                 'within_range': not operating_point.get('extrapolated', False),
-                'sizing_info': operating_point.get('sizing_info')  # Include sizing information
+                'sizing_info': operating_point.get(
+                    'sizing_info')  # Include sizing information
             }
 
         chart_data = {
@@ -135,50 +151,92 @@ def get_chart_data(pump_code):
 
                 if speed_scaling_applied and actual_speed_ratio != 1.0:
                     # Apply speed scaling to match operating point calculation
-                    flows = [p['flow_m3hr'] * actual_speed_ratio for p in performance_points if 'flow_m3hr' in p]
-                    heads = [p['head_m'] * (actual_speed_ratio ** 2) for p in performance_points if 'head_m' in p]
+                    flows = [
+                        p['flow_m3hr'] * actual_speed_ratio
+                        for p in performance_points if 'flow_m3hr' in p
+                    ]
+                    heads = [
+                        p['head_m'] * (actual_speed_ratio**2)
+                        for p in performance_points if 'head_m' in p
+                    ]
                     base_powers = calculate_power_curve(performance_points)
-                    powers = [power * (actual_speed_ratio ** 3) for power in base_powers]
-                    logger.info(f"Chart API: Speed scaling applied to selected curve - ratio={actual_speed_ratio:.3f}")
+                    powers = [
+                        power * (actual_speed_ratio**3)
+                        for power in base_powers
+                    ]
+                    logger.info(
+                        f"Chart API: Speed scaling applied to selected curve - ratio={actual_speed_ratio:.3f}"
+                    )
                 else:
                     # Use original data for non-speed-varied cases
-                    flows = [p['flow_m3hr'] for p in performance_points if 'flow_m3hr' in p]
-                    heads = [p['head_m'] for p in performance_points if 'head_m' in p]
+                    flows = [
+                        p['flow_m3hr'] for p in performance_points
+                        if 'flow_m3hr' in p
+                    ]
+                    heads = [
+                        p['head_m'] for p in performance_points
+                        if 'head_m' in p
+                    ]
                     powers = calculate_power_curve(performance_points)
             else:
                 # Non-selected curves use original manufacturer data
-                flows = [p['flow_m3hr'] for p in performance_points if 'flow_m3hr' in p]
-                heads = [p['head_m'] for p in performance_points if 'head_m' in p]
+                flows = [
+                    p['flow_m3hr'] for p in performance_points
+                    if 'flow_m3hr' in p
+                ]
+                heads = [
+                    p['head_m'] for p in performance_points if 'head_m' in p
+                ]
                 powers = calculate_power_curve(performance_points)
 
-            efficiencies = [p.get('efficiency_pct') for p in performance_points if p.get('efficiency_pct') is not None]
+            efficiencies = [
+                p.get('efficiency_pct') for p in performance_points
+                if p.get('efficiency_pct') is not None
+            ]
 
-            npshrs = [p.get('npshr_m') for p in performance_points if p.get('npshr_m') is not None]
+            npshrs = [
+                p.get('npshr_m') for p in performance_points
+                if p.get('npshr_m') is not None
+            ]
 
             curve_data = {
-                'curve_index': i,
-                'impeller_size': curve.get('impeller_size', f'Curve {i+1}'),
-                'impeller_diameter_mm': curve.get('impeller_diameter_mm', curve.get('impeller_size', f'Curve {i+1}')),
-                'flow_data': flows,
-                'head_data': heads,
-                'efficiency_data': efficiencies,
-                'power_data': powers,
-                'npshr_data': npshrs,
-                'is_selected': i == best_curve_index
+                'curve_index':
+                i,
+                'impeller_size':
+                curve.get('impeller_size', f'Curve {i+1}'),
+                'impeller_diameter_mm':
+                curve.get('impeller_diameter_mm',
+                          curve.get('impeller_size', f'Curve {i+1}')),
+                'flow_data':
+                flows,
+                'head_data':
+                heads,
+                'efficiency_data':
+                efficiencies,
+                'power_data':
+                powers,
+                'npshr_data':
+                npshrs,
+                'is_selected':
+                i == best_curve_index
             }
             chart_data['curves'].append(curve_data)
 
         # Create response with short-term caching for chart data
         response = jsonify(chart_data)
-        response.headers['Cache-Control'] = 'public, max-age=300'  # 5 minute cache
+        response.headers[
+            'Cache-Control'] = 'public, max-age=300'  # 5 minute cache
         response.headers['Content-Type'] = 'application/json'
         return response
 
     except Exception as e:
         logger.error(f"Error getting chart data: {str(e)}")
-        error_response = jsonify({'error': f'Error retrieving chart data: {str(e)}'})
-        error_response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+        error_response = jsonify(
+            {'error': f'Error retrieving chart data: {str(e)}'})
+        error_response.headers[
+            'Cache-Control'] = 'no-cache, no-store, must-revalidate'
         return error_response, 500
+
 
 @api_bp.route('/chart_data_safe/<safe_pump_code>')
 def get_chart_data_safe(safe_pump_code):
@@ -205,7 +263,9 @@ def get_chart_data_safe(safe_pump_code):
         catalog_engine = get_catalog_engine()
         target_pump = catalog_engine.get_pump_by_code(pump_code)
 
-        logger.info(f"Chart API: Catalog lookup took {time.time() - data_load_start:.3f}s")
+        logger.info(
+            f"Chart API: Catalog lookup took {time.time() - data_load_start:.3f}s"
+        )
 
         if not target_pump:
             return jsonify({'error': f'Pump {pump_code} not found'})
@@ -214,11 +274,15 @@ def get_chart_data_safe(safe_pump_code):
         curves = target_pump.curves
 
         if not curves:
-            return jsonify({'error': f'Pump {pump_code} not found or no curve data available'})
+            return jsonify({
+                'error':
+                f'Pump {pump_code} not found or no curve data available'
+            })
 
         # Calculate operating point using catalog engine
         best_curve = target_pump.get_best_curve_for_duty(flow_rate, head)
-        operating_point_data = target_pump.get_performance_at_duty(flow_rate, head)
+        operating_point_data = target_pump.get_performance_at_duty(
+            flow_rate, head)
 
         # Calculate BEP analysis for the pump
         bep_analysis = target_pump.calculate_bep_distance(flow_rate, head)
@@ -226,24 +290,50 @@ def get_chart_data_safe(safe_pump_code):
         # Extract speed scaling information from performance calculation
         speed_scaling_applied = False
         actual_speed_ratio = 1.0
+        base_speed = None
+        required_speed = None
+
+        # Get actual base speed from pump specifications
+        if target_pump.specifications and target_pump.specifications.get(
+                'test_speed_rpm'):
+            base_speed = target_pump.specifications['test_speed_rpm']
+        else:
+            base_speed = 980  # Fallback default
 
         if operating_point_data and operating_point_data.get('sizing_info'):
             sizing_info = operating_point_data['sizing_info']
             if sizing_info.get('sizing_method') == 'speed_variation':
                 speed_scaling_applied = True
-                required_speed = sizing_info.get('required_speed_rpm', 980)
-                base_speed = 980
+                required_speed = sizing_info.get('required_speed_rpm',
+                                                 base_speed)
                 actual_speed_ratio = required_speed / base_speed
-                logger.info(f"Chart API: Speed variation detected - {base_speed}→{required_speed} RPM (ratio: {actual_speed_ratio:.3f})")
+                logger.info(
+                    f"Chart API: Speed variation detected - {base_speed}→{required_speed} RPM (ratio: {actual_speed_ratio:.3f})"
+                )
+            else:
+                required_speed = base_speed
+        else:
+            required_speed = base_speed
 
         # Prepare operating point data for charts
         op_point = {
-            'flow_m3hr': flow_rate,
-            'head_m': operating_point_data.get('head_m', head) if operating_point_data else head,
-            'efficiency_pct': operating_point_data.get('efficiency_pct') if operating_point_data else None,
-            'power_kw': operating_point_data.get('power_kw') if operating_point_data else None,
-            'npshr_m': operating_point_data.get('npshr_m') if operating_point_data else None,
-            'extrapolated': operating_point_data.get('extrapolated', False) if operating_point_data else False
+            'flow_m3hr':
+            flow_rate,
+            'head_m':
+            operating_point_data.get('head_m', head)
+            if operating_point_data else head,
+            'efficiency_pct':
+            operating_point_data.get('efficiency_pct')
+            if operating_point_data else None,
+            'power_kw':
+            operating_point_data.get('power_kw')
+            if operating_point_data else None,
+            'npshr_m':
+            operating_point_data.get('npshr_m')
+            if operating_point_data else None,
+            'extrapolated':
+            operating_point_data.get('extrapolated', False)
+            if operating_point_data else False
         }
 
         # Prepare chart data
@@ -257,6 +347,14 @@ def get_chart_data_safe(safe_pump_code):
             'curves': [],
             'operating_point': op_point,
             'bep_analysis': bep_analysis,
+            'speed_scaling': {
+                'applied': speed_scaling_applied,
+                'base_speed_rpm': base_speed,
+                'required_speed_rpm': required_speed,
+                'speed_ratio': actual_speed_ratio,
+                'method':
+                'speed_variation' if speed_scaling_applied else 'none'
+            },
             'metadata': {
                 'flow_units': 'm³/hr',
                 'head_units': 'm',
@@ -281,19 +379,33 @@ def get_chart_data_safe(safe_pump_code):
             is_selected_curve = (i == best_curve_index)
 
             # Calculate base data
-            base_flows = [p['flow_m3hr'] for p in performance_points if 'flow_m3hr' in p]
-            base_heads = [p['head_m'] for p in performance_points if 'head_m' in p]
+            base_flows = [
+                p['flow_m3hr'] for p in performance_points if 'flow_m3hr' in p
+            ]
+            base_heads = [
+                p['head_m'] for p in performance_points if 'head_m' in p
+            ]
             base_powers = calculate_power_curve(performance_points)
-            efficiencies = [p.get('efficiency_pct') for p in performance_points if p.get('efficiency_pct') is not None]
-            npshrs = [p.get('npshr_m') for p in performance_points if p.get('npshr_m') is not None]
+            efficiencies = [
+                p.get('efficiency_pct') for p in performance_points
+                if p.get('efficiency_pct') is not None
+            ]
+            npshrs = [
+                p.get('npshr_m') for p in performance_points
+                if p.get('npshr_m') is not None
+            ]
 
             # Apply speed scaling to selected curve if speed variation is required
             if is_selected_curve and speed_scaling_applied and actual_speed_ratio != 1.0:
                 # Apply affinity laws for speed variation - Global Fix Implementation
                 flows = [flow * actual_speed_ratio for flow in base_flows]
-                heads = [head * (actual_speed_ratio ** 2) for head in base_heads]
-                powers = [power * (actual_speed_ratio ** 3) for power in base_powers]
-                logger.info(f"Chart API: Speed scaling applied to selected curve - power range: {min(powers):.1f}-{max(powers):.1f} kW")
+                heads = [head * (actual_speed_ratio**2) for head in base_heads]
+                powers = [
+                    power * (actual_speed_ratio**3) for power in base_powers
+                ]
+                logger.info(
+                    f"Chart API: Speed scaling applied to selected curve - power range: {min(powers):.1f}-{max(powers):.1f} kW"
+                )
                 # Efficiency and NPSH remain unchanged with speed variation
             else:
                 # Use original manufacturer data for non-selected curves or when no speed variation
@@ -302,32 +414,47 @@ def get_chart_data_safe(safe_pump_code):
                 powers = base_powers
 
             curve_data = {
-                'curve_index': i,
-                'impeller_size': curve.get('impeller_size', f'Curve {i+1}'),
-                'impeller_diameter_mm': curve.get('impeller_diameter_mm', curve.get('impeller_size', f'Curve {i+1}')),
-                'flow_data': flows,
-                'head_data': heads,
-                'efficiency_data': efficiencies,
-                'power_data': powers,
-                'npshr_data': npshrs,
-                'is_selected': is_selected_curve
+                'curve_index':
+                i,
+                'impeller_size':
+                curve.get('impeller_size', f'Curve {i+1}'),
+                'impeller_diameter_mm':
+                curve.get('impeller_diameter_mm',
+                          curve.get('impeller_size', f'Curve {i+1}')),
+                'flow_data':
+                flows,
+                'head_data':
+                heads,
+                'efficiency_data':
+                efficiencies,
+                'power_data':
+                powers,
+                'npshr_data':
+                npshrs,
+                'is_selected':
+                is_selected_curve
             }
             chart_data['curves'].append(curve_data)
 
         # Create response with cache-control headers
         response = jsonify(chart_data)
-        response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+        response.headers[
+            'Cache-Control'] = 'no-cache, no-store, must-revalidate'
         response.headers['Pragma'] = 'no-cache'
         response.headers['Expires'] = '0'
 
         total_time = time.time() - start_time
-        logger.info(f"Chart API: Total request time {total_time:.3f}s for pump {pump_code}")
+        logger.info(
+            f"Chart API: Total request time {total_time:.3f}s for pump {pump_code}"
+        )
 
         return response
 
     except Exception as e:
         logger.error(f"Error in safe chart data API: {str(e)}")
-        return jsonify({'error': f'Failed to generate chart data: {str(e)}'}), 500
+        return jsonify({'error':
+                        f'Failed to generate chart data: {str(e)}'}), 500
+
 
 def calculate_power_curve(performance_points):
     """Calculate power values for performance points using hydraulic formula."""
@@ -335,17 +462,21 @@ def calculate_power_curve(performance_points):
     for p in performance_points:
         if p.get('power_kw') and p.get('power_kw') > 0:
             powers.append(p['power_kw'])
-        elif p.get('efficiency_pct') and p.get('efficiency_pct') > 0 and p.get('flow_m3hr', 0) > 0:
+        elif p.get('efficiency_pct') and p.get('efficiency_pct') > 0 and p.get(
+                'flow_m3hr', 0) > 0:
             # P(kW) = (Q × H × 9.81) / (3600 × η)
-            calc_power = (p['flow_m3hr'] * p['head_m'] * 9.81) / (3600 * (p['efficiency_pct'] / 100))
+            calc_power = (p['flow_m3hr'] * p['head_m'] *
+                          9.81) / (3600 * (p['efficiency_pct'] / 100))
             powers.append(calc_power)
         elif p.get('flow_m3hr', 0) == 0:
             powers.append(0)
         else:
             # Fallback for missing data - estimate based on flow and head
-            estimated_power = (p.get('flow_m3hr', 0) * p.get('head_m', 0) * 9.81) / (3600 * 0.75)  # Assume 75% efficiency
+            estimated_power = (p.get('flow_m3hr', 0) * p.get('head_m', 0) *
+                               9.81) / (3600 * 0.75)  # Assume 75% efficiency
             powers.append(max(0, estimated_power))
     return powers
+
 
 @api_bp.route('/pumps', methods=['GET'])
 def get_pumps():
@@ -365,14 +496,12 @@ def get_pumps():
                 'model_series': pump.model_series
             })
 
-        return jsonify({
-            'pumps': pump_list,
-            'count': len(pump_list)
-        })
+        return jsonify({'pumps': pump_list, 'count': len(pump_list)})
 
     except Exception as e:
         logger.error(f"Error getting pumps: {str(e)}")
         return jsonify({'error': 'Failed to get pumps'}), 500
+
 
 @api_bp.route('/pumps/search', methods=['GET'])
 def search_pumps():
@@ -418,15 +547,11 @@ def search_pumps():
         # Limit results to prevent overwhelming the UI
         matching_pumps = matching_pumps[:20]
 
-        return jsonify({
-            'pumps': matching_pumps,
-            'count': len(matching_pumps)
-        })
+        return jsonify({'pumps': matching_pumps, 'count': len(matching_pumps)})
 
     except Exception as e:
         logger.error(f"Error searching pumps: {str(e)}")
         return jsonify({'error': 'Failed to search pumps'}), 500
-
 
 
 @app.route('/select_pump', methods=['POST'])
@@ -463,6 +588,7 @@ def select_pump():
         logger.error(f"Error in select_pump: {str(e)}")
         return jsonify({'error': 'Failed to select pump'}), 500
 
+
 @app.route('/api/ai_analysis_fast', methods=['POST'])
 def ai_analysis_fast():
     """Fast AI technical analysis without knowledge base dependency."""
@@ -478,25 +604,38 @@ def ai_analysis_fast():
         topic = data.get('topic', None)  # Handle specific topic requests
 
         # Generate technical analysis based on pump parameters
-        efficiency_rating = "excellent" if float(efficiency) >= 80 else "good" if float(efficiency) >= 70 else "acceptable"
-        power_analysis = "efficient" if float(power) < 150 else "moderate power consumption"
+        efficiency_rating = "excellent" if float(
+            efficiency) >= 80 else "good" if float(
+                efficiency) >= 70 else "acceptable"
+        power_analysis = "efficient" if float(
+            power) < 150 else "moderate power consumption"
 
         # Handle topic-specific analysis requests
         if topic == 'efficiency optimization':
             return jsonify({
-                'response': _generate_efficiency_optimization_analysis(pump_code, efficiency, power, flow, head),
+                'response':
+                _generate_efficiency_optimization_analysis(
+                    pump_code, efficiency, power, flow, head),
                 'source_documents': [],
-                'confidence_score': 0.9,
-                'processing_time': 1.5,
-                'cost_estimate': 0.015
+                'confidence_score':
+                0.9,
+                'processing_time':
+                1.5,
+                'cost_estimate':
+                0.015
             })
         elif topic == 'maintenance recommendations':
             return jsonify({
-                'response': _generate_maintenance_recommendations(pump_code, efficiency, power, application),
+                'response':
+                _generate_maintenance_recommendations(pump_code, efficiency,
+                                                      power, application),
                 'source_documents': [],
-                'confidence_score': 0.9,
-                'processing_time': 1.5,
-                'cost_estimate': 0.015
+                'confidence_score':
+                0.9,
+                'processing_time':
+                1.5,
+                'cost_estimate':
+                0.015
             })
 
         analysis_text = f"""## 1) Efficiency Characteristics and BEP Analysis
@@ -566,12 +705,14 @@ Follow IEEE and manufacturer guidelines for installation procedures. Document ba
     except Exception as e:
         logger.error(f"Error in fast AI analysis: {e}")
         return jsonify({
-            'response': 'Technical analysis temporarily unavailable. Please try again or contact support.',
+            'response':
+            'Technical analysis temporarily unavailable. Please try again or contact support.',
             'source_documents': [],
             'confidence_score': 0.0,
             'processing_time': 0.0,
             'cost_estimate': 0.0
         }), 500
+
 
 @app.route('/api/convert_markdown', methods=['POST'])
 def convert_markdown_api():
@@ -590,6 +731,7 @@ def convert_markdown_api():
         logger.error(f"Error in markdown conversion API: {e}")
         return jsonify({'error': 'Markdown conversion failed'}), 500
 
+
 def markdown_to_html(text: str) -> str:
     """Convert markdown text to HTML using markdown2 library for reliable parsing"""
     if not text or not isinstance(text, str):
@@ -600,34 +742,57 @@ def markdown_to_html(text: str) -> str:
         # Clean up source document references first
         clean_text = text
         clean_text = re.sub(r'\(([^)]*\.pdf[^)]*)\)', '', clean_text)
-        clean_text = re.sub(r'according to ([^.,\s]+\.pdf)', 'according to industry standards', clean_text, flags=re.IGNORECASE)
-        clean_text = re.sub(r'as stated in ([^.,\s]+\.pdf)', 'as stated in technical literature', clean_text, flags=re.IGNORECASE)
-        clean_text = re.sub(r'from ([^.,\s]+\.pdf)', 'from technical documentation', clean_text, flags=re.IGNORECASE)
+        clean_text = re.sub(r'according to ([^.,\s]+\.pdf)',
+                            'according to industry standards',
+                            clean_text,
+                            flags=re.IGNORECASE)
+        clean_text = re.sub(r'as stated in ([^.,\s]+\.pdf)',
+                            'as stated in technical literature',
+                            clean_text,
+                            flags=re.IGNORECASE)
+        clean_text = re.sub(r'from ([^.,\s]+\.pdf)',
+                            'from technical documentation',
+                            clean_text,
+                            flags=re.IGNORECASE)
         clean_text = re.sub(r'\b[a-zA-Z_\-]+\.pdf\b', '', clean_text)
 
         # Preserve line breaks and normalize spacing without collapsing line structure
-        clean_text = re.sub(r'[ \t]+', ' ', clean_text)  # Only collapse spaces/tabs, not newlines
-        clean_text = re.sub(r'[ \t]*\n[ \t]*', '\n', clean_text)  # Clean up line breaks
+        clean_text = re.sub(
+            r'[ \t]+', ' ',
+            clean_text)  # Only collapse spaces/tabs, not newlines
+        clean_text = re.sub(r'[ \t]*\n[ \t]*', '\n',
+                            clean_text)  # Clean up line breaks
         clean_text = clean_text.strip()
 
         # Use markdown2 with appropriate extras for robust parsing
-        html = markdown2.markdown(clean_text, extras=['cuddled-lists', 'strike', 'fenced-code-blocks'])
+        html = markdown2.markdown(
+            clean_text,
+            extras=['cuddled-lists', 'strike', 'fenced-code-blocks'])
 
         # Convert H2 tags (from ##) to H4 with proper styling for consistency
-        html = html.replace('<h2>', '<h4 style="color: #1976d2; margin: 20px 0 10px 0; font-weight: 600;">')
+        html = html.replace(
+            '<h2>',
+            '<h4 style="color: #1976d2; margin: 20px 0 10px 0; font-weight: 600;">'
+        )
         html = html.replace('</h2>', '</h4>')
 
         # Add proper styling to paragraphs and lists
-        html = html.replace('<p>', '<p style="margin: 15px 0; line-height: 1.6; color: #333;">')
-        html = html.replace('<ul>', '<ul style="margin: 15px 0; padding-left: 20px;">')
+        html = html.replace(
+            '<p>',
+            '<p style="margin: 15px 0; line-height: 1.6; color: #333;">')
+        html = html.replace(
+            '<ul>', '<ul style="margin: 15px 0; padding-left: 20px;">')
         html = html.replace('<li>', '<li style="margin: 5px 0; color: #555;">')
 
-        logger.debug("Markdown successfully converted to HTML using markdown2.")
+        logger.debug(
+            "Markdown successfully converted to HTML using markdown2.")
         return html
 
     except Exception as e:
-        logger.error(f"Error converting markdown to HTML with markdown2: {e}", exc_info=True)
+        logger.error(f"Error converting markdown to HTML with markdown2: {e}",
+                     exc_info=True)
         return "<p>Error: Could not display formatted technical analysis at this time.</p>"
+
 
 @app.route('/api/ai_analysis', methods=['POST'])
 def ai_analysis():
@@ -643,8 +808,11 @@ def ai_analysis():
         application = data.get('application', 'Water Supply')
 
         # Generate technical analysis based on pump parameters
-        efficiency_rating = "excellent" if float(efficiency) >= 80 else "good" if float(efficiency) >= 70 else "acceptable"
-        power_analysis = "efficient" if float(power) < 150 else "moderate power consumption"
+        efficiency_rating = "excellent" if float(
+            efficiency) >= 80 else "good" if float(
+                efficiency) >= 70 else "acceptable"
+        power_analysis = "efficient" if float(
+            power) < 150 else "moderate power consumption"
 
         analysis_text = f"""## 1) Efficiency Characteristics and BEP Analysis
 
@@ -716,14 +884,17 @@ Follow IEEE and manufacturer guidelines for installation procedures. Document ba
     except Exception as e:
         logger.error(f"Error in AI analysis: {e}")
         return jsonify({
-            'response': 'Technical analysis temporarily unavailable. Please try again or contact support.',
+            'response':
+            'Technical analysis temporarily unavailable. Please try again or contact support.',
             'source_documents': [],
             'confidence_score': 0.0,
             'processing_time': 0.0,
             'cost_estimate': 0.0
         }), 500
 
-def _generate_efficiency_optimization_analysis(pump_code, efficiency, power, flow, head):
+
+def _generate_efficiency_optimization_analysis(pump_code, efficiency, power,
+                                               flow, head):
     """Generate focused efficiency optimization analysis"""
     efficiency_val = float(efficiency)
     power_val = float(power)
@@ -760,7 +931,9 @@ def _generate_efficiency_optimization_analysis(pump_code, efficiency, power, flo
 
     return analysis
 
-def _generate_maintenance_recommendations(pump_code, efficiency, power, application):
+
+def _generate_maintenance_recommendations(pump_code, efficiency, power,
+                                          application):
     """Generate focused maintenance recommendations"""
     efficiency_val = float(efficiency)
     power_val = float(power)
