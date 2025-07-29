@@ -344,13 +344,7 @@ class PumpChartsManager {
 
         // Enhanced title with performance envelope information
         let envelopeInfo = '';
-        if (minDiameterCurve && maxDiameterCurve && selectedCurve) {
-            if (minDiameterCurve.diameter !== maxDiameterCurve.diameter) {
-                envelopeInfo = ` (${minDiameterCurve.diameter}-${maxDiameterCurve.diameter}mm Range, ${selectedCurve.diameter}mm Required)`;
-            } else {
-                envelopeInfo = ` (${selectedCurve.diameter}mm Required)`;
-            }
-        }
+        // Note: Multi-curve envelope info will be implemented when curve range data is available
 
         const title = this.currentChartData.pump_code + " - " + config.title + envelopeInfo;
         const yAxisTitle = config.yAxis;
@@ -636,17 +630,8 @@ class PumpChartsManager {
             });
         }
 
-        // Enhanced title with performance envelope information
-        let envelopeInfo = '';
-        if (minDiameterCurve && maxDiameterCurve && selectedCurve) {
-            if (minDiameterCurve.diameter !== maxDiameterCurve.diameter) {
-                envelopeInfo = ` (${minDiameterCurve.diameter}-${maxDiameterCurve.diameter}mm Range, ${selectedCurve.diameter}mm Required)`;
-            } else {
-                envelopeInfo = ` (${selectedCurve.diameter}mm Required)`;
-            }
-        }
-
-        const title = this.currentChartData.pump_code + " - " + config.title + envelopeInfo;
+        // Enhanced title
+        const title = this.currentChartData.pump_code + " - " + config.title;
         const yAxisTitle = config.yAxis;
 
         // Calculate Y-axis range centered on operating point efficiency
@@ -693,7 +678,7 @@ class PumpChartsManager {
                     const dataMax = Math.max(...allEfficiencies);
                     const range = dataMax - dataMin;
                     minEfficiency = Math.max(0, dataMin - range * 0.05);
-                    maxEfficiency = Math.min(100, dataMax + range * 0.05;
+                    maxEfficiency = Math.min(100, dataMax + range * 0.05);
                 }
             }
         }
@@ -713,7 +698,7 @@ class PumpChartsManager {
                 gridcolor: '#e0e0e0',
                 gridwidth: 1,
                 showline: true,
-                linecolor: '#ccc',```tool_code
+                linecolor: '#ccc',
                 linewidth: 1
             },
             yaxis: {
@@ -735,7 +720,8 @@ class PumpChartsManager {
             },
             paper_bgcolor: '#ffffff',
             plot_bgcolor: '#fafafa',
-            margin: { l: 90, r: 90, t: 100, b: 140 },
+            ```tool_code
+margin: { l: 90, r: 90, t: 100, b: 140 },
             showlegend: true,
             legend: {
                 orientation: 'h',
@@ -926,17 +912,8 @@ class PumpChartsManager {
             });
         }
 
-        // Enhanced title with performance envelope information
-        let envelopeInfo = '';
-        if (minDiameterCurve && maxDiameterCurve && selectedCurve) {
-            if (minDiameterCurve.diameter !== maxDiameterCurve.diameter) {
-                envelopeInfo = ` (${minDiameterCurve.diameter}-${maxDiameterCurve.diameter}mm Range, ${selectedCurve.diameter}mm Required)`;
-            } else {
-                envelopeInfo = ` (${selectedCurve.diameter}mm Required)`;
-            }
-        }
-
-        const title = this.currentChartData.pump_code + " - " + config.title + envelopeInfo;
+        // Enhanced title
+        const title = this.currentChartData.pump_code + " - " + config.title;
         const yAxisTitle = config.yAxis;
 
         // Calculate Y-axis range centered on operating point power
@@ -1205,17 +1182,8 @@ class PumpChartsManager {
             });
         }
 
-        // Enhanced title with performance envelope information
-        let envelopeInfo = '';
-        if (minDiameterCurve && maxDiameterCurve && selectedCurve) {
-            if (minDiameterCurve.diameter !== maxDiameterCurve.diameter) {
-                envelopeInfo = ` (${minDiameterCurve.diameter}-${maxDiameterCurve.diameter}mm Range, ${selectedCurve.diameter}mm Required)`;
-            } else {
-                envelopeInfo = ` (${selectedCurve.diameter}mm Required)`;
-            }
-        }
-
-        const title = this.currentChartData.pump_code + " - " + config.title + envelopeInfo;
+        // Enhanced title
+        const title = this.currentChartData.pump_code + " - " + config.title;
         const yAxisTitle = config.yAxis;
 
         // Calculate Y-axis range centered on operating point NPSH
