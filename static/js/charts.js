@@ -43,7 +43,7 @@ class PumpChartsManager {
             });
             console.log('Charts.js: Encoded pump code:', safePumpCode);
 
-            const url = `/api/chart_data_safe/${safePumpCode}?flow=${flowRate}&head=${head}`;
+            const url = '/api/chart_data_safe/' + safePumpCode + '?flow=' + flowRate + '&head=' + head;
             console.log('Charts.js: Fetching from URL:', url);
 
             const response = await fetch(url);
@@ -92,11 +92,11 @@ class PumpChartsManager {
                     // Generate proper impeller size name
                     let impellerName = 'Unknown Size';
                     if (curve.impeller_diameter_mm) {
-                        impellerName = `${curve.impeller_diameter_mm}mm Impeller`;
-                    } else if (curve.impeller_size && curve.impeller_size !== `Curve ${index + 1}` && !curve.impeller_size.includes('Curve')) {
-                        impellerName = `${curve.impeller_size}mm Impeller`;
+                        impellerName = curve.impeller_diameter_mm + "mm Impeller";
+                    } else if (curve.impeller_size && curve.impeller_size !== "Curve " + (index + 1) && !curve.impeller_size.includes('Curve')) {
+                        impellerName = curve.impeller_size + "mm Impeller";
                     } else {
-                        impellerName = `Impeller ${index + 1}`;
+                        impellerName = "Impeller " + (index + 1);
                     }
 
                     traces.push({
@@ -163,7 +163,7 @@ class PumpChartsManager {
                     width: 2,
                     dash: 'dash'
                 },
-                hovertemplate: `<b>80% BEP Minimum</b><br>Flow: ${bep80Flow.toFixed(0)} m³/hr<extra></extra>`,
+                hovertemplate: "<b>80% BEP Minimum</b><br>Flow: " + bep80Flow.toFixed(0) + " m³/hr<extra></extra>",
                 showlegend: true
             });
 
@@ -179,7 +179,7 @@ class PumpChartsManager {
                     width: 2,
                     dash: 'dash'
                 },
-                hovertemplate: `<b>110% BEP Maximum</b><br>Flow: ${bep110Flow.toFixed(0)} m³/hr<extra></extra>`,
+                hovertemplate: "<b>110% BEP Maximum</b><br>Flow: " + bep110Flow.toFixed(0) + " m³/hr<extra></extra>",
                 showlegend: true
             });
 
@@ -324,17 +324,17 @@ class PumpChartsManager {
                     line: { color: '#d32f2f', width: 3 }
                 },
                 hovertemplate: '<b>🎯 OPERATING POINT ANALYSIS</b><br>' +
-                              `<b>Flow Rate:</b> ${opPoint.flow_m3hr.toFixed(1)} m³/hr<br>` +
-                              `<b>Head:</b> ${opPoint.head_m.toFixed(1)} m<br>` +
-                              `<b>Efficiency:</b> ${opPoint.efficiency_pct.toFixed(1)}% (${efficiencyRating})<br>` +
-                              `<b>Power:</b> ${opPoint.power_kw ? opPoint.power_kw.toFixed(1) + ' kW' : 'Calculated'}<br>` +
-                              `<b>NPSH Required:</b> ${opPoint.npshr_m ? opPoint.npshr_m.toFixed(1) + ' m' : 'N/A'}<br>` +
-                              `<b>BEP Position:</b> ${bepPercentage}% of optimal flow<br>` +
-                              `<b>Status:</b> ${opPoint.extrapolated ? 'Extrapolated' : 'Within Curve'}<extra></extra>`
+                              '<b>Flow Rate:</b> ' + opPoint.flow_m3hr.toFixed(1) + ' m³/hr<br>' +
+                              '<b>Head:</b> ' + opPoint.head_m.toFixed(1) + ' m<br>' +
+                              '<b>Efficiency:</b> ' + opPoint.efficiency_pct.toFixed(1) + '% (' + efficiencyRating + ')<br>' +
+                              '<b>Power:</b> ' + (opPoint.power_kw ? opPoint.power_kw.toFixed(1) + ' kW' : 'Calculated') + '<br>' +
+                              '<b>NPSH Required:</b> ' + (opPoint.npshr_m ? opPoint.npshr_m.toFixed(1) + ' m' : 'N/A') + '<br>' +
+                              '<b>BEP Position:</b> ' + bepPercentage + '% of optimal flow<br>' +
+                              '<b>Status:</b> ' + (opPoint.extrapolated ? 'Extrapolated' : 'Within Curve') + '<extra></extra>'
             });
         }
 
-        const title = `${this.currentChartData.pump_code} - ${config.title}`;
+        const title = this.currentChartData.pump_code + " - " + config.title;
         const yAxisTitle = config.yAxis;
 
         // Calculate proper y-axis range based on actual data
@@ -411,6 +411,10 @@ class PumpChartsManager {
         };
 
         try {
+            console.log('Charts.js: Attempting to render head-flow chart with', traces.length, 'traces');
+            console.log('Charts.js: Container ID:', containerId);
+            console.log('Charts.js: Container element:', document.getElementById(containerId));
+            
             Plotly.newPlot(containerId, traces, layout, plotConfig);
             console.log('Charts.js: Head-flow chart rendered successfully');
             // Remove loading spinner after successful render
@@ -439,11 +443,11 @@ class PumpChartsManager {
                     // Generate proper impeller size name
                     let impellerName = 'Unknown Size';
                     if (curve.impeller_diameter_mm) {
-                        impellerName = `${curve.impeller_diameter_mm}mm Impeller`;
-                    } else if (curve.impeller_size && curve.impeller_size !== `Curve ${index + 1}` && !curve.impeller_size.includes('Curve')) {
-                        impellerName = `${curve.impeller_size}mm Impeller`;
+                        impellerName = curve.impeller_diameter_mm + "mm Impeller";
+                    } else if (curve.impeller_size && curve.impeller_size !== "Curve " + (index + 1) && !curve.impeller_size.includes('Curve')) {
+                        impellerName = curve.impeller_size + "mm Impeller";
                     } else {
-                        impellerName = `Impeller ${index + 1}`;
+                        impellerName = "Impeller " + (index + 1);
                     }
 
                     traces.push({
@@ -579,7 +583,7 @@ class PumpChartsManager {
             });
         }
 
-        const title = `${this.currentChartData.pump_code} - ${config.title}`;
+        const title = this.currentChartData.pump_code + " - " + config.title;
         const yAxisTitle = config.yAxis;
 
         // Calculate proper y-axis range based on actual efficiency data
@@ -684,11 +688,11 @@ class PumpChartsManager {
                     // Generate proper impeller size name
                     let impellerName = 'Unknown Size';
                     if (curve.impeller_diameter_mm) {
-                        impellerName = `${curve.impeller_diameter_mm}mm Impeller`;
-                    } else if (curve.impeller_size && curve.impeller_size !== `Curve ${index + 1}` && !curve.impeller_size.includes('Curve')) {
-                        impellerName = `${curve.impeller_size}mm Impeller`;
+                        impellerName = curve.impeller_diameter_mm + "mm Impeller";
+                    } else if (curve.impeller_size && curve.impeller_size !== "Curve " + (index + 1) && !curve.impeller_size.includes('Curve')) {
+                        impellerName = curve.impeller_size + "mm Impeller";
                     } else {
-                        impellerName = `Impeller ${index + 1}`;
+                        impellerName = "Impeller " + (index + 1);
                     }
 
                     traces.push({
@@ -824,7 +828,7 @@ class PumpChartsManager {
             });
         }
 
-        const title = `${this.currentChartData.pump_code} - ${config.title}`;
+        const title = this.currentChartData.pump_code + " - " + config.title;
         const yAxisTitle = config.yAxis;
 
         // Calculate proper y-axis range based on actual power data
@@ -928,11 +932,11 @@ class PumpChartsManager {
                     // Generate proper impeller size name
                     let impellerName = 'Unknown Size';
                     if (curve.impeller_diameter_mm) {
-                        impellerName = `${curve.impeller_diameter_mm}mm Impeller`;
-                    } else if (curve.impeller_size && curve.impeller_size !== `Curve ${index + 1}` && !curve.impeller_size.includes('Curve')) {
-                        impellerName = `${curve.impeller_size}mm Impeller`;
+                        impellerName = curve.impeller_diameter_mm + "mm Impeller";
+                    } else if (curve.impeller_size && curve.impeller_size !== "Curve " + (index + 1) && !curve.impeller_size.includes('Curve')) {
+                        impellerName = curve.impeller_size + "mm Impeller";
                     } else {
-                        impellerName = `Impeller ${index + 1}`;
+                        impellerName = "Impeller " + (index + 1);
                     }
 
                     traces.push({
@@ -1058,7 +1062,7 @@ class PumpChartsManager {
             });
         }
 
-        const title = `${this.currentChartData.pump_code} - ${config.title}`;
+        const title = this.currentChartData.pump_code + " - " + config.title;
         const yAxisTitle = config.yAxis;
 
         // Calculate proper y-axis range based on actual NPSH data
@@ -1150,7 +1154,7 @@ class PumpChartsManager {
         console.log('Charts.js: Starting renderAllCharts for:', {pumpCode, flowRate, head});
 
         // Prevent multiple initializations for the same pump
-        const chartKey = `${pumpCode}_${flowRate}_${head}`;
+        const chartKey = pumpCode + '_' + flowRate + '_' + head;
         if (this.chartsInitialized === chartKey) {
             console.log('Charts.js: Charts already initialized for this pump, skipping...');
             return;
@@ -1171,17 +1175,15 @@ class PumpChartsManager {
                     container.style.display = 'block';
                     container.style.minHeight = '400px';
                     // Show loading indicator
-                    container.innerHTML = `
-                        <div style="display: flex; justify-content: center; align-items: center; height: 100%; min-height: 400px; flex-direction: column;">
-                            <div class="spinner-border text-primary mb-3" role="status">
-                                <span class="visually-hidden">Loading...</span>
-                            </div>
-                            <div class="text-muted">Loading ${containerId.replace('-', ' ').replace('chart', '')} chart...</div>
-                        </div>
-                    `;
-                    console.log(`Charts.js: Made container ${containerId} visible with loading indicator`);
+                    container.innerHTML = '<div style="display: flex; justify-content: center; align-items: center; height: 100%; min-height: 400px; flex-direction: column;">' +
+                        '<div class="spinner-border text-primary mb-3" role="status">' +
+                        '<span class="visually-hidden">Loading...</span>' +
+                        '</div>' +
+                        '<div class="text-muted">Loading ' + containerId.replace('-', ' ').replace('chart', '') + ' chart...</div>' +
+                        '</div>';
+                    console.log('Charts.js: Made container ' + containerId + ' visible with loading indicator');
                 } else {
-                    console.warn(`Charts.js: Container ${containerId} not found`);
+                    console.warn('Charts.js: Container ' + containerId + ' not found');
                 }
             });
         }
@@ -1240,7 +1242,7 @@ class PumpChartsManager {
 
                     const errorText = document.createElement('p');
                     errorText.className = 'red-text';
-                    errorText.textContent = `Error loading chart data: ${message}`;
+                    errorText.textContent = "Error loading chart data: " + message;
 
                     errorDiv.appendChild(icon);
                     errorDiv.appendChild(errorText);
@@ -1293,51 +1295,11 @@ window.forceChartRefresh = function(pumpCode, flowRate, head) {
     }, 500);
 };
 
-async function loadChartData(pumpCode, flowRate, head) {
-        console.log('Charts.js: loadChartData called with:', {pumpCode, flowRate, head});
 
-        // Check cache first
-        const cacheKey = `${pumpCode}_${flowRate}_${head}`;
-        const cached = chartDataCache[cacheKey];
-        if (cached && (Date.now() - cached.timestamp) < CACHE_DURATION) {
-            console.log('Charts.js: Using cached data');
-            return cached.data;
-        }
-
-        try {
-            // Encode pump code to handle special characters
-            const encodedPumpCode = btoa(pumpCode).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
-            console.log('Charts.js: Encoded pump code:', encodedPumpCode);
-
-            const url = `/api/chart_data_safe/${encodedPumpCode}?flow=${flowRate}&head=${head}`;
-            console.log('Charts.js: Fetching from URL:', url);
-
-            const response = await fetch(url);
-            console.log('Charts.js: Response status:', response.status);
-
-            const data = await response.json();
-            console.log('Charts.js: Response data:', data);
-
-            if (data.error) {
-                throw new Error(data.error);
-            }
-
-             // Store in cache
-            chartDataCache[cacheKey] = {
-                timestamp: Date.now(),
-                data: data
-            };
-
-            return data;
-        } catch (error) {
-            console.error('Charts.js: Error loading chart data:', error);
-            throw error;
-        }
-    }
 
 document.addEventListener('DOMContentLoaded', function() {
     initializationAttempts++;
-    console.log(`Charts.js: DOM loaded (attempt ${initializationAttempts}), checking for charts...`);
+    console.log("Charts.js: DOM loaded (attempt " + initializationAttempts + "), checking for charts...");
 
     // Prevent multiple initializations
     if (chartsInitialized) {

@@ -95,12 +95,16 @@ def pump_selection():
                                    head=str(head_val),
                                    direct_search='true'))
         
+        # Get pump type from form
+        selected_pump_type = request.form.get('pump_type', 'GENERAL')
+        logger.info(f"Form submitted with pump type: '{selected_pump_type}'")
+        
         # Process the selection - redirect to pump options
         return redirect(url_for('main_flow.pump_options', 
                                flow=str(flow_val), 
                                head=str(head_val),
                                application_type=request.form.get('application', 'water'),
-                               pump_type=request.form.get('pump_type', 'General')))
+                               pump_type=selected_pump_type))
 
     except Exception as e:
         logger.error(f"Error in pump selection: {str(e)}")
@@ -148,8 +152,17 @@ def pump_options():
         logger.info(f"Processing pump options for: flow={flow} m³/hr, head={head} m")
 
         # Get additional form parameters
-        pump_type = request.args.get('pump_type', 'General')
+        pump_type = request.args.get('pump_type', 'GENERAL')
         application_type = request.args.get('application_type', 'general')
+        
+        # Log pump type filtering for debugging
+        logger.info(f"Pump type filter requested: '{pump_type}'")
+        
+        # Validate pump type against known types
+        valid_pump_types = ['GENERAL', 'HSC', 'END SUCTION', 'MULTI-STAGE', 'VERTICAL TURBINE', 'AXIAL FLOW']
+        if pump_type.upper() not in valid_pump_types:
+            logger.warning(f"Invalid pump type '{pump_type}' requested, defaulting to 'GENERAL'")
+            pump_type = 'GENERAL'
 
         # Create site requirements using pump_engine
         site_requirements = SiteRequirements(

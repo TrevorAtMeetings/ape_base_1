@@ -172,17 +172,19 @@ def pump_report(pump_code):
                 from ..catalog_engine import get_catalog_engine
                 catalog_engine = get_catalog_engine()
 
-                # Handle direct pump search
+                # Handle direct pump search with enhanced validation
                 if direct_search:
-                    # Find the specific pump by code (case-insensitive)
+                    # Phase 1: Find and validate the directly selected pump
                     target_pump = None
                     search_code = pump_code.lower().strip()
 
+                    # Enhanced search logic with better matching
                     for pump in catalog_engine.pumps:
                         pump_code_lower = pump.pump_code.lower().strip()
                         # Try exact match first, then partial match
                         if pump_code_lower == search_code or search_code in pump_code_lower:
                             target_pump = pump
+                            logger.info(f"Direct search: Found exact/partial match '{pump.pump_code}' for search '{pump_code}'")
                             break
 
                     # If still not found, try more flexible matching
@@ -194,12 +196,22 @@ def pump_report(pump_code):
                             normalized_pump = pump_code_lower.replace('/', '').replace('-', '').replace(' ', '')
                             if normalized_search in normalized_pump or normalized_pump in normalized_search:
                                 target_pump = pump
+                                logger.info(f"Direct search: Found normalized match '{pump.pump_code}' for search '{pump_code}'")
                                 break
 
                     if not target_pump:
                         logger.warning(f"Direct search failed for pump code: '{pump_code}'. Available pumps: {[p.pump_code for p in catalog_engine.pumps[:10]]}")
                         safe_flash(f'Pump "{pump_code}" not found in database. Please check the model name and try again.', 'error')
                         return redirect(url_for('main_flow.index'))
+
+                    # Phase 2: Run algorithm comparison in background for validation
+                    logger.info(f"Direct search: Running background optimization for comparison")
+                    optimal_selections = catalog_engine.select_pumps(
+                        flow_m3hr=flow,
+                        head_m=head,
+                        max_results=5,
+                        pump_type=pump_type
+                    )
 
                     # Calculate performance for the direct search pump
                     try:
@@ -208,7 +220,56 @@ def pump_report(pump_code):
                         if performance_result and not performance_result.get('error'):
                             operating_point = performance_result
                             suitable_pumps = [target_pump]
+                            
+                            # Performance validation checks
+                            efficiency = performance_result.get('efficiency_pct', 0)
+                            power_kw = performance_result.get('power_kw', 0)
+                            
+                            # Check if pump operates in reasonable efficiency range
+                            is_efficient = efficiency >= 50  # Minimum acceptable efficiency
+                            is_very_efficient = efficiency >= 70  # Good efficiency
+                            
+                            # Check if selection is in top optimal choices
+                            is_optimal_choice = any(opt.get('pump_code') == target_pump.pump_code for opt in optimal_selections)
+                            
+                            # Calculate rank against optimal selections
+                            optimal_rank = None
+                            for i, opt in enumerate(optimal_selections):
+                                if opt.get('pump_code') == target_pump.pump_code:
+                                    optimal_rank = i + 1
+                                    break
+                            
+                            # Store validation data for warning banner
+                            validation_data = {
+                                'is_direct_selection': True,
+                                'efficiency_pct': efficiency,
+                                'is_efficient': is_efficient,
+                                'is_very_efficient': is_very_efficient,
+                                'is_optimal_choice': is_optimal_choice,
+                                'optimal_rank': optimal_rank,
+                                'optimal_selections_count': len(optimal_selections),
+                                'best_alternative': optimal_selections[0] if optimal_selections else None,
+                                'efficiency_difference': None,
+                                'power_difference': None
+                            }
+                            
+                            # Calculate performance differences if alternatives exist
+                            if optimal_selections:
+                                best_alt = optimal_selections[0]
+                                best_alt_efficiency = best_alt.get('efficiency_pct', 0)
+                                best_alt_power = best_alt.get('operating_point', {}).get('power_kw', 0)
+                                
+                                validation_data['efficiency_difference'] = efficiency - best_alt_efficiency
+                                validation_data['power_difference'] = power_kw - best_alt_power
+                                validation_data['best_alternative_code'] = best_alt.get('pump_code')
+                                validation_data['best_alternative_efficiency'] = best_alt_efficiency
+                            
+                            # Store validation data globally for context use
+                            globals()['current_validation_data'] = validation_data
+                            
                             logger.info(f"Direct search successful for pump: {pump_code}")
+                            logger.info(f"Direct selection validation: efficiency={efficiency}%, optimal_rank={optimal_rank}, is_optimal={is_optimal_choice}")
+                            
                         else:
                             logger.error(f"Performance calculation failed for pump: {pump_code}")
                             safe_flash(f'Error calculating performance for pump "{pump_code}".', 'error')
@@ -253,6 +314,15 @@ def pump_report(pump_code):
             logger.warning(f"Failed to generate alternatives: {e}")
             alternatives = []
 
+        # Check if this is a direct selection for validation data
+        direct_search = request.args.get('direct_search', 'false').lower() == 'true'
+        validation_data = None
+        
+        if direct_search and 'current_validation_data' in globals():
+            validation_data = globals().get('current_validation_data')
+            # Clear the global variable after use
+            globals().pop('current_validation_data', None)
+
         context_data = {
             'pump_selections': pump_selections,
             'selected_pump': selected_pump,
@@ -267,7 +337,8 @@ def pump_report(pump_code):
                 'fluid_type': site_requirements_data.get('fluid_type', 'Water')
             },
             'selected_pump_code': pump_code,
-            'current_date': __import__('datetime').datetime.now().strftime('%Y-%m-%d')
+            'current_date': __import__('datetime').datetime.now().strftime('%Y-%m-%d'),
+            'direct_selection_validation': validation_data
         }
 
         # Ensure selected_curve data is available for all pumps

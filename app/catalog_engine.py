@@ -460,11 +460,18 @@ class CatalogEngine:
 
         for pump in self.pumps:
             # Filter by pump type if specified
-            if pump_type and pump_type.upper() not in ('GENERAL', 'General'):
+            if pump_type and pump_type.upper() not in ('GENERAL', 'GENERAL', 'ALL TYPES'):
+                # Normalize both pump types for comparison
+                selected_type = pump_type.upper().strip()
+                pump_db_type = pump.pump_type.upper().strip()
+                
                 # Direct comparison with database pump types
-                if pump_type.upper() != pump.pump_type.upper():
+                if selected_type != pump_db_type:
+                    logger.debug(f"Skipping pump {pump.pump_code} - type '{pump_db_type}' doesn't match selected '{selected_type}'")
                     continue  # Skip pumps that don't match the selected type
+                
                 filtered_count += 1
+                logger.debug(f"Including pump {pump.pump_code} - type '{pump_db_type}' matches selected '{selected_type}'")
             
             performance = pump.get_performance_at_duty(flow_m3hr, head_m)
 

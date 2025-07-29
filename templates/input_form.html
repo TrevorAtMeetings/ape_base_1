@@ -2,6 +2,111 @@
 
 {% block title %}Pump Selection - APE Pumps{% endblock %}
 
+{% block extra_css %}
+<style>
+/* Enhanced Autocomplete Styling */
+.autocomplete-container {
+    position: relative !important;
+    z-index: 100;
+}
+
+.enhanced-autocomplete {
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.enhanced-autocomplete:focus {
+    border-color: var(--md-primary) !important;
+    box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.1);
+    outline: none;
+}
+
+.enhanced-autocomplete[data-search-status="searching"] {
+    border-color: #ff9800 !important;
+    background: linear-gradient(90deg, transparent 0%, rgba(255, 152, 0, 0.1) 50%, transparent 100%);
+    background-size: 200% 100%;
+    animation: searchingPulse 2s ease-in-out infinite;
+}
+
+@keyframes searchingPulse {
+    0%, 100% { background-position: 200% 0; }
+    50% { background-position: -200% 0; }
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.autocomplete-dropdown {
+    position: absolute !important;
+    top: 100% !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 9999 !important;
+}
+
+.suggestion-item {
+    padding: 12px 16px;
+    cursor: pointer;
+    border-bottom: 1px solid #f0f0f0;
+    transition: background-color 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.suggestion-item:hover {
+    background-color: rgba(25, 118, 210, 0.08);
+}
+
+.suggestion-item:last-child {
+    border-bottom: none;
+}
+
+.suggestion-item.selected {
+    background-color: rgba(25, 118, 210, 0.12);
+}
+
+.pump-code {
+    font-weight: 600;
+    color: var(--md-primary);
+    font-size: 14px;
+}
+
+.pump-details {
+    font-size: 12px;
+    color: #666;
+    margin-top: 2px;
+}
+
+.pump-type-badge {
+    background: #e3f2fd;
+    color: var(--md-primary);
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.suggestion-chip {
+    background: #e3f2fd;
+    color: var(--md-primary);
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.suggestion-chip:hover {
+    background: var(--md-primary);
+    color: white;
+    transform: scale(1.05);
+}
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container" style="margin-top: 30px;">
     <!-- Header Section -->
@@ -28,30 +133,31 @@
       method="POST" 
       class="needs-validation" 
       novalidate>
-        <!-- Core Requirements Section -->
-        <div class="row section-card stagger-item" id="core-requirements-section">
+        <!-- Primary Requirements Section -->
+        <div class="row section-card stagger-item" id="primary-requirements-section">
             <div class="col s12">
                 <div class="card">
                     <div class="card-content">
                         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
                             <span class="card-title" style="color: var(--md-primary); margin: 0;">
                                 <i class="material-icons left">speed</i>
-                                Core Requirements
+                                Essential Requirements
                                 <span class="new badge red" data-badge-caption="Required" style="margin-left: 10px;"></span>
                             </span>
                             <i class="material-icons tooltipped" data-position="left" data-tooltip="Flow Rate and Head are the fundamental parameters that define your pumping system. These values determine pump selection, sizing calculations, and performance verification." style="color: var(--md-primary); cursor: help;">help_outline</i>
                         </div>
                         <p style="color: var(--text-secondary); margin-bottom: 24px;">
-                            <strong>Essential pump specifications</strong> - These parameters define your pumping system's operational requirements and directly influence pump selection, sizing, and performance analysis.
+                            <strong>Quick pump selection</strong> - Enter these 4 essential parameters to find the best pump for your application.
                         </p>
 
+                        <!-- Flow Rate and Head -->
                         <div class="row">
                             <div class="col s12 m6">
                                 <div class="input-field">
                                     <i class="material-icons prefix">water_drop</i>
                                     <input id="flow_rate" name="flow_m3hr" type="number" step="0.01" min="0.1" max="10000" required class="validate">
                                     <label for="flow_rate">Flow Rate (m³/hr) *</label>
-                                    <span class="helper-text" data-error="Flow rate must be between 0.1 and 10000 m³/hr">Required volumetric flow rate - precise to 0.01 m³/hr</span>
+                                    <span class="helper-text" data-error="Flow rate must be between 0.1 and 10000 m³/hr">Required volumetric flow rate</span>
                                 </div>
                             </div>
                             <div class="col s12 m6">
@@ -64,24 +170,19 @@
                             </div>
                         </div>
 
+                        <!-- Pump Type and Direct Selection -->
                         <div class="row">
                             <div class="col s12 m6">
                                 <div class="input-group">
                                     <label class="form-label" style="color: var(--md-primary); font-size: 14px; font-weight: 600; margin-bottom: 10px; display: block;">
                                         <i class="material-icons" style="font-size: 16px; vertical-align: middle; margin-right: 8px;">category</i>
-                                        Preferred Pump Type
+                                        Pump Type
                                     </label>
                                     <div class="radio-group">
                                         <p>
                                             <label>
                                                 <input name="pump_type" type="radio" value="GENERAL" checked />
-                                                <span>General - All Types</span>
-                                            </label>
-                                        </p>
-                                        <p>
-                                            <label>
-                                                <input name="pump_type" type="radio" value="END SUCTION" />
-                                                <span>End Suction - Single Stage Centrifugal</span>
+                                                <span>All Types (Recommended)</span>
                                             </label>
                                         </p>
                                         <p>
@@ -92,146 +193,81 @@
                                         </p>
                                         <p>
                                             <label>
-                                                <input name="pump_type" type="radio" value="AXIAL FLOW" />
-                                                <span>Axial Flow Pump</span>
-                                            </label>
-                                        </p>
-                                        <p>
-                                            <label>
-                                                <input name="pump_type" type="radio" value="VERTICAL TURBINE" />
-                                                <span>Vertical Turbine Pump</span>
+                                                <input name="pump_type" type="radio" value="END SUCTION" />
+                                                <span>End Suction</span>
                                             </label>
                                         </p>
                                         <p>
                                             <label>
                                                 <input name="pump_type" type="radio" value="MULTI-STAGE" />
-                                                <span>Multistage Centrifugal</span>
+                                                <span>Multi-Stage</span>
+                                            </label>
+                                        </p>
+                                        <p>
+                                            <label>
+                                                <input name="pump_type" type="radio" value="VERTICAL TURBINE" />
+                                                <span>Vertical Turbine</span>
+                                            </label>
+                                        </p>
+                                        <p>
+                                            <label>
+                                                <input name="pump_type" type="radio" value="AXIAL FLOW" />
+                                                <span>Axial Flow</span>
                                             </label>
                                         </p>
                                     </div>
-                                    <span class="helper-text">Select specific pump configuration or 'General' for all options</span>
+                                    <span class="helper-text">Select specific type or 'All Types' for best options</span>
                                 </div>
                             </div>
                             <div class="col s12 m6">
-                                <div class="input-group">
-                                    <label class="form-label" style="color: var(--md-primary); font-size: 14px; font-weight: 600; margin-bottom: 10px; display: block;">
-                                        <i class="material-icons" style="font-size: 16px; vertical-align: middle; margin-right: 8px;">business</i>
-                                        Application Type
-                                    </label>
-                                    <div class="radio-group">
-                                        <p>
-                                            <label>
-                                                <input name="application" type="radio" value="water" checked />
-                                                <span>Water Supply</span>
-                                            </label>
-                                        </p>
-                                        <p>
-                                            <label>
-                                                <input name="application" type="radio" value="industrial" />
-                                                <span>Industrial Process</span>
-                                            </label>
-                                        </p>
-                                        <p>
-                                            <label>
-                                                <input name="application" type="radio" value="cooling" />
-                                                <span>Cooling Water</span>
-                                            </label>
-                                        </p>
-                                        <p>
-                                            <label>
-                                                <input name="application" type="radio" value="boiler_feed" />
-                                                <span>Boiler Feed</span>
-                                            </label>
-                                        </p>
-                                        <p>
-                                            <label>
-                                                <input name="application" type="radio" value="fire_protection" />
-                                                <span>Fire Protection</span>
-                                            </label>
-                                        </p>
-                                        <p>
-                                            <label>
-                                                <input name="application" type="radio" value="irrigation" />
-                                                <span>Irrigation</span>
-                                            </label>
-                                        </p>
-                                        <p>
-                                            <label>
-                                                <input name="application" type="radio" value="general" />
-                                                <span>General Service</span>
-                                            </label>
-                                        </p>
-                                    </div>
-                                    <span class="helper-text">Application context affects pump selection criteria</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Variable Flow Requirements -->
-                        <div class="row">
-                            <div class="col s12">
-                                <div class="input-group">
-                                    <label class="form-label" style="color: var(--md-primary); font-size: 14px; font-weight: 600; margin-bottom: 10px; display: block;">
-                                        <i class="material-icons" style="font-size: 16px; vertical-align: middle; margin-right: 8px;">tune</i>
-                                        Variable Flow Requirements
-                                    </label>
-                                    <div class="radio-group">
-                                        <p>
-                                            <label>
-                                                <input name="variable_flow" type="radio" value="no" checked />
-                                                <span>Fixed Flow Rate</span>
-                                            </label>
-                                        </p>
-                                        <p>
-                                            <label>
-                                                <input name="variable_flow" type="radio" value="yes" />
-                                                <span>Variable Flow Required</span>
-                                            </label>
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Direct Pump Search Section -->
-                        <div class="row">
-                            <div class="col s12">
-                                <div class="input-group" style="position: relative;">
+                                <div class="autocomplete-container" style="position: relative; z-index: 10000;">
                                     <label class="form-label" style="color: var(--md-primary); font-size: 14px; font-weight: 600; margin-bottom: 10px; display: block;">
                                         <i class="material-icons" style="font-size: 16px; vertical-align: middle; margin-right: 8px;">search</i>
                                         Direct Pump Selection (Optional)
                                     </label>
-                                    <div class="input-field col s12">
-                                        <input type="text" id="direct_pump_search" name="direct_pump_search" class="autocomplete" autocomplete="off">
-                                        <label for="direct_pump_search">Direct Pump Selection (Optional)</label>
-                                        <span class="helper-text">Search for a specific pump model (e.g., 6/8 ALE, 10 WLN 26A)</span>
+                                    <div class="custom-input-wrapper" style="margin-top: 0; position: relative;">
+                                        <input type="text" id="direct_pump_search" name="direct_pump_search" 
+                                               class="enhanced-autocomplete" autocomplete="off" 
+                                               placeholder="e.g., 6/8 ALE, 10 WLN 26A"
+                                               data-search-status="ready"
+                                               style="border: 2px solid #e0e0e0; border-radius: 8px; padding: 12px 16px; width: 100%; box-sizing: border-box;">
+                                        <span class="helper-text" style="display: block; margin-top: 8px;">
+                                            <span id="pump-search-status">Skip selection algorithm and analyze a specific pump model</span>
+                                            <span id="pump-count-status" style="display: none; color: var(--md-primary); font-weight: 500;"></span>
+                                        </span>
                                     </div>
-                                    <div id="pump_search_suggestions" style="display: none; position: absolute; z-index: 1000; width: 100%; margin-top: -10px; border: 1px solid #ddd; border-top: none; border-radius: 0 0 8px 8px; background: white; max-height: 300px; overflow-y: auto; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-                                        <!-- Search suggestions will appear here -->
+                                    
+                                    <!-- Enhanced dropdown suggestions -->
+                                    <div id="pump_search_suggestions" class="autocomplete-dropdown" style="display: none; position: absolute; top: 100%; left: 0; right: 0; z-index: 99999; margin-top: 2px; border: 2px solid var(--md-primary); border-radius: 8px; background: white; max-height: 300px; overflow-y: auto; box-shadow: 0 8px 24px rgba(0,0,0,0.15);">
+                                        <!-- Loading indicator -->
+                                        <div class="suggestions-loading" style="display: none; padding: 12px; text-align: center; color: #666;">
+                                            <i class="material-icons small" style="vertical-align: middle; margin-right: 8px; animation: spin 1s linear infinite;">autorenew</i>
+                                            Searching pumps...
+                                        </div>
+                                        
+                                        <!-- Results container -->
+                                        <div class="suggestions-list">
+                                            <!-- Dynamic pump suggestions will appear here -->
+                                        </div>
+                                        
+                                        <!-- No results message -->
+                                        <div class="suggestions-empty" style="display: none; padding: 16px; text-align: center; color: #666;">
+                                            <i class="material-icons small" style="vertical-align: middle; margin-right: 8px;">search_off</i>
+                                            No pumps found matching your search
+                                            <div style="font-size: 12px; margin-top: 4px; color: #999;">Try shorter terms like "6" or "ALE"</div>
+                                        </div>
+                                        
+                                        <!-- Quick suggestions when empty -->
+                                        <div class="suggestions-help" style="display: none; padding: 12px; border-top: 1px solid #eee; background: #f9f9f9;">
+                                            <div style="font-size: 12px; color: #666; margin-bottom: 6px;">Popular models:</div>
+                                            <div class="quick-suggestions" style="display: flex; flex-wrap: wrap; gap: 6px;">
+                                                <span class="suggestion-chip" onclick="selectQuickSuggestion('6/8 ALE')">6/8 ALE</span>
+                                                <span class="suggestion-chip" onclick="selectQuickSuggestion('10 WLN')">10 WLN</span>
+                                                <span class="suggestion-chip" onclick="selectQuickSuggestion('28 HC')">28 HC</span>
+                                                <span class="suggestion-chip" onclick="selectQuickSuggestion('DVMS')">DVMS</span>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div id="pump_search_results" style="display: none; margin-top: 10px; padding: 10px; border: 1px solid #ddd; border-radius: 4px; background: #f9f9f9;">
-                                        <p style="margin: 0; color: #666; font-size: 14px;">
-                                            <i class="material-icons tiny">info</i>
-                                            When you enter a pump model above, the system will show that specific pump's performance at your specified flow and head values, regardless of whether it's optimal for your requirements.
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="row" id="flow-range-section" style="display: none;">
-                            <div class="col s12 m6">
-                                <div class="input-field">
-                                    <i class="material-icons prefix">trending_down</i>
-                                    <input id="min_flow_rate" name="min_flow_rate" type="number" step="0.01" min="0.1">
-                                    <label for="min_flow_rate">Minimum Flow Rate (m³/hr)</label>
-                                </div>
-                            </div>
-                            <div class="col s12 m6">
-                                <div class="input-field">
-                                    <i class="material-icons prefix">trending_up</i>
-                                    <input id="max_flow_rate" name="max_flow_rate" type="number" step="0.01" min="0.1">
-                                    <label for="max_flow_rate">Maximum Flow Rate (m³/hr)</label>
                                 </div>
                             </div>
                         </div>
@@ -240,350 +276,153 @@
             </div>
         </div>
 
-        <!-- Contact Information Section -->
-        <div class="row section-card stagger-item" id="contact-section">
+        <!-- Advanced Options Section -->
+        <div class="row section-card stagger-item" id="advanced-options-section">
             <div class="col s12">
                 <div class="card">
                     <div class="card-content">
-                        <span class="card-title" style="color: var(--md-primary);">
-                            <i class="material-icons left">person</i>
-                            Contact Information
-                        </span>
-
-                        <div class="row">
-                            <div class="col s12 m6">
-                                <div class="input-field">
-                                    <i class="material-icons prefix">person</i>
-                                    <input id="contact_name" name="contact_name" type="text">
-                                    <label for="contact_name">Contact Name</label>
-                                </div>
-                            </div>
-                            <div class="col s12 m6">
-                                <div class="input-field">
-                                    <i class="material-icons prefix">business</i>
-                                    <input id="company" name="company" type="text">
-                                    <label for="company">Company</label>
-                                </div>
+                        <div class="collapsible-header" style="display: flex; align-items: center; justify-content: space-between; padding: 0; margin-bottom: 16px; cursor: pointer; border-bottom: 1px solid #e0e0e0; padding-bottom: 12px;" onclick="toggleAdvancedOptions()">
+                            <span class="card-title" style="color: var(--md-primary); margin: 0;">
+                                <i class="material-icons left">tune</i>
+                                Advanced Options
+                                <span class="new badge orange" data-badge-caption="Optional" style="margin-left: 10px;"></span>
+                            </span>
+                            <div style="display: flex; align-items: center;">
+                                <span id="advanced-status" style="color: #666; font-size: 14px; margin-right: 10px;">Click to expand detailed parameters</span>
+                                <i class="material-icons" id="advanced-arrow" style="color: var(--md-primary); transition: transform 0.3s;">expand_more</i>
                             </div>
                         </div>
-
-                        <div class="row">
-                            <div class="col s12 m6">
-                                <div class="input-field">
-                                    <i class="material-icons prefix">email</i>
-                                    <input id="email" name="email" type="email">
-                                    <label for="email">Email Address</label>
-                                </div>
-                            </div>
-                            <div class="col s12 m6">
-                                <div class="input-field">
-                                    <i class="material-icons prefix">work</i>
-                                    <input id="project_name" name="project_name" type="text">
-                                    <label for="project_name">Project Name</label>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Location Section -->
-        <div class="row section-card stagger-item" id="application-section">
-            <div class="col s12">
-                <div class="card">
-                    <div class="card-content">
-                        <span class="card-title" style="color: var(--md-primary);">
-                            <i class="material-icons left">location_on</i>
-                            Location
-                        </span>
-
-                        <div class="row">
-                            <div class="col s12 m6">
-                                <div class="input-field">
-                                    <i class="material-icons prefix">location_on</i>
-                                    <input id="project_location" name="project_location" type="text">
-                                    <label for="project_location">Project Location</label>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Liquid Properties Section -->
-        <div class="row section-card" id="liquid-section">
-            <div class="col s12">
-                <div class="card">
-                    <div class="card-content">
-                        <span class="card-title" style="color: var(--md-primary);">
-                            <i class="material-icons left">science</i>
-                            Liquid Properties
-                        </span>
-
-                        <div class="row">
-                            <div class="col s12 m6">
-                                <div class="input-group">
-                                    <label class="form-label" style="color: var(--md-primary); font-size: 14px; font-weight: 600; margin-bottom: 10px; display: block;">
-                                        <i class="material-icons" style="font-size: 16px; vertical-align: middle; margin-right: 8px;">science</i>
-                                        Liquid Type
-                                    </label>
-                                    <div class="radio-group">
-                                        <p>
-                                            <label>
-                                                <input name="liquid_type" type="radio" value="water" checked />
-                                                <span>Water</span>
+                        
+                        <div id="advanced-options-content" style="display: none;">
+                            <!-- Application Context -->
+                            <div class="row" style="margin-bottom: 20px;">
+                                <div class="col s12">
+                                    <h6 style="color: var(--md-primary); margin-bottom: 15px;">
+                                        <i class="material-icons tiny">business</i>
+                                        Application Context
+                                    </h6>
+                                    <div class="input-group">
+                                        <div class="radio-group" style="display: flex; flex-wrap: wrap; gap: 15px;">
+                                            <label style="margin-right: 20px;">
+                                                <input name="application" type="radio" value="water" checked />
+                                                <span>Water Supply</span>
                                             </label>
-                                        </p>
-                                        <p>
-                                            <label>
-                                                <input name="liquid_type" type="radio" value="seawater" />
-                                                <span>Seawater</span>
+                                            <label style="margin-right: 20px;">
+                                                <input name="application" type="radio" value="industrial" />
+                                                <span>Industrial</span>
                                             </label>
-                                        </p>
-                                        <p>
-                                            <label>
-                                                <input name="liquid_type" type="radio" value="oil" />
-                                                <span>Oil</span>
+                                            <label style="margin-right: 20px;">
+                                                <input name="application" type="radio" value="cooling" />
+                                                <span>Cooling</span>
                                             </label>
-                                        </p>
-                                        <p>
-                                            <label>
-                                                <input name="liquid_type" type="radio" value="chemical" />
-                                                <span>Chemical</span>
+                                            <label style="margin-right: 20px;">
+                                                <input name="application" type="radio" value="fire_protection" />
+                                                <span>Fire Protection</span>
                                             </label>
-                                        </p>
-                                        <p>
                                             <label>
-                                                <input name="liquid_type" type="radio" value="other" />
-                                                <span>Other</span>
+                                                <input name="application" type="radio" value="general" />
+                                                <span>General Service</span>
                                             </label>
-                                        </p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                            <div class="col s12 m6">
-                                <div class="input-field">
-                                    <i class="material-icons prefix">thermostat</i>
-                                    <input id="temperature" name="temperature" type="number" step="0.1" value="20">
-                                    <label for="temperature">Temperature (°C)</label>
-                                </div>
-                            </div>
-                        </div>
 
-                        <div class="row">
-                            <div class="col s12 m6">
-                                <div class="input-field">
-                                    <i class="material-icons prefix">scale</i>
-                                    <input id="specific_gravity" name="specific_gravity" type="number" step="0.01" min="0.1" max="5" value="1.0">
-                                    <label for="specific_gravity">Specific Gravity</label>
-                                    <span class="helper-text">1.0 for water</span>
-                                </div>
-                            </div>
-                            <div class="col s12 m6">
-                                <div class="input-field">
-                                    <i class="material-icons prefix">waves</i>
-                                    <input id="viscosity" name="viscosity" type="number" step="0.1" min="0.1" value="1.0">
-                                    <label for="viscosity">Viscosity (cP)</label>
-                                    <span class="helper-text">1.0 for water at 20°C</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- System Conditions Section -->
-        <div class="row section-card stagger-item" id="system-section">
-            <div class="col s12">
-                <div class="card">
-                    <div class="card-content">
-                        <span class="card-title" style="color: var(--md-primary);">
-                            <i class="material-icons left">account_tree</i>
-                            System Conditions
-                        </span>
-
-                        <div class="row">
-                            <div class="col s12 m6">
-                                <div class="input-field">
-                                    <i class="material-icons prefix">vertical_align_bottom</i>
-                                    <input id="suction_pressure" name="suction_pressure" type="number" step="0.1" value="0">
-                                    <label for="suction_pressure">Suction Pressure (bar gauge)</label>
-                                    <span class="helper-text">Gauge pressure at pump suction</span>
-                                </div>
-                            </div>
-                            <div class="col s12 m6">
-                                <div class="input-field">
-                                    <i class="material-icons prefix">trending_up</i>
-                                    <input id="static_head" name="static_head" type="number" step="0.1" value="0">
-                                    <label for="static_head">Static Head (m)</label>
-                                    <span class="helper-text">Vertical distance between liquid levels</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col s12 m6">
-                                <div class="input-field">
-                                    <i class="material-icons prefix">bubble_chart</i>
-                                    <input id="npsh_available" name="npsh_available" type="number" step="0.1" min="0">
-                                    <label for="npsh_available">NPSH Available (m)</label>
-                                    <span class="helper-text">Net Positive Suction Head available</span>
-                                </div>
-                            </div>
-                            <div class="col s12 m6">
-                                <div class="input-field">
-                                    <i class="material-icons prefix">terrain</i>
-                                    <input id="site_altitude" name="site_altitude" type="number" step="0.1" min="0">
-                                    <label for="site_altitude">Site Altitude (m above sea level)</label>
-                                    <span class="helper-text">Affects NPSH and vapor pressure calculations</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col s12 m6">
-                                <div class="input-field">
-                                    <i class="material-icons prefix">vertical_align_top</i>
-                                    <input id="discharge_pressure" name="discharge_pressure" type="number" step="0.1">
-                                    <label for="discharge_pressure">Discharge Pressure (bar gauge)</label>
-                                    <span class="helper-text">System discharge pressure</span>
-                                </div>
-                            </div>
-                            <div class="col s12 m6">
-                                <div class="input-field">
-                                    <i class="material-icons prefix">compress</i>
-                                    <input id="vapor_pressure" name="vapor_pressure" type="number" step="0.001" value="3.074">
-                                    <label for="vapor_pressure">Vapor Pressure (kPa)</label>
-                                    <span class="helper-text">Liquid vapor pressure at operating temperature</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Motor Requirements Section -->
-        <div class="row section-card" id="motor-section">
-            <div class="col s12">
-                <div class="card">
-                    <div class="card-content">
-                        <span class="card-title" style="color: var(--md-primary);">
-                            <i class="material-icons left">electric_bolt</i>
-                            Motor & Power Requirements
-                        </span>
-
-                        <div class="row">
-                            <div class="col s12 m6">
-                                <div class="input-field">
-                                    <i class="material-icons prefix">power</i>
-                                    <input id="max_power" name="max_power" type="number" step="0.1" min="0">
-                                    <label for="max_power">Maximum Power (kW)</label>
-                                    <span class="helper-text">Maximum allowable motor power</span>
-                                </div>
-                            </div>
-                            <div class="col s12 m6">
-                                <div class="input-field">
-                                    <i class="material-icons prefix">settings</i>
-                                    <input id="motor_speed" name="motor_speed" type="number" step="1" value="2960">
-                                    <label for="motor_speed">Motor Speed (rpm)</label>
-                                    <span class="helper-text">Required motor speed</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col s12 m4">
-                                <div class="input-field">
-                                    <i class="material-icons prefix">electrical_services</i>
-                                    <input id="voltage" name="voltage" type="number" step="1" value="380">
-                                    <label for="voltage">Voltage (V)</label>
-                                </div>
-                            </div>
-                            <div class="col s12 m4">
-                                <div class="input-field">
-                                    <i class="material-icons prefix">waves</i>
-                                    <input id="frequency" name="frequency" type="number" step="1" value="50">
-                                    <label for="frequency">Frequency (Hz)</label>
-                                </div>
-                            </div>
-                            <div class="col s12 m4">
-                                <div class="input-group">
-                                    <label class="form-label" style="color: var(--md-primary); font-size: 14px; font-weight: 600; margin-bottom: 10px; display: block;">
-                                        <i class="material-icons" style="font-size: 16px; vertical-align: middle; margin-right: 8px;">electrical_services</i>
-                                        Phase
-                                    </label>
-                                    <div class="radio-group">
-                                        <p style="margin: 5px 0;">
-                                            <label>
-                                                <input name="motor_phase" type="radio" value="three_phase" checked />
-                                                <span>Three Phase</span>
+                            <!-- Variable Flow Options -->
+                            <div class="row" style="margin-bottom: 20px;">
+                                <div class="col s12">
+                                    <h6 style="color: var(--md-primary); margin-bottom: 15px;">
+                                        <i class="material-icons tiny">tune</i>
+                                        Flow Characteristics
+                                    </h6>
+                                    <div class="input-group">
+                                        <div class="radio-group" style="margin-bottom: 15px;">
+                                            <label style="margin-right: 30px;">
+                                                <input name="variable_flow" type="radio" value="no" checked />
+                                                <span>Fixed Flow Rate</span>
                                             </label>
-                                        </p>
-                                        <p style="margin: 5px 0;">
                                             <label>
-                                                <input name="motor_phase" type="radio" value="single_phase" />
-                                                <span>Single Phase</span>
+                                                <input name="variable_flow" type="radio" value="yes" />
+                                                <span>Variable Flow Required</span>
                                             </label>
-                                        </p>
+                                        </div>
+                                        
+                                        <div class="row" id="flow-range-section" style="display: none; margin-top: 15px;">
+                                            <div class="col s12 m6">
+                                                <div class="input-field">
+                                                    <i class="material-icons prefix">trending_down</i>
+                                                    <input id="min_flow_rate" name="min_flow_rate" type="number" step="0.01" min="0.1">
+                                                    <label for="min_flow_rate">Minimum Flow Rate (m³/hr)</label>
+                                                </div>
+                                            </div>
+                                            <div class="col s12 m6">
+                                                <div class="input-field">
+                                                    <i class="material-icons prefix">trending_up</i>
+                                                    <input id="max_flow_rate" name="max_flow_rate" type="number" step="0.01" min="0.1">
+                                                    <label for="max_flow_rate">Maximum Flow Rate (m³/hr)</label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Coming Soon Badge -->
+                            <div class="row">
+                                <div class="col s12">
+                                    <div class="card-panel orange lighten-4" style="border-left: 4px solid #ff9800; margin: 0;">
+                                        <div style="display: flex; align-items: center;">
+                                            <i class="material-icons orange-text" style="margin-right: 10px;">construction</i>
+                                            <div>
+                                                <strong>Additional Advanced Features Coming Soon</strong>
+                                                <p style="margin: 5px 0 0 0; color: #666;">
+                                                    Liquid properties, system conditions, motor specifications, and project details will be available in the next update.
+                                                </p>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="row">
-                            <div class="col s12 m6">
-                                <div class="input-group">
-                                    <label class="form-label" style="color: var(--md-primary); font-size: 14px; font-weight: 600; margin-bottom: 10px; display: block;">
-                                        <i class="material-icons" style="font-size: 16px; vertical-align: middle; margin-right: 8px;">security</i>
-                                        Sealing Arrangement
-                                    </label>
-                                    <div class="radio-group">
-                                        <p>
-                                            <label>
-                                                <input name="sealing" type="radio" value="mechanical_seal" checked />
-                                                <span>Mechanical Seal</span>
-                                            </label>
-                                        </p>
-                                        <p>
-                                            <label>
-                                                <input name="sealing" type="radio" value="gland_packing" />
-                                                <span>Gland Packing</span>
-                                            </label>
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col s12 m6">
-                                <div class="input-group">
-                                    <label class="form-label" style="color: var(--md-primary); font-size: 14px; font-weight: 600; margin-bottom: 10px; display: block;">
-                                        <i class="material-icons" style="font-size: 16px; vertical-align: middle; margin-right: 8px;">warning</i>
-                                        ATEX/Hazardous Area
-                                    </label>
-                                    <div class="radio-group">
-                                        <p>
-                                            <label>
-                                                <input name="atex_required" type="radio" value="no" checked />
-                                                <span>Standard Motor</span>
-                                            </label>
-                                        </p>
-                                        <p>
-                                            <label>
-                                                <input name="atex_required" type="radio" value="yes" />
-                                                <span>ATEX Motor Required</span>
-                                            </label>
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
+                        <!-- Hidden fields with default values for backend compatibility -->
+                        <div style="display: none;">
+                            <!-- Contact defaults -->
+                            <input name="contact_name" type="hidden" value="">
+                            <input name="company" type="hidden" value="">
+                            <input name="email" type="hidden" value="">
+                            <input name="project_name" type="hidden" value="">
+                            <input name="project_location" type="hidden" value="">
+                            
+                            <!-- Liquid properties defaults -->
+                            <input name="liquid_type" type="hidden" value="water">
+                            <input name="temperature" type="hidden" value="20">
+                            <input name="specific_gravity" type="hidden" value="1.0">
+                            <input name="viscosity" type="hidden" value="1.0">
+                            
+                            <!-- System conditions defaults -->
+                            <input name="suction_pressure" type="hidden" value="0">
+                            <input name="static_head" type="hidden" value="0">
+                            <input name="npsh_available" type="hidden" value="">
+                            <input name="site_altitude" type="hidden" value="">
+                            <input name="discharge_pressure" type="hidden" value="">
+                            <input name="vapor_pressure" type="hidden" value="3.074">
+                            
+                            <!-- Motor defaults -->
+                            <input name="max_power" type="hidden" value="">
+                            <input name="motor_speed" type="hidden" value="2960">
+                            <input name="voltage" type="hidden" value="380">
+                            <input name="frequency" type="hidden" value="50">
+                            <input name="motor_phase" type="hidden" value="three_phase">
+                            <input name="sealing" type="hidden" value="mechanical_seal">
+                            <input name="atex_required" type="hidden" value="no">
                         </div>
                     </div>
                 </div>
             </div>
         </div>
+
+
 
         <!-- Form Actions -->
         <div class="row stagger-item">
@@ -615,12 +454,19 @@
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize form components
     initializeFormComponents();
+    initializeAdvancedOptions();
 });
 
 function initializeFormComponents() {
     // Initialize tooltips for this form
     var tooltips = document.querySelectorAll('.tooltipped');
     M.Tooltip.init(tooltips);
+    
+    // Prevent Materialize from auto-initializing autocomplete on our custom input
+    const customInput = document.getElementById('direct_pump_search');
+    if (customInput) {
+        customInput.setAttribute('data-no-autoinit', 'true');
+    }
 
     // Form submission handling
     var form = document.getElementById('pumpSelectionForm');
@@ -634,7 +480,7 @@ function initializeFormComponents() {
                 submitBtn.disabled = true;
             }
             if (progressBar) {
-                progressBar.classList.add('show');
+                progressBar.style.display = 'block';
             }
         });
     }
@@ -653,67 +499,349 @@ function initializeFormComponents() {
         });
     });
 
-    // Direct pump search suggestions
+    // Enhanced Direct Pump Search with improved autocomplete
+    // Add a small delay to ensure Materialize doesn't interfere
+    setTimeout(function() {
+        initializeEnhancedAutocomplete();
+    }, 100);
+
+    console.log('Form components initialized - enhanced autocomplete ready');
+}
+
+function initializeEnhancedAutocomplete() {
     const pumpSearchInput = document.getElementById('direct_pump_search');
     const suggestionsDiv = document.getElementById('pump_search_suggestions');
+    const statusSpan = document.getElementById('pump-search-status');
+    const countSpan = document.getElementById('pump-count-status');
+    
+    if (!pumpSearchInput || !suggestionsDiv) return;
+    
+    // Check if already initialized to prevent duplicates
+    if (pumpSearchInput.dataset.autocompleteInitialized === 'true') {
+        console.log('Enhanced autocomplete already initialized, skipping...');
+        return;
+    }
+    
+    // Mark as initialized
+    pumpSearchInput.dataset.autocompleteInitialized = 'true';
+    
+    // Disable any existing Materialize autocomplete initialization
+    pumpSearchInput.removeAttribute('data-autocomplete');
+    pumpSearchInput.classList.remove('autocomplete');
+    
+    // Remove any existing Materialize autocomplete instances
+    if (window.M && window.M.Autocomplete) {
+        const existingInstance = window.M.Autocomplete.getInstance(pumpSearchInput);
+        if (existingInstance) {
+            console.log('Destroying existing Materialize autocomplete instance');
+            existingInstance.destroy();
+        }
+    }
+    
+    // Clear any existing event listeners by cloning the element
+    const newInput = pumpSearchInput.cloneNode(true);
+    pumpSearchInput.parentNode.replaceChild(newInput, pumpSearchInput);
+    const cleanInput = document.getElementById('direct_pump_search');
+    
+    let searchTimeout;
+    let selectedIndex = -1;
+    let currentSuggestions = [];
 
-    if (pumpSearchInput && suggestionsDiv) {
-        let searchTimeout;
+    // Enhanced input handler with loading states and better UX - use the clean input
+    cleanInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        const query = this.value.trim();
+        
+        // Reset UI state
+        selectedIndex = -1;
+        this.setAttribute('data-search-status', 'ready');
+        
+        if (query.length < 1) {
+            hideSuggestions();
+            updateStatus('Skip selection algorithm and analyze a specific pump model');
+            return;
+        }
 
-        pumpSearchInput.addEventListener('input', function() {
-            clearTimeout(searchTimeout);
-            const query = this.value.trim();
+        if (query.length < 2) {
+            showQuickHelp();
+            updateStatus('Keep typing to search our pump database...');
+            return;
+        }
 
-            if (query.length < 2) {
-                suggestionsDiv.style.display = 'none';
-                return;
-            }
+        // Show loading state
+        this.setAttribute('data-search-status', 'searching');
+        showLoading();
+        updateStatus('Searching pump database...');
 
-            searchTimeout = setTimeout(() => {
-                // Real-time search suggestions are handled by Materialize autocomplete
-                // which fetches data from the /api/pumps endpoint
-                suggestionsDiv.style.display = 'none';
-            }, 300);
-        });
+        searchTimeout = setTimeout(function() {
+            searchPumps(query);
+        }, 300);
+    });
 
-        // Hide suggestions when clicking outside
-        document.addEventListener('click', function(e) {
-            if (!pumpSearchInput.contains(e.target) && !suggestionsDiv.contains(e.target)) {
-                suggestionsDiv.style.display = 'none';
+    // Keyboard navigation - use the clean input
+    cleanInput.addEventListener('keydown', function(e) {
+        if (!suggestionsDiv.style.display || suggestionsDiv.style.display === 'none') return;
+        
+        const suggestions = suggestionsDiv.querySelectorAll('.suggestion-item');
+        
+        switch(e.key) {
+            case 'ArrowDown':
+                e.preventDefault();
+                selectedIndex = Math.min(selectedIndex + 1, suggestions.length - 1);
+                updateSelection(suggestions);
+                break;
+            case 'ArrowUp':
+                e.preventDefault();
+                selectedIndex = Math.max(selectedIndex - 1, -1);
+                updateSelection(suggestions);
+                break;
+            case 'Enter':
+                e.preventDefault();
+                if (selectedIndex >= 0 && suggestions[selectedIndex]) {
+                    const pumpCode = suggestions[selectedIndex].dataset.pumpCode;
+                    selectPump(pumpCode);
+                }
+                break;
+            case 'Escape':
+                e.preventDefault();
+                hideSuggestions();
+                break;
+        }
+    });
+
+    // Enhanced search function
+    function searchPumps(query) {
+        fetch('/api/pumps/search?q=' + encodeURIComponent(query))
+            .then(function(response) {
+                return response.json();
+            })
+            .then(function(data) {
+                cleanInput.setAttribute('data-search-status', 'ready');
+                
+                if (data.pumps && data.pumps.length > 0) {
+                    currentSuggestions = data.pumps;
+                    showSuggestions(data.pumps);
+                    updateStatus('Found ' + data.pumps.length + ' matching pump' + (data.pumps.length > 1 ? 's' : ''));
+                } else {
+                    showEmptyState();
+                    updateStatus('No pumps found - try different search terms');
+                }
+            })
+            .catch(function(error) {
+                console.error('Error fetching pump suggestions:', error);
+                cleanInput.setAttribute('data-search-status', 'ready');
+                showErrorState();
+                updateStatus('Search temporarily unavailable');
+            });
+    }
+
+    function showSuggestions(pumps) {
+        const loadingDiv = suggestionsDiv.querySelector('.suggestions-loading');
+        const listDiv = suggestionsDiv.querySelector('.suggestions-list');
+        const emptyDiv = suggestionsDiv.querySelector('.suggestions-empty');
+        const helpDiv = suggestionsDiv.querySelector('.suggestions-help');
+
+        // Hide other states
+        loadingDiv.style.display = 'none';
+        emptyDiv.style.display = 'none';
+        helpDiv.style.display = 'none';
+
+        // Show suggestions - only pump codes
+        listDiv.innerHTML = pumps.map(function(pump, index) {
+            return '<div class="suggestion-item" data-pump-code="' + pump.pump_code + '" onclick="selectPump(\'' + pump.pump_code + '\')" style="padding: 8px 16px;">' +
+                '<div class="pump-code" style="font-size: 14px; color: #333;">' + pump.pump_code + '</div>' +
+            '</div>';
+        }).join('');
+
+        suggestionsDiv.style.display = 'block';
+    }
+
+    function showLoading() {
+        const loadingDiv = suggestionsDiv.querySelector('.suggestions-loading');
+        const listDiv = suggestionsDiv.querySelector('.suggestions-list');
+        const emptyDiv = suggestionsDiv.querySelector('.suggestions-empty');
+        const helpDiv = suggestionsDiv.querySelector('.suggestions-help');
+
+        loadingDiv.style.display = 'block';
+        listDiv.innerHTML = '';
+        emptyDiv.style.display = 'none';
+        helpDiv.style.display = 'none';
+
+        suggestionsDiv.style.display = 'block';
+    }
+
+    function showEmptyState() {
+        const loadingDiv = suggestionsDiv.querySelector('.suggestions-loading');
+        const listDiv = suggestionsDiv.querySelector('.suggestions-list');
+        const emptyDiv = suggestionsDiv.querySelector('.suggestions-empty');
+        const helpDiv = suggestionsDiv.querySelector('.suggestions-help');
+
+        loadingDiv.style.display = 'none';
+        listDiv.innerHTML = '';
+        emptyDiv.style.display = 'block';
+        helpDiv.style.display = 'none';
+
+        suggestionsDiv.style.display = 'block';
+    }
+
+    function showQuickHelp() {
+        const loadingDiv = suggestionsDiv.querySelector('.suggestions-loading');
+        const listDiv = suggestionsDiv.querySelector('.suggestions-list');
+        const emptyDiv = suggestionsDiv.querySelector('.suggestions-empty');
+        const helpDiv = suggestionsDiv.querySelector('.suggestions-help');
+
+        loadingDiv.style.display = 'none';
+        listDiv.innerHTML = '';
+        emptyDiv.style.display = 'none';
+        helpDiv.style.display = 'block';
+
+        suggestionsDiv.style.display = 'block';
+    }
+
+    function showErrorState() {
+        hideSuggestions();
+    }
+
+    function hideSuggestions() {
+        suggestionsDiv.style.display = 'none';
+        selectedIndex = -1;
+    }
+
+    function updateSelection(suggestions) {
+        suggestions.forEach(function(item, index) {
+            if (index === selectedIndex) {
+                item.classList.add('selected');
+                item.scrollIntoView({ block: 'nearest' });
+            } else {
+                item.classList.remove('selected');
             }
         });
     }
 
-    console.log('Form components initialized - radio buttons ready');
+    function updateStatus(message) {
+        if (statusSpan) {
+            statusSpan.textContent = message;
+        }
+    }
 
-    // Initialize autocomplete for direct pump search
-    // Fetch pump data for autocomplete
-    fetch('/api/pumps')
-        .then(response => response.json())
-        .then(data => {
-            if (data.pumps) {
-                const pumpData = {};
-                data.pumps.forEach(pump => {
-                    pumpData[pump.pump_code] = null; // Materialize autocomplete format
-                });
+    // Hide suggestions when clicking outside - use the clean input
+    document.addEventListener('click', function(e) {
+        if (!cleanInput.contains(e.target) && !suggestionsDiv.contains(e.target)) {
+            hideSuggestions();
+            updateStatus('Skip selection algorithm and analyze a specific pump model');
+        }
+    });
+    
+    console.log('Enhanced autocomplete initialized successfully');
+}
 
-                // Initialize Materialize autocomplete
-                const autocompleteElem = document.getElementById('direct_pump_search');
-                if (autocompleteElem) {
-                    M.Autocomplete.init(autocompleteElem, {
-                        data: pumpData,
-                        limit: 10,
-                        minLength: 1,
-                        onAutocomplete: function(val) {
-                            console.log('Pump selected:', val);
-                        }
-                    });
-                }
-            }
-        })
-        .catch(error => {
-            console.error('Error loading pump data for autocomplete:', error);
-        });
+// Global pump selection function
+function selectPump(pumpCode) {
+    const input = document.getElementById('direct_pump_search');
+    const suggestions = document.getElementById('pump_search_suggestions');
+    const statusSpan = document.getElementById('pump-search-status');
+    
+    if (input) {
+        input.value = pumpCode;
+        input.setAttribute('data-search-status', 'ready');
+        // Trigger change event for any listeners
+        input.dispatchEvent(new Event('change'));
+    }
+    
+    if (suggestions) {
+        suggestions.style.display = 'none';
+    }
+    
+    if (statusSpan) {
+        statusSpan.textContent = `Selected: ${pumpCode}`;
+    }
+    
+    // Add visual feedback
+    if (input) {
+        input.style.borderColor = '#4caf50';
+        setTimeout(() => {
+            input.style.borderColor = '';
+        }, 2000);
+    }
+}
+
+// Quick suggestion selection function
+function selectQuickSuggestion(pumpCode) {
+    selectPump(pumpCode);
+}
+
+function initializeAdvancedOptions() {
+    // Advanced options initialization - no longer using Materialize autocomplete
+    // The enhanced autocomplete is handled in initializeEnhancedAutocomplete()
+    console.log('Advanced options initialized');
+}
+
+// Advanced options toggle functionality
+function toggleAdvancedOptions() {
+    const content = document.getElementById('advanced-options-content');
+    const arrow = document.getElementById('advanced-arrow');
+    const status = document.getElementById('advanced-status');
+    
+    if (content.style.display === 'none' || content.style.display === '') {
+        // Expand
+        content.style.display = 'block';
+        arrow.style.transform = 'rotate(180deg)';
+        status.textContent = 'Click to collapse advanced options';
+        
+        // Smooth scroll into view
+        setTimeout(() => {
+            content.scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'nearest' 
+            });
+        }, 100);
+    } else {
+        // Collapse
+        content.style.display = 'none';
+        arrow.style.transform = 'rotate(0deg)';
+        status.textContent = 'Click to expand detailed parameters';
+    }
+}
+
+// Pump suggestion selection
+function selectPumpSuggestion(pumpCode) {
+    const input = document.getElementById('direct_pump_search');
+    const suggestions = document.getElementById('pump_search_suggestions');
+    
+    if (input) {
+        input.value = pumpCode;
+        // Trigger change event for any listeners
+        input.dispatchEvent(new Event('change'));
+    }
+    
+    if (suggestions) {
+        suggestions.style.display = 'none';
+    }
+}
+
+// Form reset functionality
+function resetForm() {
+    const form = document.getElementById('pumpSelectionForm');
+    if (form) {
+        form.reset();
+        
+        // Reset advanced options to collapsed state
+        const content = document.getElementById('advanced-options-content');
+        const arrow = document.getElementById('advanced-arrow');
+        const status = document.getElementById('advanced-status');
+        
+        if (content) content.style.display = 'none';
+        if (arrow) arrow.style.transform = 'rotate(0deg)';
+        if (status) status.textContent = 'Click to expand detailed parameters';
+        
+        // Hide variable flow section
+        const flowRangeSection = document.getElementById('flow-range-section');
+        if (flowRangeSection) flowRangeSection.style.display = 'none';
+        
+        // Hide pump suggestions
+        const suggestions = document.getElementById('pump_search_suggestions');
+        if (suggestions) suggestions.style.display = 'none';
+    }
 }
 </script>
 {% endblock %}

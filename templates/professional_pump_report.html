@@ -403,6 +403,53 @@
 </head>
 <body>
 
+<!-- Direct Selection Warning Banner -->
+{% if direct_selection_validation and direct_selection_validation.is_direct_selection %}
+<div class="alert alert-warning alert-dismissible fade show direct-selection-banner" role="alert" style="margin: 0; border-radius: 0; border-left: 4px solid #ffc107;">
+    <div class="container" style="max-width: 1400px;">
+        <div class="row align-items-center">
+            <div class="col-auto">
+                <i class="fas fa-exclamation-triangle fa-2x text-warning"></i>
+            </div>
+            <div class="col">
+                <h5 class="alert-heading mb-1">
+                    <i class="fas fa-hand-paper me-2"></i>Direct Pump Selection Notice
+                </h5>
+                <p class="mb-1">
+                    <strong>This report analyzes a directly selected pump, bypassing our optimization algorithm.</strong>
+                </p>
+                <div class="small">
+                    {% if direct_selection_validation.is_optimal_choice %}
+                        <span class="badge bg-success me-2">
+                            <i class="fas fa-check-circle me-1"></i>Good Choice
+                        </span>
+                        This pump ranked #{{ direct_selection_validation.optimal_rank }} in our optimization results.
+                    {% elif not direct_selection_validation.is_efficient %}
+                        <span class="badge bg-danger me-2">
+                            <i class="fas fa-exclamation-circle me-1"></i>Low Efficiency
+                        </span>
+                        Operating at {{ "%.1f"|format(direct_selection_validation.efficiency_pct) }}% efficiency - consider alternatives.
+                    {% else %}
+                        <span class="badge bg-warning me-2">
+                            <i class="fas fa-info-circle me-1"></i>Sub-Optimal
+                        </span>
+                        {% if direct_selection_validation.best_alternative_code %}
+                            Better option available: <strong>{{ direct_selection_validation.best_alternative_code }}</strong> 
+                            ({{ "%.1f"|format(direct_selection_validation.best_alternative_efficiency) }}% efficiency)
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+            <div class="col-auto">
+                <a href="{{ url_for('main_flow.index') }}" class="btn btn-outline-primary btn-sm me-2">
+                    <i class="fas fa-search me-1"></i>Run Optimization
+                </a>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    </div>
+</div>
+{% endif %}
 
 <div class="container-fluid" style="max-width: 1400px; margin: 0 auto; padding: 0 24px;">
     <div class="row">

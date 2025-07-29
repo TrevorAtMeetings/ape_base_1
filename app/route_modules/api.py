@@ -344,40 +344,84 @@ def calculate_power_curve(performance_points):
     return powers
 
 @api_bp.route('/pumps', methods=['GET'])
-def api_pumps():
-    """API endpoint to get all pumps for autocomplete with optional HSC filtering."""
+def get_pumps():
+    """Get all pumps for autocomplete"""
     try:
+        # Get all pumps from repository
         from ..catalog_engine import get_catalog_engine
         catalog_engine = get_catalog_engine()
 
-        # Get filter parameters
-        hsc_filter = request.args.get('hsc_filter', '').strip()
-
-        pumps = []
+        # Format for autocomplete
+        pump_list = []
         for pump in catalog_engine.pumps:
-            # Apply HSC filter if specified
-            if hsc_filter:
-                # Check if pump matches HSC criteria (pump_type or model_series contains HSC)
-                if ('hsc' not in pump.pump_type.lower() and 
-                    'hsc' not in pump.model_series.lower() and
-                    'hsc' not in pump.pump_code.lower()):
-                    continue
-
-            pumps.append({
+            pump_list.append({
                 'pump_code': pump.pump_code,
-                'manufacturer': pump.manufacturer,
-                'model_series': pump.model_series,
                 'pump_type': pump.pump_type,
-                'max_flow_m3hr': pump.max_flow_m3hr,
-                'max_head_m': pump.max_head_m,
-                'curves_count': len(pump.curves)
+                'manufacturer': pump.manufacturer,
+                'model_series': pump.model_series
             })
 
-        return jsonify({'pumps': pumps})
+        return jsonify({
+            'pumps': pump_list,
+            'count': len(pump_list)
+        })
 
     except Exception as e:
-        logger.error(f"Error in api_pumps: {str(e)}")
-        return jsonify({'error': 'Failed to retrieve pump data'}), 500
+        logger.error(f"Error getting pumps: {str(e)}")
+        return jsonify({'error': 'Failed to get pumps'}), 500
+
+@api_bp.route('/pumps/search', methods=['GET'])
+def search_pumps():
+    """Search pumps for autocomplete"""
+    try:
+        query = request.args.get('q', '').strip()
+        if not query:
+            return jsonify({'pumps': [], 'count': 0})
+
+        # Get all pumps from repository
+        from ..catalog_engine import get_catalog_engine
+        catalog_engine = get_catalog_engine()
+
+        # Filter pumps based on query
+        matching_pumps = []
+        query_lower = query.lower()
+
+        for pump in catalog_engine.pumps:
+            # Search in pump code, type, and model series
+            search_fields = [
+                pump.pump_code.lower(),
+                pump.pump_type.lower(),
+                pump.model_series.lower(),
+                pump.manufacturer.lower()
+            ]
+
+            # Check if query matches any field
+            if any(query_lower in field for field in search_fields):
+                matching_pumps.append({
+                    'pump_code': pump.pump_code,
+                    'pump_type': pump.pump_type,
+                    'manufacturer': pump.manufacturer,
+                    'model_series': pump.model_series
+                })
+
+        # Sort by relevance (exact matches first, then partial matches)
+        def sort_key(pump):
+            exact_match = pump['pump_code'].lower().startswith(query_lower)
+            return (0 if exact_match else 1, pump['pump_code'])
+
+        matching_pumps.sort(key=sort_key)
+
+        # Limit results to prevent overwhelming the UI
+        matching_pumps = matching_pumps[:20]
+
+        return jsonify({
+            'pumps': matching_pumps,
+            'count': len(matching_pumps)
+        })
+
+    except Exception as e:
+        logger.error(f"Error searching pumps: {str(e)}")
+        return jsonify({'error': 'Failed to search pumps'}), 500
 
 
 
