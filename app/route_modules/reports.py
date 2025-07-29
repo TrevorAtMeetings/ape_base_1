@@ -236,7 +236,13 @@ def pump_report(pump_code):
                         logger.info(f"Direct search: Found fuzzy match '{best_match.pump_code}' (score: {best_match_score}) for search '{pump_code}'")
 
                     if not target_pump:
-                        logger.warning(f"Direct search failed for pump code: '{pump_code}'. Available pumps: {[p.pump_code for p in catalog_engine.pumps[:10]]}")
+                        # Enhanced debugging - show pumps that start with similar patterns
+                        search_prefix = pump_code.split()[0] if ' ' in pump_code else pump_code[:3]
+                        similar_pumps = [p.pump_code for p in catalog_engine.pumps if p.pump_code.lower().startswith(search_prefix.lower())][:10]
+                        logger.warning(f"Direct search failed for pump code: '{pump_code}'")
+                        logger.warning(f"Pumps starting with '{search_prefix}': {similar_pumps}")
+                        logger.warning(f"Total pumps in catalog: {len(catalog_engine.pumps)}")
+                        logger.warning(f"Sample pump codes: {[p.pump_code for p in catalog_engine.pumps[:20]]}")
                         safe_flash(f'Pump "{pump_code}" not found in database. Please check the model name and try again.', 'error')
                         return redirect(url_for('main_flow.index'))
 
