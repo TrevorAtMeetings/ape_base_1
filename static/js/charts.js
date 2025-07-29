@@ -306,7 +306,15 @@ class PumpChartsManager {
             });
 
             // Enhanced Operating Point Triangle Marker with comprehensive hover information
-            const bepPercentage = opPoint.flow_m3hr > 0 ? ((opPoint.flow_m3hr / opPoint.flow_m3hr) * 100).toFixed(0) : 'N/A';
+            // Calculate BEP percentage using real BEP data if available
+            let bepPercentage = 'N/A';
+            if (this.currentChartData.bep_analysis && this.currentChartData.bep_analysis.bep_available) {
+                const bepFlow = this.currentChartData.bep_analysis.bep_flow;
+                if (bepFlow > 0) {
+                    bepPercentage = ((opPoint.flow_m3hr / bepFlow) * 100).toFixed(0);
+                }
+            }
+            
             const efficiencyRating = opPoint.efficiency_pct >= 80 ? 'Excellent' : 
                                    opPoint.efficiency_pct >= 70 ? 'Good' : 
                                    opPoint.efficiency_pct >= 60 ? 'Acceptable' : 'Poor';

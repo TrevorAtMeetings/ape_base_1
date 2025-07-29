@@ -220,6 +220,9 @@ def get_chart_data_safe(safe_pump_code):
         best_curve = target_pump.get_best_curve_for_duty(flow_rate, head)
         operating_point_data = target_pump.get_performance_at_duty(flow_rate, head)
 
+        # Calculate BEP analysis for the pump
+        bep_analysis = target_pump.calculate_bep_distance(flow_rate, head)
+
         # Extract speed scaling information from performance calculation
         speed_scaling_applied = False
         actual_speed_ratio = 1.0
@@ -253,6 +256,7 @@ def get_chart_data_safe(safe_pump_code):
             },
             'curves': [],
             'operating_point': op_point,
+            'bep_analysis': bep_analysis,
             'metadata': {
                 'flow_units': 'm³/hr',
                 'head_units': 'm',
