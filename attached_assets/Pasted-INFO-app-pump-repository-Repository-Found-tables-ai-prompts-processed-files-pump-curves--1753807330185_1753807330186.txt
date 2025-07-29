@@ -1,0 +1,37 @@
+INFO:app.pump_repository:Repository: Found tables: ['ai_prompts', 'processed_files', 'pump_curves', 'pump_performance_points', 'pump_specifications', 'pumps']
+INFO:app.pump_repository:Repository: Found 386 pump records with aggregated statistics
+INFO:app.pump_repository:Repository: Found 386 pump records with aggregated statistics
+INFO:app.pump_repository:Repository: Retrieved 6273 performance points
+INFO:app.pump_repository:Repository: Successfully loaded 386 pump models from PostgreSQL
+INFO:app.pump_repository:Repository: Total curves: 869
+INFO:app.pump_repository:Repository: Total points: 6273
+INFO:app.pump_repository:Repository: NPSH curves: 612
+INFO:app.pump_repository:Repository: Tables used: ['ai_prompts', 'processed_files', 'pump_curves', 'pump_performance_points', 'pump_specifications', 'pumps']
+INFO:app.pump_repository:Repository: Retrieved 6273 performance points
+INFO:app.pump_repository:Repository: Successfully loaded 386 pump models from PostgreSQL
+INFO:app.pump_repository:Repository: Total curves: 869
+INFO:app.pump_repository:Repository: Total points: 6273
+INFO:app.pump_repository:Repository: NPSH curves: 612
+INFO:app.pump_repository:Repository: Tables used: ['ai_prompts', 'processed_files', 'pump_curves', 'pump_performance_points', 'pump_specifications', 'pumps']
+INFO:app.catalog_engine:Catalog Engine: Loaded 386 pump models from repository
+INFO:app.catalog_engine:Catalog Engine: Total curves: 869
+INFO:app.catalog_engine:Catalog Engine: NPSH curves: 612 (70.4%)
+INFO:werkzeug:172.31.119.98 - - [29/Jul/2025 16:37:38] "GET /api/pumps/search?q=28 HTTP/1.1" 200 -
+INFO:app.catalog_engine:Catalog Engine: Loaded 386 pump models from repository
+INFO:app.catalog_engine:Catalog Engine: Total curves: 869
+INFO:app.catalog_engine:Catalog Engine: NPSH curves: 612 (70.4%)
+INFO:werkzeug:172.31.119.98 - - [29/Jul/2025 16:37:38] "GET /api/pumps/search?q=28%20HC HTTP/1.1" 200 -
+INFO:app.route_modules.main_flow:Direct pump search requested for: '28 HC 6P' with flow=500.0, head=10.0
+INFO:werkzeug:172.31.119.98 - - [29/Jul/2025 16:37:43] "POST /pump_selection HTTP/1.1" 302 -
+[ERROR] Pump "28 HC 6P" not found in database. Please check the model name and try again.
+INFO:werkzeug:172.31.119.98 - - [29/Jul/2025 16:37:44] "GET /pump_report/28%20HC%206P?flow=500.0&head=10.0&direct_search=true HTTP/1.1" 302 -
+INFO:app.route_modules.main_flow:Index route accessed.
+INFO:werkzeug:172.31.119.98 - - [29/Jul/2025 16:37:44] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:172.31.119.98 - - [29/Jul/2025 16:37:44] "GET /static/css/style.css?v=2014 HTTP/1.1" 200 -
+INFO:werkzeug:172.31.119.98 - - [29/Jul/2025 16:37:44] "GET /static/css/icon-fixes.css?v=9204 HTTP/1.1" 200 -
+INFO:werkzeug:172.31.119.98 - - [29/Jul/2025 16:37:44] "GET /static/css/floating-ai-chat.css?v=8456 HTTP/1.1" 200 -
+INFO:werkzeug:172.31.119.98 - - [29/Jul/2025 16:37:45] "GET /static/js/force-icon-refresh.js HTTP/1.1" 304 -
+INFO:werkzeug:172.31.119.98 - - [29/Jul/2025 16:37:45] "GET /static/js/icon-loader.js HTTP/1.1" 304 -
+INFO:werkzeug:172.31.119.98 - - [29/Jul/2025 16:37:45] "GET /static/js/floating-ai-chat.js HTTP/1.1" 304 -
+INFO:werkzeug:172.31.119.98 - - [29/Jul/2025 16:37:45] "GET /static/js/main.js HTTP/1.1" 304 -
+INFO:werkzeug:172.31.119.98 - - [29/Jul/2025 16:37:45] "GET /static/js/micro-interactions.js HTTP/1.1" 304 -
