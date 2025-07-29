@@ -1,0 +1,29 @@
+INFO:app.catalog_engine:Catalog Engine: Filtering for pump_type='GENERAL', flow=500.0, head=10.0
+INFO:app.catalog_engine:Catalog Engine: Found 138 suitable pumps from 386 total
+INFO:app.catalog_engine:  #1: 18 HC 1213 6P (VERTICAL TURBINE) - Score: 89.0
+INFO:app.catalog_engine:  #2: 16 HC 1264 6P (VERTICAL TURBINE) - Score: 88.4
+INFO:app.catalog_engine:  #3: 150-200 2F (END SUCTION) - Score: 87.1
+INFO:app.catalog_engine:  #4: 12/15 V.S.M.F.V (END SUCTION) - Score: 86.9
+INFO:app.catalog_engine:  #5: 8312-14 313T 4P (AXIAL FLOW) - Score: 85.7
+INFO:app.route_modules.reports:Normal performance calculation failed for 28 HC 6P, forcing analysis at ANY operating point
+INFO:app.route_modules.reports:Direct search successful for pump: 28 HC 6P
+INFO:app.route_modules.reports:Direct selection validation: efficiency=62.00306905370844%, optimal_rank=None, is_optimal=False
+WARNING:app.route_modules.reports:Direct search warnings for 28 HC 6P: Performance extrapolated beyond normal operating range
+INFO:app.route_modules.reports:Template data - selected_pump operating_point: {'curve': {'curve_id': '28 HC 6P_C2_501mm', 'curve_index': 1, 'impeller_diameter_mm': 501.0, 'test_speed_rpm': 980, 'performance_points': [{'flow_m3hr': 802.9, 'head_m': 32.4, 'efficiency_pct': 69.44, 'power_kw': None, 'npshr_m': 5.97}, {'flow_m3hr': 1233.0, 'head_m': 29.0, 'efficiency_pct': 80.0, 'power_kw': None, 'npshr_m': 6.0}, {'flow_m3hr': 1444.0, 'head_m': 26.8, 'efficiency_pct': 84.0, 'power_kw': None, 'npshr_m': 6.34}, {'flow_m3hr': 1648.0, 'head_m': 24.2, 'efficiency_pct': 85.0, 'power_kw': None, 'npshr_m': 6.91}, {'flow_m3hr': 1781.0, 'head_m': 22.1, 'efficiency_pct': 84.0, 'power_kw': None, 'npshr_m': 7.71}, {'flow_m3hr': 2009.0, 'head_m': 18.2, 'efficiency_pct': 80.0, 'power_kw': None, 'npshr_m': 9.75}, {'flow_m3hr': 2257.0, 'head_m': 13.3, 'efficiency_pct': 70.0, 'power_kw': None, 'npshr_m': 14.75}], 'point_count': 7, 'flow_range_m3hr': '802.9-2257.0', 'head_range_m': '13.3-32.4', 'efficiency_range_pct': '69.44-85.0', 'has_power_data': False, 'has_npsh_data': True, 'npsh_range_m': '5.97-14.75'}, 'flow_m3hr': 500.0, 'head_m': 34.794466403162055, 'efficiency_pct': 62.00306905370844, 'power_kw': 76.46, 'npshr_m': 5.948872355266217, 'impeller_diameter_mm': 501.0, 'test_speed_rpm': 980, 'extrapolated': True}
+INFO:app.route_modules.reports:Template data - selected_pump selected_curve: {'impeller_size': 501.0, 'impeller_diameter_mm': 501.0, 'is_selected': True, 'curve_index': 0}
+INFO:werkzeug:172.31.119.98 - - [29/Jul/2025 17:15:01] "GET /pump_report/28%20HC%206P?flow=500.0&head=10.0&direct_search=true HTTP/1.1" 200 -
+INFO:werkzeug:172.31.119.98 - - [29/Jul/2025 17:15:01] "GET /static/js/chart_layout_fix.js?v=20250607-1905 HTTP/1.1" 304 -
+INFO:werkzeug:172.31.119.98 - - [29/Jul/2025 17:15:01] "GET /static/js/force-chart-refresh.js HTTP/1.1" 304 -
+INFO:werkzeug:172.31.119.98 - - [29/Jul/2025 17:15:01] "GET /static/js/charts.js?v=20250607-1910-green HTTP/1.1" 304 -
+INFO:werkzeug:172.31.119.98 - - [29/Jul/2025 17:15:01] "GET /static/js/chart_legend_fix.js?v=20250607-1905 HTTP/1.1" 304 -
+INFO:werkzeug:172.31.119.98 - - [29/Jul/2025 17:15:01] "GET /static/js/error-handler.js HTTP/1.1" 304 -
+INFO:app.route_modules.api:Chart API: Loading data for pump 28 HC 6P
+INFO:app.route_modules.api:Chart API: Catalog lookup took 0.000s
+INFO:app.route_modules.api:Chart API: Total request time 0.001s for pump 28 HC 6P
+INFO:werkzeug:172.31.119.98 - - [29/Jul/2025 17:15:03] "GET /api/chart_data_safe/MjggSEMgNlA?flow=500&head=34.8 HTTP/1.1" 200 -
+INFO:app.route_modules.api:Chart API: Loading data for pump 28 HC 6P
+INFO:app.route_modules.api:Chart API: Catalog lookup took 0.000s
+INFO:app.route_modules.api:Chart API: Total request time 0.001s for pump 28 HC 6P
+INFO:werkzeug:172.31.119.98 - - [29/Jul/2025 17:15:03] "GET /api/chart_data_safe/MjggSEMgNlA?flow=500&head=10 HTTP/1.1" 200 -
+INFO:werkzeug:172.31.119.98 - - [29/Jul/2025 17:15:03] "POST /api/ai_analysis_fast HTTP/1.1" 200 -
+INFO:werkzeug:172.31.119.98 - - [29/Jul/2025 17:15:03] "POST /api/convert_markdown HTTP/1.1" 200 -
