@@ -315,7 +315,7 @@ def get_chart_data_safe(safe_pump_code):
         else:
             required_speed = base_speed
 
-        # Prepare operating point data for charts
+        # Prepare operating point data for charts - include sizing information
         op_point = {
             'flow_m3hr':
             flow_rate,
@@ -335,6 +335,26 @@ def get_chart_data_safe(safe_pump_code):
             operating_point_data.get('extrapolated', False)
             if operating_point_data else False
         }
+        
+        # Add impeller sizing information if available
+        if operating_point_data and operating_point_data.get('sizing_info'):
+            sizing_info = operating_point_data['sizing_info']
+            op_point['sizing_info'] = {
+                'base_diameter_mm': sizing_info.get('base_diameter_mm'),
+                'required_diameter_mm': sizing_info.get('required_diameter_mm'),
+                'trim_percent': sizing_info.get('trim_percent'),
+                'sizing_method': sizing_info.get('sizing_method'),
+                'meets_requirements': sizing_info.get('meets_requirements', False)
+            }
+            
+            # Get the actual impeller diameter for this operating point
+            if sizing_info.get('required_diameter_mm'):
+                op_point['impeller_diameter_mm'] = sizing_info['required_diameter_mm']
+            elif operating_point_data.get('impeller_diameter_mm'):
+                op_point['impeller_diameter_mm'] = operating_point_data['impeller_diameter_mm']
+        elif operating_point_data and operating_point_data.get('impeller_diameter_mm'):
+            # Fallback to impeller diameter from performance data
+            op_point['impeller_diameter_mm'] = operating_point_data['impeller_diameter_mm']
 
         # Prepare chart data
         chart_data = {

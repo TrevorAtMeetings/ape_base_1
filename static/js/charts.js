@@ -385,42 +385,64 @@ class PumpChartsManager {
                 opPoint.efficiency_pct >= 70 ? 'Good' :
                     opPoint.efficiency_pct >= 60 ? 'Acceptable' : 'Poor';
 
-            // Format impeller sizing information - get from selected curve
+            // Format impeller sizing information - use actual operating point requirements
             let impellerInfo = 'N/A';
             
-            // Find the selected curve (the one being used for the operating point)
-            let selectedCurve = null;
-            if (this.currentChartData.curves && this.currentChartData.curves.length > 0) {
-                // Look for the curve marked as selected
-                selectedCurve = this.currentChartData.curves.find(curve => curve.is_selected);
-                // If no curve is marked as selected, use the first curve
-                if (!selectedCurve) {
-                    selectedCurve = this.currentChartData.curves[0];
-                }
-            }
-            
-            if (selectedCurve && selectedCurve.impeller_diameter_mm) {
-                const impellerDiameter = selectedCurve.impeller_diameter_mm;
+            // First, try to get impeller information from the operating point data
+            if (opPoint.impeller_diameter_mm) {
+                const actualDiameter = opPoint.impeller_diameter_mm;
                 
-                // Check if this curve represents a scaled/trimmed impeller
-                // Look for speed scaling in the chart data
-                if (this.currentChartData.speed_scaling) {
-                    const speedRatio = this.currentChartData.speed_scaling.speed_ratio || 1.0;
-                    const originalSpeed = this.currentChartData.speed_scaling.original_speed || 1480;
-                    const newSpeed = this.currentChartData.speed_scaling.new_speed || originalSpeed;
+                // Check if sizing information is available (trimming/scaling details)
+                if (opPoint.sizing_info) {
+                    const sizingInfo = opPoint.sizing_info;
+                    const baseDiameter = sizingInfo.base_diameter_mm;
+                    const requiredDiameter = sizingInfo.required_diameter_mm;
+                    const trimPercent = sizingInfo.trim_percent;
+                    const sizingMethod = sizingInfo.sizing_method;
                     
-                    if (Math.abs(speedRatio - 1.0) > 0.01) {
-                        // Speed scaling is applied
-                        impellerInfo = impellerDiameter.toFixed(0) + 'mm @ ' + 
-                            newSpeed.toFixed(0) + ' RPM (scaled from ' + 
-                            originalSpeed.toFixed(0) + ' RPM)';
+                    if (sizingMethod === 'impeller_trimming' && baseDiameter && requiredDiameter && baseDiameter !== requiredDiameter) {
+                        // Impeller trimming is applied
+                        impellerInfo = `${baseDiameter.toFixed(0)}mm (Base) → ${requiredDiameter.toFixed(0)}mm (${trimPercent.toFixed(0)}% Trim)`;
+                    } else if (sizingMethod === 'speed_variation') {
+                        // Speed variation with impeller diameter info
+                        const speedInfo = this.currentChartData.speed_scaling;
+                        if (speedInfo && speedInfo.applied) {
+                            impellerInfo = `${actualDiameter.toFixed(0)}mm @ ${speedInfo.required_speed_rpm.toFixed(0)} RPM (scaled from ${speedInfo.base_speed_rpm.toFixed(0)} RPM)`;
+                        } else {
+                            impellerInfo = `${actualDiameter.toFixed(0)}mm Diameter`;
+                        }
                     } else {
-                        // No scaling
-                        impellerInfo = impellerDiameter.toFixed(0) + 'mm Diameter';
+                        // Standard operation
+                        impellerInfo = `${actualDiameter.toFixed(0)}mm Diameter`;
                     }
                 } else {
-                    // Standard case - no speed scaling info
-                    impellerInfo = impellerDiameter.toFixed(0) + 'mm Diameter';
+                    // No detailed sizing info, but we have the operating point diameter
+                    const speedInfo = this.currentChartData.speed_scaling;
+                    if (speedInfo && speedInfo.applied && Math.abs(speedInfo.speed_ratio - 1.0) > 0.01) {
+                        // Speed scaling is applied
+                        impellerInfo = `${actualDiameter.toFixed(0)}mm @ ${speedInfo.required_speed_rpm.toFixed(0)} RPM (scaled from ${speedInfo.base_speed_rpm.toFixed(0)} RPM)`;
+                    } else {
+                        // Standard operation
+                        impellerInfo = `${actualDiameter.toFixed(0)}mm Diameter`;
+                    }
+                }
+            } else {
+                // Fallback: try to get from selected curve if operating point data is missing
+                let selectedCurve = null;
+                if (this.currentChartData.curves && this.currentChartData.curves.length > 0) {
+                    selectedCurve = this.currentChartData.curves.find(curve => curve.is_selected);
+                    if (!selectedCurve) {
+                        selectedCurve = this.currentChartData.curves[0];
+                    }
+                }
+                
+                if (selectedCurve && selectedCurve.impeller_diameter_mm) {
+                    const speedInfo = this.currentChartData.speed_scaling;
+                    if (speedInfo && speedInfo.applied && Math.abs(speedInfo.speed_ratio - 1.0) > 0.01) {
+                        impellerInfo = `${selectedCurve.impeller_diameter_mm.toFixed(0)}mm @ ${speedInfo.required_speed_rpm.toFixed(0)} RPM (from curve data)`;
+                    } else {
+                        impellerInfo = `${selectedCurve.impeller_diameter_mm.toFixed(0)}mm Diameter (from curve data)`;
+                    }
                 }
             }
 
