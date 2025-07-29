@@ -555,19 +555,19 @@
                         {% set efficiency = selected_pump.get('operating_point', {}).get('efficiency_pct', 0) %}
                         {% if efficiency >= 80 %}
                             <span class="efficiency-indicator efficiency-excellent float-end">
-                                <i class="fas fa-check-circle me-1"></i>Excellent: {{ "%.1f"|format(efficiency) }}%
+                                <i class="fas fa-check-circle me-1"></i>Excellent
                             </span>
                         {% elif efficiency >= 70 %}
                             <span class="efficiency-indicator efficiency-good float-end">
-                                <i class="fas fa-thumbs-up me-1"></i>Good: {{ "%.1f"|format(efficiency) }}%
+                                <i class="fas fa-thumbs-up me-1"></i>Good
                             </span>
                         {% elif efficiency >= 60 %}
                             <span class="efficiency-indicator efficiency-acceptable float-end">
-                                <i class="fas fa-exclamation-triangle me-1"></i>Acceptable: {{ "%.1f"|format(efficiency) }}%
+                                <i class="fas fa-exclamation-triangle me-1"></i>Acceptable
                             </span>
                         {% else %}
                             <span class="efficiency-indicator efficiency-poor float-end">
-                                <i class="fas fa-times-circle me-1"></i>Poor: {{ "%.1f"|format(efficiency) }}%
+                                <i class="fas fa-times-circle me-1"></i>Poor
                             </span>
                         {% endif %}
                     </h4>
