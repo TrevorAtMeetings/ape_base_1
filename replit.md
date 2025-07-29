@@ -106,7 +106,8 @@ The application follows a modular Flask architecture with clear separation of co
 
 ## Changelog
 
-- July 08, 2025. Initial setup
+- July 29, 2025: Created comprehensive build specification document (Spec.md) in docs folder
+- July 08, 2025: Initial setup
 
 ## User Preferences
 
