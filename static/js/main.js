@@ -8,7 +8,34 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Setup form validation and submission
     setupFormHandling();
+    
+    // Hide any persistent progress bars after page load
+    hidePersistentProgressBars();
 });
+
+function hidePersistentProgressBars() {
+    // Hide any progress bars that might be stuck visible
+    const progressBars = document.querySelectorAll('.progress');
+    progressBars.forEach(progressBar => {
+        if (progressBar.style.display !== 'none') {
+            // Add a small delay to ensure the page is fully loaded
+            setTimeout(() => {
+                progressBar.style.display = 'none';
+            }, 1000);
+        }
+    });
+    
+    // Also hide any indeterminate progress bars specifically
+    const indeterminateBars = document.querySelectorAll('.progress .indeterminate');
+    indeterminateBars.forEach(bar => {
+        const parent = bar.closest('.progress');
+        if (parent && parent.style.display !== 'none') {
+            setTimeout(() => {
+                parent.style.display = 'none';
+            }, 1000);
+        }
+    });
+}
 
 /**
  * Initialize all Materialize components

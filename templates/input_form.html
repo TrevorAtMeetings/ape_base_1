@@ -16,8 +16,8 @@
                     Enter your pump requirements below and our intelligent selection algorithm 
                     will recommend the best pump options for your application.
                 </p>
-                
-                
+
+
             </div>
         </div>
     </div>
@@ -44,7 +44,7 @@
                         <p style="color: var(--text-secondary); margin-bottom: 24px;">
                             <strong>Essential pump specifications</strong> - These parameters define your pumping system's operational requirements and directly influence pump selection, sizing, and performance analysis.
                         </p>
-                        
+
                         <div class="row">
                             <div class="col s12 m6">
                                 <div class="input-field">
@@ -63,7 +63,7 @@
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div class="row">
                             <div class="col s12 m6">
                                 <div class="input-group">
@@ -74,38 +74,38 @@
                                     <div class="radio-group">
                                         <p>
                                             <label>
-                                                <input name="pump_type" type="radio" value="General" checked />
+                                                <input name="pump_type" type="radio" value="GENERAL" checked />
                                                 <span>General - All Types</span>
                                             </label>
                                         </p>
                                         <p>
                                             <label>
-                                                <input name="pump_type" type="radio" value="END_SUCTION" />
-                                                <span>End-Suction - Single Stage Centrifugal</span>
+                                                <input name="pump_type" type="radio" value="END SUCTION" />
+                                                <span>End Suction - Single Stage Centrifugal</span>
                                             </label>
                                         </p>
                                         <p>
                                             <label>
                                                 <input name="pump_type" type="radio" value="HSC" />
-                                                <span>Horizontal Split Case</span>
+                                                <span>HSC - Horizontal Split Case</span>
                                             </label>
                                         </p>
                                         <p>
                                             <label>
-                                                <input name="pump_type" type="radio" value="VTP" />
+                                                <input name="pump_type" type="radio" value="AXIAL FLOW" />
+                                                <span>Axial Flow Pump</span>
+                                            </label>
+                                        </p>
+                                        <p>
+                                            <label>
+                                                <input name="pump_type" type="radio" value="VERTICAL TURBINE" />
                                                 <span>Vertical Turbine Pump</span>
                                             </label>
                                         </p>
                                         <p>
                                             <label>
-                                                <input name="pump_type" type="radio" value="MULTI_STAGE" />
+                                                <input name="pump_type" type="radio" value="MULTI-STAGE" />
                                                 <span>Multistage Centrifugal</span>
-                                            </label>
-                                        </p>
-                                        <p>
-                                            <label>
-                                                <input name="pump_type" type="radio" value="AXIAL_FLOW" />
-                                                <span>Axial Flow</span>
                                             </label>
                                         </p>
                                     </div>
@@ -166,7 +166,7 @@
                                 </div>
                             </div>
                         </div>
-                        
+
                         <!-- Variable Flow Requirements -->
                         <div class="row">
                             <div class="col s12">
@@ -192,7 +192,33 @@
                                 </div>
                             </div>
                         </div>
-                        
+
+                        <!-- Direct Pump Search Section -->
+                        <div class="row">
+                            <div class="col s12">
+                                <div class="input-group" style="position: relative;">
+                                    <label class="form-label" style="color: var(--md-primary); font-size: 14px; font-weight: 600; margin-bottom: 10px; display: block;">
+                                        <i class="material-icons" style="font-size: 16px; vertical-align: middle; margin-right: 8px;">search</i>
+                                        Direct Pump Selection (Optional)
+                                    </label>
+                                    <div class="input-field col s12">
+                                        <input type="text" id="direct_pump_search" name="direct_pump_search" class="autocomplete" autocomplete="off">
+                                        <label for="direct_pump_search">Direct Pump Selection (Optional)</label>
+                                        <span class="helper-text">Search for a specific pump model (e.g., 6/8 ALE, 10 WLN 26A)</span>
+                                    </div>
+                                    <div id="pump_search_suggestions" style="display: none; position: absolute; z-index: 1000; width: 100%; margin-top: -10px; border: 1px solid #ddd; border-top: none; border-radius: 0 0 8px 8px; background: white; max-height: 300px; overflow-y: auto; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                                        <!-- Search suggestions will appear here -->
+                                    </div>
+                                    <div id="pump_search_results" style="display: none; margin-top: 10px; padding: 10px; border: 1px solid #ddd; border-radius: 4px; background: #f9f9f9;">
+                                        <p style="margin: 0; color: #666; font-size: 14px;">
+                                            <i class="material-icons tiny">info</i>
+                                            When you enter a pump model above, the system will show that specific pump's performance at your specified flow and head values, regardless of whether it's optimal for your requirements.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="row" id="flow-range-section" style="display: none;">
                             <div class="col s12 m6">
                                 <div class="input-field">
@@ -223,7 +249,7 @@
                             <i class="material-icons left">person</i>
                             Contact Information
                         </span>
-                        
+
                         <div class="row">
                             <div class="col s12 m6">
                                 <div class="input-field">
@@ -240,7 +266,7 @@
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div class="row">
                             <div class="col s12 m6">
                                 <div class="input-field">
@@ -271,7 +297,7 @@
                             <i class="material-icons left">location_on</i>
                             Location
                         </span>
-                        
+
                         <div class="row">
                             <div class="col s12 m6">
                                 <div class="input-field">
@@ -295,7 +321,7 @@
                             <i class="material-icons left">science</i>
                             Liquid Properties
                         </span>
-                        
+
                         <div class="row">
                             <div class="col s12 m6">
                                 <div class="input-group">
@@ -345,7 +371,7 @@
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div class="row">
                             <div class="col s12 m6">
                                 <div class="input-field">
@@ -378,7 +404,7 @@
                             <i class="material-icons left">account_tree</i>
                             System Conditions
                         </span>
-                        
+
                         <div class="row">
                             <div class="col s12 m6">
                                 <div class="input-field">
@@ -397,7 +423,7 @@
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div class="row">
                             <div class="col s12 m6">
                                 <div class="input-field">
@@ -416,7 +442,7 @@
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div class="row">
                             <div class="col s12 m6">
                                 <div class="input-field">
@@ -449,7 +475,7 @@
                             <i class="material-icons left">electric_bolt</i>
                             Motor & Power Requirements
                         </span>
-                        
+
                         <div class="row">
                             <div class="col s12 m6">
                                 <div class="input-field">
@@ -468,7 +494,7 @@
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div class="row">
                             <div class="col s12 m4">
                                 <div class="input-field">
@@ -507,7 +533,7 @@
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div class="row">
                             <div class="col s12 m6">
                                 <div class="input-group">
@@ -595,12 +621,12 @@ function initializeFormComponents() {
     // Initialize tooltips for this form
     var tooltips = document.querySelectorAll('.tooltipped');
     M.Tooltip.init(tooltips);
-    
+
     // Form submission handling
     var form = document.getElementById('pumpSelectionForm');
     var submitBtn = document.getElementById('submit-btn');
     var progressBar = document.getElementById('loading-progress');
-    
+
     if (form) {
         form.addEventListener('submit', function(e) {
             if (submitBtn) {
@@ -608,15 +634,15 @@ function initializeFormComponents() {
                 submitBtn.disabled = true;
             }
             if (progressBar) {
-                progressBar.style.display = 'block';
+                progressBar.classList.add('show');
             }
         });
     }
-    
+
     // Variable flow handling
     const variableFlowRadios = document.querySelectorAll('input[name="variable_flow"]');
     const flowRangeSection = document.getElementById('flow-range-section');
-    
+
     variableFlowRadios.forEach(radio => {
         radio.addEventListener('change', function() {
             if (this.value === 'yes') {
@@ -626,339 +652,68 @@ function initializeFormComponents() {
             }
         });
     });
-    
+
+    // Direct pump search suggestions
+    const pumpSearchInput = document.getElementById('direct_pump_search');
+    const suggestionsDiv = document.getElementById('pump_search_suggestions');
+
+    if (pumpSearchInput && suggestionsDiv) {
+        let searchTimeout;
+
+        pumpSearchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            const query = this.value.trim();
+
+            if (query.length < 2) {
+                suggestionsDiv.style.display = 'none';
+                return;
+            }
+
+            searchTimeout = setTimeout(() => {
+                // Real-time search suggestions are handled by Materialize autocomplete
+                // which fetches data from the /api/pumps endpoint
+                suggestionsDiv.style.display = 'none';
+            }, 300);
+        });
+
+        // Hide suggestions when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!pumpSearchInput.contains(e.target) && !suggestionsDiv.contains(e.target)) {
+                suggestionsDiv.style.display = 'none';
+            }
+        });
+    }
+
     console.log('Form components initialized - radio buttons ready');
-}
 
-function resetForm() {
-    document.getElementById('pumpSelectionForm').reset();
-    M.updateTextFields();
-    M.toast({html: 'Form reset successfully', classes: 'green'});
-}
+    // Initialize autocomplete for direct pump search
+    // Fetch pump data for autocomplete
+    fetch('/api/pumps')
+        .then(response => response.json())
+        .then(data => {
+            if (data.pumps) {
+                const pumpData = {};
+                data.pumps.forEach(pump => {
+                    pumpData[pump.pump_code] = null; // Materialize autocomplete format
+                });
 
-function loadVSCExample() {
-    // 6/8 ALE pump example data - operating point for optimal performance
-    const flowField = document.getElementById('flow_rate');
-    const headField = document.getElementById('total_head');
-    
-    // Removed dummy values - only allow authentic user input
-    if (flowField) {
-        flowField.focus();
-        M.updateTextFields(); // Update Materialize labels
-    }
-    if (headField) {
-        M.updateTextFields(); // Update Materialize labels
-    }
-    
-    // Customer information
-    const contactField = document.getElementById('contact_name');
-    const companyField = document.getElementById('company');
-    const emailField = document.getElementById('email');
-    
-    if (contactField) contactField.value = 'James Richardson';
-    if (companyField) companyField.value = 'Municipal Water Authority';
-    if (emailField) emailField.value = 'j.richardson@waterauth.gov.uk';
-    
-    // Project details
-    const projectField = document.getElementById('project_name');
-    const locationField = document.getElementById('project_location');
-    
-    if (projectField) projectField.value = 'Town Centre Water Supply Upgrade';
-    if (locationField) locationField.value = 'Central Pumping Station, Manchester';
-    
-    // Application details - set radio button values
-    const applicationRadio = document.querySelector('input[name="application"][value="water"]');
-    if (applicationRadio) {
-        applicationRadio.checked = true;
-    }
-    
-    const liquidRadio = document.querySelector('input[name="liquid_type"][value="water"]');
-    if (liquidRadio) {
-        liquidRadio.checked = true;
-    }
-    
-    // Operating conditions
-    const tempField = document.getElementById('temperature');
-    const npshField = document.getElementById('npsh_available');
-    const suctionField = document.getElementById('suction_pressure');
-    const specificGravityField = document.getElementById('specific_gravity');
-    const viscosityField = document.getElementById('viscosity');
-    
-    if (tempField) tempField.value = '15';
-    if (npshField) npshField.value = '4.5';
-    if (suctionField) suctionField.value = '0.1';
-    if (specificGravityField) specificGravityField.value = '1.0';
-    if (viscosityField) viscosityField.value = '1.0';
-    
-    // System conditions
-    const staticHeadField = document.getElementById('static_head');
-    const maxPowerField = document.getElementById('max_power');
-    
-    if (staticHeadField) staticHeadField.value = '15';
-    if (maxPowerField) maxPowerField.value = '160';
-    
-    // Update labels for Materialize
-    M.updateTextFields();
-    
-    // Show success toast
-    M.toast({
-        html: '<i class="material-icons left">check_circle</i>6/8 ALE pump example loaded - ready for AI analysis',
-        classes: 'green darken-1',
-        displayLength: 4000
-    });
-}
-
-// AI Consultation Modal Functions
-function showAIConsultation() {
-    // Create modal if it doesn't exist
-    if (!document.getElementById('aiConsultModal')) {
-        createAIConsultModal();
-    }
-    
-    const modal = M.Modal.getInstance(document.getElementById('aiConsultModal'));
-    modal.open();
-    
-    // Load initial AI guidance based on current form data
-    loadContextualGuidance();
-}
-
-function createAIConsultModal() {
-    const modalHTML = `
-    <div id="aiConsultModal" class="modal modal-fixed-footer" style="max-height: 90%; width: 85%;">
-        <div class="modal-content">
-            <h4 style="color: var(--md-primary);">
-                <i class="material-icons left">psychology</i>
-                AI Technical Consultation
-            </h4>
-            <p>Get instant technical guidance for your pump selection requirements</p>
-            
-            <div class="row">
-                <!-- Quick Consultation -->
-                <div class="col s12 m6">
-                    <div class="card">
-                        <div class="card-content">
-                            <span class="card-title">Quick Consultation</span>
-                            <div class="collection">
-                                <a href="#!" class="collection-item" onclick="askAI('What pump type is best for my flow and head requirements?')">
-                                    <i class="material-icons left">help_outline</i>
-                                    Pump Type Recommendation
-                                </a>
-                                <a href="#!" class="collection-item" onclick="askAI('What are the pump bearing requirements I should consider?')">
-                                    <i class="material-icons left">engineering</i>
-                                    Bearing Standards
-                                </a>
-                                <a href="#!" class="collection-item" onclick="askAI('How do I calculate NPSH requirements?')">
-                                    <i class="material-icons left">calculate</i>
-                                    NPSH Calculations
-                                </a>
-                                <a href="#!" class="collection-item" onclick="askAI('What efficiency considerations should I review?')">
-                                    <i class="material-icons left">trending_up</i>
-                                    Efficiency Analysis
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- AI Chat Interface -->
-                <div class="col s12 m6">
-                    <div class="card">
-                        <div class="card-content">
-                            <span class="card-title">AI Expert Chat</span>
-                            <div id="aiChatContainer" style="height: 250px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; margin: 10px 0; background: #fafafa;">
-                                <div class="ai-message">
-                                    <i class="material-icons tiny">psychology</i>
-                                    <strong>AI Expert:</strong> I'm ready to help with your pump selection. Ask me about API standards, efficiency calculations, or specific pump requirements.
-                                </div>
-                            </div>
-                            
-                            <div class="input-field">
-                                <input id="aiQueryInput" type="text" onkeypress="handleAIEnter(event)">
-                                <label for="aiQueryInput">Ask about pump selection, API standards, efficiency...</label>
-                            </div>
-                            
-                            <button class="btn waves-effect waves-light deep-purple darken-1" onclick="sendAIQuery()" style="width: 100%;">
-                                <i class="material-icons left">send</i>
-                                Ask AI Expert
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Contextual Guidance -->
-            <div class="row">
-                <div class="col s12">
-                    <div class="card blue-grey lighten-5">
-                        <div class="card-content">
-                            <span class="card-title">Contextual Guidance</span>
-                            <div id="contextualGuidance">
-                                <p><i class="material-icons tiny">info</i> Loading AI analysis of your current pump requirements...</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="modal-footer">
-            <a href="/chat" class="btn-flat" target="_blank">
-                <i class="material-icons left">open_in_new</i>
-                Open Full AI Expert
-            </a>
-            <a href="#!" class="modal-close btn-flat">Close</a>
-        </div>
-    </div>`;
-    
-    document.body.insertAdjacentHTML('beforeend', modalHTML);
-    M.Modal.init(document.getElementById('aiConsultModal'));
-}
-
-function loadContextualGuidance() {
-    const flowValue = document.getElementById('flow_rate')?.value;
-    const headValue = document.getElementById('head')?.value;
-    const application = document.getElementById('application')?.value;
-    
-    let contextQuery = "Based on my pump selection form, what should I consider?";
-    
-    if (flowValue && headValue) {
-        contextQuery = `I need a pump for ${flowValue} m³/h flow and ${headValue} m head. What technical considerations should I review?`;
-    } else if (application) {
-        contextQuery = `I'm selecting a pump for ${application} application. What are the key requirements?`;
-    }
-    
-    // Send contextual query to AI
-    fetch('/api/chat/query', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            query: contextQuery
+                // Initialize Materialize autocomplete
+                const autocompleteElem = document.getElementById('direct_pump_search');
+                if (autocompleteElem) {
+                    M.Autocomplete.init(autocompleteElem, {
+                        data: pumpData,
+                        limit: 10,
+                        minLength: 1,
+                        onAutocomplete: function(val) {
+                            console.log('Pump selected:', val);
+                        }
+                    });
+                }
+            }
         })
-    })
-    .then(response => response.json())
-    .then(data => {
-        const guidanceDiv = document.getElementById('contextualGuidance');
-        guidanceDiv.innerHTML = `
-            <div class="ai-guidance">
-                <i class="material-icons tiny green-text">check_circle</i>
-                <strong>AI Analysis:</strong><br>
-                ${data.response.replace(/\n/g, '<br>')}
-            </div>
-        `;
-    })
-    .catch(error => {
-        document.getElementById('contextualGuidance').innerHTML = 
-            '<p><i class="material-icons tiny orange-text">warning</i> AI guidance temporarily unavailable. Please try the full AI Expert interface.</p>';
-    });
-}
-
-function askAI(question) {
-    document.getElementById('aiQueryInput').value = question;
-    sendAIQuery();
-}
-
-function handleAIEnter(event) {
-    if (event.key === 'Enter') {
-        sendAIQuery();
-    }
-}
-
-function sendAIQuery() {
-    const query = document.getElementById('aiQueryInput').value.trim();
-    if (!query) return;
-    
-    const chatContainer = document.getElementById('aiChatContainer');
-    
-    // Add user message
-    chatContainer.innerHTML += `
-        <div class="user-message" style="margin: 10px 0; text-align: right;">
-            <strong>You:</strong> ${query}
-        </div>
-    `;
-    
-    // Add loading message
-    chatContainer.innerHTML += `
-        <div class="ai-loading" style="margin: 10px 0;">
-            <i class="material-icons tiny">psychology</i>
-            <strong>AI Expert:</strong> <em>Analyzing your question...</em>
-        </div>
-    `;
-    
-    chatContainer.scrollTop = chatContainer.scrollHeight;
-    document.getElementById('aiQueryInput').value = '';
-    
-    // Send query to AI
-    fetch('/api/chat/query', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            query: query
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        // Remove loading message
-        const loadingMsg = chatContainer.querySelector('.ai-loading');
-        if (loadingMsg) loadingMsg.remove();
-        
-        // Add AI response
-        chatContainer.innerHTML += `
-            <div class="ai-message" style="margin: 10px 0;">
-                <i class="material-icons tiny green-text">psychology</i>
-                <strong>AI Expert:</strong><br>
-                ${data.response.replace(/\n/g, '<br>')}
-                <div style="font-size: 0.8em; color: #666; margin-top: 5px;">
-                    Sources: ${data.source_documents.slice(0, 2).join(', ')}
-                </div>
-            </div>
-        `;
-        
-        chatContainer.scrollTop = chatContainer.scrollHeight;
-    })
-    .catch(error => {
-        // Remove loading message and show error
-        const loadingMsg = chatContainer.querySelector('.ai-loading');
-        if (loadingMsg) loadingMsg.remove();
-        
-        chatContainer.innerHTML += `
-            <div class="ai-message" style="margin: 10px 0;">
-                <i class="material-icons tiny orange-text">warning</i>
-                <strong>AI Expert:</strong> I'm temporarily unavailable. Please try the full AI Expert interface or contact technical support.
-            </div>
-        `;
-        
-        chatContainer.scrollTop = chatContainer.scrollHeight;
-    });
-}
-
-function validateAndCompare() {
-    const flowField = document.getElementById('flow_rate');
-    const headField = document.getElementById('total_head');
-    
-    if (!flowField || !headField) {
-        M.toast({html: 'Form fields not found', classes: 'red'});
-        return;
-    }
-    
-    if (!flowField.value || !headField.value) {
-        M.toast({html: 'Please enter both flow and head values first', classes: 'red'});
-        return;
-    }
-    
-    const flow = parseFloat(flowField.value);
-    const head = parseFloat(headField.value);
-    
-    if (isNaN(flow) || isNaN(head) || flow <= 0 || head <= 0) {
-        M.toast({html: 'Please enter valid positive numbers for flow and head', classes: 'red'});
-        return;
-    }
-    
-    const pumpType = document.getElementById('pump_type')?.value || 'General';
-    window.location.href = `/compare?flow=${flow}&head=${head}&pump_type=${pumpType}`;
+        .catch(error => {
+            console.error('Error loading pump data for autocomplete:', error);
+        });
 }
 </script>
 {% endblock %}

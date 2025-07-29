@@ -83,6 +83,18 @@ def pump_selection():
             safe_flash('Invalid numerical values for flow rate or head.', 'error')
             return render_template('input_form.html'), 400
 
+        # Check for direct pump search
+        direct_pump_search = request.form.get('direct_pump_search', '').strip()
+        
+        if direct_pump_search:
+            logger.info(f"Direct pump search requested for: '{direct_pump_search}' with flow={flow_val}, head={head_val}")
+            # Redirect directly to pump report with the searched pump
+            return redirect(url_for('reports.pump_report',
+                                   pump_code=direct_pump_search,
+                                   flow=str(flow_val),
+                                   head=str(head_val),
+                                   direct_search='true'))
+        
         # Process the selection - redirect to pump options
         return redirect(url_for('main_flow.pump_options', 
                                flow=str(flow_val), 

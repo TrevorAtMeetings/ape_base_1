@@ -116,7 +116,7 @@ def pump_report(pump_code):
             catalog_engine = get_catalog_engine()
             target_pump = catalog_engine.get_pump_by_code(pump_code)
             if target_pump:
-                performance = catalog_pump.get_performance_at_duty(flow, head)
+                performance = target_pump.get_performance_at_duty(flow, head)
                 if performance:
                     # Calculate proper suitability score to match catalog engine scoring
                     efficiency_pct = performance.get('efficiency_pct', 0)
@@ -166,37 +166,89 @@ def pump_report(pump_code):
             flow = site_requirements_data.get('flow_m3hr', 0)
             head = site_requirements_data.get('head_m', 0)
             pump_type = site_requirements_data.get('pump_type', 'General')
+            direct_search = request.args.get('direct_search', 'false').lower() == 'true'
 
             if flow and head:
-                alternative_selections = catalog_engine.select_pumps(
-                    flow_m3hr=flow,
-                    head_m=head,
-                    max_results=5,
-                    pump_type=pump_type
-                )
+                from ..catalog_engine import get_catalog_engine
+                catalog_engine = get_catalog_engine()
 
-                # Filter out the selected pump and create alternative data
-                for alt_pump in alternative_selections:
-                    if alt_pump.get('pump_code') != pump_code:
-                        # Normalize alternative pump score to 0-100% scale
-                        raw_alt_score = alt_pump.get('overall_score', 0)
-                        normalized_alt_score = min(100.0, (raw_alt_score / 115.0) * 100.0)
-                        
-                        alternatives.append({
-                            'pump_code': alt_pump.get('pump_code'),
-                            'overall_score': normalized_alt_score,
-                            'efficiency_at_duty': alt_pump.get('efficiency_pct', 0),
-                            'operating_point': alt_pump.get('operating_point', {}),
-                            'suitable': alt_pump.get('efficiency_pct', 0) > 40,
-                            'manufacturer': alt_pump.get('manufacturer', 'APE PUMPS'),
-                            'pump_type': alt_pump.get('pump_type', 'Centrifugal'),
-                            'test_speed_rpm': alt_pump.get('test_speed_rpm', 1480),
-                            'stages': '1'
-                        })
+                # Handle direct pump search
+                if direct_search:
+                    # Find the specific pump by code (case-insensitive)
+                    target_pump = None
+                    search_code = pump_code.lower().strip()
 
-                        # Limit to 3 alternatives
-                        if len(alternatives) >= 3:
+                    for pump in catalog_engine.pumps:
+                        pump_code_lower = pump.pump_code.lower().strip()
+                        # Try exact match first, then partial match
+                        if pump_code_lower == search_code or search_code in pump_code_lower:
+                            target_pump = pump
                             break
+
+                    # If still not found, try more flexible matching
+                    if not target_pump:
+                        for pump in catalog_engine.pumps:
+                            pump_code_lower = pump.pump_code.lower().strip()
+                            # Remove common separators and spaces for matching
+                            normalized_search = search_code.replace('/', '').replace('-', '').replace(' ', '')
+                            normalized_pump = pump_code_lower.replace('/', '').replace('-', '').replace(' ', '')
+                            if normalized_search in normalized_pump or normalized_pump in normalized_search:
+                                target_pump = pump
+                                break
+
+                    if not target_pump:
+                        logger.warning(f"Direct search failed for pump code: '{pump_code}'. Available pumps: {[p.pump_code for p in catalog_engine.pumps[:10]]}")
+                        safe_flash(f'Pump "{pump_code}" not found in database. Please check the model name and try again.', 'error')
+                        return redirect(url_for('main_flow.index'))
+
+                    # Calculate performance for the direct search pump
+                    try:
+                        performance_result = target_pump.get_performance_at_duty(flow, head)
+
+                        if performance_result and not performance_result.get('error'):
+                            operating_point = performance_result
+                            suitable_pumps = [target_pump]
+                            logger.info(f"Direct search successful for pump: {pump_code}")
+                        else:
+                            logger.error(f"Performance calculation failed for pump: {pump_code}")
+                            safe_flash(f'Error calculating performance for pump "{pump_code}".', 'error')
+                            return redirect(url_for('main_flow.index'))
+
+                    except Exception as e:
+                        logger.error(f"Error calculating performance for direct search pump {pump_code}: {str(e)}")
+                        safe_flash(f'Error calculating performance for pump "{pump_code}".', 'error')
+                        return redirect(url_for('main_flow.index'))
+                else:
+                    # Normal pump selection process
+                    alternative_selections = catalog_engine.select_pumps(
+                        flow_m3hr=flow,
+                        head_m=head,
+                        max_results=5,
+                        pump_type=pump_type
+                    )
+
+                    # Filter out the selected pump and create alternative data
+                    for alt_pump in alternative_selections:
+                        if alt_pump.get('pump_code') != pump_code:
+                            # Normalize alternative pump score to 0-100% scale
+                            raw_alt_score = alt_pump.get('overall_score', 0)
+                            normalized_alt_score = min(100.0, (raw_alt_score / 115.0) * 100.0)
+
+                            alternatives.append({
+                                'pump_code': alt_pump.get('pump_code'),
+                                'overall_score': normalized_alt_score,
+                                'efficiency_at_duty': alt_pump.get('efficiency_pct', 0),
+                                'operating_point': alt_pump.get('operating_point', {}),
+                                'suitable': alt_pump.get('efficiency_pct', 0) > 40,
+                                'manufacturer': alt_pump.get('manufacturer', 'APE PUMPS'),
+                                'pump_type': alt_pump.get('pump_type', 'Centrifugal'),
+                                'test_speed_rpm': alt_pump.get('test_speed_rpm', 1480),
+                                'stages': '1'
+                            })
+
+                            # Limit to 3 alternatives
+                            if len(alternatives) >= 3:
+                                break
         except Exception as e:
             logger.warning(f"Failed to generate alternatives: {e}")
             alternatives = []

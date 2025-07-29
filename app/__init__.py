@@ -84,7 +84,7 @@ app.register_blueprint(chat_bp)
 
 # Register the API blueprint
 from .route_modules.api import api_bp
-app.register_blueprint(api_bp)
+app.register_blueprint(api_bp, url_prefix='/api')
 
 # Register the Pump Editor blueprint
 from .route_modules.pump_editor_routes import pump_editor_bp

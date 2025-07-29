@@ -187,7 +187,7 @@ class PumpChartsManager {
             if (this.currentChartData.system_curve && this.currentChartData.system_curve.length > 0) {
                 const systemFlows = this.currentChartData.system_curve.map(point => point.flow_m3hr);
                 const systemHeads = this.currentChartData.system_curve.map(point => point.head_m);
-                
+
                 traces.push({
                     x: systemFlows,
                     y: systemHeads,
@@ -208,21 +208,21 @@ class PumpChartsManager {
                 // Where H_static is typically 30-60% of total head at duty point
                 const staticHead = opPoint.head_m * 0.4; // 40% static head assumption
                 const frictionHead = opPoint.head_m - staticHead;
-                
+
                 // Calculate friction coefficient from duty point
                 const frictionCoeff = frictionHead / (opPoint.flow_m3hr * opPoint.flow_m3hr);
-                
+
                 // Generate system curve points from 0 to 150% of duty flow
                 const systemFlows = [];
                 const systemHeads = [];
-                
+
                 for (let i = 0; i <= 15; i++) {
                     const flow = (opPoint.flow_m3hr * i) / 10; // 0% to 150% in 10% increments
                     const head = staticHead + frictionCoeff * flow * flow;
                     systemFlows.push(flow);
                     systemHeads.push(head);
                 }
-                
+
                 traces.push({
                     x: systemFlows,
                     y: systemHeads,
@@ -323,7 +323,7 @@ class PumpChartsManager {
                     symbol: pointSymbol,
                     line: { color: '#d32f2f', width: 3 }
                 },
-                hovertemplate: `<b>🎯 OPERATING POINT ANALYSIS</b><br>` +
+                hovertemplate: '<b>🎯 OPERATING POINT ANALYSIS</b><br>' +
                               `<b>Flow Rate:</b> ${opPoint.flow_m3hr.toFixed(1)} m³/hr<br>` +
                               `<b>Head:</b> ${opPoint.head_m.toFixed(1)} m<br>` +
                               `<b>Efficiency:</b> ${opPoint.efficiency_pct.toFixed(1)}% (${efficiencyRating})<br>` +
@@ -575,7 +575,7 @@ class PumpChartsManager {
                     symbol: pointSymbol,
                     line: { color: '#d32f2f', width: 3 }
                 },
-                hovertemplate: `<b>Operating Point</b><br>Flow: ${opPoint.flow_m3hr.toFixed(1)} m³/hr<br>Efficiency: ${opPoint.efficiency_pct.toFixed(1)}%<extra></extra>`
+                hovertemplate: '<b>Operating Point</b><br>Flow: %{x:.0f} m³/hr<br>Efficiency: %{y:.1f}%<extra></extra>'
             });
         }
 
@@ -820,7 +820,7 @@ class PumpChartsManager {
                     symbol: pointSymbol,
                     line: { color: '#d32f2f', width: 3 }
                 },
-                hovertemplate: `<b>Operating Point</b><br>Flow: ${opPoint.flow_m3hr.toFixed(1)} m³/hr<br>Power: ${opPoint.power_kw.toFixed(1)} kW<extra></extra>`
+                hovertemplate: '<b>Operating Point</b><br>Flow: %{x:.0f} m³/hr<br>Power: %{y:.1f} kW<extra></extra>'
             });
         }
 
@@ -1041,7 +1041,7 @@ class PumpChartsManager {
                     symbol: pointSymbol,
                     line: { color: '#d32f2f', width: 3 }
                 },
-                hovertemplate: `<b>Operating Point</b><br>Flow: ${opPoint.flow_m3hr.toFixed(1)} m³/hr<br>NPSHr: ${opPoint.npshr_m.toFixed(1)} m<extra></extra>`
+                hovertemplate: '<b>Operating Point</b><br>Flow: %{x:.0f} m³/hr<br>NPSHr: %{y:.1f} m<extra></extra>'
             });
         } else if (!hasNpshData) {
             // Show message when no NPSH data is available
@@ -1254,8 +1254,8 @@ class PumpChartsManager {
 }
 
 // Cache for chart data to avoid redundant API calls
-    let chartDataCache = {};
-    const CACHE_DURATION = 300000; // 5 minutes
+let chartDataCache = {};
+const CACHE_DURATION = 300000; // 5 minutes
 
 // Global chart manager instance
 window.pumpChartsManager = new PumpChartsManager();

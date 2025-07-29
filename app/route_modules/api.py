@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 # Create blueprint
 api_bp = Blueprint('api', __name__)
 
-@api_bp.route('/api/chart_data/<pump_code>')
+@api_bp.route('/chart_data/<pump_code>')
 def get_chart_data(pump_code):
     """API endpoint to get chart data for interactive Plotly.js charts."""
     try:
@@ -43,7 +43,7 @@ def get_chart_data(pump_code):
 
         # Use catalog pump curves directly
         curves = target_pump.curves
-        
+
         if not curves:
             response = jsonify({'error': f'No curve data available for pump {pump_code}'})
             response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
@@ -54,18 +54,18 @@ def get_chart_data(pump_code):
 
         # Get the best curve and calculate performance using catalog engine
         best_curve = target_pump.get_best_curve_for_duty(flow_rate, head)
-        
+
         # Calculate performance at duty point with detailed analysis
         performance_result = target_pump.get_performance_at_duty(flow_rate, head)
-        
+
         # Extract operating point details from performance calculation
         operating_point = None
         speed_scaling_applied = False
         actual_speed_ratio = 1.0
-        
+
         if performance_result and not performance_result.get('error'):
             operating_point = performance_result
-            
+
             # Check for speed variation in the performance calculation
             sizing_info = performance_result.get('sizing_info')
             if sizing_info and sizing_info.get('sizing_method') == 'speed_variation':
@@ -75,7 +75,7 @@ def get_chart_data(pump_code):
                 actual_speed_ratio = required_speed / base_speed
                 logger.info(f"Chart API: Speed variation detected - {base_speed}→{required_speed} RPM (ratio: {actual_speed_ratio:.3f})")
                 logger.info(f"Chart API: Performance at scaled speed - power: {performance_result.get('power_kw')}kW")
-        
+
         logger.info(f"Chart API: Final scaling status - applied: {speed_scaling_applied}, ratio: {actual_speed_ratio:.3f}")
 
         # Prepare chart data with enhanced operating point including sizing info
@@ -120,19 +120,19 @@ def get_chart_data(pump_code):
                 if curve.get('curve_id') == best_curve.get('curve_id'):
                     best_curve_index = i
                     break
-        
+
         # Use the actual performance calculation results for consistent chart scaling
-        
+
         for i, curve in enumerate(curves):
             # Extract data points from catalog curve format
             performance_points = curve.get('performance_points', [])
             is_selected_curve = (i == best_curve_index)
-            
+
             # For the selected curve, use the same calculation methodology as operating point
             if is_selected_curve and operating_point:
                 # Generate chart data that matches the operating point calculation
                 # This ensures consistency between chart visualization and performance results
-                
+
                 if speed_scaling_applied and actual_speed_ratio != 1.0:
                     # Apply speed scaling to match operating point calculation
                     flows = [p['flow_m3hr'] * actual_speed_ratio for p in performance_points if 'flow_m3hr' in p]
@@ -150,9 +150,9 @@ def get_chart_data(pump_code):
                 flows = [p['flow_m3hr'] for p in performance_points if 'flow_m3hr' in p]
                 heads = [p['head_m'] for p in performance_points if 'head_m' in p]
                 powers = calculate_power_curve(performance_points)
-            
+
             efficiencies = [p.get('efficiency_pct') for p in performance_points if p.get('efficiency_pct') is not None]
-                
+
             npshrs = [p.get('npshr_m') for p in performance_points if p.get('npshr_m') is not None]
 
             curve_data = {
@@ -180,7 +180,7 @@ def get_chart_data(pump_code):
         error_response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
         return error_response, 500
 
-@api_bp.route('/api/chart_data_safe/<safe_pump_code>')
+@api_bp.route('/chart_data_safe/<safe_pump_code>')
 def get_chart_data_safe(safe_pump_code):
     """Optimized API endpoint to get chart data using base64-encoded pump codes."""
     start_time = time.time()
@@ -200,11 +200,11 @@ def get_chart_data_safe(safe_pump_code):
         # Use catalog engine for consistent pump lookup
         logger.info(f"Chart API: Loading data for pump {pump_code}")
         data_load_start = time.time()
-        
+
         from ..catalog_engine import get_catalog_engine
         catalog_engine = get_catalog_engine()
         target_pump = catalog_engine.get_pump_by_code(pump_code)
-        
+
         logger.info(f"Chart API: Catalog lookup took {time.time() - data_load_start:.3f}s")
 
         if not target_pump:
@@ -212,7 +212,7 @@ def get_chart_data_safe(safe_pump_code):
 
         # Use catalog pump curves directly
         curves = target_pump.curves
-        
+
         if not curves:
             return jsonify({'error': f'Pump {pump_code} not found or no curve data available'})
 
@@ -223,7 +223,7 @@ def get_chart_data_safe(safe_pump_code):
         # Extract speed scaling information from performance calculation
         speed_scaling_applied = False
         actual_speed_ratio = 1.0
-        
+
         if operating_point_data and operating_point_data.get('sizing_info'):
             sizing_info = operating_point_data['sizing_info']
             if sizing_info.get('sizing_method') == 'speed_variation':
@@ -270,19 +270,19 @@ def get_chart_data_safe(safe_pump_code):
                 if curve.get('curve_id') == best_curve.get('curve_id'):
                     best_curve_index = i
                     break
-        
+
         for i, curve in enumerate(curves):
             # Extract data points from catalog curve format
             performance_points = curve.get('performance_points', [])
             is_selected_curve = (i == best_curve_index)
-            
+
             # Calculate base data
             base_flows = [p['flow_m3hr'] for p in performance_points if 'flow_m3hr' in p]
             base_heads = [p['head_m'] for p in performance_points if 'head_m' in p]
             base_powers = calculate_power_curve(performance_points)
             efficiencies = [p.get('efficiency_pct') for p in performance_points if p.get('efficiency_pct') is not None]
             npshrs = [p.get('npshr_m') for p in performance_points if p.get('npshr_m') is not None]
-            
+
             # Apply speed scaling to selected curve if speed variation is required
             if is_selected_curve and speed_scaling_applied and actual_speed_ratio != 1.0:
                 # Apply affinity laws for speed variation - Global Fix Implementation
@@ -343,15 +343,26 @@ def calculate_power_curve(performance_points):
             powers.append(max(0, estimated_power))
     return powers
 
-@api_bp.route('/api/pumps', methods=['GET'])
+@api_bp.route('/pumps', methods=['GET'])
 def api_pumps():
-    """API endpoint to get all pumps."""
+    """API endpoint to get all pumps for autocomplete with optional HSC filtering."""
     try:
         from ..catalog_engine import get_catalog_engine
         catalog_engine = get_catalog_engine()
-        
+
+        # Get filter parameters
+        hsc_filter = request.args.get('hsc_filter', '').strip()
+
         pumps = []
         for pump in catalog_engine.pumps:
+            # Apply HSC filter if specified
+            if hsc_filter:
+                # Check if pump matches HSC criteria (pump_type or model_series contains HSC)
+                if ('hsc' not in pump.pump_type.lower() and 
+                    'hsc' not in pump.model_series.lower() and
+                    'hsc' not in pump.pump_code.lower()):
+                    continue
+
             pumps.append({
                 'pump_code': pump.pump_code,
                 'manufacturer': pump.manufacturer,
@@ -361,12 +372,14 @@ def api_pumps():
                 'max_head_m': pump.max_head_m,
                 'curves_count': len(pump.curves)
             })
-        
+
         return jsonify({'pumps': pumps})
-    
+
     except Exception as e:
         logger.error(f"Error in api_pumps: {str(e)}")
         return jsonify({'error': 'Failed to retrieve pump data'}), 500
+
+
 
 @app.route('/select_pump', methods=['POST'])
 def select_pump():
@@ -376,28 +389,28 @@ def select_pump():
         pump_code = data.get('pump_code')
         flow = data.get('flow', type=float)
         head = data.get('head', type=float)
-        
+
         if not all([pump_code, flow, head]):
             return jsonify({'error': 'Missing required parameters'}), 400
-        
+
         from ..catalog_engine import get_catalog_engine
         catalog_engine = get_catalog_engine()
         pump = catalog_engine.get_pump_by_code(pump_code)
-        
+
         if not pump:
             return jsonify({'error': 'Pump not found'}), 404
-        
+
         performance = pump.get_performance_at_duty(flow, head)
-        
+
         if not performance:
             return jsonify({'error': 'Pump cannot meet requirements'}), 400
-        
+
         return jsonify({
             'pump_code': pump_code,
             'performance': performance,
             'suitable': performance.get('efficiency_pct', 0) > 40
         })
-    
+
     except Exception as e:
         logger.error(f"Error in select_pump: {str(e)}")
         return jsonify({'error': 'Failed to select pump'}), 500
@@ -518,13 +531,13 @@ def convert_markdown_api():
     try:
         data = request.get_json()
         markdown_text = data.get('markdown', '')
-        
+
         if not markdown_text:
             return jsonify({'error': 'No markdown text provided'}), 400
-            
+
         html_output = markdown_to_html(markdown_text)
         return jsonify({'html': html_output})
-        
+
     except Exception as e:
         logger.error(f"Error in markdown conversion API: {e}")
         return jsonify({'error': 'Markdown conversion failed'}), 500
@@ -534,7 +547,7 @@ def markdown_to_html(text: str) -> str:
     if not text or not isinstance(text, str):
         logger.warning("markdown_to_html received empty or invalid input.")
         return ""
-    
+
     try:
         # Clean up source document references first
         clean_text = text
@@ -543,27 +556,27 @@ def markdown_to_html(text: str) -> str:
         clean_text = re.sub(r'as stated in ([^.,\s]+\.pdf)', 'as stated in technical literature', clean_text, flags=re.IGNORECASE)
         clean_text = re.sub(r'from ([^.,\s]+\.pdf)', 'from technical documentation', clean_text, flags=re.IGNORECASE)
         clean_text = re.sub(r'\b[a-zA-Z_\-]+\.pdf\b', '', clean_text)
-        
+
         # Preserve line breaks and normalize spacing without collapsing line structure
         clean_text = re.sub(r'[ \t]+', ' ', clean_text)  # Only collapse spaces/tabs, not newlines
         clean_text = re.sub(r'[ \t]*\n[ \t]*', '\n', clean_text)  # Clean up line breaks
         clean_text = clean_text.strip()
-        
+
         # Use markdown2 with appropriate extras for robust parsing
         html = markdown2.markdown(clean_text, extras=['cuddled-lists', 'strike', 'fenced-code-blocks'])
-        
+
         # Convert H2 tags (from ##) to H4 with proper styling for consistency
         html = html.replace('<h2>', '<h4 style="color: #1976d2; margin: 20px 0 10px 0; font-weight: 600;">')
         html = html.replace('</h2>', '</h4>')
-        
+
         # Add proper styling to paragraphs and lists
         html = html.replace('<p>', '<p style="margin: 15px 0; line-height: 1.6; color: #333;">')
         html = html.replace('<ul>', '<ul style="margin: 15px 0; padding-left: 20px;">')
         html = html.replace('<li>', '<li style="margin: 5px 0; color: #555;">')
-        
+
         logger.debug("Markdown successfully converted to HTML using markdown2.")
         return html
-        
+
     except Exception as e:
         logger.error(f"Error converting markdown to HTML with markdown2: {e}", exc_info=True)
         return "<p>Error: Could not display formatted technical analysis at this time.</p>"
@@ -667,7 +680,7 @@ def _generate_efficiency_optimization_analysis(pump_code, efficiency, power, flo
     efficiency_val = float(efficiency)
     power_val = float(power)
     flow_val = float(flow)
-    
+
     analysis = f"""## Efficiency Optimization Analysis for {pump_code}
 
 ### Current Performance Assessment
@@ -703,7 +716,7 @@ def _generate_maintenance_recommendations(pump_code, efficiency, power, applicat
     """Generate focused maintenance recommendations"""
     efficiency_val = float(efficiency)
     power_val = float(power)
-    
+
     analysis = f"""## Maintenance Recommendations for {pump_code}
 
 ### Preventive Maintenance Schedule
@@ -748,4 +761,4 @@ def _generate_maintenance_recommendations(pump_code, efficiency, power, applicat
 - Condition-based monitoring reduces unexpected failures by 70%
 - Proper maintenance maintains efficiency within 2-3% of design values"""
 
-    return analysis 
+    return analysis

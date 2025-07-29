@@ -1129,10 +1129,16 @@ nav.teal {
     z-index: 1000;
     height: 4px;
     background-color: transparent;
+    display: none; /* Hide by default */
 }
 
 .progress .indeterminate {
     background-color: var(--accent-cyan);
+}
+
+/* Only show progress bars when explicitly enabled */
+.progress.show {
+    display: block;
 }
 
 /* Flash Messages Enhancement */

@@ -14,30 +14,6 @@ from .pump_repository import get_pump_repository
 logger = logging.getLogger(__name__)
 
 class CatalogPump:
-    """Wrapper class for pump data from catalog"""
-    
-    def __init__(self, pump_data):
-        self.pump_data = pump_data
-        self.pump_code = pump_data.get('pump_code', '')
-        self.manufacturer = pump_data.get('manufacturer', 'APE PUMPS')
-        self.pump_type = pump_data.get('pump_type', 'END SUCTION')
-        self.model_series = pump_data.get('model_series', '')
-        self.curves = pump_data.get('curves', [])
-        
-    def get_performance_at_duty(self, flow_m3hr, head_m):
-        """Get performance data at specified duty point"""
-        # Implementation would go here
-        return {
-            'efficiency_pct': 75.0,
-            'power_kw': 50.0,
-            'npshr_m': 3.5,
-            'head_m': head_m,
-            'flow_m3hr': flow_m3hr,
-            'impeller_diameter_mm': 200.0,
-            'test_speed_rpm': 1480
-        }
-
-class CatalogPump:
     """Represents a pump model with multiple performance curves"""
 
     def __init__(self, pump_data: Dict[str, Any]):
@@ -484,12 +460,9 @@ class CatalogEngine:
 
         for pump in self.pumps:
             # Filter by pump type if specified
-            if pump_type and pump_type.upper() != 'GENERAL':
-                # Normalize pump type names to handle form/database mismatches
-                form_type = pump_type.upper().replace('_', '')  # MULTI_STAGE -> MULTISTAGE
-                db_type = pump.pump_type.upper().replace('_', '')  # Already MULTISTAGE
-                
-                if form_type != db_type:
+            if pump_type and pump_type.upper() not in ('GENERAL', 'General'):
+                # Direct comparison with database pump types
+                if pump_type.upper() != pump.pump_type.upper():
                     continue  # Skip pumps that don't match the selected type
                 filtered_count += 1
             
