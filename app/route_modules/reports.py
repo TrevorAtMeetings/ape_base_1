@@ -188,25 +188,52 @@ def pump_report(pump_code):
                     search_code = pump_code.lower().strip()
 
                     # Enhanced search logic with better matching
+                    best_match = None
+                    best_match_score = 0
+                    
                     for pump in catalog_engine.pumps:
                         pump_code_lower = pump.pump_code.lower().strip()
-                        # Try exact match first, then partial match
-                        if pump_code_lower == search_code or search_code in pump_code_lower:
+                        
+                        # Try exact match first (highest priority)
+                        if pump_code_lower == search_code:
                             target_pump = pump
-                            logger.info(f"Direct search: Found exact/partial match '{pump.pump_code}' for search '{pump_code}'")
+                            logger.info(f"Direct search: Found exact match '{pump.pump_code}' for search '{pump_code}'")
                             break
-
-                    # If still not found, try more flexible matching
-                    if not target_pump:
-                        for pump in catalog_engine.pumps:
-                            pump_code_lower = pump.pump_code.lower().strip()
-                            # Remove common separators and spaces for matching
-                            normalized_search = search_code.replace('/', '').replace('-', '').replace(' ', '')
-                            normalized_pump = pump_code_lower.replace('/', '').replace('-', '').replace(' ', '')
-                            if normalized_search in normalized_pump or normalized_pump in normalized_search:
-                                target_pump = pump
-                                logger.info(f"Direct search: Found normalized match '{pump.pump_code}' for search '{pump_code}'")
-                                break
+                        
+                        # Calculate similarity score for fuzzy matching
+                        match_score = 0
+                        
+                        # Check if search term is contained in pump code
+                        if search_code in pump_code_lower:
+                            match_score += 50
+                        
+                        # Check normalized versions (remove spaces, hyphens, slashes)
+                        normalized_search = search_code.replace('/', '').replace('-', '').replace(' ', '').replace('_', '')
+                        normalized_pump = pump_code_lower.replace('/', '').replace('-', '').replace(' ', '').replace('_', '')
+                        
+                        if normalized_search == normalized_pump:
+                            match_score += 100  # Perfect normalized match
+                        elif normalized_search in normalized_pump:
+                            match_score += 75   # Partial normalized match
+                        elif normalized_pump in normalized_search:
+                            match_score += 60   # Reverse partial match
+                        
+                        # Check word-by-word matching
+                        search_words = search_code.split()
+                        pump_words = pump_code_lower.split()
+                        matching_words = sum(1 for word in search_words if any(word in pump_word for pump_word in pump_words))
+                        if matching_words > 0:
+                            match_score += matching_words * 20
+                        
+                        # Update best match if this is better
+                        if match_score > best_match_score and match_score >= 50:  # Minimum threshold
+                            best_match = pump
+                            best_match_score = match_score
+                    
+                    # Use best match if no exact match found
+                    if not target_pump and best_match:
+                        target_pump = best_match
+                        logger.info(f"Direct search: Found fuzzy match '{best_match.pump_code}' (score: {best_match_score}) for search '{pump_code}'")
 
                     if not target_pump:
                         logger.warning(f"Direct search failed for pump code: '{pump_code}'. Available pumps: {[p.pump_code for p in catalog_engine.pumps[:10]]}")
