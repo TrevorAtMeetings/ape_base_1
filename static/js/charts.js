@@ -314,7 +314,7 @@ class PumpChartsManager {
                     bepPercentage = ((opPoint.flow_m3hr / bepFlow) * 100).toFixed(0);
                 }
             }
-            
+
             const efficiencyRating = opPoint.efficiency_pct >= 80 ? 'Excellent' : 
                                    opPoint.efficiency_pct >= 70 ? 'Good' : 
                                    opPoint.efficiency_pct >= 60 ? 'Acceptable' : 'Poor';
@@ -342,17 +342,27 @@ class PumpChartsManager {
             });
         }
 
-        const title = this.currentChartData.pump_code + " - " + config.title;
+        // Enhanced title with performance envelope information
+        let envelopeInfo = '';
+        if (minDiameterCurve && maxDiameterCurve && selectedCurve) {
+            if (minDiameterCurve.diameter !== maxDiameterCurve.diameter) {
+                envelopeInfo = ` (${minDiameterCurve.diameter}-${maxDiameterCurve.diameter}mm Range, ${selectedCurve.diameter}mm Required)`;
+            } else {
+                envelopeInfo = ` (${selectedCurve.diameter}mm Required)`;
+            }
+        }
+
+        const title = this.currentChartData.pump_code + " - " + config.title + envelopeInfo;
         const yAxisTitle = config.yAxis;
 
         // Calculate Y-axis range centered on operating point requirements
         let maxHead = 60;
         let minHead = 0;
-        
+
         if (opPoint && opPoint.head_m) {
             // Primary: Center around the actual operating requirement
             const operatingHead = opPoint.head_m;
-            
+
             // Get curve data range for context
             let dataMin = operatingHead;
             let dataMax = operatingHead;
@@ -363,14 +373,14 @@ class PumpChartsManager {
                     dataMax = Math.max(...allHeads);
                 }
             }
-            
+
             // Calculate intelligent range that centers on operating point
             const curveRange = dataMax - dataMin;
             const centeringRange = Math.max(curveRange * 0.4, operatingHead * 0.3, 10); // Minimum meaningful range
-            
+
             minHead = Math.max(0, operatingHead - centeringRange);
             maxHead = operatingHead + centeringRange;
-            
+
             // Ensure all curve data remains visible with slight extension
             if (dataMin < minHead) {
                 const extension = (minHead - dataMin) * 1.1;
@@ -457,7 +467,7 @@ class PumpChartsManager {
             console.log('Charts.js: Attempting to render head-flow chart with', traces.length, 'traces');
             console.log('Charts.js: Container ID:', containerId);
             console.log('Charts.js: Container element:', document.getElementById(containerId));
-            
+
             Plotly.newPlot(containerId, traces, layout, plotConfig);
             console.log('Charts.js: Head-flow chart rendered successfully');
             // Remove loading spinner after successful render
@@ -626,17 +636,27 @@ class PumpChartsManager {
             });
         }
 
-        const title = this.currentChartData.pump_code + " - " + config.title;
+        // Enhanced title with performance envelope information
+        let envelopeInfo = '';
+        if (minDiameterCurve && maxDiameterCurve && selectedCurve) {
+            if (minDiameterCurve.diameter !== maxDiameterCurve.diameter) {
+                envelopeInfo = ` (${minDiameterCurve.diameter}-${maxDiameterCurve.diameter}mm Range, ${selectedCurve.diameter}mm Required)`;
+            } else {
+                envelopeInfo = ` (${selectedCurve.diameter}mm Required)`;
+            }
+        }
+
+        const title = this.currentChartData.pump_code + " - " + config.title + envelopeInfo;
         const yAxisTitle = config.yAxis;
 
         // Calculate Y-axis range centered on operating point efficiency
         let maxEfficiency = 100;
         let minEfficiency = 0;
-        
+
         if (opPoint && opPoint.efficiency_pct != null && opPoint.efficiency_pct > 0) {
             // Primary: Center around the actual operating efficiency
             const operatingEff = opPoint.efficiency_pct;
-            
+
             // Get curve data range for context
             let dataMin = operatingEff;
             let dataMax = operatingEff;
@@ -647,14 +667,14 @@ class PumpChartsManager {
                     dataMax = Math.max(...allEfficiencies);
                 }
             }
-            
+
             // Calculate intelligent range that centers on operating point
             const curveRange = dataMax - dataMin;
             const centeringRange = Math.max(curveRange * 0.4, operatingEff * 0.3, 15); // Minimum meaningful range
-            
+
             minEfficiency = Math.max(0, operatingEff - centeringRange);
             maxEfficiency = Math.min(100, operatingEff + centeringRange);
-            
+
             // Ensure all curve data remains visible with slight extension
             if (dataMin < minEfficiency) {
                 const extension = (minEfficiency - dataMin) * 1.1;
@@ -673,7 +693,7 @@ class PumpChartsManager {
                     const dataMax = Math.max(...allEfficiencies);
                     const range = dataMax - dataMin;
                     minEfficiency = Math.max(0, dataMin - range * 0.05);
-                    maxEfficiency = Math.min(100, dataMax + range * 0.05);
+                    maxEfficiency = Math.min(100, dataMax + range * 0.05;
                 }
             }
         }
@@ -693,7 +713,7 @@ class PumpChartsManager {
                 gridcolor: '#e0e0e0',
                 gridwidth: 1,
                 showline: true,
-                linecolor: '#ccc',
+                linecolor: '#ccc',```tool_code
                 linewidth: 1
             },
             yaxis: {
@@ -906,17 +926,27 @@ class PumpChartsManager {
             });
         }
 
-        const title = this.currentChartData.pump_code + " - " + config.title;
+        // Enhanced title with performance envelope information
+        let envelopeInfo = '';
+        if (minDiameterCurve && maxDiameterCurve && selectedCurve) {
+            if (minDiameterCurve.diameter !== maxDiameterCurve.diameter) {
+                envelopeInfo = ` (${minDiameterCurve.diameter}-${maxDiameterCurve.diameter}mm Range, ${selectedCurve.diameter}mm Required)`;
+            } else {
+                envelopeInfo = ` (${selectedCurve.diameter}mm Required)`;
+            }
+        }
+
+        const title = this.currentChartData.pump_code + " - " + config.title + envelopeInfo;
         const yAxisTitle = config.yAxis;
 
         // Calculate Y-axis range centered on operating point power
         let maxPower = 200;
         let minPower = 0;
-        
+
         if (opPoint && opPoint.power_kw != null && opPoint.power_kw > 0) {
             // Primary: Center around the actual operating power
             const operatingPower = opPoint.power_kw;
-            
+
             // Get curve data range for context
             let dataMin = operatingPower;
             let dataMax = operatingPower;
@@ -927,14 +957,14 @@ class PumpChartsManager {
                     dataMax = Math.max(...allPowers);
                 }
             }
-            
+
             // Calculate intelligent range that centers on operating point
             const curveRange = dataMax - dataMin;
             const centeringRange = Math.max(curveRange * 0.4, operatingPower * 0.3, 20); // Minimum meaningful range
-            
+
             minPower = Math.max(0, operatingPower - centeringRange);
             maxPower = operatingPower + centeringRange;
-            
+
             // Ensure all curve data remains visible with slight extension
             if (dataMin < minPower) {
                 const extension = (minPower - dataMin) * 1.1;
@@ -1175,17 +1205,27 @@ class PumpChartsManager {
             });
         }
 
-        const title = this.currentChartData.pump_code + " - " + config.title;
+        // Enhanced title with performance envelope information
+        let envelopeInfo = '';
+        if (minDiameterCurve && maxDiameterCurve && selectedCurve) {
+            if (minDiameterCurve.diameter !== maxDiameterCurve.diameter) {
+                envelopeInfo = ` (${minDiameterCurve.diameter}-${maxDiameterCurve.diameter}mm Range, ${selectedCurve.diameter}mm Required)`;
+            } else {
+                envelopeInfo = ` (${selectedCurve.diameter}mm Required)`;
+            }
+        }
+
+        const title = this.currentChartData.pump_code + " - " + config.title + envelopeInfo;
         const yAxisTitle = config.yAxis;
 
         // Calculate Y-axis range centered on operating point NPSH
         let maxNpsh = 20;
         let minNpsh = 0;
-        
+
         if (opPoint && opPoint.npshr_m != null && opPoint.npshr_m > 0 && hasNpshData) {
             // Primary: Center around the actual operating NPSH
             const operatingNpsh = opPoint.npshr_m;
-            
+
             // Get curve data range for context
             let dataMin = operatingNpsh;
             let dataMax = operatingNpsh;
@@ -1196,14 +1236,14 @@ class PumpChartsManager {
                     dataMax = Math.max(...allNpsh);
                 }
             }
-            
+
             // Calculate intelligent range that centers on operating point
             const curveRange = dataMax - dataMin;
             const centeringRange = Math.max(curveRange * 0.4, operatingNpsh * 0.4, 3); // Minimum meaningful range
-            
+
             minNpsh = Math.max(0, operatingNpsh - centeringRange);
             maxNpsh = operatingNpsh + centeringRange;
-            
+
             // Ensure all curve data remains visible with slight extension
             if (dataMin < minNpsh) {
                 const extension = (minNpsh - dataMin) * 1.1;
@@ -1405,7 +1445,7 @@ class PumpChartsManager {
 
 // Cache for chart data to avoid redundant API calls
 let chartDataCache = {};
-const CACHE_DURATION = 300000; // 5 minutes
+const CACHE_DURATION =300000; // 5 minutes
 
 // Global chart manager instance
 window.pumpChartsManager = new PumpChartsManager();
