@@ -24,7 +24,8 @@ def health_check():
             from app.pump_repository import PumpRepository
             repo = PumpRepository()
             # Simple connectivity test
-            pump_count = len(repo.get_all_pumps())
+            catalog_data = repo.get_catalog_data()
+            pump_count = len(catalog_data.get('pumps', [])) if catalog_data else 0
             health_status['database'] = {
                 'status': 'connected',
                 'pump_count': pump_count
