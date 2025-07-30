@@ -1,0 +1,51 @@
+Navigated to https://6dd2f576-2ef8-4b25-89ca-bfe6bf4699e9-00-k88np1o1tjai.worf.replit.dev:5000/
+(index):32 MathJax is loaded and ready
+6[Violation] Added non-passive event listener to a scroll-blocking <some> event. Consider marking event handler as 'passive' to make the page more responsive. See <URL>
+materialize.min.js:6 [Violation] Added non-passive event listener to a scroll-blocking 'touchmove' event. Consider marking event handler as 'passive' to make the page more responsive. See https://www.chromestatus.com/feature/5745543795965952
+value @ materialize.min.js:6
+n @ materialize.min.js:6
+value @ materialize.min.js:6
+value @ materialize.min.js:6
+(anonymous) @ (index):575
+materialize.min.js:6 [Violation] Added non-passive event listener to a scroll-blocking 'touchmove' event. Consider marking event handler as 'passive' to make the page more responsive. See https://www.chromestatus.com/feature/5745543795965952
+value @ materialize.min.js:6
+n @ materialize.min.js:6
+value @ materialize.min.js:6
+value @ materialize.min.js:6
+(anonymous) @ (index):575
+materialize.min.js:6 [Violation] Added non-passive event listener to a scroll-blocking 'touchmove' event. Consider marking event handler as 'passive' to make the page more responsive. See https://www.chromestatus.com/feature/5745543795965952
+value @ materialize.min.js:6
+n @ materialize.min.js:6
+value @ materialize.min.js:6
+value @ materialize.min.js:6
+(anonymous) @ (index):575
+materialize.min.js:6 [Violation] Added non-passive event listener to a scroll-blocking 'touchmove' event. Consider marking event handler as 'passive' to make the page more responsive. See https://www.chromestatus.com/feature/5745543795965952
+value @ materialize.min.js:6
+n @ materialize.min.js:6
+value @ materialize.min.js:6
+value @ materialize.min.js:6
+(anonymous) @ materialize.min.js:6
+initializeMaterialize @ main.js:47
+(anonymous) @ main.js:4
+materialize.min.js:6 [Violation] Added non-passive event listener to a scroll-blocking 'touchmove' event. Consider marking event handler as 'passive' to make the page more responsive. See https://www.chromestatus.com/feature/5745543795965952
+value @ materialize.min.js:6
+n @ materialize.min.js:6
+value @ materialize.min.js:6
+value @ materialize.min.js:6
+(anonymous) @ materialize.min.js:6
+initializeMaterialize @ main.js:47
+(anonymous) @ main.js:4
+materialize.min.js:6 [Violation] Added non-passive event listener to a scroll-blocking 'touchmove' event. Consider marking event handler as 'passive' to make the page more responsive. See https://www.chromestatus.com/feature/5745543795965952
+value @ materialize.min.js:6
+n @ materialize.min.js:6
+value @ materialize.min.js:6
+value @ materialize.min.js:6
+(anonymous) @ materialize.min.js:6
+initializeMaterialize @ main.js:47
+(anonymous) @ main.js:4
+(index):681 Form components initialized - enhanced autocomplete ready
+(index):965 Advanced options initialized
+(index):681 Form components initialized - enhanced autocomplete ready
+(index):965 Advanced options initialized
+(index):918 Enhanced autocomplete initialized successfully
+(index):694 Enhanced autocomplete already initialized, skipping...

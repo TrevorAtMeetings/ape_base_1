@@ -180,6 +180,32 @@
                             <strong>Quick pump selection</strong> - Enter these 4 essential parameters to find the best pump for your application.
                         </p>
 
+                        <!-- Unit System Selection -->
+                        <div class="row" style="margin-bottom: 20px;">
+                            <div class="col s12">
+                                <div class="input-group">
+                                    <label class="form-label" style="color: var(--md-primary); font-size: 14px; font-weight: 600; margin-bottom: 10px; display: block;">
+                                        <i class="material-icons" style="font-size: 16px; vertical-align: middle; margin-right: 8px;">straighten</i>
+                                        Unit System
+                                    </label>
+                                    <div class="radio-group" style="display: flex; gap: 30px;">
+                                        <p style="margin: 0;">
+                                            <label>
+                                                <input name="unit_system" type="radio" value="metric" checked onchange="switchUnitSystem('metric')" />
+                                                <span>Metric (m³/hr, m)</span>
+                                            </label>
+                                        </p>
+                                        <p style="margin: 0;">
+                                            <label>
+                                                <input name="unit_system" type="radio" value="imperial" onchange="switchUnitSystem('imperial')" />
+                                                <span>Imperial (GPM, ft)</span>
+                                            </label>
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Flow Rate and Head -->
                         <div class="row">
                             <div class="col s12 m6">
@@ -998,7 +1024,51 @@ function resetForm() {
 // Define global variable for current unit system
 let currentUnitSystem = 'metric';
 
-// Function to toggle between metric and imperial units
+// Function to switch unit systems (called by radio buttons)
+function switchUnitSystem(newSystem) {
+    if (currentUnitSystem === newSystem) return;
+    
+    const flowInput = document.getElementById('flow_rate');
+    const headInput = document.getElementById('total_head');
+    
+    // Convert existing values if they exist
+    if (flowInput && flowInput.value) {
+        const flowValue = parseFloat(flowInput.value);
+        if (!isNaN(flowValue)) {
+            if (newSystem === 'imperial' && currentUnitSystem === 'metric') {
+                // Convert m³/hr to GPM: m³/hr * 4.40287
+                flowInput.value = (flowValue * 4.40287).toFixed(2);
+            } else if (newSystem === 'metric' && currentUnitSystem === 'imperial') {
+                // Convert GPM to m³/hr: GPM * 0.227124
+                flowInput.value = (flowValue * 0.227124).toFixed(3);
+            }
+        }
+    }
+    
+    if (headInput && headInput.value) {  
+        const headValue = parseFloat(headInput.value);
+        if (!isNaN(headValue)) {
+            if (newSystem === 'imperial' && currentUnitSystem === 'metric') {
+                // Convert meters to feet: m * 3.28084
+                headInput.value = (headValue * 3.28084).toFixed(2);
+            } else if (newSystem === 'metric' && currentUnitSystem === 'imperial') {
+                // Convert feet to meters: ft * 0.3048
+                headInput.value = (headValue * 0.3048).toFixed(3);
+            }
+        }
+    }
+    
+    // Update current system
+    currentUnitSystem = newSystem;
+    
+    // Update labels and validation
+    updateUnitLabels();
+    
+    // Trigger validation check
+    checkEssentialRequirements();
+}
+
+// Function to toggle between metric and imperial units (legacy function)
 function toggleUnitSystem() {
     currentUnitSystem = (currentUnitSystem === 'metric') ? 'imperial' : 'metric';
     updateUnitLabels();
