@@ -211,7 +211,7 @@
                             <div class="col s12 m6">
                                 <div class="input-field">
                                     <i class="material-icons prefix">water_drop</i>
-                                    <input id="flow_rate" name="flow_m3hr" type="number" step="0.01" min="0.1" max="10000" required class="validate">
+                                    <input id="flow_rate" name="flow_m3hr" type="number" step="0.01" min="0.1" max="10000" required class="validate" data-metric-min="0.1" data-metric-max="10000" data-imperial-min="0.44" data-imperial-max="44029">
                                     <label for="flow_rate">Flow Rate (m³/hr) *</label>
                                     <span class="helper-text" data-error="Flow rate must be between 0.1 and 10000 m³/hr">Required volumetric flow rate</span>
                                 </div>
@@ -219,7 +219,7 @@
                             <div class="col s12 m6">
                                 <div class="input-field">
                                     <i class="material-icons prefix">height</i>
-                                    <input id="total_head" name="head_m" type="number" step="0.01" min="0.1" max="1000" required class="validate">
+                                    <input id="total_head" name="head_m" type="number" step="0.01" min="0.1" max="1000" required class="validate" data-metric-min="0.1" data-metric-max="1000" data-imperial-min="0.32" data-imperial-max="3280">
                                     <label for="total_head">Total Head (m) *</label>
                                     <span class="helper-text" data-error="Total head must be between 0.1 and 1000 m">Total dynamic head including friction and static losses</span>
                                 </div>
@@ -569,20 +569,26 @@ function initializeFormComponents() {
     // Form submission handling
     form.addEventListener('submit', function(e) {
         // Convert to metric if in imperial mode before submission
-        if (currentUnitSystem === 'imperial') {
+        // But only convert fields that haven't been converted already
+        const imperialRadio = document.querySelector('input[name="unit_system"][value="imperial"]');
+        const isImperialSelected = imperialRadio && imperialRadio.checked;
+        
+        if (isImperialSelected) {
             const flowInput = document.getElementById('flow_rate');
             const headInput = document.getElementById('total_head');
 
-            if (flowInput && flowInput.value) {
+            if (flowInput && flowInput.value && !convertedFields.has('flow_rate')) {
                 const flowGPM = parseFloat(flowInput.value);
                 const flowM3hr = flowGPM * 0.227124; // GPM to m³/hr
                 flowInput.value = flowM3hr.toFixed(3);
+                console.log('Form submission: Converting flow rate', flowGPM, 'GPM to', flowM3hr.toFixed(3), 'm³/hr');
             }
 
-            if (headInput && headInput.value) {
+            if (headInput && headInput.value && !convertedFields.has('total_head')) {
                 const headFt = parseFloat(headInput.value);
                 const headM = headFt * 0.3048; // ft to m
                 headInput.value = headM.toFixed(3);
+                console.log('Form submission: Converting head', headFt, 'ft to', headM.toFixed(3), 'm');
             }
         }
 
@@ -1083,17 +1089,41 @@ function updateUnitLabels() {
     const headLabel = document.querySelector('label[for="total_head"]');
     const flowHelper = document.querySelector('#flow_rate + .helper-text');
     const headHelper = document.querySelector('#total_head + .helper-text') || document.querySelector('span.helper-text[data-error*="head"]');
+    
+    // Update input validation ranges
+    const flowInput = document.getElementById('flow_rate');
+    const headInput = document.getElementById('total_head');
 
     if (currentUnitSystem === 'metric') {
         if (flowLabel) flowLabel.textContent = 'Flow Rate (m³/hr) *';
         if (headLabel) headLabel.textContent = 'Total Head (m) *';
         if (flowHelper) flowHelper.dataset.error = "Flow rate must be between 0.1 and 10000 m³/hr";
         if (headHelper) headHelper.dataset.error = "Total head must be between 0.1 and 1000 m";
+        
+        // Update validation ranges
+        if (flowInput) {
+            flowInput.min = flowInput.dataset.metricMin || "0.1";
+            flowInput.max = flowInput.dataset.metricMax || "10000";
+        }
+        if (headInput) {
+            headInput.min = headInput.dataset.metricMin || "0.1";
+            headInput.max = headInput.dataset.metricMax || "1000";
+        }
     } else {
         if (flowLabel) flowLabel.textContent = 'Flow Rate (GPM) *';
         if (headLabel) headLabel.textContent = 'Total Head (ft) *';
         if (flowHelper) flowHelper.dataset.error = "Flow rate must be between 0.44 and 44029 GPM";
         if (headHelper) headHelper.dataset.error = "Total head must be between 0.32 and 3280 ft";
+        
+        // Update validation ranges
+        if (flowInput) {
+            flowInput.min = flowInput.dataset.imperialMin || "0.44";
+            flowInput.max = flowInput.dataset.imperialMax || "44029";
+        }
+        if (headInput) {
+            headInput.min = headInput.dataset.imperialMin || "0.32";
+            headInput.max = headInput.dataset.imperialMax || "3280";
+        }
     }
 }
 
@@ -1171,6 +1201,12 @@ function handleUnitConversionOnBlur(input) {
         return;
     }
     
+    // Additional safety checks
+    if (!input.value || input.value.trim() === '') {
+        console.log('Empty input value, no conversion needed');
+        return;
+    }
+    
     const value = parseFloat(input.value);
     if (isNaN(value) || value <= 0) {
         console.log('Invalid value for conversion:', value);
@@ -1182,14 +1218,16 @@ function handleUnitConversionOnBlur(input) {
     
     if (input.id === 'flow_rate') {
         // Convert GPM to m³/hr: GPM × 0.227124
-        convertedValue = (value * 0.227124).toFixed(3);
+        const exactConversion = value * 0.227124;
+        convertedValue = exactConversion.toFixed(3);
         message = `Flow rate converted: ${value} GPM → ${convertedValue} m³/hr`;
-        console.log('Converting flow rate:', value, 'GPM to', convertedValue, 'm³/hr');
+        console.log('Converting flow rate:', value, 'GPM to', convertedValue, 'm³/hr', '(exact:', exactConversion, ')');
     } else if (input.id === 'total_head') {
         // Convert feet to meters: ft × 0.3048
-        convertedValue = (value * 0.3048).toFixed(3);
+        const exactConversion = value * 0.3048;
+        convertedValue = exactConversion.toFixed(3);
         message = `Head converted: ${value} ft → ${convertedValue} m`;
-        console.log('Converting head:', value, 'ft to', convertedValue, 'm');
+        console.log('Converting head:', value, 'ft to', convertedValue, 'm', '(exact:', exactConversion, ')');
     } else {
         console.log('Unknown input field:', input.id);
         return;
@@ -1262,9 +1300,18 @@ function checkEssentialRequirements() {
         let headValue = parseFloat(headInput.value);
 
         // Convert to metric for validation if in imperial mode
-        if (currentUnitSystem === 'imperial') {
-            if (!isNaN(flowValue)) flowValue = flowValue * 0.227124; // GPM to m³/hr  
-            if (!isNaN(headValue)) headValue = headValue * 0.3048; // ft to m
+        // Check actual radio button state for accuracy
+        const imperialRadio = document.querySelector('input[name="unit_system"][value="imperial"]');
+        const isImperialMode = imperialRadio && imperialRadio.checked;
+        
+        if (isImperialMode) {
+            // Only convert values that haven't been converted already
+            if (!isNaN(flowValue) && !convertedFields.has('flow_rate')) {
+                flowValue = flowValue * 0.227124; // GPM to m³/hr  
+            }
+            if (!isNaN(headValue) && !convertedFields.has('total_head')) {
+                headValue = headValue * 0.3048; // ft to m
+            }
         }
 
         const pumpTypeSelected = Array.from(pumpTypeInputs).some(input => input.checked);
@@ -1304,6 +1351,52 @@ function triggerHeadBlur() {
     }
 }
 
+// Comprehensive test function for unit conversion robustness
+function testUnitConversionRobustness() {
+    console.log('=== UNIT CONVERSION ROBUSTNESS TEST ===');
+    
+    // Test 1: Basic conversion
+    console.log('Test 1: Basic conversion functionality');
+    const flowInput = document.getElementById('flow_rate');
+    const headInput = document.getElementById('total_head');
+    
+    if (flowInput && headInput) {
+        // Set test values
+        flowInput.value = '1000';
+        headInput.value = '100';
+        
+        // Switch to imperial
+        const imperialRadio = document.querySelector('input[name="unit_system"][value="imperial"]');
+        if (imperialRadio) {
+            imperialRadio.checked = true;
+            currentUnitSystem = 'imperial';
+            console.log('Switched to imperial, testing conversions...');
+            
+            // Test blur events
+            handleUnitConversionOnBlur(flowInput);
+            handleUnitConversionOnBlur(headInput);
+            
+            console.log('Flow after conversion:', flowInput.value);
+            console.log('Head after conversion:', headInput.value);
+        }
+    }
+    
+    // Test 2: Validation ranges
+    console.log('Test 2: Validation range updates');
+    updateUnitLabels();
+    console.log('Flow min/max:', flowInput?.min, '/', flowInput?.max);
+    console.log('Head min/max:', headInput?.min, '/', headInput?.max);
+    
+    // Test 3: Edge cases
+    console.log('Test 3: Edge case handling');
+    flowInput.value = '';
+    headInput.value = '0';
+    handleUnitConversionOnBlur(flowInput);
+    handleUnitConversionOnBlur(headInput);
+    
+    console.log('=== TEST COMPLETE ===');
+}
+
 // Call setup function after DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize form components
@@ -1316,6 +1409,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Add manual test for head input (for debugging)
     window.testHeadConversion = testHeadConversion;
     window.triggerHeadBlur = triggerHeadBlur;
+    window.testUnitConversionRobustness = testUnitConversionRobustness;
 });
 </script>
 {% endblock %}
