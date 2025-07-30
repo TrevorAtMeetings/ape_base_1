@@ -1147,6 +1147,9 @@ function showConversionMessage(message) {
     }, 3000);
 }
 
+// Track which fields have been converted to avoid double conversion
+const convertedFields = new Set();
+
 // Function to handle unit conversion on blur (when user clicks out of field)
 function handleUnitConversionOnBlur(input) {
     console.log('Blur event triggered for input:', input.id, 'value:', input.value, 'currentUnitSystem:', currentUnitSystem);
@@ -1160,6 +1163,12 @@ function handleUnitConversionOnBlur(input) {
     if (!isImperialSelected) {
         console.log('Not in imperial mode, no conversion needed');
         return; // No conversion needed if not in imperial mode
+    }
+    
+    // Check if this field has already been converted
+    if (convertedFields.has(input.id)) {
+        console.log('Field', input.id, 'already converted, skipping');
+        return;
     }
     
     const value = parseFloat(input.value);
@@ -1189,13 +1198,12 @@ function handleUnitConversionOnBlur(input) {
     input.value = convertedValue;
     showConversionMessage(message);
     
-    // Update to metric system after conversion
-    currentUnitSystem = 'metric';
-    updateUnitLabels();
+    // Mark this field as converted
+    convertedFields.add(input.id);
     
-    // Update radio button selection
-    const metricRadio = document.querySelector('input[name="unit_system"][value="metric"]');
-    if (metricRadio) metricRadio.checked = true;
+    // Don't automatically switch unit system - let user control this
+    // The individual field has been converted, but the system stays in imperial mode
+    // for other fields that haven't been converted yet
     
     // Trigger validation check
     checkEssentialRequirements();
