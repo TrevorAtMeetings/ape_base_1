@@ -513,9 +513,15 @@
 {% block scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    const flowInput = document.getElementById('flow_rate');
+    const headInput = document.getElementById('total_head');
+    const pumpTypeInputs = document.querySelectorAll('input[name="pump_type"]');
+
     // Initialize form components
     initializeFormComponents();
     initializeAdvancedOptions();
+
+    setupEssentialRequirementsWatcher();
 });
 
 function initializeFormComponents() {
