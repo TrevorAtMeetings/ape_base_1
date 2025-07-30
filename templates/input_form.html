@@ -1486,6 +1486,49 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('Current unit system:', currentUnitSystem);
         console.log('Converted fields:', Array.from(convertedFields));
     };
+    
+    // Comprehensive system review function
+    window.reviewSystem = function() {
+        console.log('=== SYSTEM REVIEW ===');
+        
+        // Check for essential elements
+        const flowInput = document.getElementById('flow_rate');
+        const headInput = document.getElementById('total_head');
+        const imperialRadio = document.querySelector('input[name="unit_system"][value="imperial"]');
+        const metricRadio = document.querySelector('input[name="unit_system"][value="metric"]');
+        
+        console.log('✓ Essential elements found:', {
+            flow_input: !!flowInput,
+            head_input: !!headInput,
+            imperial_radio: !!imperialRadio,
+            metric_radio: !!metricRadio
+        });
+        
+        // Check conversion calculations
+        console.log('✓ Conversion calculation test:');
+        const testFlow = 1614.27;
+        const testHead = 164.08;
+        const expectedFlowMetric = 366.64;
+        const expectedHeadMetric = 50.00;
+        
+        const calculatedFlow = (testFlow * 0.227124).toFixed(2);
+        const calculatedHead = (testHead * 0.3048).toFixed(2);
+        
+        console.log(`  Flow: ${testFlow} GPM → ${calculatedFlow} m³/hr (expected: ${expectedFlowMetric})`);
+        console.log(`  Head: ${testHead} ft → ${calculatedHead} m (expected: ${expectedHeadMetric})`);
+        console.log(`  Flow accurate: ${calculatedFlow == expectedFlowMetric}`);
+        console.log(`  Head accurate: ${calculatedHead == expectedHeadMetric}`);
+        
+        // Check state
+        console.log('✓ Current state:', {
+            unit_system: currentUnitSystem,
+            converted_fields: Array.from(convertedFields),
+            stored_values: storedValues
+        });
+        
+        console.log('=== REVIEW COMPLETE ===');
+        return 'System review completed - check console for results';
+    };
 });
 </script>
 {% endblock %}
