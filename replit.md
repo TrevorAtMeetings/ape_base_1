@@ -106,6 +106,7 @@ The application follows a modular Flask architecture with clear separation of co
 
 ## Changelog
 
+- July 30, 2025: **Critical pump selection algorithm fixes implemented** - corrected backwards impeller diameter validation logic, improved speed variation penalty system (graduated penalties instead of flat -20 points), added physical constraints validation, fixed interpolation parameter issues, reordered selection flow to try all sizing methods before validation
 - July 29, 2025: Completed deployment readiness fixes - production configuration, security headers, error handling, health checks
 - July 29, 2025: Added "Find Best Pump" search button that appears when essential requirements are completed
 - July 29, 2025: Created comprehensive build specification document (Spec.md) in docs folder

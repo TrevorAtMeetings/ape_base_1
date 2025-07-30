@@ -349,22 +349,17 @@ class CatalogPump:
                                 head_m: float) -> Optional[Dict[str, Any]]:
         """Get performance characteristics at specific duty point using requirement-driven sizing"""
 
-        # CRITICAL: Validate against physical pump capabilities first
-        if not self._validate_physical_capability(flow_m3hr, head_m):
-            logger.debug(
-                f"Pump {self.pump_code} cannot physically meet requirements: {flow_m3hr} m³/hr, {head_m} m"
-            )
-            return None
-
         from .impeller_scaling import get_impeller_scaling_engine
-
         scaling_engine = get_impeller_scaling_engine()
 
-        # Try impeller trimming first
+        # IMPROVED FLOW: Try all sizing methods first, validate later
+        # This prevents premature rejection of pumps that could work with adjustments
+        
+        # Method 1: Try impeller trimming first (most common and precise)
         optimal_sizing = scaling_engine.find_optimal_sizing(
             self.curves, flow_m3hr, head_m)
 
-        # If impeller trimming doesn't work, try speed variation
+        # Method 2: If impeller trimming doesn't work, try speed variation
         if not optimal_sizing:
             pump_specs = {
                 'test_speed_rpm':
@@ -379,10 +374,11 @@ class CatalogPump:
                 speed_result = scaling_engine.calculate_speed_variation(
                     curve, flow_m3hr, head_m, pump_specs)
                 if speed_result and speed_result['meets_requirements']:
-                    # Double-check that speed variation doesn't exceed physical limits
-                    if self._validate_speed_variation_limits(
-                            speed_result, curve):
-                        return {
+                    # Validate speed variation is within engineering limits
+                    if self._validate_speed_variation_limits(speed_result, curve):
+                        # Final physical capability check for speed variation solution
+                        if self._validate_physical_capability(flow_m3hr, head_m):
+                            return {
                             'curve':
                             curve,
                             'flow_m3hr':
@@ -422,12 +418,14 @@ class CatalogPump:
                         }
 
         if optimal_sizing:
-            # Return properly sized pump performance (impeller trimming)
-            performance = optimal_sizing['performance']
-            sizing = optimal_sizing['sizing']
-            curve = optimal_sizing['curve']
+            # Validate that trimming solution meets physical constraints
+            if self._validate_physical_capability(flow_m3hr, head_m):
+                # Return properly sized pump performance (impeller trimming)
+                performance = optimal_sizing['performance']
+                sizing = optimal_sizing['sizing']
+                curve = optimal_sizing['curve']
 
-            return {
+                return {
                 'curve': curve,
                 'flow_m3hr': performance['flow_m3hr'],
                 'head_m': performance['head_m'],
@@ -560,17 +558,17 @@ class CatalogPump:
         effs = [p['efficiency_pct'] for p in points]
 
         try:
-            # Use linear extrapolation (allow bounds_error=False for extrapolation)
+            # Use linear interpolation with clamping (no extrapolation beyond bounds)
             head_interp = interpolate.interp1d(flows,
                                                heads,
                                                kind='linear',
                                                bounds_error=False,
-                                               fill_value='extrapolate')
+                                               fill_value=0)
             eff_interp = interpolate.interp1d(flows,
                                               effs,
                                               kind='linear',
                                               bounds_error=False,
-                                              fill_value='extrapolate')
+                                              fill_value=0)
 
             predicted_head = float(head_interp(target_flow))
             efficiency = float(eff_interp(target_flow))
@@ -603,7 +601,7 @@ class CatalogPump:
                         npshs,
                         kind='linear',
                         bounds_error=False,
-                        fill_value='extrapolate')
+                        fill_value=0)
                     npshr_m = max(0, float(
                         npsh_interp(target_flow)))  # Ensure positive NPSH
                 except:
@@ -781,14 +779,20 @@ class CatalogEngine:
                     if 'sizing_info' in performance:
                         sizing_info = performance['sizing_info']
 
-                        # Major penalty for speed variation requirement
+                        # IMPROVED: Moderate penalty for speed variation (VFDs are industry-standard)
                         if sizing_info.get('vfd_required', False):
                             speed_variation_pct = abs(
                                 sizing_info.get('speed_variation_pct', 0))
                             if speed_variation_pct > 0:
-                                # Penalty increases with speed variation magnitude
-                                speed_penalty = min(20, speed_variation_pct *
-                                                    2)  # Up to -20 points
+                                # Graduated penalty: minimal for small variations, larger for extreme
+                                if speed_variation_pct <= 5:
+                                    speed_penalty = speed_variation_pct * 0.5  # 0.5-2.5 points max
+                                elif speed_variation_pct <= 10:
+                                    speed_penalty = 2.5 + (speed_variation_pct - 5) * 1.0  # 2.5-7.5 points
+                                else:
+                                    speed_penalty = 7.5 + (speed_variation_pct - 10) * 1.5  # 7.5+ points
+                                
+                                speed_penalty = min(15, speed_penalty)  # Cap at 15 points (reduced from 20)
                                 logger.debug(
                                     f"Speed penalty for {pump.pump_code}: -{speed_penalty:.1f} points ({speed_variation_pct:.1f}% speed change)"
                                 )

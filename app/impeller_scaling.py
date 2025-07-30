@@ -15,6 +15,8 @@ class ImpellerScalingEngine:
     def __init__(self):
         self.min_trim_percent = 85.0  # Minimum impeller trim (industry standard)
         self.max_efficiency_loss = 5.0  # Maximum efficiency loss from trimming (%)
+        self.max_speed_variation_percent = 20.0  # Maximum speed variation (industry practice)
+        self.conservative_speed_variation_percent = 10.0  # Preferred speed variation limit
         
     def calculate_required_diameter(self, base_curve: Dict[str, Any], 
                                   target_flow: float, target_head: float) -> Optional[Dict[str, Any]]:
@@ -84,9 +86,10 @@ class ImpellerScalingEngine:
             diameter_ratio = np.sqrt(target_head / base_head_at_flow)
             required_diameter = base_diameter * diameter_ratio
             
-            # CRITICAL FIX: Check if required diameter exceeds base diameter (impossible)
-            if required_diameter > base_diameter:
-                logger.debug(f"Required diameter {required_diameter:.1f}mm exceeds maximum {base_diameter}mm - pump cannot meet requirements")
+            # CRITICAL FIX: Check if we need to INCREASE diameter (impossible with trimming)
+            # If target head > base head at flow, we'd need a larger impeller - not possible with trimming
+            if target_head > base_head_at_flow:
+                logger.debug(f"Target head {target_head:.1f}m exceeds base curve head {base_head_at_flow:.1f}m - trimming cannot increase head")
                 return None
             
             # Check if required diameter is within acceptable trimming limits
@@ -471,17 +474,21 @@ class ImpellerScalingEngine:
             speed_ratio_for_head = sqrt(target_head / base_head)
             required_speed = test_speed * speed_ratio_for_head
             
-            # ENHANCED: Check against both hard limits and conservative limits
+            # ENHANCED: Physical constraints validation
             if required_speed < min_speed or required_speed > max_speed:
+                logger.debug(f"Required speed {required_speed:.0f} RPM outside physical limits ({min_speed}-{max_speed} RPM)")
                 return None
                 
-            # Apply conservative speed limits penalty
+            # Calculate speed variation percentage for scoring
             speed_variation_pct = abs((required_speed / test_speed) - 1) * 100
             
-            # Strongly discourage speed variations >5% (for better pump selections)
-            if speed_variation_pct > 5.0:
-                logger.debug(f"Speed variation {speed_variation_pct:.1f}% exceeds preferred limit of 5%")
-                # Don't completely reject, but this will be heavily penalized in scoring
+            # Apply industry-standard limits: prefer ≤10%, allow up to 20%
+            if speed_variation_pct > self.max_speed_variation_percent:
+                logger.debug(f"Speed variation {speed_variation_pct:.1f}% exceeds maximum {self.max_speed_variation_percent}%")
+                return None
+            elif speed_variation_pct > self.conservative_speed_variation_percent:
+                logger.debug(f"Speed variation {speed_variation_pct:.1f}% exceeds preferred limit of {self.conservative_speed_variation_percent}%")
+                # Allow but will be penalized in scoring
                 
             # Calculate actual performance at required speed
             # CRITICAL FIX: Maintain exact required flow rate instead of calculated flow
