@@ -1,0 +1,33 @@
+Event target: flow_rate Event type: blur
+(index):1242 Blur event triggered for input: flow_rate value: 1614 currentUnitSystem: metric
+(index):1245 Already in metric system, no conversion needed
+(index):1304 Blur event detected on: flow_rate value: 1614 currentUnitSystem: metric
+(index):1305 Event target: flow_rate Event type: blur
+(index):1242 Blur event triggered for input: flow_rate value: 1614 currentUnitSystem: metric
+(index):1245 Already in metric system, no conversion needed
+(index):1311 Focusout event detected on: flow_rate value: 1614
+(index):1242 Blur event triggered for input: flow_rate value: 1614 currentUnitSystem: metric
+(index):1245 Already in metric system, no conversion needed
+(index):1311 Focusout event detected on: flow_rate value: 1614
+(index):1242 Blur event triggered for input: flow_rate value: 1614 currentUnitSystem: metric
+(index):1245 Already in metric system, no conversion needed
+(index):1304 Blur event detected on: total_head value: 164 currentUnitSystem: metric
+(index):1305 Event target: total_head Event type: blur
+(index):1242 Blur event triggered for input: total_head value: 164 currentUnitSystem: metric
+(index):1245 Already in metric system, no conversion needed
+(index):1304 Blur event detected on: total_head value: 164 currentUnitSystem: metric
+(index):1305 Event target: total_head Event type: blur
+(index):1242 Blur event triggered for input: total_head value: 164 currentUnitSystem: metric
+(index):1245 Already in metric system, no conversion needed
+(index):1311 Focusout event detected on: total_head value: 164
+(index):1242 Blur event triggered for input: total_head value: 164 currentUnitSystem: metric
+(index):1245 Already in metric system, no conversion needed
+(index):1311 Focusout event detected on: total_head value: 164
+(index):1242 Blur event triggered for input: total_head value: 164 currentUnitSystem: metric
+(index):1245 Already in metric system, no conversion needed
+(index):1119 switchUnitSystem called with: imperial current: metric
+(index):1159 currentUnitSystem updated to: imperial
+(index):1185 Uncaught TypeError: Cannot read properties of null (reading 'dataset')
+    at updateUnitLabels ((index):1185:20)
+    at switchUnitSystem ((index):1162:5)
+    at HTMLInputElement.onchange ((index):158:147)

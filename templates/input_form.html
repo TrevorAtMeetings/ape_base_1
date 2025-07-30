@@ -1082,18 +1082,18 @@ function updateUnitLabels() {
     const flowLabel = document.querySelector('label[for="flow_rate"]');
     const headLabel = document.querySelector('label[for="total_head"]');
     const flowHelper = document.querySelector('#flow_rate + .helper-text');
-    const headHelper = document.querySelector('#total_head + .helper-text');
+    const headHelper = document.querySelector('#total_head + .helper-text') || document.querySelector('span.helper-text[data-error*="head"]');
 
     if (currentUnitSystem === 'metric') {
-        flowLabel.textContent = 'Flow Rate (m³/hr) *';
-        headLabel.textContent = 'Total Head (m) *';
-        flowHelper.dataset.error = "Flow rate must be between 0.1 and 10000 m³/hr";
-        headHelper.dataset.error = "Total head must be between 0.1 and 1000 m";
+        if (flowLabel) flowLabel.textContent = 'Flow Rate (m³/hr) *';
+        if (headLabel) headLabel.textContent = 'Total Head (m) *';
+        if (flowHelper) flowHelper.dataset.error = "Flow rate must be between 0.1 and 10000 m³/hr";
+        if (headHelper) headHelper.dataset.error = "Total head must be between 0.1 and 1000 m";
     } else {
-        flowLabel.textContent = 'Flow Rate (GPM) *';
-        headLabel.textContent = 'Total Head (ft) *';
-        flowHelper.dataset.error = "Flow rate must be between 0.44 and 44029 GPM";
-        headHelper.dataset.error = "Total head must be between 0.32 and 3280 ft";
+        if (flowLabel) flowLabel.textContent = 'Flow Rate (GPM) *';
+        if (headLabel) headLabel.textContent = 'Total Head (ft) *';
+        if (flowHelper) flowHelper.dataset.error = "Flow rate must be between 0.44 and 44029 GPM";
+        if (headHelper) headHelper.dataset.error = "Total head must be between 0.32 and 3280 ft";
     }
 }
 
@@ -1151,9 +1151,15 @@ function showConversionMessage(message) {
 function handleUnitConversionOnBlur(input) {
     console.log('Blur event triggered for input:', input.id, 'value:', input.value, 'currentUnitSystem:', currentUnitSystem);
     
-    if (currentUnitSystem === 'metric') {
-        console.log('Already in metric system, no conversion needed');
-        return; // No conversion needed for metric
+    // Check the actual radio button state instead of the variable
+    const imperialRadio = document.querySelector('input[name="unit_system"][value="imperial"]');
+    const isImperialSelected = imperialRadio && imperialRadio.checked;
+    
+    console.log('Imperial radio checked:', isImperialSelected);
+    
+    if (!isImperialSelected) {
+        console.log('Not in imperial mode, no conversion needed');
+        return; // No conversion needed if not in imperial mode
     }
     
     const value = parseFloat(input.value);
