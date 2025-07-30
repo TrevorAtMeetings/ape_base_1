@@ -758,7 +758,7 @@ class CatalogEngine:
                     # Efficiency score (reduced to 35 points max - secondary importance)
                     efficiency_score = (efficiency / 100.0) * 35
 
-                    # Head margin bonus - reward precise delivery (reduced importance)
+                    # Head margin bonus/penalty - reward precise delivery, heavily penalize oversizing
                     if -2 <= head_margin_pct <= 2:
                         margin_bonus = 15  # Perfect delivery
                     elif 2 < head_margin_pct <= 10:
@@ -767,10 +767,18 @@ class CatalogEngine:
                     elif 10 < head_margin_pct <= 20:
                         margin_bonus = 10 - (head_margin_pct -
                                              10) * 0.2  # 10-8 points
+                    elif 20 < head_margin_pct <= 50:
+                        margin_bonus = 8 - (head_margin_pct -
+                                           20) * 0.2  # 8-2 points (increasing penalty)
+                    elif 50 < head_margin_pct <= 100:
+                        margin_bonus = 2 - (head_margin_pct -
+                                           50) * 0.1  # 2 to -3 points (penalty zone)
                     else:
-                        margin_bonus = max(
-                            3, 8 -
-                            (head_margin_pct - 20) * 0.1)  # Minimum 3 points
+                        # Extreme oversizing penalty (>100% over required head)
+                        margin_bonus = -3 - (head_margin_pct - 100) * 0.05  # Increasing penalty
+                        logger.debug(
+                            f"Extreme oversizing penalty for {pump.pump_code}: {margin_bonus:.1f} points ({head_margin_pct:.1f}% over-delivery)"
+                        )
 
                     # CRITICAL: Speed variation penalty
                     speed_penalty = 0

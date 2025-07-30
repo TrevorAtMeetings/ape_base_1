@@ -391,6 +391,11 @@ def get_chart_data_safe(safe_pump_code):
                 'efficiency_units': '%',
                 'power_units': 'kW',
                 'npshr_units': 'm'
+            },
+            # Include system requirements for proper system curve generation
+            'system_requirements': {
+                'flow_m3hr': flow_rate,
+                'head_m': head  # The actual required head, not what pump delivers
             }
         }
 

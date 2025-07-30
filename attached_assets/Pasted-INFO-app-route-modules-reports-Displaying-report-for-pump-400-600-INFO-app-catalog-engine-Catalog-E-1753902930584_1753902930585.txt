@@ -1,0 +1,29 @@
+INFO:app.route_modules.reports:Displaying report for pump: 400-600
+INFO:app.catalog_engine:Catalog Engine: Filtering for pump_type='VERTICAL TURBINE', flow=1500.0, head=30.0
+INFO:app.catalog_engine:Catalog Engine: Found 9 suitable pumps from 386 total
+INFO:app.catalog_engine:Catalog Engine: Type filtering applied for 'VERTICAL TURBINE' - 64 pumps passed filter
+INFO:app.catalog_engine:  #1: 400-600 (VERTICAL TURBINE) - Score: 54.8
+INFO:app.catalog_engine:  #2: 18 XHC 2185 4P (VERTICAL TURBINE) - Score: 50.6
+INFO:app.catalog_engine:  #3: 28 HC 6P (VERTICAL TURBINE) - Score: 49.2
+INFO:app.catalog_engine:  #4: 32 HC 6P (VERTICAL TURBINE) - Score: 38.7
+INFO:app.catalog_engine:  #5: 30 HC 6P (VERTICAL TURBINE) - Score: 35.2
+INFO:app.route_modules.reports:Template data - selected_pump operating_point: {'curve': {'curve_id': '400-600_C1_553mm', 'curve_index': 0, 'impeller_diameter_mm': 553.0, 'test_speed_rpm': 1480, 'performance_points': [{'flow_m3hr': 200.0, 'head_m': 221.0, 'efficiency_pct': 19.0, 'power_kw': None, 'npshr_m': 4.0}, {'flow_m3hr': 500.0, 'head_m': 219.0, 'efficiency_pct': 45.0, 'power_kw': None, 'npshr_m': 3.9}, {'flow_m3hr': 800.0, 'head_m': 213.0, 'efficiency_pct': 62.0, 'power_kw': None, 'npshr_m': 3.8}, {'flow_m3hr': 1100.0, 'head_m': 200.0, 'efficiency_pct': 73.0, 'power_kw': None, 'npshr_m': 3.9}, {'flow_m3hr': 1400.0, 'head_m': 179.5, 'efficiency_pct': 79.0, 'power_kw': None, 'npshr_m': 4.1}, {'flow_m3hr': 1600.0, 'head_m': 160.0, 'efficiency_pct': 80.0, 'power_kw': None, 'npshr_m': 4.2}, {'flow_m3hr': 1750.0, 'head_m': 143.0, 'efficiency_pct': 79.0, 'power_kw': None, 'npshr_m': 4.4}], 'point_count': 7, 'flow_range_m3hr': '200.0-1750.0', 'head_range_m': '143.0-221.0', 'efficiency_range_pct': '19.0-80.0', 'has_power_data': False, 'has_npsh_data': True, 'npsh_range_m': '3.8-4.4'}, 'flow_m3hr': 1500.0, 'head_m': 169.75, 'efficiency_pct': 79.5, 'power_kw': 872.771, 'npshr_m': 4.15, 'impeller_diameter_mm': 553.0, 'test_speed_rpm': 1480, 'sizing_info': {'base_diameter_mm': 553.0, 'required_diameter_mm': 553.0, 'trim_percent': 100.0, 'meets_requirements': True, 'head_margin_m': 139.75, 'sizing_method': 'impeller_trimming'}}
+INFO:app.route_modules.reports:Template data - selected_pump selected_curve: {'impeller_size': 553.0, 'impeller_diameter_mm': 553.0, 'is_selected': True, 'curve_index': 0}
+INFO:werkzeug:172.31.122.194 - - [30/Jul/2025 19:12:17] "GET /pump_report/400-600?flow=1500.0&head=30.0&pump_type=VERTICAL+TURBINE HTTP/1.1" 200 -
+INFO:werkzeug:172.31.122.194 - - [30/Jul/2025 19:12:18] "GET /static/js/charts.js?v=20250607-1910-green HTTP/1.1" 304 -
+INFO:werkzeug:172.31.122.194 - - [30/Jul/2025 19:12:18] "GET /static/js/chart_legend_fix.js?v=20250607-1905 HTTP/1.1" 304 -
+INFO:werkzeug:172.31.122.194 - - [30/Jul/2025 19:12:18] "GET /static/js/force-chart-refresh.js HTTP/1.1" 304 -
+INFO:werkzeug:172.31.122.194 - - [30/Jul/2025 19:12:18] "GET /static/js/error-handler.js HTTP/1.1" 304 -
+INFO:werkzeug:172.31.122.194 - - [30/Jul/2025 19:12:18] "GET /static/js/chart_layout_fix.js?v=20250607-1905 HTTP/1.1" 304 -
+INFO:app.route_modules.api:Chart API: Loading data for pump 400-600
+INFO:app.route_modules.api:Chart API: Catalog lookup took 0.000s
+INFO:app.route_modules.api:Chart API: Total request time 0.001s for pump 400-600
+INFO:werkzeug:172.31.122.194 - - [30/Jul/2025 19:12:18] "GET /api/chart_data_safe/NDAwLTYwMA?flow=1500&head=30 HTTP/1.1" 200 -
+INFO:app.route_modules.api:Chart API: Loading data for pump 400-600
+INFO:werkzeug:172.31.122.194 - - [30/Jul/2025 19:12:18] "POST /api/ai_analysis_fast HTTP/1.1" 200 -
+INFO:app.route_modules.api:Chart API: Catalog lookup took 0.000s
+INFO:app.route_modules.api:Chart API: Speed variation detected - 1480→1439.0 RPM (ratio: 0.972)
+INFO:app.route_modules.api:Chart API: Speed scaling applied to selected curve - power range: 582.7-801.5 kW
+INFO:app.route_modules.api:Chart API: Total request time 0.003s for pump 400-600
+INFO:werkzeug:172.31.122.194 - - [30/Jul/2025 19:12:18] "GET /api/chart_data_safe/NDAwLTYwMA?flow=1500&head=169.8 HTTP/1.1" 200 -
+INFO:werkzeug:172.31.122.194 - - [30/Jul/2025 19:12:19] "POST /api/convert_markdown HTTP/1.1" 200 -

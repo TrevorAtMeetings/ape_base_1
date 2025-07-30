@@ -209,100 +209,51 @@ class PumpChartsManager {
                     showlegend: true
                 });
             } else {
-                // Generate a more realistic system curve if none provided
-                // System curve should intersect with pump curve at operating point
-                // Use the actual pump curve data to find the intersection point
+                // Generate system curve based on actual system requirements
+                // System curve should pass through the required duty point, NOT the pump's delivery point
+                
+                // Use system requirements if available, otherwise fall back to operating point
+                let systemFlow = opPoint.flow_m3hr;
+                let systemHead = opPoint.head_m;
+                
+                // Check if we have actual system requirements
+                if (this.currentChartData.system_requirements) {
+                    systemFlow = this.currentChartData.system_requirements.flow_m3hr;
+                    systemHead = this.currentChartData.system_requirements.head_m;
+                    console.log('Using actual system requirements:', { systemFlow, systemHead });
+                }
+                
+                // Calculate system curve parameters based on typical system design
+                // Assume 40% static head and 60% friction losses at duty point
+                const staticHead = systemHead * 0.4; // 40% static head
+                const frictionHead = systemHead - staticHead;
+                const frictionCoeff = frictionHead / (systemFlow * systemFlow);
 
-                // Find the pump curve that contains the operating point
-                let pumpCurve = null;
-                for (const curve of this.currentChartData.curves) {
-                    if (curve.is_selected && Array.isArray(curve.flow_data) && Array.isArray(curve.head_data)) {
-                        pumpCurve = curve;
-                        break;
-                    }
+                // Generate system curve points from 0 to 150% of duty flow
+                const systemFlows = [];
+                const systemHeads = [];
+
+                for (let i = 0; i <= 15; i++) {
+                    const flow = (systemFlow * i) / 10; // 0% to 150% in 10% increments
+                    const head = staticHead + frictionCoeff * flow * flow;
+                    systemFlows.push(flow);
+                    systemHeads.push(head);
                 }
 
-                if (pumpCurve) {
-                    // Find the pump head at operating flow rate
-                    let pumpHeadAtOpFlow = opPoint.head_m;
-
-                    // Interpolate to find exact pump head at operating flow
-                    for (let i = 0; i < pumpCurve.flow_data.length - 1; i++) {
-                        if (pumpCurve.flow_data[i] <= opPoint.flow_m3hr && pumpCurve.flow_data[i + 1] >= opPoint.flow_m3hr) {
-                            const flow1 = pumpCurve.flow_data[i];
-                            const flow2 = pumpCurve.flow_data[i + 1];
-                            const head1 = pumpCurve.head_data[i];
-                            const head2 = pumpCurve.head_data[i + 1];
-
-                            // Linear interpolation
-                            const ratio = (opPoint.flow_m3hr - flow1) / (flow2 - flow1);
-                            pumpHeadAtOpFlow = head1 + ratio * (head2 - head1);
-                            break;
-                        }
-                    }
-
-                    // Calculate system curve parameters to intersect at operating point
-                    const staticHead = pumpHeadAtOpFlow * 0.3; // 30% static head
-                    const frictionHead = pumpHeadAtOpFlow - staticHead;
-                    const frictionCoeff = frictionHead / (opPoint.flow_m3hr * opPoint.flow_m3hr);
-
-                    // Generate system curve points from 0 to 150% of duty flow
-                    const systemFlows = [];
-                    const systemHeads = [];
-
-                    for (let i = 0; i <= 15; i++) {
-                        const flow = (opPoint.flow_m3hr * i) / 10; // 0% to 150% in 10% increments
-                        const head = staticHead + frictionCoeff * flow * flow;
-                        systemFlows.push(flow);
-                        systemHeads.push(head);
-                    }
-
-                    traces.push({
-                        x: systemFlows,
-                        y: systemHeads,
-                        type: 'scatter',
-                        mode: 'lines',
-                        name: 'System Curve (Estimated)',
-                        line: {
-                            color: '#666666',
-                            width: 2,
-                            dash: 'dashdot'
-                        },
-                        hovertemplate: '<b>System Curve</b><br>Flow: %{x:.0f} m³/hr<br>Head: %{y:.1f} m<br><i>Static: ' + (staticHead || 0).toFixed(1) + 'm + Friction</i><extra></extra>',
-                        showlegend: true
-                    });
-                } else {
-                    // Fallback to original calculation if no pump curve found
-                    const staticHead = opPoint.head_m * 0.4; // 40% static head assumption
-                    const frictionHead = opPoint.head_m - staticHead;
-                    const frictionCoeff = frictionHead / (opPoint.flow_m3hr * opPoint.flow_m3hr);
-
-                    // Generate system curve points from 0 to 150% of duty flow
-                    const systemFlows = [];
-                    const systemHeads = [];
-
-                    for (let i = 0; i <= 15; i++) {
-                        const flow = (opPoint.flow_m3hr * i) / 10; // 0% to 150% in 10% increments
-                        const head = staticHead + frictionCoeff * flow * flow;
-                        systemFlows.push(flow);
-                        systemHeads.push(head);
-                    }
-
-                    traces.push({
-                        x: systemFlows,
-                        y: systemHeads,
-                        type: 'scatter',
-                        mode: 'lines',
-                        name: 'System Curve (Estimated)',
-                        line: {
-                            color: '#666666',
-                            width: 2,
-                            dash: 'dashdot'
-                        },
-                        hovertemplate: '<b>System Curve</b><br>Flow: %{x:.0f} m³/hr<br>Head: %{y:.1f} m<br><i>Static: ' + (staticHead || 0).toFixed(1) + 'm + Friction</i><extra></extra>',
-                        showlegend: true
-                    });
-                }
+                traces.push({
+                    x: systemFlows,
+                    y: systemHeads,
+                    type: 'scatter',
+                    mode: 'lines',
+                    name: 'System Curve',
+                    line: {
+                        color: '#666666',
+                        width: 2,
+                        dash: 'dashdot'
+                    },
+                    hovertemplate: '<b>System Curve</b><br>Flow: %{x:.0f} m³/hr<br>Head: %{y:.1f} m<br><i>Static: ' + (staticHead || 0).toFixed(1) + 'm + Friction</i><extra></extra>',
+                    showlegend: true
+                });
             }
         }
 
