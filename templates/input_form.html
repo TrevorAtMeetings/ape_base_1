@@ -111,14 +111,14 @@
         flex-direction: column !important;
         gap: 12px !important;
     }
-    
+
     #direct_search_button[style*="display: flex"] {
         width: 100% !important;
         min-width: auto !important;
         justify-content: center !important;
         display: flex !important;
     }
-    
+
     #direct_search_button .btn-text {
         display: inline !important;
     }
@@ -128,7 +128,7 @@
     #direct_search_button .btn-text {
         display: none !important;
     }
-    
+
     #direct_search_button[style*="display: flex"] {
         min-width: 60px !important;
         display: flex !important;
@@ -277,7 +277,7 @@
                                             <span id="pump-count-status" style="display: none; color: var(--md-primary); font-weight: 500;"></span>
                                         </span>
                                     </div>
-                                    
+
                                     <!-- Enhanced dropdown suggestions -->
                                     <div id="pump_search_suggestions" class="autocomplete-dropdown" style="display: none; position: absolute; top: 100%; left: 0; right: 0; z-index: 99999; margin-top: 2px; border: 2px solid var(--md-primary); border-radius: 8px; background: white; max-height: 300px; overflow-y: auto; box-shadow: 0 8px 24px rgba(0,0,0,0.15);">
                                         <!-- Loading indicator -->
@@ -285,19 +285,19 @@
                                             <i class="material-icons small" style="vertical-align: middle; margin-right: 8px; animation: spin 1s linear infinite;">autorenew</i>
                                             Searching pumps...
                                         </div>
-                                        
+
                                         <!-- Results container -->
                                         <div class="suggestions-list">
                                             <!-- Dynamic pump suggestions will appear here -->
                                         </div>
-                                        
+
                                         <!-- No results message -->
                                         <div class="suggestions-empty" style="display: none; padding: 16px; text-align: center; color: #666;">
                                             <i class="material-icons small" style="vertical-align: middle; margin-right: 8px;">search_off</i>
                                             No pumps found matching your search
                                             <div style="font-size: 12px; margin-top: 4px; color: #999;">Try shorter terms like "6" or "ALE"</div>
                                         </div>
-                                        
+
                                         <!-- Quick suggestions when empty -->
                                         <div class="suggestions-help" style="display: none; padding: 12px; border-top: 1px solid #eee; background: #f9f9f9;">
                                             <div style="font-size: 12px; color: #666; margin-bottom: 6px;">Popular models:</div>
@@ -312,7 +312,7 @@
                                 </div>
                             </div>
                         </div>
-                        
+
                         <!-- Find Best Pump Button - appears when essential requirements are complete -->
                         <div class="row" id="find-best-pump-section" style="display: none; margin-top: 24px;">
                             <div class="col s12" style="text-align: center;">
@@ -353,7 +353,7 @@
                                 <i class="material-icons" id="advanced-arrow" style="color: var(--md-primary); transition: transform 0.3s;">expand_more</i>
                             </div>
                         </div>
-                        
+
                         <div id="advanced-options-content" style="display: none;">
                             <!-- Application Context -->
                             <div class="row" style="margin-bottom: 20px;">
@@ -407,7 +407,7 @@
                                                 <span>Variable Flow Required</span>
                                             </label>
                                         </div>
-                                        
+
                                         <div class="row" id="flow-range-section" style="display: none; margin-top: 15px;">
                                             <div class="col s12 m6">
                                                 <div class="input-field">
@@ -454,13 +454,13 @@
                             <input name="email" type="hidden" value="">
                             <input name="project_name" type="hidden" value="">
                             <input name="project_location" type="hidden" value="">
-                            
+
                             <!-- Liquid properties defaults -->
                             <input name="liquid_type" type="hidden" value="water">
                             <input name="temperature" type="hidden" value="20">
                             <input name="specific_gravity" type="hidden" value="1.0">
                             <input name="viscosity" type="hidden" value="1.0">
-                            
+
                             <!-- System conditions defaults -->
                             <input name="suction_pressure" type="hidden" value="0">
                             <input name="static_head" type="hidden" value="0">
@@ -468,7 +468,7 @@
                             <input name="site_altitude" type="hidden" value="">
                             <input name="discharge_pressure" type="hidden" value="">
                             <input name="vapor_pressure" type="hidden" value="3.074">
-                            
+
                             <!-- Motor defaults -->
                             <input name="max_power" type="hidden" value="">
                             <input name="motor_speed" type="hidden" value="2960">
@@ -522,7 +522,7 @@ function initializeFormComponents() {
     // Initialize tooltips for this form
     var tooltips = document.querySelectorAll('.tooltipped');
     M.Tooltip.init(tooltips);
-    
+
     // Prevent Materialize from auto-initializing autocomplete on our custom input
     const customInput = document.getElementById('direct_pump_search');
     if (customInput) {
@@ -574,22 +574,22 @@ function initializeEnhancedAutocomplete() {
     const suggestionsDiv = document.getElementById('pump_search_suggestions');
     const statusSpan = document.getElementById('pump-search-status');
     const countSpan = document.getElementById('pump-count-status');
-    
+
     if (!pumpSearchInput || !suggestionsDiv) return;
-    
+
     // Check if already initialized to prevent duplicates
     if (pumpSearchInput.dataset.autocompleteInitialized === 'true') {
         console.log('Enhanced autocomplete already initialized, skipping...');
         return;
     }
-    
+
     // Mark as initialized
     pumpSearchInput.dataset.autocompleteInitialized = 'true';
-    
+
     // Disable any existing Materialize autocomplete initialization
     pumpSearchInput.removeAttribute('data-autocomplete');
     pumpSearchInput.classList.remove('autocomplete');
-    
+
     // Remove any existing Materialize autocomplete instances
     if (window.M && window.M.Autocomplete) {
         const existingInstance = window.M.Autocomplete.getInstance(pumpSearchInput);
@@ -598,12 +598,12 @@ function initializeEnhancedAutocomplete() {
             existingInstance.destroy();
         }
     }
-    
+
     // Clear any existing event listeners by cloning the element
     const newInput = pumpSearchInput.cloneNode(true);
     pumpSearchInput.parentNode.replaceChild(newInput, pumpSearchInput);
     const cleanInput = document.getElementById('direct_pump_search');
-    
+
     let searchTimeout;
     let selectedIndex = -1;
     let currentSuggestions = [];
@@ -613,7 +613,7 @@ function initializeEnhancedAutocomplete() {
         clearTimeout(searchTimeout);
         const query = this.value.trim();
         const searchButton = document.getElementById('direct_search_button');
-        
+
         // Show/hide search button based on input content
         if (searchButton) {
             if (query.length > 0) {
@@ -622,11 +622,11 @@ function initializeEnhancedAutocomplete() {
                 searchButton.style.display = 'none';
             }
         }
-        
+
         // Reset UI state
         selectedIndex = -1;
         this.setAttribute('data-search-status', 'ready');
-        
+
         if (query.length < 1) {
             hideSuggestions();
             updateStatus('Skip selection algorithm and analyze a specific pump model');
@@ -652,9 +652,9 @@ function initializeEnhancedAutocomplete() {
     // Keyboard navigation - use the clean input
     cleanInput.addEventListener('keydown', function(e) {
         if (!suggestionsDiv.style.display || suggestionsDiv.style.display === 'none') return;
-        
+
         const suggestions = suggestionsDiv.querySelectorAll('.suggestion-item');
-        
+
         switch(e.key) {
             case 'ArrowDown':
                 e.preventDefault();
@@ -688,7 +688,7 @@ function initializeEnhancedAutocomplete() {
             })
             .then(function(data) {
                 cleanInput.setAttribute('data-search-status', 'ready');
-                
+
                 if (data.pumps && data.pumps.length > 0) {
                     currentSuggestions = data.pumps;
                     showSuggestions(data.pumps);
@@ -802,7 +802,7 @@ function initializeEnhancedAutocomplete() {
             updateStatus('Skip selection algorithm and analyze a specific pump model');
         }
     });
-    
+
     console.log('Enhanced autocomplete initialized successfully');
 }
 
@@ -812,27 +812,27 @@ function selectPump(pumpCode) {
     const suggestions = document.getElementById('pump_search_suggestions');
     const statusSpan = document.getElementById('pump-search-status');
     const searchButton = document.getElementById('direct_search_button');
-    
+
     if (input) {
         input.value = pumpCode;
         input.setAttribute('data-search-status', 'ready');
         // Trigger change event for any listeners
         input.dispatchEvent(new Event('change'));
     }
-    
+
     // Show search button since there's now content in the input
     if (searchButton && pumpCode.trim().length > 0) {
         searchButton.style.display = 'flex';
     }
-    
+
     if (suggestions) {
         suggestions.style.display = 'none';
     }
-    
+
     if (statusSpan) {
         statusSpan.textContent = `Selected: ${pumpCode}`;
     }
-    
+
     // Add visual feedback
     if (input) {
         input.style.borderColor = '#4caf50';
@@ -858,13 +858,13 @@ function toggleAdvancedOptions() {
     const content = document.getElementById('advanced-options-content');
     const arrow = document.getElementById('advanced-arrow');
     const status = document.getElementById('advanced-status');
-    
+
     if (content.style.display === 'none' || content.style.display === '') {
         // Expand
         content.style.display = 'block';
         arrow.style.transform = 'rotate(180deg)';
         status.textContent = 'Click to collapse advanced options';
-        
+
         // Smooth scroll into view
         setTimeout(() => {
             content.scrollIntoView({ 
@@ -894,29 +894,29 @@ function searchDirectPump() {
     const flowInput = document.getElementById('flow_rate');
     const headInput = document.getElementById('total_head');
     const button = document.getElementById('direct_search_button');
-    
+
     if (!input || !flowInput || !headInput) {
         alert('Please make sure all required fields are filled');
         return;
     }
-    
+
     const pumpCode = input.value.trim();
     const flow = flowInput.value;
     const head = headInput.value;
-    
+
     if (!pumpCode) {
         alert('Please enter a pump code to search');
         input.focus();
         return;
     }
-    
+
     if (!flow || !head) {
         alert('Please enter both flow rate and total head before searching');
         if (!flow) flowInput.focus();
         else if (!head) headInput.focus();
         return;
     }
-    
+
     // Show loading state
     if (button) {
         button.style.opacity = '0.7';
@@ -924,10 +924,10 @@ function searchDirectPump() {
         if (buttonText) buttonText.textContent = 'Searching...';
         button.disabled = true;
     }
-    
+
     // Construct the direct search URL
     const url = `/pump_report/${encodeURIComponent(pumpCode)}?flow=${flow}&head=${head}&direct_search=true`;
-    
+
     // Navigate to the pump report
     window.location.href = url;
 }
@@ -936,13 +936,13 @@ function searchDirectPump() {
 function selectPumpSuggestion(pumpCode) {
     const input = document.getElementById('direct_pump_search');
     const suggestions = document.getElementById('pump_search_suggestions');
-    
+
     if (input) {
         input.value = pumpCode;
         // Trigger change event for any listeners
         input.dispatchEvent(new Event('change'));
     }
-    
+
     if (suggestions) {
         suggestions.style.display = 'none';
     }
@@ -953,24 +953,142 @@ function resetForm() {
     const form = document.getElementById('pumpSelectionForm');
     if (form) {
         form.reset();
-        
+
         // Reset advanced options to collapsed state
         const content = document.getElementById('advanced-options-content');
         const arrow = document.getElementById('advanced-arrow');
         const status = document.getElementById('advanced-status');
-        
+
         if (content) content.style.display = 'none';
         if (arrow) arrow.style.transform = 'rotate(0deg)';
         if (status) status.textContent = 'Click to expand detailed parameters';
-        
+
         // Hide variable flow section
         const flowRangeSection = document.getElementById('flow-range-section');
         if (flowRangeSection) flowRangeSection.style.display = 'none';
-        
+
         // Hide pump suggestions
         const suggestions = document.getElementById('pump_search_suggestions');
         if (suggestions) suggestions.style.display = 'none';
     }
 }
+// Add unit conversion logic and essential requirements watcher
+// Define global variable for current unit system
+let currentUnitSystem = 'metric';
+
+// Function to toggle between metric and imperial units
+function toggleUnitSystem() {
+    currentUnitSystem = (currentUnitSystem === 'metric') ? 'imperial' : 'metric';
+    updateUnitLabels();
+    updateUnitConversion('flow');
+    updateUnitConversion('head');
+}
+
+// Function to update labels based on the unit system
+function updateUnitLabels() {
+    const flowLabel = document.querySelector('label[for="flow_rate"]');
+    const headLabel = document.querySelector('label[for="total_head"]');
+    const flowHelper = document.querySelector('#flow_rate + .helper-text');
+    const headHelper = document.querySelector('#total_head + .helper-text');
+
+    if (currentUnitSystem === 'metric') {
+        flowLabel.textContent = 'Flow Rate (m³/hr) *';
+        headLabel.textContent = 'Total Head (m) *';
+        flowHelper.dataset.error = "Flow rate must be between 0.1 and 10000 m³/hr";
+        headHelper.dataset.error = "Total head must be between 0.1 and 1000 m";
+    } else {
+        flowLabel.textContent = 'Flow Rate (GPM) *';
+        headLabel.textContent = 'Total Head (ft) *';
+        flowHelper.dataset.error = "Flow rate must be between 2.64 and 264172 GPM";
+        headHelper.dataset.error = "Total head must be between 0.32 and 3280 ft";
+    }
+}
+
+// Function to handle unit conversions
+function updateUnitConversion(type) {
+    const flowInput = document.getElementById('flow_rate');
+    const headInput = document.getElementById('total_head');
+
+    if (type === 'flow') {
+        if (currentUnitSystem === 'metric') {
+            // If switching to metric, and the field is already in m3/hr, no conversion needed on display.
+        } else {
+            // Convert m3/hr to GPM = m3/hr * 4.40287
+            flowInput.value = (parseFloat(flowInput.value) * 4.40287).toFixed(2);
+        }
+    } else if (type === 'head') {
+        if (currentUnitSystem === 'metric') {
+             // If switching to metric, and the field is already in meters, no conversion needed.
+        } else {
+            // Convert meters to feet = meters * 3.28084
+            headInput.value = (parseFloat(headInput.value) * 3.28084).toFixed(2);
+        }
+    }
+}
+
+// Set up essential requirements watcher
+function setupEssentialRequirementsWatcher() {
+    const flowInput = document.getElementById('flow_rate');
+    const headInput = document.getElementById('total_head');
+    const pumpTypeInputs = document.querySelectorAll('input[name="pump_type"]');
+	// Add event listeners
+    flowInput.addEventListener('input', function() {
+        updateUnitConversion('flow');
+        checkEssentialRequirements();
+    });
+    flowInput.addEventListener('change', function() {
+        updateUnitConversion('flow');
+        checkEssentialRequirements();
+    });
+    headInput.addEventListener('input', function() {
+        updateUnitConversion('head');
+        checkEssentialRequirements();
+    });
+    headInput.addEventListener('change', function() {
+        updateUnitConversion('head');
+        checkEssentialRequirements();
+    });
+
+    pumpTypeInputs.forEach(input => {
+        input.addEventListener('change', checkEssentialRequirements);
+    });
+
+    // Initial check
+    checkEssentialRequirements();
+}
+
+// Check essential requirements function
+function checkEssentialRequirements() {
+        let flowValue = parseFloat(flowInput.value);
+        let headValue = parseFloat(headInput.value);
+
+        // Convert to metric for validation if in imperial mode
+        if (currentUnitSystem === 'imperial') {
+            if (!isNaN(flowValue)) flowValue = flowValue / 264.172; // GPH to m³/hr
+            if (!isNaN(headValue)) headValue = headValue / 3.28084; // ft to m
+        }
+
+        const pumpTypeSelected = Array.from(pumpTypeInputs).some(input => input.checked);
+
+        const hasFlow = !isNaN(flowValue) && flowValue > 0;
+        const hasHead = !isNaN(headValue) && headValue > 0;
+
+    const findBestPumpSection = document.getElementById('find-best-pump-section');
+    if (hasFlow && hasHead && pumpTypeSelected) {
+        findBestPumpSection.style.display = 'block';
+    } else {
+        findBestPumpSection.style.display = 'none';
+    }
+}
+
+// Call setup function after DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize form components
+    initializeFormComponents();
+    initializeAdvancedOptions();
+
+	// Set up unit conversion and essential requirements watcher
+    setupEssentialRequirementsWatcher();
+});
 </script>
 {% endblock %}
