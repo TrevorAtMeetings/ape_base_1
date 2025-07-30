@@ -9,8 +9,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Setup form validation and submission
     setupFormHandling();
     
-    // Setup essential requirements monitoring
-    setupEssentialRequirementsWatcher();
+    // Note: Essential requirements monitoring is handled in the template
     
     // Hide any persistent progress bars after page load
     hidePersistentProgressBars();
@@ -132,61 +131,4 @@ function resetForm() {
     }
 }
 
-/**
- * Monitor essential requirements and show/hide Find Best Pump button
- */
-function setupEssentialRequirementsWatcher() {
-    const flowInput = document.getElementById('flow_rate');
-    const headInput = document.getElementById('total_head');
-    const pumpTypeInputs = document.querySelectorAll('input[name="pump_type"]');
-    const findBestPumpSection = document.getElementById('find-best-pump-section');
-    
-    if (!flowInput || !headInput || !pumpTypeInputs.length || !findBestPumpSection) {
-        return;
-    }
-    
-    function checkEssentialRequirements() {
-        const flowValue = parseFloat(flowInput.value);
-        const headValue = parseFloat(headInput.value);
-        const pumpTypeSelected = Array.from(pumpTypeInputs).some(input => input.checked);
-        
-        const hasFlow = !isNaN(flowValue) && flowValue > 0;
-        const hasHead = !isNaN(headValue) && headValue > 0;
-        
-        if (hasFlow && hasHead && pumpTypeSelected) {
-            // Show the Find Best Pump button with smooth animation
-            findBestPumpSection.style.display = 'block';
-            setTimeout(() => {
-                findBestPumpSection.style.opacity = '1';
-                findBestPumpSection.style.transform = 'translateY(0)';
-            }, 50);
-        } else {
-            // Hide the Find Best Pump button
-            findBestPumpSection.style.opacity = '0';
-            findBestPumpSection.style.transform = 'translateY(20px)';
-            setTimeout(() => {
-                if (findBestPumpSection.style.opacity === '0') {
-                    findBestPumpSection.style.display = 'none';
-                }
-            }, 300);
-        }
-    }
-    
-    // Add event listeners
-    flowInput.addEventListener('input', checkEssentialRequirements);
-    flowInput.addEventListener('change', checkEssentialRequirements);
-    headInput.addEventListener('input', checkEssentialRequirements);
-    headInput.addEventListener('change', checkEssentialRequirements);
-    
-    pumpTypeInputs.forEach(input => {
-        input.addEventListener('change', checkEssentialRequirements);
-    });
-    
-    // Set initial styles for smooth transitions
-    findBestPumpSection.style.transition = 'all 0.3s ease';
-    findBestPumpSection.style.opacity = '0';
-    findBestPumpSection.style.transform = 'translateY(20px)';
-    
-    // Check initially
-    checkEssentialRequirements();
-}
+// Essential requirements monitoring is handled in the input_form.html template

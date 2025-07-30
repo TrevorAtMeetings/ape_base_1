@@ -1053,7 +1053,7 @@ function setupEssentialRequirementsWatcher() {
     const flowInput = document.getElementById('flow_rate');
     const headInput = document.getElementById('total_head');
     const pumpTypeInputs = document.querySelectorAll('input[name="pump_type"]');
-	// Add event listeners
+        // Add event listeners
     flowInput.addEventListener('input', function() {
         updateUnitConversion('flow');
         checkEssentialRequirements();
@@ -1081,12 +1081,22 @@ function setupEssentialRequirementsWatcher() {
 
 // Check essential requirements function
 function checkEssentialRequirements() {
+        // Get the input elements each time to ensure they exist
+        const flowInput = document.getElementById('flow_rate');
+        const headInput = document.getElementById('total_head');
+        const pumpTypeInputs = document.querySelectorAll('input[name="pump_type"]');
+        
+        if (!flowInput || !headInput) {
+            console.warn('Flow or head input elements not found');
+            return;
+        }
+        
         let flowValue = parseFloat(flowInput.value);
         let headValue = parseFloat(headInput.value);
 
         // Convert to metric for validation if in imperial mode
         if (currentUnitSystem === 'imperial') {
-            if (!isNaN(flowValue)) flowValue = flowValue / 264.172; // GPH to m³/hr
+            if (!isNaN(flowValue)) flowValue = flowValue / 264.172; // GPH to m³/hr  
             if (!isNaN(headValue)) headValue = headValue / 3.28084; // ft to m
         }
 
@@ -1109,7 +1119,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeFormComponents();
     initializeAdvancedOptions();
 
-	// Set up unit conversion and essential requirements watcher
+        // Set up unit conversion and essential requirements watcher
     setupEssentialRequirementsWatcher();
 });
 </script>
