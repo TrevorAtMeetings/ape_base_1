@@ -1026,6 +1026,8 @@ let currentUnitSystem = 'metric';
 
 // Function to switch unit systems (called by radio buttons)
 function switchUnitSystem(newSystem) {
+    console.log('switchUnitSystem called with:', newSystem, 'current:', currentUnitSystem);
+    
     if (currentUnitSystem === newSystem) return;
     
     const flowInput = document.getElementById('flow_rate');
@@ -1064,6 +1066,7 @@ function switchUnitSystem(newSystem) {
     
     // Update current system
     currentUnitSystem = newSystem;
+    console.log('currentUnitSystem updated to:', currentUnitSystem);
     
     // Update labels and validation
     updateUnitLabels();
@@ -1198,11 +1201,15 @@ function setupEssentialRequirementsWatcher() {
     const headInput = document.getElementById('total_head');
     const pumpTypeInputs = document.querySelectorAll('input[name="pump_type"]');
     
+    console.log('Setting up event listeners for:', flowInput?.id, headInput?.id);
+    
     // Add event listeners - only input for real-time validation, blur for conversion
     [flowInput, headInput].forEach(input => {
         if (input) {
+            console.log('Adding event listeners to:', input.id);
             input.addEventListener('input', checkEssentialRequirements);
             input.addEventListener('blur', function() {
+                console.log('Blur event detected on:', input.id);
                 handleUnitConversionOnBlur(input);
             });
         }
