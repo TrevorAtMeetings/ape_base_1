@@ -1146,22 +1146,39 @@ function showConversionMessage(message) {
 
 // Function to handle unit conversion on blur (when user clicks out of field)
 function handleUnitConversionOnBlur(input) {
-    if (currentUnitSystem === 'metric') return; // No conversion needed for metric
+    console.log('Blur event triggered for input:', input.id, 'value:', input.value, 'currentUnitSystem:', currentUnitSystem);
+    
+    if (currentUnitSystem === 'metric') {
+        console.log('Already in metric system, no conversion needed');
+        return; // No conversion needed for metric
+    }
     
     const value = parseFloat(input.value);
-    if (isNaN(value) || value <= 0) return;
+    if (isNaN(value) || value <= 0) {
+        console.log('Invalid value for conversion:', value);
+        return;
+    }
+    
+    let convertedValue;
+    let message;
     
     if (input.id === 'flow_rate') {
         // Convert GPH to m³/hr: GPH * 0.00378541
-        const convertedValue = (value * 0.00378541).toFixed(3);
-        input.value = convertedValue;
-        showConversionMessage(`Flow rate converted: ${value} GPH → ${convertedValue} m³/hr`);
+        convertedValue = (value * 0.00378541).toFixed(3);
+        message = `Flow rate converted: ${value} GPH → ${convertedValue} m³/hr`;
+        console.log('Converting flow rate:', value, 'GPH to', convertedValue, 'm³/hr');
     } else if (input.id === 'total_head') {
         // Convert feet to meters: ft * 0.3048
-        const convertedValue = (value * 0.3048).toFixed(3);
-        input.value = convertedValue;
-        showConversionMessage(`Head converted: ${value} ft → ${convertedValue} m`);
+        convertedValue = (value * 0.3048).toFixed(3);
+        message = `Head converted: ${value} ft → ${convertedValue} m`;
+        console.log('Converting head:', value, 'ft to', convertedValue, 'm');
+    } else {
+        console.log('Unknown input field:', input.id);
+        return;
     }
+    
+    input.value = convertedValue;
+    showConversionMessage(message);
     
     // Update to metric system after conversion
     currentUnitSystem = 'metric';
