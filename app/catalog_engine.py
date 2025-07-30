@@ -742,42 +742,44 @@ class CatalogEngine:
                     head_margin = delivered_head - head_m
                     head_margin_pct = (head_margin / head_m) * 100
 
-                    # CORRECTED SCORING SYSTEM: Industry-Standard Pump Selection
-                    # 1. BEP proximity (40 points max) - PRIMARY: Operating near BEP is critical
-                    # 2. Efficiency at duty point (35 points max) - SECONDARY: Actual performance
-                    # 3. Head margin bonus (15 points max) - TERTIARY: Safety margin
-                    # 4. Speed variation penalty (-20 points) - CRITICAL: Penalize VFD requirement
-                    # 5. Impeller trimming penalty - Penalize excessive trimming
+                    # COMPREHENSIVE SCORING SYSTEM: Advanced Pump Selection (100 points total)
+                    # 1. BEP proximity (40 points max) - PRIMARY: Reliability factor
+                    # 2. Efficiency at duty point (30 points max) - SECONDARY: Operating cost
+                    # 3. Head margin score (15 points max to -∞) - TERTIARY: Right-sizing factor
+                    # 4. NPSH score (15 points max) - QUATERNARY: Cavitation risk factor
+                    # 5. Speed variation penalty (up to -15 points) - Graduated penalty
+                    # 6. Impeller trimming penalty - Linear penalty
 
                     # Calculate BEP analysis for this pump
                     bep_analysis = pump.calculate_bep_distance(
                         flow_m3hr, head_m)
-                    # BEP score is now PRIMARY factor (40 points max)
-                    bep_score = (bep_analysis.get('bep_score', 0) / 30.0) * 40
+                    
+                    # 1. BEP PROXIMITY SCORE (40 points max) - Squared decay function
+                    flow_ratio = flow_m3hr / bep_analysis.get('bep_flow', flow_m3hr) if bep_analysis.get('bep_flow', 0) > 0 else 1.0
+                    bep_score_raw = max(0, 1 - ((flow_ratio - 1) / 0.5) ** 2)
+                    bep_score = 40 * bep_score_raw
 
-                    # Efficiency score (reduced to 35 points max - secondary importance)
-                    efficiency_score = (efficiency / 100.0) * 35
+                    # 2. EFFICIENCY SCORE (30 points max) - Linear scaling
+                    efficiency_score = (efficiency / 100.0) * 30
 
-                    # Head margin bonus/penalty - reward precise delivery, heavily penalize oversizing
-                    if -2 <= head_margin_pct <= 2:
-                        margin_bonus = 15  # Perfect delivery
-                    elif 2 < head_margin_pct <= 10:
-                        margin_bonus = 13 - (head_margin_pct -
-                                             2) * 0.3  # 13-10.6 points
-                    elif 10 < head_margin_pct <= 20:
-                        margin_bonus = 10 - (head_margin_pct -
-                                             10) * 0.2  # 10-8 points
+                    # 3. HEAD MARGIN SCORE (15 points max to -∞) - Piece-wise function
+                    if head_margin_pct < -2:
+                        # Under-sized - should have been filtered out earlier
+                        continue  # Skip this pump
+                    elif -2 <= head_margin_pct <= 5:
+                        # Ideal margin range
+                        margin_score = 15  # Perfect sizing
+                    elif 5 < head_margin_pct <= 20:
+                        # Good margin - linear decrease
+                        margin_score = 15 - 0.5 * (head_margin_pct - 5)  # 15 to 7.5 points
                     elif 20 < head_margin_pct <= 50:
-                        margin_bonus = 8 - (head_margin_pct -
-                                           20) * 0.2  # 8-2 points (increasing penalty)
-                    elif 50 < head_margin_pct <= 100:
-                        margin_bonus = 2 - (head_margin_pct -
-                                           50) * 0.1  # 2 to -3 points (penalty zone)
+                        # Excessive margin - steeper penalty
+                        margin_score = 7.5 - 0.25 * (head_margin_pct - 20)  # 7.5 to 0 points
                     else:
-                        # Extreme oversizing penalty (>100% over required head)
-                        margin_bonus = -3 - (head_margin_pct - 100) * 0.05  # Increasing penalty
+                        # Wasteful oversizing (>50%) - negative score continues to decrease
+                        margin_score = 0 - 0.1 * (head_margin_pct - 50)  # Negative and decreasing
                         logger.debug(
-                            f"Extreme oversizing penalty for {pump.pump_code}: {margin_bonus:.1f} points ({head_margin_pct:.1f}% over-delivery)"
+                            f"Wasteful oversizing penalty for {pump.pump_code}: {margin_score:.1f} points ({head_margin_pct:.1f}% over-delivery)"
                         )
 
                     # CRITICAL: Speed variation penalty
@@ -787,41 +789,60 @@ class CatalogEngine:
                     if 'sizing_info' in performance:
                         sizing_info = performance['sizing_info']
 
-                        # IMPROVED: Moderate penalty for speed variation (VFDs are industry-standard)
+                        # VFD Speed Variation Penalty (up to -15 points)
                         if sizing_info.get('vfd_required', False):
                             speed_variation_pct = abs(
                                 sizing_info.get('speed_variation_pct', 0))
                             if speed_variation_pct > 0:
-                                # Graduated penalty: minimal for small variations, larger for extreme
-                                if speed_variation_pct <= 5:
-                                    speed_penalty = speed_variation_pct * 0.5  # 0.5-2.5 points max
-                                elif speed_variation_pct <= 10:
-                                    speed_penalty = 2.5 + (speed_variation_pct - 5) * 1.0  # 2.5-7.5 points
-                                else:
-                                    speed_penalty = 7.5 + (speed_variation_pct - 10) * 1.5  # 7.5+ points
-                                
-                                speed_penalty = min(15, speed_penalty)  # Cap at 15 points (reduced from 20)
+                                # New formula: Penalty = 1.5 × Speed_Change % (capped at 15)
+                                speed_penalty = min(15, 1.5 * speed_variation_pct)
                                 logger.debug(
                                     f"Speed penalty for {pump.pump_code}: -{speed_penalty:.1f} points ({speed_variation_pct:.1f}% speed change)"
                                 )
 
-                        # Penalty for excessive impeller trimming
+                        # Impeller Trimming Penalty
                         trim_percent = sizing_info.get('trim_percent', 100)
-                        if trim_percent < 95:  # More than 5% trim
-                            trim_penalty = (95 - trim_percent
-                                            ) * 0.5  # 0.5 points per % of trim
+                        if trim_percent < 100:  # Any trimming
+                            # New formula: Penalty = 0.5 × Trim %
+                            trim_penalty = 0.5 * (100 - trim_percent)
                             sizing_penalty += trim_penalty
                             logger.debug(
-                                f"Trimming penalty for {pump.pump_code}: -{trim_penalty:.1f} points ({trim_percent:.1f}% trim)"
+                                f"Trimming penalty for {pump.pump_code}: -{trim_penalty:.1f} points ({100 - trim_percent:.1f}% trimmed)"
                             )
 
+                    # 4. NPSH SCORE (15 points max) - Dual mode based on NPSHa availability
+                    npsh_score = 0
+                    npshr_value = performance.get('npshr_m')
+                    
+                    # For now, we'll implement Mode B (NPSHa unknown) as the default
+                    # Mode A will be activated when user provides NPSHa value in the form
+                    if npshr_value is not None and npshr_value > 0:
+                        # Mode B: Requirement-based scoring (NPSHa unknown)
+                        # Score based on absolute NPSHr value - lower is better
+                        if npshr_value <= 2.0:
+                            npsh_score = 15  # Excellent - very low requirement
+                        elif npshr_value >= 8.0:
+                            npsh_score = 0  # Very demanding
+                        else:
+                            # Linear scaling between 2m and 8m
+                            npsh_score = 15 * max(0, (8 - npshr_value) / (8 - 2))
+                        
+                        logger.debug(
+                            f"NPSH score for {pump.pump_code}: {npsh_score:.1f} points (NPSHr={npshr_value:.1f}m)"
+                        )
+                    else:
+                        # No NPSH data available - don't penalize
+                        logger.debug(
+                            f"No NPSH data for {pump.pump_code} - skipping NPSH scoring"
+                        )
+
                     # Total score with penalties
-                    base_score = bep_score + efficiency_score + margin_bonus
+                    base_score = bep_score + efficiency_score + margin_score + npsh_score
                     total_penalties = speed_penalty + sizing_penalty
                     score = base_score - total_penalties
 
                     logger.debug(
-                        f"Scoring for {pump.pump_code}: BEP={bep_score:.1f}, Eff={efficiency_score:.1f}, Margin={margin_bonus:.1f}, Speed Penalty=-{speed_penalty:.1f}, Final={score:.1f}"
+                        f"Scoring for {pump.pump_code}: BEP={bep_score:.1f}, Eff={efficiency_score:.1f}, Margin={margin_score:.1f}, NPSH={npsh_score:.1f}, Speed Penalty=-{speed_penalty:.1f}, Final={score:.1f}"
                     )
 
                     # Check if sizing information is available from requirement-driven approach
@@ -852,7 +873,8 @@ class CatalogEngine:
                         'bep_analysis': bep_analysis,
                         'bep_score': bep_score,
                         'efficiency_score': efficiency_score,
-                        'margin_bonus': margin_bonus
+                        'margin_score': margin_score,
+                        'npsh_score': npsh_score
                     }
                     suitable_pumps.append(result)
 
@@ -902,7 +924,8 @@ class CatalogEngine:
                 'bep_analysis': result['bep_analysis'],
                 'bep_score': result['bep_score'],
                 'efficiency_score': result['efficiency_score'],
-                'margin_bonus': result['margin_bonus'],
+                'margin_score': result.get('margin_score', 0),
+                'npsh_score': result.get('npsh_score', 0),
                 'sizing_validated': result['sizing_validated']
             }
             formatted_results.append(formatted_result)
