@@ -198,7 +198,7 @@
                                         <p style="margin: 0;">
                                             <label>
                                                 <input name="unit_system" type="radio" value="imperial" onchange="switchUnitSystem('imperial')" />
-                                                <span>Imperial (GPH, ft)</span>
+                                                <span>Imperial (GPM, ft)</span>
                                             </label>
                                         </p>
                                     </div>
@@ -1038,12 +1038,12 @@ function switchUnitSystem(newSystem) {
         const flowValue = parseFloat(flowInput.value);
         if (!isNaN(flowValue)) {
             if (newSystem === 'imperial' && currentUnitSystem === 'metric') {
-                // Convert m³/hr to GPH: m³/hr * 264.172
-                flowInput.value = (flowValue * 264.172).toFixed(2);
-                showConversionMessage(`Flow rate converted to ${flowInput.value} GPH`);
+                // Convert m³/hr to GPM: m³/hr ÷ 0.227124
+                flowInput.value = (flowValue / 0.227124).toFixed(2);
+                showConversionMessage(`Flow rate converted to ${flowInput.value} GPM`);
             } else if (newSystem === 'metric' && currentUnitSystem === 'imperial') {
-                // Convert GPH to m³/hr: GPH * 0.00378541
-                flowInput.value = (flowValue * 0.00378541).toFixed(3);
+                // Convert GPM to m³/hr: GPM × 0.227124
+                flowInput.value = (flowValue * 0.227124).toFixed(3);
                 showConversionMessage(`Flow rate converted to ${flowInput.value} m³/hr`);
             }
         }
@@ -1090,9 +1090,9 @@ function updateUnitLabels() {
         flowHelper.dataset.error = "Flow rate must be between 0.1 and 10000 m³/hr";
         headHelper.dataset.error = "Total head must be between 0.1 and 1000 m";
     } else {
-        flowLabel.textContent = 'Flow Rate (GPH) *';
+        flowLabel.textContent = 'Flow Rate (GPM) *';
         headLabel.textContent = 'Total Head (ft) *';
-        flowHelper.dataset.error = "Flow rate must be between 26.4 and 2641720 GPH";
+        flowHelper.dataset.error = "Flow rate must be between 0.44 and 44029 GPM";
         headHelper.dataset.error = "Total head must be between 0.32 and 3280 ft";
     }
 }
@@ -1166,10 +1166,10 @@ function handleUnitConversionOnBlur(input) {
     let message;
     
     if (input.id === 'flow_rate') {
-        // Convert GPH to m³/hr: GPH * 0.00378541
-        convertedValue = (value * 0.00378541).toFixed(3);
-        message = `Flow rate converted: ${value} GPH → ${convertedValue} m³/hr`;
-        console.log('Converting flow rate:', value, 'GPH to', convertedValue, 'm³/hr');
+        // Convert GPM to m³/hr: GPM × 0.227124
+        convertedValue = (value * 0.227124).toFixed(3);
+        message = `Flow rate converted: ${value} GPM → ${convertedValue} m³/hr`;
+        console.log('Converting flow rate:', value, 'GPM to', convertedValue, 'm³/hr');
     } else if (input.id === 'total_head') {
         // Convert feet to meters: ft * 0.3048
         convertedValue = (value * 0.3048).toFixed(3);
