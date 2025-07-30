@@ -1040,12 +1040,12 @@ function switchUnitSystem(newSystem) {
     const headInput = document.getElementById('total_head');
     
     // Store original values if this is the first time switching from metric
-    if (currentUnitSystem === 'metric' && !originalValues.flow_rate && flowInput && flowInput.value) {
+    if (currentUnitSystem === 'metric' && originalValues.flow_rate === null && flowInput && flowInput.value) {
         originalValues.flow_rate = parseFloat(flowInput.value);
         originalValues.originalUnitSystem = 'metric';
         console.log('Stored original flow rate:', originalValues.flow_rate, 'm³/hr');
     }
-    if (currentUnitSystem === 'metric' && !originalValues.total_head && headInput && headInput.value) {
+    if (currentUnitSystem === 'metric' && originalValues.total_head === null && headInput && headInput.value) {
         originalValues.total_head = parseFloat(headInput.value);
         console.log('Stored original head:', originalValues.total_head, 'm');
     }
@@ -1061,12 +1061,14 @@ function switchUnitSystem(newSystem) {
             } else if (newSystem === 'metric' && currentUnitSystem === 'imperial') {
                 // If we have original values, restore them instead of converting
                 if (originalValues.flow_rate !== null) {
-                    flowInput.value = originalValues.flow_rate.toFixed(3);
+                    flowInput.value = originalValues.flow_rate.toString();
                     showConversionMessage(`Flow rate restored to original ${flowInput.value} m³/hr`);
+                    console.log('Restored original flow rate:', originalValues.flow_rate);
                 } else {
                     // Convert GPM to m³/hr: GPM × 0.227124
                     flowInput.value = (flowValue * 0.227124).toFixed(3);
                     showConversionMessage(`Flow rate converted to ${flowInput.value} m³/hr`);
+                    console.log('No original value found, performing conversion');
                 }
             }
         }
@@ -1082,12 +1084,14 @@ function switchUnitSystem(newSystem) {
             } else if (newSystem === 'metric' && currentUnitSystem === 'imperial') {
                 // If we have original values, restore them instead of converting
                 if (originalValues.total_head !== null) {
-                    headInput.value = originalValues.total_head.toFixed(3);
+                    headInput.value = originalValues.total_head.toString();
                     showConversionMessage(`Head restored to original ${headInput.value} m`);
+                    console.log('Restored original head:', originalValues.total_head);
                 } else {
                     // Convert feet to meters: ft * 0.3048
                     headInput.value = (headValue * 0.3048).toFixed(3);
                     showConversionMessage(`Head converted to ${headInput.value} m`);
+                    console.log('No original value found, performing conversion');
                 }
             }
         }
@@ -1444,6 +1448,13 @@ document.addEventListener('DOMContentLoaded', function() {
     window.testHeadConversion = testHeadConversion;
     window.triggerHeadBlur = triggerHeadBlur;
     window.testUnitConversionRobustness = testUnitConversionRobustness;
+    
+    // Add debugging function to check original values
+    window.checkOriginalValues = function() {
+        console.log('Original values:', originalValues);
+        console.log('Current unit system:', currentUnitSystem);
+        console.log('Converted fields:', Array.from(convertedFields));
+    };
 });
 </script>
 {% endblock %}
