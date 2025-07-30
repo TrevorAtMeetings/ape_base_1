@@ -574,8 +574,8 @@ function initializeFormComponents() {
             const headInput = document.getElementById('total_head');
 
             if (flowInput && flowInput.value) {
-                const flowGPH = parseFloat(flowInput.value);
-                const flowM3hr = flowGPH * 0.00378541; // GPH to m³/hr
+                const flowGPM = parseFloat(flowInput.value);
+                const flowM3hr = flowGPM * 0.227124; // GPM to m³/hr
                 flowInput.value = flowM3hr.toFixed(3);
             }
 
@@ -1240,7 +1240,7 @@ function checkEssentialRequirements() {
 
         // Convert to metric for validation if in imperial mode
         if (currentUnitSystem === 'imperial') {
-            if (!isNaN(flowValue)) flowValue = flowValue * 0.00378541; // GPH to m³/hr  
+            if (!isNaN(flowValue)) flowValue = flowValue * 0.227124; // GPM to m³/hr  
             if (!isNaN(headValue)) headValue = headValue * 0.3048; // ft to m
         }
 
