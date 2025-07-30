@@ -1329,14 +1329,14 @@ function checkEssentialRequirements() {
     }
 }
 
-// Test function for head conversion
+// Test function for head conversion  
 function testHeadConversion() {
     const headInput = document.getElementById('total_head');
     if (headInput) {
         console.log('Testing head conversion manually...');
         console.log('Head input found:', headInput.id, 'value:', headInput.value);
         console.log('Current unit system:', currentUnitSystem);
-        handleUnitConversionOnBlur(headInput);
+        console.log('Blur conversion disabled - only converts on unit system switch');
     } else {
         console.log('Head input not found!');
     }
@@ -1375,8 +1375,7 @@ function testUnitConversionRobustness() {
             console.log('Switched to imperial, testing conversions...');
             
             // Test blur events
-            handleUnitConversionOnBlur(flowInput);
-            handleUnitConversionOnBlur(headInput);
+            console.log('Blur conversion disabled - values only convert on unit system switch');
             
             console.log('Flow after conversion:', flowInput.value);
             console.log('Head after conversion:', headInput.value);
