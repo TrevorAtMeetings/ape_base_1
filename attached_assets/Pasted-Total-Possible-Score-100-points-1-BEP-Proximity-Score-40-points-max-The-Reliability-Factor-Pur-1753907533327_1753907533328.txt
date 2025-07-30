@@ -1,0 +1,65 @@
+Total Possible Score: 100 points
+1. BEP Proximity Score (40 points max) - The Reliability Factor
+Purpose: To heavily reward operation near the pump's Best Efficiency Point (BEP).
+Formula: A squared decay function that creates a "peak" at the BEP.
+Let Flow_Ratio = Duty_Flow / BEP_Flow.
+Score = 40 × max(0, 1 - ( (Flow_Ratio - 1) / 0.5 )^2 )
+Behavior:
+At BEP (Flow_Ratio = 1.0): 40 points.
+At the edge of the typical AOR (70% or 130% of BEP flow, where Flow_Ratio is 0.7 or 1.3): 3.6 points.
+At 50% deviation from BEP (Flow_Ratio is 0.5 or 1.5): 0 points.
+Outside 50% deviation: 0 points. This naturally filters out egregiously misapplied pumps.
+2. Efficiency Score (30 points max) - The Operating Cost Factor
+Purpose: To reward high efficiency at the duty point.
+Rationale for Change: Reduced from 35 to 30 points to make room for the new NPSH score, creating a more balanced evaluation of mechanical vs. hydraulic attributes.
+Formula:
+Score = (Efficiency_at_Duty_Point % / 100) × 30
+Minimum Threshold: Pumps with <40% efficiency at the duty point are disqualified before scoring.
+3. Head Margin Score (15 points max to -∞) - The Right-Sizing Factor
+Purpose: To reward ideal safety margins and aggressively penalize oversizing using a smooth, continuous function.
+Formula: A piece-wise function based on Margin % = ( (Delivered_Head / Required_Head) - 1 ) * 100.
+Margin (%) Range	Formula for Score	Example (15%)
+< -2% (Under-sized)	Disqualified	N/A
+-2% to +5% (Ideal)	15	N/A
++5% to +20% (Good)	15 - 0.5 × (Margin - 5)	15 - 0.5 × (15 - 5) = 10
++20% to +50% (Excessive)	7.5 - 0.25 × (Margin - 20)	N/A
+> +50% (Wasteful)	0 - 0.1 × (Margin - 50)	N/A
+Behavior:
+An ideal safety margin of 2-5% gets the full 15 points.
+The score decreases linearly to 7.5 points at a 20% margin.
+The penalty slope steepens, reaching 0 points at a 50% margin.
+Beyond 50%, the score becomes negative and continues to decrease, ensuring oversized pumps are heavily punished.
+4. NPSH Score (15 points max) - The Cavitation Risk Factor
+Purpose: To holistically evaluate the pump's suitability for the suction conditions. This score replaces the previous binary NPSH approach. It has two modes based on user input.
+Rationale for Change: Given 15 points to reflect that avoiding cavitation is as critical as right-sizing the discharge head.
+Mode A: NPSHa is KNOWN (Margin-Based Scoring)
+Formula: Based on NPSH_Margin_Ratio = NPSHa / NPSHr.
+Score = 15 × max(0, min(1, (NPSH_Margin_Ratio - 1.1) / (2.0 - 1.1) ) )
+Behavior:
+If ratio is ≤ 1.1 (minimal margin): 0 points.
+The score scales linearly from 0 to 15 points as the ratio increases from 1.1 to 2.0.
+If ratio is ≥ 2.0 (excellent margin): 15 points (capped).
+Hard Filter: Pumps where NPSHr ≥ NPSHa are still disqualified before scoring.
+Mode B: NPSHa is UNKNOWN (Requirement-Based Scoring)
+Purpose: To reward pumps that are inherently less risky and easier to apply.
+Formula: Based on the absolute NPSHr value (in meters).
+Score = 15 × max(0, (8 - NPSHr) / (8 - 2) )
+Behavior:
+If NPSHr is ≤ 2m (excellent, very low requirement): 15 points (capped).
+The score scales linearly down as NPSHr increases.
+If NPSHr is ≥ 8m (very demanding): 0 points.
+Penalties (Deducted from Total Score)
+VFD Speed Variation Penalty (Deducts up to 15 points)
+Let Speed_Change % be the % change from nominal speed.
+Formula: Penalty = 1.5 × Speed_Change % (capped at a max penalty of 15).
+Behavior: A 5% speed change gives a -7.5 penalty. A 10% or greater speed change gives the maximum -15 penalty.
+Impeller Trimming Penalty (Deducts points)
+Let Trim % be the percentage trimmed off the max diameter.
+Formula: Penalty = 0.5 × Trim %
+Behavior: A 10% trim (to 90% diameter) gives a -5 point penalty.
+Final Calculation Process
+Initial Filtering: Apply hard filters (Pump Type, Min Efficiency, Under-sized Head, NPSHa/NPSHr check if applicable).
+Optimization: Find best operating point within ±10% flow.
+Calculate Base Score: Score = BEP_Score + Efficiency_Score + Head_Margin_Score + NPSH_Score
+Apply Penalties: Final Score = Base_Score - VFD_Penalty - Trim_Penalty
+Rank pumps by Final Score.
