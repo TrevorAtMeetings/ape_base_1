@@ -534,17 +534,33 @@ function initializeFormComponents() {
     var submitBtn = document.getElementById('submit-btn');
     var progressBar = document.getElementById('loading-progress');
 
-    if (form) {
-        form.addEventListener('submit', function(e) {
-            if (submitBtn) {
-                submitBtn.innerHTML = '<i class="material-icons left">hourglass_empty</i>Analyzing...';
-                submitBtn.disabled = true;
+    // Form submission handling
+    form.addEventListener('submit', function(e) {
+        // Convert to metric if in imperial mode before submission
+        if (currentUnitSystem === 'imperial') {
+            const flowInput = document.getElementById('flow_rate');
+            const headInput = document.getElementById('total_head');
+
+            if (flowInput && flowInput.value) {
+                const flowGPM = parseFloat(flowInput.value);
+                const flowM3hr = flowGPM * 0.227124; // GPM to m³/hr
+                flowInput.value = flowM3hr.toFixed(3);
             }
-            if (progressBar) {
-                progressBar.style.display = 'block';
+
+            if (headInput && headInput.value) {
+                const headFt = parseFloat(headInput.value);
+                const headM = headFt * 0.3048; // ft to m
+                headInput.value = headM.toFixed(3);
             }
-        });
-    }
+        }
+
+        // Show loading state
+        const submitBtn = document.getElementById('submit-btn');
+        if (submitBtn) {
+            submitBtn.innerHTML = '<i class="material-icons left">hourglass_empty</i>Processing...';
+            submitBtn.disabled = true;
+        }
+    });
 
     // Variable flow handling
     const variableFlowRadios = document.querySelectorAll('input[name="variable_flow"]');
