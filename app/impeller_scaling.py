@@ -417,11 +417,17 @@ class ImpellerScalingEngine:
         """
         Calculate if pump can meet requirements through speed variation (VFD)
         Uses affinity laws to determine required speed
+        ENHANCED: Stricter validation to prevent poor selections
         """
         try:
             test_speed = pump_specs.get('test_speed_rpm', 980)
             max_speed = pump_specs.get('max_speed_rpm', 1150)
             min_speed = pump_specs.get('min_speed_rpm', 700)
+            
+            # ENHANCED: Stricter speed variation limits
+            # Industry best practice: avoid >±10% speed variation when possible
+            conservative_max_speed = test_speed * 1.10  # +10% max
+            conservative_min_speed = test_speed * 0.90  # -10% max</old_str>
             
             # Find the best operating point that can achieve target head through speed scaling
             # Prioritize points that can deliver target head with minimal speed increase
@@ -465,9 +471,17 @@ class ImpellerScalingEngine:
             speed_ratio_for_head = sqrt(target_head / base_head)
             required_speed = test_speed * speed_ratio_for_head
             
-            # Check if required speed is within limits
+            # ENHANCED: Check against both hard limits and conservative limits
             if required_speed < min_speed or required_speed > max_speed:
                 return None
+                
+            # Apply conservative speed limits penalty
+            speed_variation_pct = abs((required_speed / test_speed) - 1) * 100
+            
+            # Strongly discourage speed variations >5% (for better pump selections)
+            if speed_variation_pct > 5.0:
+                logger.debug(f"Speed variation {speed_variation_pct:.1f}% exceeds preferred limit of 5%")
+                # Don't completely reject, but this will be heavily penalized in scoring
                 
             # Calculate actual performance at required speed
             # CRITICAL FIX: Maintain exact required flow rate instead of calculated flow

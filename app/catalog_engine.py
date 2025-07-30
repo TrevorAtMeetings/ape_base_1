@@ -125,39 +125,51 @@ class CatalogPump:
         flow_distance_pct = abs(target_flow - bep_flow) / bep_flow * 100 if bep_flow > 0 else float('inf')
         head_distance_pct = abs(target_head - bep_head) / bep_head * 100 if bep_head > 0 else float('inf')
         
-        # Industry-standard tolerance zones evaluation
-        # Preferred operating range: 70% to 120% of BEP flow
+        # CORRECTED: Industry-standard tolerance zones with stricter evaluation
+        # Preferred operating range: 80% to 110% of BEP flow (tighter than before)
         operating_zone = "unknown"
         zone_score = 0
         
         if 0.95 <= flow_ratio <= 1.05:
-            # At BEP (95-105%) - Excellent
+            # At BEP (95-105%) - Excellent - HIGHEST PRIORITY
             operating_zone = "at_bep"
             zone_score = 30
-        elif 1.05 < flow_ratio <= 1.20:
-            # Right side preferred zone (105-120%) - Industry preference
-            operating_zone = "right_preferred"
-            zone_score = 25
-        elif 0.85 <= flow_ratio < 0.95:
-            # Left side acceptable (85-95%) - Good
+        elif 0.90 <= flow_ratio < 0.95:
+            # Left side of BEP (90-95%) - Very Good
+            operating_zone = "left_good"
+            zone_score = 28
+        elif 1.05 < flow_ratio <= 1.10:
+            # Right side preferred zone (105-110%) - Very Good
+            operating_zone = "right_good"
+            zone_score = 26
+        elif 0.85 <= flow_ratio < 0.90:
+            # Left acceptable (85-90%) - Good but efficiency drops
             operating_zone = "left_acceptable" 
+            zone_score = 22
+        elif 1.10 < flow_ratio <= 1.15:
+            # Extended right (110-115%) - Good but NPSH increases
+            operating_zone = "right_acceptable"
             zone_score = 20
-        elif 0.70 <= flow_ratio < 0.85:
-            # Lower flow zone (70-85%) - Acceptable but watch efficiency
+        elif 0.80 <= flow_ratio < 0.85:
+            # Lower flow zone (80-85%) - Marginal, efficiency concerns
             operating_zone = "low_flow"
             zone_score = 15
-        elif 1.20 < flow_ratio <= 1.30:
-            # Extended right side (120-130%) - Acceptable but higher NPSH
+        elif 1.15 < flow_ratio <= 1.25:
+            # Far right (115-125%) - Marginal, cavitation risk
             operating_zone = "extended_right"
             zone_score = 12
-        elif flow_ratio < 0.70:
-            # Below minimum continuous stable flow - Poor
-            operating_zone = "unstable_zone"
-            zone_score = 5
-        else:  # flow_ratio > 1.30
-            # Far right - risk of cavitation and high power
+        elif 0.70 <= flow_ratio < 0.80:
+            # Very low flow (70-80%) - Poor, potential instability
+            operating_zone = "very_low_flow"
+            zone_score = 8
+        elif 1.25 < flow_ratio <= 1.35:
+            # Overload zone (125-135%) - Poor, high power/cavitation risk
             operating_zone = "overload_zone"
-            zone_score = 3
+            zone_score = 5
+        else:
+            # Outside reasonable operating envelope - Unacceptable
+            operating_zone = "outside_envelope"
+            zone_score = 0</old_str>
         
         # Head tolerance check (±15% typical)
         head_tolerance_met = head_distance_pct <= 15
@@ -600,35 +612,59 @@ class CatalogEngine:
                     head_margin = delivered_head - head_m
                     head_margin_pct = (head_margin / head_m) * 100
 
-                    # OPTIMIZED SCORING SYSTEM: Efficiency-Prioritized Selection
-                    # 1. Efficiency at duty point (80 points max) - Primary performance indicator
-                    # 2. BEP proximity (15 points max) - Important for pump longevity but secondary
-                    # 3. Head margin bonus (20 points max) - Safety margin
+                    # CORRECTED SCORING SYSTEM: Industry-Standard Pump Selection
+                    # 1. BEP proximity (40 points max) - PRIMARY: Operating near BEP is critical
+                    # 2. Efficiency at duty point (35 points max) - SECONDARY: Actual performance
+                    # 3. Head margin bonus (15 points max) - TERTIARY: Safety margin
+                    # 4. Speed variation penalty (-20 points) - CRITICAL: Penalize VFD requirement
+                    # 5. Impeller trimming penalty - Penalize excessive trimming
                     
                     # Calculate BEP analysis for this pump
                     bep_analysis = pump.calculate_bep_distance(flow_m3hr, head_m)
-                    # Scale BEP score to 15 points max (reduced from 30)
-                    bep_score = (bep_analysis.get('bep_score', 0) / 30.0) * 15
+                    # BEP score is now PRIMARY factor (40 points max)
+                    bep_score = (bep_analysis.get('bep_score', 0) / 30.0) * 40
                     
-                    # Efficiency score (scaled to 80 points max - increased from 70)
-                    efficiency_score = (efficiency / 100.0) * 80
+                    # Efficiency score (reduced to 35 points max - secondary importance)
+                    efficiency_score = (efficiency / 100.0) * 35
                     
-                    # Head margin bonus - reward precise delivery and reasonable safety margins
+                    # Head margin bonus - reward precise delivery (reduced importance)
                     if -2 <= head_margin_pct <= 2:
-                        # Perfect delivery - meets requirements exactly (±2%)
-                        margin_bonus = 20  # Maximum bonus for precise delivery
+                        margin_bonus = 15  # Perfect delivery
                     elif 2 < head_margin_pct <= 10:
-                        # Good safety margin without over-delivery
-                        margin_bonus = 18 - (head_margin_pct - 2) * 0.5  # 18-14 points
+                        margin_bonus = 13 - (head_margin_pct - 2) * 0.3  # 13-10.6 points
                     elif 10 < head_margin_pct <= 20:
-                        # Acceptable margin but starting to over-deliver
-                        margin_bonus = 14 - (head_margin_pct - 10) * 0.3  # 14-11 points
+                        margin_bonus = 10 - (head_margin_pct - 10) * 0.2  # 10-8 points
                     else:
-                        # Excessive over-delivery - inefficient pump selection
-                        margin_bonus = max(5, 11 - (head_margin_pct - 20) * 0.2)  # Minimum 5 points
+                        margin_bonus = max(3, 8 - (head_margin_pct - 20) * 0.1)  # Minimum 3 points
                     
-                    # Total score: BEP proximity + Efficiency + Margin bonus
-                    score = bep_score + efficiency_score + margin_bonus
+                    # CRITICAL: Speed variation penalty
+                    speed_penalty = 0
+                    sizing_penalty = 0
+                    
+                    if 'sizing_info' in performance:
+                        sizing_info = performance['sizing_info']
+                        
+                        # Major penalty for speed variation requirement
+                        if sizing_info.get('vfd_required', False):
+                            speed_variation_pct = abs(sizing_info.get('speed_variation_pct', 0))
+                            if speed_variation_pct > 0:
+                                # Penalty increases with speed variation magnitude
+                                speed_penalty = min(20, speed_variation_pct * 2)  # Up to -20 points
+                                logger.debug(f"Speed penalty for {pump.pump_code}: -{speed_penalty:.1f} points ({speed_variation_pct:.1f}% speed change)")
+                        
+                        # Penalty for excessive impeller trimming
+                        trim_percent = sizing_info.get('trim_percent', 100)
+                        if trim_percent < 95:  # More than 5% trim
+                            trim_penalty = (95 - trim_percent) * 0.5  # 0.5 points per % of trim
+                            sizing_penalty += trim_penalty
+                            logger.debug(f"Trimming penalty for {pump.pump_code}: -{trim_penalty:.1f} points ({trim_percent:.1f}% trim)")
+                    
+                    # Total score with penalties
+                    base_score = bep_score + efficiency_score + margin_bonus
+                    total_penalties = speed_penalty + sizing_penalty
+                    score = base_score - total_penalties
+                    
+                    logger.debug(f"Scoring for {pump.pump_code}: BEP={bep_score:.1f}, Eff={efficiency_score:.1f}, Margin={margin_bonus:.1f}, Speed Penalty=-{speed_penalty:.1f}, Final={score:.1f}")
 
                     # Check if sizing information is available from requirement-driven approach
                     sizing_validated = False
