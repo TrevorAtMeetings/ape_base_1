@@ -1230,8 +1230,56 @@ const storedValues = {
     total_head_imperial: null
 };
 
-// Disabled blur-based conversion - we only convert when switching unit systems
-// This prevents the double conversion issue
+// Simple unit conversion function - only converts when in imperial mode
+function handleUnitConversionOnBlur(input) {
+    // Check if we're in imperial mode
+    const imperialRadio = document.querySelector('input[name="unit_system"][value="imperial"]');
+    const isImperialSelected = imperialRadio && imperialRadio.checked;
+    
+    if (!isImperialSelected) {
+        return; // No conversion needed if not in imperial mode
+    }
+    
+    // Check if this field has already been converted
+    if (convertedFields.has(input.id)) {
+        return; // Already converted
+    }
+    
+    const value = parseFloat(input.value);
+    if (isNaN(value) || value <= 0) {
+        return; // Invalid value
+    }
+    
+    let convertedValue;
+    let message;
+    
+    if (input.id === 'flow_rate') {
+        // Convert GPM to m³/hr: GPM × 0.227124
+        convertedValue = (value * 0.227124).toFixed(3);
+        message = `Flow rate converted: ${value} GPM → ${convertedValue} m³/hr`;
+    } else if (input.id === 'total_head') {
+        // Convert feet to meters: ft × 0.3048
+        convertedValue = (value * 0.3048).toFixed(3);
+        message = `Head converted: ${value} ft → ${convertedValue} m`;
+    } else {
+        return;
+    }
+    
+    input.value = convertedValue;
+    showConversionMessage(message);
+    
+    // Mark this field as converted
+    convertedFields.add(input.id);
+    
+    // Store the converted value
+    if (input.id === 'flow_rate') {
+        storedValues.flow_rate_metric = parseFloat(convertedValue);
+    } else if (input.id === 'total_head') {
+        storedValues.total_head_metric = parseFloat(convertedValue);
+    }
+    
+    checkEssentialRequirements();
+}
 
 // Set up essential requirements watcher
 function setupEssentialRequirementsWatcher() {
@@ -1270,11 +1318,29 @@ function setupEssentialRequirementsWatcher() {
                     }
                 }
                 
-                // Clear converted flag as user is editing
+                // Clear converted flag as user is editing and clear opposite unit system storage
                 convertedFields.delete(this.id);
+                
+                // When user edits, clear the opposite unit system's stored value
+                if (this.id === 'flow_rate') {
+                    if (currentUnitSystem === 'metric') {
+                        storedValues.flow_rate_imperial = null;
+                    } else {
+                        storedValues.flow_rate_metric = null;
+                    }
+                } else if (this.id === 'total_head') {
+                    if (currentUnitSystem === 'metric') {
+                        storedValues.total_head_imperial = null;
+                    } else {
+                        storedValues.total_head_metric = null;
+                    }
+                }
             });
             
-            // Remove blur-based conversion - we only do conversions when switching unit systems
+            // Add blur event listener for conversion
+            input.addEventListener('blur', function(event) {
+                handleUnitConversionOnBlur(input);
+            });
         }
     });
 
@@ -1336,7 +1402,7 @@ function testHeadConversion() {
         console.log('Testing head conversion manually...');
         console.log('Head input found:', headInput.id, 'value:', headInput.value);
         console.log('Current unit system:', currentUnitSystem);
-        console.log('Blur conversion disabled - only converts on unit system switch');
+        handleUnitConversionOnBlur(headInput);
     } else {
         console.log('Head input not found!');
     }
@@ -1375,7 +1441,9 @@ function testUnitConversionRobustness() {
             console.log('Switched to imperial, testing conversions...');
             
             // Test blur events
-            console.log('Blur conversion disabled - values only convert on unit system switch');
+            // Test blur events
+            handleUnitConversionOnBlur(flowInput);
+            handleUnitConversionOnBlur(headInput);
             
             console.log('Flow after conversion:', flowInput.value);
             console.log('Head after conversion:', headInput.value);
