@@ -1,0 +1,25 @@
+0 -
+INFO:werkzeug:172.31.122.194 - - [30/Jul/2025 14:31:12] "GET /static/css/floating-ai-chat.css?v=4111 HTTP/1.1" 200 -
+INFO:werkzeug:172.31.122.194 - - [30/Jul/2025 14:31:12] "GET /static/css/icon-fixes.css?v=5480 HTTP/1.1" 200 -
+INFO:werkzeug:172.31.122.194 - - [30/Jul/2025 14:31:12] "GET /static/js/floating-ai-chat.js HTTP/1.1" 304 -
+INFO:werkzeug:172.31.122.194 - - [30/Jul/2025 14:31:13] "GET /static/js/icon-loader.js HTTP/1.1" 304 -
+INFO:werkzeug:172.31.122.194 - - [30/Jul/2025 14:31:13] "GET /static/js/micro-interactions.js HTTP/1.1" 304 -
+INFO:werkzeug:172.31.122.194 - - [30/Jul/2025 14:31:13] "GET /static/js/main.js HTTP/1.1" 304 -
+INFO:werkzeug:172.31.122.194 - - [30/Jul/2025 14:31:13] "GET /static/js/force-icon-refresh.js HTTP/1.1" 304 -
+INFO:app.route_modules.main_flow:Form submitted with pump type: 'GENERAL'
+INFO:werkzeug:172.31.122.194 - - [30/Jul/2025 14:31:23] "POST /pump_selection HTTP/1.1" 302 -
+INFO:app.route_modules.main_flow:Processing pump options for: flow=1440.0 m³/hr, head=21.0 m
+INFO:app.route_modules.main_flow:Pump type filter requested: 'GENERAL'
+ERROR:app.route_modules.main_flow:Error in pump_options: invalid syntax (catalog_engine.py, line 172)
+[ERROR] An error occurred while processing your request. Please try again.
+INFO:werkzeug:172.31.122.194 - - [30/Jul/2025 14:31:23] "GET /pump_options?flow=1440.0&head=21.0&application_type=water&pump_type=GENERAL HTTP/1.1" 302 -
+INFO:app.route_modules.main_flow:Index route accessed.
+INFO:werkzeug:172.31.122.194 - - [30/Jul/2025 14:31:23] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:172.31.122.194 - - [30/Jul/2025 14:31:23] "GET /static/css/style.css?v=1521 HTTP/1.1" 200 -
+INFO:werkzeug:172.31.122.194 - - [30/Jul/2025 14:31:23] "GET /static/css/icon-fixes.css?v=9604 HTTP/1.1" 200 -
+INFO:werkzeug:172.31.122.194 - - [30/Jul/2025 14:31:23] "GET /static/css/floating-ai-chat.css?v=5019 HTTP/1.1" 200 -
+INFO:werkzeug:172.31.122.194 - - [30/Jul/2025 14:31:24] "GET /static/js/micro-interactions.js HTTP/1.1" 304 -
+INFO:werkzeug:172.31.122.194 - - [30/Jul/2025 14:31:24] "GET /static/js/floating-ai-chat.js HTTP/1.1" 304 -
+INFO:werkzeug:172.31.122.194 - - [30/Jul/2025 14:31:24] "GET /static/js/icon-loader.js HTTP/1.1" 304 -
+INFO:werkzeug:172.31.122.194 - - [30/Jul/2025 14:31:24] "GET /static/js/main.js HTTP/1.1" 304 -
+INFO:werkzeug:172.31.122.194 - - [30/Jul/2025 14:31:24] "GET /static/js/force-icon-refresh.js HTTP/1.1
