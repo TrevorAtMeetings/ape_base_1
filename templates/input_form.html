@@ -1208,8 +1208,17 @@ function setupEssentialRequirementsWatcher() {
         if (input) {
             console.log('Adding event listeners to:', input.id);
             input.addEventListener('input', checkEssentialRequirements);
-            input.addEventListener('blur', function() {
-                console.log('Blur event detected on:', input.id);
+            
+            // Add specific blur event listener with more debugging
+            input.addEventListener('blur', function(event) {
+                console.log('Blur event detected on:', input.id, 'value:', input.value, 'currentUnitSystem:', currentUnitSystem);
+                console.log('Event target:', event.target.id, 'Event type:', event.type);
+                handleUnitConversionOnBlur(input);
+            });
+            
+            // Also try with focusout as a backup
+            input.addEventListener('focusout', function(event) {
+                console.log('Focusout event detected on:', input.id, 'value:', input.value);
                 handleUnitConversionOnBlur(input);
             });
         }
@@ -1262,7 +1271,22 @@ function testHeadConversion() {
     const headInput = document.getElementById('total_head');
     if (headInput) {
         console.log('Testing head conversion manually...');
+        console.log('Head input found:', headInput.id, 'value:', headInput.value);
+        console.log('Current unit system:', currentUnitSystem);
         handleUnitConversionOnBlur(headInput);
+    } else {
+        console.log('Head input not found!');
+    }
+}
+
+// Direct test for head blur event
+function triggerHeadBlur() {
+    const headInput = document.getElementById('total_head');
+    if (headInput) {
+        console.log('Manually triggering blur event on head input...');
+        headInput.blur();
+        headInput.dispatchEvent(new Event('blur'));
+        headInput.dispatchEvent(new Event('focusout'));
     }
 }
 
@@ -1277,6 +1301,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Add manual test for head input (for debugging)
     window.testHeadConversion = testHeadConversion;
+    window.triggerHeadBlur = triggerHeadBlur;
 });
 </script>
 {% endblock %}
