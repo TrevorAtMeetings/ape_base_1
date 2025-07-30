@@ -1334,34 +1334,41 @@ function setupEssentialRequirementsWatcher() {
     [flowInput, headInput].forEach(input => {
         if (input) {
             console.log('Adding event listeners to:', input.id);
-            input.addEventListener('input', checkEssentialRequirements);
+            input.addEventListener('input', function() {
+                checkEssentialRequirements();
+                
+                // Store the value as user types it (in the current unit system)
+                const value = parseFloat(this.value);
+                if (!isNaN(value) && value > 0) {
+                    if (this.id === 'flow_rate') {
+                        if (currentUnitSystem === 'metric') {
+                            storedValues.flow_rate_metric = value;
+                            console.log('Stored typed flow rate (metric):', value);
+                        } else {
+                            storedValues.flow_rate_imperial = value;  
+                            console.log('Stored typed flow rate (imperial):', value);
+                        }
+                    } else if (this.id === 'total_head') {
+                        if (currentUnitSystem === 'metric') {
+                            storedValues.total_head_metric = value;
+                            console.log('Stored typed head (metric):', value);
+                        } else {
+                            storedValues.total_head_imperial = value;
+                            console.log('Stored typed head (imperial):', value);
+                        }
+                    }
+                }
+                
+                // Clear converted flag as user is editing
+                convertedFields.delete(this.id);
+            });
             
             // Add specific blur event listener with more debugging
             input.addEventListener('blur', function(event) {
                 console.log('Blur event detected on:', input.id, 'value:', input.value, 'currentUnitSystem:', currentUnitSystem);
                 console.log('Event target:', event.target.id, 'Event type:', event.type);
                 
-                // Store the value in the appropriate unit system when user inputs it
-                const value = parseFloat(input.value);
-                if (!isNaN(value) && value > 0) {
-                    if (input.id === 'flow_rate') {
-                        if (currentUnitSystem === 'metric') {
-                            storedValues.flow_rate_metric = value;
-                            console.log('Stored user input flow rate (metric):', value);
-                        } else {
-                            storedValues.flow_rate_imperial = value;
-                            console.log('Stored user input flow rate (imperial):', value);
-                        }
-                    } else if (input.id === 'total_head') {
-                        if (currentUnitSystem === 'metric') {
-                            storedValues.total_head_metric = value;
-                            console.log('Stored user input head (metric):', value);
-                        } else {
-                            storedValues.total_head_imperial = value;
-                            console.log('Stored user input head (imperial):', value);
-                        }
-                    }
-                }
+                // Values are already stored via input event listener
                 
                 handleUnitConversionOnBlur(input);
             });
