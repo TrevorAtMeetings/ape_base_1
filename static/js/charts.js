@@ -679,8 +679,7 @@ class PumpChartsManager {
                 type: 'scatter',
                 mode: 'lines',
                 name: 'Flow Reference',
-                line:```python
-{
+                line: {
                     color: '#d32f2f',
                     width: 2,
                     dash: 'dot'
