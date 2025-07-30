@@ -198,7 +198,7 @@
                                         <p style="margin: 0;">
                                             <label>
                                                 <input name="unit_system" type="radio" value="imperial" onchange="switchUnitSystem('imperial')" />
-                                                <span>Imperial (GPM, ft)</span>
+                                                <span>Imperial (GPH, ft)</span>
                                             </label>
                                         </p>
                                     </div>
@@ -574,8 +574,8 @@ function initializeFormComponents() {
             const headInput = document.getElementById('total_head');
 
             if (flowInput && flowInput.value) {
-                const flowGPM = parseFloat(flowInput.value);
-                const flowM3hr = flowGPM * 0.227124; // GPM to m³/hr
+                const flowGPH = parseFloat(flowInput.value);
+                const flowM3hr = flowGPH * 0.00378541; // GPH to m³/hr
                 flowInput.value = flowM3hr.toFixed(3);
             }
 
@@ -1036,11 +1036,11 @@ function switchUnitSystem(newSystem) {
         const flowValue = parseFloat(flowInput.value);
         if (!isNaN(flowValue)) {
             if (newSystem === 'imperial' && currentUnitSystem === 'metric') {
-                // Convert m³/hr to GPM: m³/hr * 4.40287
-                flowInput.value = (flowValue * 4.40287).toFixed(2);
+                // Convert m³/hr to GPH: m³/hr * 264.172
+                flowInput.value = (flowValue * 264.172).toFixed(2);
             } else if (newSystem === 'metric' && currentUnitSystem === 'imperial') {
-                // Convert GPM to m³/hr: GPM * 0.227124
-                flowInput.value = (flowValue * 0.227124).toFixed(3);
+                // Convert GPH to m³/hr: GPH * 0.00378541
+                flowInput.value = (flowValue * 0.00378541).toFixed(3);
             }
         }
     }
@@ -1089,9 +1089,9 @@ function updateUnitLabels() {
         flowHelper.dataset.error = "Flow rate must be between 0.1 and 10000 m³/hr";
         headHelper.dataset.error = "Total head must be between 0.1 and 1000 m";
     } else {
-        flowLabel.textContent = 'Flow Rate (GPM) *';
+        flowLabel.textContent = 'Flow Rate (GPH) *';
         headLabel.textContent = 'Total Head (ft) *';
-        flowHelper.dataset.error = "Flow rate must be between 2.64 and 264172 GPM";
+        flowHelper.dataset.error = "Flow rate must be between 26.4 and 2641720 GPH";
         headHelper.dataset.error = "Total head must be between 0.32 and 3280 ft";
     }
 }
@@ -1105,8 +1105,8 @@ function updateUnitConversion(type) {
         if (currentUnitSystem === 'metric') {
             // If switching to metric, and the field is already in m3/hr, no conversion needed on display.
         } else {
-            // Convert m3/hr to GPM = m3/hr * 4.40287
-            flowInput.value = (parseFloat(flowInput.value) * 4.40287).toFixed(2);
+            // Convert m3/hr to GPH = m3/hr * 264.172
+            flowInput.value = (parseFloat(flowInput.value) * 264.172).toFixed(2);
         }
     } else if (type === 'head') {
         if (currentUnitSystem === 'metric') {
@@ -1166,8 +1166,8 @@ function checkEssentialRequirements() {
 
         // Convert to metric for validation if in imperial mode
         if (currentUnitSystem === 'imperial') {
-            if (!isNaN(flowValue)) flowValue = flowValue / 264.172; // GPH to m³/hr  
-            if (!isNaN(headValue)) headValue = headValue / 3.28084; // ft to m
+            if (!isNaN(flowValue)) flowValue = flowValue * 0.00378541; // GPH to m³/hr  
+            if (!isNaN(headValue)) headValue = headValue * 0.3048; // ft to m
         }
 
         const pumpTypeSelected = Array.from(pumpTypeInputs).some(input => input.checked);
