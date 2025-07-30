@@ -1052,7 +1052,7 @@ function switchUnitSystem(newSystem) {
                     showConversionMessage(`Flow rate restored to ${flowInput.value} GPM`);
                     console.log('Restored stored imperial flow rate:', storedValues.flow_rate_imperial);
                 } else {
-                    // Convert m³/hr to GPM: m³/hr ÷ 0.227124 and store for future use
+                    // Convert m³/hr to GPM: m³/hr ÷ 0.227124 
                     const convertedValue = (flowValue / 0.227124);
                     flowInput.value = convertedValue.toFixed(2);
                     storedValues.flow_rate_imperial = convertedValue;
@@ -1065,9 +1065,9 @@ function switchUnitSystem(newSystem) {
                     showConversionMessage(`Flow rate restored to ${flowInput.value} m³/hr`);
                     console.log('Restored stored metric flow rate:', storedValues.flow_rate_metric);
                 } else {
-                    // Convert GPM to m³/hr: GPM × 0.227124 and store for future use
+                    // Convert GPM to m³/hr: 1 US gpm = 0.227124 m³/h
                     const convertedValue = (flowValue * 0.227124);
-                    flowInput.value = convertedValue.toFixed(3);
+                    flowInput.value = convertedValue.toFixed(2);
                     storedValues.flow_rate_metric = convertedValue;
                     showConversionMessage(`Flow rate converted to ${flowInput.value} m³/hr`);
                 }
@@ -1085,7 +1085,7 @@ function switchUnitSystem(newSystem) {
                     showConversionMessage(`Head restored to ${headInput.value} ft`);
                     console.log('Restored stored imperial head:', storedValues.total_head_imperial);
                 } else {
-                    // Convert meters to feet: m * 3.28084 and store for future use
+                    // Convert meters to feet: 1 m = 3.28084 ft
                     const convertedValue = (headValue * 3.28084);
                     headInput.value = convertedValue.toFixed(2);
                     storedValues.total_head_imperial = convertedValue;
@@ -1098,9 +1098,9 @@ function switchUnitSystem(newSystem) {
                     showConversionMessage(`Head restored to ${headInput.value} m`);
                     console.log('Restored stored metric head:', storedValues.total_head_metric);
                 } else {
-                    // Convert feet to meters: ft * 0.3048 and store for future use
+                    // Convert feet to meters: 1 ft = 0.3048 m
                     const convertedValue = (headValue * 0.3048);
-                    headInput.value = convertedValue.toFixed(3);
+                    headInput.value = convertedValue.toFixed(2);
                     storedValues.total_head_metric = convertedValue;
                     showConversionMessage(`Head converted to ${headInput.value} m`);
                 }
@@ -1254,12 +1254,12 @@ function handleUnitConversionOnBlur(input) {
     let message;
     
     if (input.id === 'flow_rate') {
-        // Convert GPM to m³/hr: GPM × 0.227124
-        convertedValue = (value * 0.227124).toFixed(3);
+        // Convert GPM to m³/hr: 1 US gpm = 0.227124 m³/h
+        convertedValue = (value * 0.227124).toFixed(2);
         message = `Flow rate converted: ${value} GPM → ${convertedValue} m³/hr`;
     } else if (input.id === 'total_head') {
-        // Convert feet to meters: ft × 0.3048
-        convertedValue = (value * 0.3048).toFixed(3);
+        // Convert feet to meters: 1 ft = 0.3048 m
+        convertedValue = (value * 0.3048).toFixed(2);
         message = `Head converted: ${value} ft → ${convertedValue} m`;
     } else {
         return;
