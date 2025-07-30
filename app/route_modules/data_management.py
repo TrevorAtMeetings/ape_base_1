@@ -58,53 +58,48 @@ def data_management():
         # Prepare pump data for display
         pump_data = []
         for pump in pumps_page:
-            # Extract basic performance data using catalog format
+            # Extract performance data from curves structure
+            curves = pump.get('curves', [])
+            curve_count = len(curves)
+            
+            # Initialize statistics
             max_flow = 0
             max_head = 0
             max_efficiency = 0
             has_npsh = False
             
-            # Parse curves from pump data (now a dictionary)
-            from ..utils import _parse_performance_curves
-            # Convert pump data to legacy format for compatibility
-            pump_info = {
-                'pM_FLOW': ';'.join(str(p['flow_m3hr']) for p in pump.get('performance_points', [])),
-                'pM_HEAD': ';'.join(str(p['head_m']) for p in pump.get('performance_points', [])),
-                'pM_EFF': ';'.join(str(p['efficiency_pct']) for p in pump.get('performance_points', [])),
-                'pM_NP': ';'.join(str(p.get('npshr_m', 0)) for p in pump.get('performance_points', [])),
-                'pM_IMP': str(pump.get('impeller_diameter_mm', 0))
-            }
-            curves = _parse_performance_curves(pump_info)
-            curve_count = len(curves)
-            
+            # Extract statistics from all curves and their performance points
             for curve in curves:
-                flow_head_data = curve.get('flow_vs_head', [])
-                if flow_head_data:
-                    flows = [f for f, h in flow_head_data]
-                    heads = [h for f, h in flow_head_data]
-                    if flows:
-                        max_flow = max(max_flow, max(flows))
-                    if heads:
-                        max_head = max(max_head, max(heads))
+                performance_points = curve.get('performance_points', [])
                 
-                eff_data = curve.get('flow_vs_efficiency', [])
-                if eff_data:
-                    effs = [e for f, e in eff_data if e > 0]
-                    if effs:
-                        max_efficiency = max(max_efficiency, max(effs))
-                
-                # Check for NPSH data
-                npsh_data = curve.get('flow_vs_npshr', [])
-                if npsh_data and any(npsh > 0 for f, npsh in npsh_data):
-                    has_npsh = True
+                for point in performance_points:
+                    # Extract flow rates (excluding zero flow shutoff points for max calculation)
+                    flow = point.get('flow_m3hr', 0)
+                    if flow > 0:
+                        max_flow = max(max_flow, flow)
+                    
+                    # Extract head values
+                    head = point.get('head_m', 0)
+                    if head > 0:
+                        max_head = max(max_head, head)
+                    
+                    # Extract efficiency values
+                    efficiency = point.get('efficiency_pct', 0)
+                    if efficiency > 0:
+                        max_efficiency = max(max_efficiency, efficiency)
+                    
+                    # Check for NPSH data
+                    npsh = point.get('npshr_m', 0)
+                    if npsh > 0:
+                        has_npsh = True
             
             pump_data.append({
                 'pump_code': pump.get('pump_code', ''),
                 'manufacturer': pump.get('manufacturer', ''),
-                'model': pump.get('model', ''),
-                'max_flow': max_flow,
-                'max_head': max_head,
-                'max_efficiency': max_efficiency,
+                'model': pump.get('model_series', ''),
+                'max_flow': round(max_flow, 1) if max_flow > 0 else 0,
+                'max_head': round(max_head, 1) if max_head > 0 else 0,
+                'max_efficiency': round(max_efficiency, 1) if max_efficiency > 0 else 0,
                 'curve_count': curve_count,
                 'has_npsh': has_npsh
             })
