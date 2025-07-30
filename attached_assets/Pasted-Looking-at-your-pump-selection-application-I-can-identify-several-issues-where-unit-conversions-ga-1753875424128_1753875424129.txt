@@ -1,0 +1,55 @@
+Looking at your pump selection application, I can identify several issues where unit conversions (gallons vs. m³/hr, feet vs. meters) are not being properly handled. Here's my analysis:
+
+Key Issues Found:
+1. Input Form Limitations
+Your input form in templates/input_form.html is hardcoded to only accept metric units:
+
+Flow Rate: Fixed to "m³/hr"
+Head: Fixed to "m" (meters)
+There's no option for users to select Imperial units (GPM for gallons per minute, feet for head).
+
+2. Data Processing Issues
+In app/unified_pump_processor.py, the power calculation method has conversion factors for Imperial units:
+
+flow_conversions = {
+    'm^3/hr': 1.0 / 3600.0,  # to m³/s
+    'l/s': 1.0 / 1000.0,     # to m³/s
+    'gpm': 0.00006309,       # US gallons/min to m³/s
+    'l/min': 1.0 / 60000.0   # to m³/s
+}
+head_conversions = {
+    'm': 1.0,                # no conversion
+    'ft': 0.3048,           # feet to meters
+    'kPa': 0.102,           # kPa to meters
+    'psi': 0.704            # psi to meters
+}
+However, these conversions are only applied during power calculations, not during the main pump selection process.
+
+3. Catalog Engine Missing Unit Handling
+In app/catalog_engine.py, the select_pumps() method directly uses the input flow and head values without checking or converting units:
+
+def select_pumps(self, flow_m3hr: float, head_m: float, max_results: int = 10, pump_type: str | None = None)
+The method assumes all inputs are already in metric units.
+
+4. Main Flow Processing
+In app/route_modules/main_flow.py, the pump selection process extracts flow and head values but doesn't account for unit specifications:
+
+flow_val = float(flow_m3hr)
+head_val = float(head_m)
+5. Database Storage Inconsistency
+Your pump data appears to be stored in multiple unit formats based on the source files (SCG/TXT), but there's no standardization layer ensuring all data is converted to a consistent unit system before processing.
+
+Impact on Selection Accuracy:
+Imperial Unit Data: If pump performance data was originally in Imperial units but stored without proper conversion, the selection algorithm would be comparing apples to oranges.
+
+User Input Mismatch: Users might mentally think in GPM/feet but be forced to enter m³/hr/meters, leading to conversion errors.
+
+Performance Calculations: Power, efficiency, and NPSH calculations could be significantly off if unit assumptions are incorrect.
+
+Recommendations:
+Add Unit Selection to Input Form: Allow users to choose between metric and Imperial units
+Implement Universal Conversion Layer: Create a standardized conversion system in the main flow processing
+Audit Existing Data: Verify that all pump data in your database is stored in consistent units
+Update Catalog Engine: Modify the selection logic to handle unit conversions before processing
+Add Unit Validation: Ensure all calculations account for the source unit system
+The core issue is that your application assumes metric inputs throughout the selection process, but doesn't validate or convert data that might be in Imperial units from the source files or user preferences.
