@@ -1038,9 +1038,11 @@ function switchUnitSystem(newSystem) {
             if (newSystem === 'imperial' && currentUnitSystem === 'metric') {
                 // Convert m³/hr to GPH: m³/hr * 264.172
                 flowInput.value = (flowValue * 264.172).toFixed(2);
+                showConversionMessage(`Flow rate converted to ${flowInput.value} GPH`);
             } else if (newSystem === 'metric' && currentUnitSystem === 'imperial') {
                 // Convert GPH to m³/hr: GPH * 0.00378541
                 flowInput.value = (flowValue * 0.00378541).toFixed(3);
+                showConversionMessage(`Flow rate converted to ${flowInput.value} m³/hr`);
             }
         }
     }
@@ -1051,9 +1053,11 @@ function switchUnitSystem(newSystem) {
             if (newSystem === 'imperial' && currentUnitSystem === 'metric') {
                 // Convert meters to feet: m * 3.28084
                 headInput.value = (headValue * 3.28084).toFixed(2);
+                showConversionMessage(`Head converted to ${headInput.value} ft`);
             } else if (newSystem === 'metric' && currentUnitSystem === 'imperial') {
                 // Convert feet to meters: ft * 0.3048
                 headInput.value = (headValue * 0.3048).toFixed(3);
+                showConversionMessage(`Head converted to ${headInput.value} m`);
             }
         }
     }
@@ -1068,13 +1072,7 @@ function switchUnitSystem(newSystem) {
     checkEssentialRequirements();
 }
 
-// Function to toggle between metric and imperial units (legacy function)
-function toggleUnitSystem() {
-    currentUnitSystem = (currentUnitSystem === 'metric') ? 'imperial' : 'metric';
-    updateUnitLabels();
-    updateUnitConversion('flow');
-    updateUnitConversion('head');
-}
+
 
 // Function to update labels based on the unit system
 function updateUnitLabels() {
@@ -1096,26 +1094,85 @@ function updateUnitLabels() {
     }
 }
 
-// Function to handle unit conversions
-function updateUnitConversion(type) {
-    const flowInput = document.getElementById('flow_rate');
-    const headInput = document.getElementById('total_head');
 
-    if (type === 'flow') {
-        if (currentUnitSystem === 'metric') {
-            // If switching to metric, and the field is already in m3/hr, no conversion needed on display.
-        } else {
-            // Convert m3/hr to GPH = m3/hr * 264.172
-            flowInput.value = (parseFloat(flowInput.value) * 264.172).toFixed(2);
-        }
-    } else if (type === 'head') {
-        if (currentUnitSystem === 'metric') {
-             // If switching to metric, and the field is already in meters, no conversion needed.
-        } else {
-            // Convert meters to feet = meters * 3.28084
-            headInput.value = (parseFloat(headInput.value) * 3.28084).toFixed(2);
-        }
+
+// Function to show conversion message
+function showConversionMessage(message) {
+    // Remove any existing conversion message
+    const existingMessage = document.getElementById('conversion-message');
+    if (existingMessage) {
+        existingMessage.remove();
     }
+    
+    // Create new message element
+    const messageDiv = document.createElement('div');
+    messageDiv.id = 'conversion-message';
+    messageDiv.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #4caf50;
+        color: white;
+        padding: 12px 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        font-size: 14px;
+        z-index: 1000;
+        opacity: 0;
+        transform: translateX(100%);
+        transition: all 0.3s ease;
+    `;
+    messageDiv.innerHTML = `<i class="material-icons" style="font-size: 16px; vertical-align: middle; margin-right: 8px;">check_circle</i>${message}`;
+    
+    document.body.appendChild(messageDiv);
+    
+    // Animate in
+    setTimeout(() => {
+        messageDiv.style.opacity = '1';
+        messageDiv.style.transform = 'translateX(0)';
+    }, 10);
+    
+    // Auto remove after 3 seconds
+    setTimeout(() => {
+        messageDiv.style.opacity = '0';
+        messageDiv.style.transform = 'translateX(100%)';
+        setTimeout(() => {
+            if (messageDiv.parentNode) {
+                messageDiv.parentNode.removeChild(messageDiv);
+            }
+        }, 300);
+    }, 3000);
+}
+
+// Function to handle unit conversion on blur (when user clicks out of field)
+function handleUnitConversionOnBlur(input) {
+    if (currentUnitSystem === 'metric') return; // No conversion needed for metric
+    
+    const value = parseFloat(input.value);
+    if (isNaN(value) || value <= 0) return;
+    
+    if (input.id === 'flow_rate') {
+        // Convert GPH to m³/hr: GPH * 0.00378541
+        const convertedValue = (value * 0.00378541).toFixed(3);
+        input.value = convertedValue;
+        showConversionMessage(`Flow rate converted: ${value} GPH → ${convertedValue} m³/hr`);
+    } else if (input.id === 'total_head') {
+        // Convert feet to meters: ft * 0.3048
+        const convertedValue = (value * 0.3048).toFixed(3);
+        input.value = convertedValue;
+        showConversionMessage(`Head converted: ${value} ft → ${convertedValue} m`);
+    }
+    
+    // Update to metric system after conversion
+    currentUnitSystem = 'metric';
+    updateUnitLabels();
+    
+    // Update radio button selection
+    const metricRadio = document.querySelector('input[name="unit_system"][value="metric"]');
+    if (metricRadio) metricRadio.checked = true;
+    
+    // Trigger validation check
+    checkEssentialRequirements();
 }
 
 // Set up essential requirements watcher
@@ -1123,22 +1180,15 @@ function setupEssentialRequirementsWatcher() {
     const flowInput = document.getElementById('flow_rate');
     const headInput = document.getElementById('total_head');
     const pumpTypeInputs = document.querySelectorAll('input[name="pump_type"]');
-        // Add event listeners
-    flowInput.addEventListener('input', function() {
-        updateUnitConversion('flow');
-        checkEssentialRequirements();
-    });
-    flowInput.addEventListener('change', function() {
-        updateUnitConversion('flow');
-        checkEssentialRequirements();
-    });
-    headInput.addEventListener('input', function() {
-        updateUnitConversion('head');
-        checkEssentialRequirements();
-    });
-    headInput.addEventListener('change', function() {
-        updateUnitConversion('head');
-        checkEssentialRequirements();
+    
+    // Add event listeners - only input for real-time validation, blur for conversion
+    [flowInput, headInput].forEach(input => {
+        if (input) {
+            input.addEventListener('input', checkEssentialRequirements);
+            input.addEventListener('blur', function() {
+                handleUnitConversionOnBlur(input);
+            });
+        }
     });
 
     pumpTypeInputs.forEach(input => {
