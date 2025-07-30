@@ -1039,15 +1039,31 @@ function switchUnitSystem(newSystem) {
     const flowInput = document.getElementById('flow_rate');
     const headInput = document.getElementById('total_head');
     
-    // Store original values if this is the first time switching from metric
-    if (currentUnitSystem === 'metric' && originalValues.flow_rate === null && flowInput && flowInput.value) {
-        originalValues.flow_rate = parseFloat(flowInput.value);
-        originalValues.originalUnitSystem = 'metric';
-        console.log('Stored original flow rate:', originalValues.flow_rate, 'm³/hr');
+    // Store current values before converting
+    if (flowInput && flowInput.value) {
+        const flowValue = parseFloat(flowInput.value);
+        if (!isNaN(flowValue)) {
+            if (currentUnitSystem === 'metric') {
+                storedValues.flow_rate_metric = flowValue;
+                console.log('Stored metric flow rate:', flowValue, 'm³/hr');
+            } else {
+                storedValues.flow_rate_imperial = flowValue;
+                console.log('Stored imperial flow rate:', flowValue, 'GPM');
+            }
+        }
     }
-    if (currentUnitSystem === 'metric' && originalValues.total_head === null && headInput && headInput.value) {
-        originalValues.total_head = parseFloat(headInput.value);
-        console.log('Stored original head:', originalValues.total_head, 'm');
+    
+    if (headInput && headInput.value) {
+        const headValue = parseFloat(headInput.value);
+        if (!isNaN(headValue)) {
+            if (currentUnitSystem === 'metric') {
+                storedValues.total_head_metric = headValue;
+                console.log('Stored metric head:', headValue, 'm');
+            } else {
+                storedValues.total_head_imperial = headValue;
+                console.log('Stored imperial head:', headValue, 'ft');
+            }
+        }
     }
     
     // Convert existing values if they exist
@@ -1055,20 +1071,30 @@ function switchUnitSystem(newSystem) {
         const flowValue = parseFloat(flowInput.value);
         if (!isNaN(flowValue)) {
             if (newSystem === 'imperial' && currentUnitSystem === 'metric') {
-                // Convert m³/hr to GPM: m³/hr ÷ 0.227124
-                flowInput.value = (flowValue / 0.227124).toFixed(2);
-                showConversionMessage(`Flow rate converted to ${flowInput.value} GPM`);
+                // Check if we have stored imperial value first, otherwise convert
+                if (storedValues.flow_rate_imperial !== null) {
+                    flowInput.value = storedValues.flow_rate_imperial.toString();
+                    showConversionMessage(`Flow rate restored to ${flowInput.value} GPM`);
+                    console.log('Restored stored imperial flow rate:', storedValues.flow_rate_imperial);
+                } else {
+                    // Convert m³/hr to GPM: m³/hr ÷ 0.227124
+                    const convertedValue = (flowValue / 0.227124);
+                    flowInput.value = convertedValue.toFixed(2);
+                    storedValues.flow_rate_imperial = convertedValue;
+                    showConversionMessage(`Flow rate converted to ${flowInput.value} GPM`);
+                }
             } else if (newSystem === 'metric' && currentUnitSystem === 'imperial') {
-                // If we have original values, restore them instead of converting
-                if (originalValues.flow_rate !== null) {
-                    flowInput.value = originalValues.flow_rate.toString();
-                    showConversionMessage(`Flow rate restored to original ${flowInput.value} m³/hr`);
-                    console.log('Restored original flow rate:', originalValues.flow_rate);
+                // Check if we have stored metric value first, otherwise convert
+                if (storedValues.flow_rate_metric !== null) {
+                    flowInput.value = storedValues.flow_rate_metric.toString();
+                    showConversionMessage(`Flow rate restored to ${flowInput.value} m³/hr`);
+                    console.log('Restored stored metric flow rate:', storedValues.flow_rate_metric);
                 } else {
                     // Convert GPM to m³/hr: GPM × 0.227124
-                    flowInput.value = (flowValue * 0.227124).toFixed(3);
+                    const convertedValue = (flowValue * 0.227124);
+                    flowInput.value = convertedValue.toFixed(3);
+                    storedValues.flow_rate_metric = convertedValue;
                     showConversionMessage(`Flow rate converted to ${flowInput.value} m³/hr`);
-                    console.log('No original value found, performing conversion');
                 }
             }
         }
@@ -1078,20 +1104,30 @@ function switchUnitSystem(newSystem) {
         const headValue = parseFloat(headInput.value);
         if (!isNaN(headValue)) {
             if (newSystem === 'imperial' && currentUnitSystem === 'metric') {
-                // Convert meters to feet: m * 3.28084
-                headInput.value = (headValue * 3.28084).toFixed(2);
-                showConversionMessage(`Head converted to ${headInput.value} ft`);
+                // Check if we have stored imperial value first, otherwise convert
+                if (storedValues.total_head_imperial !== null) {
+                    headInput.value = storedValues.total_head_imperial.toString();
+                    showConversionMessage(`Head restored to ${headInput.value} ft`);
+                    console.log('Restored stored imperial head:', storedValues.total_head_imperial);
+                } else {
+                    // Convert meters to feet: m * 3.28084
+                    const convertedValue = (headValue * 3.28084);
+                    headInput.value = convertedValue.toFixed(2);
+                    storedValues.total_head_imperial = convertedValue;
+                    showConversionMessage(`Head converted to ${headInput.value} ft`);
+                }
             } else if (newSystem === 'metric' && currentUnitSystem === 'imperial') {
-                // If we have original values, restore them instead of converting
-                if (originalValues.total_head !== null) {
-                    headInput.value = originalValues.total_head.toString();
-                    showConversionMessage(`Head restored to original ${headInput.value} m`);
-                    console.log('Restored original head:', originalValues.total_head);
+                // Check if we have stored metric value first, otherwise convert
+                if (storedValues.total_head_metric !== null) {
+                    headInput.value = storedValues.total_head_metric.toString();
+                    showConversionMessage(`Head restored to ${headInput.value} m`);
+                    console.log('Restored stored metric head:', storedValues.total_head_metric);
                 } else {
                     // Convert feet to meters: ft * 0.3048
-                    headInput.value = (headValue * 0.3048).toFixed(3);
+                    const convertedValue = (headValue * 0.3048);
+                    headInput.value = convertedValue.toFixed(3);
+                    storedValues.total_head_metric = convertedValue;
                     showConversionMessage(`Head converted to ${headInput.value} m`);
-                    console.log('No original value found, performing conversion');
                 }
             }
         }
@@ -1211,11 +1247,12 @@ function showConversionMessage(message) {
 // Track which fields have been converted to avoid double conversion
 const convertedFields = new Set();
 
-// Store original values for proper bidirectional conversion
-const originalValues = {
-    flow_rate: null,
-    total_head: null,
-    originalUnitSystem: 'metric'
+// Store values in both unit systems for proper bidirectional conversion
+const storedValues = {
+    flow_rate_metric: null,
+    flow_rate_imperial: null,
+    total_head_metric: null,
+    total_head_imperial: null
 };
 
 // Function to handle unit conversion on blur (when user clicks out of field)
@@ -1303,6 +1340,29 @@ function setupEssentialRequirementsWatcher() {
             input.addEventListener('blur', function(event) {
                 console.log('Blur event detected on:', input.id, 'value:', input.value, 'currentUnitSystem:', currentUnitSystem);
                 console.log('Event target:', event.target.id, 'Event type:', event.type);
+                
+                // Store the value in the appropriate unit system when user inputs it
+                const value = parseFloat(input.value);
+                if (!isNaN(value) && value > 0) {
+                    if (input.id === 'flow_rate') {
+                        if (currentUnitSystem === 'metric') {
+                            storedValues.flow_rate_metric = value;
+                            console.log('Stored user input flow rate (metric):', value);
+                        } else {
+                            storedValues.flow_rate_imperial = value;
+                            console.log('Stored user input flow rate (imperial):', value);
+                        }
+                    } else if (input.id === 'total_head') {
+                        if (currentUnitSystem === 'metric') {
+                            storedValues.total_head_metric = value;
+                            console.log('Stored user input head (metric):', value);
+                        } else {
+                            storedValues.total_head_imperial = value;
+                            console.log('Stored user input head (imperial):', value);
+                        }
+                    }
+                }
+                
                 handleUnitConversionOnBlur(input);
             });
             
@@ -1449,9 +1509,9 @@ document.addEventListener('DOMContentLoaded', function() {
     window.triggerHeadBlur = triggerHeadBlur;
     window.testUnitConversionRobustness = testUnitConversionRobustness;
     
-    // Add debugging function to check original values
-    window.checkOriginalValues = function() {
-        console.log('Original values:', originalValues);
+    // Add debugging function to check stored values
+    window.checkStoredValues = function() {
+        console.log('Stored values:', storedValues);
         console.log('Current unit system:', currentUnitSystem);
         console.log('Converted fields:', Array.from(convertedFields));
     };
