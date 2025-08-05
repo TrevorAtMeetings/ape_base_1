@@ -1210,15 +1210,20 @@ class PumpChartsManager {
                 const dataMax = Math.max(...allNpsh);
                 const range = dataMax - dataMin;
                 
-                // Use tighter padding for better visualization
-                minNpsh = Math.max(0, dataMin - range * 0.1); // 10% padding below minimum, but not below 0
-                maxNpsh = dataMax + range * 0.1; // 10% padding above maximum
+                // Use tighter padding for better visualization - FIXED LOGIC
+                minNpsh = Math.max(0, dataMin - range * 0.05); // 5% padding below minimum
+                maxNpsh = dataMax + range * 0.05; // 5% padding above maximum
                 
-                // If range is very small, ensure we have at least some visible range
-                if (maxNpsh - minNpsh < 0.5) {
-                    const center = (maxNpsh + minNpsh) / 2;
+                // Ensure minimum visible range for readability
+                if (maxNpsh - minNpsh < 1.0) {
+                    const center = (dataMax + dataMin) / 2;
                     minNpsh = Math.max(0, center - 0.5);
                     maxNpsh = center + 0.5;
+                }
+                
+                // Prevent axis from starting at 0 when data is much higher
+                if (dataMin > 1.5) {
+                    minNpsh = Math.max(0, dataMin - 0.3);
                 }
                 
 

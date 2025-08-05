@@ -132,12 +132,20 @@ def pump_report(pump_code):
 
         # Find the selected pump in results
         selected_pump = None
-        for selection in pump_selections:
+        logger.info(f"Template data - Looking for pump_code: '{pump_code}' in {len(pump_selections)} selections")
+        for i, selection in enumerate(pump_selections):
+            selection_code = selection.get('pump_code', 'N/A')
+            logger.info(f"Template data - Selection {i}: pump_code='{selection_code}'")
             if selection.get('pump_code') == pump_code:
                 selected_pump = selection
-                
-                # Process BEP analysis and calculate QBEP percentage
-                if selected_pump.get('operating_point'):
+                logger.info(f"Template data - Found matching pump at index {i}")
+                break
+        
+        if not selected_pump:
+            logger.warning(f"Template data - No matching pump found for '{pump_code}' in pump_selections")
+        
+        # Process BEP analysis and calculate QBEP percentage (for any selected pump)
+        if selected_pump and selected_pump.get('operating_point'):
                     operating_flow = selected_pump['operating_point'].get('flow_m3hr', 0)
                     operating_head = selected_pump['operating_point'].get('head_m', 0)
                     
@@ -180,47 +188,92 @@ def pump_report(pump_code):
                             selected_pump['bep_zone_color'] = 'secondary'
                     else:
                         logger.error(f"Template data - Could not find pump {pump_code} in catalog")
-                
-                # Ensure scoring_details is available if not already present
-                if 'scoring_details' not in selected_pump and selected_pump.get('operating_point'):
-                    # Generate scoring details for display
-                    performance = selected_pump['operating_point']
-                    efficiency = selected_pump.get('efficiency_at_duty', 0)
-                    selected_pump['scoring_details'] = {
-                        'qbp_proximity': {
-                            'score': selected_pump.get('bep_score', 0),
-                            'description': 'Best Efficiency Point proximity',
-                            'formula': '40 × max(0, 1 - ((flow_ratio - 1) / 0.5)²)'
-                        },
-                        'efficiency': {
-                            'score': selected_pump.get('efficiency_score', 0),
-                            'description': f"Efficiency at duty point: {efficiency:.1f}%",
-                            'formula': '(efficiency/100)² × 30'
-                        },
-                        'head_margin': {
-                            'score': selected_pump.get('margin_score', 0),
-                            'description': f"Head margin: {selected_pump.get('head_margin_pct', 0):.1f}%",
-                            'formula': 'Graduated scoring based on margin percentage'
-                        },
-                        'npsh': {
-                            'score': selected_pump.get('npsh_score', 0),
-                            'description': f"NPSHr: {performance.get('npshr_m', 'N/A'):.1f}m" if performance.get('npshr_m') else "No NPSH data",
-                            'formula': '15 × max(0, (8 - NPSHr) / 6)' if performance.get('npshr_m') else 'N/A'
-                        },
-                        'speed_penalty': {
-                            'score': 0,
-                            'description': "No speed variation",
-                            'formula': '1.5 × speed_change_% (max -15)'
-                        },
-                        'trim_penalty': {
-                            'score': 0,
-                            'description': "No trimming",
-                            'formula': '0.5 × trim_%'
-                        }
-                    }
-                break
+        
+        # Ensure scoring_details is available if not already present
+        if selected_pump and 'scoring_details' not in selected_pump and selected_pump.get('operating_point'):
+            # Generate scoring details for display
+            performance = selected_pump['operating_point']
+            efficiency = selected_pump.get('efficiency_at_duty', 0)
+            selected_pump['scoring_details'] = {
+                'qbp_proximity': {
+                    'score': selected_pump.get('bep_score', 0),
+                    'description': 'Best Efficiency Point proximity',
+                    'formula': '40 × max(0, 1 - ((flow_ratio - 1) / 0.5)²)'
+                },
+                'efficiency': {
+                    'score': selected_pump.get('efficiency_score', 0),
+                    'description': f"Efficiency at duty point: {efficiency:.1f}%",
+                    'formula': '(efficiency/100)² × 30'
+                },
+                'head_margin': {
+                    'score': selected_pump.get('margin_score', 0),
+                    'description': f"Head margin: {selected_pump.get('head_margin_pct', 0):.1f}%",
+                    'formula': 'Graduated scoring based on margin percentage'
+                },
+                'npsh': {
+                    'score': selected_pump.get('npsh_score', 0),
+                    'description': f"NPSHr: {performance.get('npshr_m', 'N/A'):.1f}m" if performance.get('npshr_m') else "No NPSH data",
+                    'formula': '15 × max(0, (8 - NPSHr) / 6)' if performance.get('npshr_m') else 'N/A'
+                },
+                'speed_penalty': {
+                    'score': 0,
+                    'description': "No speed variation",
+                    'formula': '1.5 × speed_change_% (max -15)'
+                },
+                'trim_penalty': {
+                    'score': 0,
+                    'description': "No trimming",
+                    'formula': '0.5 × trim_%'
+                }
+            }
 
-        # If pump not found in session data, force regenerate with specific pump
+        # CRITICAL FIX: Always ensure BEP analysis exists regardless of pump selection source
+        if not selected_pump:
+            logger.info(f"Template data - No selected_pump found, creating one for {pump_code}")
+            # Create selected_pump directly from catalog 
+            flow = request.args.get('flow', type=float)
+            head = request.args.get('head', type=float)
+            if flow and head:
+                from ..catalog_engine import get_catalog_engine
+                catalog_engine = get_catalog_engine()
+                target_pump = catalog_engine.get_pump_by_code(pump_code)
+                if target_pump:
+                    performance = target_pump.get_performance_at_duty(flow, head)
+                    if performance:
+                        # Calculate BEP analysis
+                        bep_analysis = target_pump.calculate_bep_distance(flow, head)
+                        
+                        selected_pump = {
+                            'pump_code': pump_code,
+                            'operating_point': performance,
+                            'bep_analysis': bep_analysis,
+                            'manufacturer': target_pump.manufacturer,
+                            'pump_type': target_pump.pump_type
+                        }
+                        
+                        # Calculate QBEP percentage
+                        if bep_analysis and bep_analysis.get('bep_available') and bep_analysis.get('bep_flow', 0) > 0:
+                            operating_flow = performance.get('flow_m3hr', 0)
+                            qbep_percentage = (operating_flow / bep_analysis['bep_flow']) * 100
+                            selected_pump['qbep_percentage'] = qbep_percentage
+                            
+                            # Determine operating zone
+                            if 90 <= qbep_percentage <= 110:
+                                selected_pump['bep_zone'] = 'optimal'
+                                selected_pump['bep_zone_label'] = 'Optimal Zone'
+                                selected_pump['bep_zone_color'] = 'success'
+                            elif 70 <= qbep_percentage < 90 or 110 < qbep_percentage <= 120:
+                                selected_pump['bep_zone'] = 'good'
+                                selected_pump['bep_zone_label'] = 'Good Operating Range'
+                                selected_pump['bep_zone_color'] = 'warning'
+                            else:
+                                selected_pump['bep_zone'] = 'marginal'
+                                selected_pump['bep_zone_label'] = 'Outside Preferred Range'
+                                selected_pump['bep_zone_color'] = 'danger'
+                            
+                            logger.info(f"Template data - QBEP percentage calculated: {qbep_percentage}%")
+                        
+        # If pump still not found in session data, use fallback method  
         if not selected_pump:
             flow = request.args.get('flow', 1600.0, type=float)
             head = request.args.get('head', 10.3, type=float)
