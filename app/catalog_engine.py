@@ -1188,7 +1188,8 @@ class CatalogEngine:
                         flow_m3hr, head_m)
                     
                     # 1. BEP PROXIMITY SCORE (40 points max) - Squared decay function
-                    flow_ratio = flow_m3hr / bep_analysis.get('bep_flow', flow_m3hr) if bep_analysis.get('bep_flow', 0) > 0 else 1.0
+                    bep_flow = bep_analysis.get('bep_flow', 0)
+                    flow_ratio = flow_m3hr / bep_flow if bep_flow and bep_flow > 0 else 1.0
                     bep_score_raw = max(0, 1 - ((flow_ratio - 1) / 0.5) ** 2)
                     bep_score = 40 * bep_score_raw
 
