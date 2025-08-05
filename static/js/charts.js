@@ -302,7 +302,7 @@ class PumpChartsManager {
 
             // Reference line extensions beyond chart boundaries - Vertical (flow)
             traces.push({
-                x: [opPoint.flow_m3hr, opPoint.flow_m3hr],
+                x: [operatingPointFlow, operatingPointFlow],
                 y: [extendedMinHead, extendedMaxHead],
                 type: 'scatter',
                 mode: 'lines',
@@ -319,7 +319,7 @@ class PumpChartsManager {
             // Reference line extensions beyond chart boundaries - Horizontal (head)
             traces.push({
                 x: [extendedMinFlow, extendedMaxFlow],
-                y: [opPoint.head_m, opPoint.head_m],
+                y: [operatingPointHead, operatingPointHead],
                 type: 'scatter',
                 mode: 'lines',
                 name: 'Head Reference Line',
@@ -338,7 +338,7 @@ class PumpChartsManager {
             if (this.currentChartData.bep_analysis && this.currentChartData.bep_analysis.bep_available) {
                 const bepFlow = this.currentChartData.bep_analysis.bep_flow;
                 if (bepFlow > 0) {
-                    bepPercentage = ((opPoint.flow_m3hr / bepFlow) * 100).toFixed(0);
+                    bepPercentage = ((operatingPointFlow / bepFlow) * 100).toFixed(0);
                 }
             }
 
@@ -409,9 +409,21 @@ class PumpChartsManager {
                 }
             }
 
+            // Apply speed scaling to operating point coordinates if speed scaling is active
+            let operatingPointFlow = opPoint.flow_m3hr;
+            let operatingPointHead = opPoint.head_m;
+            
+            if (this.currentChartData.speed_scaling && this.currentChartData.speed_scaling.applied) {
+                const speedRatio = this.currentChartData.speed_scaling.speed_ratio;
+                // Apply affinity laws to operating point: Flow ∝ speed, Head ∝ speed²
+                operatingPointFlow = opPoint.flow_m3hr * speedRatio;
+                operatingPointHead = opPoint.head_m * (speedRatio * speedRatio);
+                console.log(`Charts.js: Applied speed scaling to operating point - Flow: ${opPoint.flow_m3hr.toFixed(1)} → ${operatingPointFlow.toFixed(1)}, Head: ${opPoint.head_m.toFixed(1)} → ${operatingPointHead.toFixed(1)}`);
+            }
+
             traces.push({
-                x: [opPoint.flow_m3hr],
-                y: [opPoint.head_m],
+                x: [operatingPointFlow],
+                y: [operatingPointHead],
                 type: 'scatter',
                 mode: 'markers',
                 name: opPoint.extrapolated ? 'Operating Point (Extrapolated)' : 'Operating Point',
