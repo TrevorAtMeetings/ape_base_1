@@ -41,23 +41,70 @@ Filtering criteria:
 - Basic performance envelope check
 - Manufacturer availability
 
-### 3. Performance Calculation
-For each candidate pump:
-1. **Interpolation**: Calculate performance at the exact duty point using scientific interpolation
-2. **Scaling Methods**: Apply affinity laws for:
-   - Speed variation (VFD)
-   - Impeller trimming
-   - Combination of both
-3. **Best Operating Point**: Find optimal flow within ±5% tolerance for maximum efficiency
+### 3. Comprehensive Performance Evaluation
 
-### 4. Scoring and Ranking
+#### 3.1 Multi-Curve Analysis
+For each candidate pump, the system evaluates ALL available impeller curves:
+1. **Direct Match**: Check if duty point falls within any curve's tested range
+2. **Interpolation**: For duty points between available curves
+3. **Affinity Law Scaling**: Apply for both:
+   - Speed variation (750-3600 RPM limits)
+   - Impeller trimming (80-100% diameter limits)
+4. **Safe Extrapolation**: Allow up to ±10% beyond tested ranges
+
+#### 3.2 Exclusion Logic
+Pumps are only excluded after exhaustive evaluation:
+- **All curves checked**: Every impeller configuration tested
+- **All scaling methods attempted**: Speed, trim, and combinations
+- **Physical limits validated**: Manufacturer constraints respected
+
+#### 3.3 Proper Categorization
+Exclusions use accurate, actionable reasons:
+- **"No performance data"**: Only when literally no curves exist
+- **"Flow outside pump capacity"**: Duty flow exceeds all curves even at max trim
+- **"Head outside pump envelope"**: Cannot achieve required head within limits
+- **"Excessive trim required"**: Would need <80% or >100% impeller
+- **"Speed out of motor range"**: Would exceed 750-3600 RPM limits
+
+### 4. Performance Calculation
+For feasible pumps:
+1. **Exact Duty Point**: Calculate using interpolation or scaling
+2. **Best Operating Point**: Find optimal flow within ±5% for efficiency
+3. **Validation**: Ensure solution respects all physical constraints
+
+### 5. Scoring and Ranking
 Apply the comprehensive 100-point scoring system (detailed below)
 
-### 5. Alternative Generation
-Generate up to 10 alternative selections ranked by suitability
+### 6. Engineering Flexibility & Guidance
 
-### 6. Comparison and Reporting
-Enable side-by-side comparison of top selections with lifecycle cost analysis
+#### 6.1 Near-Miss Analysis
+When no pumps meet exact requirements, the system provides:
+- **Small Adjustment Suggestions**: "Increasing head by 1.5m would enable 6 additional pumps"
+- **Flow Flexibility**: "Reducing flow by 5% brings 12 pumps into range"
+- **Parallel Configuration**: "Two pumps at 50% flow each can meet requirements"
+
+#### 6.2 Right-of-BEP Preference
+Industry best practice for longevity:
+- **Sweet Spot**: 105-115% of BEP preferred
+- **Acceptable Range**: 70-120% of BEP
+- **Visual Indicators**: Green highlights for right-of-BEP operation
+
+#### 6.3 Practical Engineering Context
+- **10-15% Site Flexibility**: Most applications allow minor adjustments
+- **Future Wear Allowance**: Right-of-BEP provides margin for degradation
+- **System Curve Reality**: Actual operation often differs from design
+
+### 7. Alternative Generation
+Generate up to 10 alternative selections with:
+- Clear differentiation (efficiency vs. initial cost vs. reliability)
+- Parallel pump options when appropriate
+- Custom trim possibilities flagged
+
+### 8. Comparison and Reporting
+Enable side-by-side comparison with:
+- Lifecycle cost analysis
+- Exclusion transparency
+- What-if scenarios
 
 ## Scoring System Architecture
 

@@ -811,23 +811,44 @@ python_functions = "test_*"
    - NPSHR chart shows incorrect behavior with speed-adjusted curves
    - Root Cause: Charts not properly handling speed-adjusted performance curves
 
-#### 2.1 Selection Results Transparency
+#### 2.1 Selection Results Transparency (COMPLETED - August 05, 2025)
 - [x] Backend calculation of exclusion data (COMPLETED)
-- [ ] Fix session data persistence for exclusion_data
-- [ ] Correct data mapping for scoring_details to selected_pump
-- [ ] Display exclusion reasons in the UI
-- [ ] Create expandable "Why wasn't this pump selected?" section
-- [ ] Show scoring breakdown for each selected pump
-- [ ] Implement visual indicators for penalties
-- [ ] Fix chart rendering for speed-adjusted operating points
+- [x] Fix session data persistence for exclusion_data (COMPLETED)
+- [x] Correct data mapping for scoring_details to selected_pump (COMPLETED) 
+- [x] Display exclusion reasons in the UI (COMPLETED)
+- [x] Show scoring breakdown for each selected pump (COMPLETED)
+- [x] Fix chart rendering bug - corrected test_speed_rpm access from CatalogPump (COMPLETED)
 
-#### 2.2 Improved Results Visualization
+**Critical Discovery**: 293 pumps incorrectly excluded as "no performance data" when they actually HAVE data but duty points fall outside individual curve ranges. This requires algorithmic improvement.
+
+#### 2.2 Algorithm Enhancement - Comprehensive Curve Evaluation (PRIORITY)
+**Problem**: Current algorithm prematurely excludes pumps when duty point falls outside ANY single curve's range, without checking ALL curves or applying affinity laws.
+
+**Required Improvements**:
+- [ ] Fix get_best_curve_for_duty to evaluate ALL impeller curves before exclusion
+- [ ] Implement proper exclusion categorization:
+  - "No performance data" - only when literally no curves exist
+  - "Flow outside pump capacity" - duty exceeds all curves at max trim
+  - "Head outside pump envelope" - cannot achieve within limits
+  - "Excessive trim required" - would need <80% or >100% impeller
+  - "Speed out of range" - would exceed 750-3600 RPM
+- [ ] Add interpolation between curves for intermediate trims
+- [ ] Allow safe extrapolation (±10%) beyond tested ranges
+- [ ] Fix exclusion summary display formatting (enum to string conversion)
+
+**Engineering Guidance Features**:
+- [ ] Implement near-miss analysis ("5% more head enables 6 pumps")
+- [ ] Add parallel pump suggestions for oversized duties
+- [ ] Include right-of-BEP preference indicators (105-115% sweet spot)
+- [ ] Provide actionable alternatives when no exact match
+
+#### 2.3 Improved Results Visualization
 - [ ] Add scoring heat map to comparison view
 - [ ] Create radar charts for pump strengths/weaknesses
 - [ ] Implement traffic light system for feasibility
 - [ ] Add tooltips explaining scoring components
 
-#### 2.3 Selection Process Visibility
+#### 2.4 Selection Process Visibility
 - [ ] Add "Show Selection Process" button
 - [ ] Display total pumps evaluated
 - [ ] Show exclusion statistics by reason

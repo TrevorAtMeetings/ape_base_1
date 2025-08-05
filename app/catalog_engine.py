@@ -221,7 +221,7 @@ class CatalogPump:
 
     def get_best_curve_for_duty(self, flow_m3hr: float,
                                 head_m: float) -> Optional[Dict[str, Any]]:
-        """Find the best curve for the given duty point"""
+        """Find the best curve for the given duty point - allows safe extrapolation"""
         best_curve = None
         best_score = float('inf')
 
@@ -234,9 +234,12 @@ class CatalogPump:
             if not flows or not heads:
                 continue
 
-            # Check if duty point is within curve range
-            flow_in_range = min(flows) <= flow_m3hr <= max(flows)
-            head_in_range = min(heads) <= head_m <= max(heads)
+            # Allow 10% extrapolation beyond tested range
+            flow_min, flow_max = min(flows), max(flows)
+            head_min, head_max = min(heads), max(heads)
+            
+            flow_in_range = flow_min * 0.9 <= flow_m3hr <= flow_max * 1.1
+            head_in_range = head_min * 0.9 <= head_m <= head_max * 1.1
 
             if flow_in_range and head_in_range:
                 # Calculate efficiency at duty point
@@ -244,11 +247,13 @@ class CatalogPump:
                     head_interp = interpolate.interp1d(flows,
                                                        heads,
                                                        kind='linear',
-                                                       bounds_error=False)
+                                                       bounds_error=False,
+                                                       fill_value='extrapolate')
                     eff_interp = interpolate.interp1d(
                         flows, [p['efficiency_pct'] for p in points],
                         kind='linear',
-                        bounds_error=False)
+                        bounds_error=False,
+                                                      fill_value='extrapolate')
 
                     predicted_head = head_interp(flow_m3hr)
                     efficiency = eff_interp(flow_m3hr)
@@ -269,6 +274,77 @@ class CatalogPump:
                     continue
 
         return best_curve
+
+    def can_meet_requirements(self, flow_m3hr: float, head_m: float) -> Dict[str, Any]:
+        """Comprehensively evaluate if pump can meet requirements through ANY valid modification"""
+        from .impeller_scaling import get_impeller_scaling_engine
+        scaling_engine = get_impeller_scaling_engine()
+        
+        # Track all reasons why pump might not work
+        reasons = []
+        
+        # 1. Check if any curve directly covers the duty point (with 10% extrapolation)
+        for curve in self.curves:
+            points = curve['performance_points']
+            if not points:
+                continue
+                
+            flows = [p['flow_m3hr'] for p in points]
+            heads = [p['head_m'] for p in points]
+            
+            flow_min, flow_max = min(flows), max(flows)
+            head_min, head_max = min(heads), max(heads)
+            
+            # Direct coverage with 10% safety margin
+            if (flow_min * 0.9 <= flow_m3hr <= flow_max * 1.1 and 
+                head_min * 0.9 <= head_m <= head_max * 1.1):
+                return {'feasible': True, 'method': 'direct', 'curve': curve}
+        
+        # 2. Check if impeller trimming can achieve duty point
+        optimal_sizing = scaling_engine.find_optimal_sizing(
+            self.curves, flow_m3hr, head_m)
+        if optimal_sizing:
+            trim_percent = optimal_sizing['sizing_info']['trim_percent']
+            if 80 <= trim_percent <= 100:
+                return {'feasible': True, 'method': 'trim', 'sizing': optimal_sizing}
+            else:
+                reasons.append(ExclusionReason.UNDERTRIM if trim_percent < 80 else ExclusionReason.OVERTRIM)
+        
+        # 3. Check if speed variation can achieve duty point
+        pump_specs = {
+            'test_speed_rpm': self.specifications.get('test_speed_rpm', 980),
+            'max_speed_rpm': self.specifications.get('max_speed_rpm', 1150),
+            'min_speed_rpm': self.specifications.get('min_speed_rpm', 700)
+        }
+        
+        for curve in self.curves:
+            speed_result = scaling_engine.calculate_speed_variation(
+                curve, flow_m3hr, head_m, pump_specs)
+            if speed_result and speed_result['meets_requirements']:
+                required_speed = speed_result['test_speed_rpm']
+                if 750 <= required_speed <= 3600:
+                    return {'feasible': True, 'method': 'speed', 'result': speed_result}
+                else:
+                    reasons.append(ExclusionReason.UNDERSPEED if required_speed < 750 else ExclusionReason.OVERSPEED)
+        
+        # 4. Check absolute physical limits
+        max_head = self._calculate_max_head()
+        max_flow = self._calculate_max_flow()
+        min_flow = min(min(p['flow_m3hr'] for p in curve['performance_points']) 
+                      for curve in self.curves if curve['performance_points'])
+        
+        if head_m > max_head * 1.2:  # 20% margin for speed increase
+            reasons.append(ExclusionReason.HEAD_NOT_MET)
+        if flow_m3hr > max_flow * 1.2:  # 20% margin
+            reasons.append(ExclusionReason.FLOW_OUT_OF_RANGE)
+        if flow_m3hr < min_flow * 0.5:  # 50% of minimum
+            reasons.append(ExclusionReason.FLOW_OUT_OF_RANGE)
+        
+        # Return comprehensive exclusion reasons
+        return {
+            'feasible': False, 
+            'reasons': list(set(reasons)) if reasons else [ExclusionReason.ENVELOPE_EXCEEDED]
+        }
 
     def _validate_physical_capability(self, flow_m3hr: float,
                                       head_m: float) -> bool:
@@ -730,11 +806,23 @@ class CatalogEngine:
                     )
                     continue  # Skip pumps that don't match the selected type
 
-            # Get performance at duty point
+            # Comprehensive evaluation - check ALL curves and modifications before exclusion
+            can_meet_result = pump.can_meet_requirements(flow_m3hr, head_m)
+            
+            if not can_meet_result['feasible']:
+                # Add specific exclusion reasons from comprehensive check
+                for reason in can_meet_result['reasons']:
+                    evaluation.add_exclusion(reason)
+                excluded_pumps.append(evaluation)
+                excluded_count += 1
+                continue
+            
+            # Get performance at duty point (we know it's feasible now)
             performance = pump.get_performance_at_duty(flow_m3hr, head_m)
-
+            
+            # Fallback - if performance calculation fails despite feasibility check
             if not performance:
-                evaluation.add_exclusion(ExclusionReason.NO_PERFORMANCE_DATA)
+                evaluation.add_exclusion(ExclusionReason.ENVELOPE_EXCEEDED)
                 excluded_pumps.append(evaluation)
                 excluded_count += 1
                 continue
@@ -1035,11 +1123,15 @@ class CatalogEngine:
             exclusion_summary = {}
             for eval in excluded_pumps:
                 for reason in eval.exclusion_reasons:
-                    exclusion_summary[reason] = exclusion_summary.get(reason, 0) + 1
+                    # Convert enum name to lowercase with underscores for template compatibility
+                    reason_key = reason.name.lower()
+                    exclusion_summary[reason_key] = exclusion_summary.get(reason_key, 0) + 1
             
             logger.info("Exclusion Summary:")
-            for reason, count in sorted(exclusion_summary.items(), key=lambda x: x[1], reverse=True):
-                logger.info(f"  {reason.value}: {count} pumps")
+            for reason_key, count in sorted(exclusion_summary.items(), key=lambda x: x[1], reverse=True):
+                # Convert back to enum for logging
+                reason_enum = ExclusionReason[reason_key.upper()]
+                logger.info(f"  {reason_enum.value}: {count} pumps")
 
         # Return exclusion data if requested
         if return_exclusions:
