@@ -547,6 +547,141 @@
                 </div>
             </div>
 
+            <!-- Selection Process Transparency -->
+            {% if exclusion_data %}
+            <div class="row" style="margin-bottom: 32px;">
+                <div class="col-12">
+                    <div class="card" style="border-radius: var(--md-border-radius-large); box-shadow: var(--md-shadow); border: 1px solid var(--md-outline-variant);">
+                        <div class="card-body" style="padding: 32px;">
+                            <h5 style="color: var(--md-primary); font-weight: 500; margin-bottom: 24px; display: flex; align-items: center;">
+                                <i class="material-icons" style="margin-right: 12px; color: var(--md-primary);">filter_list</i>
+                                Selection Process Transparency
+                            </h5>
+                            
+                            <!-- Overview Statistics -->
+                            <div class="row mb-4">
+                                <div class="col-md-3 col-sm-6 mb-3">
+                                    <div class="metric-display" style="background: #e3f2fd; padding: 20px; border-radius: 12px; text-align: center;">
+                                        <div style="font-size: 32px; font-weight: 600; color: #1976d2;">{{ exclusion_data.total_evaluated or 386 }}</div>
+                                        <div style="color: #666; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">Total Pumps Evaluated</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-sm-6 mb-3">
+                                    <div class="metric-display" style="background: #e8f5e9; padding: 20px; border-radius: 12px; text-align: center;">
+                                        <div style="font-size: 32px; font-weight: 600; color: #388e3c;">{{ exclusion_data.feasible_count or 0 }}</div>
+                                        <div style="color: #666; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">Physically Feasible</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-sm-6 mb-3">
+                                    <div class="metric-display" style="background: #fff3e0; padding: 20px; border-radius: 12px; text-align: center;">
+                                        <div style="font-size: 32px; font-weight: 600; color: #f57c00;">{{ exclusion_data.excluded_count or 0 }}</div>
+                                        <div style="color: #666; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">Excluded</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-sm-6 mb-3">
+                                    <div class="metric-display" style="background: #f3e5f5; padding: 20px; border-radius: 12px; text-align: center;">
+                                        <div style="font-size: 32px; font-weight: 600; color: #7b1fa2;">{{ pump_selections|length }}</div>
+                                        <div style="color: #666; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">Top Recommendations</div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Exclusion Reasons Breakdown -->
+                            {% if exclusion_data.exclusion_summary %}
+                            <h6 style="color: #666; font-weight: 500; margin-top: 32px; margin-bottom: 16px;">Exclusion Reasons:</h6>
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th style="color: #666;">Reason</th>
+                                            <th style="color: #666; text-align: right;">Count</th>
+                                            <th style="color: #666; text-align: right;">Percentage</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for reason, count in exclusion_data.exclusion_summary.items() %}
+                                        <tr>
+                                            <td>
+                                                {% if reason == 'no_performance_data' %}
+                                                    <i class="fas fa-database text-danger me-2"></i>No Performance Data
+                                                {% elif reason == 'below_min_speed' %}
+                                                    <i class="fas fa-tachometer-alt text-warning me-2"></i>Below Minimum Speed
+                                                {% elif reason == 'above_max_speed' %}
+                                                    <i class="fas fa-tachometer-alt text-warning me-2"></i>Above Maximum Speed
+                                                {% elif reason == 'efficiency_too_low' %}
+                                                    <i class="fas fa-chart-line text-danger me-2"></i>Efficiency Below Threshold
+                                                {% elif reason == 'insufficient_head' %}
+                                                    <i class="fas fa-arrow-down text-danger me-2"></i>Insufficient Head
+                                                {% elif reason == 'excessive_head' %}
+                                                    <i class="fas fa-arrow-up text-warning me-2"></i>Excessive Head
+                                                {% elif reason == 'undertrim' %}
+                                                    <i class="fas fa-compress text-warning me-2"></i>Impeller Undertrim
+                                                {% elif reason == 'overtrim' %}
+                                                    <i class="fas fa-expand text-warning me-2"></i>Impeller Overtrim
+                                                {% else %}
+                                                    <i class="fas fa-times-circle text-muted me-2"></i>{{ reason|replace('_', ' ')|title }}
+                                                {% endif %}
+                                            </td>
+                                            <td style="text-align: right;">{{ count }}</td>
+                                            <td style="text-align: right;">{{ "%.1f"|format((count / exclusion_data.excluded_count * 100) if exclusion_data.excluded_count > 0 else 0) }}%</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Scoring Breakdown for Selected Pump -->
+            {% if selected_pump and selected_pump.scoring_details %}
+            <div class="row" style="margin-bottom: 32px;">
+                <div class="col-12">
+                    <div class="card" style="border-radius: var(--md-border-radius-large); box-shadow: var(--md-shadow); border: 1px solid var(--md-outline-variant);">
+                        <div class="card-body" style="padding: 32px;">
+                            <h5 style="color: var(--md-primary); font-weight: 500; margin-bottom: 24px; display: flex; align-items: center;">
+                                <i class="material-icons" style="margin-right: 12px; color: var(--md-primary);">assessment</i>
+                                Scoring Breakdown for {{ selected_pump.pump_code }}
+                            </h5>
+                            
+                            <!-- Overall Score -->
+                            <div class="text-center mb-4">
+                                <div style="display: inline-block; padding: 20px 40px; background: linear-gradient(135deg, #1976d2, #1565c0); color: white; border-radius: 12px;">
+                                    <div style="font-size: 48px; font-weight: 700;">{{ "%.1f"|format(selected_pump.overall_score) }}</div>
+                                    <div style="font-size: 16px; text-transform: uppercase; letter-spacing: 1px;">Total Score</div>
+                                </div>
+                            </div>
+                            
+                            <!-- Score Components -->
+                            <div class="row">
+                                {% for component, details in selected_pump.scoring_details.items() %}
+                                <div class="col-md-6 mb-3">
+                                    <div style="padding: 16px; background: #f8f9fa; border-radius: 8px;">
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <span style="font-weight: 500; color: #333;">{{ component|replace('_', ' ')|title }}</span>
+                                            <span style="font-weight: 600; color: {% if details.score > 0 %}#388e3c{% else %}#d32f2f{% endif %};">
+                                                {% if details.score > 0 %}+{% endif %}{{ "%.1f"|format(details.score) }}
+                                            </span>
+                                        </div>
+                                        {% if details.description %}
+                                        <div style="font-size: 14px; color: #666;">{{ details.description }}</div>
+                                        {% endif %}
+                                        {% if details.formula %}
+                                        <div style="font-size: 12px; color: #999; font-style: italic; margin-top: 4px;">{{ details.formula }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
             <!-- 1. Selected Pump Summary -->
             <div class="card mb-4 pump-card selected">
                 <div class="card-header-professional" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white; padding: 24px; border: none; box-shadow: 0 2px 8px rgba(25, 118, 210, 0.2);">

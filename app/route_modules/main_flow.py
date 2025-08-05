@@ -177,10 +177,27 @@ def pump_options():
         catalog_engine = get_catalog_engine()
         logger.info(f"Loaded {len(catalog_engine.pumps)} pumps from catalog")
 
-        # Evaluate pumps using catalog engine with pump type filtering
+        # Evaluate pumps using catalog engine with pump type filtering and exclusion tracking
         pump_evaluations = []
+        exclusion_data = None  # Initialize here
         try:
-            pump_selections = catalog_engine.select_pumps(flow, head, max_results=10, pump_type=pump_type)
+            # Get pump selections with exclusion data for transparency
+            selection_data = catalog_engine.select_pumps(flow, head, max_results=10, pump_type=pump_type, return_exclusions=True)
+            
+            # Handle both old and new return formats
+            if isinstance(selection_data, dict):
+                pump_selections = selection_data['suitable_pumps']
+                exclusion_data = {
+                    'excluded_pumps': selection_data.get('excluded_pumps', []),
+                    'exclusion_summary': selection_data.get('exclusion_summary', {}),
+                    'total_evaluated': selection_data.get('total_evaluated', 0),
+                    'feasible_count': selection_data.get('feasible_count', 0),
+                    'excluded_count': selection_data.get('excluded_count', 0)
+                }
+            else:
+                # Fallback for old format
+                pump_selections = selection_data
+                exclusion_data = None
             for selection in pump_selections[:3]:
                 # Convert catalog engine format to template-compatible format
                 pump = selection['pump']
@@ -219,6 +236,10 @@ def pump_options():
             'application': request.args.get('application', 'Water Supply'),
             'fluid_type': request.args.get('liquid_type', 'Water')
         })
+        
+        # Store exclusion data for transparency
+        if exclusion_data:
+            safe_session_set('exclusion_data', exclusion_data)
 
         # Redirect to the best pump's report page with flow and head parameters
         best_pump = pump_evaluations[0]

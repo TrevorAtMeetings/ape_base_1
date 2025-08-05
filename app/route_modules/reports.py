@@ -42,6 +42,7 @@ def pump_report(pump_code):
         # Get stored results from session with validation
         pump_selections = session.get('pump_selections', [])
         site_requirements_data = session.get('site_requirements', {})
+        exclusion_data = session.get('exclusion_data', None)
 
         # Validate session data integrity
         if pump_selections and not isinstance(pump_selections, list):
@@ -639,7 +640,8 @@ def pump_report(pump_code):
             },
             'selected_pump_code': pump_code,
             'current_date': __import__('datetime').datetime.now().strftime('%Y-%m-%d'),
-            'direct_selection_validation': validation_data
+            'direct_selection_validation': validation_data,
+            'exclusion_data': exclusion_data  # Add exclusion data for transparency
         }
 
         # Ensure selected_curve data is available for all pumps

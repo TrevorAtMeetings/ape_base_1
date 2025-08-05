@@ -992,7 +992,41 @@ class CatalogEngine:
                 'efficiency_score': result['efficiency_score'],
                 'margin_score': result.get('margin_score', 0),
                 'npsh_score': result.get('npsh_score', 0),
-                'sizing_validated': result['sizing_validated']
+                'sizing_validated': result['sizing_validated'],
+                
+                # Scoring details for transparency
+                'scoring_details': {
+                    'qbp_proximity': {
+                        'score': result.get('evaluation', {}).score_components.get('qbp_proximity', 0) if result.get('evaluation') else result.get('bep_score', 0),
+                        'description': f"Operating at {result.get('evaluation', {}).calculation_metadata.get('flow_ratio', 1.0) * 100:.0f}% of Best Efficiency Point flow" if result.get('evaluation') else 'BEP Proximity',
+                        'formula': '40 × max(0, 1 - ((flow_ratio - 1) / 0.5)²)'
+                    },
+                    'efficiency': {
+                        'score': result.get('evaluation', {}).score_components.get('efficiency', 0) if result.get('evaluation') else result.get('efficiency_score', 0),
+                        'description': f"Efficiency at duty point: {result['efficiency_at_duty']:.1f}%",
+                        'formula': '(efficiency/100)² × 30'
+                    },
+                    'head_margin': {
+                        'score': result.get('evaluation', {}).score_components.get('head_margin', 0) if result.get('evaluation') else result.get('margin_score', 0),
+                        'description': f"Head margin: {result['head_margin_pct']:.1f}%",
+                        'formula': 'Graduated scoring based on margin percentage'
+                    },
+                    'npsh': {
+                        'score': result.get('evaluation', {}).score_components.get('npsh', 0) if result.get('evaluation') else result.get('npsh_score', 0),
+                        'description': f"NPSHr: {performance.get('npshr_m', 'N/A'):.1f}m" if performance.get('npshr_m') else "No NPSH data",
+                        'formula': '15 × max(0, (8 - NPSHr) / 6)' if performance.get('npshr_m') else 'N/A'
+                    },
+                    'speed_penalty': {
+                        'score': result.get('evaluation', {}).score_components.get('speed_penalty', 0) if result.get('evaluation') else 0,
+                        'description': f"Speed variation: {performance.get('sizing_info', {}).get('speed_variation_pct', 0):.1f}%" if performance.get('sizing_info', {}).get('vfd_required') else "No speed variation",
+                        'formula': '1.5 × speed_change_% (max -15)'
+                    },
+                    'trim_penalty': {
+                        'score': result.get('evaluation', {}).score_components.get('trim_penalty', 0) if result.get('evaluation') else 0,
+                        'description': f"Impeller trim: {100 - performance.get('sizing_info', {}).get('trim_percent', 100):.1f}%" if performance.get('sizing_info', {}).get('trim_percent', 100) < 100 else "No trimming",
+                        'formula': '0.5 × trim_%'
+                    }
+                }
             }
             formatted_results.append(formatted_result)
 
@@ -1007,6 +1041,17 @@ class CatalogEngine:
             for reason, count in sorted(exclusion_summary.items(), key=lambda x: x[1], reverse=True):
                 logger.info(f"  {reason.value}: {count} pumps")
 
+        # Return exclusion data if requested
+        if return_exclusions:
+            return {
+                'suitable_pumps': formatted_results,
+                'excluded_pumps': excluded_pumps,
+                'exclusion_summary': exclusion_summary if excluded_pumps else {},
+                'total_evaluated': total_pumps,
+                'feasible_count': feasible_count,
+                'excluded_count': excluded_count
+            }
+        
         return formatted_results
 
     def _validate_physical_feasibility(self, pump: 'CatalogPump', 
