@@ -444,91 +444,79 @@ class CatalogPump:
         optimal_sizing = scaling_engine.find_optimal_sizing(
             self.curves, flow_m3hr, head_m)
 
-        # Method 2: If impeller trimming doesn't work, try speed variation
-        if not optimal_sizing:
-            pump_specs = {
-                'test_speed_rpm':
-                self.specifications.get('test_speed_rpm', 980),
-                'max_speed_rpm':
-                self.specifications.get('max_speed_rpm', 1150),
-                'min_speed_rpm': self.specifications.get('min_speed_rpm', 700)
-            }
-
-            # Try speed variation on each curve
-            for curve in self.curves:
-                speed_result = scaling_engine.calculate_speed_variation(
-                    curve, flow_m3hr, head_m, pump_specs)
-                if speed_result and speed_result['meets_requirements']:
-                    # Validate speed variation is within engineering limits
-                    if self._validate_speed_variation_limits(speed_result, curve):
-                        # Final physical capability check for speed variation solution
-                        if self._validate_physical_capability(flow_m3hr, head_m):
-                            return {
-                            'curve':
-                            curve,
-                            'flow_m3hr':
-                            speed_result['flow_m3hr'],
-                            'head_m':
-                            speed_result['head_m'],
-                            'efficiency_pct':
-                            speed_result['efficiency_pct'],
-                            'power_kw':
-                            speed_result['power_kw'],
-                            'npshr_m':
-                            speed_result['npshr_m'],
-                            'impeller_diameter_mm':
-                            speed_result['impeller_diameter_mm'],
-                            'test_speed_rpm':
-                            speed_result['test_speed_rpm'],
-                            'sizing_info': {
-                                'base_diameter_mm':
-                                speed_result['impeller_diameter_mm'],
-                                'required_diameter_mm':
-                                speed_result['impeller_diameter_mm'],
-                                'trim_percent':
-                                100.0,
-                                'meets_requirements':
-                                True,
-                                'head_margin_m':
-                                speed_result['head_margin_m'],
-                                'required_speed_rpm':
-                                speed_result['required_speed_rpm'],
-                                'speed_variation_pct':
-                                speed_result['speed_variation_pct'],
-                                'vfd_required':
-                                True,
-                                'sizing_method':
-                                'speed_variation'
-                            }
-                        }
-
+        # FIXED LOGIC: Always prioritize impeller trimming over speed variation
         if optimal_sizing:
             # Validate that trimming solution meets physical constraints
             if self._validate_physical_capability(flow_m3hr, head_m):
-                # Return properly sized pump performance (impeller trimming)
+                # Return properly sized pump performance (impeller trimming - PREFERRED METHOD)
                 performance = optimal_sizing['performance']
                 sizing = optimal_sizing['sizing']
                 curve = optimal_sizing['curve']
+                
+                logger.info(f"Pump {self.pump_code}: Using impeller trimming - {sizing['base_diameter_mm']}mm → {sizing['required_diameter_mm']}mm ({sizing['trim_percent']:.1f}% trim)")
 
                 return {
-                'curve': curve,
-                'flow_m3hr': performance['flow_m3hr'],
-                'head_m': performance['head_m'],
-                'efficiency_pct': performance['efficiency_pct'],
-                'power_kw': performance['power_kw'],
-                'npshr_m': performance['npshr_m'],
-                'impeller_diameter_mm': performance['impeller_diameter_mm'],
-                'test_speed_rpm': performance['test_speed_rpm'],
-                # Additional sizing information
-                'sizing_info': {
-                    'base_diameter_mm': sizing['base_diameter_mm'],
-                    'required_diameter_mm': sizing['required_diameter_mm'],
-                    'trim_percent': sizing['trim_percent'],
-                    'meets_requirements': performance['meets_requirements'],
-                    'head_margin_m': performance['head_margin_m'],
-                    'sizing_method': 'impeller_trimming'
+                    'curve': curve,
+                    'flow_m3hr': performance['flow_m3hr'],
+                    'head_m': performance['head_m'],
+                    'efficiency_pct': performance['efficiency_pct'],
+                    'power_kw': performance['power_kw'],
+                    'npshr_m': performance['npshr_m'],
+                    'impeller_diameter_mm': performance['impeller_diameter_mm'],
+                    'test_speed_rpm': performance['test_speed_rpm'],
+                    # Additional sizing information
+                    'sizing_info': {
+                        'base_diameter_mm': sizing['base_diameter_mm'],
+                        'required_diameter_mm': sizing['required_diameter_mm'],
+                        'trim_percent': sizing['trim_percent'],
+                        'meets_requirements': True,
+                        'head_margin_m': performance['head_m'] - head_m,
+                        'sizing_method': 'impeller_trimming'
+                    }
                 }
-            }
+
+        # Method 2: Only use speed variation as fallback when impeller trimming fails
+        pump_specs = {
+            'test_speed_rpm': self.specifications.get('test_speed_rpm', 980),
+            'max_speed_rpm': self.specifications.get('max_speed_rpm', 1150),
+            'min_speed_rpm': self.specifications.get('min_speed_rpm', 700)
+        }
+
+        # Try speed variation on each curve
+        for curve in self.curves:
+            speed_result = scaling_engine.calculate_speed_variation(
+                curve, flow_m3hr, head_m, pump_specs)
+            if speed_result and speed_result['meets_requirements']:
+                # Validate speed variation is within engineering limits
+                if self._validate_speed_variation_limits(speed_result, curve):
+                    # Final physical capability check for speed variation solution
+                    if self._validate_physical_capability(flow_m3hr, head_m):
+                        logger.info(f"Pump {self.pump_code}: Using speed variation as fallback - {speed_result['test_speed_rpm']}→{speed_result['required_speed_rpm']} RPM ({speed_result['speed_variation_pct']:.1f}% variation)")
+                        
+                        return {
+                            'curve': curve,
+                            'flow_m3hr': speed_result['flow_m3hr'],
+                            'head_m': speed_result['head_m'],
+                            'efficiency_pct': speed_result['efficiency_pct'],
+                            'power_kw': speed_result['power_kw'],
+                            'npshr_m': speed_result['npshr_m'],
+                            'impeller_diameter_mm': speed_result['impeller_diameter_mm'],
+                            'test_speed_rpm': speed_result['test_speed_rpm'],
+                            'sizing_info': {
+                                'base_diameter_mm': speed_result['impeller_diameter_mm'],
+                                'required_diameter_mm': speed_result['impeller_diameter_mm'],
+                                'trim_percent': 100.0,
+                                'meets_requirements': True,
+                                'head_margin_m': speed_result['head_margin_m'],
+                                'required_speed_rpm': speed_result['required_speed_rpm'],
+                                'speed_variation_pct': speed_result['speed_variation_pct'],
+                                'vfd_required': True,
+                                'sizing_method': 'speed_variation'
+                            }
+                        }
+
+        # If we reach here, neither method worked
+        return None
 
         # Fallback to old method if no sizing possible
         return self._get_performance_interpolated(flow_m3hr, head_m)
