@@ -79,15 +79,16 @@ def get_chart_data(pump_code):
             if sizing_info and sizing_info.get(
                     'sizing_method') == 'speed_variation':
                 speed_scaling_applied = True
-                required_speed = sizing_info.get('required_speed_rpm', 980)
-                base_speed = 980
-                actual_speed_ratio = required_speed / base_speed
-                logger.info(
-                    f"Chart API: Speed variation detected - {base_speed}→{required_speed} RPM (ratio: {actual_speed_ratio:.3f})"
-                )
-                logger.info(
-                    f"Chart API: Performance at scaled speed - power: {performance_result.get('power_kw')}kW"
-                )
+                required_speed = sizing_info.get('required_speed_rpm')
+                base_speed = sizing_info.get('test_speed_rpm', target_pump.test_speed_rpm)
+                if required_speed and base_speed:
+                    actual_speed_ratio = required_speed / base_speed
+                    logger.info(
+                        f"Chart API: Speed variation detected - {base_speed}→{required_speed} RPM (ratio: {actual_speed_ratio:.3f})"
+                    )
+                    logger.info(
+                        f"Chart API: Performance at scaled speed - power: {performance_result.get('power_kw')}kW"
+                    )
 
         logger.info(
             f"Chart API: Final scaling status - applied: {speed_scaling_applied}, ratio: {actual_speed_ratio:.3f}"
@@ -293,12 +294,16 @@ def get_chart_data_safe(safe_pump_code):
         base_speed = None
         required_speed = None
 
-        # Get actual base speed from pump specifications
-        if target_pump.specifications and target_pump.specifications.get(
-                'test_speed_rpm'):
-            base_speed = target_pump.specifications['test_speed_rpm']
-        else:
-            base_speed = 980  # Fallback default
+        # Get actual base speed from pump
+        base_speed = target_pump.test_speed_rpm
+        if not base_speed:
+            # Try from specifications
+            if target_pump.specifications and target_pump.specifications.get(
+                    'test_speed_rpm'):
+                base_speed = target_pump.specifications['test_speed_rpm']
+            else:
+                # Use a reasonable default based on pump type
+                base_speed = 2900  # Standard 2-pole motor speed for most pumps
 
         if operating_point_data and operating_point_data.get('sizing_info'):
             sizing_info = operating_point_data['sizing_info']

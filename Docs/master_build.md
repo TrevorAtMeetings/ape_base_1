@@ -797,11 +797,29 @@ python_functions = "test_*"
 
 ### 🚧 Phase 2: Enhanced Selection Transparency & UI (IN PROGRESS)
 
+#### Issues Discovered (August 05, 2025)
+1. **Exclusion Data Not Displaying**: Backend correctly generates exclusion statistics (386 evaluated, 59 feasible, 327 excluded) but data not shown in UI
+   - Root Cause: Session data not persisting between pump selection and report viewing
+   - Impact: Users cannot see transparency information about why pumps were excluded
+
+2. **Scoring Breakdown Missing**: Scoring details calculated in backend but not rendered in template
+   - Root Cause: Data structure mismatch - template expects `selected_pump.scoring_details` but data not properly mapped
+   - Impact: Users cannot understand how the 100-point score was calculated
+
+3. **Chart Rendering Issues**:
+   - Operating point breaks max impeller boundary when speed variation is used
+   - NPSHR chart shows incorrect behavior with speed-adjusted curves
+   - Root Cause: Charts not properly handling speed-adjusted performance curves
+
 #### 2.1 Selection Results Transparency
+- [x] Backend calculation of exclusion data (COMPLETED)
+- [ ] Fix session data persistence for exclusion_data
+- [ ] Correct data mapping for scoring_details to selected_pump
 - [ ] Display exclusion reasons in the UI
 - [ ] Create expandable "Why wasn't this pump selected?" section
 - [ ] Show scoring breakdown for each selected pump
 - [ ] Implement visual indicators for penalties
+- [ ] Fix chart rendering for speed-adjusted operating points
 
 #### 2.2 Improved Results Visualization
 - [ ] Add scoring heat map to comparison view

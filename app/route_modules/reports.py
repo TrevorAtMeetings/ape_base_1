@@ -69,8 +69,32 @@ def pump_report(pump_code):
                     'customer_name': request.args.get('customer', ''),
                     'project_name': request.args.get('project', ''),
                 }
+                
+                # Generate exclusion data when regenerating from URL parameters
+                if not exclusion_data:
+                    pump_type = request.args.get('pump_type', 'General')
+                    selection_data = catalog_engine.select_pumps(
+                        flow_m3hr=flow, 
+                        head_m=head, 
+                        max_results=10, 
+                        pump_type=pump_type, 
+                        return_exclusions=True
+                    )
+                    
+                    if isinstance(selection_data, dict):
+                        exclusion_data = {
+                            'excluded_pumps': selection_data.get('excluded_pumps', []),
+                            'exclusion_summary': selection_data.get('exclusion_summary', {}),
+                            'total_evaluated': selection_data.get('total_evaluated', 0),
+                            'feasible_count': selection_data.get('feasible_count', 0),
+                            'excluded_count': selection_data.get('excluded_count', 0)
+                        }
+                        # Use the selection results for pump_selections if not already set
+                        if 'suitable_pumps' in selection_data:
+                            pump_selections = selection_data['suitable_pumps']
+                
                 target_pump = catalog_engine.get_pump_by_code(pump_code)
-                if target_pump:
+                if target_pump and not pump_selections:
                     performance = target_pump.get_performance_at_duty(flow, head)
                     if performance:
                         # Calculate proper suitability score to match catalog engine scoring
@@ -106,6 +130,43 @@ def pump_report(pump_code):
         for selection in pump_selections:
             if selection.get('pump_code') == pump_code:
                 selected_pump = selection
+                # Ensure scoring_details is available if not already present
+                if 'scoring_details' not in selected_pump and selected_pump.get('operating_point'):
+                    # Generate scoring details for display
+                    performance = selected_pump['operating_point']
+                    efficiency = selected_pump.get('efficiency_at_duty', 0)
+                    selected_pump['scoring_details'] = {
+                        'qbp_proximity': {
+                            'score': selected_pump.get('bep_score', 0),
+                            'description': 'Best Efficiency Point proximity',
+                            'formula': '40 × max(0, 1 - ((flow_ratio - 1) / 0.5)²)'
+                        },
+                        'efficiency': {
+                            'score': selected_pump.get('efficiency_score', 0),
+                            'description': f"Efficiency at duty point: {efficiency:.1f}%",
+                            'formula': '(efficiency/100)² × 30'
+                        },
+                        'head_margin': {
+                            'score': selected_pump.get('margin_score', 0),
+                            'description': f"Head margin: {selected_pump.get('head_margin_pct', 0):.1f}%",
+                            'formula': 'Graduated scoring based on margin percentage'
+                        },
+                        'npsh': {
+                            'score': selected_pump.get('npsh_score', 0),
+                            'description': f"NPSHr: {performance.get('npshr_m', 'N/A'):.1f}m" if performance.get('npshr_m') else "No NPSH data",
+                            'formula': '15 × max(0, (8 - NPSHr) / 6)' if performance.get('npshr_m') else 'N/A'
+                        },
+                        'speed_penalty': {
+                            'score': 0,
+                            'description': "No speed variation",
+                            'formula': '1.5 × speed_change_% (max -15)'
+                        },
+                        'trim_penalty': {
+                            'score': 0,
+                            'description': "No trimming",
+                            'formula': '0.5 × trim_%'
+                        }
+                    }
                 break
 
         # If pump not found in session data, force regenerate with specific pump
