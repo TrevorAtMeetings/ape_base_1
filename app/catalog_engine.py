@@ -787,6 +787,7 @@ class CatalogEngine:
         
         suitable_pumps = []
         excluded_pumps = []
+        near_miss_pumps = []  # Track pumps that just missed criteria
 
         # Debug logging for pump type filtering
         logger.info(
@@ -844,6 +845,43 @@ class CatalogEngine:
             if not is_feasible:
                 excluded_pumps.append(evaluation)
                 excluded_count += 1
+                
+                # Check if this is a near-miss pump
+                is_near_miss = False
+                near_miss_reasons = []
+                
+                # Check if head is within 5% of requirement
+                delivered_head = performance.get('head_m', 0)
+                if delivered_head > 0 and delivered_head >= head_m * 0.95:
+                    is_near_miss = True
+                    near_miss_reasons.append(f"Head {delivered_head:.1f}m is within 5% of required {head_m:.1f}m")
+                
+                # Check if efficiency is just below threshold (35-40%)
+                efficiency = performance.get('efficiency_pct', 0)
+                if 35 <= efficiency < 40:
+                    is_near_miss = True
+                    near_miss_reasons.append(f"Efficiency {efficiency:.1f}% just below 40% threshold")
+                
+                # Check if NPSH margin is close (within 1m)
+                npshr = performance.get('npshr_m')
+                npsha = 10.0  # Default NPSHa if not specified
+                if npshr and npshr > npsha and (npshr - npsha) <= 1.0:
+                    is_near_miss = True
+                    near_miss_reasons.append(f"NPSHr {npshr:.1f}m is within 1m of NPSHa {npsha:.1f}m")
+                
+                if is_near_miss:
+                    near_miss_pumps.append({
+                        'pump': pump,
+                        'performance': performance,
+                        'evaluation': evaluation,
+                        'near_miss_reasons': near_miss_reasons,
+                        'pump_code': pump.pump_code,
+                        'efficiency_at_duty': efficiency,
+                        'head_at_duty': delivered_head,
+                        'head_deficit': max(0, head_m - delivered_head),
+                        'head_deficit_pct': max(0, (head_m - delivered_head) / head_m * 100) if head_m > 0 else 0
+                    })
+                
                 logger.debug(f"Pump {pump.pump_code} excluded: {evaluation.get_exclusion_summary()}")
                 continue
 
@@ -1141,11 +1179,22 @@ class CatalogEngine:
                 reason_enum = ExclusionReason[reason_key.upper()]
                 logger.info(f"  {reason_enum.value}: {count} pumps")
 
+        # Sort near-miss pumps by how close they came to meeting requirements
+        # Lower head deficit percentage = closer to meeting requirements
+        near_miss_pumps.sort(key=lambda x: x['head_deficit_pct'])
+        
+        # Log near-miss summary
+        if near_miss_pumps:
+            logger.info(f"Found {len(near_miss_pumps)} near-miss pumps that just missed selection criteria")
+            for i, nm in enumerate(near_miss_pumps[:3]):
+                logger.info(f"  Near-miss #{i+1}: {nm['pump_code']} - {', '.join(nm['near_miss_reasons'])}")
+        
         # Return exclusion data if requested
         if return_exclusions:
             return {
                 'suitable_pumps': formatted_results,
                 'excluded_pumps': excluded_pumps,
+                'near_miss_pumps': near_miss_pumps[:5],  # Return top 5 near-miss pumps
                 'exclusion_summary': exclusion_summary if excluded_pumps else {},
                 'total_evaluated': total_pumps,
                 'feasible_count': feasible_count,

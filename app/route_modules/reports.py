@@ -87,7 +87,8 @@ def pump_report(pump_code):
                             'exclusion_summary': selection_data.get('exclusion_summary', {}),
                             'total_evaluated': selection_data.get('total_evaluated', 0),
                             'feasible_count': selection_data.get('feasible_count', 0),
-                            'excluded_count': selection_data.get('excluded_count', 0)
+                            'excluded_count': selection_data.get('excluded_count', 0),
+                            'near_miss_pumps': selection_data.get('near_miss_pumps', [])  # Add near-miss data
                         }
                         # Use the selection results for pump_selections if not already set
                         if 'suitable_pumps' in selection_data:
@@ -130,6 +131,47 @@ def pump_report(pump_code):
         for selection in pump_selections:
             if selection.get('pump_code') == pump_code:
                 selected_pump = selection
+                
+                # Add BEP analysis data if not already present
+                if 'bep_analysis' not in selected_pump and selected_pump.get('operating_point'):
+                    # Get the pump object to calculate BEP analysis
+                    from ..catalog_engine import get_catalog_engine
+                    catalog_engine = get_catalog_engine()
+                    target_pump = catalog_engine.get_pump_by_code(pump_code)
+                    
+                    if target_pump:
+                        # Calculate BEP analysis
+                        operating_flow = selected_pump['operating_point'].get('flow_m3hr', 0)
+                        operating_head = selected_pump['operating_point'].get('head_m', 0)
+                        bep_analysis = target_pump.calculate_bep_distance(operating_flow, operating_head)
+                        
+                        # Add BEP analysis to selected pump
+                        selected_pump['bep_analysis'] = bep_analysis
+                        
+                        # Calculate QBEP percentage and operating zone
+                        if bep_analysis.get('bep_available') and bep_analysis.get('bep_flow', 0) > 0:
+                            qbep_percentage = (operating_flow / bep_analysis['bep_flow']) * 100
+                            selected_pump['qbep_percentage'] = qbep_percentage
+                            
+                            # Determine operating zone (70-120% preferred range)
+                            if 90 <= qbep_percentage <= 110:
+                                selected_pump['bep_zone'] = 'optimal'
+                                selected_pump['bep_zone_label'] = 'Optimal Zone'
+                                selected_pump['bep_zone_color'] = 'success'
+                            elif 70 <= qbep_percentage < 90 or 110 < qbep_percentage <= 120:
+                                selected_pump['bep_zone'] = 'good'
+                                selected_pump['bep_zone_label'] = 'Good Operating Range' 
+                                selected_pump['bep_zone_color'] = 'warning'
+                            else:
+                                selected_pump['bep_zone'] = 'marginal'
+                                selected_pump['bep_zone_label'] = 'Outside Preferred Range'
+                                selected_pump['bep_zone_color'] = 'danger'
+                        else:
+                            selected_pump['qbep_percentage'] = None
+                            selected_pump['bep_zone'] = 'unknown'
+                            selected_pump['bep_zone_label'] = 'BEP Data Unavailable'
+                            selected_pump['bep_zone_color'] = 'secondary'
+                
                 # Ensure scoring_details is available if not already present
                 if 'scoring_details' not in selected_pump and selected_pump.get('operating_point'):
                     # Generate scoring details for display

@@ -635,6 +635,83 @@
                 </div>
             </div>
             {% endif %}
+            
+            <!-- Near-Miss Pumps Analysis -->
+            {% if exclusion_data.near_miss_pumps %}
+            <div class="row" style="margin-bottom: 32px;">
+                <div class="col-12">
+                    <div class="card" style="border-radius: var(--md-border-radius-large); box-shadow: var(--md-shadow); border: 1px solid #ff9800;">
+                        <div class="card-body" style="padding: 32px;">
+                            <h5 style="color: #f57c00; font-weight: 500; margin-bottom: 24px; display: flex; align-items: center;">
+                                <i class="material-icons" style="margin-right: 12px; color: #f57c00;">lightbulb</i>
+                                Near-Miss Pumps - Actionable Alternatives
+                            </h5>
+                            <p style="color: #666; margin-bottom: 24px;">
+                                These pumps just missed selection criteria. Minor site adjustments could make them viable options:
+                            </p>
+                            
+                            <div class="table-responsive">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Pump Model</th>
+                                            <th>Head Deficit</th>
+                                            <th>Efficiency</th>
+                                            <th>Near-Miss Reasons</th>
+                                            <th>Suggested Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for nm_pump in exclusion_data.near_miss_pumps[:3] %}
+                                        <tr>
+                                            <td>
+                                                <strong>{{ nm_pump.pump_code }}</strong>
+                                            </td>
+                                            <td>
+                                                {% if nm_pump.head_deficit > 0 %}
+                                                    <span class="badge bg-warning">-{{ "%.1f"|format(nm_pump.head_deficit) }}m ({{ "%.1f"|format(nm_pump.head_deficit_pct) }}%)</span>
+                                                {% else %}
+                                                    <span class="badge bg-success">Meets Head</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-{% if nm_pump.efficiency_at_duty >= 40 %}success{% elif nm_pump.efficiency_at_duty >= 35 %}warning{% else %}danger{% endif %}">
+                                                    {{ "%.1f"|format(nm_pump.efficiency_at_duty) }}%
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <ul class="mb-0" style="font-size: 0.9rem;">
+                                                    {% for reason in nm_pump.near_miss_reasons %}
+                                                    <li>{{ reason }}</li>
+                                                    {% endfor %}
+                                                </ul>
+                                            </td>
+                                            <td>
+                                                {% if nm_pump.head_deficit > 0 and nm_pump.head_deficit_pct <= 5 %}
+                                                    <i class="fas fa-arrow-down text-success me-1"></i>
+                                                    <span style="font-size: 0.9rem;">Reduce system losses by {{ "%.1f"|format(nm_pump.head_deficit) }}m</span>
+                                                {% endif %}
+                                                {% if nm_pump.efficiency_at_duty >= 35 and nm_pump.efficiency_at_duty < 40 %}
+                                                    <i class="fas fa-check-circle text-warning me-1"></i>
+                                                    <span style="font-size: 0.9rem;">Consider for non-critical applications</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <div class="alert alert-info mt-3" style="border-left: 4px solid #1976d2;">
+                                <i class="fas fa-info-circle me-2"></i>
+                                <strong>Engineering Tip:</strong> Site flexibility of ±5% in head requirements can significantly expand pump options. 
+                                Consider reviewing pipe sizing, valve selections, and elevation differences for optimization opportunities.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
 
             <!-- Scoring Breakdown for Selected Pump -->
             {% if selected_pump and selected_pump.scoring_details %}
@@ -831,28 +908,46 @@
                                     <i class="fas fa-check-circle me-2"></i>Performance Achievement
                                 </h6>
                                 <div class="row text-center">
-                                    <div class="col-md-3">
+                                    <div class="col-md-2">
                                         <div class="metric-achievement">
                                             <strong style="color: var(--md-primary); font-size: 1.5rem;">{{ "%.1f"|format((selected_pump.get('operating_point', {}).get('flow_m3hr') or 0)|float) }}</strong>
-                                            <div style="font-size: 0.9rem; color: #666;">Achieved Flow (m³/hr)</div>
+                                            <div style="font-size: 0.9rem; color: #666;">Flow (m³/hr)</div>
                                         </div>
                                     </div>
-                                    <div class="col-md-3">
+                                    <div class="col-md-2">
                                         <div class="metric-achievement">
                                             <strong style="color: var(--md-primary); font-size: 1.5rem;">{{ "%.1f"|format((selected_pump.get('operating_point', {}).get('head_m') or 0)|float) }}</strong>
-                                            <div style="font-size: 0.9rem; color: #666;">Achieved Head (m)</div>
+                                            <div style="font-size: 0.9rem; color: #666;">Head (m)</div>
                                         </div>
                                     </div>
-                                    <div class="col-md-3">
+                                    <div class="col-md-2">
                                         <div class="metric-achievement">
                                             <strong style="color: var(--efficiency-excellent); font-size: 1.5rem;">{{ "%.1f"|format((selected_pump.get('operating_point', {}).get('efficiency_pct') or 0)|float) }}%</strong>
                                             <div style="font-size: 0.9rem; color: #666;">Efficiency</div>
                                         </div>
                                     </div>
-                                    <div class="col-md-3">
+                                    <div class="col-md-2">
                                         <div class="metric-achievement">
                                             <strong style="color: var(--md-primary); font-size: 1.5rem;">{{ "%.1f"|format((selected_pump.get('operating_point', {}).get('power_kw') or 0)|float) }}</strong>
                                             <div style="font-size: 0.9rem; color: #666;">Power (kW)</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="metric-achievement">
+                                            <strong style="color: #1976d2; font-size: 1.5rem;">
+                                                {% if selected_pump.qbep_percentage %}
+                                                    {{ "%.0f"|format(selected_pump.qbep_percentage) }}%
+                                                {% else %}
+                                                    N/A
+                                                {% endif %}
+                                            </strong>
+                                            <div style="font-size: 0.9rem; color: #666;">QBEP</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="metric-achievement">
+                                            <strong style="color: #1976d2; font-size: 1.5rem;">{{ selected_pump.operating_point.impeller_diameter_mm|default(selected_pump.selected_curve.impeller_diameter_mm)|round(0) }}</strong>
+                                            <div style="font-size: 0.9rem; color: #666;">Impeller (mm)</div>
                                         </div>
                                     </div>
                                 </div>
@@ -1018,38 +1113,47 @@
                                     <div class="row">
                                         <div class="col-md-3">
                                             <div class="performance-metric">
-                                                <strong>BEP Operating Range:</strong>
+                                                <strong>BEP Position:</strong>
+                                                {% if selected_pump.qbep_percentage %}
                                                 <div class="mt-2">
-                                                    <span class="badge bg-success ms-2">
-                                                        {{ (selected_pump.operating_point.flow_m3hr * 0.8)|round(0) }} - {{ (selected_pump.operating_point.flow_m3hr * 1.1)|round(0) }} m³/hr
+                                                    <span class="badge bg-primary ms-2" style="font-size: 1.1rem;">
+                                                        {{ "%.1f"|format(selected_pump.qbep_percentage) }}% of QBEP
                                                     </span>
                                                 </div>
-                                                <small class="text-muted">80% - 110% of duty point</small>
+                                                <small class="text-muted">Operating flow vs BEP flow</small>
+                                                {% else %}
+                                                <div class="mt-2">
+                                                    <span class="badge bg-secondary ms-2">BEP Data N/A</span>
+                                                </div>
+                                                <small class="text-muted">BEP calculation unavailable</small>
+                                                {% endif %}
                                             </div>
                                         </div>
                                         <div class="col-md-3">
                                             <div class="performance-metric">
-                                                <strong>Operating Position:</strong>
-                                                {% set bep_ratio = (selected_pump.operating_point.flow_m3hr / selected_pump.operating_point.flow_m3hr) * 100 %}
+                                                <strong>Operating Zone:</strong>
                                                 <div class="mt-2">
-                                                    {% if bep_ratio >= 80 and bep_ratio <= 110 %}
-                                                    <span class="badge bg-success ms-2">Within BEP Range</span>
-                                                    {% elif bep_ratio >= 70 and bep_ratio <= 120 %}
-                                                    <span class="badge bg-warning ms-2">Near BEP Range</span>
-                                                    {% else %}
-                                                    <span class="badge bg-danger ms-2">Outside BEP Range</span>
+                                                    <span class="badge bg-{{ selected_pump.bep_zone_color|default('secondary') }} ms-2">
+                                                        {{ selected_pump.bep_zone_label|default('Unknown') }}
+                                                    </span>
+                                                </div>
+                                                <small class="text-muted">Preferred range: 70-120% QBEP</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="performance-metric">
+                                                <strong>Impeller Configuration:</strong>
+                                                <div class="mt-2">
+                                                    <span class="badge bg-info ms-2" style="font-size: 1.1rem;">
+                                                        {{ selected_pump.operating_point.impeller_diameter_mm|default(selected_pump.selected_curve.impeller_diameter_mm)|round(0) }}mm
+                                                    </span>
+                                                    {% if selected_pump.operating_point.sizing_info %}
+                                                        <span class="badge bg-secondary ms-1">
+                                                            {{ selected_pump.operating_point.sizing_info.trim_percent|round(0) }}% trim
+                                                        </span>
                                                     {% endif %}
                                                 </div>
-                                                <small class="text-muted">Optimal efficiency zone</small>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-3">
-                                            <div class="performance-metric">
-                                                <strong>System Curve Match:</strong>
-                                                <div class="mt-2">
-                                                    <span class="badge bg-info ms-2">Good Match</span>
-                                                </div>
-                                                <small class="text-muted">Static: {{ (selected_pump.operating_point.head_m * 0.3)|round(1) }}m, Dynamic: {{ (selected_pump.operating_point.head_m * 0.7)|round(1) }}m</small>
+                                                <small class="text-muted">Selected impeller size</small>
                                             </div>
                                         </div>
                                         <div class="col-md-3">
@@ -1066,10 +1170,55 @@
                                                     <span class="badge bg-danger ms-2">Poor ({{ selected_pump.operating_point.efficiency_pct|round(1) }}%)</span>
                                                     {% endif %}
                                                 </div>
-                                                <small class="text-muted">Operational efficiency</small>
+                                                <small class="text-muted">At operating point</small>
                                             </div>
                                         </div>
                                     </div>
+                                    
+                                    <!-- BEP Operating Range Visual Indicator -->
+                                    {% if selected_pump.qbep_percentage %}
+                                    <div class="mt-4">
+                                        <strong style="color: #1976d2;">BEP Operating Range Indicator:</strong>
+                                        <div class="position-relative mt-2" style="height: 40px; background: #f5f5f5; border-radius: 20px; overflow: hidden;">
+                                            <!-- Marginal zones -->
+                                            <div class="position-absolute" style="left: 0; width: 20%; height: 100%; background: #ffcdd2;"></div>
+                                            <div class="position-absolute" style="right: 0; width: 20%; height: 100%; background: #ffcdd2;"></div>
+                                            
+                                            <!-- Good zones -->
+                                            <div class="position-absolute" style="left: 20%; width: 10%; height: 100%; background: #fff3e0;"></div>
+                                            <div class="position-absolute" style="right: 20%; width: 10%; height: 100%; background: #fff3e0;"></div>
+                                            
+                                            <!-- Optimal zone -->
+                                            <div class="position-absolute" style="left: 30%; width: 40%; height: 100%; background: #c8e6c9;"></div>
+                                            
+                                            <!-- Zone labels -->
+                                            <div class="position-absolute w-100 h-100 d-flex align-items-center justify-content-between" style="padding: 0 10px; font-size: 0.75rem;">
+                                                <span>0%</span>
+                                                <span style="position: absolute; left: 20%;">70%</span>
+                                                <span style="position: absolute; left: 30%;">90%</span>
+                                                <span style="position: absolute; left: 70%;">110%</span>
+                                                <span style="position: absolute; left: 80%;">120%</span>
+                                                <span style="position: absolute; right: 10px;">150%</span>
+                                            </div>
+                                            
+                                            <!-- Operating point marker -->
+                                            {% set marker_position = (selected_pump.qbep_percentage / 150 * 100)|min(95)|max(5) %}
+                                            <div class="position-absolute" style="left: {{ marker_position }}%; top: -5px; transform: translateX(-50%);">
+                                                <div style="width: 0; height: 0; border-left: 10px solid transparent; border-right: 10px solid transparent; border-top: 15px solid #1976d2;"></div>
+                                                <div class="text-center" style="margin-top: 5px; font-weight: bold; color: #1976d2;">
+                                                    {{ "%.0f"|format(selected_pump.qbep_percentage) }}%
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="text-center mt-2">
+                                            <small class="text-muted">
+                                                <span style="color: #c8e6c9;">■</span> Optimal (90-110%) &nbsp;
+                                                <span style="color: #fff3e0;">■</span> Good (70-90%, 110-120%) &nbsp;
+                                                <span style="color: #ffcdd2;">■</span> Marginal (<70%, >120%)
+                                            </small>
+                                        </div>
+                                    </div>
+                                    {% endif %}
                                 </div>
                             </div>
                         </div>
