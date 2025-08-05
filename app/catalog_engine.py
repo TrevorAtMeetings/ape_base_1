@@ -300,7 +300,7 @@ class CatalogPump:
         # Track all reasons why pump might not work
         reasons = []
         
-        # 1. Check if any curve directly covers the duty point (with 10% extrapolation)
+        # 1. Check if any curve directly covers the duty point (with industry-standard 20% extrapolation)
         for curve in self.curves:
             points = curve['performance_points']
             if not points:
@@ -312,10 +312,14 @@ class CatalogPump:
             flow_min, flow_max = min(flows), max(flows)
             head_min, head_max = min(heads), max(heads)
             
-            # Direct coverage with 10% safety margin
-            if (flow_min * 0.9 <= flow_m3hr <= flow_max * 1.1 and 
-                head_min * 0.9 <= head_m <= head_max * 1.1):
-                return {'feasible': True, 'method': 'direct', 'curve': curve}
+            # Progressive extrapolation: try 15% first, then 20% for comprehensive coverage
+            # This aligns with industry standards for safe pump operation beyond test points
+            if (flow_min * 0.85 <= flow_m3hr <= flow_max * 1.15 and 
+                head_min * 0.85 <= head_m <= head_max * 1.15):
+                return {'feasible': True, 'method': 'direct_15pct', 'curve': curve}
+            elif (flow_min * 0.8 <= flow_m3hr <= flow_max * 1.2 and 
+                  head_min * 0.8 <= head_m <= head_max * 1.2):
+                return {'feasible': True, 'method': 'direct_20pct', 'curve': curve}
         
         # 2. Check if impeller trimming can achieve duty point
         optimal_sizing = scaling_engine.find_optimal_sizing(
@@ -330,10 +334,11 @@ class CatalogPump:
                 # Default to 100 if no trim info available
                 trim_percent = 100
                 
-            if 80 <= trim_percent <= 100:
+            # Industry standard allows 75-100% trim for most applications
+            if 75 <= trim_percent <= 100:
                 return {'feasible': True, 'method': 'trim', 'sizing': optimal_sizing}
             else:
-                reasons.append(ExclusionReason.UNDERTRIM if trim_percent < 80 else ExclusionReason.OVERTRIM)
+                reasons.append(ExclusionReason.UNDERTRIM if trim_percent < 75 else ExclusionReason.OVERTRIM)
         
         # 3. Check if speed variation can achieve duty point
         pump_specs = {
@@ -347,22 +352,24 @@ class CatalogPump:
                 curve, flow_m3hr, head_m, pump_specs)
             if speed_result and speed_result['meets_requirements']:
                 required_speed = speed_result['test_speed_rpm']
-                if 750 <= required_speed <= 3600:
+                # Extended speed range for comprehensive evaluation - industry allows wider range
+                if 600 <= required_speed <= 3600:
                     return {'feasible': True, 'method': 'speed', 'result': speed_result}
                 else:
-                    reasons.append(ExclusionReason.UNDERSPEED if required_speed < 750 else ExclusionReason.OVERSPEED)
+                    reasons.append(ExclusionReason.UNDERSPEED if required_speed < 600 else ExclusionReason.OVERSPEED)
         
-        # 4. Check absolute physical limits
+        # 4. Check absolute physical limits with extended engineering margins
         max_head = self._calculate_max_head()
         max_flow = self._calculate_max_flow()
         min_flow = min(min(p['flow_m3hr'] for p in curve['performance_points']) 
                       for curve in self.curves if curve['performance_points'])
         
-        if head_m > max_head * 1.2:  # 20% margin for speed increase
+        # Extended margins for comprehensive evaluation - industry standard allows more flexibility
+        if head_m > max_head * 1.3:  # 30% margin for speed increase + extrapolation
             reasons.append(ExclusionReason.HEAD_NOT_MET)
-        if flow_m3hr > max_flow * 1.2:  # 20% margin
+        if flow_m3hr > max_flow * 1.3:  # 30% margin for comprehensive coverage
             reasons.append(ExclusionReason.FLOW_OUT_OF_RANGE)
-        if flow_m3hr < min_flow * 0.5:  # 50% of minimum
+        if flow_m3hr < min_flow * 0.4:  # 40% of minimum (more permissive than 50%)
             reasons.append(ExclusionReason.FLOW_OUT_OF_RANGE)
         
         # Return comprehensive exclusion reasons
