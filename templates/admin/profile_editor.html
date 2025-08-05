@@ -75,54 +75,59 @@
 {% endblock %}
 
 {% block content %}
-<div class="container mt-4">
+<div class="container" style="margin-top: 30px;">
+    <!-- Admin Navigation Tabs -->
     <div class="row">
-        <div class="col-12">
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="{{ url_for('admin_config.index') }}">Admin Config</a></li>
-                    <li class="breadcrumb-item active">{{ profile.name }}</li>
-                </ol>
+        <div class="col s12">
+            <ul class="tabs">
+                <li class="tab col s6"><a href="{{ url_for('admin.ai_admin') }}">AI Knowledge Base</a></li>
+                <li class="tab col s6"><a class="active" href="#config-settings">Configuration Settings</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <div id="config-settings">
+    <div class="row">
+        <div class="col s12">
+            <nav>
+                <div class="nav-wrapper grey lighten-3">
+                    <div class="col s12">
+                        <a href="{{ url_for('admin_config.index') }}" class="breadcrumb grey-text text-darken-2">Admin Config</a>
+                        <a href="#!" class="breadcrumb grey-text text-darken-2">{{ profile.name }}</a>
+                    </div>
+                </div>
             </nav>
-            <h1 class="mb-4">{{ profile.name }}</h1>
-            <p class="lead">{{ profile.description }}</p>
+            <h1>{{ profile.name }}</h1>
+            <p class="flow-text">{{ profile.description }}</p>
         </div>
     </div>
     
     <form id="profileForm">
         <!-- Scoring Weights -->
-        <div class="param-group">
-            <h3>Scoring Weights</h3>
-            <p class="text-muted">These weights determine how pumps are scored. Total must equal 100.</p>
-            
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="param-input position-relative">
-                        <label for="bep_weight">BEP Proximity Weight</label>
-                        <input type="number" class="form-control" id="bep_weight" name="bep_weight" 
+        <div class="card">
+            <div class="card-content">
+                <span class="card-title">Scoring Weights</span>
+                <p class="grey-text">These weights determine how pumps are scored. Total must equal 100.</p>
+                
+                <div class="row">
+                    <div class="input-field col s12 m6">
+                        <input type="number" id="bep_weight" name="bep_weight" 
                                value="{{ profile.scoring_weights.bep }}" min="0" max="100" step="0.1">
-                        <span class="weight-indicator">{{ profile.scoring_weights.bep }}%</span>
-                        <small>Weight given to operating near Best Efficiency Point (reliability)</small>
+                        <label for="bep_weight" class="active">BEP Proximity Weight ({{ profile.scoring_weights.bep }}%)</label>
+                        <span class="helper-text">Weight given to operating near Best Efficiency Point (reliability)</span>
                     </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="param-input position-relative">
-                        <label for="efficiency_weight">Efficiency Weight</label>
-                        <input type="number" class="form-control" id="efficiency_weight" name="efficiency_weight" 
+                    <div class="input-field col s12 m6">
+                        <input type="number" id="efficiency_weight" name="efficiency_weight" 
                                value="{{ profile.scoring_weights.efficiency }}" min="0" max="100" step="0.1">
-                        <span class="weight-indicator">{{ profile.scoring_weights.efficiency }}%</span>
-                        <small>Weight given to pump efficiency (operating cost)</small>
+                        <label for="efficiency_weight" class="active">Efficiency Weight ({{ profile.scoring_weights.efficiency }}%)</label>
+                        <span class="helper-text">Weight given to pump efficiency (operating cost)</span>
                     </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="param-input position-relative">
-                        <label for="head_margin_weight">Head Margin Weight</label>
-                        <input type="number" class="form-control" id="head_margin_weight" name="head_margin_weight" 
+                    <div class="input-field col s12 m6">
+                        <input type="number" id="head_margin_weight" name="head_margin_weight" 
                                value="{{ profile.scoring_weights.head_margin }}" min="0" max="100" step="0.1">
-                        <span class="weight-indicator">{{ profile.scoring_weights.head_margin }}%</span>
-                        <small>Weight given to proper pump sizing (avoiding oversizing)</small>
+                        <label for="head_margin_weight" class="active">Head Margin Weight ({{ profile.scoring_weights.head_margin }}%)</label>
+                        <span class="helper-text">Weight given to proper pump sizing (avoiding oversizing)</span>
                     </div>
-                </div>
                 <div class="col-md-6">
                     <div class="param-input position-relative">
                         <label for="npsh_weight">NPSH Weight</label>
@@ -393,4 +398,6 @@ function saveProfile() {
 // Initialize total weight display
 updateTotalWeight();
 </script>
+</div> <!-- End of config-settings div -->
+</div> <!-- End of container div -->
 {% endblock %}
