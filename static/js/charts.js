@@ -1028,6 +1028,12 @@ class PumpChartsManager {
                         impellerName = "Impeller " + (index + 1);
                     }
 
+                    // Debug log to verify data
+                    console.log(`NPSHr Chart - Curve ${index + 1} (${impellerName}):`, {
+                        flow_data: curve.flow_data,
+                        npshr_data: curve.npshr_data
+                    });
+                    
                     traces.push({
                         x: curve.flow_data,
                         y: curve.npshr_data,
@@ -1228,6 +1234,16 @@ class PumpChartsManager {
         };
 
         try {
+            // Debug: Log all traces before rendering
+            console.log('NPSHr Chart - All traces before rendering:', traces.map((trace, idx) => ({
+                traceIndex: idx,
+                name: trace.name,
+                xData: trace.x,
+                yData: trace.y,
+                yDataMax: Math.max(...(trace.y || [])),
+                yDataMin: Math.min(...(trace.y || []))
+            })));
+            
             Plotly.newPlot(containerId, traces, layout, plotConfig);
             console.log('Charts.js: NPSHr-flow chart rendered successfully');
             // Remove loading spinner after successful render
