@@ -1,9 +1,10 @@
 # APE Pumps Selection Application - Master Build Document
 ## Complete Technical Reference and Implementation Guide
 
-### Document Version: 2.0
+### Document Version: 3.0
 ### Last Updated: August 5, 2025
-### Status: Production Ready
+### Status: Production Ready - QBP-Centric Implementation
+### Revision: Physical Feasibility Gate & Enhanced Transparency
 
 ---
 
@@ -242,7 +243,44 @@ def select_pumps(flow, head, pump_type):
     return sorted(suitable_pumps, key=lambda x: x[1], reverse=True)
 ```
 
-### 2. Performance Interpolation
+### 2. Physical Feasibility Gate (New)
+
+#### Overview
+Physical constraints are validated BEFORE any scoring to prevent selection of unbuildable pumps.
+
+#### Validation Sequence
+```python
+def validate_physical_feasibility(pump, performance):
+    exclusion_reasons = []
+    
+    # 1. Impeller trim limits
+    if trim_percent < 80:
+        exclusion_reasons.append("UNDERTRIM")
+    if trim_percent > 100:
+        exclusion_reasons.append("OVERTRIM")
+        
+    # 2. Speed limits
+    if speed_rpm < 750:
+        exclusion_reasons.append("UNDERSPEED")
+    if speed_rpm > 3600:
+        exclusion_reasons.append("OVERSPEED")
+        
+    # 3. Head achievement
+    if delivered_head < required_head * 0.98:
+        exclusion_reasons.append("HEAD_NOT_MET")
+        
+    # 4. Curve monotonicity
+    if not is_curve_monotonic(pump_curve):
+        exclusion_reasons.append("CURVE_INVALID")
+        
+    # 5. Combined limits
+    if not within_manufacturer_envelope(speed, trim):
+        exclusion_reasons.append("ENVELOPE_EXCEEDED")
+        
+    return len(exclusion_reasons) == 0, exclusion_reasons
+```
+
+### 3. Performance Interpolation
 
 #### Scientific Approach
 - **Method**: Cubic spline interpolation for smooth curves
@@ -283,29 +321,37 @@ H2 = H1 × (D2/D1)²
 P2 = P1 × (D2/D1)³
 ```
 
-### 4. Scoring System (100 Points)
+### 4. Scoring System (100 Points) - QBP-Centric Approach
 
 #### Component Breakdown
-1. **BEP Proximity (40 points)**
-   - Squared decay function
+1. **QBP Proximity (40 points)**
+   - QBP-centric: Focuses on duty point to BEP relationship
+   - Formula: 40 × max(0, 1 - ((Duty_Flow/BEP_Flow - 1)/0.5)²)
    - Maximum at BEP ±5%
    - Zero beyond ±50%
 
 2. **Efficiency (30 points)**
-   - Linear scaling
-   - Minimum 40% threshold
+   - **Parabolic scaling**: (Efficiency_at_Duty_Point/100)² × 30
+   - Reflects diminishing returns at high efficiency
+   - Minimum 40% threshold for consideration
 
 3. **Head Margin (15 points to -∞)**
-   - Ideal: 2-5% over-delivery
-   - Penalty for oversizing
+   - Piecewise function:
+     - < -2%: Disqualified
+     - -2% to +5%: 15 points (ideal)
+     - +5% to +20%: 15 - 0.5 × (Margin - 5)
+     - +20% to +50%: 7.5 - 0.25 × (Margin - 20)
+     - > +50%: 0 - 0.1 × (Margin - 50) (negative)
 
 4. **NPSH (15 points)**
-   - Dual-mode evaluation
-   - Safety margin weighting
+   - Mode A (NPSHa known): 15 × max(0, min(1, (NPSHa/NPSHr - 1.1)/(2.0 - 1.1)))
+   - Mode B (NPSHa unknown): Linear scale based on NPSHr value
+   - Missing NPSH data: No penalty, skip component
 
 5. **Penalties**
-   - Speed variation: -1.5 × change%
-   - Impeller trim: -0.5 × trim%
+   - Speed variation: min(15, 1.5 × % speed change)
+   - Impeller trim: 0.5 × % trim
+   - Physical impossibility: Immediate disqualification
 
 ---
 
@@ -351,7 +397,39 @@ P2 = P1 × (D2/D1)³
 
 ## Implementation Details
 
-### 1. Repository Pattern Implementation
+### 1. Exclusion Tracking System (New)
+
+#### Overview
+Every pump evaluation now includes comprehensive exclusion tracking for full transparency.
+
+#### Exclusion Categories
+```python
+class ExclusionReason(Enum):
+    UNDERTRIM = "Impeller trim below minimum allowed diameter"
+    OVERTRIM = "Impeller trim above maximum allowed diameter"
+    OVERSPEED = "Exceeds maximum motor speed"
+    UNDERSPEED = "Below minimum viable speed"
+    HEAD_NOT_MET = "Cannot achieve required head"
+    CURVE_INVALID = "Non-monotonic or invalid performance curve"
+    EFFICIENCY_MISSING = "No efficiency data available"
+    ENVELOPE_EXCEEDED = "Outside manufacturer's operating envelope"
+    FLOW_OUT_OF_RANGE = "Flow requirement outside pump capacity"
+    NPSH_INSUFFICIENT = "NPSHr exceeds NPSHa"
+```
+
+#### Tracking Implementation
+```python
+class PumpEvaluation:
+    def __init__(self):
+        self.pump_code = None
+        self.feasible = False
+        self.exclusion_reasons = []
+        self.score_components = {}
+        self.total_score = 0
+        self.calculation_metadata = {}
+```
+
+### 2. Repository Pattern Implementation
 
 The repository pattern provides database abstraction:
 

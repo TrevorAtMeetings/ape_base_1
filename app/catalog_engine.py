@@ -10,6 +10,7 @@ from typing import List, Dict, Any, Optional, Tuple
 import numpy as np
 from scipy import interpolate
 from .pump_repository import get_pump_repository
+from .data_models import PumpEvaluation, ExclusionReason
 
 logger = logging.getLogger(__name__)
 
@@ -683,18 +684,38 @@ class CatalogEngine:
                      flow_m3hr: float,
                      head_m: float,
                      max_results: int = 10,
-                     pump_type: str | None = None) -> List[Dict[str, Any]]:
-        """Select pumps for given duty point with requirement-driven validation"""
+                     pump_type: str | None = None,
+                     return_exclusions: bool = False) -> List[Dict[str, Any]]:
+        """
+        Select pumps for given duty point with physical feasibility gate.
+        
+        Args:
+            flow_m3hr: Required flow rate in m³/hr
+            head_m: Required head in meters
+            max_results: Maximum number of suitable pumps to return
+            pump_type: Filter by pump type (optional)
+            return_exclusions: If True, also return excluded pumps with reasons
+            
+        Returns:
+            List of pump evaluations (suitable pumps, and optionally excluded pumps)
+        """
+        from .data_models import PumpEvaluation, ExclusionReason
+        
         suitable_pumps = []
+        excluded_pumps = []
 
         # Debug logging for pump type filtering
         logger.info(
-            f"Catalog Engine: Filtering for pump_type='{pump_type}', flow={flow_m3hr}, head={head_m}"
+            f"Catalog Engine: QBP-centric selection for flow={flow_m3hr}, head={head_m}, type='{pump_type}'"
         )
         total_pumps = len(self.pumps)
-        filtered_count = 0
+        excluded_count = 0
+        feasible_count = 0
 
         for pump in self.pumps:
+            # Create evaluation object for this pump
+            evaluation = PumpEvaluation(pump_code=pump.pump_code)
+            
             # Filter by pump type if specified
             if pump_type and pump_type.upper() not in ('GENERAL', 'GENERAL',
                                                        'ALL TYPES'):
@@ -709,12 +730,30 @@ class CatalogEngine:
                     )
                     continue  # Skip pumps that don't match the selected type
 
-                filtered_count += 1
-                logger.debug(
-                    f"Including pump {pump.pump_code} - type '{pump_db_type}' matches selected '{selected_type}'"
-                )
-
+            # Get performance at duty point
             performance = pump.get_performance_at_duty(flow_m3hr, head_m)
+
+            if not performance:
+                evaluation.add_exclusion(ExclusionReason.NO_PERFORMANCE_DATA)
+                excluded_pumps.append(evaluation)
+                excluded_count += 1
+                continue
+
+            # Store performance data for scoring
+            evaluation.performance_data = performance
+
+            # PHYSICAL FEASIBILITY GATE - Check before any scoring
+            is_feasible = self._validate_physical_feasibility(pump, performance, head_m, evaluation)
+            
+            if not is_feasible:
+                excluded_pumps.append(evaluation)
+                excluded_count += 1
+                logger.debug(f"Pump {pump.pump_code} excluded: {evaluation.get_exclusion_summary()}")
+                continue
+
+            # Pump passed physical feasibility - proceed to scoring
+            feasible_count += 1
+            evaluation.feasible = True
 
             if performance:
                 original_delivered_head = performance['head_m']
@@ -759,8 +798,9 @@ class CatalogEngine:
                     bep_score_raw = max(0, 1 - ((flow_ratio - 1) / 0.5) ** 2)
                     bep_score = 40 * bep_score_raw
 
-                    # 2. EFFICIENCY SCORE (30 points max) - Linear scaling
-                    efficiency_score = (efficiency / 100.0) * 30
+                    # 2. EFFICIENCY SCORE (30 points max) - Parabolic scaling
+                    # Reflects diminishing returns at high efficiency
+                    efficiency_score = ((efficiency / 100.0) ** 2) * 30
 
                     # 3. HEAD MARGIN SCORE (15 points max to -∞) - Piece-wise function
                     if head_margin_pct < -2:
@@ -841,8 +881,33 @@ class CatalogEngine:
                     total_penalties = speed_penalty + sizing_penalty
                     score = base_score - total_penalties
 
+                    # Store score components in evaluation
+                    evaluation.score_components = {
+                        'qbp_proximity': bep_score,
+                        'efficiency': efficiency_score,
+                        'head_margin': margin_score,
+                        'npsh': npsh_score,
+                        'speed_penalty': -speed_penalty,
+                        'trim_penalty': -sizing_penalty,
+                        'base_score': base_score,
+                        'total_penalties': total_penalties
+                    }
+                    evaluation.total_score = score
+                    
+                    # Store calculation metadata for transparency
+                    evaluation.calculation_metadata = {
+                        'flow_ratio': flow_ratio,
+                        'efficiency_pct': efficiency,
+                        'head_margin_pct': head_margin_pct,
+                        'npshr_m': npshr_value,
+                        'speed_variation_pct': sizing_info.get('speed_variation_pct', 0) if 'sizing_info' in performance else 0,
+                        'trim_percent': sizing_info.get('trim_percent', 100) if 'sizing_info' in performance else 100,
+                        'bep_flow': bep_analysis.get('bep_flow', 0),
+                        'bep_head': bep_analysis.get('bep_head', 0)
+                    }
+
                     logger.debug(
-                        f"Scoring for {pump.pump_code}: BEP={bep_score:.1f}, Eff={efficiency_score:.1f}, Margin={margin_score:.1f}, NPSH={npsh_score:.1f}, Speed Penalty=-{speed_penalty:.1f}, Final={score:.1f}"
+                        f"Scoring for {pump.pump_code}: QBP={bep_score:.1f}, Eff={efficiency_score:.1f}, Margin={margin_score:.1f}, NPSH={npsh_score:.1f}, Speed Penalty=-{speed_penalty:.1f}, Final={score:.1f}"
                     )
 
                     # Check if sizing information is available from requirement-driven approach
@@ -851,14 +916,11 @@ class CatalogEngine:
                         sizing_info = performance['sizing_info']
                         sizing_validated = sizing_info.get(
                             'meets_requirements', False)
-                        if not sizing_validated:
-                            # Skip pumps that fail sizing validation only if they have sizing info
-                            # If no sizing info, rely on tolerance logic validation above
-                            continue
                     else:
                         # For pumps without sizing info, they passed tolerance validation above
                         sizing_validated = True
 
+                    # Create result compatible with existing format
                     result = {
                         'pump': pump,
                         'performance': performance,
@@ -866,28 +928,32 @@ class CatalogEngine:
                         'head_margin_m': head_margin,
                         'head_margin_pct': head_margin_pct,
                         'efficiency_at_duty': efficiency,
-                        'meets_requirements':
-                        True,  # All pumps in results meet requirements
+                        'meets_requirements': True,  # All pumps in results meet requirements
                         'sizing_validated': sizing_validated,
                         # BEP analysis data for display and further processing
                         'bep_analysis': bep_analysis,
                         'bep_score': bep_score,
                         'efficiency_score': efficiency_score,
                         'margin_score': margin_score,
-                        'npsh_score': npsh_score
+                        'npsh_score': npsh_score,
+                        # Add evaluation data for transparency
+                        'evaluation': evaluation
                     }
                     suitable_pumps.append(result)
 
         # Sort by suitability score (descending)
         suitable_pumps.sort(key=lambda x: x['suitability_score'], reverse=True)
 
-        # Log filtering results
+        # Log filtering results with transparency
         logger.info(
-            f"Catalog Engine: Found {len(suitable_pumps)} suitable pumps from {total_pumps} total"
+            f"Catalog Engine: Evaluated {total_pumps} pumps - {feasible_count} feasible, {excluded_count} excluded"
+        )
+        logger.info(
+            f"Catalog Engine: Found {len(suitable_pumps)} suitable pumps meeting all criteria"
         )
         if pump_type and pump_type.upper() != 'GENERAL':
             logger.info(
-                f"Catalog Engine: Type filtering applied for '{pump_type}' - {filtered_count} pumps passed filter"
+                f"Catalog Engine: Type filtering applied for '{pump_type}'"
             )
 
         # Log top results for debugging
@@ -930,7 +996,91 @@ class CatalogEngine:
             }
             formatted_results.append(formatted_result)
 
+        # Log exclusion summary for transparency
+        if excluded_pumps:
+            exclusion_summary = {}
+            for eval in excluded_pumps:
+                for reason in eval.exclusion_reasons:
+                    exclusion_summary[reason] = exclusion_summary.get(reason, 0) + 1
+            
+            logger.info("Exclusion Summary:")
+            for reason, count in sorted(exclusion_summary.items(), key=lambda x: x[1], reverse=True):
+                logger.info(f"  {reason.value}: {count} pumps")
+
         return formatted_results
+
+    def _validate_physical_feasibility(self, pump: 'CatalogPump', 
+                                     performance: Dict[str, Any],
+                                     required_head: float,
+                                     evaluation: 'PumpEvaluation') -> bool:
+        """
+        Validate physical feasibility BEFORE scoring.
+        Returns True if pump is feasible, False otherwise.
+        Updates evaluation with exclusion reasons.
+        """
+        from .data_models import ExclusionReason
+        
+        # Extract sizing information
+        sizing_info = performance.get('sizing_info', {})
+        
+        # 1. Check impeller trim limits (80-100% typical)
+        trim_percent = sizing_info.get('trim_percent', 100)
+        if trim_percent < 80:
+            evaluation.add_exclusion(ExclusionReason.UNDERTRIM)
+            logger.debug(f"Pump {pump.pump_code} excluded: undertrim at {trim_percent:.1f}%")
+        elif trim_percent > 100:
+            evaluation.add_exclusion(ExclusionReason.OVERTRIM)
+            logger.debug(f"Pump {pump.pump_code} excluded: overtrim at {trim_percent:.1f}%")
+        
+        # 2. Check speed limits (750-3600 RPM typical)
+        base_speed = performance.get('test_speed_rpm', 1480)  # Default to 1480 RPM
+        speed_rpm = sizing_info.get('operating_speed_rpm', base_speed)
+        
+        if sizing_info.get('vfd_required', False):
+            speed_variation_pct = sizing_info.get('speed_variation_pct', 0)
+            actual_speed = base_speed * (1 + speed_variation_pct / 100)
+            
+            if actual_speed < 750:
+                evaluation.add_exclusion(ExclusionReason.UNDERSPEED)
+                logger.debug(f"Pump {pump.pump_code} excluded: underspeed at {actual_speed:.0f} RPM")
+            elif actual_speed > 3600:
+                evaluation.add_exclusion(ExclusionReason.OVERSPEED)
+                logger.debug(f"Pump {pump.pump_code} excluded: overspeed at {actual_speed:.0f} RPM")
+        
+        # 3. Check head achievement (must meet required head)
+        delivered_head = performance.get('head_m', 0)
+        if delivered_head < required_head * 0.98:  # Allow 2% tolerance
+            evaluation.add_exclusion(ExclusionReason.HEAD_NOT_MET)
+            logger.debug(f"Pump {pump.pump_code} excluded: head {delivered_head:.1f}m < required {required_head:.1f}m")
+        
+        # 4. Check efficiency threshold
+        efficiency = performance.get('efficiency_pct', 0)
+        if efficiency < 40:
+            evaluation.add_exclusion(ExclusionReason.EFFICIENCY_TOO_LOW)
+            logger.debug(f"Pump {pump.pump_code} excluded: efficiency {efficiency:.1f}% < 40%")
+        
+        # 5. Check for valid performance data
+        if efficiency == 0 or delivered_head == 0:
+            evaluation.add_exclusion(ExclusionReason.NO_PERFORMANCE_DATA)
+            logger.debug(f"Pump {pump.pump_code} excluded: invalid performance data")
+        
+        # 6. Check combined speed and trim limits
+        if sizing_info.get('vfd_required', False) and trim_percent < 100:
+            # Combined adjustment - more restrictive limits
+            if trim_percent < 85 or abs(speed_variation_pct) > 30:
+                evaluation.add_exclusion(ExclusionReason.COMBINED_LIMITS_EXCEEDED)
+                logger.debug(f"Pump {pump.pump_code} excluded: combined trim/speed limits exceeded")
+        
+        # 7. Check NPSH if available
+        npsha = performance.get('npsha_m')
+        npshr = performance.get('npshr_m')
+        if npsha is not None and npshr is not None and npsha > 0 and npshr > 0:
+            if npshr >= npsha:
+                evaluation.add_exclusion(ExclusionReason.NPSH_INSUFFICIENT)
+                logger.debug(f"Pump {pump.pump_code} excluded: NPSHr {npshr:.1f}m >= NPSHa {npsha:.1f}m")
+        
+        # Return feasibility status
+        return len(evaluation.exclusion_reasons) == 0
 
     def _find_best_operating_point(self, performance: Dict[str, Any],
                                    target_flow: float,

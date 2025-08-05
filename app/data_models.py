@@ -3,6 +3,50 @@ APE Pumps Data Models
 Essential data structures for pump selection
 """
 
+from enum import Enum
+from dataclasses import dataclass, field
+from typing import List, Dict, Any, Optional
+
+# Exclusion Tracking System
+class ExclusionReason(Enum):
+    """Comprehensive tracking of pump exclusion reasons"""
+    UNDERTRIM = "Impeller trim below minimum allowed diameter (80%)"
+    OVERTRIM = "Impeller trim above maximum allowed diameter (100%)"
+    OVERSPEED = "Exceeds maximum motor speed (3600 RPM)"
+    UNDERSPEED = "Below minimum viable speed (750 RPM)"
+    HEAD_NOT_MET = "Cannot achieve required head within constraints"
+    CURVE_INVALID = "Non-monotonic or invalid performance curve"
+    EFFICIENCY_MISSING = "No efficiency data available at duty point"
+    EFFICIENCY_TOO_LOW = "Efficiency below minimum threshold (40%)"
+    ENVELOPE_EXCEEDED = "Outside manufacturer's operating envelope"
+    FLOW_OUT_OF_RANGE = "Flow requirement outside pump capacity"
+    NPSH_INSUFFICIENT = "NPSHr exceeds NPSHa (when NPSHa is known)"
+    NO_PERFORMANCE_DATA = "Unable to calculate performance at duty point"
+    COMBINED_LIMITS_EXCEEDED = "Speed and trim combination exceeds limits"
+
+@dataclass
+class PumpEvaluation:
+    """Comprehensive pump evaluation result with exclusion tracking"""
+    pump_code: str
+    feasible: bool = False
+    exclusion_reasons: List[ExclusionReason] = field(default_factory=list)
+    score_components: Dict[str, float] = field(default_factory=dict)
+    total_score: float = 0.0
+    performance_data: Optional[Dict[str, Any]] = None
+    calculation_metadata: Dict[str, Any] = field(default_factory=dict)
+    
+    def add_exclusion(self, reason: ExclusionReason):
+        """Add an exclusion reason and mark as infeasible"""
+        self.feasible = False
+        if reason not in self.exclusion_reasons:
+            self.exclusion_reasons.append(reason)
+    
+    def get_exclusion_summary(self) -> str:
+        """Get human-readable exclusion summary"""
+        if self.feasible:
+            return "Pump is feasible"
+        return "; ".join([reason.value for reason in self.exclusion_reasons])
+
 # Essential Data Structures
 class SiteRequirements:
     """Data structure to represent site requirements for pump selection"""
