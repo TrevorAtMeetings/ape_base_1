@@ -271,6 +271,11 @@ def pump_report(pump_code):
                                 selected_pump['bep_zone_label'] = 'Outside Preferred Range'
                                 selected_pump['bep_zone_color'] = 'danger'
                             
+                            # Calculate marker position for visual indicator (constrained to 5-95%)
+                            raw_position = (qbep_percentage / 150) * 100
+                            marker_position = max(5, min(95, raw_position))
+                            selected_pump['marker_position'] = marker_position
+                            
                             logger.info(f"Template data - QBEP percentage calculated: {qbep_percentage}%")
                         
         # If pump still not found in session data, use fallback method  
