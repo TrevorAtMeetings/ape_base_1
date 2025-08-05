@@ -159,9 +159,13 @@ def pump_report(pump_code):
                         bep_analysis = selected_pump['bep_analysis']
                         operating_flow = selected_pump['operating_point'].get('flow_m3hr', 0)
                         
+                        logger.info(f"Template data - BEP analysis: {bep_analysis}")
+                        logger.info(f"Template data - Operating flow: {operating_flow}")
+                        
                         if bep_analysis.get('bep_available') and bep_analysis.get('bep_flow', 0) > 0:
                             qbep_percentage = (operating_flow / bep_analysis['bep_flow']) * 100
                             selected_pump['qbep_percentage'] = qbep_percentage
+                            logger.info(f"Template data - QBEP percentage calculated: {qbep_percentage}%")
                             
                             # Determine operating zone (70-120% preferred range)
                             if 90 <= qbep_percentage <= 110:
@@ -782,6 +786,8 @@ def pump_report(pump_code):
                 }
             logger.info(f"Template data - selected_pump operating_point: {selected_pump.get('operating_point')}")
             logger.info(f"Template data - selected_pump selected_curve: {selected_pump.get('selected_curve')}")
+            logger.info(f"Template data - selected_pump qbep_percentage: {selected_pump.get('qbep_percentage')}")
+            logger.info(f"Template data - selected_pump bep_analysis keys: {list(selected_pump.get('bep_analysis', {}).keys()) if selected_pump.get('bep_analysis') else 'None'}")
 
 
 

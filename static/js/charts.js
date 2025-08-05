@@ -1221,7 +1221,7 @@ class PumpChartsManager {
                     maxNpsh = center + 0.5;
                 }
                 
-                console.log('NPSH Chart Range:', {allNpsh, dataMin, dataMax, range, minNpsh, maxNpsh});
+
             }
         }
 
