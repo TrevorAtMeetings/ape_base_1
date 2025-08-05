@@ -1027,7 +1027,7 @@ def _generate_performance_chart_base64(parsed_pump: Any, operating_point: Dict[s
             if flows and heads:
                 curve_data = {
                     'performance_points': [
-                        {'flow_m3hr': f, 'head_m': h, 'efficiency_pct': e if i < len(effs) else 0}
+                        {'flow_m3hr': f, 'head_m': h, 'efficiency_pct': effs[i] if i < len(effs) else 0}
                         for i, (f, h) in enumerate(zip(flows, heads))
                     ]
                 }
