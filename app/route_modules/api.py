@@ -334,24 +334,30 @@ def get_chart_data_safe(safe_pump_code):
             required_speed = base_speed
 
         # Prepare operating point data for charts - include sizing information
+        # Apply speed scaling to operating point coordinates if speed scaling is applied
+        op_flow = flow_rate
+        op_head = operating_point_data.get('head_m', head) if operating_point_data else head
+        op_power = operating_point_data.get('power_kw') if operating_point_data else None
+        op_npshr = operating_point_data.get('npshr_m') if operating_point_data else None
+        
+        # Apply speed scaling to match the scaled curves if speed scaling is applied
+        if speed_scaling_applied and actual_speed_ratio != 1.0:
+            # Apply affinity laws to operating point coordinates
+            op_flow = flow_rate * actual_speed_ratio  # Flow ∝ speed
+            op_head = op_head * (actual_speed_ratio ** 2)  # Head ∝ speed²
+            if op_power is not None:
+                op_power = op_power * (actual_speed_ratio ** 3)  # Power ∝ speed³
+            if op_npshr is not None:
+                op_npshr = op_npshr * (actual_speed_ratio ** 2)  # NPSH ∝ speed²
+            logger.info(f"Chart API: Applied speed scaling to operating point coordinates - Flow: {flow_rate:.1f}→{op_flow:.1f}, Head: {(operating_point_data.get('head_m', head) if operating_point_data else head):.1f}→{op_head:.1f}")
+        
         op_point = {
-            'flow_m3hr':
-            flow_rate,
-            'head_m':
-            operating_point_data.get('head_m', head)
-            if operating_point_data else head,
-            'efficiency_pct':
-            operating_point_data.get('efficiency_pct')
-            if operating_point_data else None,
-            'power_kw':
-            operating_point_data.get('power_kw')
-            if operating_point_data else None,
-            'npshr_m':
-            operating_point_data.get('npshr_m')
-            if operating_point_data else None,
-            'extrapolated':
-            operating_point_data.get('extrapolated', False)
-            if operating_point_data else False
+            'flow_m3hr': op_flow,
+            'head_m': op_head,
+            'efficiency_pct': operating_point_data.get('efficiency_pct') if operating_point_data else None,
+            'power_kw': op_power,
+            'npshr_m': op_npshr,
+            'extrapolated': operating_point_data.get('extrapolated', False) if operating_point_data else False
         }
         
         # Add impeller sizing information if available

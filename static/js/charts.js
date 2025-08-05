@@ -269,17 +269,9 @@ class PumpChartsManager {
 
         // Enhanced Operating Point Display with comprehensive hover information
         if (opPoint && opPoint.flow_m3hr && opPoint.head_m) {
-            // Apply speed scaling to operating point coordinates if speed scaling is active
-            let operatingPointFlow = opPoint.flow_m3hr;
-            let operatingPointHead = opPoint.head_m;
-            
-            if (this.currentChartData.speed_scaling && this.currentChartData.speed_scaling.applied) {
-                const speedRatio = this.currentChartData.speed_scaling.speed_ratio;
-                // Apply affinity laws to operating point: Flow ∝ speed, Head ∝ speed²
-                operatingPointFlow = opPoint.flow_m3hr * speedRatio;
-                operatingPointHead = opPoint.head_m * (speedRatio * speedRatio);
-                console.log(`Charts.js: Applied speed scaling to operating point - Flow: ${opPoint.flow_m3hr.toFixed(1)} → ${operatingPointFlow.toFixed(1)}, Head: ${opPoint.head_m.toFixed(1)} → ${operatingPointHead.toFixed(1)}`);
-            }
+            // Operating point coordinates are now properly scaled on the server side
+            const operatingPointFlow = opPoint.flow_m3hr;
+            const operatingPointHead = opPoint.head_m;
             
             const pointColor = '#d32f2f'; // Red color for duty point
             const pointSymbol = 'triangle-up'; // Red triangle marker
@@ -598,16 +590,9 @@ class PumpChartsManager {
         // Add BEP Operating Range Visualization to Efficiency Chart
         const opPoint = this.currentChartData.operating_point;
         if (opPoint && opPoint.flow_m3hr && opPoint.efficiency_pct != null && opPoint.efficiency_pct > 0) {
-            // Apply speed scaling to operating point coordinates if speed scaling is active
-            let operatingPointFlow = opPoint.flow_m3hr;
-            let operatingPointEfficiency = opPoint.efficiency_pct;
-            
-            if (this.currentChartData.speed_scaling && this.currentChartData.speed_scaling.applied) {
-                const speedRatio = this.currentChartData.speed_scaling.speed_ratio;
-                // Apply affinity laws to operating point: Flow ∝ speed, Efficiency stays constant
-                operatingPointFlow = opPoint.flow_m3hr * speedRatio;
-                console.log(`Charts.js: Applied speed scaling to efficiency operating point - Flow: ${opPoint.flow_m3hr.toFixed(1)} → ${operatingPointFlow.toFixed(1)}`);
-            }
+            // Operating point coordinates are now properly scaled on the server side
+            const operatingPointFlow = opPoint.flow_m3hr;
+            const operatingPointEfficiency = opPoint.efficiency_pct;
             const bep80Flow = operatingPointFlow * 0.8;
             const bep110Flow = operatingPointFlow * 1.1;
 
@@ -869,17 +854,9 @@ class PumpChartsManager {
         // Add BEP Operating Range Visualization to Power Chart
         const opPoint = this.currentChartData.operating_point;
         if (opPoint && opPoint.flow_m3hr && opPoint.power_kw != null && opPoint.power_kw > 0) {
-            // Apply speed scaling to operating point coordinates if speed scaling is active
-            let operatingPointFlow = opPoint.flow_m3hr;
-            let operatingPointPower = opPoint.power_kw;
-            
-            if (this.currentChartData.speed_scaling && this.currentChartData.speed_scaling.applied) {
-                const speedRatio = this.currentChartData.speed_scaling.speed_ratio;
-                // Apply affinity laws to operating point: Flow ∝ speed, Power ∝ speed³
-                operatingPointFlow = opPoint.flow_m3hr * speedRatio;
-                operatingPointPower = opPoint.power_kw * (speedRatio * speedRatio * speedRatio);
-                console.log(`Charts.js: Applied speed scaling to power operating point - Flow: ${opPoint.flow_m3hr.toFixed(1)} → ${operatingPointFlow.toFixed(1)}, Power: ${opPoint.power_kw.toFixed(1)} → ${operatingPointPower.toFixed(1)}`);
-            }
+            // Operating point coordinates are now properly scaled on the server side
+            const operatingPointFlow = opPoint.flow_m3hr;
+            const operatingPointPower = opPoint.power_kw;
             
             const bep80Flow = operatingPointFlow * 0.8;
             const bep110Flow = operatingPointFlow * 1.1;
@@ -1183,17 +1160,9 @@ class PumpChartsManager {
             );
 
         if (opPoint && opPoint.flow_m3hr && opPoint.npshr_m != null && opPoint.npshr_m > 0 && hasNpshData) {
-            // Apply speed scaling to operating point coordinates if speed scaling is active
-            let operatingPointFlow = opPoint.flow_m3hr;
-            let operatingPointNpsh = opPoint.npshr_m;
-            
-            if (this.currentChartData.speed_scaling && this.currentChartData.speed_scaling.applied) {
-                const speedRatio = this.currentChartData.speed_scaling.speed_ratio;
-                // Apply affinity laws to operating point: Flow ∝ speed, NPSH ∝ speed²
-                operatingPointFlow = opPoint.flow_m3hr * speedRatio;
-                operatingPointNpsh = opPoint.npshr_m * (speedRatio * speedRatio);
-                console.log(`Charts.js: Applied speed scaling to NPSH operating point - Flow: ${opPoint.flow_m3hr.toFixed(1)} → ${operatingPointFlow.toFixed(1)}, NPSH: ${opPoint.npshr_m.toFixed(1)} → ${operatingPointNpsh.toFixed(1)}`);
-            }
+            // Operating point coordinates are now properly scaled on the server side
+            const operatingPointFlow = opPoint.flow_m3hr;
+            const operatingPointNpsh = opPoint.npshr_m;
             
             const pointColor = '#d32f2f'; // Red color for duty point
             const pointSymbol = 'triangle-up'; // Red triangle marker
