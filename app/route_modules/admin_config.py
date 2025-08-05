@@ -255,16 +255,30 @@ def api_audit_log():
 
 
 @admin_config_bp.route('/init-database', methods=['POST'])
+@admin_required
+@handle_api_errors
 def init_database():
     """Initialize admin config database tables"""
-    if not session.get('is_admin'):
-        return jsonify({'error': 'Unauthorized'}), 401
-    
     try:
-        admin_db.init_tables()
-        admin_db.seed_engineering_constants()
-        admin_db.seed_default_profiles()
-        return jsonify({'success': True, 'message': 'Database initialized successfully'})
+        # Use the admin_config_service to initialize
+        success, message = admin_config_service.initialize_database()
+        
+        if success:
+            logger.info("Admin configuration database initialized successfully")
+            return jsonify({
+                'success': True,
+                'message': message
+            })
+        else:
+            logger.error(f"Failed to initialize database: {message}")
+            return jsonify({
+                'success': False,
+                'error': message
+            }), 500
+            
     except Exception as e:
-        logger.error(f"Failed to initialize database: {e}")
-        return jsonify({'error': str(e)}), 500
+        logger.error(f"Error initializing database: {e}")
+        return jsonify({
+            'success': False,
+            'error': f'Database initialization failed: {str(e)}'
+        }), 500
