@@ -18,8 +18,9 @@
 6. [Exclusion Categorization System](#exclusion-categorization-system)
 7. [Scoring System](#scoring-system)
 8. [Implementation Details](#implementation-details)
-9. [Performance Impact](#performance-impact)
-10. [Future Enhancements](#future-enhancements)
+9. [Interactive Performance Visualization](#interactive-performance-visualization)
+10. [Performance Impact](#performance-impact)
+11. [Future Enhancements](#future-enhancements)
 
 ---
 
@@ -515,6 +516,465 @@ if excluded_pumps:
         reason_enum = ExclusionReason[reason_key.upper()]
         logger.info(f"  {reason_enum.value}: {count} pumps")
 ```
+
+---
+
+## Interactive Performance Visualization
+
+### Chart Architecture Overview
+
+The visualization system provides real-time interactive performance analysis through a sophisticated client-server architecture that transforms raw pump data into professional engineering charts.
+
+#### Core Visualization Files
+```
+Frontend Visualization:
+├── static/js/charts.js                # Interactive chart rendering engine
+├── static/js/chart_layout_fix.js      # Chart layout optimization
+├── static/js/chart_legend_fix.js      # Legend formatting corrections
+└── static/js/force-chart-refresh.js   # Chart update management
+
+Backend Data Pipeline:
+├── app/route_modules/api.py           # Chart data API endpoints
+├── app/catalog_engine.py             # Performance data calculation
+├── app/impeller_scaling.py           # Affinity law applications
+└── templates/pump_report.html        # Chart container integration
+```
+
+### Chart Data API Architecture
+**File**: `app/route_modules/api.py` → Chart endpoints
+
+#### Primary Chart Data Endpoint
+```python
+@api_bp.route('/chart_data_safe/<encoded_pump_code>')
+def get_chart_data_safe(encoded_pump_code):
+    """
+    Secure chart data endpoint with base64 encoding
+    Handles special characters in pump codes safely
+    """
+    
+    # Decode pump code safely
+    pump_code = base64.b64decode(encoded_pump_code + '==').decode('utf-8')
+    
+    # Get performance data with comprehensive evaluation
+    performance_result = target_pump.get_performance_at_duty(flow_rate, head)
+    
+    # Detect speed scaling applications
+    if performance_result.get('sizing_info', {}).get('sizing_method') == 'speed_variation':
+        speed_scaling_applied = True
+        required_speed = sizing_info.get('required_speed_rpm')
+        base_speed = sizing_info.get('test_speed_rpm', 2900)
+        actual_speed_ratio = required_speed / base_speed
+```
+
+#### Chart Data Structure
+```python
+chart_data = {
+    'pump_code': pump_code,
+    'pump_info': {
+        'manufacturer': target_pump.manufacturer,
+        'series': target_pump.model_series,
+        'description': target_pump.pump_code
+    },
+    'curves': [
+        {
+            'curve_index': 0,
+            'impeller_diameter_mm': 720.0,
+            'impeller_size': '720mm Impeller',
+            'is_selected': True,
+            'flow_data': [4021.0, 4460.0, 4764.0, ...],
+            'head_data': [30.4, 29.2, 28.1, ...],
+            'efficiency_data': [77.76, 84.0, 85.0, ...],
+            'power_data': [428.4, 431.7, 435.2, ...],
+            'npshr_data': [5.94, 6.13, 6.42, ...]
+        }
+    ],
+    'operating_point': {
+        'flow_m3hr': 4840.0,
+        'head_m': 27.73,
+        'efficiency_pct': 84.78,
+        'power_kw': 431.4,
+        'npshr_m': 6.54,
+        'sizing_info': {
+            'sizing_method': 'impeller_trimming',
+            'trim_percent': 100.0
+        }
+    },
+    'bep_analysis': {
+        'bep_flow': 4764.0,
+        'bep_head': 28.1,
+        'bep_efficiency': 85.0,
+        'operating_zone': 'at_bep',
+        'flow_ratio': 1.02
+    },
+    'speed_scaling': {
+        'applied': False,
+        'required_speed_rpm': None,
+        'speed_ratio': 1.0
+    }
+}
+```
+
+### Interactive Chart Engine
+**File**: `static/js/charts.js` → `PumpChartsManager` class
+
+#### Chart Types and Configurations
+```javascript
+class PumpChartsManager {
+    constructor() {
+        this.chartConfigs = {
+            head_flow: {
+                title: 'Head vs Flow Rate',
+                xAxis: 'Flow Rate (m³/hr)',
+                yAxis: 'Head (m)',
+                color: '#004d40'
+            },
+            efficiency_flow: {
+                title: 'Efficiency vs Flow Rate', 
+                xAxis: 'Flow Rate (m³/hr)',
+                yAxis: 'Efficiency (%)',
+                color: '#2e7d32'
+            },
+            power_flow: {
+                title: 'Power vs Flow Rate',
+                xAxis: 'Flow Rate (m³/hr)', 
+                yAxis: 'Power (kW)',
+                color: '#1565c0'
+            },
+            npshr_flow: {
+                title: 'NPSHr vs Flow Rate',
+                xAxis: 'Flow Rate (m³/hr)',
+                yAxis: 'NPSHr (m)',
+                color: '#e65100'
+            }
+        };
+    }
+```
+
+#### Chart Data Loading Process
+```javascript
+async loadChartData(pumpCode, flowRate, head) {
+    // Safe encoding for special characters in pump codes
+    const safePumpCode = btoa(pumpCode).replace(/[+/=]/g, function(match) {
+        return { '+': '-', '/': '_', '=': '' }[match];
+    });
+    
+    // Fetch from secure API endpoint
+    const url = `/api/chart_data_safe/${safePumpCode}?flow=${flowRate}&head=${head}`;
+    const response = await fetch(url);
+    const data = await response.json();
+    
+    this.currentChartData = data;
+    return data;
+}
+```
+
+### Speed Scaling Visualization
+**Revolutionary Feature**: Real-time affinity law application in charts
+
+#### Speed Scaling Detection and Application
+```javascript
+renderHeadFlowChart(containerId) {
+    this.currentChartData.curves.forEach((curve, index) => {
+        let flowData = [...curve.flow_data];
+        let headData = [...curve.head_data];
+        
+        // Apply speed scaling to selected curve if detected
+        if (this.currentChartData.speed_scaling && 
+            this.currentChartData.speed_scaling.applied && 
+            curve.is_selected) {
+            
+            const speedRatio = this.currentChartData.speed_scaling.speed_ratio;
+            
+            // Apply affinity laws: Flow ∝ speed, Head ∝ speed²
+            flowData = flowData.map(flow => flow * speedRatio);
+            headData = headData.map(head => head * (speedRatio * speedRatio));
+            
+            console.log(`Charts.js: Applied speed scaling to selected curve - ratio: ${speedRatio.toFixed(3)}`);
+        }
+```
+
+#### Evidence from System Logs
+```
+INFO:app.catalog_engine:Pump 36 XHC 8P: Using speed variation as fallback - 2970→3441.0 RPM (15.9% variation)
+Charts.js: Applied speed scaling to selected curve - ratio: 1.159
+Charts.js: Applied speed scaling to efficiency curve - ratio: 1.159
+Charts.js: Applied speed scaling to power curve - ratio: 1.159
+```
+
+### Chart Rendering Pipeline
+
+#### 1. Performance Curve Visualization
+**Head-Flow Chart**: Primary selection visualization
+```javascript
+renderHeadFlowChart(containerId) {
+    const traces = [];
+    
+    // Add performance curves for each impeller size
+    this.currentChartData.curves.forEach((curve, index) => {
+        traces.push({
+            x: flowData,
+            y: headData,
+            type: 'scatter',
+            mode: 'lines+markers',
+            name: impellerName,
+            line: {
+                color: curve.is_selected ? config.color : this.getAlternateColor(index),
+                width: curve.is_selected ? 3 : 2
+            }
+        });
+    });
+    
+    // Add operating point marker
+    if (opPoint && opPoint.flow_m3hr && opPoint.head_m) {
+        traces.push({
+            x: [opPoint.flow_m3hr],
+            y: [opPoint.head_m],
+            type: 'scatter',
+            mode: 'markers',
+            name: 'Operating Point',
+            marker: {
+                color: 'red',
+                size: 12,
+                symbol: 'x'
+            }
+        });
+    }
+}
+```
+
+#### 2. Efficiency Analysis Visualization
+```javascript
+renderEfficiencyFlowChart(containerId) {
+    // Show BEP (Best Efficiency Point) clearly
+    if (this.currentChartData.bep_analysis && this.currentChartData.bep_analysis.bep_flow) {
+        traces.push({
+            x: [this.currentChartData.bep_analysis.bep_flow],
+            y: [this.currentChartData.bep_analysis.bep_efficiency],
+            type: 'scatter',
+            mode: 'markers',
+            name: 'BEP',
+            marker: {
+                color: 'gold',
+                size: 15,
+                symbol: 'star'
+            }
+        });
+    }
+}
+```
+
+#### 3. Power Consumption Analysis
+```javascript
+renderPowerFlowChart(containerId) {
+    // Calculate power using affinity laws when speed scaling applied
+    if (this.currentChartData.speed_scaling && 
+        this.currentChartData.speed_scaling.applied && 
+        curve.is_selected) {
+        
+        const speedRatio = this.currentChartData.speed_scaling.speed_ratio;
+        // Power scales with speed³: P₂ = P₁ × (N₂/N₁)³
+        powerData = powerData.map(power => power * Math.pow(speedRatio, 3));
+    }
+}
+```
+
+#### 4. NPSH Requirements Visualization
+```javascript
+renderNPSHrFlowChart(containerId) {
+    // Add NPSH available line if provided
+    if (this.systemRequirements && this.systemRequirements.npshAvailable) {
+        traces.push({
+            x: [minFlow, maxFlow],
+            y: [this.systemRequirements.npshAvailable, this.systemRequirements.npshAvailable],
+            type: 'scatter',
+            mode: 'lines',
+            name: 'NPSH Available',
+            line: {
+                color: 'green',
+                width: 2,
+                dash: 'dash'
+            }
+        });
+    }
+}
+```
+
+### Chart Layout and Styling
+
+#### Professional Engineering Layout
+```javascript
+const layout = {
+    title: {
+        text: config.title,
+        font: { size: 16, family: 'Arial, sans-serif' }
+    },
+    xaxis: {
+        title: config.xAxis,
+        showgrid: true,
+        gridcolor: '#f0f0f0',
+        zeroline: false
+    },
+    yaxis: {
+        title: config.yAxis,
+        showgrid: true,
+        gridcolor: '#f0f0f0',
+        zeroline: false
+    },
+    legend: {
+        x: 0.02,
+        y: 0.98,
+        bgcolor: 'rgba(255,255,255,0.8)',
+        bordercolor: '#ccc',
+        borderwidth: 1
+    },
+    margin: { l: 60, r: 20, t: 50, b: 50 },
+    hovermode: 'closest'
+};
+```
+
+#### Interactive Features
+```javascript
+const config = {
+    displayModeBar: true,
+    modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d'],
+    modeBarButtonsToAdd: [{
+        name: 'Export as PNG',
+        icon: Plotly.Icons.camera,
+        click: function(gd) {
+            Plotly.downloadImage(gd, {
+                format: 'png',
+                width: 1000,
+                height: 600,
+                filename: `${pumpCode}_performance_chart`
+            });
+        }
+    }],
+    responsive: true
+};
+```
+
+### BEP Analysis Integration
+
+#### Operating Zone Visualization
+```javascript
+// Color-code operating zones based on BEP analysis
+const getOperatingZoneColor = (zone) => {
+    switch(zone) {
+        case 'at_bep': return '#4caf50';        // Green - Optimal
+        case 'left_good': return '#8bc34a';     // Light green - Good  
+        case 'right_good': return '#8bc34a';    // Light green - Good
+        case 'left_acceptable': return '#ffc107'; // Yellow - Acceptable
+        case 'right_acceptable': return '#ffc107'; // Yellow - Acceptable
+        case 'left_poor': return '#ff5722';     // Red - Poor
+        case 'right_poor': return '#ff5722';    // Red - Poor
+        default: return '#9e9e9e';              // Gray - Unknown
+    }
+};
+
+// Add operating zone indicator to charts
+if (this.currentChartData.bep_analysis) {
+    const zoneColor = getOperatingZoneColor(this.currentChartData.bep_analysis.operating_zone);
+    // Add colored background or indicator based on zone
+}
+```
+
+### Chart Performance Optimization
+
+#### Efficient Data Handling
+```javascript
+// Optimize large datasets with data reduction
+optimizeChartData(flowData, headData, maxPoints = 50) {
+    if (flowData.length <= maxPoints) return { flowData, headData };
+    
+    // Intelligent data reduction maintaining curve shape
+    const step = Math.ceil(flowData.length / maxPoints);
+    const optimizedFlow = [];
+    const optimizedHead = [];
+    
+    for (let i = 0; i < flowData.length; i += step) {
+        optimizedFlow.push(flowData[i]);
+        optimizedHead.push(headData[i]);
+    }
+    
+    return { 
+        flowData: optimizedFlow, 
+        headData: optimizedHead 
+    };
+}
+```
+
+#### Caching and Update Management
+```javascript
+// Intelligent chart updates
+updateCharts(newData) {
+    if (this.isDifferentData(newData)) {
+        this.currentChartData = newData;
+        this.renderAllCharts();
+    } else {
+        console.log('Charts.js: Data unchanged, skipping re-render');
+    }
+}
+
+isDifferentData(newData) {
+    if (!this.currentChartData) return true;
+    
+    // Compare key parameters for change detection
+    return (
+        this.currentChartData.operating_point?.flow_m3hr !== newData.operating_point?.flow_m3hr ||
+        this.currentChartData.operating_point?.head_m !== newData.operating_point?.head_m ||
+        this.currentChartData.speed_scaling?.applied !== newData.speed_scaling?.applied
+    );
+}
+```
+
+### Chart Error Handling and Validation
+
+#### Robust Error Management
+```javascript
+renderChart(containerId, renderFunction) {
+    try {
+        const container = document.getElementById(containerId);
+        if (!container) {
+            console.error(`Charts.js: Container ${containerId} not found`);
+            return;
+        }
+        
+        if (!this.currentChartData || !this.currentChartData.curves) {
+            container.innerHTML = '<p style="text-align: center; padding: 50px;">No chart data available</p>';
+            return;
+        }
+        
+        renderFunction(containerId);
+        console.log(`Charts.js: ${containerId} rendered successfully`);
+        
+    } catch (error) {
+        console.error(`Charts.js: Error rendering ${containerId}:`, error);
+        document.getElementById(containerId).innerHTML = 
+            '<p style="text-align: center; padding: 50px; color: red;">Chart rendering error</p>';
+    }
+}
+```
+
+### Integration with Comprehensive Evaluation
+
+#### Real-Time Methodology Visualization
+The charting system provides immediate visual feedback on the comprehensive evaluation process:
+
+1. **Method Visualization**: Charts show which evaluation method was used (direct, extrapolated, trimmed, speed-varied)
+2. **Modification Indicators**: Visual cues indicate when impeller trimming or speed variation is applied
+3. **Operating Zone Feedback**: Color-coding shows BEP proximity and operating zone assessment
+4. **Performance Transparency**: Interactive tooltips explain calculation methodology
+
+#### Evidence from System Integration
+```
+Log Evidence of Chart-Algorithm Integration:
+INFO:app.catalog_engine:Pump 36 XHC 8P: Using impeller trimming - 720.0mm → 720.0mm (100.0% trim)
+Charts.js: Chart data loaded and stored
+Charts.js: Operating point marked at flow: 4840, head: 27.7
+Charts.js: BEP analysis integrated - zone: at_bep, efficiency: 85%
+```
+
+The visualization system transforms the complex comprehensive evaluation methodology into intuitive, interactive charts that provide engineers with immediate understanding of pump performance, selection rationale, and operating characteristics.
 
 ---
 
