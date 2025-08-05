@@ -1095,10 +1095,14 @@ class PumpChartsManager {
             const extendedMinNpsh = Math.max(0, minNpshRef - minNpshExtension);
             const extendedMaxNpsh = maxNpshRef + minNpshExtension;
 
-            // Vertical reference line (flow) - limit to reasonable NPSH range
+            // Vertical reference line (flow) - constrain to calculated y-axis range
+            // Use the same range calculation as the y-axis to ensure consistency
+            const yAxisMin = Math.max(0, minNpshRef - (maxNpshRef - minNpshRef) * 0.05);
+            const yAxisMax = maxNpshRef + (maxNpshRef - minNpshRef) * 0.05;
+            
             traces.push({
                 x: [opPoint.flow_m3hr, opPoint.flow_m3hr],
-                y: [Math.max(0, minNpshRef * 0.8), maxNpshRef * 1.2], // Limit to 80%-120% of data range
+                y: [yAxisMin, yAxisMax], // Use exact same range as y-axis
                 type: 'scatter',
                 mode: 'lines',
                 name: 'Flow Reference',
@@ -1142,11 +1146,14 @@ class PumpChartsManager {
                 },
                 hovertemplate: '<b>Operating Point</b><br>Flow: %{x:.0f} m³/hr<br>NPSHr: %{y:.1f} m<extra></extra>'
             });
-        } else if (!hasNpshData) {
+        }
+        
+        if (!hasNpshData) {
             // Show message when no NPSH data is available
+            // Use middle of the expected range instead of 0
             traces.push({
-                x: [0],
-                y: [0],
+                x: [100],
+                y: [3],
                 type: 'scatter',
                 mode: 'text',
                 text: ['No NPSH Data Available'],
@@ -1213,7 +1220,14 @@ class PumpChartsManager {
                 linewidth: 1,
                 range: [minNpsh, maxNpsh], // Explicitly set y-axis range
                 autorange: false, // Disable auto-ranging to force our range
-                fixedrange: true // Prevent user from zooming/panning y-axis
+                fixedrange: true, // Prevent user from zooming/panning y-axis
+                rangemode: 'normal', // Prevent Plotly from extending axis to 0
+                autorangeoptions: {
+                    minallowed: minNpsh,
+                    maxallowed: maxNpsh,
+                    clipmin: minNpsh,
+                    clipmax: maxNpsh
+                }
             },
             font: {
                 family: 'Roboto, sans-serif',
