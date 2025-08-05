@@ -1011,7 +1011,19 @@
             </div>
         </div>
 
-        <!-- Section Divider -->
+        <!-- Advanced Filter Panel -->
+        <div class="filter-panel" style="margin-top: 30px;">
+            <div class="filter-header" onclick="toggleFilterPanel()">
+                <div class="filter-title">
+                    <i class="material-icons">filter_list</i>
+                    Advanced Filters
+                    <span class="filter-badge" id="activeFilterCount" style="display: none;">0</span>
+                </div>
+                <i class="material-icons filter-toggle" id="filterToggle">expand_more</i>
+            </div>
+            
+            <div class="filter-content" id="filterContent">
+                <div class="filter-grid">
         <div class="section-divider"></div>
 
         <!-- Enhanced Lifecycle Cost Analysis -->
@@ -1115,98 +1127,6 @@
                 </div>
             </div>
         </div>
-
-        <!-- Advanced Filter Panel -->
-        <div class="filter-panel" style="margin-top: 30px;">
-            <div class="filter-header" onclick="toggleFilterPanel()">
-                <div class="filter-title">
-                    <i class="material-icons">filter_list</i>
-                    Advanced Filters
-                    <span class="filter-badge" id="activeFilterCount" style="display: none;">0</span>
-                </div>
-                <i class="material-icons filter-toggle" id="filterToggle">expand_more</i>
-            </div>
-            
-            <div class="filter-content" id="filterContent">
-                <div class="filter-grid">
-                    <!-- Efficiency Filter -->
-                    <div class="filter-group">
-                        <div class="filter-label">Efficiency Range (%)</div>
-                        <div class="range-slider-container">
-                            <p class="range-field">
-                                <input type="range" id="efficiencyMin" min="0" max="100" value="0" />
-                            </p>
-                            <p class="range-field">
-                                <input type="range" id="efficiencyMax" min="0" max="100" value="100" />
-                            </p>
-                            <div class="range-values">
-                                <span id="efficiencyMinValue">0%</span>
-                                <span id="efficiencyMaxValue">100%</span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Power Consumption Filter -->
-                    <div class="filter-group">
-                        <div class="filter-label">Power Consumption (kW)</div>
-                        <div class="range-slider-container">
-                            <p class="range-field">
-                                <input type="range" id="powerMin" min="0" max="500" value="0" step="5" />
-                            </p>
-                            <p class="range-field">
-                                <input type="range" id="powerMax" min="0" max="500" value="500" step="5" />
-                            </p>
-                            <div class="range-values">
-                                <span id="powerMinValue">0 kW</span>
-                                <span id="powerMaxValue">500 kW</span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Impeller Size Filter -->
-                    <div class="filter-group">
-                        <div class="filter-label">Impeller Diameter (mm)</div>
-                        <div class="range-slider-container">
-                            <p class="range-field">
-                                <input type="range" id="impellerMin" min="200" max="800" value="200" step="10" />
-                            </p>
-                            <p class="range-field">
-                                <input type="range" id="impellerMax" min="200" max="800" value="800" step="10" />
-                            </p>
-                            <div class="range-values">
-                                <span id="impellerMinValue">200 mm</span>
-                                <span id="impellerMaxValue">800 mm</span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Overall Score Filter -->
-                    <div class="filter-group">
-                        <div class="filter-label">Overall Score</div>
-                        <div class="range-slider-container">
-                            <p class="range-field">
-                                <input type="range" id="scoreMin" min="0" max="100" value="0" />
-                            </p>
-                            <div class="range-values">
-                                <span>Minimum: </span>
-                                <span id="scoreMinValue">0/100</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="filter-actions">
-                    <button class="btn-flat waves-effect" onclick="resetFilters()">
-                        <i class="material-icons left">refresh</i>Reset
-                    </button>
-                    <button class="btn blue waves-effect waves-light" onclick="applyFilters()">
-                        <i class="material-icons left">check</i>Apply Filters
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Section Divider -->
         <div class="section-divider"></div>
 
         <!-- Individual Pump Cards (Alternative View) -->
