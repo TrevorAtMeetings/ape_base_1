@@ -107,6 +107,9 @@ def pump_report(pump_code):
                         # Normalize to 0-100% scale (115 is the maximum possible score)
                         suitability_score = min(100.0, (raw_suitability_score / 115.0) * 100.0)
 
+                        # Calculate BEP analysis for the pump
+                        bep_analysis = target_pump.calculate_bep_distance(flow, head)
+                        
                         pump_selections = [{
                             'pump_code': pump_code,
                             'overall_score': suitability_score,
@@ -116,7 +119,8 @@ def pump_report(pump_code):
                             'manufacturer': target_pump.manufacturer,
                             'pump_type': target_pump.pump_type,
                             'test_speed_rpm': performance.get('test_speed_rpm', 1480),
-                            'stages': '1'
+                            'stages': '1',
+                            'bep_analysis': bep_analysis  # Include BEP analysis
                         }]
                     else:
                         pump_selections = []
@@ -132,23 +136,29 @@ def pump_report(pump_code):
             if selection.get('pump_code') == pump_code:
                 selected_pump = selection
                 
-                # Add BEP analysis data if not already present
-                if 'bep_analysis' not in selected_pump and selected_pump.get('operating_point'):
-                    # Get the pump object to calculate BEP analysis
-                    from ..catalog_engine import get_catalog_engine
-                    catalog_engine = get_catalog_engine()
-                    target_pump = catalog_engine.get_pump_by_code(pump_code)
+                # Process BEP analysis and calculate QBEP percentage
+                if selected_pump.get('operating_point'):
+                    # Add BEP analysis if not already present
+                    if 'bep_analysis' not in selected_pump:
+                        # Get the pump object to calculate BEP analysis
+                        from ..catalog_engine import get_catalog_engine
+                        catalog_engine = get_catalog_engine()
+                        target_pump = catalog_engine.get_pump_by_code(pump_code)
+                        
+                        if target_pump:
+                            # Calculate BEP analysis
+                            operating_flow = selected_pump['operating_point'].get('flow_m3hr', 0)
+                            operating_head = selected_pump['operating_point'].get('head_m', 0)
+                            bep_analysis = target_pump.calculate_bep_distance(operating_flow, operating_head)
+                            
+                            # Add BEP analysis to selected pump
+                            selected_pump['bep_analysis'] = bep_analysis
                     
-                    if target_pump:
-                        # Calculate BEP analysis
+                    # Calculate QBEP percentage and operating zone (regardless of where BEP analysis came from)
+                    if selected_pump.get('bep_analysis'):
+                        bep_analysis = selected_pump['bep_analysis']
                         operating_flow = selected_pump['operating_point'].get('flow_m3hr', 0)
-                        operating_head = selected_pump['operating_point'].get('head_m', 0)
-                        bep_analysis = target_pump.calculate_bep_distance(operating_flow, operating_head)
                         
-                        # Add BEP analysis to selected pump
-                        selected_pump['bep_analysis'] = bep_analysis
-                        
-                        # Calculate QBEP percentage and operating zone
                         if bep_analysis.get('bep_available') and bep_analysis.get('bep_flow', 0) > 0:
                             qbep_percentage = (operating_flow / bep_analysis['bep_flow']) * 100
                             selected_pump['qbep_percentage'] = qbep_percentage

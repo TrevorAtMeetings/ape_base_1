@@ -1201,16 +1201,27 @@ class PumpChartsManager {
         const yAxisTitle = config.yAxis;
 
         // Calculate proper y-axis range based on actual NPSH data
-        let maxNpsh = 20;
+        let maxNpsh = 4;
         let minNpsh = 0;
-        if (this.currentChartData.curves.length > 0) {
+        if (this.currentChartData.curves && this.currentChartData.curves.length > 0) {
             const allNpsh = this.currentChartData.curves.flatMap(c => c.npshr_data || []).filter(n => n != null && n > 0);
             if (allNpsh.length > 0) {
                 const dataMin = Math.min(...allNpsh);
                 const dataMax = Math.max(...allNpsh);
                 const range = dataMax - dataMin;
-                minNpsh = Math.max(0, dataMin - range * 0.05); // 5% padding below minimum, but not below 0
-                maxNpsh = dataMax + range * 0.05; // 5% padding above maximum
+                
+                // Use tighter padding for better visualization
+                minNpsh = Math.max(0, dataMin - range * 0.1); // 10% padding below minimum, but not below 0
+                maxNpsh = dataMax + range * 0.1; // 10% padding above maximum
+                
+                // If range is very small, ensure we have at least some visible range
+                if (maxNpsh - minNpsh < 0.5) {
+                    const center = (maxNpsh + minNpsh) / 2;
+                    minNpsh = Math.max(0, center - 0.5);
+                    maxNpsh = center + 0.5;
+                }
+                
+                console.log('NPSH Chart Range:', {allNpsh, dataMin, dataMax, range, minNpsh, maxNpsh});
             }
         }
 
