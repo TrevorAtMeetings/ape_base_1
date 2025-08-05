@@ -218,7 +218,9 @@ def pump_options():
                 }
                 pump_evaluations.append(standardized_eval)
         except Exception as e:
+            import traceback
             logger.error(f"Error evaluating pumps with catalog engine: {e}")
+            logger.error(f"Traceback: {traceback.format_exc()}")
             pump_evaluations = []
 
         if not pump_evaluations:
