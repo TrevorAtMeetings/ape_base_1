@@ -2,13 +2,24 @@
 Service layer for admin configuration system
 """
 import logging
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 from app.database import admin_db
 from psycopg2.extras import RealDictCursor
 import json
 from datetime import datetime
+import psycopg2
 
 logger = logging.getLogger(__name__)
+
+
+class ValidationError(Exception):
+    """Custom validation error"""
+    pass
+
+
+class ConfigurationError(Exception):
+    """Custom configuration error"""
+    pass
 
 
 class AdminConfigService:
@@ -135,6 +146,191 @@ class AdminConfigService:
             }
         }
     
+    def validate_profile_data(self, profile_data: Dict) -> Tuple[bool, List[str]]:
+        """
+        Validate profile configuration data
+        Returns: (is_valid, list_of_errors)
+        """
+        errors = []
+        
+        try:
+            # Validate scoring weights
+            weights = profile_data.get('scoring_weights', {})
+            total_weight = sum([
+                float(weights.get('bep', 0)),
+                float(weights.get('efficiency', 0)),
+                float(weights.get('head_margin', 0)),
+                float(weights.get('npsh', 0))
+            ])
+            
+            if abs(total_weight - 100.0) > 0.1:
+                errors.append(f"Scoring weights must total 100.0, got {total_weight}")
+            
+            # Validate individual weight ranges
+            for weight_name, weight_value in weights.items():
+                weight_val = float(weight_value)
+                if not (0 <= weight_val <= 100):
+                    errors.append(f"{weight_name} weight must be between 0-100, got {weight_val}")
+            
+            # Validate efficiency thresholds
+            efficiency = profile_data.get('zones', {}).get('efficiency_thresholds', {})
+            thresholds = [
+                ('minimum', efficiency.get('minimum', 0)),
+                ('fair', efficiency.get('fair', 0)),
+                ('good', efficiency.get('good', 0)),
+                ('excellent', efficiency.get('excellent', 0))
+            ]
+            
+            prev_val = 0
+            for name, val in thresholds:
+                if not (0 <= float(val) <= 100):
+                    errors.append(f"Efficiency {name} must be 0-100%, got {val}")
+                if float(val) <= prev_val:
+                    errors.append(f"Efficiency {name} ({val}%) must be > previous threshold ({prev_val}%)")
+                prev_val = float(val)
+            
+            # Validate BEP range
+            bep_range = profile_data.get('zones', {}).get('bep_optimal', (0.95, 1.05))
+            if len(bep_range) != 2 or bep_range[0] >= bep_range[1]:
+                errors.append("BEP optimal range must have min < max")
+            
+            # Validate NPSH margins
+            npsh = profile_data.get('zones', {}).get('npsh_margins', {})
+            npsh_vals = [
+                ('minimum', npsh.get('minimum', 0.5)),
+                ('good', npsh.get('good', 1.5)),
+                ('excellent', npsh.get('excellent', 3.0))
+            ]
+            
+            prev_val = 0
+            for name, val in npsh_vals:
+                if float(val) <= prev_val:
+                    errors.append(f"NPSH {name} margin ({val}m) must be > previous ({prev_val}m)")
+                prev_val = float(val)
+            
+        except (ValueError, TypeError, KeyError) as e:
+            errors.append(f"Data validation error: {str(e)}")
+        
+        return len(errors) == 0, errors
+    
+    def update_profile(self, profile_id: int, profile_data: Dict, user_id: str = "system") -> Tuple[bool, str]:
+        """
+        Update profile with validation and audit logging
+        Returns: (success, message)
+        """
+        # Validate input data
+        is_valid, errors = self.validate_profile_data(profile_data)
+        if not is_valid:
+            return False, f"Validation failed: {'; '.join(errors)}"
+        
+        try:
+            with self.db.get_connection() as conn:
+                with conn.cursor(cursor_factory=RealDictCursor) as cursor:
+                    # Start transaction
+                    cursor.execute("BEGIN")
+                    
+                    # Get current profile for audit
+                    cursor.execute("""
+                        SELECT name, bep_weight, efficiency_weight, head_margin_weight, npsh_weight 
+                        FROM admin_config.application_profiles 
+                        WHERE id = %s
+                    """, (profile_id,))
+                    
+                    old_profile = cursor.fetchone()
+                    if not old_profile:
+                        cursor.execute("ROLLBACK")
+                        return False, "Profile not found"
+                    
+                    # Update profile
+                    weights = profile_data.get('scoring_weights', {})
+                    zones = profile_data.get('zones', {})
+                    efficiency = zones.get('efficiency_thresholds', {})
+                    head_margin = zones.get('head_margin', {})
+                    npsh_margins = zones.get('npsh_margins', {})
+                    modifications = profile_data.get('modifications', {})
+                    reporting = profile_data.get('reporting', {})
+                    bep_optimal = zones.get('bep_optimal', (0.95, 1.05))
+                    
+                    cursor.execute("""
+                        UPDATE admin_config.application_profiles SET
+                            bep_weight = %s,
+                            efficiency_weight = %s,
+                            head_margin_weight = %s,
+                            npsh_weight = %s,
+                            bep_optimal_min = %s,
+                            bep_optimal_max = %s,
+                            min_acceptable_efficiency = %s,
+                            fair_efficiency = %s,
+                            good_efficiency = %s,
+                            excellent_efficiency = %s,
+                            optimal_head_margin_max = %s,
+                            acceptable_head_margin_max = %s,
+                            npsh_minimum_margin = %s,
+                            npsh_good_margin = %s,
+                            npsh_excellent_margin = %s,
+                            speed_variation_penalty_factor = %s,
+                            trimming_penalty_factor = %s,
+                            max_acceptable_trim_pct = %s,
+                            top_recommendation_threshold = %s,
+                            acceptable_option_threshold = %s,
+                            near_miss_count = %s,
+                            updated_at = NOW()
+                        WHERE id = %s
+                    """, (
+                        weights.get('bep', 40.0),
+                        weights.get('efficiency', 30.0),
+                        weights.get('head_margin', 15.0),
+                        weights.get('npsh', 15.0),
+                        bep_optimal[0],
+                        bep_optimal[1],
+                        efficiency.get('minimum', 40.0),
+                        efficiency.get('fair', 65.0),
+                        efficiency.get('good', 75.0),
+                        efficiency.get('excellent', 85.0),
+                        head_margin.get('optimal_max', 5.0),
+                        head_margin.get('acceptable_max', 10.0),
+                        npsh_margins.get('minimum', 0.5),
+                        npsh_margins.get('good', 1.5),
+                        npsh_margins.get('excellent', 3.0),
+                        modifications.get('speed_penalty', 15.0),
+                        modifications.get('trim_penalty', 10.0),
+                        modifications.get('max_trim_pct', 75.0),
+                        reporting.get('top_threshold', 70.0),
+                        reporting.get('acceptable_threshold', 50.0),
+                        reporting.get('near_miss_count', 5),
+                        profile_id
+                    ))
+                    
+                    # Add audit log
+                    changes = []
+                    if weights.get('bep') != old_profile['bep_weight']:
+                        changes.append(f"BEP weight: {old_profile['bep_weight']} → {weights.get('bep')}")
+                    if weights.get('efficiency') != old_profile['efficiency_weight']:
+                        changes.append(f"Efficiency weight: {old_profile['efficiency_weight']} → {weights.get('efficiency')}")
+                    
+                    if changes:
+                        cursor.execute("""
+                            INSERT INTO admin_config.audit_log (
+                                profile_id, action, user_id, changes, timestamp
+                            ) VALUES (%s, %s, %s, %s, NOW())
+                        """, (profile_id, 'update', user_id, '; '.join(changes)))
+                    
+                    cursor.execute("COMMIT")
+                    
+                    # Clear cache
+                    self._config_cache.clear()
+                    self._cache_timestamp = None
+                    
+                    logger.info(f"Profile {profile_id} updated by {user_id}: {len(changes)} changes")
+                    return True, "Profile updated successfully"
+                    
+        except psycopg2.Error as e:
+            logger.error(f"Database error updating profile {profile_id}: {e}")
+            return False, f"Database error: {str(e)}"
+        except Exception as e:
+            logger.error(f"Unexpected error updating profile {profile_id}: {e}")
+            return False, f"Unexpected error: {str(e)}"
+    
     def get_all_profiles(self) -> List[Dict]:
         """Get all configuration profiles"""
         with self.db.get_connection() as conn:
@@ -158,114 +354,7 @@ class AdminConfigService:
                 
                 return cursor.fetchall()
     
-    def update_profile(self, profile_id: int, updates: Dict, user: str, reason: str = None) -> bool:
-        """Update a configuration profile with audit logging"""
-        try:
-            with self.db.get_connection() as conn:
-                with conn.cursor(cursor_factory=RealDictCursor) as cursor:
-                    # Get current values for audit
-                    cursor.execute("""
-                        SELECT * FROM admin_config.application_profiles
-                        WHERE id = %s
-                    """, (profile_id,))
-                    current = cursor.fetchone()
-                    
-                    if not current:
-                        return False
-                    
-                    # Build update query
-                    update_fields = []
-                    update_values = []
-                    audit_entries = []
-                    
-                    # Map update keys to database columns
-                    field_mapping = {
-                        'bep_weight': 'bep_weight',
-                        'efficiency_weight': 'efficiency_weight',
-                        'head_margin_weight': 'head_margin_weight',
-                        'npsh_weight': 'npsh_weight',
-                        'bep_optimal_min': 'bep_optimal_min',
-                        'bep_optimal_max': 'bep_optimal_max',
-                        'min_acceptable_efficiency': 'min_acceptable_efficiency',
-                        'excellent_efficiency': 'excellent_efficiency',
-                        'good_efficiency': 'good_efficiency',
-                        'fair_efficiency': 'fair_efficiency',
-                        'optimal_head_margin_max': 'optimal_head_margin_max',
-                        'acceptable_head_margin_max': 'acceptable_head_margin_max',
-                        'npsh_excellent_margin': 'npsh_excellent_margin',
-                        'npsh_good_margin': 'npsh_good_margin',
-                        'npsh_minimum_margin': 'npsh_minimum_margin',
-                        'speed_variation_penalty_factor': 'speed_variation_penalty_factor',
-                        'trimming_penalty_factor': 'trimming_penalty_factor',
-                        'max_acceptable_trim_pct': 'max_acceptable_trim_pct',
-                        'top_recommendation_threshold': 'top_recommendation_threshold',
-                        'acceptable_option_threshold': 'acceptable_option_threshold',
-                        'near_miss_count': 'near_miss_count'
-                    }
-                    
-                    for key, value in updates.items():
-                        if key in field_mapping:
-                            db_field = field_mapping[key]
-                            if current[db_field] != value:
-                                update_fields.append(f"{db_field} = %s")
-                                update_values.append(value)
-                                audit_entries.append({
-                                    'field': db_field,
-                                    'old': current[db_field],
-                                    'new': value
-                                })
-                    
-                    if not update_fields:
-                        return True  # No changes needed
-                    
-                    # Validate weights total 100 if any weight is updated
-                    weight_fields = ['bep_weight', 'efficiency_weight', 'head_margin_weight', 'npsh_weight']
-                    if any(f in updates for f in weight_fields):
-                        # Get all weights (current + updates)
-                        weights = {
-                            'bep_weight': updates.get('bep_weight', current['bep_weight']),
-                            'efficiency_weight': updates.get('efficiency_weight', current['efficiency_weight']),
-                            'head_margin_weight': updates.get('head_margin_weight', current['head_margin_weight']),
-                            'npsh_weight': updates.get('npsh_weight', current['npsh_weight'])
-                        }
-                        total = sum(weights.values())
-                        if abs(total - 100.0) > 0.01:
-                            raise ValueError(f"Weights must total 100, got {total}")
-                    
-                    # Update the profile
-                    update_values.append(profile_id)
-                    cursor.execute(f"""
-                        UPDATE admin_config.application_profiles
-                        SET {', '.join(update_fields)}
-                        WHERE id = %s
-                    """, update_values)
-                    
-                    # Log audit entries
-                    for entry in audit_entries:
-                        cursor.execute("""
-                            INSERT INTO admin_config.configuration_audits
-                            (profile_id, changed_by, change_type, field_name, old_value, new_value, reason)
-                            VALUES (%s, %s, %s, %s, %s, %s, %s)
-                        """, (
-                            profile_id,
-                            user,
-                            'update',
-                            entry['field'],
-                            str(entry['old']),
-                            str(entry['new']),
-                            reason
-                        ))
-                    
-                    conn.commit()
-                    
-                    # Clear cache
-                    self._config_cache.clear()
-                    
-                    return True
-                    
-        except Exception as e:
-            logger.error(f"Failed to update profile: {e}")
-            return False
+
     
     def create_profile(self, profile_data: Dict, user: str) -> Optional[int]:
         """Create a new configuration profile"""

@@ -42,6 +42,93 @@
         right: 20px;
         z-index: 1000;
     }
+    
+    /* Loading states */
+    .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.5);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+    }
+    
+    .loading-spinner {
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #3498db;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        animation: spin 2s linear infinite;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    /* Accessibility improvements */
+    .profile-card:focus {
+        outline: 2px solid #2196F3;
+        outline-offset: 2px;
+    }
+    
+    .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0,0,0,0);
+        white-space: nowrap;
+        border: 0;
+    }
+    
+    /* Toast notifications */
+    .toast-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9998;
+    }
+    
+    .toast {
+        background: white;
+        border-radius: 4px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        margin-bottom: 10px;
+        padding: 16px;
+        max-width: 300px;
+        border-left: 4px solid;
+        animation: slideIn 0.3s ease-in-out;
+        position: relative;
+    }
+    
+    .toast.success { border-left-color: #4CAF50; }
+    .toast.error { border-left-color: #f44336; }
+    .toast.warning { border-left-color: #ff9800; }
+    .toast.info { border-left-color: #2196F3; }
+    
+    @keyframes slideIn {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+    
+    .toast-close {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: 18px;
+        color: #666;
+    }
 </style>
 {% endblock %}
 
@@ -91,10 +178,17 @@
                 
                 <!-- Add New Profile Card -->
                 <div class="col s12 m6 l4">
-                    <div class="card hoverable profile-card center-align" style="border: 2px dashed #ccc; cursor: pointer;" onclick="createNewProfile()">
+                    <div class="card hoverable profile-card center-align" 
+                         style="border: 2px dashed #ccc; cursor: pointer;" 
+                         onclick="createNewProfile()" 
+                         tabindex="0"
+                         role="button"
+                         aria-label="Create new application profile"
+                         onkeypress="if(event.key==='Enter'||event.key===' ') createNewProfile()">
                         <div class="card-content">
                             <i class="material-icons large grey-text" style="margin-bottom: 15px;">add_circle_outline</i>
                             <h5 class="grey-text">Create New Profile</h5>
+                            <span class="sr-only">Press Enter or Space to create a new profile</span>
                         </div>
                     </div>
                 </div>
@@ -148,6 +242,15 @@
     </a>
     {% endif %}
 </div>
+
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="loadingOverlay" aria-hidden="true">
+    <div class="loading-spinner" role="status" aria-label="Loading..."></div>
+    <span class="sr-only">Loading...</span>
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toastContainer" aria-live="polite" aria-atomic="true"></div>
 
 <!-- Create Profile Modal -->
 <div id="createProfileModal" class="modal">
@@ -211,21 +314,152 @@ function updateTotalWeight() {
     document.getElementById('totalWeight').style.color = Math.abs(total - 100) < 0.01 ? '#28a745' : '#dc3545';
 }
 
-// Initialize Materialize components on page load
+// Enhanced UX System for Admin Configuration
+class AdminConfigUX {
+    constructor() {
+        this.loadingOverlay = document.getElementById('loadingOverlay');
+        this.toastContainer = document.getElementById('toastContainer');
+        this.init();
+    }
+
+    init() {
+        // Initialize Materialize components
+        this.initMaterializeComponents();
+        
+        // Add keyboard navigation support
+        this.addKeyboardNavigation();
+        
+        // Initialize form validation
+        this.initFormValidation();
+    }
+
+    initMaterializeComponents() {
+        var collapsibles = document.querySelectorAll('.collapsible');
+        M.Collapsible.init(collapsibles);
+        
+        var modals = document.querySelectorAll('.modal');
+        M.Modal.init(modals);
+        
+        var tabs = document.querySelectorAll('.tabs');
+        M.Tabs.init(tabs);
+        
+        // Update text fields
+        M.updateTextFields();
+    }
+
+    addKeyboardNavigation() {
+        // Add keyboard support for profile cards
+        const profileCards = document.querySelectorAll('.profile-card[tabindex]');
+        profileCards.forEach(card => {
+            card.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    card.click();
+                }
+            });
+        });
+    }
+
+    initFormValidation() {
+        // Real-time form validation will be added here
+        console.log('Form validation initialized');
+    }
+
+    showLoading(show = true) {
+        if (this.loadingOverlay) {
+            this.loadingOverlay.style.display = show ? 'flex' : 'none';
+            this.loadingOverlay.setAttribute('aria-hidden', !show);
+        }
+    }
+
+    showToast(message, type = 'info', duration = 5000) {
+        if (!this.toastContainer) return;
+
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        toast.setAttribute('role', 'alert');
+        toast.setAttribute('aria-live', 'assertive');
+        
+        toast.innerHTML = `
+            <div class="toast-content">
+                <strong>${this.getToastIcon(type)}</strong>
+                <span>${message}</span>
+            </div>
+            <button class="toast-close" onclick="this.parentElement.remove()" aria-label="Close notification">
+                &times;
+            </button>
+        `;
+
+        this.toastContainer.appendChild(toast);
+
+        // Auto-remove after duration
+        setTimeout(() => {
+            if (toast.parentElement) {
+                toast.style.animation = 'slideOut 0.3s ease-in-out';
+                setTimeout(() => toast.remove(), 300);
+            }
+        }, duration);
+
+        return toast;
+    }
+
+    getToastIcon(type) {
+        const icons = {
+            success: '✓',
+            error: '✕',
+            warning: '⚠',
+            info: 'ℹ'
+        };
+        return icons[type] || icons.info;
+    }
+
+    async makeApiRequest(url, options = {}) {
+        this.showLoading(true);
+        
+        try {
+            const response = await fetch(url, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...options.headers
+                },
+                ...options
+            });
+
+            const data = await response.json();
+            
+            if (!response.ok) {
+                throw new Error(data.error || `HTTP ${response.status}`);
+            }
+
+            return data;
+        } catch (error) {
+            this.showToast(`Request failed: ${error.message}`, 'error');
+            throw error;
+        } finally {
+            this.showLoading(false);
+        }
+    }
+}
+
+// Initialize UX system
+let adminUX;
 document.addEventListener('DOMContentLoaded', function() {
-    var collapsibles = document.querySelectorAll('.collapsible');
-    M.Collapsible.init(collapsibles);
-    
-    var modals = document.querySelectorAll('.modal');
-    M.Modal.init(modals);
-    
-    // Update text fields
-    M.updateTextFields();
+    adminUX = new AdminConfigUX();
 });
 
 function createNewProfile() {
-    const modal = M.Modal.getInstance(document.getElementById('createProfileModal'));
-    modal.open();
+    try {
+        const modal = M.Modal.getInstance(document.getElementById('createProfileModal'));
+        if (modal) {
+            modal.open();
+            adminUX?.showToast('Ready to create new profile', 'info', 3000);
+        } else {
+            throw new Error('Modal not found');
+        }
+    } catch (error) {
+        adminUX?.showToast('Error opening profile creation dialog', 'error');
+        console.error('Create profile error:', error);
+    }
 }
 
 function submitNewProfile() {
