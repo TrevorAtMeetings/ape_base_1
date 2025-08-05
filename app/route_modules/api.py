@@ -80,7 +80,10 @@ def get_chart_data(pump_code):
                     'sizing_method') == 'speed_variation':
                 speed_scaling_applied = True
                 required_speed = sizing_info.get('required_speed_rpm')
-                base_speed = sizing_info.get('test_speed_rpm', target_pump.test_speed_rpm)
+                # Get base speed from sizing info or curves
+                base_speed = sizing_info.get('test_speed_rpm')
+                if not base_speed and target_pump.curves and len(target_pump.curves) > 0:
+                    base_speed = target_pump.curves[0].get('test_speed_rpm', 2900)
                 if required_speed and base_speed:
                     actual_speed_ratio = required_speed / base_speed
                     logger.info(
@@ -294,16 +297,20 @@ def get_chart_data_safe(safe_pump_code):
         base_speed = None
         required_speed = None
 
-        # Get actual base speed from pump
-        base_speed = target_pump.test_speed_rpm
+        # Get actual base speed from pump curves or specifications
+        base_speed = None
+        
+        # First try to get from the first curve (all curves should have same test speed)
+        if target_pump.curves and len(target_pump.curves) > 0:
+            base_speed = target_pump.curves[0].get('test_speed_rpm')
+        
+        # If not found in curves, try specifications
+        if not base_speed and target_pump.specifications:
+            base_speed = target_pump.specifications.get('test_speed_rpm')
+        
+        # Use a reasonable default if still not found
         if not base_speed:
-            # Try from specifications
-            if target_pump.specifications and target_pump.specifications.get(
-                    'test_speed_rpm'):
-                base_speed = target_pump.specifications['test_speed_rpm']
-            else:
-                # Use a reasonable default based on pump type
-                base_speed = 2900  # Standard 2-pole motor speed for most pumps
+            base_speed = 2900  # Standard 2-pole motor speed for most pumps
 
         if operating_point_data and operating_point_data.get('sizing_info'):
             sizing_info = operating_point_data['sizing_info']
