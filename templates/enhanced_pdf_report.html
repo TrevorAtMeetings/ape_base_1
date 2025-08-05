@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>APE Pumps Selection Report - Enhanced</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 1.5cm;
+            @top-left {
+                content: "APE Pumps Selection Report";
+                font-family: Arial, sans-serif;
+                font-size: 10pt;
+                color: #004d40;
+            }
+            @top-right {
+                content: "Report ID: {{ report_context.report_id }}";
+                font-family: Arial, sans-serif;
+                font-size: 10pt;
+                color: #666;
+            }
+            @bottom-center {
+                content: "Page " counter(page) " of " counter(pages);
+                font-family: Arial, sans-serif;
+                font-size: 10pt;
+                color: #666;
+            }
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #004d40 0%, #00695c 100%);
+            color: white;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border-radius: 8px;
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 28pt;
+            font-weight: bold;
+        }
+        
+        .header .subtitle {
+            font-size: 14pt;
+            margin-top: 0.5rem;
+            opacity: 0.9;
+        }
+        
+        .company-info {
+            text-align: right;
+            margin-top: 1rem;
+        }
+        
+        /* Executive Summary Section */
+        .executive-summary {
+            background: #f8f9fa;
+            border: 2px solid #004d40;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            page-break-inside: avoid;
+        }
+        
+        .executive-summary h2 {
+            color: #004d40;
+            margin-top: 0;
+            margin-bottom: 1rem;
+        }
+        
+        .score-display {
+            text-align: center;
+            margin: 1.5rem 0;
+        }
+        
+        .overall-score {
+            display: inline-block;
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #1976d2, #1565c0);
+            color: white;
+            text-align: center;
+            line-height: 120px;
+            font-size: 48pt;
+            font-weight: bold;
+            position: relative;
+        }
+        
+        .score-label {
+            position: absolute;
+            bottom: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 10pt;
+            color: #666;
+            white-space: nowrap;
+        }
+        
+        .key-metrics {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+        
+        .metric-box {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            padding: 1rem;
+            text-align: center;
+        }
+        
+        .metric-value {
+            font-size: 24pt;
+            font-weight: bold;
+            color: #004d40;
+        }
+        
+        .metric-label {
+            font-size: 10pt;
+            color: #666;
+            margin-top: 0.5rem;
+        }
+        
+        /* Score Breakdown Section */
+        .score-breakdown {
+            background: #fafafa;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            page-break-inside: avoid;
+        }
+        
+        .score-component {
+            margin-bottom: 1rem;
+        }
+        
+        .score-component-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        
+        .score-component-name {
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .score-component-value {
+            font-weight: bold;
+            color: #004d40;
+        }
+        
+        .progress-bar {
+            height: 10px;
+            background-color: #e0e0e0;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background-color: #004d40;
+            transition: width 0.3s ease;
+        }
+        
+        .score-description {
+            font-size: 9pt;
+            color: #666;
+            margin-top: 0.25rem;
+        }
+        
+        .section {
+            margin-bottom: 2rem;
+            page-break-inside: avoid;
+        }
+        
+        .section h2 {
+            color: #004d40;
+            border-bottom: 2px solid #004d40;
+            padding-bottom: 0.5rem;
+            margin-bottom: 1rem;
+            font-size: 18pt;
+        }
+        
+        .section h3 {
+            color: #00695c;
+            margin-bottom: 0.8rem;
+            font-size: 14pt;
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .info-box {
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            padding: 1rem;
+            background-color: #fafafa;
+        }
+        
+        .info-box strong {
+            color: #004d40;
+        }
+        
+        .performance-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 1.5rem;
+        }
+        
+        .performance-table th,
+        .performance-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        
+        .performance-table th {
+            background-color: #004d40;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .performance-table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        
+        .highlight {
+            background-color: #e8f5e8;
+            border-left: 4px solid #004d40;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .chart-container {
+            text-align: center;
+            margin: 1.5rem 0;
+            page-break-inside: avoid;
+        }
+        
+        .chart-image {
+            max-width: 100%;
+            height: auto;
+            border: 1px solid #ddd;
+        }
+        
+        .alternatives-comparison {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 1.5rem;
+            font-size: 9pt;
+        }
+        
+        .alternatives-comparison th {
+            background-color: #004d40;
+            color: white;
+            padding: 8px;
+            text-align: left;
+        }
+        
+        .alternatives-comparison td {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+        
+        .alternatives-comparison tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        
+        .warning {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 4px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .warning strong {
+            color: #856404;
+        }
+        
+        .recommendations ul {
+            list-style-type: disc;
+            padding-left: 1.5rem;
+        }
+        
+        .recommendations li {
+            margin-bottom: 0.5rem;
+        }
+        
+        .technical-appendix {
+            background: #f8f9fa;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            page-break-before: always;
+        }
+        
+        .calculation-details {
+            font-size: 9pt;
+            color: #666;
+            margin-top: 1rem;
+        }
+        
+        .footer {
+            border-top: 2px solid #004d40;
+            padding-top: 1rem;
+            margin-top: 3rem;
+            font-size: 9pt;
+            color: #666;
+        }
+        
+        .page-break {
+            page-break-before: always;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 9pt;
+            font-weight: bold;
+            color: white;
+        }
+        
+        .badge-success {
+            background-color: #28a745;
+        }
+        
+        .badge-info {
+            background-color: #17a2b8;
+        }
+        
+        .badge-warning {
+            background-color: #ffc107;
+            color: #333;
+        }
+        
+        .badge-danger {
+            background-color: #dc3545;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header Section -->
+    <div class="header">
+        <h1>Pump Selection Report</h1>
+        <div class="subtitle">Professional Engineering Analysis with Performance Scoring</div>
+        <div class="company-info">
+            <strong>APE Pumps</strong><br>
+            Industrial Pump Solutions<br>
+            Report Generated: {{ report_context.generation_date }}
+        </div>
+    </div>
+
+    <!-- Executive Summary with Score Display -->
+    <div class="executive-summary">
+        <h2>Executive Summary</h2>
+        
+        <div class="score-display">
+            <div class="overall-score">
+                {{ "%.0f"|format(report_context.selected_pump.overall_score) }}
+                <div class="score-label">Overall Score /100</div>
+            </div>
+        </div>
+        
+        <div class="key-metrics">
+            <div class="metric-box">
+                <div class="metric-value">{{ report_context.selected_pump.pump_code }}</div>
+                <div class="metric-label">Recommended Model</div>
+            </div>
+            <div class="metric-box">
+                <div class="metric-value">{{ "%.1f"|format(report_context.selected_pump.operating_point.efficiency_pct) }}%</div>
+                <div class="metric-label">Operating Efficiency</div>
+            </div>
+            <div class="metric-box">
+                <div class="metric-value">{{ "%.2f"|format(report_context.selected_pump.operating_point.power_kw) }} kW</div>
+                <div class="metric-label">Power Required</div>
+            </div>
+        </div>
+        
+        <div class="highlight" style="margin-top: 1.5rem;">
+            <p><strong>Summary:</strong> {{ report_context.executive_summary.summary_text }}</p>
+        </div>
+    </div>
+
+    <!-- Detailed Score Breakdown -->
+    <div class="score-breakdown">
+        <h2>Performance Score Analysis</h2>
+        
+        {% if report_context.selected_pump.score_breakdown %}
+        <!-- BEP Proximity Score -->
+        <div class="score-component">
+            <div class="score-component-header">
+                <span class="score-component-name">BEP Proximity (Reliability Factor)</span>
+                <span class="score-component-value">{{ "%.1f"|format(report_context.selected_pump.score_breakdown.bep_score) }}/40</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" style="width: {{ (report_context.selected_pump.score_breakdown.bep_score / 40 * 100) }}%;"></div>
+            </div>
+            <div class="score-description">
+                Measures proximity to Best Efficiency Point for optimal reliability and longevity
+            </div>
+        </div>
+        
+        <!-- Efficiency Score -->
+        <div class="score-component">
+            <div class="score-component-header">
+                <span class="score-component-name">Efficiency (Operating Cost)</span>
+                <span class="score-component-value">{{ "%.1f"|format(report_context.selected_pump.score_breakdown.efficiency_score) }}/30</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" style="width: {{ (report_context.selected_pump.score_breakdown.efficiency_score / 30 * 100) }}%;"></div>
+            </div>
+            <div class="score-description">
+                Energy efficiency at duty point directly impacts operating costs
+            </div>
+        </div>
+        
+        <!-- Head Margin Score -->
+        <div class="score-component">
+            <div class="score-component-header">
+                <span class="score-component-name">Head Margin (Right-Sizing)</span>
+                <span class="score-component-value">{{ "%.1f"|format(report_context.selected_pump.score_breakdown.margin_score) }}/15</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" style="width: {{ (report_context.selected_pump.score_breakdown.margin_score / 15 * 100) }}%;"></div>
+            </div>
+            <div class="score-description">
+                Optimal head delivery margin ensures proper sizing without oversizing
+            </div>
+        </div>
+        
+        <!-- NPSH Score -->
+        <div class="score-component">
+            <div class="score-component-header">
+                <span class="score-component-name">NPSH Margin (Cavitation Protection)</span>
+                <span class="score-component-value">{{ "%.1f"|format(report_context.selected_pump.score_breakdown.npsh_score) }}/15</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" style="width: {{ (report_context.selected_pump.score_breakdown.npsh_score / 15 * 100) }}%;"></div>
+            </div>
+            <div class="score-description">
+                Higher NPSH margin reduces cavitation risk and extends pump life
+            </div>
+        </div>
+        
+        {% if report_context.selected_pump.score_breakdown.speed_penalty > 0 or report_context.selected_pump.score_breakdown.sizing_penalty > 0 %}
+        <hr style="margin: 1.5rem 0;">
+        <h3>Modification Penalties</h3>
+        
+        {% if report_context.selected_pump.score_breakdown.speed_penalty > 0 %}
+        <div class="score-component">
+            <div class="score-component-header">
+                <span class="score-component-name">Speed Variation Penalty</span>
+                <span class="score-component-value" style="color: #dc3545;">-{{ "%.1f"|format(report_context.selected_pump.score_breakdown.speed_penalty) }}</span>
+            </div>
+            <div class="score-description">
+                VFD required for speed adjustment from standard motor speed
+            </div>
+        </div>
+        {% endif %}
+        
+        {% if report_context.selected_pump.score_breakdown.sizing_penalty > 0 %}
+        <div class="score-component">
+            <div class="score-component-header">
+                <span class="score-component-name">Impeller Trimming Penalty</span>
+                <span class="score-component-value" style="color: #dc3545;">-{{ "%.1f"|format(report_context.selected_pump.score_breakdown.sizing_penalty) }}</span>
+            </div>
+            <div class="score-description">
+                Impeller diameter reduction required from standard size
+            </div>
+        </div>
+        {% endif %}
+        {% endif %}
+        {% endif %}
+    </div>
+
+    <!-- Site Requirements vs Selected Pump -->
+    <div class="section">
+        <h2>Requirements Analysis</h2>
+        
+        <div class="info-grid">
+            <div class="info-box">
+                <h3>Site Requirements</h3>
+                <p><strong>Flow Rate:</strong> {{ report_context.site_requirements.flow_m3hr }} m³/hr</p>
+                <p><strong>Total Head:</strong> {{ report_context.site_requirements.head_m }} m</p>
+                <p><strong>Application:</strong> {{ report_context.site_requirements.application }}</p>
+                <p><strong>Fluid Type:</strong> {{ report_context.site_requirements.fluid_type }}</p>
+            </div>
+            
+            <div class="info-box">
+                <h3>Selected Pump Performance</h3>
+                <p><strong>Operating Flow:</strong> {{ "%.1f"|format(report_context.selected_pump.operating_point.flow_m3hr) }} m³/hr</p>
+                <p><strong>Operating Head:</strong> {{ "%.1f"|format(report_context.selected_pump.operating_point.head_m) }} m</p>
+                <p><strong>Head Margin:</strong> {{ "%.1f"|format(report_context.selected_pump.operating_point.head_m - report_context.site_requirements.head_m) }} m 
+                    ({{ "%.1f"|format((report_context.selected_pump.operating_point.head_m - report_context.site_requirements.head_m) / report_context.site_requirements.head_m * 100) }}%)</p>
+                <p><strong>NPSHr:</strong> {{ "%.2f"|format(report_context.selected_pump.operating_point.npshr_m) }} m</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Technical Performance Data -->
+    <div class="section">
+        <h2>Technical Performance Data</h2>
+        
+        <table class="performance-table">
+            <thead>
+                <tr>
+                    <th>Parameter</th>
+                    <th>Value</th>
+                    <th>Unit</th>
+                    <th>Assessment</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Operating Efficiency</td>
+                    <td>{{ "%.1f"|format(report_context.selected_pump.operating_point.efficiency_pct) }}</td>
+                    <td>%</td>
+                    <td>
+                        {% if report_context.selected_pump.operating_point.efficiency_pct >= 80 %}
+                        <span class="badge badge-success">Excellent</span>
+                        {% elif report_context.selected_pump.operating_point.efficiency_pct >= 70 %}
+                        <span class="badge badge-info">Good</span>
+                        {% elif report_context.selected_pump.operating_point.efficiency_pct >= 60 %}
+                        <span class="badge badge-warning">Fair</span>
+                        {% else %}
+                        <span class="badge badge-danger">Poor</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <td>Power Consumption</td>
+                    <td>{{ "%.2f"|format(report_context.selected_pump.operating_point.power_kw) }}</td>
+                    <td>kW</td>
+                    <td>{{ "%.1f"|format(report_context.selected_pump.operating_point.power_kw * 0.746) }} HP</td>
+                </tr>
+                <tr>
+                    <td>BEP Flow Ratio</td>
+                    <td>{{ "%.1f"|format(report_context.selected_pump.qbep_percentage) }}</td>
+                    <td>%</td>
+                    <td>
+                        {% if 80 <= report_context.selected_pump.qbep_percentage <= 110 %}
+                        <span class="badge badge-success">Preferred Zone</span>
+                        {% elif 70 <= report_context.selected_pump.qbep_percentage <= 120 %}
+                        <span class="badge badge-info">Acceptable Zone</span>
+                        {% else %}
+                        <span class="badge badge-warning">Extended Zone</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <td>Impeller Diameter</td>
+                    <td>{{ "%.0f"|format(report_context.selected_pump.operating_point.impeller_diameter_mm) }}</td>
+                    <td>mm</td>
+                    <td>
+                        {% if report_context.selected_pump.operating_point.sizing_info.trim_percent < 100 %}
+                        Trimmed to {{ "%.1f"|format(report_context.selected_pump.operating_point.sizing_info.trim_percent) }}%
+                        {% else %}
+                        Full Diameter
+                        {% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <td>Operating Speed</td>
+                    <td>{{ report_context.selected_pump.operating_point.test_speed_rpm }}</td>
+                    <td>RPM</td>
+                    <td>
+                        {% if report_context.selected_pump.operating_point.sizing_info.vfd_required %}
+                        VFD Required ({{ "%.0f"|format(report_context.selected_pump.operating_point.sizing_info.required_speed_rpm) }} RPM)
+                        {% else %}
+                        Standard Speed
+                        {% endif %}
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Performance Charts -->
+    {% if report_context.performance_charts %}
+    <div class="section page-break">
+        <h2>Performance Curves</h2>
+        
+        {% if report_context.performance_charts.head_flow %}
+        <div class="chart-container">
+            <h3>Head-Flow Characteristic</h3>
+            <img src="data:image/png;base64,{{ report_context.performance_charts.head_flow }}" alt="Head-Flow Curve" class="chart-image">
+        </div>
+        {% endif %}
+        
+        {% if report_context.performance_charts.efficiency %}
+        <div class="chart-container">
+            <h3>Efficiency Curve</h3>
+            <img src="data:image/png;base64,{{ report_context.performance_charts.efficiency }}" alt="Efficiency Curve" class="chart-image">
+        </div>
+        {% endif %}
+        
+        {% if report_context.performance_charts.power %}
+        <div class="chart-container">
+            <h3>Power Consumption</h3>
+            <img src="data:image/png;base64,{{ report_context.performance_charts.power }}" alt="Power Curve" class="chart-image">
+        </div>
+        {% endif %}
+        
+        {% if report_context.performance_charts.npsh %}
+        <div class="chart-container">
+            <h3>NPSH Requirements</h3>
+            <img src="data:image/png;base64,{{ report_context.performance_charts.npsh }}" alt="NPSH Curve" class="chart-image">
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Alternative Options Comparison -->
+    {% if report_context.alternatives %}
+    <div class="section">
+        <h2>Alternative Pump Comparison</h2>
+        
+        <table class="alternatives-comparison">
+            <thead>
+                <tr>
+                    <th>Model</th>
+                    <th>Overall Score</th>
+                    <th>Efficiency</th>
+                    <th>Power (kW)</th>
+                    <th>Head Margin</th>
+                    <th>Key Difference</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr style="background-color: #e8f5e8;">
+                    <td><strong>{{ report_context.selected_pump.pump_code }}</strong> (Selected)</td>
+                    <td><strong>{{ "%.0f"|format(report_context.selected_pump.overall_score) }}/100</strong></td>
+                    <td><strong>{{ "%.1f"|format(report_context.selected_pump.operating_point.efficiency_pct) }}%</strong></td>
+                    <td><strong>{{ "%.2f"|format(report_context.selected_pump.operating_point.power_kw) }}</strong></td>
+                    <td><strong>{{ "%.1f"|format(report_context.selected_pump.operating_point.head_m - report_context.site_requirements.head_m) }}m</strong></td>
+                    <td><strong>Best Overall Score</strong></td>
+                </tr>
+                {% for alt in report_context.alternatives[:4] %}
+                <tr>
+                    <td>{{ alt.pump_code }}</td>
+                    <td>{{ "%.0f"|format(alt.overall_score) }}/100</td>
+                    <td>{{ "%.1f"|format(alt.efficiency_pct) }}%</td>
+                    <td>{{ "%.2f"|format(alt.power_kw) }}</td>
+                    <td>{{ "%.1f"|format(alt.head_m - report_context.site_requirements.head_m) }}m</td>
+                    <td>{{ alt.key_difference }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        <div class="calculation-details">
+            <p><em>Note: Scores are calculated based on BEP proximity (40 points), efficiency (30 points), head margin (15 points), and NPSH margin (15 points), with penalties for speed variation or impeller trimming.</em></p>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Selection Rationale -->
+    <div class="section">
+        <h2>Selection Rationale</h2>
+        
+        {% for reason in report_context.technical_reasoning %}
+        <div class="info-box">
+            <h3>{{ reason.title }}</h3>
+            <p>{{ reason.explanation }}</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Recommendations -->
+    <div class="section">
+        <h2>Engineering Recommendations</h2>
+        
+        <div class="recommendations">
+            <ul>
+                {% for recommendation in report_context.recommendations %}
+                <li>{{ recommendation }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        
+        {% if report_context.selected_pump.operating_point.npshr_m > 5 %}
+        <div class="warning">
+            <strong>NPSH Warning:</strong> 
+            The selected pump requires {{ "%.2f"|format(report_context.selected_pump.operating_point.npshr_m) }}m NPSHr. 
+            Please ensure adequate NPSHa is available considering suction lift, friction losses, vapor pressure, and safety margin.
+        </div>
+        {% endif %}
+        
+        {% if report_context.selected_pump.operating_point.sizing_info.vfd_required %}
+        <div class="warning">
+            <strong>VFD Required:</strong> 
+            This pump requires a Variable Frequency Drive to operate at {{ "%.0f"|format(report_context.selected_pump.operating_point.sizing_info.required_speed_rpm) }} RPM 
+            ({{ "%.1f"|format(report_context.selected_pump.operating_point.sizing_info.speed_variation_pct) }}% speed variation from standard).
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Technical Appendix -->
+    <div class="technical-appendix">
+        <h2>Technical Appendix - Scoring Methodology</h2>
+        
+        <h3>100-Point Scoring System Breakdown</h3>
+        
+        <div class="info-grid">
+            <div class="info-box">
+                <h4>BEP Proximity (40 points max)</h4>
+                <ul style="font-size: 9pt;">
+                    <li>40 points: Within 10% of BEP</li>
+                    <li>35 points: 10-20% from BEP</li>
+                    <li>25 points: 20-30% from BEP</li>
+                    <li>15 points: Beyond 30% from BEP</li>
+                </ul>
+            </div>
+            
+            <div class="info-box">
+                <h4>Efficiency Score (30 points max)</h4>
+                <ul style="font-size: 9pt;">
+                    <li>Linear scaling based on efficiency</li>
+                    <li>30 points at 100% efficiency</li>
+                    <li>Minimum threshold: 40% efficiency</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="info-grid">
+            <div class="info-box">
+                <h4>Head Margin (15 points max)</h4>
+                <ul style="font-size: 9pt;">
+                    <li>15 points: 2-5% margin (optimal)</li>
+                    <li>12 points: 1-2% or 5-10% margin</li>
+                    <li>8 points: 0.5-1% or 10-15% margin</li>
+                    <li>5 points: Other margins</li>
+                </ul>
+            </div>
+            
+            <div class="info-box">
+                <h4>NPSH Score (15 points max)</h4>
+                <ul style="font-size: 9pt;">
+                    <li>Based on NPSHr requirements</li>
+                    <li>Lower NPSHr = higher score</li>
+                    <li>15 points for NPSHr < 2m</li>
+                    <li>0 points for NPSHr > 8m</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="info-box" style="margin-top: 1rem;">
+            <h4>Modification Penalties</h4>
+            <ul style="font-size: 9pt;">
+                <li><strong>Speed Variation:</strong> Up to -15 points based on deviation from standard speed</li>
+                <li><strong>Impeller Trimming:</strong> Up to -10 points based on trim percentage</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <p><strong>Disclaimer:</strong> This report is based on theoretical calculations and manufacturer data. Actual pump performance may vary based on installation conditions, system configuration, and operating parameters. Final pump selection should be verified by a qualified engineer.</p>
+        
+        <p><strong>Report Methodology:</strong> This enhanced report uses a comprehensive 100-point scoring system to evaluate pumps based on reliability (BEP proximity), efficiency, proper sizing (head margin), and cavitation protection (NPSH margin). The scoring system ensures objective, data-driven pump selection.</p>
+        
+        <p><strong>APE Pumps</strong> - Industrial Pump Solutions | Report ID: {{ report_context.report_id }} | Generated: {{ report_context.generation_date }}</p>
+    </div>
+</body>
+</html>

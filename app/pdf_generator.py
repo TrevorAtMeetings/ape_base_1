@@ -222,6 +222,142 @@ def generate_pdf_report(selected_pump_evaluation: Dict[str, Any],
         logger.error(f"Error generating PDF report: {str(e)}")
         raise
 
+
+def generate_enhanced_pdf_report(selected_pump_evaluation: Dict[str, Any],
+                                parsed_pump: Any,
+                                site_requirements: Any,
+                                alternatives: List[Dict[str, Any]] = None,
+                                score_breakdown: Dict[str, Any] = None) -> bytes:
+    """
+    Generate an enhanced PDF report with comprehensive scoring breakdown.
+
+    Args:
+        selected_pump_evaluation: Detailed evaluation of the selected pump
+        parsed_pump: ParsedPumpData object or CatalogPump object for the selected pump
+        site_requirements: SiteRequirements object
+        alternatives: List of alternative pump evaluations (optional)
+        score_breakdown: Detailed scoring breakdown (optional)
+
+    Returns:
+        PDF content as bytes
+    """
+    try:
+        # Handle both CatalogPump, LegacyPumpData, and ParsedPumpData objects
+        
+        # Check if we have a LegacyPumpData object from web interface
+        if hasattr(parsed_pump, 'authentic_impeller_mm') and hasattr(parsed_pump, 'authentic_power_kw'):
+            logger.info(f"Enhanced PDF Generator - Processing LegacyPumpData object: {parsed_pump.pump_code}")
+            logger.info(f"Enhanced PDF Generator - Authentic data: impeller={parsed_pump.authentic_impeller_mm}mm, power={parsed_pump.authentic_power_kw}kW")
+            
+            # Ensure operating point has authentic data
+            if 'operating_point' not in selected_pump_evaluation or not selected_pump_evaluation['operating_point']:
+                selected_pump_evaluation['operating_point'] = {
+                    'flow_m3hr': site_requirements.flow_m3hr,
+                    'head_m': site_requirements.head_m,
+                    'efficiency_pct': parsed_pump.authentic_efficiency_pct,
+                    'power_kw': parsed_pump.authentic_power_kw,
+                    'npshr_m': parsed_pump.authentic_npshr_m,
+                    'impeller_diameter_mm': parsed_pump.authentic_impeller_mm
+                }
+            
+            # Ensure performance data has authentic values
+            if 'performance' not in selected_pump_evaluation:
+                selected_pump_evaluation['performance'] = {
+                    'impeller_diameter_mm': parsed_pump.authentic_impeller_mm,
+                    'power_kw': parsed_pump.authentic_power_kw,
+                    'efficiency_pct': parsed_pump.authentic_efficiency_pct,
+                    'npshr_m': parsed_pump.authentic_npshr_m
+                }
+        
+        # Check if we have a CatalogPump object and need to adapt it
+        elif isinstance(parsed_pump, CatalogPump):
+            logger.info(f"Enhanced PDF Generator - Adapting CatalogPump object: {parsed_pump.pump_code}")
+            # Create a compatible object structure for PDF generation
+            class CompatiblePump:
+                def __init__(self, catalog_pump):
+                    self.pump_code = catalog_pump.pump_code
+                    specs = catalog_pump.specifications
+                    self.pump_info = {
+                        'pPumpCode': catalog_pump.pump_code,
+                        'pSuppName': catalog_pump.manufacturer,
+                        'pPumpType': catalog_pump.pump_type,
+                        'pPumpTestSpeed': str(specs.get('test_speed_rpm', '1450')),
+                        'pBEPFlow': str(specs.get('bep_flow_m3hr', '0')),
+                        'pBEPHead': str(specs.get('bep_head_m', '0')),
+                        'pBEPEff': str(specs.get('bep_efficiency_pct', '0')),
+                        'pMaxFlow': str(specs.get('max_flow_m3hr', '0')),
+                        'pMaxHead': str(specs.get('max_head_m', '0')),
+                        'pMinFlow': str(specs.get('min_flow_m3hr', '0')),
+                        'pKWMax': str(specs.get('max_power_kw', '0')),
+                        'pInletSize': str(specs.get('inlet_size_mm', '0')),
+                        'pOutletSize': str(specs.get('outlet_size_mm', '0'))
+                    }
+            
+            parsed_pump = CompatiblePump(parsed_pump)
+            logger.info(f"Enhanced PDF Generator - Created compatible pump object with code: {parsed_pump.pump_code}")
+        
+        # Extract authentic performance data before generating context
+        performance = selected_pump_evaluation.get('performance', {})
+        impeller_diameter = performance.get('impeller_diameter_mm', 312)
+        power_kw = performance.get('power_kw', 31.1)
+        
+        logger.info(f"Enhanced PDF Generator - Authentic data extracted: impeller={impeller_diameter}mm, power={power_kw}kW")
+        
+        # Ensure operating point contains authentic values
+        operating_point = selected_pump_evaluation.get('operating_point', {})
+        if not operating_point:
+            operating_point = {
+                'flow_m3hr': site_requirements.flow_m3hr,
+                'head_m': performance.get('predicted_head_m', site_requirements.head_m),
+                'efficiency_pct': performance.get('efficiency_pct', 82),
+                'power_kw': power_kw,
+                'npshr_m': performance.get('npshr_m', 2.78),
+                'impeller_diameter_mm': impeller_diameter
+            }
+            selected_pump_evaluation['operating_point'] = operating_point
+
+        # Generate enhanced report context data with scoring breakdown
+        report_context = _create_enhanced_report_context(
+            selected_pump_evaluation, parsed_pump, site_requirements, alternatives, score_breakdown
+        )
+
+        # Generate performance charts for all 4 types
+        performance_charts = _generate_all_performance_charts(
+            parsed_pump, selected_pump_evaluation.get('operating_point', {})
+        )
+        
+        if performance_charts:
+            report_context['performance_charts'] = performance_charts
+            logger.info(f"Enhanced PDF Generator - Generated {len(performance_charts)} performance charts")
+
+        # Create template variables
+        template_vars = {
+            'report_context': report_context,
+            'generation_date': datetime.now().strftime('%B %d, %Y'),
+            'report_id': report_context.get('report_id', f"APE-{datetime.now().strftime('%Y%m%d-%H%M%S')}")
+        }
+
+        logger.info(f"Enhanced PDF Generator - Template variables prepared for pump: {parsed_pump.pump_code}")
+
+        # Render enhanced HTML template with scoring breakdown
+        html_content = render_template('enhanced_pdf_report.html', **template_vars)
+
+        # Log rendered HTML length and check for base64 content
+        logger.info(f"Enhanced PDF Generator - Rendered HTML content length: {len(html_content)}")
+        chart_refs = html_content.count('data:image/png;base64,')
+        logger.info(f"Enhanced PDF Generator - HTML contains {chart_refs} PNG image references")
+
+        # Generate PDF using WeasyPrint
+        html_obj = HTML(string=html_content)
+        pdf_bytes = html_obj.write_pdf()
+
+        logger.info(f"Enhanced PDF Generator - Generated enhanced PDF report for pump: {parsed_pump.pump_code}")
+        return pdf_bytes
+
+    except Exception as e:
+        logger.error(f"Error generating enhanced PDF report: {str(e)}")
+        raise
+
 def _create_report_context(selected_pump_evaluation: Dict[str, Any],
                           parsed_pump: Any,
                           site_requirements: Any,
@@ -260,6 +396,82 @@ def _create_report_context(selected_pump_evaluation: Dict[str, Any],
         'environmental_impact': _format_environmental_impact(selected_pump_evaluation),
         'vfd_analysis': _format_vfd_analysis(selected_pump_evaluation),
         'alternatives': _format_alternatives(alternatives) if alternatives else [],
+        'recommendations': _generate_recommendations(selected_pump_evaluation, site_requirements),
+        'operating_point': operating_point  # Add operating point to template context
+    }
+
+
+def _create_enhanced_report_context(selected_pump_evaluation: Dict[str, Any],
+                                   parsed_pump: Any,
+                                   site_requirements: Any,
+                                   alternatives: List[Dict[str, Any]] = None,
+                                   score_breakdown: Dict[str, Any] = None) -> Dict[str, Any]:
+    """Create enhanced report context data with scoring breakdown."""
+
+    # Generate unique report ID
+    report_id = f"APE-{datetime.now().strftime('%Y%m%d-%H%M%S')}-{parsed_pump.pump_code}"
+
+    # Extract operating point data - if missing, calculate from performance data
+    operating_point = selected_pump_evaluation.get('operating_point', {})
+    if not operating_point and 'performance' in selected_pump_evaluation:
+        # Create operating point from catalog engine performance data
+        performance = selected_pump_evaluation['performance']
+        operating_point = {
+            'flow_m3hr': site_requirements.flow_m3hr,
+            'head_m': performance.get('predicted_head_m', site_requirements.head_m),
+            'efficiency_pct': performance.get('efficiency_pct', 0),
+            'power_kw': performance.get('power_kw', 0),
+            'npshr_m': performance.get('npshr_m', 0),
+            'impeller_diameter_mm': performance.get('impeller_diameter_mm', 
+                                   performance.get('curve', {}).get('impeller_diameter_mm', 'Standard'))
+        }
+        logger.info(f"Enhanced report - Created operating point from performance data: {operating_point}")
+
+    # Add sizing information to operating point if available
+    if 'sizing_info' in selected_pump_evaluation:
+        operating_point['sizing_info'] = selected_pump_evaluation['sizing_info']
+
+    # Extract or calculate overall score
+    overall_score = selected_pump_evaluation.get('overall_score', 0)
+    if not overall_score and score_breakdown:
+        # Calculate overall score from breakdown
+        overall_score = (score_breakdown.get('bep_score', 0) + 
+                        score_breakdown.get('efficiency_score', 0) + 
+                        score_breakdown.get('margin_score', 0) + 
+                        score_breakdown.get('npsh_score', 0) - 
+                        score_breakdown.get('speed_penalty', 0) - 
+                        score_breakdown.get('sizing_penalty', 0))
+        logger.info(f"Enhanced report - Calculated overall score from breakdown: {overall_score}")
+
+    # Format selected pump with scoring data
+    selected_pump_data = _format_selected_pump_details(selected_pump_evaluation, parsed_pump, site_requirements)
+    selected_pump_data['overall_score'] = overall_score
+    selected_pump_data['score_breakdown'] = score_breakdown
+    selected_pump_data['operating_point'] = operating_point
+    
+    # Add BEP percentage if available
+    if 'bep_analysis' in selected_pump_evaluation:
+        bep_analysis = selected_pump_evaluation['bep_analysis']
+        selected_pump_data['qbep_percentage'] = bep_analysis.get('flow_ratio', 100) * 100
+        selected_pump_data['bep_analysis'] = bep_analysis
+    else:
+        selected_pump_data['qbep_percentage'] = 100
+
+    return {
+        'report_id': report_id,
+        'generation_date': datetime.now().strftime('%B %d, %Y'),
+        'customer_info': _format_customer_info(site_requirements, report_id),
+        'executive_summary': _generate_enhanced_executive_summary(selected_pump_evaluation, parsed_pump, overall_score),
+        'site_requirements': _format_enhanced_site_requirements(site_requirements),
+        'selected_pump': selected_pump_data,
+        'pump_specifications': _generate_specifications_table(selected_pump_evaluation, parsed_pump),
+        'performance_analysis': _generate_performance_analysis(selected_pump_evaluation, parsed_pump),
+        'technical_analysis': _generate_technical_analysis(selected_pump_evaluation, parsed_pump),
+        'technical_reasoning': _generate_technical_reasoning(selected_pump_evaluation, parsed_pump),
+        'lifecycle_cost': _format_lifecycle_cost_analysis(selected_pump_evaluation),
+        'environmental_impact': _format_environmental_impact(selected_pump_evaluation),
+        'vfd_analysis': _format_vfd_analysis(selected_pump_evaluation),
+        'alternatives': _format_enhanced_alternatives(alternatives, site_requirements) if alternatives else [],
         'recommendations': _generate_recommendations(selected_pump_evaluation, site_requirements),
         'operating_point': operating_point  # Add operating point to template context
     }
@@ -994,3 +1206,288 @@ def _get_ape_logo_base64() -> str:
     except Exception as e:
         logger.error(f"Error loading APE logo: {str(e)}")
         return ""
+
+def _generate_enhanced_executive_summary(evaluation: Dict[str, Any], parsed_pump: Any, overall_score: float) -> Dict[str, Any]:
+    """Generate enhanced executive summary with scoring for the report."""
+    operating_point = evaluation.get('operating_point', {})
+    
+    # Determine summary text based on score
+    if overall_score >= 80:
+        summary_text = (
+            f"The {parsed_pump.pump_code} pump has been selected as the optimal solution with an exceptional score of {overall_score:.0f}/100. "
+            f"This pump demonstrates superior performance characteristics, operating at {operating_point.get('efficiency_pct', 0):.1f}% efficiency "
+            f"at the required duty point, ensuring both reliability and energy efficiency."
+        )
+    elif overall_score >= 60:
+        summary_text = (
+            f"The {parsed_pump.pump_code} pump is recommended with a strong performance score of {overall_score:.0f}/100. "
+            f"Operating at {operating_point.get('efficiency_pct', 0):.1f}% efficiency, this pump provides a well-balanced solution "
+            f"meeting all technical requirements while maintaining good operational characteristics."
+        )
+    else:
+        summary_text = (
+            f"The {parsed_pump.pump_code} pump has been selected with a score of {overall_score:.0f}/100. "
+            f"While this pump meets the specified requirements with {operating_point.get('efficiency_pct', 0):.1f}% efficiency, "
+            f"consideration of alternative options or system optimization may further improve performance."
+        )
+    
+    return {
+        'summary_text': summary_text,
+        'overall_score': overall_score,
+        'confidence_level': "Excellent" if overall_score >= 80 else "Good" if overall_score >= 60 else "Acceptable"
+    }
+
+
+def _format_enhanced_site_requirements(site_requirements: Any) -> Dict[str, Any]:
+    """Format enhanced site requirements for report display."""
+    # Get application type
+    application_type = getattr(site_requirements, 'application_type', 'Water Supply')
+    
+    # Get fluid type with default
+    fluid_type = getattr(site_requirements, 'liquid_type', 'Clean Water')
+    if not fluid_type:
+        fluid_type = 'Clean Water'
+    
+    return {
+        'flow_m3hr': site_requirements.flow_m3hr,
+        'head_m': site_requirements.head_m,
+        'application': application_type,
+        'fluid_type': fluid_type,
+        'temperature_c': getattr(site_requirements, 'temperature_c', 20),
+        'density_kg_m3': getattr(site_requirements, 'density_kg_m3', 1000),
+        'npsha_m': getattr(site_requirements, 'npsha_m', 10)  # Available NPSH if provided
+    }
+
+
+def _format_enhanced_alternatives(alternatives: List[Dict[str, Any]], site_requirements: Any) -> List[Dict[str, Any]]:
+    """Format enhanced alternatives with scoring details."""
+    if not alternatives:
+        return []
+    
+    formatted_alternatives = []
+    for i, alt in enumerate(alternatives[:4]):  # Limit to top 4 alternatives
+        operating_point = alt.get('operating_point', alt.get('performance', {}))
+        
+        # Calculate head margin
+        head_margin = operating_point.get('head_m', operating_point.get('predicted_head_m', 0)) - site_requirements.head_m
+        
+        # Determine key difference
+        if alt.get('overall_score', 0) < 60:
+            key_difference = "Lower overall performance score"
+        elif operating_point.get('efficiency_pct', 0) < 70:
+            key_difference = "Lower efficiency at duty point"
+        elif abs(head_margin) > 5:
+            key_difference = "Different head delivery characteristics"
+        else:
+            key_difference = "Alternative sizing option"
+        
+        formatted_alternatives.append({
+            'pump_code': alt.get('pump_code', ''),
+            'overall_score': alt.get('overall_score', 0),
+            'efficiency_pct': operating_point.get('efficiency_pct', 0),
+            'power_kw': operating_point.get('power_kw', 0),
+            'head_m': operating_point.get('head_m', operating_point.get('predicted_head_m', 0)),
+            'key_difference': key_difference
+        })
+    
+    return formatted_alternatives
+
+
+def _generate_all_performance_charts(parsed_pump: Any, operating_point: Dict[str, Any]) -> Dict[str, str]:
+    """Generate all 4 performance charts for the enhanced PDF report."""
+    charts = {}
+    
+    try:
+        # Generate Head-Flow chart
+        head_flow_chart = _generate_head_flow_chart(parsed_pump, operating_point)
+        if head_flow_chart:
+            charts['head_flow'] = head_flow_chart
+            
+        # Generate Efficiency chart
+        efficiency_chart = _generate_efficiency_chart(parsed_pump, operating_point)
+        if efficiency_chart:
+            charts['efficiency'] = efficiency_chart
+            
+        # Generate Power chart
+        power_chart = _generate_power_chart(parsed_pump, operating_point)
+        if power_chart:
+            charts['power'] = power_chart
+            
+        # Generate NPSH chart
+        npsh_chart = _generate_npsh_chart(parsed_pump, operating_point)
+        if npsh_chart:
+            charts['npsh'] = npsh_chart
+            
+        logger.info(f"Generated {len(charts)} performance charts for enhanced PDF")
+        
+    except Exception as e:
+        logger.error(f"Error generating performance charts: {str(e)}")
+        
+    return charts
+
+
+def _generate_head_flow_chart(parsed_pump: Any, operating_point: Dict[str, Any]) -> Optional[str]:
+    """Generate head-flow performance chart."""
+    try:
+        fig, ax = plt.subplots(figsize=(8, 6))
+        
+        # Get curve data
+        if hasattr(parsed_pump, 'curves') and parsed_pump.curves:
+            for curve in parsed_pump.curves:
+                flow_data = [pt.flow_m3hr for pt in curve.performance_points]
+                head_data = [pt.head_m for pt in curve.performance_points]
+                label = f"Impeller {curve.impeller_diameter_mm}mm"
+                ax.plot(flow_data, head_data, 'b-', linewidth=2, label=label)
+        
+        # Plot operating point
+        if operating_point:
+            ax.plot(operating_point.get('flow_m3hr', 0), 
+                   operating_point.get('head_m', 0), 
+                   'ro', markersize=10, label='Operating Point')
+        
+        ax.set_xlabel('Flow Rate (m³/hr)', fontsize=12)
+        ax.set_ylabel('Head (m)', fontsize=12)
+        ax.set_title(f'{parsed_pump.pump_code} - Head-Flow Characteristic', fontsize=14, fontweight='bold')
+        ax.grid(True, alpha=0.3)
+        ax.legend()
+        
+        # Convert to base64
+        buffer = io.BytesIO()
+        plt.savefig(buffer, format='png', dpi=150, bbox_inches='tight')
+        buffer.seek(0)
+        chart_base64 = base64.b64encode(buffer.read()).decode('utf-8')
+        plt.close()
+        
+        return chart_base64
+        
+    except Exception as e:
+        logger.error(f"Error generating head-flow chart: {str(e)}")
+        return None
+
+
+def _generate_efficiency_chart(parsed_pump: Any, operating_point: Dict[str, Any]) -> Optional[str]:
+    """Generate efficiency performance chart."""
+    try:
+        fig, ax = plt.subplots(figsize=(8, 6))
+        
+        # Get curve data
+        if hasattr(parsed_pump, 'curves') and parsed_pump.curves:
+            for curve in parsed_pump.curves:
+                flow_data = [pt.flow_m3hr for pt in curve.performance_points]
+                efficiency_data = [pt.efficiency_pct for pt in curve.performance_points]
+                label = f"Impeller {curve.impeller_diameter_mm}mm"
+                ax.plot(flow_data, efficiency_data, 'g-', linewidth=2, label=label)
+        
+        # Plot operating point
+        if operating_point:
+            ax.plot(operating_point.get('flow_m3hr', 0), 
+                   operating_point.get('efficiency_pct', 0), 
+                   'ro', markersize=10, label='Operating Point')
+        
+        ax.set_xlabel('Flow Rate (m³/hr)', fontsize=12)
+        ax.set_ylabel('Efficiency (%)', fontsize=12)
+        ax.set_title(f'{parsed_pump.pump_code} - Efficiency Curve', fontsize=14, fontweight='bold')
+        ax.grid(True, alpha=0.3)
+        ax.legend()
+        
+        # Convert to base64
+        buffer = io.BytesIO()
+        plt.savefig(buffer, format='png', dpi=150, bbox_inches='tight')
+        buffer.seek(0)
+        chart_base64 = base64.b64encode(buffer.read()).decode('utf-8')
+        plt.close()
+        
+        return chart_base64
+        
+    except Exception as e:
+        logger.error(f"Error generating efficiency chart: {str(e)}")
+        return None
+
+
+def _generate_power_chart(parsed_pump: Any, operating_point: Dict[str, Any]) -> Optional[str]:
+    """Generate power consumption chart."""
+    try:
+        fig, ax = plt.subplots(figsize=(8, 6))
+        
+        # Get curve data
+        if hasattr(parsed_pump, 'curves') and parsed_pump.curves:
+            for curve in parsed_pump.curves:
+                flow_data = [pt.flow_m3hr for pt in curve.performance_points]
+                # Calculate power if not available
+                power_data = []
+                for pt in curve.performance_points:
+                    if pt.power_kw:
+                        power_data.append(pt.power_kw)
+                    else:
+                        # Calculate power from flow, head, efficiency
+                        power = (pt.flow_m3hr * pt.head_m * 9.81 * 1000) / (3600 * 1000 * (pt.efficiency_pct/100))
+                        power_data.append(power)
+                
+                label = f"Impeller {curve.impeller_diameter_mm}mm"
+                ax.plot(flow_data, power_data, 'r-', linewidth=2, label=label)
+        
+        # Plot operating point
+        if operating_point:
+            ax.plot(operating_point.get('flow_m3hr', 0), 
+                   operating_point.get('power_kw', 0), 
+                   'ro', markersize=10, label='Operating Point')
+        
+        ax.set_xlabel('Flow Rate (m³/hr)', fontsize=12)
+        ax.set_ylabel('Power (kW)', fontsize=12)
+        ax.set_title(f'{parsed_pump.pump_code} - Power Consumption', fontsize=14, fontweight='bold')
+        ax.grid(True, alpha=0.3)
+        ax.legend()
+        
+        # Convert to base64
+        buffer = io.BytesIO()
+        plt.savefig(buffer, format='png', dpi=150, bbox_inches='tight')
+        buffer.seek(0)
+        chart_base64 = base64.b64encode(buffer.read()).decode('utf-8')
+        plt.close()
+        
+        return chart_base64
+        
+    except Exception as e:
+        logger.error(f"Error generating power chart: {str(e)}")
+        return None
+
+
+def _generate_npsh_chart(parsed_pump: Any, operating_point: Dict[str, Any]) -> Optional[str]:
+    """Generate NPSH requirement chart."""
+    try:
+        fig, ax = plt.subplots(figsize=(8, 6))
+        
+        # Get curve data
+        if hasattr(parsed_pump, 'curves') and parsed_pump.curves:
+            for curve in parsed_pump.curves:
+                flow_data = [pt.flow_m3hr for pt in curve.performance_points if pt.npshr_m]
+                npsh_data = [pt.npshr_m for pt in curve.performance_points if pt.npshr_m]
+                
+                if flow_data and npsh_data:
+                    label = f"Impeller {curve.impeller_diameter_mm}mm"
+                    ax.plot(flow_data, npsh_data, 'm-', linewidth=2, label=label)
+        
+        # Plot operating point
+        if operating_point and operating_point.get('npshr_m'):
+            ax.plot(operating_point.get('flow_m3hr', 0), 
+                   operating_point.get('npshr_m', 0), 
+                   'ro', markersize=10, label='Operating Point')
+        
+        ax.set_xlabel('Flow Rate (m³/hr)', fontsize=12)
+        ax.set_ylabel('NPSHr (m)', fontsize=12)
+        ax.set_title(f'{parsed_pump.pump_code} - NPSH Requirements', fontsize=14, fontweight='bold')
+        ax.grid(True, alpha=0.3)
+        ax.legend()
+        
+        # Convert to base64
+        buffer = io.BytesIO()
+        plt.savefig(buffer, format='png', dpi=150, bbox_inches='tight')
+        buffer.seek(0)
+        chart_base64 = base64.b64encode(buffer.read()).decode('utf-8')
+        plt.close()
+        
+        return chart_base64
+        
+    except Exception as e:
+        logger.error(f"Error generating NPSH chart: {str(e)}")
+        return None

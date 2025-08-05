@@ -1184,8 +1184,35 @@ def generate_pdf_post():  # Renamed to be more descriptive
         # Convert to legacy format for PDF compatibility
         legacy_pump = convert_catalog_pump_to_legacy_format(catalog_pump, performance)
 
-        from ..pdf_generator import generate_pdf_report
-        pdf_content = generate_pdf_report(evaluation, legacy_pump, site_requirements)
+        # Check if enhanced report is requested
+        enhanced = request.args.get('enhanced', 'false').lower() == 'true'
+        
+        if enhanced:
+            # Calculate score breakdown if available
+            score_breakdown = None
+            if 'score_components' in performance:
+                score_breakdown = performance['score_components']
+            
+            # Get alternatives if available from session
+            alternatives = []
+            pump_selections = session.get('pump_selections', [])
+            for alt in pump_selections:
+                if alt.get('pump_code') != pump_code:
+                    alternatives.append(alt)
+                    if len(alternatives) >= 3:  # Limit to top 3 alternatives
+                        break
+            
+            from ..pdf_generator import generate_enhanced_pdf_report
+            pdf_content = generate_enhanced_pdf_report(
+                evaluation, 
+                legacy_pump, 
+                site_requirements, 
+                alternatives=alternatives,
+                score_breakdown=score_breakdown
+            )
+        else:
+            from ..pdf_generator import generate_pdf_report
+            pdf_content = generate_pdf_report(evaluation, legacy_pump, site_requirements)
 
         response = make_response(pdf_content)
         response.headers['Content-Type'] = 'application/pdf'
