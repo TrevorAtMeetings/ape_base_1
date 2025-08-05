@@ -9,6 +9,10 @@ from ..session_manager import safe_flash, safe_session_get, safe_session_set, sa
 from ..data_models import SiteRequirements
 from ..pump_repository import load_all_pump_data
 from ..utils import validate_site_requirements
+from ..template_config import (
+    get_efficiency_rating, get_bep_zone_classification, get_score_classification,
+    get_pump_status_badges, calculate_bep_range_visual
+)
 from .. import app
 
 logger = logging.getLogger(__name__)
@@ -167,25 +171,20 @@ def pump_report(pump_code):
                             selected_pump['qbep_percentage'] = qbep_percentage
                             logger.info(f"Template data - QBEP percentage calculated: {qbep_percentage}%")
                             
-                            # Determine operating zone (70-120% preferred range)
-                            if 90 <= qbep_percentage <= 110:
-                                selected_pump['bep_zone'] = 'optimal'
-                                selected_pump['bep_zone_label'] = 'Optimal Zone'
-                                selected_pump['bep_zone_color'] = 'success'
-                            elif 70 <= qbep_percentage < 90 or 110 < qbep_percentage <= 120:
-                                selected_pump['bep_zone'] = 'good'
-                                selected_pump['bep_zone_label'] = 'Good Operating Range' 
-                                selected_pump['bep_zone_color'] = 'warning'
-                            else:
-                                selected_pump['bep_zone'] = 'marginal'
-                                selected_pump['bep_zone_label'] = 'Outside Preferred Range'
-                                selected_pump['bep_zone_color'] = 'danger'
+                            # Use template configuration for BEP zone classification
+                            bep_zone_info = get_bep_zone_classification(qbep_percentage)
+                            selected_pump['bep_zone'] = bep_zone_info['zone_type']
+                            selected_pump['bep_zone_label'] = bep_zone_info['label']
+                            selected_pump['bep_zone_color'] = bep_zone_info['color']
+                            selected_pump['marker_position'] = bep_zone_info['marker_position']
                         else:
                             logger.warning(f"Template data - BEP analysis invalid or incomplete: {bep_analysis}")
                             selected_pump['qbep_percentage'] = None
-                            selected_pump['bep_zone'] = 'unknown'
-                            selected_pump['bep_zone_label'] = 'BEP Data Unavailable'
-                            selected_pump['bep_zone_color'] = 'secondary'
+                            bep_zone_info = get_bep_zone_classification(None)
+                            selected_pump['bep_zone'] = bep_zone_info['zone_type']
+                            selected_pump['bep_zone_label'] = bep_zone_info['label']
+                            selected_pump['bep_zone_color'] = bep_zone_info['color']
+                            selected_pump['marker_position'] = bep_zone_info['marker_position']
                     else:
                         logger.error(f"Template data - Could not find pump {pump_code} in catalog")
         
@@ -257,24 +256,12 @@ def pump_report(pump_code):
                             qbep_percentage = (operating_flow / bep_analysis['bep_flow']) * 100
                             selected_pump['qbep_percentage'] = qbep_percentage
                             
-                            # Determine operating zone
-                            if 90 <= qbep_percentage <= 110:
-                                selected_pump['bep_zone'] = 'optimal'
-                                selected_pump['bep_zone_label'] = 'Optimal Zone'
-                                selected_pump['bep_zone_color'] = 'success'
-                            elif 70 <= qbep_percentage < 90 or 110 < qbep_percentage <= 120:
-                                selected_pump['bep_zone'] = 'good'
-                                selected_pump['bep_zone_label'] = 'Good Operating Range'
-                                selected_pump['bep_zone_color'] = 'warning'
-                            else:
-                                selected_pump['bep_zone'] = 'marginal'
-                                selected_pump['bep_zone_label'] = 'Outside Preferred Range'
-                                selected_pump['bep_zone_color'] = 'danger'
-                            
-                            # Calculate marker position for visual indicator (constrained to 5-95%)
-                            raw_position = (qbep_percentage / 150) * 100
-                            marker_position = max(5, min(95, raw_position))
-                            selected_pump['marker_position'] = marker_position
+                            # Use template configuration for BEP zone classification
+                            bep_zone_info = get_bep_zone_classification(qbep_percentage)
+                            selected_pump['bep_zone'] = bep_zone_info['zone_type']
+                            selected_pump['bep_zone_label'] = bep_zone_info['label']
+                            selected_pump['bep_zone_color'] = bep_zone_info['color']
+                            selected_pump['marker_position'] = bep_zone_info['marker_position']
                             
                             logger.info(f"Template data - QBEP percentage calculated: {qbep_percentage}%")
                         
@@ -842,7 +829,41 @@ def pump_report(pump_code):
             logger.info(f"Template data - selected_pump qbep_percentage: {selected_pump.get('qbep_percentage')}")
             logger.info(f"Template data - selected_pump bep_analysis keys: {list(selected_pump.get('bep_analysis', {}).keys()) if selected_pump.get('bep_analysis') else 'None'}")
 
+        # Enrich selected_pump with template configuration helpers
+        if selected_pump and isinstance(selected_pump, dict):
+            operating_point = selected_pump.get('operating_point', {})
+            efficiency_pct = operating_point.get('efficiency_pct', 0)
+            overall_score = selected_pump.get('overall_score', 0)
+            qbep_percentage = selected_pump.get('qbep_percentage')
+            
+            # Add efficiency rating information
+            selected_pump['efficiency_rating'] = get_efficiency_rating(efficiency_pct)
+            
+            # Add BEP zone information (if not already present)
+            if 'bep_zone_info' not in selected_pump:
+                selected_pump['bep_zone_info'] = get_bep_zone_classification(qbep_percentage)
+            
+            # Add score classification
+            selected_pump['score_classification'] = get_score_classification(overall_score)
+            
+            # Add status badges
+            selected_pump['status_badges'] = get_pump_status_badges(selected_pump)
+            
+            # Add BEP range visual configuration
+            selected_pump['bep_range_visual'] = calculate_bep_range_visual()
+            
+            logger.info(f"Template helpers - Efficiency rating: {selected_pump['efficiency_rating']}")
+            logger.info(f"Template helpers - BEP zone: {selected_pump.get('bep_zone_info', {}).get('label', 'N/A')}")
 
+        # Add template configuration to context for global access
+        context_data['template_config'] = {
+            'efficiency_thresholds': {
+                'excellent': 80,
+                'good': 70,
+                'acceptable': 60
+            },
+            'bep_range_config': calculate_bep_range_visual()
+        }
 
         return render_template('professional_pump_report.html', **context_data)
 

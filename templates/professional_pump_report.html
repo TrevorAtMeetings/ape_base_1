@@ -45,6 +45,53 @@
             --gradient-danger: linear-gradient(135deg, #dc3545 0%, #e83e8c 100%);
         }
 
+        /* Score value styles */
+        .score-positive {
+            font-weight: 600;
+            color: #388e3c;
+        }
+        
+        .score-negative {
+            font-weight: 600;
+            color: #d32f2f;
+        }
+
+        /* BEP marker styles */
+        .bep-marker {
+            position: absolute;
+            top: -5px;
+            transform: translateX(-50%);
+        }
+        
+        .bep-marker-arrow {
+            width: 0;
+            height: 0;
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            border-top: 15px solid #1976d2;
+        }
+        
+        .bep-marker-label {
+            text-align: center;
+            margin-top: 5px;
+            font-weight: bold;
+            color: #1976d2;
+        }
+
+        /* Alternative badge styles */
+        .alternative-badge {
+            font-size: 0.8rem;
+            padding: 4px 8px;
+        }
+        
+        .alternative-score-bar {
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 500;
+        }
+
         .ape-header {
             background: linear-gradient(135deg, var(--md-primary) 0%, var(--md-primary-variant) 100%);
             color: white;
@@ -662,7 +709,7 @@
                                     <div style="padding: 16px; background: #f8f9fa; border-radius: 8px;">
                                         <div class="d-flex justify-content-between align-items-center mb-2">
                                             <span style="font-weight: 500; color: #333;">{{ component|replace('_', ' ')|title }}</span>
-                                            <span style="font-weight: 600; color: {% if details.score > 0 %}#388e3c{% else %}#d32f2f{% endif %};">
+                                            <span class="score-value {% if details.score > 0 %}score-positive{% else %}score-negative{% endif %}">
                                                 {% if details.score > 0 %}+{% endif %}{{ "%.1f"|format(details.score) }}
                                             </span>
                                         </div>
@@ -687,22 +734,9 @@
                 <div class="card-header-professional" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white; padding: 24px; border: none; box-shadow: 0 2px 8px rgba(25, 118, 210, 0.2);">
                     <h4 class="mb-0" style="font-weight: 500; font-size: 1.4rem; z-index: 1; position: relative;">
                         <i class="fas fa-star me-2"></i>1. Selected Pump Summary
-                        {% set efficiency = selected_pump.get('operating_point', {}).get('efficiency_pct', 0) %}
-                        {% if efficiency >= 80 %}
-                            <span class="efficiency-indicator efficiency-excellent float-end">
-                                <i class="fas fa-check-circle me-1"></i>Excellent
-                            </span>
-                        {% elif efficiency >= 70 %}
-                            <span class="efficiency-indicator efficiency-good float-end">
-                                <i class="fas fa-thumbs-up me-1"></i>Good
-                            </span>
-                        {% elif efficiency >= 60 %}
-                            <span class="efficiency-indicator efficiency-acceptable float-end">
-                                <i class="fas fa-exclamation-triangle me-1"></i>Acceptable
-                            </span>
-                        {% else %}
-                            <span class="efficiency-indicator efficiency-poor float-end">
-                                <i class="fas fa-times-circle me-1"></i>Poor
+                        {% if selected_pump.efficiency_rating %}
+                            <span class="efficiency-indicator {{ selected_pump.efficiency_rating.class }} float-end">
+                                <i class="fas fa-check-circle me-1"></i>{{ selected_pump.efficiency_rating.label }}
                             </span>
                         {% endif %}
                     </h4>
@@ -721,8 +755,8 @@
                             <h6 class="mb-2" style="color: var(--md-primary); font-weight: 600;">Overall Suitability Score</h6>
                             <div class="suitability-progress">
                                 {% set score = selected_pump.get('overall_score', 0) %}
-                                <div class="suitability-progress-bar" 
-                                     style="width: {{ score }}%; background: {% if score >= 90 %}var(--gradient-success){% elif score >= 80 %}var(--gradient-info){% elif score >= 70 %}var(--gradient-warning){% else %}var(--gradient-danger){% endif %}">
+                                <div class="suitability-progress-bar {{ selected_pump.score_classification.class if selected_pump.score_classification else 'bg-secondary' }}" 
+                                     style="width: {{ score }}%;">
                                     {{ "%.0f"|format(score) }}%
                                 </div>
                             </div>
@@ -980,13 +1014,14 @@
                             </div>
                             
                             <!-- Operating point marker -->
-                            {% set marker_position = selected_pump.marker_position if selected_pump.marker_position else 50 %}
-                            <div class="position-absolute" style="left: {{ marker_position }}%; top: -5px; transform: translateX(-50%);">
-                                <div style="width: 0; height: 0; border-left: 10px solid transparent; border-right: 10px solid transparent; border-top: 15px solid #1976d2;"></div>
-                                <div class="text-center" style="margin-top: 5px; font-weight: bold; color: #1976d2;">
+                            {% if selected_pump.marker_position %}
+                            <div class="bep-marker" style="left: {{ selected_pump.marker_position }}%;">
+                                <div class="bep-marker-arrow"></div>
+                                <div class="bep-marker-label">
                                     {{ "%.0f"|format(selected_pump.qbep_percentage) }}%
                                 </div>
                             </div>
+                            {% endif %}
                         </div>
                         <div class="text-center mt-2">
                             <small class="text-muted">
@@ -1031,22 +1066,29 @@
                                     <!-- Efficiency Indicator -->
                                     <div class="mb-3">
                                         {% set alt_efficiency = alternative.get('efficiency_at_duty', 0) %}
-                                        {% if alt_efficiency >= 80 %}
-                                            <span class="efficiency-indicator efficiency-excellent" style="font-size: 0.8rem; padding: 4px 8px;">
+                                        {% set alt_efficiency_rating = alternative.get('efficiency_rating') %}
+                                        {% if alt_efficiency_rating %}
+                                            <span class="efficiency-indicator {{ alt_efficiency_rating.badge_class }} alternative-badge">
                                                 <i class="fas fa-check-circle me-1"></i>{{ "%.1f"|format(alt_efficiency) }}%
                                             </span>
-                                        {% elif alt_efficiency >= 70 %}
-                                            <span class="efficiency-indicator efficiency-good" style="font-size: 0.8rem; padding: 4px 8px;">
-                                                <i class="fas fa-thumbs-up me-1"></i>{{ "%.1f"|format(alt_efficiency) }}%
-                                            </span>
-                                        {% elif alt_efficiency >= 60 %}
-                                            <span class="efficiency-indicator efficiency-acceptable" style="font-size: 0.8rem; padding: 4px 8px;">
-                                                <i class="fas fa-exclamation-triangle me-1"></i>{{ "%.1f"|format(alt_efficiency) }}%
-                                            </span>
                                         {% else %}
-                                            <span class="efficiency-indicator efficiency-poor" style="font-size: 0.8rem; padding: 4px 8px;">
-                                                <i class="fas fa-times-circle me-1"></i>{{ "%.1f"|format(alt_efficiency) }}%
-                                            </span>
+                                            {% if alt_efficiency >= 80 %}
+                                                <span class="efficiency-indicator bg-success alternative-badge">
+                                                    <i class="fas fa-check-circle me-1"></i>{{ "%.1f"|format(alt_efficiency) }}%
+                                                </span>
+                                            {% elif alt_efficiency >= 70 %}
+                                                <span class="efficiency-indicator bg-info alternative-badge">
+                                                    <i class="fas fa-thumbs-up me-1"></i>{{ "%.1f"|format(alt_efficiency) }}%
+                                                </span>
+                                            {% elif alt_efficiency >= 60 %}
+                                                <span class="efficiency-indicator bg-warning alternative-badge">
+                                                    <i class="fas fa-exclamation-triangle me-1"></i>{{ "%.1f"|format(alt_efficiency) }}%
+                                                </span>
+                                            {% else %}
+                                                <span class="efficiency-indicator bg-danger alternative-badge">
+                                                    <i class="fas fa-times-circle me-1"></i>{{ "%.1f"|format(alt_efficiency) }}%
+                                                </span>
+                                            {% endif %}
                                         {% endif %}
                                     </div>
 
@@ -1055,8 +1097,9 @@
                                         <small class="text-muted">Suitability Score</small>
                                         <div class="suitability-progress" style="height: 20px; margin-top: 4px;">
                                             {% set alt_score = alternative.get('overall_score', 0) %}
-                                            <div class="suitability-progress-bar" 
-                                                 style="width: {{ alt_score }}%; height: 100%; font-size: 0.75rem; background: {% if alt_score >= 90 %}var(--gradient-success){% elif alt_score >= 80 %}var(--gradient-info){% elif alt_score >= 70 %}var(--gradient-warning){% else %}var(--gradient-danger){% endif %}">
+                                            <div class="suitability-progress-bar alternative-score-bar
+                                                        {% if alt_score >= 90 %}bg-success{% elif alt_score >= 80 %}bg-info{% elif alt_score >= 70 %}bg-warning{% else %}bg-danger{% endif %}" 
+                                                 style="width: {{ alt_score }}%; height: 100%; font-size: 0.75rem;">
                                                 {{ "%.0f"|format(alt_score) }}%
                                             </div>
                                         </div>
@@ -1653,9 +1696,9 @@
             });
 
             const chartData = {
-                pumpCode: "{{ selected_pump.pump_code }}",
-                flowRate: {{ selected_pump.operating_point.flow_m3hr|round(1)|default(0) }},
-                head: {{ selected_pump.operating_point.head_m|round(1)|default(0) }}
+                pumpCode: "{{ selected_pump.pump_code if selected_pump else '' }}",
+                flowRate: {{ selected_pump.operating_point.flow_m3hr|round(1)|default(0) if selected_pump and selected_pump.operating_point else 0 }},
+                head: {{ selected_pump.operating_point.head_m|round(1)|default(0) if selected_pump and selected_pump.operating_point else 0 }}
             };
 
             console.log('Professional report data:', chartData);
