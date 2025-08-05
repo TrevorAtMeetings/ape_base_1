@@ -221,7 +221,7 @@ class CatalogPump:
 
     def get_best_curve_for_duty(self, flow_m3hr: float,
                                 head_m: float) -> Optional[Dict[str, Any]]:
-        """Find the best curve for the given duty point - allows safe extrapolation"""
+        """Find the best curve for the given duty point - allows safe extrapolation up to 20%"""
         best_curve = None
         best_score = float('inf')
 
@@ -234,12 +234,29 @@ class CatalogPump:
             if not flows or not heads:
                 continue
 
-            # Allow 10% extrapolation beyond tested range
+            # Industry-standard extrapolation: try 15% first, then 20% for comprehensive coverage
             flow_min, flow_max = min(flows), max(flows)
             head_min, head_max = min(heads), max(heads)
             
-            flow_in_range = flow_min * 0.9 <= flow_m3hr <= flow_max * 1.1
-            head_in_range = head_min * 0.9 <= head_m <= head_max * 1.1
+            # Calculate extrapolation requirements
+            flow_extrapolation = 0
+            head_extrapolation = 0
+            
+            if flow_m3hr < flow_min:
+                flow_extrapolation = (flow_min - flow_m3hr) / flow_min * 100
+            elif flow_m3hr > flow_max:
+                flow_extrapolation = (flow_m3hr - flow_max) / flow_max * 100
+                
+            if head_m < head_min:
+                head_extrapolation = (head_min - head_m) / head_min * 100
+            elif head_m > head_max:
+                head_extrapolation = (head_m - head_max) / head_max * 100
+            
+            max_extrapolation = max(flow_extrapolation, head_extrapolation)
+            
+            # Allow up to 20% extrapolation (industry standard)
+            flow_in_range = flow_min * 0.8 <= flow_m3hr <= flow_max * 1.2
+            head_in_range = head_min * 0.8 <= head_m <= head_max * 1.2
 
             if flow_in_range and head_in_range:
                 # Calculate efficiency at duty point
