@@ -1095,10 +1095,10 @@ class PumpChartsManager {
             const extendedMinNpsh = Math.max(0, minNpshRef - minNpshExtension);
             const extendedMaxNpsh = maxNpshRef + minNpshExtension;
 
-            // Vertical reference line (flow) - extends from bottom to top of chart
+            // Vertical reference line (flow) - limit to reasonable NPSH range
             traces.push({
                 x: [opPoint.flow_m3hr, opPoint.flow_m3hr],
-                y: [extendedMinNpsh, extendedMaxNpsh],
+                y: [Math.max(0, minNpshRef * 0.8), maxNpshRef * 1.2], // Limit to 80%-120% of data range
                 type: 'scatter',
                 mode: 'lines',
                 name: 'Flow Reference',
@@ -1171,6 +1171,15 @@ class PumpChartsManager {
                 const range = dataMax - dataMin;
                 minNpsh = Math.max(0, dataMin - range * 0.05); // 5% padding below minimum, but not below 0
                 maxNpsh = dataMax + range * 0.05; // 5% padding above maximum
+                
+                // Debug log
+                console.log('NPSHr Chart Y-axis range calculation:', {
+                    allNpsh: allNpsh,
+                    dataMin: dataMin,
+                    dataMax: dataMax,
+                    calculatedMinNpsh: minNpsh,
+                    calculatedMaxNpsh: maxNpsh
+                });
             }
         }
 
@@ -1202,7 +1211,8 @@ class PumpChartsManager {
                 showline: true,
                 linecolor: '#ccc',
                 linewidth: 1,
-                range: [minNpsh, maxNpsh] // Explicitly set y-axis range
+                range: [minNpsh, maxNpsh], // Explicitly set y-axis range
+                autorange: false // Disable auto-ranging to force our range
             },
             font: {
                 family: 'Roboto, sans-serif',
