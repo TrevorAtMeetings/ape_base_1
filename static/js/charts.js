@@ -598,8 +598,18 @@ class PumpChartsManager {
         // Add BEP Operating Range Visualization to Efficiency Chart
         const opPoint = this.currentChartData.operating_point;
         if (opPoint && opPoint.flow_m3hr && opPoint.efficiency_pct != null && opPoint.efficiency_pct > 0) {
-            const bep80Flow = opPoint.flow_m3hr * 0.8;
-            const bep110Flow = opPoint.flow_m3hr * 1.1;
+            // Apply speed scaling to operating point coordinates if speed scaling is active
+            let operatingPointFlow = opPoint.flow_m3hr;
+            let operatingPointEfficiency = opPoint.efficiency_pct;
+            
+            if (this.currentChartData.speed_scaling && this.currentChartData.speed_scaling.applied) {
+                const speedRatio = this.currentChartData.speed_scaling.speed_ratio;
+                // Apply affinity laws to operating point: Flow ∝ speed, Efficiency stays constant
+                operatingPointFlow = opPoint.flow_m3hr * speedRatio;
+                console.log(`Charts.js: Applied speed scaling to efficiency operating point - Flow: ${opPoint.flow_m3hr.toFixed(1)} → ${operatingPointFlow.toFixed(1)}`);
+            }
+            const bep80Flow = operatingPointFlow * 0.8;
+            const bep110Flow = operatingPointFlow * 1.1;
 
             // Get efficiency range for shaded zone based on actual data
             let maxEffForZone = 100;
@@ -663,7 +673,7 @@ class PumpChartsManager {
 
             // Vertical reference line (flow) - extends from bottom to top of chart
             traces.push({
-                x: [opPoint.flow_m3hr, opPoint.flow_m3hr],
+                x: [operatingPointFlow, operatingPointFlow],
                 y: [extendedMinEff, extendedMaxEff],
                 type: 'scatter',
                 mode: 'lines',
@@ -680,7 +690,7 @@ class PumpChartsManager {
             // Horizontal reference line (efficiency) - extends from left to right of chart
             traces.push({
                 x: [extendedMinFlow, extendedMaxFlow],
-                y: [opPoint.efficiency_pct, opPoint.efficiency_pct],
+                y: [operatingPointEfficiency, operatingPointEfficiency],
                 type: 'scatter',
                 mode: 'lines',
                 name: 'Efficiency Reference',
@@ -695,8 +705,8 @@ class PumpChartsManager {
 
             // Add operating point triangle marker with enhanced visibility
             traces.push({
-                x: [opPoint.flow_m3hr],
-                y: [opPoint.efficiency_pct],
+                x: [operatingPointFlow],
+                y: [operatingPointEfficiency],
                 type: 'scatter',
                 mode: 'markers',
                 name: 'Operating Point',
@@ -859,8 +869,20 @@ class PumpChartsManager {
         // Add BEP Operating Range Visualization to Power Chart
         const opPoint = this.currentChartData.operating_point;
         if (opPoint && opPoint.flow_m3hr && opPoint.power_kw != null && opPoint.power_kw > 0) {
-            const bep80Flow = opPoint.flow_m3hr * 0.8;
-            const bep110Flow = opPoint.flow_m3hr * 1.1;
+            // Apply speed scaling to operating point coordinates if speed scaling is active
+            let operatingPointFlow = opPoint.flow_m3hr;
+            let operatingPointPower = opPoint.power_kw;
+            
+            if (this.currentChartData.speed_scaling && this.currentChartData.speed_scaling.applied) {
+                const speedRatio = this.currentChartData.speed_scaling.speed_ratio;
+                // Apply affinity laws to operating point: Flow ∝ speed, Power ∝ speed³
+                operatingPointFlow = opPoint.flow_m3hr * speedRatio;
+                operatingPointPower = opPoint.power_kw * (speedRatio * speedRatio * speedRatio);
+                console.log(`Charts.js: Applied speed scaling to power operating point - Flow: ${opPoint.flow_m3hr.toFixed(1)} → ${operatingPointFlow.toFixed(1)}, Power: ${opPoint.power_kw.toFixed(1)} → ${operatingPointPower.toFixed(1)}`);
+            }
+            
+            const bep80Flow = operatingPointFlow * 0.8;
+            const bep110Flow = operatingPointFlow * 1.1;
 
             // Get power range for shaded zone based on actual data
             let maxPowerZone = 300;
@@ -924,7 +946,7 @@ class PumpChartsManager {
 
             // Vertical reference line (flow) - extends from bottom to top of chart
             traces.push({
-                x: [opPoint.flow_m3hr, opPoint.flow_m3hr],
+                x: [operatingPointFlow, operatingPointFlow],
                 y: [extendedMinPower, extendedMaxPower],
                 type: 'scatter',
                 mode: 'lines',
@@ -941,7 +963,7 @@ class PumpChartsManager {
             // Horizontal reference line (power) - extends from left to right of chart
             traces.push({
                 x: [extendedMinFlow, extendedMaxFlow],
-                y: [opPoint.power_kw, opPoint.power_kw],
+                y: [operatingPointPower, operatingPointPower],
                 type: 'scatter',
                 mode: 'lines',
                 name: 'Power Reference',
@@ -956,8 +978,8 @@ class PumpChartsManager {
 
             // Add operating point triangle marker with enhanced visibility
             traces.push({
-                x: [opPoint.flow_m3hr],
-                y: [opPoint.power_kw],
+                x: [operatingPointFlow],
+                y: [operatingPointPower],
                 type: 'scatter',
                 mode: 'markers',
                 name: 'Operating Point',
@@ -1161,6 +1183,18 @@ class PumpChartsManager {
             );
 
         if (opPoint && opPoint.flow_m3hr && opPoint.npshr_m != null && opPoint.npshr_m > 0 && hasNpshData) {
+            // Apply speed scaling to operating point coordinates if speed scaling is active
+            let operatingPointFlow = opPoint.flow_m3hr;
+            let operatingPointNpsh = opPoint.npshr_m;
+            
+            if (this.currentChartData.speed_scaling && this.currentChartData.speed_scaling.applied) {
+                const speedRatio = this.currentChartData.speed_scaling.speed_ratio;
+                // Apply affinity laws to operating point: Flow ∝ speed, NPSH ∝ speed²
+                operatingPointFlow = opPoint.flow_m3hr * speedRatio;
+                operatingPointNpsh = opPoint.npshr_m * (speedRatio * speedRatio);
+                console.log(`Charts.js: Applied speed scaling to NPSH operating point - Flow: ${opPoint.flow_m3hr.toFixed(1)} → ${operatingPointFlow.toFixed(1)}, NPSH: ${opPoint.npshr_m.toFixed(1)} → ${operatingPointNpsh.toFixed(1)}`);
+            }
+            
             const pointColor = '#d32f2f'; // Red color for duty point
             const pointSymbol = 'triangle-up'; // Red triangle marker
 
@@ -1202,7 +1236,7 @@ class PumpChartsManager {
             const yAxisMax = maxNpshRef + (maxNpshRef - minNpshRef) * 0.05;
             
             traces.push({
-                x: [opPoint.flow_m3hr, opPoint.flow_m3hr],
+                x: [operatingPointFlow, operatingPointFlow],
                 y: [yAxisMin, yAxisMax], // Use exact same range as y-axis
                 type: 'scatter',
                 mode: 'lines',
@@ -1219,7 +1253,7 @@ class PumpChartsManager {
             // Horizontal reference line (NPSH) - extends from left to right of chart
             traces.push({
                 x: [extendedMinFlow, extendedMaxFlow],
-                y: [opPoint.npshr_m, opPoint.npshr_m],
+                y: [operatingPointNpsh, operatingPointNpsh],
                 type: 'scatter',
                 mode: 'lines',
                 name: 'NPSH Reference',
@@ -1234,8 +1268,8 @@ class PumpChartsManager {
 
             // Add operating point triangle marker with enhanced visibility
             traces.push({
-                x: [opPoint.flow_m3hr],
-                y: [opPoint.npshr_m],
+                x: [operatingPointFlow],
+                y: [operatingPointNpsh],
                 type: 'scatter',
                 mode: 'markers',
                 name: 'Operating Point',
