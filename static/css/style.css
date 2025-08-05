@@ -2428,3 +2428,148 @@ table tbody tr:hover {
     z-index: 1 !important;
     position: relative !important;
 }
+
+/* Section Divider */
+.section-divider {
+    height: 1px;
+    background: linear-gradient(to right, transparent, #e0e0e0, transparent);
+    margin: 40px 0;
+}
+
+/* Advanced Filter Panel */
+.filter-panel {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    margin-bottom: 30px;
+    overflow: hidden;
+}
+
+.filter-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px;
+    cursor: pointer;
+    background: #f8f9fa;
+    transition: background 0.3s ease;
+}
+
+.filter-header:hover {
+    background: #f0f1f3;
+}
+
+.filter-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 18px;
+    font-weight: 600;
+    color: #333;
+}
+
+.filter-badge {
+    background: #2196F3;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.filter-toggle {
+    transition: transform 0.3s ease;
+    color: #666;
+}
+
+.filter-toggle.active {
+    transform: rotate(180deg);
+}
+
+.filter-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease-in-out;
+    padding: 0 24px;
+}
+
+.filter-content.active {
+    max-height: 500px;
+    padding: 24px;
+}
+
+.filter-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 24px;
+    margin-bottom: 20px;
+}
+
+.filter-group {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+}
+
+.filter-label {
+    font-weight: 600;
+    color: #555;
+    margin-bottom: 12px;
+    font-size: 14px;
+}
+
+.range-slider-container {
+    margin-top: 10px;
+}
+
+.range-slider-container .range-field {
+    margin: 10px 0;
+}
+
+.range-slider-container input[type="range"] {
+    width: 100%;
+}
+
+.range-values {
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+    color: #666;
+    margin-top: 8px;
+}
+
+.filter-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    padding-top: 16px;
+    border-top: 1px solid #e0e0e0;
+}
+
+/* Hide filtered pump cards */
+.pump-card.filtered-out {
+    display: none;
+}
+
+/* No results message */
+.no-results {
+    text-align: center;
+    padding: 60px 20px;
+    color: #666;
+}
+
+.no-results-icon {
+    font-size: 64px;
+    color: #ddd;
+    margin-bottom: 20px;
+}
+
+.no-results h5 {
+    color: #555;
+    margin-bottom: 10px;
+}
+
+.no-results p {
+    color: #888;
+    font-size: 16px;
+}
