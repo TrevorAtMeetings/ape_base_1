@@ -138,7 +138,10 @@ def pump_report(pump_code):
                 
                 # Process BEP analysis and calculate QBEP percentage
                 if selected_pump.get('operating_point'):
-                    # Add BEP analysis if not already present
+                    operating_flow = selected_pump['operating_point'].get('flow_m3hr', 0)
+                    operating_head = selected_pump['operating_point'].get('head_m', 0)
+                    
+                    # Always ensure BEP analysis is present and calculated
                     if 'bep_analysis' not in selected_pump:
                         # Get the pump object to calculate BEP analysis
                         from ..catalog_engine import get_catalog_engine
@@ -147,18 +150,12 @@ def pump_report(pump_code):
                         
                         if target_pump:
                             # Calculate BEP analysis
-                            operating_flow = selected_pump['operating_point'].get('flow_m3hr', 0)
-                            operating_head = selected_pump['operating_point'].get('head_m', 0)
                             bep_analysis = target_pump.calculate_bep_distance(operating_flow, operating_head)
-                            
-                            # Add BEP analysis to selected pump
                             selected_pump['bep_analysis'] = bep_analysis
                     
-                    # Calculate QBEP percentage and operating zone (regardless of where BEP analysis came from)
-                    if selected_pump.get('bep_analysis'):
-                        bep_analysis = selected_pump['bep_analysis']
-                        operating_flow = selected_pump['operating_point'].get('flow_m3hr', 0)
-                        
+                    # Always calculate QBEP percentage and operating zone if BEP analysis exists
+                    bep_analysis = selected_pump.get('bep_analysis')
+                    if bep_analysis:
                         logger.info(f"Template data - BEP analysis: {bep_analysis}")
                         logger.info(f"Template data - Operating flow: {operating_flow}")
                         
