@@ -61,40 +61,42 @@ class ImpellerScalingEngine:
             if np.isnan(base_head_at_flow) or np.isnan(base_efficiency) or base_head_at_flow <= 0:
                 return None
                 
-            # Check if pump can already deliver required head without modification
-            if base_head_at_flow >= target_head:
-                # Pump already meets requirements with base impeller
-                scaled_performance = self._calculate_scaled_performance(
-                    base_curve, base_diameter, base_diameter, target_flow, target_head
-                )
-                
-                if not scaled_performance:
-                    return None
-                    
-                return {
-                    'required_diameter_mm': base_diameter,
-                    'base_diameter_mm': base_diameter,
-                    'trim_percent': 100.0,
-                    'diameter_ratio': 1.0,
-                    'performance': scaled_performance,
-                    'achievable': True,
-                    'trimming_required': False
-                }
-                
-            # Calculate required diameter using affinity laws
+            # FIXED LOGIC: Always calculate optimal diameter using affinity laws
             # H₂ = H₁ × (D₂/D₁)²  =>  D₂ = D₁ × √(H₂/H₁)
             diameter_ratio = np.sqrt(target_head / base_head_at_flow)
             required_diameter = base_diameter * diameter_ratio
             
-            # CRITICAL FIX: Check if we need to INCREASE diameter (impossible with trimming)
-            # If target head > base head at flow, we'd need a larger impeller - not possible with trimming
+            logger.debug(f"Impeller sizing: Base head {base_head_at_flow:.1f}m → Target {target_head:.1f}m")
+            logger.debug(f"Diameter calculation: {base_diameter}mm × {diameter_ratio:.3f} = {required_diameter:.1f}mm")
+            
+            # Check if we need to INCREASE diameter (impossible with trimming)
             if target_head > base_head_at_flow:
                 logger.debug(f"Target head {target_head:.1f}m exceeds base curve head {base_head_at_flow:.1f}m - trimming cannot increase head")
                 return None
             
-            # Check if required diameter is within acceptable trimming limits
+            # Calculate trim percentage and validate
             trim_percent = (required_diameter / base_diameter) * 100
             
+            # ENHANCED: Allow full impeller when trim would be minimal (>98%)
+            if trim_percent >= 98.0:
+                # Very minimal trimming - use full impeller for simplicity
+                scaled_performance = self._calculate_scaled_performance(
+                    base_curve, base_diameter, base_diameter, target_flow, target_head
+                )
+                
+                if scaled_performance:
+                    logger.info(f"Optimal trim {trim_percent:.1f}% - using full impeller for minimal benefit")
+                    return {
+                        'required_diameter_mm': base_diameter,
+                        'base_diameter_mm': base_diameter,
+                        'trim_percent': 100.0,
+                        'diameter_ratio': 1.0,
+                        'performance': scaled_performance,
+                        'achievable': True,
+                        'trimming_required': False
+                    }
+            
+            # Check minimum trimming limits
             if trim_percent < self.min_trim_percent:
                 logger.debug(f"Required trim {trim_percent:.1f}% below minimum {self.min_trim_percent}%")
                 return None
@@ -107,6 +109,8 @@ class ImpellerScalingEngine:
             if not scaled_performance:
                 return None
                 
+            logger.info(f"Impeller trimming: {base_diameter}mm → {required_diameter:.1f}mm ({trim_percent:.1f}% trim)")
+            
             return {
                 'required_diameter_mm': round(required_diameter, 1),
                 'base_diameter_mm': base_diameter,
