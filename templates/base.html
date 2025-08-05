@@ -64,7 +64,7 @@
             <ul id="admin-dropdown" class="dropdown-content">
                 <li><a href="{{ url_for('data_management.data_management') }}"><i class="material-icons left">storage</i>Database</a></li>
                 <li class="divider"></li>
-                <li><a href="/admin"><i class="material-icons left">library_books</i>Docs</a></li>
+                <li><a href="{{ url_for('admin.admin_landing') }}"><i class="material-icons left">library_books</i>Docs</a></li>
                 <li><a href="{{ url_for('ai_extract.ai_extract_page') }}"><i class="material-icons left">auto_awesome</i>AI Extract</a></li>
                 <li><a href="{{ url_for('chat.chat_page') }}"><i class="material-icons left">smart_toy</i>AI Console</a></li>
                 <li class="divider"></li>
@@ -83,7 +83,7 @@
         <li><a href="{{ url_for('main_flow.index') }}" style="font-size: 16px;">Selection</a></li>
         <li><a href="https://apepumps.projectapp.ai/" target="_blank" style="font-size: 16px;">Features</a></li>
         <li><a href="{{ url_for('main_flow.guide') }}" style="font-size: 16px;">Guide</a></li>
-        <li><a href="/admin" style="font-size: 16px;">Document Library</a></li>
+        <li><a href="{{ url_for('admin.admin_landing') }}" style="font-size: 16px;">Document Library</a></li>
         <li><a href="/chat" style="font-size: 16px;">AI Expert Console</a></li>
         <li><a href="#about" onclick="showAboutModal()" style="font-size: 16px;">About</a></li>
     </ul>

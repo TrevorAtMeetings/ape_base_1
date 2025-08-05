@@ -96,4 +96,59 @@ def chat_status():
         logger.error(f"Error checking chat status: {str(e)}")
         return jsonify({'status': 'error', 'error': str(e)}), 500
 
- 
+
+@admin_bp.route('/admin/documents', methods=['GET'])
+def get_documents():
+    """Get list of uploaded documents"""
+    try:
+        upload_dir = os.path.join(current_app.config['UPLOAD_FOLDER'], 'documents')
+        documents = []
+        
+        if os.path.exists(upload_dir):
+            for filename in os.listdir(upload_dir):
+                if allowed_file(filename):
+                    filepath = os.path.join(upload_dir, filename)
+                    file_stat = os.stat(filepath)
+                    documents.append({
+                        'filename': filename,
+                        'size': file_stat.st_size,
+                        'uploaded': file_stat.st_mtime,
+                        'type': filename.split('.')[-1].lower()
+                    })
+        
+        return jsonify({
+            'success': True,
+            'documents': documents,
+            'count': len(documents)
+        })
+        
+    except Exception as e:
+        logger.error(f"Error getting documents: {str(e)}")
+        return jsonify({'success': False, 'error': 'Failed to retrieve documents'}), 500
+
+
+@admin_bp.route('/admin/test-query', methods=['POST'])
+def test_query():
+    """Test AI query functionality"""
+    try:
+        data = request.get_json()
+        query = data.get('query', '').strip()
+        
+        if not query:
+            return jsonify({'success': False, 'error': 'No query provided'}), 400
+        
+        # For now, return a placeholder response indicating the feature is under development
+        response = {
+            'success': True,
+            'query': query,
+            'response': 'AI query functionality is under development. This feature will provide intelligent responses based on uploaded technical documents.',
+            'confidence': 0.95,
+            'sources': ['Feature coming soon'],
+            'processing_time': 0.1
+        }
+        
+        return jsonify(response)
+        
+    except Exception as e:
+        logger.error(f"Error processing test query: {str(e)}")
+        return jsonify({'success': False, 'error': 'Query processing failed'}), 500
