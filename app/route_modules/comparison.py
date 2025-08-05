@@ -64,8 +64,16 @@ def pump_comparison():
                     'total_10_year_cost': total_10_year_cost,
                     'cost_per_m3': cost_per_m3
                 }
+                
+                # Add BEP analysis for QBEP sorting (for session-based data)
+                bep_analysis = selection.get('bep_analysis', {})
+                flow_ratio = bep_analysis.get('flow_ratio', 1.0)
+                qbep_percentage = flow_ratio * 100  # Convert to percentage
+                
                 selection['operating_point'] = mapped_performance
                 selection['lifecycle_cost'] = lifecycle_cost
+                selection['bep_analysis'] = bep_analysis
+                selection['qbep_percentage'] = qbep_percentage
 
         # If session is empty, reconstruct from URL parameters
         if not pump_selections:
@@ -114,6 +122,11 @@ def pump_comparison():
                         'cost_per_m3': cost_per_m3
                     }
                     
+                    # Calculate BEP analysis for QBEP sorting
+                    bep_analysis = selection.get('bep_analysis', {})
+                    flow_ratio = bep_analysis.get('flow_ratio', 1.0)
+                    qbep_percentage = flow_ratio * 100  # Convert to percentage
+                    
                     evaluation = {
                         'pump_code': pump.pump_code,
                         'overall_score': selection.get('suitability_score', 0),
@@ -126,7 +139,9 @@ def pump_comparison():
                         },
                         'curve_index': 0,
                         'suitable': selection.get('suitability_score', 0) > 50,
-                        'lifecycle_cost': lifecycle_cost
+                        'lifecycle_cost': lifecycle_cost,
+                        'bep_analysis': bep_analysis,
+                        'qbep_percentage': qbep_percentage
                     }
                     pump_selections.append(evaluation)
                 site_requirements = {

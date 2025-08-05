@@ -728,6 +728,9 @@
                         <button class="btn-small blue darken-1 waves-effect waves-light sort-btn active" data-sort="rank" style="border-radius: 20px; height: 36px; line-height: 36px; padding: 0 16px;">
                             <i class="material-icons left" style="font-size: 1rem;">star</i>Best Match
                         </button>
+                        <button class="btn-small blue-grey lighten-1 waves-effect waves-light sort-btn" data-sort="qbep" style="border-radius: 20px; height: 36px; line-height: 36px; padding: 0 16px;">
+                            <i class="material-icons left" style="font-size: 1rem;">my_location</i>QBEP %
+                        </button>
                         <button class="btn-small blue-grey lighten-1 waves-effect waves-light sort-btn" data-sort="efficiency" style="border-radius: 20px; height: 36px; line-height: 36px; padding: 0 16px;">
                             <i class="material-icons left" style="font-size: 1rem;">trending_up</i>Efficiency
                         </button>
@@ -793,6 +796,15 @@
                                 {% for pump in pump_comparisons %}
                                 <td style="font-weight: 500; color: #1976d2;">
                                     {{ pump.pump_type }}
+                                </td>
+                                {% endfor %}
+                            </tr>
+                            
+                            <tr>
+                                <td><strong>QBEP (%)</strong></td>
+                                {% for pump in pump_comparisons %}
+                                <td class="{{ 'best-value' if pump.qbep_percentage >= 95 and pump.qbep_percentage <= 105 else '' }}">
+                                    {{ "%.1f"|format(pump.qbep_percentage) }}%
                                 </td>
                                 {% endfor %}
                             </tr>
@@ -1272,7 +1284,8 @@
                         rank: pumpIndex + 1,
                         efficiency: parseFloat(getRowValue(dataRows, 'Efficiency', i)) || 0,
                         power: parseFloat(getRowValue(dataRows, 'Power', i)) || 0,
-                        score: parseFloat(getRowValue(dataRows, 'Overall Score', i)) || 0
+                        score: parseFloat(getRowValue(dataRows, 'Overall Score', i)) || 0,
+                        qbep: parseFloat(getRowValue(dataRows, 'QBEP', i)) || 100
                     };
                     pumpData.push(data);
                 }
@@ -1280,6 +1293,11 @@
                 // Sort pump data
                 pumpData.sort((a, b) => {
                     switch(sortType) {
+                        case 'qbep':
+                            // Sort by proximity to 100% (optimal BEP operation)
+                            const aDistance = Math.abs(a.qbep - 100);
+                            const bDistance = Math.abs(b.qbep - 100);
+                            return aDistance - bDistance;
                         case 'efficiency':
                             return b.efficiency - a.efficiency;
                         case 'power':
