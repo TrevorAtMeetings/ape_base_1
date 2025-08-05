@@ -555,8 +555,8 @@ class CatalogPump:
         score += margin_score
         
         # 4. NPSH Score (15 points max)
-        npshr = performance.get('npshr_m', 0)
-        if npshr > 0:
+        npshr = performance.get('npshr_m', 0) or 0  # Ensure None becomes 0
+        if npshr and npshr > 0:
             if npshr <= 2.0:
                 npsh_score = 15
             elif npshr <= 4.0:
