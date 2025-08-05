@@ -133,114 +133,163 @@
 {% endblock %}
 
 {% block content %}
-<div class="container mt-4">
+<div class="container" style="max-width: 1200px; margin: 0 auto; padding: 20px;">
     <!-- Admin Navigation Tabs -->
     <div class="row">
         <div class="col s12">
-            <ul class="tabs">
-                <li class="tab col s6"><a href="{{ url_for('admin.ai_admin') }}">AI Knowledge Base</a></li>
-                <li class="tab col s6"><a class="active" href="#config-settings">Configuration Settings</a></li>
+            <ul class="tabs" style="margin-bottom: 30px;">
+                <li class="tab col s6">
+                    <a href="{{ url_for('admin.ai_admin') }}" class="waves-effect waves-light">
+                        <i class="material-icons left">psychology</i>AI Knowledge Base
+                    </a>
+                </li>
+                <li class="tab col s6">
+                    <a href="#config-settings" class="active waves-effect waves-light">
+                        <i class="material-icons left">settings</i>Configuration Settings
+                    </a>
+                </li>
             </ul>
         </div>
     </div>
 
-    <div id="config-settings">
-    <div class="row">
-        <div class="col s12">
-            <h1 class="center-align">
-                <i class="material-icons medium">settings</i> Admin Configuration Center
-            </h1>
-            <p class="center-align flow-text">Manage pump selection parameters and application profiles</p>
+    <!-- Configuration Settings Content -->
+    <div id="config-settings" class="tab-content">
+        <div class="row">
+            <div class="col s12">
+                <div class="center-align" style="margin-bottom: 40px;">
+                    <h1 style="margin-bottom: 10px;">
+                        <i class="material-icons medium" style="vertical-align: middle;">settings</i> 
+                        Admin Configuration Center
+                    </h1>
+                    <p class="flow-text grey-text text-darken-1">Manage pump selection parameters and application profiles</p>
+                </div>
+            </div>
         </div>
-    </div>
-    
-    <!-- Configuration Profiles Section -->
-    <div class="row" style="margin-top: 30px;">
-        <div class="col s12">
-            <h2>Application Profiles</h2>
+        
+        <!-- Configuration Profiles Section -->
+        <div class="section">
             <div class="row">
-                {% for profile in profiles %}
-                <div class="col s12 m6 l4">
-                    <div class="card hoverable profile-card" style="cursor: pointer;" onclick="window.location.href='{{ url_for('admin_config.profile_details', profile_id=profile.id) }}'">
-                        <div class="card-content">
-                            <span class="card-title">{{ profile.name }}</span>
-                            <p class="grey-text">{{ profile.description }}</p>
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px;">
-                                <span class="chip {% if profile.is_active %}green white-text{% else %}grey{% endif %}">
-                                    {% if profile.is_active %}Active{% else %}Inactive{% endif %}
-                                </span>
-                                <small class="grey-text">Updated: {{ profile.updated_at.strftime('%Y-%m-%d') if profile.updated_at else 'Never' }}</small>
+                <div class="col s12">
+                    <h2 style="margin-bottom: 30px;">
+                        <i class="material-icons medium" style="vertical-align: middle;">folder_special</i>
+                        Application Profiles
+                    </h2>
+                    <div class="row">
+                        {% for profile in profiles %}
+                        <div class="col s12 m6 l4" style="margin-bottom: 20px;">
+                            <div class="card hoverable profile-card waves-effect waves-block waves-light" 
+                                 style="cursor: pointer; min-height: 200px;" 
+                                 onclick="window.location.href='{{ url_for('admin_config.profile_details', profile_id=profile.id) }}'">
+                                <div class="card-content" style="padding: 24px;">
+                                    <span class="card-title" style="font-size: 1.4em; margin-bottom: 10px; display: block;">
+                                        {{ profile.name }}
+                                    </span>
+                                    <p class="grey-text text-darken-1" style="margin-bottom: 20px; min-height: 48px;">
+                                        {{ profile.description }}
+                                    </p>
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: auto;">
+                                        <span class="chip {% if profile.is_active %}green white-text{% else %}grey lighten-1{% endif %}" 
+                                              style="font-weight: 500;">
+                                            {% if profile.is_active %}
+                                                <i class="material-icons left tiny">check_circle</i>Active
+                                            {% else %}
+                                                <i class="material-icons left tiny">pause_circle_outline</i>Inactive
+                                            {% endif %}
+                                        </span>
+                                        <small class="grey-text">
+                                            Updated: {{ profile.updated_at.strftime('%m/%d/%Y') if profile.updated_at else 'Never' }}
+                                        </small>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                </div>
-                {% endfor %}
-                
-                <!-- Add New Profile Card -->
-                <div class="col s12 m6 l4">
-                    <div class="card hoverable profile-card center-align" 
-                         style="border: 2px dashed #ccc; cursor: pointer;" 
-                         onclick="createNewProfile()" 
-                         tabindex="0"
-                         role="button"
-                         aria-label="Create new application profile"
-                         onkeypress="if(event.key==='Enter'||event.key===' ') createNewProfile()">
-                        <div class="card-content">
-                            <i class="material-icons large grey-text" style="margin-bottom: 15px;">add_circle_outline</i>
-                            <h5 class="grey-text">Create New Profile</h5>
-                            <span class="sr-only">Press Enter or Space to create a new profile</span>
+                        {% endfor %}
+                        
+                        <!-- Add New Profile Card -->
+                        <div class="col s12 m6 l4" style="margin-bottom: 20px;">
+                            <div class="card hoverable profile-card center-align waves-effect waves-block waves-light" 
+                                 style="border: 2px dashed #26a69a; cursor: pointer; min-height: 200px; display: flex; align-items: center;" 
+                                 onclick="createNewProfile()" 
+                                 tabindex="0"
+                                 role="button"
+                                 aria-label="Create new application profile"
+                                 onkeypress="if(event.key==='Enter'||event.key===' ') createNewProfile()">
+                                <div class="card-content" style="width: 100%; padding: 24px;">
+                                    <i class="material-icons large teal-text" style="margin-bottom: 15px; font-size: 4rem;">add_circle_outline</i>
+                                    <h5 class="teal-text" style="margin: 0;">Create New Profile</h5>
+                                    <p class="grey-text" style="margin-top: 10px;">Configure a new application profile</p>
+                                    <span class="sr-only">Press Enter or Space to create a new profile</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
-    
-    <!-- Engineering Constants Section -->
-    <div class="row" style="margin-top: 50px;">
-        <div class="col s12">
-            <h2>Locked Engineering Constants</h2>
-            <p class="grey-text">These values are based on physical laws and cannot be modified</p>
-            
-            <ul class="collapsible">
-                {% set categories = constants|groupby('category') %}
-                {% for category, items in categories %}
-                <li {% if loop.index == 1 %}class="active"{% endif %}>
-                    <div class="collapsible-header">
-                        <i class="material-icons">lock</i>{{ category }}
+        
+        <!-- Engineering Constants Section -->
+        <div class="section" style="margin-top: 50px;">
+            <div class="row">
+                <div class="col s12">
+                    <h2 style="margin-bottom: 30px;">
+                        <i class="material-icons medium" style="vertical-align: middle;">lock</i>
+                        Locked Engineering Constants
+                    </h2>
+                    <div class="card-panel orange lighten-4" style="margin-bottom: 30px;">
+                        <p style="margin: 0;">
+                            <i class="material-icons left">info_outline</i>
+                            These values are based on physical laws and cannot be modified. They ensure pump selections follow engineering principles.
+                        </p>
                     </div>
-                    <div class="collapsible-body">
-                        {% for constant in items %}
-                        <div class="locked-constant">
-                            <div class="row">
-                                <div class="col s12 m4">
-                                    <strong>{{ constant.name }}</strong>
-                                </div>
-                                <div class="col s12 m3">
-                                    <code>{{ constant.value }} {% if constant.unit %}{{ constant.unit }}{% endif %}</code>
-                                </div>
-                                <div class="col s12 m5">
-                                    <small class="grey-text">{{ constant.description }}</small>
-                                    {% if constant.formula %}
-                                    <br><small><code>{{ constant.formula }}</code></small>
-                                    {% endif %}
-                                </div>
+                    
+                    <ul class="collapsible popout">
+                        {% set categories = constants|groupby('category') %}
+                        {% for category, items in categories %}
+                        <li {% if loop.index == 1 %}class="active"{% endif %}>
+                            <div class="collapsible-header">
+                                <i class="material-icons">lock</i>
+                                <strong>{{ category }}</strong>
+                                <span class="badge">{{ items|list|length }} constants</span>
                             </div>
-                        </div>
+                            <div class="collapsible-body" style="padding: 20px;">
+                                {% for constant in items %}
+                                <div class="locked-constant" style="margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+                                    <div class="row" style="margin-bottom: 0;">
+                                        <div class="col s12 m4">
+                                            <strong style="color: #2e7d32;">{{ constant.name }}</strong>
+                                        </div>
+                                        <div class="col s12 m3">
+                                            <code style="background: #e8f5e8; padding: 4px 8px; border-radius: 4px; color: #1b5e20;">
+                                                {{ constant.value }} {% if constant.unit %}{{ constant.unit }}{% endif %}
+                                            </code>
+                                        </div>
+                                        <div class="col s12 m5">
+                                            <small class="grey-text text-darken-1">{{ constant.description }}</small>
+                                            {% if constant.formula %}
+                                            <br><small><code style="background: #fff3e0; padding: 2px 6px; border-radius: 3px;">{{ constant.formula }}</code></small>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </li>
                         {% endfor %}
-                    </div>
-                </li>
-                {% endfor %}
-            </ul>
+                    </ul>
+                </div>
+            </div>
         </div>
+        
+        <!-- Initialize Database Button (only show if no data) -->
+        {% if not profiles %}
+        <div class="fixed-action-btn" style="bottom: 30px; right: 30px;">
+            <a class="btn-floating btn-large red waves-effect waves-light" onclick="initializeDatabase()" 
+               title="Initialize Database">
+                <i class="material-icons">storage</i>
+            </a>
+        </div>
+        {% endif %}
     </div>
-    
-    <!-- Initialize Database Button (only show if no data) -->
-    {% if not profiles %}
-    <a class="btn-floating btn-large waves-effect waves-light red init-button" onclick="initializeDatabase()">
-        <i class="material-icons">storage</i>
-    </a>
-    {% endif %}
 </div>
 
 <!-- Loading Overlay -->
