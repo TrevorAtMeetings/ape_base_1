@@ -489,32 +489,132 @@ class CatalogPump:
 
         return True
 
+    def _calculate_solution_score(self, performance: Dict[str, Any], 
+                                 sizing_info: Dict[str, Any],
+                                 target_flow: float,
+                                 target_head: float) -> float:
+        """Calculate comprehensive score for a pump solution
+        
+        Returns total score (0-100) based on:
+        - BEP proximity (35 points)
+        - Efficiency (30 points)
+        - Head margin (15 points)
+        - NPSH margin (15 points)
+        - Speed/trim penalties (negative points)
+        """
+        score = 0.0
+        
+        # 1. BEP Proximity Score (35 points max)
+        bep_analysis = self.calculate_bep_distance(target_flow, target_head)
+        if bep_analysis.get('bep_available'):
+            flow_ratio = bep_analysis.get('flow_ratio', 1.0)
+            if 0.7 <= flow_ratio <= 1.3:
+                if 1.05 <= flow_ratio <= 1.15:
+                    bep_score = 35  # Optimal zone
+                elif 0.95 <= flow_ratio <= 1.05:
+                    bep_score = 30  # Good zone
+                elif 0.85 <= flow_ratio <= 1.25:
+                    bep_score = 25  # Acceptable zone
+                else:
+                    bep_score = 15  # Marginal zone
+            else:
+                bep_score = 0  # Outside acceptable range
+        else:
+            bep_score = 17.5  # Default if no BEP data
+        
+        score += bep_score
+        
+        # 2. Efficiency Score (30 points max)
+        efficiency = performance.get('efficiency_pct', 0)
+        if efficiency >= 80:
+            eff_score = 30
+        elif efficiency >= 70:
+            eff_score = 25
+        elif efficiency >= 60:
+            eff_score = 20
+        elif efficiency >= 50:
+            eff_score = 15
+        else:
+            eff_score = 10
+        
+        score += eff_score
+        
+        # 3. Head Margin Score (15 points max)
+        head_margin = performance.get('head_m', 0) - target_head
+        head_margin_pct = (head_margin / target_head) * 100 if target_head > 0 else 0
+        
+        if 2 <= head_margin_pct <= 8:
+            margin_score = 15  # Optimal margin
+        elif 0 <= head_margin_pct < 2:
+            margin_score = 10  # Minimal margin
+        elif 8 < head_margin_pct <= 15:
+            margin_score = 12  # Acceptable margin
+        else:
+            margin_score = 5  # Excessive margin
+        
+        score += margin_score
+        
+        # 4. NPSH Score (15 points max)
+        npshr = performance.get('npshr_m', 0)
+        if npshr > 0:
+            if npshr <= 2.0:
+                npsh_score = 15
+            elif npshr <= 4.0:
+                npsh_score = 12
+            elif npshr <= 6.0:
+                npsh_score = 9
+            elif npshr <= 8.0:
+                npsh_score = 6
+            else:
+                npsh_score = 3
+        else:
+            npsh_score = 7.5  # Default if no NPSH data
+        
+        score += npsh_score
+        
+        # 5. Apply penalties for modifications
+        # Speed variation penalty (up to -15 points)
+        if sizing_info.get('vfd_required', False):
+            speed_var_pct = abs(sizing_info.get('speed_variation_pct', 0))
+            speed_penalty = min(15, 1.5 * speed_var_pct)
+            score -= speed_penalty
+        
+        # Impeller trimming penalty (up to -10 points)
+        trim_percent = sizing_info.get('trim_percent', 100)
+        if trim_percent < 100:
+            trim_penalty = 0.5 * (100 - trim_percent)
+            score -= trim_penalty
+        
+        # Ensure score doesn't go negative
+        return max(0, score)
+
     def get_performance_at_duty(self, flow_m3hr: float,
                                 head_m: float) -> Optional[Dict[str, Any]]:
-        """Get performance characteristics at specific duty point using requirement-driven sizing"""
-
+        """Get performance characteristics at specific duty point using Best Fit approach
+        
+        PHASE 2 IMPLEMENTATION: Evaluates ALL possible methods and returns the one with highest score
+        """
         from .impeller_scaling import get_impeller_scaling_engine
         scaling_engine = get_impeller_scaling_engine()
-
-        # IMPROVED FLOW: Try all sizing methods first, validate later
-        # This prevents premature rejection of pumps that could work with adjustments
         
-        # Method 1: Try impeller trimming first (most common and precise)
+        # Initialize list to store all possible solutions
+        possible_solutions = []
+        
+        # Method 1: Try impeller trimming (most common and precise)
         optimal_sizing = scaling_engine.find_optimal_sizing(
             self.curves, flow_m3hr, head_m)
-
-        # FIXED LOGIC: Always prioritize impeller trimming over speed variation
+        
         if optimal_sizing:
             # Validate that trimming solution meets physical constraints
             if self._validate_physical_capability(flow_m3hr, head_m):
-                # Return properly sized pump performance (impeller trimming - PREFERRED METHOD)
                 performance = optimal_sizing['performance']
                 sizing = optimal_sizing['sizing']
                 curve = optimal_sizing['curve']
                 
-                logger.info(f"Pump {self.pump_code}: Using impeller trimming - {sizing['base_diameter_mm']}mm → {sizing['required_diameter_mm']}mm ({sizing['trim_percent']:.1f}% trim)")
-
-                return {
+                # Calculate score for this solution
+                score = self._calculate_solution_score(performance, sizing, flow_m3hr, head_m)
+                
+                solution = {
                     'curve': curve,
                     'flow_m3hr': performance['flow_m3hr'],
                     'head_m': performance['head_m'],
@@ -523,7 +623,6 @@ class CatalogPump:
                     'npshr_m': performance['npshr_m'],
                     'impeller_diameter_mm': performance['impeller_diameter_mm'],
                     'test_speed_rpm': performance['test_speed_rpm'],
-                    # Additional sizing information
                     'sizing_info': {
                         'base_diameter_mm': sizing['base_diameter_mm'],
                         'required_diameter_mm': sizing['required_diameter_mm'],
@@ -531,16 +630,20 @@ class CatalogPump:
                         'meets_requirements': True,
                         'head_margin_m': performance['head_m'] - head_m,
                         'sizing_method': 'impeller_trimming'
-                    }
+                    },
+                    'total_score': score
                 }
-
-        # Method 2: Only use speed variation as fallback when impeller trimming fails
+                
+                possible_solutions.append(solution)
+                logger.debug(f"Pump {self.pump_code}: Impeller trimming solution - {sizing['base_diameter_mm']}mm → {sizing['required_diameter_mm']}mm ({sizing['trim_percent']:.1f}% trim), Score: {score:.1f}")
+        
+        # Method 2: Try speed variation
         pump_specs = {
             'test_speed_rpm': self.specifications.get('test_speed_rpm', 980),
             'max_speed_rpm': self.specifications.get('max_speed_rpm', 1150),
             'min_speed_rpm': self.specifications.get('min_speed_rpm', 700)
         }
-
+        
         # Try speed variation on each curve
         for curve in self.curves:
             speed_result = scaling_engine.calculate_speed_variation(
@@ -548,11 +651,19 @@ class CatalogPump:
             if speed_result and speed_result['meets_requirements']:
                 # Validate speed variation is within engineering limits
                 if self._validate_speed_variation_limits(speed_result, curve):
-                    # Final physical capability check for speed variation solution
+                    # Final physical capability check
                     if self._validate_physical_capability(flow_m3hr, head_m):
-                        logger.info(f"Pump {self.pump_code}: Using speed variation as fallback - {speed_result['test_speed_rpm']}→{speed_result['required_speed_rpm']} RPM ({speed_result['speed_variation_pct']:.1f}% variation)")
+                        # Calculate score for this solution
+                        sizing_info = {
+                            'base_diameter_mm': speed_result['impeller_diameter_mm'],
+                            'required_diameter_mm': speed_result['impeller_diameter_mm'],
+                            'trim_percent': 100.0,
+                            'speed_variation_pct': speed_result['speed_variation_pct'],
+                            'vfd_required': True
+                        }
+                        score = self._calculate_solution_score(speed_result, sizing_info, flow_m3hr, head_m)
                         
-                        return {
+                        solution = {
                             'curve': curve,
                             'flow_m3hr': speed_result['flow_m3hr'],
                             'head_m': speed_result['head_m'],
@@ -571,11 +682,56 @@ class CatalogPump:
                                 'speed_variation_pct': speed_result['speed_variation_pct'],
                                 'vfd_required': True,
                                 'sizing_method': 'speed_variation'
-                            }
+                            },
+                            'total_score': score
                         }
-
-        # If we reach here, neither method worked
-        return None
+                        
+                        possible_solutions.append(solution)
+                        logger.debug(f"Pump {self.pump_code}: Speed variation solution - {speed_result['test_speed_rpm']}→{speed_result['required_speed_rpm']} RPM ({speed_result['speed_variation_pct']:.1f}% variation), Score: {score:.1f}")
+        
+        # Method 3: Try direct interpolation (if within existing curves)
+        interpolated = self._get_performance_interpolated(flow_m3hr, head_m)
+        if interpolated and interpolated['head_m'] >= head_m * 0.98:  # Allow 2% tolerance
+            # Calculate score for interpolated solution
+            sizing_info = {
+                'base_diameter_mm': interpolated['impeller_diameter_mm'],
+                'required_diameter_mm': interpolated['impeller_diameter_mm'],
+                'trim_percent': 100.0,
+                'speed_variation_pct': 0.0,
+                'vfd_required': False
+            }
+            score = self._calculate_solution_score(interpolated, sizing_info, flow_m3hr, head_m)
+            
+            solution = {
+                **interpolated,
+                'sizing_info': {
+                    'base_diameter_mm': interpolated['impeller_diameter_mm'],
+                    'required_diameter_mm': interpolated['impeller_diameter_mm'],
+                    'trim_percent': 100.0,
+                    'meets_requirements': True,
+                    'head_margin_m': interpolated['head_m'] - head_m,
+                    'sizing_method': 'direct_interpolation'
+                },
+                'total_score': score
+            }
+            
+            possible_solutions.append(solution)
+            logger.debug(f"Pump {self.pump_code}: Direct interpolation solution - Score: {score:.1f}")
+        
+        # Check if we have any valid solutions
+        if not possible_solutions:
+            logger.debug(f"Pump {self.pump_code}: No valid solutions found")
+            return None
+        
+        # Return the solution with the highest score
+        best_solution = max(possible_solutions, key=lambda x: x['total_score'])
+        
+        # Remove the total_score from the return value (not needed in output)
+        best_score = best_solution.pop('total_score')
+        
+        logger.info(f"Pump {self.pump_code}: Selected best solution - {best_solution['sizing_info']['sizing_method']} with score {best_score:.1f}")
+        
+        return best_solution
 
         # Fallback to old method if no sizing possible
         return self._get_performance_interpolated(flow_m3hr, head_m)
@@ -844,7 +1000,45 @@ class CatalogEngine:
         excluded_count = 0
         feasible_count = 0
 
-        for pump in self.pumps:
+        # PHASE 3 IMPLEMENTATION: BEP-centric pre-sorting
+        # Sort pumps by proximity to BEP before evaluation
+        pumps_to_evaluate = list(self.pumps)  # Create a copy of the pump list
+        
+        # Pre-sort by BEP proximity (most likely candidates first)
+        def bep_proximity_key(pump):
+            """Calculate BEP proximity for sorting"""
+            try:
+                # Get nominal BEP flow from specifications
+                bep_flow = pump.specifications.get('q_bep', 0)
+                if bep_flow <= 0:
+                    # If no BEP data, estimate from curves
+                    if pump.curves:
+                        # Use middle of flow range as estimate
+                        all_flows = []
+                        for curve in pump.curves:
+                            flows = [p['flow_m3hr'] for p in curve.get('performance_points', [])]
+                            if flows:
+                                all_flows.extend(flows)
+                        if all_flows:
+                            bep_flow = (min(all_flows) + max(all_flows)) / 2
+                
+                if bep_flow > 0:
+                    # Return absolute difference between pump BEP and required flow
+                    return abs(bep_flow - flow_m3hr)
+                else:
+                    # No BEP data - put at end of list
+                    return float('inf')
+            except Exception:
+                # Error calculating BEP - put at end of list
+                return float('inf')
+        
+        # Sort pumps by BEP proximity (closest BEP to duty point first)
+        pumps_to_evaluate.sort(key=bep_proximity_key)
+        
+        logger.info(f"Catalog Engine: Pre-sorted {len(pumps_to_evaluate)} pumps by BEP proximity")
+        
+        # Now evaluate pumps in BEP-optimized order
+        for pump in pumps_to_evaluate:
             # Create evaluation object for this pump
             evaluation = PumpEvaluation(pump_code=pump.pump_code)
             
