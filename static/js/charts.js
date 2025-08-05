@@ -1034,19 +1034,56 @@ class PumpChartsManager {
                         npshr_data: curve.npshr_data
                     });
                     
+                    // Generate smooth mother curve using cubic spline interpolation
+                    const minFlow = Math.min(...curve.flow_data);
+                    const maxFlow = Math.max(...curve.flow_data);
+                    const smoothedFlowData = [];
+                    const smoothedNpshData = [];
+                    
+                    // Create 100 points for very smooth curve
+                    for (let i = 0; i <= 100; i++) {
+                        const flow = minFlow + (maxFlow - minFlow) * i / 100;
+                        smoothedFlowData.push(flow);
+                        
+                        // Use cubic spline interpolation for smooth curves
+                        const npsh = this.cubicSplineInterpolate(curve.flow_data, curve.npshr_data, flow);
+                        smoothedNpshData.push(npsh);
+                    }
+                    
+                    // Add smooth mother curve
+                    traces.push({
+                        x: smoothedFlowData,
+                        y: smoothedNpshData,
+                        type: 'scatter',
+                        mode: 'lines',
+                        name: impellerName,
+                        line: {
+                            color: curve.is_selected ? config.color : this.getAlternateColor(index),
+                            width: curve.is_selected ? 3 : 2,
+                            shape: 'spline', // Use spline for even smoother rendering
+                            smoothing: 1.3 // Add smoothing parameter
+                        },
+                        hovertemplate: '<b>%{fullData.name}</b><br>Flow: %{x:.1f} m³/hr<br>NPSHr: %{y:.2f} m<extra></extra>'
+                    });
+                    
+                    // Add original test data points as small markers
                     traces.push({
                         x: curve.flow_data,
                         y: curve.npshr_data,
                         type: 'scatter',
-                        mode: 'lines+markers',
-                        name: impellerName,
-                        line: {
-                            color: curve.is_selected ? config.color : this.getAlternateColor(index),
-                            width: curve.is_selected ? 3 : 2
-                        },
+                        mode: 'markers',
+                        name: 'Test Data',
                         marker: {
-                            size: curve.is_selected ? 2 : 1.5
-                        }
+                            color: curve.is_selected ? config.color : this.getAlternateColor(index),
+                            size: 4,
+                            symbol: 'circle',
+                            line: {
+                                color: 'white',
+                                width: 1
+                            }
+                        },
+                        showlegend: false,
+                        hovertemplate: '<b>Test Point</b><br>Flow: %{x:.1f} m³/hr<br>NPSHr: %{y:.2f} m<extra></extra>'
                     });
                 }
             });
@@ -1345,6 +1382,49 @@ class PumpChartsManager {
     getAlternateColor(index) {
         const colors = ['#00695c', '#1976d2', '#7b1fa2', '#f57c00', '#5d4037'];
         return colors[index % colors.length];
+    }
+    
+    // Cubic spline interpolation for smooth curves
+    cubicSplineInterpolate(xData, yData, x) {
+        const n = xData.length;
+        if (n < 2) return yData[0];
+        
+        // Find the interval
+        let i = 0;
+        for (let j = 1; j < n; j++) {
+            if (x <= xData[j]) {
+                i = j - 1;
+                break;
+            }
+        }
+        if (i === 0 && x > xData[n - 1]) {
+            i = n - 2;
+        }
+        
+        // Use natural cubic spline approach
+        const h = xData[i + 1] - xData[i];
+        const t = (x - xData[i]) / h;
+        
+        // Estimate derivatives using finite differences
+        let d0, d1;
+        if (i === 0) {
+            d0 = (yData[1] - yData[0]) / (xData[1] - xData[0]);
+            d1 = (yData[2] - yData[0]) / (xData[2] - xData[0]);
+        } else if (i === n - 2) {
+            d0 = (yData[n - 1] - yData[n - 3]) / (xData[n - 1] - xData[n - 3]);
+            d1 = (yData[n - 1] - yData[n - 2]) / (xData[n - 1] - xData[n - 2]);
+        } else {
+            d0 = (yData[i + 1] - yData[i - 1]) / (xData[i + 1] - xData[i - 1]);
+            d1 = (yData[i + 2] - yData[i]) / (xData[i + 2] - xData[i]);
+        }
+        
+        // Hermite cubic interpolation
+        const h00 = 2 * t * t * t - 3 * t * t + 1;
+        const h10 = t * t * t - 2 * t * t + t;
+        const h01 = -2 * t * t * t + 3 * t * t;
+        const h11 = t * t * t - t * t;
+        
+        return h00 * yData[i] + h10 * h * d0 + h01 * yData[i + 1] + h11 * h * d1;
     }
 
     removeLoadingSpinner(containerId) {
