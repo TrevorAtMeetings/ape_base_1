@@ -123,6 +123,113 @@
             align-items: start;
         }
         
+        /* Advanced Filter Panel Styles */
+        .filter-panel {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 24px 0;
+            border: 1px solid #e0e0e0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+        
+        .filter-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            cursor: pointer;
+        }
+        
+        .filter-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #1976d2;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .filter-toggle {
+            transition: transform 0.3s ease;
+        }
+        
+        .filter-toggle.active {
+            transform: rotate(180deg);
+        }
+        
+        .filter-content {
+            display: none;
+        }
+        
+        .filter-content.active {
+            display: block;
+        }
+        
+        .filter-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        
+        .filter-group {
+            background: white;
+            border-radius: 8px;
+            padding: 16px;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .filter-label {
+            font-weight: 500;
+            color: #424242;
+            margin-bottom: 12px;
+            font-size: 0.95rem;
+        }
+        
+        .range-slider-container {
+            margin: 16px 0;
+        }
+        
+        .range-values {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 8px;
+            font-size: 0.85rem;
+            color: #666;
+        }
+        
+        .filter-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+            justify-content: flex-end;
+        }
+        
+        .filter-badge {
+            background: #1976d2;
+            color: white;
+            font-size: 0.8rem;
+            padding: 2px 8px;
+            border-radius: 12px;
+            margin-left: 8px;
+        }
+        
+        .no-results {
+            text-align: center;
+            padding: 48px 24px;
+            color: #666;
+        }
+        
+        .no-results-icon {
+            font-size: 64px;
+            color: #ccc;
+            margin-bottom: 16px;
+        }
+        
+        .pump-card.filtered-out {
+            display: none;
+        }
+        
         .pump-card {
             background: white;
             border-radius: 20px;
@@ -1012,13 +1119,103 @@
         <!-- Section Divider -->
         <div class="section-divider"></div>
 
+        <!-- Advanced Filter Panel -->
+        <div class="filter-panel">
+            <div class="filter-header" onclick="toggleFilterPanel()">
+                <div class="filter-title">
+                    <i class="material-icons">filter_list</i>
+                    Advanced Filters
+                    <span class="filter-badge" id="activeFilterCount" style="display: none;">0</span>
+                </div>
+                <i class="material-icons filter-toggle" id="filterToggle">expand_more</i>
+            </div>
+            
+            <div class="filter-content" id="filterContent">
+                <div class="filter-grid">
+                    <!-- Efficiency Filter -->
+                    <div class="filter-group">
+                        <div class="filter-label">Efficiency Range (%)</div>
+                        <div class="range-slider-container">
+                            <p class="range-field">
+                                <input type="range" id="efficiencyMin" min="0" max="100" value="0" />
+                            </p>
+                            <p class="range-field">
+                                <input type="range" id="efficiencyMax" min="0" max="100" value="100" />
+                            </p>
+                            <div class="range-values">
+                                <span id="efficiencyMinValue">0%</span>
+                                <span id="efficiencyMaxValue">100%</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Power Consumption Filter -->
+                    <div class="filter-group">
+                        <div class="filter-label">Power Consumption (kW)</div>
+                        <div class="range-slider-container">
+                            <p class="range-field">
+                                <input type="range" id="powerMin" min="0" max="500" value="0" step="5" />
+                            </p>
+                            <p class="range-field">
+                                <input type="range" id="powerMax" min="0" max="500" value="500" step="5" />
+                            </p>
+                            <div class="range-values">
+                                <span id="powerMinValue">0 kW</span>
+                                <span id="powerMaxValue">500 kW</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Impeller Size Filter -->
+                    <div class="filter-group">
+                        <div class="filter-label">Impeller Diameter (mm)</div>
+                        <div class="range-slider-container">
+                            <p class="range-field">
+                                <input type="range" id="impellerMin" min="200" max="800" value="200" step="10" />
+                            </p>
+                            <p class="range-field">
+                                <input type="range" id="impellerMax" min="200" max="800" value="800" step="10" />
+                            </p>
+                            <div class="range-values">
+                                <span id="impellerMinValue">200 mm</span>
+                                <span id="impellerMaxValue">800 mm</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Overall Score Filter -->
+                    <div class="filter-group">
+                        <div class="filter-label">Overall Score</div>
+                        <div class="range-slider-container">
+                            <p class="range-field">
+                                <input type="range" id="scoreMin" min="0" max="100" value="0" />
+                            </p>
+                            <div class="range-values">
+                                <span>Minimum: </span>
+                                <span id="scoreMinValue">0/100</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="filter-actions">
+                    <button class="btn-flat waves-effect" onclick="resetFilters()">
+                        <i class="material-icons left">refresh</i>Reset
+                    </button>
+                    <button class="btn blue waves-effect waves-light" onclick="applyFilters()">
+                        <i class="material-icons left">check</i>Apply Filters
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <!-- Individual Pump Cards (Alternative View) -->
         <div class="section-header">
             <h2 class="section-title">🔧 Individual Pump Overview</h2>
             <p class="section-subtitle">Detailed cards view with performance metrics and direct actions for each pump option</p>
         </div>
 
-        <div class="pump-comparison-grid">
+        <div class="pump-comparison-grid" id="pumpComparisonGrid">
             {% for pump in pump_comparisons %}
             <div class="pump-card">
                 <div class="pump-header">
@@ -1482,6 +1679,154 @@
                     });
             }
         });
+
+        // Advanced Filter Functionality
+        let activeFilters = {
+            efficiency: { min: 0, max: 100 },
+            power: { min: 0, max: 500 },
+            impeller: { min: 200, max: 800 },
+            score: { min: 0 }
+        };
+
+        // Toggle filter panel
+        function toggleFilterPanel() {
+            const filterContent = document.getElementById('filterContent');
+            const filterToggle = document.getElementById('filterToggle');
+            
+            filterContent.classList.toggle('active');
+            filterToggle.classList.toggle('active');
+        }
+
+        // Update range value displays
+        document.querySelectorAll('input[type="range"]').forEach(input => {
+            input.addEventListener('input', function() {
+                const id = this.id;
+                const value = this.value;
+                
+                if (id.includes('efficiency')) {
+                    document.getElementById(id + 'Value').textContent = value + '%';
+                } else if (id.includes('power')) {
+                    document.getElementById(id + 'Value').textContent = value + ' kW';
+                } else if (id.includes('impeller')) {
+                    document.getElementById(id + 'Value').textContent = value + ' mm';
+                } else if (id.includes('score')) {
+                    document.getElementById(id + 'Value').textContent = value + '/100';
+                }
+            });
+        });
+
+        // Apply filters
+        function applyFilters() {
+            // Get filter values
+            activeFilters.efficiency.min = parseFloat(document.getElementById('efficiencyMin').value);
+            activeFilters.efficiency.max = parseFloat(document.getElementById('efficiencyMax').value);
+            activeFilters.power.min = parseFloat(document.getElementById('powerMin').value);
+            activeFilters.power.max = parseFloat(document.getElementById('powerMax').value);
+            activeFilters.impeller.min = parseFloat(document.getElementById('impellerMin').value);
+            activeFilters.impeller.max = parseFloat(document.getElementById('impellerMax').value);
+            activeFilters.score.min = parseFloat(document.getElementById('scoreMin').value);
+
+            // Get all pump cards
+            const pumpCards = document.querySelectorAll('.pump-card');
+            let visibleCount = 0;
+            let activeFilterCount = 0;
+
+            // Check which filters are active
+            if (activeFilters.efficiency.min > 0 || activeFilters.efficiency.max < 100) activeFilterCount++;
+            if (activeFilters.power.min > 0 || activeFilters.power.max < 500) activeFilterCount++;
+            if (activeFilters.impeller.min > 200 || activeFilters.impeller.max < 800) activeFilterCount++;
+            if (activeFilters.score.min > 0) activeFilterCount++;
+
+            // Apply filters to each pump card
+            pumpCards.forEach(card => {
+                // Extract values from card
+                const efficiency = parseFloat(card.querySelector('.metric-row:nth-child(1) .metric-value').textContent);
+                const power = parseFloat(card.querySelector('.metric-row:nth-child(2) .metric-value').textContent);
+                const impeller = parseFloat(card.querySelector('.metric-row:nth-child(4) .metric-value').textContent);
+                const score = parseFloat(card.querySelector('.pump-score').textContent);
+
+                // Check if pump meets all filter criteria
+                const meetsEfficiency = efficiency >= activeFilters.efficiency.min && efficiency <= activeFilters.efficiency.max;
+                const meetsPower = power >= activeFilters.power.min && power <= activeFilters.power.max;
+                const meetsImpeller = impeller >= activeFilters.impeller.min && impeller <= activeFilters.impeller.max;
+                const meetsScore = score >= activeFilters.score.min;
+
+                if (meetsEfficiency && meetsPower && meetsImpeller && meetsScore) {
+                    card.classList.remove('filtered-out');
+                    visibleCount++;
+                } else {
+                    card.classList.add('filtered-out');
+                }
+            });
+
+            // Update filter badge
+            const filterBadge = document.getElementById('activeFilterCount');
+            if (activeFilterCount > 0) {
+                filterBadge.textContent = activeFilterCount;
+                filterBadge.style.display = 'inline-block';
+            } else {
+                filterBadge.style.display = 'none';
+            }
+
+            // Show no results message if needed
+            const grid = document.getElementById('pumpComparisonGrid');
+            const existingNoResults = grid.querySelector('.no-results');
+            
+            if (visibleCount === 0) {
+                if (!existingNoResults) {
+                    const noResultsDiv = document.createElement('div');
+                    noResultsDiv.className = 'no-results';
+                    noResultsDiv.innerHTML = `
+                        <i class="material-icons no-results-icon">search_off</i>
+                        <h5>No pumps match your filter criteria</h5>
+                        <p>Try adjusting your filters or reset them to see all pumps.</p>
+                    `;
+                    grid.appendChild(noResultsDiv);
+                }
+            } else {
+                if (existingNoResults) {
+                    existingNoResults.remove();
+                }
+            }
+
+            // Show toast notification
+            M.toast({html: `Showing ${visibleCount} pump(s) matching your criteria`});
+        }
+
+        // Reset filters
+        function resetFilters() {
+            // Reset all range inputs
+            document.getElementById('efficiencyMin').value = 0;
+            document.getElementById('efficiencyMax').value = 100;
+            document.getElementById('powerMin').value = 0;
+            document.getElementById('powerMax').value = 500;
+            document.getElementById('impellerMin').value = 200;
+            document.getElementById('impellerMax').value = 800;
+            document.getElementById('scoreMin').value = 0;
+
+            // Update displays
+            document.getElementById('efficiencyMinValue').textContent = '0%';
+            document.getElementById('efficiencyMaxValue').textContent = '100%';
+            document.getElementById('powerMinValue').textContent = '0 kW';
+            document.getElementById('powerMaxValue').textContent = '500 kW';
+            document.getElementById('impellerMinValue').textContent = '200 mm';
+            document.getElementById('impellerMaxValue').textContent = '800 mm';
+            document.getElementById('scoreMinValue').textContent = '0/100';
+
+            // Show all pump cards
+            document.querySelectorAll('.pump-card').forEach(card => {
+                card.classList.remove('filtered-out');
+            });
+
+            // Remove no results message if exists
+            const noResults = document.querySelector('.no-results');
+            if (noResults) noResults.remove();
+
+            // Hide filter badge
+            document.getElementById('activeFilterCount').style.display = 'none';
+
+            M.toast({html: 'Filters reset - showing all pumps'});
+        }
     </script>
 </body>
 </html>
