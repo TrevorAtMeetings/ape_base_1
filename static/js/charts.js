@@ -1028,11 +1028,7 @@ class PumpChartsManager {
                         impellerName = "Impeller " + (index + 1);
                     }
 
-                    // Debug log to verify data
-                    console.log(`NPSHr Chart - Curve ${index + 1} (${impellerName}):`, {
-                        flow_data: curve.flow_data,
-                        npshr_data: curve.npshr_data
-                    });
+
                     
                     // Generate smooth mother curve using cubic spline interpolation
                     const minFlow = Math.min(...curve.flow_data);
@@ -1215,15 +1211,6 @@ class PumpChartsManager {
                 const range = dataMax - dataMin;
                 minNpsh = Math.max(0, dataMin - range * 0.05); // 5% padding below minimum, but not below 0
                 maxNpsh = dataMax + range * 0.05; // 5% padding above maximum
-                
-                // Debug log
-                console.log('NPSHr Chart Y-axis range calculation:', {
-                    allNpsh: allNpsh,
-                    dataMin: dataMin,
-                    dataMax: dataMax,
-                    calculatedMinNpsh: minNpsh,
-                    calculatedMaxNpsh: maxNpsh
-                });
             }
         }
 
@@ -1296,24 +1283,6 @@ class PumpChartsManager {
         };
 
         try {
-            // Debug: Log all traces before rendering
-            console.log('NPSHr Chart - All traces before rendering:', traces.map((trace, idx) => ({
-                traceIndex: idx,
-                name: trace.name,
-                xData: trace.x,
-                yData: trace.y,
-                yDataMax: Math.max(...(trace.y || [])),
-                yDataMin: Math.min(...(trace.y || []))
-            })));
-            
-            // Debug the layout being passed to Plotly
-            console.log('NPSHr Chart Layout Y-axis details:', {
-                calculatedMin: minNpsh,
-                calculatedMax: maxNpsh,
-                layoutYAxisRange: layout.yaxis.range,
-                layoutYAxisAutorange: layout.yaxis.autorange
-            });
-            
             Plotly.newPlot(containerId, traces, layout, plotConfig);
             console.log('Charts.js: NPSHr-flow chart rendered successfully');
             // Remove loading spinner after successful render
