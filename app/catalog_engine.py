@@ -870,16 +870,35 @@ class CatalogEngine:
                     near_miss_reasons.append(f"NPSHr {npshr:.1f}m is within 1m of NPSHa {npsha:.1f}m")
                 
                 if is_near_miss:
+                    # Generate actionable engineering guidance for near-miss pumps
+                    engineering_guidance = []
+                    
+                    if delivered_head >= head_m * 0.95:
+                        head_deficit = head_m - delivered_head
+                        engineering_guidance.append(f"Consider reducing system head by {head_deficit:.1f}m or accepting {head_deficit:.1f}m deficit")
+                        engineering_guidance.append("Alternative: Use booster pump for additional head")
+                        
+                    if 35 <= efficiency < 40:
+                        engineering_guidance.append("Consider VFD to optimize operating point")
+                        engineering_guidance.append("Alternative: Accept lower efficiency for backup/standby duty")
+                        
+                    if npshr and npshr > npsha and (npshr - npsha) <= 1.0:
+                        npsh_margin = npshr - npsha
+                        engineering_guidance.append(f"Increase NPSHa by {npsh_margin:.1f}m through suction tank elevation")
+                        engineering_guidance.append("Alternative: Add suction booster pump")
+                    
                     near_miss_pumps.append({
                         'pump': pump,
                         'performance': performance,
                         'evaluation': evaluation,
                         'near_miss_reasons': near_miss_reasons,
+                        'engineering_guidance': engineering_guidance,
                         'pump_code': pump.pump_code,
                         'efficiency_at_duty': efficiency,
                         'head_at_duty': delivered_head,
                         'head_deficit': max(0, head_m - delivered_head),
-                        'head_deficit_pct': max(0, (head_m - delivered_head) / head_m * 100) if head_m > 0 else 0
+                        'head_deficit_pct': max(0, (head_m - delivered_head) / head_m * 100) if head_m > 0 else 0,
+                        'right_of_bep_preference': self._assess_right_of_bep_potential(pump, flow_m3hr)
                     })
                 
                 logger.debug(f"Pump {pump.pump_code} excluded: {evaluation.get_exclusion_summary()}")
@@ -1183,11 +1202,14 @@ class CatalogEngine:
         # Lower head deficit percentage = closer to meeting requirements
         near_miss_pumps.sort(key=lambda x: x['head_deficit_pct'])
         
-        # Log near-miss summary
+        # Enhanced near-miss summary with engineering guidance
         if near_miss_pumps:
             logger.info(f"Found {len(near_miss_pumps)} near-miss pumps that just missed selection criteria")
-            for i, nm in enumerate(near_miss_pumps[:3]):
-                logger.info(f"  Near-miss #{i+1}: {nm['pump_code']} - {', '.join(nm['near_miss_reasons'])}")
+            for i, near_miss in enumerate(near_miss_pumps[:3]):  # Log top 3 near-miss pumps
+                logger.info(f"  Near-miss #{i+1}: {near_miss['pump_code']} - {', '.join(near_miss['near_miss_reasons'])}")
+                if near_miss.get('engineering_guidance'):
+                    for guidance in near_miss['engineering_guidance'][:2]:  # Show top 2 suggestions
+                        logger.info(f"    → {guidance}")
         
         # Return exclusion data if requested
         if return_exclusions:
@@ -1202,6 +1224,42 @@ class CatalogEngine:
             }
         
         return formatted_results
+
+    def _assess_right_of_bep_potential(self, pump: 'CatalogPump', flow_m3hr: float) -> Dict[str, Any]:
+        """Assess potential for right-of-BEP operation (105-115% sweet spot)"""
+        try:
+            bep_analysis = pump.calculate_bep_distance(flow_m3hr, flow_m3hr)  # Dummy head for BEP calc
+            if not bep_analysis.get('bep_available'):
+                return {'potential': 'unknown', 'guidance': 'BEP data not available'}
+            
+            bep_flow = bep_analysis.get('bep_flow', 0)
+            if bep_flow <= 0:
+                return {'potential': 'unknown', 'guidance': 'Invalid BEP flow'}
+            
+            flow_ratio = flow_m3hr / bep_flow
+            
+            if 1.05 <= flow_ratio <= 1.15:
+                return {
+                    'potential': 'optimal',
+                    'flow_ratio': flow_ratio,
+                    'guidance': f'Operating in ideal right-of-BEP zone ({flow_ratio:.2f}x BEP)'
+                }
+            elif flow_ratio < 1.05:
+                bep_shortfall = (1.05 - flow_ratio) * bep_flow
+                return {
+                    'potential': 'increase_flow',
+                    'flow_ratio': flow_ratio,
+                    'guidance': f'Increase flow by {bep_shortfall:.1f} m³/hr to reach right-of-BEP zone'
+                }
+            else:
+                return {
+                    'potential': 'acceptable',
+                    'flow_ratio': flow_ratio,
+                    'guidance': f'Operating right of BEP ({flow_ratio:.2f}x) - acceptable for most applications'
+                }
+        except Exception as e:
+            logger.debug(f"Error assessing right-of-BEP potential: {e}")
+            return {'potential': 'error', 'guidance': 'Unable to assess BEP positioning'}
 
     def _validate_physical_feasibility(self, pump: 'CatalogPump', 
                                      performance: Dict[str, Any],
