@@ -90,25 +90,26 @@ The process involves capturing user input, loading pump data, evaluating pumps a
 - **After**: "Using impeller trimming - 560.0mm → 550.0mm (98.2% trim)"
 - **Evidence**: System now properly calculates when smaller impellers are optimal
 
-**REMAINING IMPROVEMENTS:**
-1. **Comprehensive Curve Evaluation**:
-   - Evaluate ALL impeller curves before exclusion
-   - Implement proper exclusion categorization system
-   - Add interpolation between curves for intermediate trims
+**🎯 PHASE 2.3 OBJECTIVES (NEXT BUILD):**
 
-2. **Engineering Guidance Features**:
-   - Near-miss analysis ("5% more head enables 6 pumps")
-   - Right-of-BEP preference indicators (105-115% sweet spot)
-   - Actionable alternatives when no exact match
+**Primary Goals:**
+1. **Extend Extrapolation Limits**: 10% → 15-20% for safe engineering operation
+2. **Cross-Curve Optimization**: Smart curve selection before trimming analysis
+3. **Comprehensive Evaluation**: Try ALL methods before exclusion
+4. **Enhanced Logging**: Visibility into evaluation decisions and near-misses
 
-#### **Phase 2.3: Comprehensive Curve Evaluation (NEXT PRIORITY)**
-**Objective:** Evaluate ALL curves before pump exclusion to eliminate false negatives
+**Technical Implementation:**
+- Modify `can_meet_requirements()` extrapolation bounds
+- Add smart curve ranking based on duty point proximity
+- Implement fallback evaluation chain: direct → best-curve-trim → multi-curve-speed → combined
+- Add detailed exclusion reasons with engineering guidance
 
-**ACTIVE DEVELOPMENT:**
-- Fix premature pump exclusions (293 pumps incorrectly excluded)
-- Implement proper exclusion categorization system  
-- Add interpolation between curves for intermediate trims
-- Allow safe extrapolation (±10%) beyond tested ranges
+**Expected Results:**
+- Reduce false exclusions from 293 to <50 pumps
+- Provide actionable alternatives for excluded pumps
+- Maintain engineering safety while maximizing selection options
+
+
 
 #### **Phase 2.4: Improved Results Visualization (PLANNED)**
 **Objective:** Enhanced transparency and user guidance in pump selection results
