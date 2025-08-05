@@ -494,6 +494,14 @@ class AdminConfigUX {
 let adminUX;
 document.addEventListener('DOMContentLoaded', function() {
     adminUX = new AdminConfigUX();
+    
+    // Ensure loading state is cleared on admin page
+    setTimeout(() => {
+        if (adminUX && adminUX.loadingOverlay) {
+            adminUX.showLoading(false);
+            console.log('Admin config: Loading state cleared');
+        }
+    }, 1000);
 });
 
 function createNewProfile() {
