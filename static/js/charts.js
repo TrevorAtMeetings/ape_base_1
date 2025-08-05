@@ -99,15 +99,25 @@ class PumpChartsManager {
                         impellerName = "Impeller " + (index + 1);
                     }
 
-                    // Add speed scaling information to selected curve if applied
+                    // Apply speed scaling to selected curve if applied
+                    let flowData = [...curve.flow_data];
+                    let headData = [...curve.head_data];
+                    
                     if (this.currentChartData.speed_scaling && this.currentChartData.speed_scaling.applied && curve.is_selected) {
+                        const speedRatio = this.currentChartData.speed_scaling.speed_ratio;
                         const requiredSpeed = this.currentChartData.speed_scaling.required_speed_rpm;
-                        impellerName += ` (${requiredSpeed} RPM)`;
+                        
+                        // Apply affinity laws: Flow ∝ speed, Head ∝ speed²
+                        flowData = flowData.map(flow => flow * speedRatio);
+                        headData = headData.map(head => head * (speedRatio * speedRatio));
+                        
+                        impellerName += ` (${Math.round(requiredSpeed)} RPM)`;
+                        console.log(`Charts.js: Applied speed scaling to selected curve - ratio: ${speedRatio.toFixed(3)}`);
                     }
 
                     traces.push({
-                        x: curve.flow_data,
-                        y: curve.head_data,
+                        x: flowData,
+                        y: headData,
                         type: 'scatter',
                         mode: 'lines+markers',
                         name: impellerName,
@@ -353,30 +363,30 @@ class PumpChartsManager {
 
                     if (sizingMethod === 'impeller_trimming' && baseDiameter && requiredDiameter && baseDiameter !== requiredDiameter) {
                         // Impeller trimming is applied
-                        impellerInfo = `${baseDiameter.toFixed(0)}mm (Base) → ${requiredDiameter.toFixed(0)}mm (${trimPercent.toFixed(0)}% Trim)`;
+                        impellerInfo = baseDiameter.toFixed(0) + "mm (Base) → " + requiredDiameter.toFixed(0) + "mm (" + trimPercent.toFixed(0) + "% Trim)";
                     } else if (sizingMethod === 'speed_variation') {
                         // Speed variation with effective impeller sizing
                         const speedInfo = this.currentChartData.speed_scaling;
                         const effectiveDiameter = sizingInfo.effective_diameter_mm || actualDiameter;
 
                         if (speedInfo && speedInfo.applied && Math.abs(speedInfo.speed_ratio - 1.0) > 0.01) {
-                            impellerInfo = `${actualDiameter.toFixed(0)}mm @ ${speedInfo.required_speed_rpm.toFixed(0)} RPM`;
+                            impellerInfo = actualDiameter.toFixed(0) + "mm @ " + speedInfo.required_speed_rpm.toFixed(0) + " RPM";
                         } else {
-                            impellerInfo = `${actualDiameter.toFixed(0)}mm Diameter`;
+                            impellerInfo = actualDiameter.toFixed(0) + "mm Diameter";
                         }
                     } else {
                         // Standard operation
-                        impellerInfo = `${actualDiameter.toFixed(0)}mm Diameter`;
+                        impellerInfo = actualDiameter.toFixed(0) + "mm Diameter";
                     }
                 } else {
                     // No detailed sizing info, but we have the operating point diameter
                     const speedInfo = this.currentChartData.speed_scaling;
                     if (speedInfo && speedInfo.applied && Math.abs(speedInfo.speed_ratio - 1.0) > 0.01) {
                         // Speed scaling - show actual impeller and operating speed
-                        impellerInfo = `${actualDiameter.toFixed(0)}mm @ ${speedInfo.required_speed_rpm.toFixed(0)} RPM`;
+                        impellerInfo = actualDiameter.toFixed(0) + "mm @ " + speedInfo.required_speed_rpm.toFixed(0) + " RPM";
                     } else {
                         // Standard operation
-                        impellerInfo = `${actualDiameter.toFixed(0)}mm Diameter`;
+                        impellerInfo = actualDiameter.toFixed(0) + "mm Diameter";
                     }
                 }
             } else {
@@ -392,9 +402,9 @@ class PumpChartsManager {
                 if (selectedCurve && selectedCurve.impeller_diameter_mm) {
                     const speedInfo = this.currentChartData.speed_scaling;
                     if (speedInfo && speedInfo.applied && Math.abs(speedInfo.speed_ratio - 1.0) > 0.01) {
-                        impellerInfo = `${selectedCurve.impeller_diameter_mm.toFixed(0)}mm @ ${speedInfo.required_speed_rpm.toFixed(0)} RPM (from curve data)`;
+                        impellerInfo = selectedCurve.impeller_diameter_mm.toFixed(0) + "mm @ " + speedInfo.required_speed_rpm.toFixed(0) + " RPM (from curve data)";
                     } else {
-                        impellerInfo = `${selectedCurve.impeller_diameter_mm.toFixed(0)}mm Diameter (from curve data)`;
+                        impellerInfo = selectedCurve.impeller_diameter_mm.toFixed(0) + "mm Diameter (from curve data)";
                     }
                 }
             }
@@ -539,9 +549,25 @@ class PumpChartsManager {
                         impellerName = "Impeller " + (index + 1);
                     }
 
+                    // Apply speed scaling to selected curve if applied
+                    let flowData = [...curve.flow_data];
+                    let efficiencyData = [...curve.efficiency_data];
+                    
+                    if (this.currentChartData.speed_scaling && this.currentChartData.speed_scaling.applied && curve.is_selected) {
+                        const speedRatio = this.currentChartData.speed_scaling.speed_ratio;
+                        const requiredSpeed = this.currentChartData.speed_scaling.required_speed_rpm;
+                        
+                        // Apply affinity laws: Flow ∝ speed, Efficiency stays constant
+                        flowData = flowData.map(flow => flow * speedRatio);
+                        // Efficiency data remains unchanged as efficiency is independent of speed
+                        
+                        impellerName += ` (${Math.round(requiredSpeed)} RPM)`;
+                        console.log(`Charts.js: Applied speed scaling to efficiency curve - ratio: ${speedRatio.toFixed(3)}`);
+                    }
+
                     traces.push({
-                        x: curve.flow_data,
-                        y: curve.efficiency_data,
+                        x: flowData,
+                        y: efficiencyData,
                         type: 'scatter',
                         mode: 'lines+markers',
                         name: impellerName,
@@ -784,9 +810,25 @@ class PumpChartsManager {
                         impellerName = "Impeller " + (index + 1);
                     }
 
+                    // Apply speed scaling to selected curve if applied
+                    let flowData = [...curve.flow_data];
+                    let powerData = [...curve.power_data];
+                    
+                    if (this.currentChartData.speed_scaling && this.currentChartData.speed_scaling.applied && curve.is_selected) {
+                        const speedRatio = this.currentChartData.speed_scaling.speed_ratio;
+                        const requiredSpeed = this.currentChartData.speed_scaling.required_speed_rpm;
+                        
+                        // Apply affinity laws: Flow ∝ speed, Power ∝ speed³
+                        flowData = flowData.map(flow => flow * speedRatio);
+                        powerData = powerData.map(power => power * (speedRatio * speedRatio * speedRatio));
+                        
+                        impellerName += ` (${Math.round(requiredSpeed)} RPM)`;
+                        console.log(`Charts.js: Applied speed scaling to power curve - ratio: ${speedRatio.toFixed(3)}`);
+                    }
+
                     traces.push({
-                        x: curve.flow_data,
-                        y: curve.power_data,
+                        x: flowData,
+                        y: powerData,
                         type: 'scatter',
                         mode: 'lines+markers',
                         name: impellerName,
@@ -1028,11 +1070,25 @@ class PumpChartsManager {
                         impellerName = "Impeller " + (index + 1);
                     }
 
-
+                    // Apply speed scaling to selected curve if applied
+                    let flowData = [...curve.flow_data];
+                    let npshData = [...curve.npshr_data];
+                    
+                    if (this.currentChartData.speed_scaling && this.currentChartData.speed_scaling.applied && curve.is_selected) {
+                        const speedRatio = this.currentChartData.speed_scaling.speed_ratio;
+                        const requiredSpeed = this.currentChartData.speed_scaling.required_speed_rpm;
+                        
+                        // Apply affinity laws: Flow ∝ speed, NPSH ∝ speed²
+                        flowData = flowData.map(flow => flow * speedRatio);
+                        npshData = npshData.map(npsh => npsh * (speedRatio * speedRatio));
+                        
+                        impellerName += ` (${Math.round(requiredSpeed)} RPM)`;
+                        console.log(`Charts.js: Applied speed scaling to NPSH curve - ratio: ${speedRatio.toFixed(3)}`);
+                    }
                     
                     // Generate smooth mother curve using cubic spline interpolation
-                    const minFlow = Math.min(...curve.flow_data);
-                    const maxFlow = Math.max(...curve.flow_data);
+                    const minFlow = Math.min(...flowData);
+                    const maxFlow = Math.max(...flowData);
                     const smoothedFlowData = [];
                     const smoothedNpshData = [];
                     
@@ -1041,8 +1097,8 @@ class PumpChartsManager {
                         const flow = minFlow + (maxFlow - minFlow) * i / 100;
                         smoothedFlowData.push(flow);
                         
-                        // Use cubic spline interpolation for smooth curves
-                        const npsh = this.cubicSplineInterpolate(curve.flow_data, curve.npshr_data, flow);
+                        // Use cubic spline interpolation for smooth curves with speed-scaled data
+                        const npsh = this.cubicSplineInterpolate(flowData, npshData, flow);
                         smoothedNpshData.push(npsh);
                     }
                     
@@ -1062,10 +1118,10 @@ class PumpChartsManager {
                         hovertemplate: '<b>%{fullData.name}</b><br>Flow: %{x:.1f} m³/hr<br>NPSHr: %{y:.2f} m<extra></extra>'
                     });
                     
-                    // Add original test data points as small markers
+                    // Add original test data points as small markers (using speed-scaled data)
                     traces.push({
-                        x: curve.flow_data,
-                        y: curve.npshr_data,
+                        x: flowData,
+                        y: npshData,
                         type: 'scatter',
                         mode: 'markers',
                         name: 'Test Data',

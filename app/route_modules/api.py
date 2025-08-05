@@ -123,6 +123,12 @@ def get_chart_data(pump_code):
             },
             'curves': [],
             'operating_point': operating_point_data,
+            'speed_scaling': {
+                'applied': speed_scaling_applied,
+                'speed_ratio': actual_speed_ratio,
+                'required_speed_rpm': performance_result.get('sizing_info', {}).get('required_speed_rpm') if performance_result else None,
+                'test_speed_rpm': performance_result.get('sizing_info', {}).get('test_speed_rpm') if performance_result else None
+            } if speed_scaling_applied else None,
             'metadata': {
                 'flow_units': 'm³/hr',
                 'head_units': 'm',
