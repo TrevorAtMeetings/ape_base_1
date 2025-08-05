@@ -957,7 +957,127 @@
                 </div>
             </div>
 
-            <!-- 3. Performance Characteristics -->
+            <!-- 3. Best Efficiency Point (BEP) Analysis -->
+            <div class="card mb-4 pump-card">
+                <div class="card-header-professional" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white; padding: 24px; border: none; box-shadow: 0 2px 8px rgba(25, 118, 210, 0.2);">
+                    <h4 class="mb-0" style="font-weight: 500; font-size: 1.4rem; z-index: 1; position: relative;">
+                        <i class="fas fa-chart-area me-2"></i>3. Best Efficiency Point (BEP) Analysis
+                    </h4>
+                </div>
+                <div class="card-body" style="padding: 32px;">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="performance-metric">
+                                <strong>BEP Position:</strong>
+                                {% if selected_pump.qbep_percentage %}
+                                <div class="mt-2">
+                                    <span class="badge bg-primary ms-2" style="font-size: 1.1rem;">
+                                        {{ "%.1f"|format(selected_pump.qbep_percentage) }}% of QBEP
+                                    </span>
+                                </div>
+                                <small class="text-muted">Operating flow vs BEP flow</small>
+                                {% else %}
+                                <div class="mt-2">
+                                    <span class="badge bg-secondary ms-2">BEP Data N/A</span>
+                                </div>
+                                <small class="text-muted">BEP calculation unavailable</small>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="performance-metric">
+                                <strong>Operating Zone:</strong>
+                                <div class="mt-2">
+                                    <span class="badge bg-{{ selected_pump.bep_zone_color|default('secondary') }} ms-2">
+                                        {{ selected_pump.bep_zone_label|default('Unknown') }}
+                                    </span>
+                                </div>
+                                <small class="text-muted">Preferred range: 70-120% QBEP</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="performance-metric">
+                                <strong>Impeller Configuration:</strong>
+                                <div class="mt-2">
+                                    <span class="badge bg-info ms-2" style="font-size: 1.1rem;">
+                                        {{ selected_pump.operating_point.impeller_diameter_mm|default(selected_pump.selected_curve.impeller_diameter_mm)|round(0) }}mm
+                                    </span>
+                                    {% if selected_pump.operating_point.sizing_info %}
+                                        <span class="badge bg-secondary ms-1">
+                                            {{ selected_pump.operating_point.sizing_info.trim_percent|round(0) }}% trim
+                                        </span>
+                                    {% endif %}
+                                </div>
+                                <small class="text-muted">Selected impeller size</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="performance-metric">
+                                <strong>Efficiency Rating:</strong>
+                                <div class="mt-2">
+                                    {% if selected_pump.operating_point.efficiency_pct >= 80 %}
+                                    <span class="badge bg-success ms-2">Excellent ({{ selected_pump.operating_point.efficiency_pct|round(1) }}%)</span>
+                                    {% elif selected_pump.operating_point.efficiency_pct >= 70 %}
+                                    <span class="badge bg-info ms-2">Good ({{ selected_pump.operating_point.efficiency_pct|round(1) }}%)</span>
+                                    {% elif selected_pump.operating_point.efficiency_pct >= 60 %}
+                                    <span class="badge bg-warning ms-2">Acceptable ({{ selected_pump.operating_point.efficiency_pct|round(1) }}%)</span>
+                                    {% else %}
+                                    <span class="badge bg-danger ms-2">Poor ({{ selected_pump.operating_point.efficiency_pct|round(1) }}%)</span>
+                                    {% endif %}
+                                </div>
+                                <small class="text-muted">At operating point</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- BEP Operating Range Visual Indicator -->
+                    {% if selected_pump.qbep_percentage %}
+                    <div class="mt-4">
+                        <strong style="color: #1976d2;">BEP Operating Range Indicator:</strong>
+                        <div class="position-relative mt-2" style="height: 40px; background: #f5f5f5; border-radius: 20px; overflow: hidden;">
+                            <!-- Marginal zones -->
+                            <div class="position-absolute" style="left: 0; width: 20%; height: 100%; background: #ffcdd2;"></div>
+                            <div class="position-absolute" style="right: 0; width: 20%; height: 100%; background: #ffcdd2;"></div>
+                            
+                            <!-- Good zones -->
+                            <div class="position-absolute" style="left: 20%; width: 10%; height: 100%; background: #fff3e0;"></div>
+                            <div class="position-absolute" style="right: 20%; width: 10%; height: 100%; background: #fff3e0;"></div>
+                            
+                            <!-- Optimal zone -->
+                            <div class="position-absolute" style="left: 30%; width: 40%; height: 100%; background: #c8e6c9;"></div>
+                            
+                            <!-- Zone labels -->
+                            <div class="position-absolute w-100 h-100 d-flex align-items-center justify-content-between" style="padding: 0 10px; font-size: 0.75rem;">
+                                <span>0%</span>
+                                <span style="position: absolute; left: 20%;">70%</span>
+                                <span style="position: absolute; left: 30%;">90%</span>
+                                <span style="position: absolute; left: 70%;">110%</span>
+                                <span style="position: absolute; left: 80%;">120%</span>
+                                <span style="position: absolute; right: 10px;">150%</span>
+                            </div>
+                            
+                            <!-- Operating point marker -->
+                            {% set marker_position = selected_pump.marker_position if selected_pump.marker_position else 50 %}
+                            <div class="position-absolute" style="left: {{ marker_position }}%; top: -5px; transform: translateX(-50%);">
+                                <div style="width: 0; height: 0; border-left: 10px solid transparent; border-right: 10px solid transparent; border-top: 15px solid #1976d2;"></div>
+                                <div class="text-center" style="margin-top: 5px; font-weight: bold; color: #1976d2;">
+                                    {{ "%.0f"|format(selected_pump.qbep_percentage) }}%
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-center mt-2">
+                            <small class="text-muted">
+                                <span style="color: #c8e6c9;">■</span> Optimal (90-110%) &nbsp;
+                                <span style="color: #fff3e0;">■</span> Good (70-90%, 110-120%) &nbsp;
+                                <span style="color: #ffcdd2;">■</span> Marginal (<70%, >120%)
+                            </small>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- 4. Performance Characteristics -->
 
             <!-- Performance Charts Section -->
             <div class="card mb-4" style="border: 1px solid var(--md-outline-variant); border-radius: var(--md-border-radius-large); box-shadow: var(--md-shadow); overflow: hidden;">
@@ -965,7 +1085,7 @@
                     <div class="d-flex justify-content-between align-items-center">
                         <h4 class="mb-0" style="font-weight: 600;">
                             <i class="fas fa-chart-line me-2"></i>
-                            Interactive Performance Analysis
+                            4. Interactive Performance Analysis
                         </h4>
                         <div class="chart-controls">
                             <button class="btn btn-sm btn-outline-light me-2" onclick="toggleChartGrid()" title="Toggle Grid">
@@ -1101,135 +1221,13 @@
                             </div>
                         </div>
                     </div>
-
-                    <!-- Enhanced BEP Analysis Summary -->
-                    <div class="row mt-4">
-                        <div class="col-12">
-                            <div class="card" style="background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); border: 1px solid #1976d2; border-radius: 8px;">
-                                <div class="card-body">
-                                    <h6 class="card-title" style="color: #1976d2; font-weight: 600;">
-                                        <i class="fas fa-chart-area me-2"></i>Best Efficiency Point (BEP) Analysis
-                                    </h6>
-                                    <div class="row">
-                                        <div class="col-md-3">
-                                            <div class="performance-metric">
-                                                <strong>BEP Position:</strong>
-                                                {% if selected_pump.qbep_percentage %}
-                                                <div class="mt-2">
-                                                    <span class="badge bg-primary ms-2" style="font-size: 1.1rem;">
-                                                        {{ "%.1f"|format(selected_pump.qbep_percentage) }}% of QBEP
-                                                    </span>
-                                                </div>
-                                                <small class="text-muted">Operating flow vs BEP flow</small>
-                                                {% else %}
-                                                <div class="mt-2">
-                                                    <span class="badge bg-secondary ms-2">BEP Data N/A</span>
-                                                </div>
-                                                <small class="text-muted">BEP calculation unavailable</small>
-                                                {% endif %}
-                                            </div>
-                                        </div>
-                                        <div class="col-md-3">
-                                            <div class="performance-metric">
-                                                <strong>Operating Zone:</strong>
-                                                <div class="mt-2">
-                                                    <span class="badge bg-{{ selected_pump.bep_zone_color|default('secondary') }} ms-2">
-                                                        {{ selected_pump.bep_zone_label|default('Unknown') }}
-                                                    </span>
-                                                </div>
-                                                <small class="text-muted">Preferred range: 70-120% QBEP</small>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-3">
-                                            <div class="performance-metric">
-                                                <strong>Impeller Configuration:</strong>
-                                                <div class="mt-2">
-                                                    <span class="badge bg-info ms-2" style="font-size: 1.1rem;">
-                                                        {{ selected_pump.operating_point.impeller_diameter_mm|default(selected_pump.selected_curve.impeller_diameter_mm)|round(0) }}mm
-                                                    </span>
-                                                    {% if selected_pump.operating_point.sizing_info %}
-                                                        <span class="badge bg-secondary ms-1">
-                                                            {{ selected_pump.operating_point.sizing_info.trim_percent|round(0) }}% trim
-                                                        </span>
-                                                    {% endif %}
-                                                </div>
-                                                <small class="text-muted">Selected impeller size</small>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-3">
-                                            <div class="performance-metric">
-                                                <strong>Efficiency Rating:</strong>
-                                                <div class="mt-2">
-                                                    {% if selected_pump.operating_point.efficiency_pct >= 80 %}
-                                                    <span class="badge bg-success ms-2">Excellent ({{ selected_pump.operating_point.efficiency_pct|round(1) }}%)</span>
-                                                    {% elif selected_pump.operating_point.efficiency_pct >= 70 %}
-                                                    <span class="badge bg-info ms-2">Good ({{ selected_pump.operating_point.efficiency_pct|round(1) }}%)</span>
-                                                    {% elif selected_pump.operating_point.efficiency_pct >= 60 %}
-                                                    <span class="badge bg-warning ms-2">Acceptable ({{ selected_pump.operating_point.efficiency_pct|round(1) }}%)</span>
-                                                    {% else %}
-                                                    <span class="badge bg-danger ms-2">Poor ({{ selected_pump.operating_point.efficiency_pct|round(1) }}%)</span>
-                                                    {% endif %}
-                                                </div>
-                                                <small class="text-muted">At operating point</small>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    
-                                    <!-- BEP Operating Range Visual Indicator -->
-                                    {% if selected_pump.qbep_percentage %}
-                                    <div class="mt-4">
-                                        <strong style="color: #1976d2;">BEP Operating Range Indicator:</strong>
-                                        <div class="position-relative mt-2" style="height: 40px; background: #f5f5f5; border-radius: 20px; overflow: hidden;">
-                                            <!-- Marginal zones -->
-                                            <div class="position-absolute" style="left: 0; width: 20%; height: 100%; background: #ffcdd2;"></div>
-                                            <div class="position-absolute" style="right: 0; width: 20%; height: 100%; background: #ffcdd2;"></div>
-                                            
-                                            <!-- Good zones -->
-                                            <div class="position-absolute" style="left: 20%; width: 10%; height: 100%; background: #fff3e0;"></div>
-                                            <div class="position-absolute" style="right: 20%; width: 10%; height: 100%; background: #fff3e0;"></div>
-                                            
-                                            <!-- Optimal zone -->
-                                            <div class="position-absolute" style="left: 30%; width: 40%; height: 100%; background: #c8e6c9;"></div>
-                                            
-                                            <!-- Zone labels -->
-                                            <div class="position-absolute w-100 h-100 d-flex align-items-center justify-content-between" style="padding: 0 10px; font-size: 0.75rem;">
-                                                <span>0%</span>
-                                                <span style="position: absolute; left: 20%;">70%</span>
-                                                <span style="position: absolute; left: 30%;">90%</span>
-                                                <span style="position: absolute; left: 70%;">110%</span>
-                                                <span style="position: absolute; left: 80%;">120%</span>
-                                                <span style="position: absolute; right: 10px;">150%</span>
-                                            </div>
-                                            
-                                            <!-- Operating point marker -->
-                                            {% set marker_position = selected_pump.marker_position if selected_pump.marker_position else 50 %}
-                                            <div class="position-absolute" style="left: {{ marker_position }}%; top: -5px; transform: translateX(-50%);">
-                                                <div style="width: 0; height: 0; border-left: 10px solid transparent; border-right: 10px solid transparent; border-top: 15px solid #1976d2;"></div>
-                                                <div class="text-center" style="margin-top: 5px; font-weight: bold; color: #1976d2;">
-                                                    {{ "%.0f"|format(selected_pump.qbep_percentage) }}%
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="text-center mt-2">
-                                            <small class="text-muted">
-                                                <span style="color: #c8e6c9;">■</span> Optimal (90-110%) &nbsp;
-                                                <span style="color: #fff3e0;">■</span> Good (70-90%, 110-120%) &nbsp;
-                                                <span style="color: #ffcdd2;">■</span> Marginal (<70%, >120%)
-                                            </small>
-                                        </div>
-                                    </div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </div>
 
-            <!-- 4. Performance Analysis & Alignment with Requirements -->
+            <!-- 5. Performance Analysis & Alignment with Requirements -->
             <div class="card mb-4">
                 <div class="card-header" style="background: var(--md-primary); color: white;">
-                    <h4 class="mb-0" style="font-weight: 500; font-size: 1.25rem;">4. Performance Analysis & Alignment with Requirements</h4>
+                    <h4 class="mb-0" style="font-weight: 500; font-size: 1.25rem;">5. Performance Analysis & Alignment with Requirements</h4>
                 </div>
                 <div class="card-body" style="padding: 32px;">
                     <p class="lead" style="font-size: 1.15rem; line-height: 1.6; color: #333; margin-bottom: 24px;">
