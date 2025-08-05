@@ -141,8 +141,8 @@ def profile_details(profile_id):
         with admin_db.get_connection() as conn:
             with conn.cursor(cursor_factory=RealDictCursor) as cursor:
                 cursor.execute("""
-                    SELECT action, user_id, changes, timestamp
-                    FROM admin_config.audit_log
+                    SELECT profile_id, change_type, field_name, old_value, new_value, changed_by, timestamp, reason
+                    FROM admin_config.configuration_audits
                     WHERE profile_id = %s
                     ORDER BY timestamp DESC
                     LIMIT 10
@@ -151,7 +151,9 @@ def profile_details(profile_id):
         
         profile['audit_history'] = audit_history
         
-        return render_template('admin/profile_editor.html', profile=profile)
+        return render_template('admin/profile_editor.html', 
+                             profile=profile, 
+                             audit_log=audit_history)
         
     except Exception as e:
         logger.error(f"Error loading profile {profile_id}: {e}")

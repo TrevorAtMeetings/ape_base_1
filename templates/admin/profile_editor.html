@@ -443,7 +443,7 @@ function saveProfile() {
     formData.reason = reason;
     
     // Send update request
-    fetch('{{ url_for("admin_config.api_profile", profile_id=profile.id) }}', {
+    fetch('{{ url_for("admin_config.update_profile_api", profile_id=profile.id) }}', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
