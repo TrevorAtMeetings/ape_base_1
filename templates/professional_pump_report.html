@@ -683,46 +683,143 @@
             </div>
             {% endif %}
 
-            <!-- Scoring Breakdown for Selected Pump -->
-            {% if selected_pump and selected_pump.scoring_details %}
+            <!-- Enhanced Scoring Breakdown for Selected Pump -->
+            {% if selected_pump %}
             <div class="row" style="margin-bottom: 32px;">
                 <div class="col-12">
                     <div class="card" style="border-radius: var(--md-border-radius-large); box-shadow: var(--md-shadow); border: 1px solid var(--md-outline-variant);">
                         <div class="card-body" style="padding: 32px;">
                             <h5 style="color: var(--md-primary); font-weight: 500; margin-bottom: 24px; display: flex; align-items: center;">
-                                <i class="material-icons" style="margin-right: 12px; color: var(--md-primary);">assessment</i>
-                                Scoring Breakdown for {{ selected_pump.pump_code }}
+                                <i class="fas fa-chart-line" style="margin-right: 12px; color: var(--md-primary);"></i>
+                                Performance Score Breakdown
                             </h5>
                             
-                            <!-- Overall Score -->
+                            <!-- Overall Score Display -->
                             <div class="text-center mb-4">
-                                <div style="display: inline-block; padding: 20px 40px; background: linear-gradient(135deg, #1976d2, #1565c0); color: white; border-radius: 12px;">
-                                    <div style="font-size: 48px; font-weight: 700;">{{ "%.1f"|format(selected_pump.overall_score) }}</div>
-                                    <div style="font-size: 16px; text-transform: uppercase; letter-spacing: 1px;">Total Score</div>
-                                </div>
-                            </div>
-                            
-                            <!-- Score Components -->
-                            <div class="row">
-                                {% for component, details in selected_pump.scoring_details.items() %}
-                                <div class="col-md-6 mb-3">
-                                    <div style="padding: 16px; background: #f8f9fa; border-radius: 8px;">
-                                        <div class="d-flex justify-content-between align-items-center mb-2">
-                                            <span style="font-weight: 500; color: #333;">{{ component|replace('_', ' ')|title }}</span>
-                                            <span class="score-value {% if details.score > 0 %}score-positive{% else %}score-negative{% endif %}">
-                                                {% if details.score > 0 %}+{% endif %}{{ "%.1f"|format(details.score) }}
-                                            </span>
-                                        </div>
-                                        {% if details.description %}
-                                        <div style="font-size: 14px; color: #666;">{{ details.description }}</div>
-                                        {% endif %}
-                                        {% if details.formula %}
-                                        <div style="font-size: 12px; color: #999; font-style: italic; margin-top: 4px;">{{ details.formula }}</div>
-                                        {% endif %}
+                                <div style="display: inline-block; width: 120px; height: 120px; border-radius: 50%; background: linear-gradient(135deg, #1976d2, #1565c0); color: white; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 16px rgba(25,118,210,0.3); position: relative;">
+                                    <div>
+                                        <div style="font-size: 3rem; font-weight: 700;">{{ "%.0f"|format(selected_pump.overall_score) }}</div>
+                                        <div style="font-size: 1rem; opacity: 0.9;">/100</div>
                                     </div>
                                 </div>
-                                {% endfor %}
+                                <div style="margin-top: 16px; font-size: 1.1rem; color: #666;">Overall Selection Score</div>
                             </div>
+                            
+                            <!-- Individual Score Components with Progress Bars -->
+                            <div style="background: #f8f9fa; padding: 24px; border-radius: 12px; border: 1px solid #e9ecef;">
+                                <!-- BEP Proximity Score -->
+                                <div class="score-component mb-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <span style="font-weight: 600; color: #495057;">
+                                            <i class="fas fa-bullseye text-primary" style="margin-right: 8px;"></i>BEP Proximity
+                                        </span>
+                                        <span style="font-weight: bold; color: #212529;">
+                                            {{ "%.1f"|format((selected_pump.get('score_breakdown', {}).get('bep_score') or selected_pump.get('bep_score') or 0)|float) }}/40
+                                        </span>
+                                    </div>
+                                    <div class="progress" style="height: 10px; background-color: #e9ecef;">
+                                        <div class="progress-bar bg-primary" role="progressbar" 
+                                             style="width: {{ ((selected_pump.get('score_breakdown', {}).get('bep_score') or selected_pump.get('bep_score') or 0) / 40 * 100)|float }}%">
+                                        </div>
+                                    </div>
+                                    <small class="text-muted">Reliability factor - proximity to Best Efficiency Point</small>
+                                </div>
+
+                                <!-- Efficiency Score -->
+                                <div class="score-component mb-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <span style="font-weight: 600; color: #495057;">
+                                            <i class="fas fa-tachometer-alt text-success" style="margin-right: 8px;"></i>Efficiency
+                                        </span>
+                                        <span style="font-weight: bold; color: #212529;">
+                                            {{ "%.1f"|format((selected_pump.get('score_breakdown', {}).get('efficiency_score') or selected_pump.get('efficiency_score') or 0)|float) }}/30
+                                        </span>
+                                    </div>
+                                    <div class="progress" style="height: 10px; background-color: #e9ecef;">
+                                        <div class="progress-bar bg-success" role="progressbar" 
+                                             style="width: {{ ((selected_pump.get('score_breakdown', {}).get('efficiency_score') or selected_pump.get('efficiency_score') or 0) / 30 * 100)|float }}%">
+                                        </div>
+                                    </div>
+                                    <small class="text-muted">Operating cost factor - efficiency at duty point</small>
+                                </div>
+
+                                <!-- Head Margin Score -->
+                                <div class="score-component mb-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <span style="font-weight: 600; color: #495057;">
+                                            <i class="fas fa-ruler-vertical text-info" style="margin-right: 8px;"></i>Head Margin
+                                        </span>
+                                        <span style="font-weight: bold; color: #212529;">
+                                            {{ "%.1f"|format((selected_pump.get('score_breakdown', {}).get('margin_score') or selected_pump.get('margin_score') or 0)|float) }}/15
+                                        </span>
+                                    </div>
+                                    <div class="progress" style="height: 10px; background-color: #e9ecef;">
+                                        <div class="progress-bar bg-info" role="progressbar" 
+                                             style="width: {{ ((selected_pump.get('score_breakdown', {}).get('margin_score') or selected_pump.get('margin_score') or 0) / 15 * 100)|float }}%">
+                                        </div>
+                                    </div>
+                                    <small class="text-muted">Right-sizing factor - optimal head delivery margin</small>
+                                </div>
+
+                                <!-- NPSH Score -->
+                                <div class="score-component mb-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <span style="font-weight: 600; color: #495057;">
+                                            <i class="fas fa-water text-warning" style="margin-right: 8px;"></i>NPSH Margin
+                                        </span>
+                                        <span style="font-weight: bold; color: #212529;">
+                                            {{ "%.1f"|format((selected_pump.get('score_breakdown', {}).get('npsh_score') or selected_pump.get('npsh_score') or 0)|float) }}/15
+                                        </span>
+                                    </div>
+                                    <div class="progress" style="height: 10px; background-color: #e9ecef;">
+                                        <div class="progress-bar bg-warning" role="progressbar" 
+                                             style="width: {{ ((selected_pump.get('score_breakdown', {}).get('npsh_score') or selected_pump.get('npsh_score') or 0) / 15 * 100)|float }}%">
+                                        </div>
+                                    </div>
+                                    <small class="text-muted">Cavitation risk factor - NPSH requirements</small>
+                                </div>
+
+                                <!-- Penalties Section -->
+                                {% if selected_pump.get('score_breakdown', {}).get('speed_penalty', 0) > 0 or selected_pump.get('score_breakdown', {}).get('sizing_penalty', 0) > 0 %}
+                                <div class="mt-4 pt-3 border-top" style="background: #fff5f5; margin: -12px -24px -24px; padding: 16px 24px; border-radius: 0 0 12px 12px;">
+                                    <h6 class="text-danger mb-3"><i class="fas fa-exclamation-triangle"></i> Modifications & Penalties</h6>
+                                    {% if selected_pump.get('score_breakdown', {}).get('speed_penalty', 0) > 0 %}
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <span class="text-danger">
+                                            <i class="fas fa-tachometer-alt"></i> Speed Variation Required
+                                        </span>
+                                        <span class="text-danger font-weight-bold">
+                                            -{{ "%.1f"|format(selected_pump.get('score_breakdown', {}).get('speed_penalty')|float) }} points
+                                        </span>
+                                    </div>
+                                    {% endif %}
+                                    {% if selected_pump.get('score_breakdown', {}).get('sizing_penalty', 0) > 0 %}
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="text-danger">
+                                            <i class="fas fa-cut"></i> Impeller Trimming Required
+                                        </span>
+                                        <span class="text-danger font-weight-bold">
+                                            -{{ "%.1f"|format(selected_pump.get('score_breakdown', {}).get('sizing_penalty')|float) }} points
+                                        </span>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Operating Zone Indicator -->
+                            {% if selected_pump.get('bep_analysis', {}).get('operating_zone') %}
+                            <div class="text-center mt-4">
+                                <span class="text-muted">Operating Zone:</span>
+                                <span class="badge ms-2" style="padding: 8px 16px; font-size: 0.9rem;
+                                    {% if 'optimal' in selected_pump.get('bep_analysis', {}).get('operating_zone', '').lower() %}background: #4caf50; color: white;
+                                    {% elif 'good' in selected_pump.get('bep_analysis', {}).get('operating_zone', '').lower() %}background: #2196f3; color: white;
+                                    {% elif 'acceptable' in selected_pump.get('bep_analysis', {}).get('operating_zone', '').lower() %}background: #03a9f4; color: white;
+                                    {% else %}background: #ff9800; color: white;{% endif %}">
+                                    {{ selected_pump.get('bep_analysis', {}).get('operating_zone', 'Unknown') }}
+                                </span>
+                            </div>
+                            {% endif %}
                         </div>
                     </div>
                 </div>

@@ -47,6 +47,90 @@
             background: linear-gradient(90deg, #28a745, #20c997);
             transition: width 0.5s ease;
         }
+        
+        /* Score Breakdown Styles */
+        .overall-score-circle {
+            display: inline-block;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(0,123,255,0.3);
+            margin-bottom: 10px;
+        }
+        .score-number {
+            font-size: 2rem;
+            font-weight: bold;
+        }
+        .score-total {
+            font-size: 1rem;
+            opacity: 0.9;
+        }
+        .score-breakdown {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+        .score-component {
+            margin-bottom: 12px;
+        }
+        .score-label {
+            font-weight: 600;
+            color: #495057;
+        }
+        .score-value {
+            font-weight: bold;
+            color: #212529;
+        }
+        .progress {
+            background-color: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .progress-bar {
+            transition: width 0.6s ease;
+        }
+        .penalties-section {
+            background: #fff5f5;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+        .penalty-item {
+            margin: 5px 0;
+        }
+        .operating-zone {
+            text-align: center;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+        
+        /* Modification Indicators */
+        .modification-indicator {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+        .vfd-required {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
+        }
+        .trimming-required {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
     </style>
 </head>
 <body>
@@ -153,16 +237,127 @@
                                 </div>
                             </div>
 
-                            <!-- Performance Summary -->
+                            <!-- Enhanced Score Breakdown -->
                             {% if pump_eval.get('suitability_analysis') %}
                             <div class="mb-3">
-                                <h6 class="text-secondary mb-2">Performance Summary</h6>
-                                <div class="alert alert-light border">
-                                    <small>
-                                        <strong>BEP Distance:</strong> {{ "%.1f"|format((pump_eval.get('suitability_analysis', {}).get('bep_distance_pct') or 0)|float) }}% from optimal<br>
-                                        <strong>Overall Score:</strong> {{ "%.0f"|format((pump_eval.get('overall_score') or 0)|float) }}/100
-                                    </small>
+                                <h6 class="text-secondary mb-2">
+                                    <i class="fas fa-chart-line"></i> Performance Score Breakdown
+                                </h6>
+                                
+                                <!-- Overall Score Display -->
+                                <div class="text-center mb-3">
+                                    <div class="overall-score-circle">
+                                        <span class="score-number">{{ "%.0f"|format((pump_eval.get('overall_score') or 0)|float) }}</span>
+                                        <span class="score-total">/100</span>
+                                    </div>
+                                    <small class="text-muted">Overall Selection Score</small>
                                 </div>
+
+                                <!-- Individual Score Components -->
+                                <div class="score-breakdown">
+                                    <!-- BEP Proximity Score -->
+                                    <div class="score-component mb-2">
+                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                            <small class="score-label">
+                                                <i class="fas fa-bullseye text-primary"></i> BEP Proximity
+                                            </small>
+                                            <small class="score-value">
+                                                {{ "%.1f"|format((pump_eval.get('score_breakdown', {}).get('bep_score') or 0)|float) }}/40
+                                            </small>
+                                        </div>
+                                        <div class="progress" style="height: 8px;">
+                                            <div class="progress-bar bg-primary" role="progressbar" 
+                                                 style="width: {{ ((pump_eval.get('score_breakdown', {}).get('bep_score') or 0) / 40 * 100)|float }}%">
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Efficiency Score -->
+                                    <div class="score-component mb-2">
+                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                            <small class="score-label">
+                                                <i class="fas fa-tachometer-alt text-success"></i> Efficiency
+                                            </small>
+                                            <small class="score-value">
+                                                {{ "%.1f"|format((pump_eval.get('score_breakdown', {}).get('efficiency_score') or 0)|float) }}/30
+                                            </small>
+                                        </div>
+                                        <div class="progress" style="height: 8px;">
+                                            <div class="progress-bar bg-success" role="progressbar" 
+                                                 style="width: {{ ((pump_eval.get('score_breakdown', {}).get('efficiency_score') or 0) / 30 * 100)|float }}%">
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Head Margin Score -->
+                                    <div class="score-component mb-2">
+                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                            <small class="score-label">
+                                                <i class="fas fa-ruler-vertical text-info"></i> Head Margin
+                                            </small>
+                                            <small class="score-value">
+                                                {{ "%.1f"|format((pump_eval.get('score_breakdown', {}).get('margin_score') or 0)|float) }}/15
+                                            </small>
+                                        </div>
+                                        <div class="progress" style="height: 8px;">
+                                            <div class="progress-bar bg-info" role="progressbar" 
+                                                 style="width: {{ ((pump_eval.get('score_breakdown', {}).get('margin_score') or 0) / 15 * 100)|float }}%">
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- NPSH Score -->
+                                    <div class="score-component mb-2">
+                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                            <small class="score-label">
+                                                <i class="fas fa-water text-warning"></i> NPSH Margin
+                                            </small>
+                                            <small class="score-value">
+                                                {{ "%.1f"|format((pump_eval.get('score_breakdown', {}).get('npsh_score') or 0)|float) }}/15
+                                            </small>
+                                        </div>
+                                        <div class="progress" style="height: 8px;">
+                                            <div class="progress-bar bg-warning" role="progressbar" 
+                                                 style="width: {{ ((pump_eval.get('score_breakdown', {}).get('npsh_score') or 0) / 15 * 100)|float }}%">
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Penalties Section -->
+                                    {% if pump_eval.get('score_breakdown', {}).get('speed_penalty', 0) > 0 or pump_eval.get('score_breakdown', {}).get('sizing_penalty', 0) > 0 %}
+                                    <div class="penalties-section mt-3 pt-2 border-top">
+                                        <small class="text-danger"><strong>Modifications & Penalties:</strong></small>
+                                        {% if pump_eval.get('score_breakdown', {}).get('speed_penalty', 0) > 0 %}
+                                        <div class="penalty-item">
+                                            <small class="text-danger">
+                                                <i class="fas fa-exclamation-triangle"></i> Speed Variation: -{{ "%.1f"|format(pump_eval.get('score_breakdown', {}).get('speed_penalty')|float) }} points
+                                            </small>
+                                        </div>
+                                        {% endif %}
+                                        {% if pump_eval.get('score_breakdown', {}).get('sizing_penalty', 0) > 0 %}
+                                        <div class="penalty-item">
+                                            <small class="text-danger">
+                                                <i class="fas fa-cut"></i> Impeller Trimming: -{{ "%.1f"|format(pump_eval.get('score_breakdown', {}).get('sizing_penalty')|float) }} points
+                                            </small>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+
+                                <!-- Operating Zone Indicator -->
+                                {% if pump_eval.get('suitability_analysis', {}).get('operating_zone') %}
+                                <div class="operating-zone mt-3">
+                                    <small class="text-muted">Operating Zone:</small>
+                                    <span class="badge 
+                                        {% if 'optimal' in pump_eval.get('suitability_analysis', {}).get('operating_zone', '').lower() %}bg-success
+                                        {% elif 'good' in pump_eval.get('suitability_analysis', {}).get('operating_zone', '').lower() %}bg-primary
+                                        {% elif 'acceptable' in pump_eval.get('suitability_analysis', {}).get('operating_zone', '').lower() %}bg-info
+                                        {% else %}bg-warning{% endif %}">
+                                        {{ pump_eval.get('suitability_analysis', {}).get('operating_zone', 'Unknown') }}
+                                    </span>
+                                </div>
+                                {% endif %}
                             </div>
                             {% endif %}
 

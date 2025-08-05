@@ -143,6 +143,25 @@ def pump_report(pump_code):
             if selection.get('pump_code') == pump_code:
                 selected_pump = selection
                 logger.info(f"Template data - Found matching pump at index {i}")
+                
+                # Ensure overall_score exists immediately after finding pump
+                if 'overall_score' not in selected_pump:
+                    # Calculate overall score from components if available
+                    if 'score_breakdown' in selected_pump:
+                        breakdown = selected_pump['score_breakdown']
+                        overall = (breakdown.get('bep_score', 0) + 
+                                 breakdown.get('efficiency_score', 0) + 
+                                 breakdown.get('margin_score', 0) + 
+                                 breakdown.get('npsh_score', 0) - 
+                                 breakdown.get('speed_penalty', 0) - 
+                                 breakdown.get('sizing_penalty', 0))
+                        selected_pump['overall_score'] = max(0, min(100, overall))
+                        logger.info(f"Calculated overall_score from breakdown: {selected_pump['overall_score']}")
+                    else:
+                        # Fallback calculation based on efficiency
+                        efficiency = selected_pump.get('efficiency_at_duty', selected_pump.get('operating_point', {}).get('efficiency_pct', 0))
+                        selected_pump['overall_score'] = min(100, efficiency * 1.2)
+                        logger.info(f"Calculated overall_score from efficiency: {selected_pump['overall_score']}")
                 break
         
         if not selected_pump:
@@ -188,43 +207,65 @@ def pump_report(pump_code):
                     else:
                         logger.error(f"Template data - Could not find pump {pump_code} in catalog")
         
-        # Ensure scoring_details is available if not already present
-        if selected_pump and 'scoring_details' not in selected_pump and selected_pump.get('operating_point'):
+        # Ensure scoring_details and overall_score are available if not already present
+        if selected_pump:
+            logger.info(f"Selected pump keys before processing: {list(selected_pump.keys())}")
+            
+            # Ensure overall_score exists
+            if 'overall_score' not in selected_pump:
+                # Calculate overall score from components if available
+                if 'score_breakdown' in selected_pump:
+                    breakdown = selected_pump['score_breakdown']
+                    overall = (breakdown.get('bep_score', 0) + 
+                             breakdown.get('efficiency_score', 0) + 
+                             breakdown.get('margin_score', 0) + 
+                             breakdown.get('npsh_score', 0) - 
+                             breakdown.get('speed_penalty', 0) - 
+                             breakdown.get('sizing_penalty', 0))
+                    selected_pump['overall_score'] = max(0, min(100, overall))
+                    logger.info(f"Calculated overall_score from breakdown: {selected_pump['overall_score']}")
+                else:
+                    # Fallback calculation based on efficiency
+                    efficiency = selected_pump.get('efficiency_at_duty', selected_pump.get('operating_point', {}).get('efficiency_pct', 0))
+                    selected_pump['overall_score'] = min(100, efficiency * 1.2)
+                    logger.info(f"Calculated overall_score from efficiency: {selected_pump['overall_score']}")
+            
             # Generate scoring details for display
-            performance = selected_pump['operating_point']
-            efficiency = selected_pump.get('efficiency_at_duty', 0)
-            selected_pump['scoring_details'] = {
-                'qbp_proximity': {
-                    'score': selected_pump.get('bep_score', 0),
-                    'description': 'Best Efficiency Point proximity',
-                    'formula': '40 × max(0, 1 - ((flow_ratio - 1) / 0.5)²)'
-                },
-                'efficiency': {
-                    'score': selected_pump.get('efficiency_score', 0),
-                    'description': f"Efficiency at duty point: {efficiency:.1f}%",
-                    'formula': '(efficiency/100)² × 30'
-                },
-                'head_margin': {
-                    'score': selected_pump.get('margin_score', 0),
-                    'description': f"Head margin: {selected_pump.get('head_margin_pct', 0):.1f}%",
-                    'formula': 'Graduated scoring based on margin percentage'
-                },
-                'npsh': {
-                    'score': selected_pump.get('npsh_score', 0),
-                    'description': f"NPSHr: {performance.get('npshr_m', 'N/A'):.1f}m" if performance.get('npshr_m') else "No NPSH data",
-                    'formula': '15 × max(0, (8 - NPSHr) / 6)' if performance.get('npshr_m') else 'N/A'
-                },
-                'speed_penalty': {
-                    'score': 0,
-                    'description': "No speed variation",
-                    'formula': '1.5 × speed_change_% (max -15)'
-                },
-                'trim_penalty': {
-                    'score': 0,
-                    'description': "No trimming",
-                    'formula': '0.5 × trim_%'
+            if 'scoring_details' not in selected_pump and selected_pump.get('operating_point'):
+                performance = selected_pump['operating_point']
+                efficiency = selected_pump.get('efficiency_at_duty', 0)
+                selected_pump['scoring_details'] = {
+                    'qbp_proximity': {
+                        'score': selected_pump.get('bep_score', 0),
+                        'description': 'Best Efficiency Point proximity',
+                        'formula': '40 × max(0, 1 - ((flow_ratio - 1) / 0.5)²)'
+                    },
+                    'efficiency': {
+                        'score': selected_pump.get('efficiency_score', 0),
+                        'description': f"Efficiency at duty point: {efficiency:.1f}%",
+                        'formula': '(efficiency/100)² × 30'
+                    },
+                    'head_margin': {
+                        'score': selected_pump.get('margin_score', 0),
+                        'description': f"Head margin: {selected_pump.get('head_margin_pct', 0):.1f}%",
+                        'formula': 'Graduated scoring based on margin percentage'
+                    },
+                    'npsh': {
+                        'score': selected_pump.get('npsh_score', 0),
+                        'description': f"NPSHr: {performance.get('npshr_m', 'N/A'):.1f}m" if performance.get('npshr_m') else "No NPSH data",
+                        'formula': '15 × max(0, (8 - NPSHr) / 6)' if performance.get('npshr_m') else 'N/A'
+                    },
+                    'speed_penalty': {
+                        'score': 0,
+                        'description': "No speed variation",
+                        'formula': '1.5 × speed_change_% (max -15)'
+                    },
+                    'trim_penalty': {
+                        'score': 0,
+                        'description': "No trimming",
+                        'formula': '0.5 × trim_%'
+                    }
                 }
-            }
 
         # CRITICAL FIX: Always ensure BEP analysis exists regardless of pump selection source
         if not selected_pump:
@@ -781,6 +822,95 @@ def pump_report(pump_code):
             validation_data = globals().get('current_validation_data')
             # Clear the global variable after use
             globals().pop('current_validation_data', None)
+
+        # Log selected_pump status before context creation and ensure overall_score exists
+        if selected_pump:
+            logger.info(f"Selected pump before context: keys={list(selected_pump.keys())}")
+            logger.info(f"Selected pump has overall_score: {'overall_score' in selected_pump}")
+            logger.info(f"Selected pump overall_score value: {selected_pump.get('overall_score', 'NOT FOUND')}")
+            
+            # CRITICAL: Ensure overall_score and score_breakdown exist before passing to template
+            if 'overall_score' not in selected_pump:
+                # Calculate overall score from components if available
+                if 'score_breakdown' in selected_pump:
+                    breakdown = selected_pump['score_breakdown']
+                    overall = (breakdown.get('bep_score', 0) + 
+                             breakdown.get('efficiency_score', 0) + 
+                             breakdown.get('margin_score', 0) + 
+                             breakdown.get('npsh_score', 0) - 
+                             breakdown.get('speed_penalty', 0) - 
+                             breakdown.get('sizing_penalty', 0))
+                    selected_pump['overall_score'] = max(0, min(100, overall))
+                    logger.info(f"Last chance: Calculated overall_score from breakdown: {selected_pump['overall_score']}")
+                else:
+                    # Fallback calculation based on efficiency
+                    efficiency = selected_pump.get('efficiency_at_duty', selected_pump.get('operating_point', {}).get('efficiency_pct', 0))
+                    selected_pump['overall_score'] = min(100, efficiency * 1.2 if efficiency else 75.0)
+                    logger.info(f"Last chance: Calculated overall_score from efficiency: {selected_pump['overall_score']}")
+            
+            # Ensure score_breakdown exists for the template
+            if 'score_breakdown' not in selected_pump:
+                # Calculate score breakdown based on available data
+                bep_analysis = selected_pump.get('bep_analysis', {})
+                efficiency = selected_pump.get('operating_point', {}).get('efficiency_pct', 0)
+                npshr = selected_pump.get('operating_point', {}).get('npshr_m', 0)
+                
+                # Calculate BEP score (max 40 points)
+                bep_score = bep_analysis.get('bep_score', 0)
+                if bep_score == 0 and bep_analysis.get('flow_ratio'):
+                    # Calculate based on distance from BEP
+                    flow_ratio = bep_analysis.get('flow_ratio', 1.0)
+                    distance = abs(flow_ratio - 1.0)
+                    if distance <= 0.1:  # Within 10% of BEP
+                        bep_score = 40
+                    elif distance <= 0.2:  # Within 20% of BEP
+                        bep_score = 35
+                    elif distance <= 0.3:  # Within 30% of BEP
+                        bep_score = 25
+                    else:
+                        bep_score = 15
+                
+                # Calculate efficiency score (max 30 points)
+                efficiency_score = min(30, (efficiency / 100) * 30) if efficiency else 0
+                
+                # Calculate head margin score (max 15 points)
+                head_margin = selected_pump.get('operating_point', {}).get('sizing_info', {}).get('head_margin_m', 0)
+                # Ideal margin is 2-5%, penalize too much or too little
+                margin_pct = (head_margin / 50) * 100  # As percentage of required head
+                if 2 <= margin_pct <= 5:
+                    margin_score = 15
+                elif 1 <= margin_pct < 2 or 5 < margin_pct <= 10:
+                    margin_score = 12
+                elif 0.5 <= margin_pct < 1 or 10 < margin_pct <= 15:
+                    margin_score = 8
+                else:
+                    margin_score = 5
+                
+                # Calculate NPSH score (max 15 points)
+                npsh_score = 15 * max(0, (8 - npshr) / 6) if npshr and npshr > 0 else 10
+                
+                selected_pump['score_breakdown'] = {
+                    'bep_score': round(bep_score, 1),
+                    'efficiency_score': round(efficiency_score, 1),
+                    'margin_score': round(margin_score, 1),
+                    'npsh_score': round(npsh_score, 1),
+                    'speed_penalty': 0,
+                    'sizing_penalty': 0
+                }
+                logger.info(f"Created score_breakdown: {selected_pump['score_breakdown']}")
+                
+                # Recalculate overall score from breakdown
+                breakdown = selected_pump['score_breakdown']
+                overall = (breakdown.get('bep_score', 0) + 
+                         breakdown.get('efficiency_score', 0) + 
+                         breakdown.get('margin_score', 0) + 
+                         breakdown.get('npsh_score', 0) - 
+                         breakdown.get('speed_penalty', 0) - 
+                         breakdown.get('sizing_penalty', 0))
+                selected_pump['overall_score'] = max(0, min(100, overall))
+                logger.info(f"Recalculated overall_score from breakdown: {selected_pump['overall_score']}")
+        else:
+            logger.warning("No selected_pump found before context creation")
 
         context_data = {
             'pump_selections': pump_selections,

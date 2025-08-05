@@ -214,7 +214,20 @@ def pump_options():
                         'pump_type': pump.pump_type
                     },
                     'curve_index': 0,  # Will be determined from performance data
-                    'suitable': selection.get('suitability_score', 0) > 50
+                    'suitable': selection.get('suitability_score', 0) > 50,
+                    # Add score breakdown for Phase 4.1 enhancement
+                    'score_breakdown': {
+                        'bep_score': selection.get('bep_score', 0),
+                        'efficiency_score': selection.get('efficiency_score', 0),
+                        'margin_score': selection.get('margin_score', 0),
+                        'npsh_score': selection.get('npsh_score', 0),
+                        'speed_penalty': abs(selection.get('scoring_details', {}).get('speed_penalty', {}).get('score', 0)),
+                        'sizing_penalty': abs(selection.get('scoring_details', {}).get('trim_penalty', {}).get('score', 0))
+                    },
+                    'suitability_analysis': {
+                        'bep_distance_pct': selection.get('bep_analysis', {}).get('distance_pct', 0),
+                        'operating_zone': selection.get('bep_analysis', {}).get('operating_zone', 'Unknown')
+                    }
                 }
                 pump_evaluations.append(standardized_eval)
         except Exception as e:
