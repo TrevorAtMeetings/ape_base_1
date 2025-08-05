@@ -269,6 +269,18 @@ class PumpChartsManager {
 
         // Enhanced Operating Point Display with comprehensive hover information
         if (opPoint && opPoint.flow_m3hr && opPoint.head_m) {
+            // Apply speed scaling to operating point coordinates if speed scaling is active
+            let operatingPointFlow = opPoint.flow_m3hr;
+            let operatingPointHead = opPoint.head_m;
+            
+            if (this.currentChartData.speed_scaling && this.currentChartData.speed_scaling.applied) {
+                const speedRatio = this.currentChartData.speed_scaling.speed_ratio;
+                // Apply affinity laws to operating point: Flow ∝ speed, Head ∝ speed²
+                operatingPointFlow = opPoint.flow_m3hr * speedRatio;
+                operatingPointHead = opPoint.head_m * (speedRatio * speedRatio);
+                console.log(`Charts.js: Applied speed scaling to operating point - Flow: ${opPoint.flow_m3hr.toFixed(1)} → ${operatingPointFlow.toFixed(1)}, Head: ${opPoint.head_m.toFixed(1)} → ${operatingPointHead.toFixed(1)}`);
+            }
+            
             const pointColor = '#d32f2f'; // Red color for duty point
             const pointSymbol = 'triangle-up'; // Red triangle marker
 
@@ -333,18 +345,6 @@ class PumpChartsManager {
             });
 
             // Enhanced Operating Point Triangle Marker with comprehensive hover information
-            // Apply speed scaling to operating point coordinates if speed scaling is active
-            let operatingPointFlow = opPoint.flow_m3hr;
-            let operatingPointHead = opPoint.head_m;
-            
-            if (this.currentChartData.speed_scaling && this.currentChartData.speed_scaling.applied) {
-                const speedRatio = this.currentChartData.speed_scaling.speed_ratio;
-                // Apply affinity laws to operating point: Flow ∝ speed, Head ∝ speed²
-                operatingPointFlow = opPoint.flow_m3hr * speedRatio;
-                operatingPointHead = opPoint.head_m * (speedRatio * speedRatio);
-                console.log(`Charts.js: Applied speed scaling to operating point - Flow: ${opPoint.flow_m3hr.toFixed(1)} → ${operatingPointFlow.toFixed(1)}, Head: ${opPoint.head_m.toFixed(1)} → ${operatingPointHead.toFixed(1)}`);
-            }
-            
             // Calculate BEP percentage using real BEP data if available
             let bepPercentage = 'N/A';
             if (this.currentChartData.bep_analysis && this.currentChartData.bep_analysis.bep_available) {
