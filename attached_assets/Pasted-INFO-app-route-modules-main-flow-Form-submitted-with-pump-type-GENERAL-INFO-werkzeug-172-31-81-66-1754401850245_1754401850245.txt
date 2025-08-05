@@ -1,0 +1,81 @@
+INFO:app.route_modules.main_flow:Form submitted with pump type: 'GENERAL'
+INFO:werkzeug:172.31.81.66 - - [05/Aug/2025 13:49:40] "POST /pump_selection HTTP/1.1" 302 -
+INFO:app.route_modules.main_flow:Processing pump options for: flow=86.0 m³/hr, head=20.0 m
+INFO:app.route_modules.main_flow:Pump type filter requested: 'GENERAL'
+INFO:app.pump_repository:Repository: Loading data from PostgreSQL database (optimized)
+INFO:app.pump_repository:Repository: Connecting to PostgreSQL at ep-polished-voice-adgviosf.c-2.us-east-1.aws.neon.tech:5432
+INFO:app.pump_repository:Repository: Created connection pool with 1-10 connections
+INFO:app.pump_repository:Repository: Found tables: ['extras', 'processed_files', 'pump_curves', 'pump_diameters', 'pump_eff_iso', 'pump_names', 'pump_performance_points', 'pump_specifications', 'pump_speeds', 'pumps']
+INFO:app.pump_repository:Repository: Found 386 pump records with aggregated statistics
+INFO:app.pump_repository:Repository: Retrieved 6273 performance points
+INFO:app.pump_repository:Repository: Successfully loaded 386 pump models from PostgreSQL
+INFO:app.pump_repository:Repository: Total curves: 869
+INFO:app.pump_repository:Repository: Total points: 6273
+INFO:app.pump_repository:Repository: NPSH curves: 612
+INFO:app.pump_repository:Repository: Tables used: ['extras', 'processed_files', 'pump_curves', 'pump_diameters', 'pump_eff_iso', 'pump_names', 'pump_performance_points', 'pump_specifications', 'pump_speeds', 'pumps']
+INFO:app.catalog_engine:Catalog Engine: Loaded 386 pump models from repository
+INFO:app.catalog_engine:Catalog Engine: Total curves: 869
+INFO:app.catalog_engine:Catalog Engine: NPSH curves: 612 (70.4%)
+INFO:app.route_modules.main_flow:Loaded 386 pumps from catalog
+INFO:app.catalog_engine:Catalog Engine: QBP-centric selection for flow=86.0, head=20.0, type='GENERAL'
+INFO:app.catalog_engine:Catalog Engine: Evaluated 386 pumps - 105 feasible, 281 excluded
+INFO:app.catalog_engine:Catalog Engine: Found 105 suitable pumps meeting all criteria
+INFO:app.catalog_engine:  #1: 4/5 ALE (HSC) - Score: 85.3
+INFO:app.catalog_engine:  #2: 100-200 CAISION (VERTICAL TURBINE) - Score: 81.5
+INFO:app.catalog_engine:  #3: 65-125 2F (END SUCTION) - Score: 76.3
+INFO:app.catalog_engine:  #4: 80-250 2F (END SUCTION) - Score: 76.2
+INFO:app.catalog_engine:  #5: 50-160 2F 2P (END SUCTION) - Score: 68.0
+INFO:app.catalog_engine:Exclusion Summary:
+INFO:app.catalog_engine:  Flow requirement outside pump capacity: 159 pumps
+INFO:app.catalog_engine:  Outside manufacturer's operating envelope: 94 pumps
+INFO:app.catalog_engine:  Cannot achieve required head within constraints: 71 pumps
+INFO:app.catalog_engine:  Efficiency below minimum threshold (40%): 8 pumps
+INFO:app.catalog_engine:  Below minimum viable speed (750 RPM): 7 pumps
+INFO:werkzeug:172.31.81.66 - - [05/Aug/2025 13:49:42] "GET /pump_options?flow=86.0&head=20.0&application_type=water&pump_type=GENERAL HTTP/1.1" 302 -
+INFO:app.catalog_engine:Catalog Engine: QBP-centric selection for flow=86.0, head=20.0, type='GENERAL'
+INFO:app.catalog_engine:Catalog Engine: Evaluated 386 pumps - 105 feasible, 281 excluded
+INFO:app.catalog_engine:Catalog Engine: Found 105 suitable pumps meeting all criteria
+INFO:app.catalog_engine:  #1: 4/5 ALE (HSC) - Score: 85.3
+INFO:app.catalog_engine:  #2: 100-200 CAISION (VERTICAL TURBINE) - Score: 81.5
+INFO:app.catalog_engine:  #3: 65-125 2F (END SUCTION) - Score: 76.3
+INFO:app.catalog_engine:  #4: 80-250 2F (END SUCTION) - Score: 76.2
+INFO:app.catalog_engine:  #5: 50-160 2F 2P (END SUCTION) - Score: 68.0
+INFO:app.catalog_engine:Exclusion Summary:
+INFO:app.catalog_engine:  Flow requirement outside pump capacity: 159 pumps
+INFO:app.catalog_engine:  Outside manufacturer's operating envelope: 94 pumps
+INFO:app.catalog_engine:  Cannot achieve required head within constraints: 71 pumps
+INFO:app.catalog_engine:  Efficiency below minimum threshold (40%): 8 pumps
+INFO:app.catalog_engine:  Below minimum viable speed (750 RPM): 7 pumps
+INFO:app.route_modules.reports:Displaying report for pump: 4/5 ALE
+INFO:app.catalog_engine:Catalog Engine: QBP-centric selection for flow=86.0, head=20.0, type='GENERAL'
+INFO:app.catalog_engine:Catalog Engine: Evaluated 386 pumps - 105 feasible, 281 excluded
+INFO:app.catalog_engine:Catalog Engine: Found 105 suitable pumps meeting all criteria
+INFO:app.catalog_engine:  #1: 4/5 ALE (HSC) - Score: 85.3
+INFO:app.catalog_engine:  #2: 100-200 CAISION (VERTICAL TURBINE) - Score: 81.5
+INFO:app.catalog_engine:  #3: 65-125 2F (END SUCTION) - Score: 76.3
+INFO:app.catalog_engine:  #4: 80-250 2F (END SUCTION) - Score: 76.2
+INFO:app.catalog_engine:  #5: 50-160 2F 2P (END SUCTION) - Score: 68.0
+INFO:app.catalog_engine:Exclusion Summary:
+INFO:app.catalog_engine:  Flow requirement outside pump capacity: 159 pumps
+INFO:app.catalog_engine:  Outside manufacturer's operating envelope: 94 pumps
+INFO:app.catalog_engine:  Cannot achieve required head within constraints: 71 pumps
+INFO:app.catalog_engine:  Efficiency below minimum threshold (40%): 8 pumps
+INFO:app.catalog_engine:  Below minimum viable speed (750 RPM): 7 pumps
+INFO:app.route_modules.reports:Template data - selected_pump operating_point: {'curve': {'curve_id': '4/5 ALE_C1_134mm', 'curve_index': 0, 'impeller_diameter_mm': 134.0, 'test_speed_rpm': 2930, 'performance_points': [{'flow_m3hr': 43.15, 'head_m': 23.16, 'efficiency_pct': 62.0, 'power_kw': None, 'npshr_m': 2.44}, {'flow_m3hr': 64.96, 'head_m': 22.56, 'efficiency_pct': 72.0, 'power_kw': None, 'npshr_m': 2.44}, {'flow_m3hr': 78.36, 'head_m': 20.73, 'efficiency_pct': 76.0, 'power_kw': None, 'npshr_m': 2.44}, {'flow_m3hr': 88.58, 'head_m': 19.81, 'efficiency_pct': 77.0, 'power_kw': None, 'npshr_m': 3.05}, {'flow_m3hr': 101.3, 'head_m': 18.29, 'efficiency_pct': 76.0, 'power_kw': None, 'npshr_m': 2.74}, {'flow_m3hr': 111.29, 'head_m': 16.15, 'efficiency_pct': 72.0, 'power_kw': None, 'npshr_m': 3.96}], 'point_count': 6, 'flow_range_m3hr': '43.15-111.29', 'head_range_m': '16.15-23.16', 'efficiency_range_pct': '62.0-77.0', 'has_power_data': False, 'has_npsh_data': True, 'npsh_range_m': '2.44-3.96'}, 'flow_m3hr': 86.0, 'head_m': 20.04, 'efficiency_pct': 76.75, 'power_kw': 6.12, 'npshr_m': 2.9, 'impeller_diameter_mm': 134.0, 'test_speed_rpm': 2930, 'sizing_info': {'base_diameter_mm': 134.0, 'required_diameter_mm': 134.0, 'trim_percent': 100.0, 'meets_requirements': True, 'head_margin_m': 0.04, 'sizing_method': 'impeller_trimming'}}
+INFO:app.route_modules.reports:Template data - selected_pump selected_curve: {'impeller_size': 134.0, 'impeller_diameter_mm': 134.0, 'is_selected': True, 'curve_index': 0}
+INFO:werkzeug:172.31.81.66 - - [05/Aug/2025 13:49:44] "GET /pump_report/4/5%20ALE?flow=86.0&head=20.0&pump_type=GENERAL HTTP/1.1" 200 -
+INFO:werkzeug:172.31.81.66 - - [05/Aug/2025 13:49:45] "GET /static/js/chart_legend_fix.js?v=20250607-1905 HTTP/1.1" 304 -
+INFO:werkzeug:172.31.81.66 - - [05/Aug/2025 13:49:45] "GET /static/js/charts.js?v=20250607-1910-green HTTP/1.1" 304 -
+INFO:werkzeug:172.31.81.66 - - [05/Aug/2025 13:49:45] "GET /static/js/chart_layout_fix.js?v=20250607-1905 HTTP/1.1" 304 -
+INFO:werkzeug:172.31.81.66 - - [05/Aug/2025 13:49:45] "GET /static/js/error-handler.js HTTP/1.1" 304 -
+INFO:werkzeug:172.31.81.66 - - [05/Aug/2025 13:49:45] "GET /static/js/force-chart-refresh.js HTTP/1.1" 304 -
+INFO:app.route_modules.api:Chart API: Loading data for pump 4/5 ALE
+INFO:app.route_modules.api:Chart API: Catalog lookup took 0.000s
+INFO:app.route_modules.api:Chart API: Total request time 0.003s for pump 4/5 ALE
+INFO:werkzeug:172.31.81.66 - - [05/Aug/2025 13:49:46] "GET /api/chart_data_safe/NC81IEFMRQ?flow=86&head=20 HTTP/1.1" 200 -
+INFO:werkzeug:172.31.81.66 - - [05/Aug/2025 13:49:47] "POST /api/ai_analysis_fast HTTP/1.1" 200 -
+INFO:app.route_modules.api:Chart API: Loading data for pump 4/5 ALE
+INFO:app.route_modules.api:Chart API: Catalog lookup took 0.000s
+INFO:app.route_modules.api:Chart API: Total request time 0.004s for pump 4/5 ALE
+INFO:werkzeug:172.31.81.66 - - [05/Aug/2025 13:49:47] "GET /api/chart_data_safe/NC81IEFMRQ?flow=86&head=20 HTTP/1.1" 200 -
+INFO:werkzeug:172.31.81.66 - - [05/Aug/2025 13:49:47] "POST /api/convert_markdown HTTP/1.1" 200 -
