@@ -434,7 +434,7 @@ class PumpChartsManager {
             const safePumpCode = encodeURIComponent(pumpCode);
             console.log('Charts.js: Encoded pump code:', safePumpCode);
 
-            const url = '/api/chart_data_safe/' + safePumpCode + '?flow=' + flowRate + '&head=' + head;
+            const url = '/api/chart_data/' + safePumpCode + '?flow=' + flowRate + '&head=' + head;
             console.log('Charts.js: Fetching from URL:', url);
 
             const response = await fetch(url);
