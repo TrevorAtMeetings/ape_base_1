@@ -31,16 +31,407 @@ class PumpChartsManager {
         };
     }
 
+    // Helper function to create standard layout for all charts
+    createStandardLayout(config, yAxisRange) {
+        const title = this.currentChartData.pump_code + " - " + config.title;
+        
+        return {
+            title: {
+                text: title,
+                font: { size: 18, color: '#1976d2', family: 'Roboto, sans-serif' },
+                x: 0.05,
+                xanchor: 'left'
+            },
+            xaxis: {
+                title: {
+                    text: config.xAxis,
+                    font: { size: 14, color: '#555' }
+                },
+                gridcolor: '#e0e0e0',
+                gridwidth: 1,
+                showline: true,
+                linecolor: '#ccc',
+                linewidth: 1
+            },
+            yaxis: {
+                title: {
+                    text: config.yAxis,
+                    font: { size: 14, color: '#555' }
+                },
+                gridcolor: '#e0e0e0',
+                gridwidth: 1,
+                showline: true,
+                linecolor: '#ccc',
+                linewidth: 1,
+                range: yAxisRange
+            },
+            font: {
+                family: 'Roboto, sans-serif',
+                size: 12,
+                color: '#333'
+            },
+            paper_bgcolor: '#ffffff',
+            plot_bgcolor: '#fafafa',
+            margin: { l: 90, r: 90, t: 100, b: 140 },
+            showlegend: true,
+            legend: {
+                orientation: 'h',
+                x: 0.5,
+                y: -0.3,
+                xanchor: 'center',
+                yanchor: 'top',
+                bgcolor: 'rgba(255,255,255,0.95)',
+                bordercolor: '#e0e0e0',
+                borderwidth: 1,
+                font: { size: 11 }
+            }
+        };
+    }
+
+    // Helper function to create standard plot config
+    createPlotConfig() {
+        return {
+            responsive: true,
+            displayModeBar: true,
+            modeBarButtonsToRemove: ['pan2d', 'select2d', 'lasso2d', 'autoScale2d'],
+            displaylogo: false
+        };
+    }
+
+    // Helper function to generate impeller name
+    getImpellerName(curve, index) {
+        if (curve.impeller_diameter_mm) {
+            return curve.impeller_diameter_mm + "mm Impeller";
+        } else if (curve.impeller_size && curve.impeller_size !== "Curve " + (index + 1) && !curve.impeller_size.includes('Curve')) {
+            return curve.impeller_size + "mm Impeller";
+        } else {
+            return "Impeller " + (index + 1);
+        }
+    }
+
+    // Helper function to add BEP operating zone traces
+    addBEPZoneTraces(traces, operatingPointFlow, dataRanges) {
+        if (!operatingPointFlow) return;
+        
+        const bep80Flow = operatingPointFlow * 0.8;
+        const bep110Flow = operatingPointFlow * 1.1;
+        
+        // BEP Preferred Operating Zone (80%-110%) - Shaded area
+        traces.push({
+            x: [bep80Flow, bep110Flow, bep110Flow, bep80Flow, bep80Flow],
+            y: [dataRanges.minY, dataRanges.minY, dataRanges.maxY, dataRanges.maxY, dataRanges.minY],
+            type: 'scatter',
+            mode: 'lines',
+            fill: 'toself',
+            fillcolor: 'rgba(76, 175, 80, 0.15)',
+            line: { color: 'rgba(76, 175, 80, 0.3)', width: 1 },
+            name: 'BEP Operating Zone (80%-110%)',
+            hoverinfo: 'text',
+            text: 'Preferred Operating Range<br>80% - 110% of BEP Flow',
+            showlegend: true
+        });
+
+        // 80% BEP minimum preferred flow line
+        traces.push({
+            x: [bep80Flow, bep80Flow],
+            y: [dataRanges.minY, dataRanges.maxY],
+            type: 'scatter',
+            mode: 'lines',
+            name: '80% BEP Min Flow',
+            line: {
+                color: '#ff9800',
+                width: 2,
+                dash: 'dash'
+            },
+            hovertemplate: "<b>80% BEP Minimum</b><br>Flow: " + (bep80Flow || 0).toFixed(0) + " m³/hr<extra></extra>",
+            showlegend: true
+        });
+
+        // 110% BEP maximum preferred flow line
+        traces.push({
+            x: [bep110Flow, bep110Flow],
+            y: [dataRanges.minY, dataRanges.maxY],
+            type: 'scatter',
+            mode: 'lines',
+            name: '110% BEP Max Flow',
+            line: {
+                color: '#f44336',
+                width: 2,
+                dash: 'dash'
+            },
+            hovertemplate: "<b>110% BEP Maximum</b><br>Flow: " + (bep110Flow || 0).toFixed(0) + " m³/hr<extra></extra>",
+            showlegend: true
+        });
+    }
+
+    // Helper function to add reference lines for operating point
+    addReferenceLines(traces, operatingPointFlow, operatingPointY, dataRanges) {
+        if (!operatingPointFlow || !operatingPointY) return;
+        
+        // Vertical reference line (flow)
+        traces.push({
+            x: [operatingPointFlow, operatingPointFlow],
+            y: [dataRanges.extendedMinY, dataRanges.extendedMaxY],
+            type: 'scatter',
+            mode: 'lines',
+            name: 'Flow Reference Line',
+            line: {
+                color: '#d32f2f',
+                width: 2,
+                dash: 'dot'
+            },
+            showlegend: false,
+            hoverinfo: 'skip'
+        });
+
+        // Horizontal reference line (Y-axis value)
+        traces.push({
+            x: [dataRanges.extendedMinX, dataRanges.extendedMaxX],
+            y: [operatingPointY, operatingPointY],
+            type: 'scatter',
+            mode: 'lines',
+            name: 'Reference Line',
+            line: {
+                color: '#d32f2f',
+                width: 2,
+                dash: 'dot'
+            },
+            showlegend: false,
+            hoverinfo: 'skip'
+        });
+    }
+
+    // Helper function to calculate data ranges for charts
+    calculateDataRanges(curves, dataKey) {
+        let minValue = 0;
+        let maxValue = 100;
+        
+        if (curves && curves.length > 0) {
+            const allData = curves.flatMap(c => c[dataKey] || []);
+            if (allData.length > 0) {
+                minValue = Math.min(...allData);
+                maxValue = Math.max(...allData);
+            }
+        }
+        
+        const range = maxValue - minValue;
+        const padding = range * 0.05;
+        
+        return {
+            minY: Math.max(0, minValue - padding),
+            maxY: maxValue + padding,
+            extendedMinY: Math.max(0, minValue - range * 0.6),
+            extendedMaxY: maxValue + range * 0.6,
+            extendedMinX: 0,
+            extendedMaxX: maxValue + range * 0.6
+        };
+    }
+
+    // Helper function to add system curve
+    addSystemCurve(traces, opPoint) {
+        if (!opPoint || !opPoint.flow_m3hr || !opPoint.head_m) return;
+        
+        if (this.currentChartData.system_curve && this.currentChartData.system_curve.length > 0) {
+            const systemFlows = this.currentChartData.system_curve.map(point => point.flow_m3hr);
+            const systemHeads = this.currentChartData.system_curve.map(point => point.head_m);
+
+            traces.push({
+                x: systemFlows,
+                y: systemHeads,
+                type: 'scatter',
+                mode: 'lines',
+                name: 'System Curve',
+                line: {
+                    color: '#666666',
+                    width: 2,
+                    dash: 'dashdot'
+                },
+                hovertemplate: '<b>System Curve</b><br>Flow: %{x:.0f} m³/hr<br>Head: %{y:.1f} m<extra></extra>',
+                showlegend: true
+            });
+        } else {
+            // Generate system curve based on actual system requirements
+            let systemFlow = opPoint.flow_m3hr;
+            let systemHead = opPoint.head_m;
+            
+            if (this.currentChartData.system_requirements) {
+                systemFlow = this.currentChartData.system_requirements.flow_m3hr;
+                systemHead = this.currentChartData.system_requirements.head_m;
+                console.log('Using actual system requirements:', { systemFlow, systemHead });
+            }
+            
+            // Calculate system curve parameters
+            const staticHead = systemHead * 0.4;
+            const frictionHead = systemHead - staticHead;
+            const frictionCoeff = frictionHead / (systemFlow * systemFlow);
+
+            // Generate system curve points
+            const systemFlows = [];
+            const systemHeads = [];
+
+            for (let i = 0; i <= 15; i++) {
+                const flow = (systemFlow * i) / 10;
+                const head = staticHead + frictionCoeff * flow * flow;
+                systemFlows.push(flow);
+                systemHeads.push(head);
+            }
+
+            traces.push({
+                x: systemFlows,
+                y: systemHeads,
+                type: 'scatter',
+                mode: 'lines',
+                name: 'System Curve',
+                line: {
+                    color: '#666666',
+                    width: 2,
+                    dash: 'dashdot'
+                },
+                hovertemplate: '<b>System Curve</b><br>Flow: %{x:.0f} m³/hr<br>Head: %{y:.1f} m<br><i>Static: ' + 
+                               (staticHead || 0).toFixed(1) + 'm + Friction</i><extra></extra>',
+                showlegend: true
+            });
+        }
+    }
+
+    // Helper function to create operating point marker
+    createOperatingPointMarker(opPoint, chartType) {
+        if (!opPoint) return null;
+        
+        const operatingPointFlow = opPoint.flow_m3hr;
+        let operatingPointY, yLabel, yUnit;
+        
+        switch(chartType) {
+            case 'head':
+                operatingPointY = opPoint.head_m;
+                yLabel = 'Head';
+                yUnit = 'm';
+                break;
+            case 'efficiency':
+                operatingPointY = opPoint.efficiency_pct;
+                yLabel = 'Efficiency';
+                yUnit = '%';
+                break;
+            case 'power':
+                operatingPointY = opPoint.power_kw;
+                yLabel = 'Power';
+                yUnit = 'kW';
+                break;
+            case 'npshr':
+                operatingPointY = opPoint.npshr_m;
+                yLabel = 'NPSHr';
+                yUnit = 'm';
+                break;
+        }
+        
+        if (!operatingPointY) return null;
+        
+        // Calculate efficiency rating
+        const efficiencyRating = opPoint.efficiency_pct >= 80 ? 'Excellent' :
+            opPoint.efficiency_pct >= 70 ? 'Good' :
+            opPoint.efficiency_pct >= 60 ? 'Acceptable' : 'Poor';
+        
+        // Calculate BEP percentage
+        let bepPercentage = 'N/A';
+        if (this.currentChartData.bep_analysis && this.currentChartData.bep_analysis.bep_available) {
+            const bepFlow = this.currentChartData.bep_analysis.bep_flow;
+            if (bepFlow > 0) {
+                bepPercentage = ((operatingPointFlow / bepFlow) * 100).toFixed(0);
+            }
+        }
+        
+        // Format impeller info
+        let impellerInfo = this.formatImpellerInfo(opPoint);
+        
+        return {
+            x: [operatingPointFlow],
+            y: [operatingPointY],
+            type: 'scatter',
+            mode: 'markers',
+            name: opPoint.extrapolated ? 'Operating Point (Extrapolated)' : 'Operating Point',
+            marker: {
+                color: 'rgba(255,255,255,0)',
+                size: 24,
+                symbol: 'triangle-up',
+                line: { color: '#d32f2f', width: 3 }
+            },
+            hovertemplate: '<b>🎯 OPERATING POINT ANALYSIS</b><br>' +
+                '<b>Flow Rate:</b> ' + (operatingPointFlow || 0).toFixed(1) + ' m³/hr<br>' +
+                '<b>' + yLabel + ':</b> ' + (operatingPointY || 0).toFixed(1) + ' ' + yUnit + '<br>' +
+                '<b>Efficiency:</b> ' + (opPoint.efficiency_pct || 0).toFixed(1) + '% (' + efficiencyRating + ')<br>' +
+                '<b>Power:</b> ' + (opPoint.power_kw ? opPoint.power_kw.toFixed(1) + ' kW' : 'Calculated') + '<br>' +
+                '<b>NPSH Required:</b> ' + (opPoint.npshr_m ? opPoint.npshr_m.toFixed(1) + ' m' : 'N/A') + '<br>' +
+                '<b>Impeller:</b> ' + impellerInfo + '<br>' +
+                '<b>BEP Position:</b> ' + bepPercentage + '% of optimal flow<br>' +
+                '<b>Status:</b> ' + (opPoint.extrapolated ? 'Extrapolated' : 'Within Curve') + '<extra></extra>'
+        };
+    }
+
+    // Helper function to format impeller information
+    formatImpellerInfo(opPoint) {
+        let impellerInfo = 'N/A';
+        
+        if (opPoint.impeller_diameter_mm) {
+            const actualDiameter = opPoint.impeller_diameter_mm;
+            
+            if (opPoint.sizing_info) {
+                const sizingInfo = opPoint.sizing_info;
+                const baseDiameter = sizingInfo.base_diameter_mm;
+                const requiredDiameter = sizingInfo.required_diameter_mm;
+                const trimPercent = sizingInfo.trim_percent;
+                const sizingMethod = sizingInfo.sizing_method;
+                
+                if (sizingMethod === 'impeller_trimming' && baseDiameter && requiredDiameter && baseDiameter !== requiredDiameter) {
+                    impellerInfo = baseDiameter.toFixed(0) + "mm (Base) → " + requiredDiameter.toFixed(0) + "mm (" + trimPercent.toFixed(0) + "% Trim)";
+                } else if (sizingMethod === 'speed_variation') {
+                    const speedInfo = this.currentChartData.speed_scaling;
+                    if (speedInfo && speedInfo.applied && Math.abs(speedInfo.speed_ratio - 1.0) > 0.01) {
+                        impellerInfo = actualDiameter.toFixed(0) + "mm @ " + speedInfo.required_speed_rpm.toFixed(0) + " RPM";
+                    } else {
+                        impellerInfo = actualDiameter.toFixed(0) + "mm Diameter";
+                    }
+                } else {
+                    impellerInfo = actualDiameter.toFixed(0) + "mm Diameter";
+                }
+            } else {
+                const speedInfo = this.currentChartData.speed_scaling;
+                if (speedInfo && speedInfo.applied && Math.abs(speedInfo.speed_ratio - 1.0) > 0.01) {
+                    impellerInfo = actualDiameter.toFixed(0) + "mm @ " + speedInfo.required_speed_rpm.toFixed(0) + " RPM";
+                } else {
+                    impellerInfo = actualDiameter.toFixed(0) + "mm Diameter";
+                }
+            }
+        } else {
+            // Fallback to selected curve
+            let selectedCurve = null;
+            if (this.currentChartData.curves && this.currentChartData.curves.length > 0) {
+                selectedCurve = this.currentChartData.curves.find(curve => curve.is_selected);
+                if (!selectedCurve) {
+                    selectedCurve = this.currentChartData.curves[0];
+                }
+            }
+            
+            if (selectedCurve && selectedCurve.impeller_diameter_mm) {
+                const speedInfo = this.currentChartData.speed_scaling;
+                if (speedInfo && speedInfo.applied && Math.abs(speedInfo.speed_ratio - 1.0) > 0.01) {
+                    impellerInfo = selectedCurve.impeller_diameter_mm.toFixed(0) + "mm @ " + speedInfo.required_speed_rpm.toFixed(0) + " RPM (from curve data)";
+                } else {
+                    impellerInfo = selectedCurve.impeller_diameter_mm.toFixed(0) + "mm Diameter (from curve data)";
+                }
+            }
+        }
+        
+        return impellerInfo;
+    }
+
 
 
     async loadChartData(pumpCode, flowRate, head) {
         try {
             console.log('Charts.js: loadChartData called with:', { pumpCode, flowRate, head });
 
-            // Use base64 encoding for pump codes with special characters
-            const safePumpCode = btoa(pumpCode).replace(/[+/=]/g, function(match) {
-                return { '+': '-', '/': '_', '=': '' }[match];
-            });
+            // Use URL encoding for pump codes with special characters
+            const safePumpCode = encodeURIComponent(pumpCode);
             console.log('Charts.js: Encoded pump code:', safePumpCode);
 
             const url = '/api/chart_data_safe/' + safePumpCode + '?flow=' + flowRate + '&head=' + head;
@@ -89,15 +480,8 @@ class PumpChartsManager {
         if (Array.isArray(this.currentChartData.curves)) {
             this.currentChartData.curves.forEach((curve, index) => {
                 if (curve && Array.isArray(curve.flow_data) && Array.isArray(curve.head_data) && curve.flow_data.length > 0) {
-                    // Generate proper impeller size name
-                    let impellerName = 'Unknown Size';
-                    if (curve.impeller_diameter_mm) {
-                        impellerName = curve.impeller_diameter_mm + "mm Impeller";
-                    } else if (curve.impeller_size && curve.impeller_size !== "Curve " + (index + 1) && !curve.impeller_size.includes('Curve')) {
-                        impellerName = curve.impeller_size + "mm Impeller";
-                    } else {
-                        impellerName = "Impeller " + (index + 1);
-                    }
+                    // Generate proper impeller size name using helper
+                    let impellerName = this.getImpellerName(curve, index);
 
                     // Apply speed scaling to selected curve if applied
                     let flowData = [...curve.flow_data];
@@ -133,385 +517,36 @@ class PumpChartsManager {
             });
         }
 
-        // Add BEP Operating Range Visualization (80% - 110% of duty point flow)
+        // Calculate data ranges and add BEP zone visualization
+        const dataRanges = this.calculateDataRanges(this.currentChartData.curves, 'head_data');
+        
         if (opPoint && opPoint.flow_m3hr && opPoint.head_m) {
-            const bep80Flow = opPoint.flow_m3hr * 0.8;
-            const bep110Flow = opPoint.flow_m3hr * 1.1;
+            // Add BEP operating zone using helper
+            this.addBEPZoneTraces(traces, opPoint.flow_m3hr, dataRanges);
 
-            // Get chart data ranges for shaded zone - extend across chart range
-            let maxHead = 60;
-            let minHead = 0;
-            if (this.currentChartData.curves.length > 0) {
-                const allHeads = this.currentChartData.curves.flatMap(c => c.head_data || []);
-                if (allHeads.length > 0) {
-                    const dataMin = Math.min(...allHeads);
-                    const dataMax = Math.max(...allHeads);
-                    const range = dataMax - dataMin;
-                    minHead = Math.max(0, dataMin - range * 0.05);
-                    maxHead = dataMax + range * 0.05;
-                }
-            }
-
-            // BEP Preferred Operating Zone (80%-110%) - Shaded area spanning full chart height
-            traces.push({
-                x: [bep80Flow, bep110Flow, bep110Flow, bep80Flow, bep80Flow],
-                y: [minHead, minHead, maxHead, maxHead, minHead],
-                type: 'scatter',
-                mode: 'lines',
-                fill: 'toself',
-                fillcolor: 'rgba(76, 175, 80, 0.15)',
-                line: { color: 'rgba(76, 175, 80, 0.3)', width: 1 },
-                name: 'BEP Operating Zone (80%-110%)',
-                hoverinfo: 'text',
-                text: 'Preferred Operating Range<br>80% - 110% of BEP Flow',
-                showlegend: true
-            });
-
-            // 80% BEP minimum preferred flow line - full height
-            traces.push({
-                x: [bep80Flow, bep80Flow],
-                y: [0, maxHead],
-                type: 'scatter',
-                mode: 'lines',
-                name: '80% BEP Min Flow',
-                line: {
-                    color: '#ff9800',
-                    width: 2,
-                    dash: 'dash'
-                },
-                hovertemplate: "<b>80% BEP Minimum</b><br>Flow: " + (bep80Flow || 0).toFixed(0) + " m³/hr<extra></extra>",
-                showlegend: true
-            });
-
-            // 110% BEP maximum preferred flow line - full height
-            traces.push({
-                x: [bep110Flow, bep110Flow],
-                y: [0, maxHead],
-                type: 'scatter',
-                mode: 'lines',
-                name: '110% BEP Max Flow',
-                line: {
-                    color: '#f44336',
-                    width: 2,
-                    dash: 'dash'
-                },
-                hovertemplate: "<b>110% BEP Maximum</b><br>Flow: " + (bep110Flow || 0).toFixed(0) + " m³/hr<extra></extra>",
-                showlegend: true
-            });
-
-            // Add System Curve to show system requirements
-            if (this.currentChartData.system_curve && this.currentChartData.system_curve.length > 0) {
-                const systemFlows = this.currentChartData.system_curve.map(point => point.flow_m3hr);
-                const systemHeads = this.currentChartData.system_curve.map(point => point.head_m);
-
-                traces.push({
-                    x: systemFlows,
-                    y: systemHeads,
-                    type: 'scatter',
-                    mode: 'lines',
-                    name: 'System Curve',
-                    line: {
-                        color: '#666666',
-                        width: 2,
-                        dash: 'dashdot'
-                    },
-                    hovertemplate: '<b>System Curve</b><br>Flow: %{x:.0f} m³/hr<br>Head: %{y:.1f} m<extra></extra>',
-                    showlegend: true
-                });
-            } else {
-                // Generate system curve based on actual system requirements
-                // System curve should pass through the required duty point, NOT the pump's delivery point
-                
-                // Use system requirements if available, otherwise fall back to operating point
-                let systemFlow = opPoint.flow_m3hr;
-                let systemHead = opPoint.head_m;
-                
-                // Check if we have actual system requirements
-                if (this.currentChartData.system_requirements) {
-                    systemFlow = this.currentChartData.system_requirements.flow_m3hr;
-                    systemHead = this.currentChartData.system_requirements.head_m;
-                    console.log('Using actual system requirements:', { systemFlow, systemHead });
-                }
-                
-                // Calculate system curve parameters based on typical system design
-                // Assume 40% static head and 60% friction losses at duty point
-                const staticHead = systemHead * 0.4; // 40% static head
-                const frictionHead = systemHead - staticHead;
-                const frictionCoeff = frictionHead / (systemFlow * systemFlow);
-
-                // Generate system curve points from 0 to 150% of duty flow
-                const systemFlows = [];
-                const systemHeads = [];
-
-                for (let i = 0; i <= 15; i++) {
-                    const flow = (systemFlow * i) / 10; // 0% to 150% in 10% increments
-                    const head = staticHead + frictionCoeff * flow * flow;
-                    systemFlows.push(flow);
-                    systemHeads.push(head);
-                }
-
-                traces.push({
-                    x: systemFlows,
-                    y: systemHeads,
-                    type: 'scatter',
-                    mode: 'lines',
-                    name: 'System Curve',
-                    line: {
-                        color: '#666666',
-                        width: 2,
-                        dash: 'dashdot'
-                    },
-                    hovertemplate: '<b>System Curve</b><br>Flow: %{x:.0f} m³/hr<br>Head: %{y:.1f} m<br><i>Static: ' + (staticHead || 0).toFixed(1) + 'm + Friction</i><extra></extra>',
-                    showlegend: true
-                });
-            }
+            // Add system curve using helper
+            this.addSystemCurve(traces, opPoint);
         }
 
-        // Enhanced Operating Point Display with comprehensive hover information
+        // Add operating point, reference lines and marker
         if (opPoint && opPoint.flow_m3hr && opPoint.head_m) {
             // Operating point coordinates are now properly scaled on the server side
             const operatingPointFlow = opPoint.flow_m3hr;
             const operatingPointHead = opPoint.head_m;
             
-            const pointColor = '#d32f2f'; // Red color for duty point
-            const pointSymbol = 'triangle-up'; // Red triangle marker
+            // Add reference lines using helper
+            this.addReferenceLines(traces, operatingPointFlow, operatingPointHead, dataRanges);
 
-            // Get chart data ranges for proper reference line scaling
-            let refMaxFlow = 500;
-            let refMaxHead = 50;
-            let refMinFlow = 0;
-            let refMinHead = 0;
-            if (this.currentChartData.curves.length > 0) {
-                const allFlows = this.currentChartData.curves.flatMap(c => c.flow_data || []);
-                const allHeads = this.currentChartData.curves.flatMap(c => c.head_data || []);
-                if (allFlows.length > 0) {
-                    refMinFlow = Math.min(...allFlows);
-                    refMaxFlow = Math.max(...allFlows);
-                }
-                if (allHeads.length > 0) {
-                    refMinHead = Math.min(...allHeads);
-                    refMaxHead = Math.max(...allHeads);
-                }
-            }
-
-            // Calculate reference line boundaries extending beyond chart boundaries
-            const flowRange = refMaxFlow - refMinFlow;
-            const headRange = refMaxHead - refMinHead;
-
-            // Extended boundaries well beyond chart limits
-            const extendedMinFlow = Math.max(0, refMinFlow - flowRange * 0.6);
-            const extendedMaxFlow = refMaxFlow + flowRange * 0.6;
-            const extendedMinHead = Math.max(0, refMinHead - headRange * 0.6);
-            const extendedMaxHead = refMaxHead + headRange * 0.6;
-
-            // Reference line extensions beyond chart boundaries - Vertical (flow)
-            traces.push({
-                x: [operatingPointFlow, operatingPointFlow],
-                y: [extendedMinHead, extendedMaxHead],
-                type: 'scatter',
-                mode: 'lines',
-                name: 'Flow Reference Line',
-                line: {
-                    color: '#d32f2f',
-                    width: 2,
-                    dash: 'dot'
-                },
-                showlegend: false,
-                hoverinfo: 'skip'
-            });
-
-            // Reference line extensions beyond chart boundaries - Horizontal (head)
-            traces.push({
-                x: [extendedMinFlow, extendedMaxFlow],
-                y: [operatingPointHead, operatingPointHead],
-                type: 'scatter',
-                mode: 'lines',
-                name: 'Head Reference Line',
-                line: {
-                    color: '#d32f2f',
-                    width: 2,
-                    dash: 'dot'
-                },
-                showlegend: false,
-                hoverinfo: 'skip'
-            });
-
-            // Enhanced Operating Point Triangle Marker with comprehensive hover information
-            // Calculate BEP percentage using real BEP data if available
-            let bepPercentage = 'N/A';
-            if (this.currentChartData.bep_analysis && this.currentChartData.bep_analysis.bep_available) {
-                const bepFlow = this.currentChartData.bep_analysis.bep_flow;
-                if (bepFlow > 0) {
-                    bepPercentage = ((operatingPointFlow / bepFlow) * 100).toFixed(0);
-                }
-            }
-
-            const efficiencyRating = opPoint.efficiency_pct >= 80 ? 'Excellent' :
-                opPoint.efficiency_pct >= 70 ? 'Good' :
-                    opPoint.efficiency_pct >= 60 ? 'Acceptable' : 'Poor';
-
-            // Format impeller sizing information - use actual operating point requirements
-            let impellerInfo = 'N/A';
-
-            // First, try to get impeller information from the operating point data
-            if (opPoint.impeller_diameter_mm) {
-                const actualDiameter = opPoint.impeller_diameter_mm;
-
-                // Check if sizing information is available (trimming/scaling details)
-                if (opPoint.sizing_info) {
-                    const sizingInfo = opPoint.sizing_info;
-                    const baseDiameter = sizingInfo.base_diameter_mm;
-                    const requiredDiameter = sizingInfo.required_diameter_mm;
-                    const trimPercent = sizingInfo.trim_percent;
-                    const sizingMethod = sizingInfo.sizing_method;
-
-                    if (sizingMethod === 'impeller_trimming' && baseDiameter && requiredDiameter && baseDiameter !== requiredDiameter) {
-                        // Impeller trimming is applied
-                        impellerInfo = baseDiameter.toFixed(0) + "mm (Base) → " + requiredDiameter.toFixed(0) + "mm (" + trimPercent.toFixed(0) + "% Trim)";
-                    } else if (sizingMethod === 'speed_variation') {
-                        // Speed variation with effective impeller sizing
-                        const speedInfo = this.currentChartData.speed_scaling;
-                        const effectiveDiameter = sizingInfo.effective_diameter_mm || actualDiameter;
-
-                        if (speedInfo && speedInfo.applied && Math.abs(speedInfo.speed_ratio - 1.0) > 0.01) {
-                            impellerInfo = actualDiameter.toFixed(0) + "mm @ " + speedInfo.required_speed_rpm.toFixed(0) + " RPM";
-                        } else {
-                            impellerInfo = actualDiameter.toFixed(0) + "mm Diameter";
-                        }
-                    } else {
-                        // Standard operation
-                        impellerInfo = actualDiameter.toFixed(0) + "mm Diameter";
-                    }
-                } else {
-                    // No detailed sizing info, but we have the operating point diameter
-                    const speedInfo = this.currentChartData.speed_scaling;
-                    if (speedInfo && speedInfo.applied && Math.abs(speedInfo.speed_ratio - 1.0) > 0.01) {
-                        // Speed scaling - show actual impeller and operating speed
-                        impellerInfo = actualDiameter.toFixed(0) + "mm @ " + speedInfo.required_speed_rpm.toFixed(0) + " RPM";
-                    } else {
-                        // Standard operation
-                        impellerInfo = actualDiameter.toFixed(0) + "mm Diameter";
-                    }
-                }
-            } else {
-                // Fallback: try to get from selected curve if operating point data is missing
-                let selectedCurve = null;
-                if (this.currentChartData.curves && this.currentChartData.curves.length > 0) {
-                    selectedCurve = this.currentChartData.curves.find(curve => curve.is_selected);
-                    if (!selectedCurve) {
-                        selectedCurve = this.currentChartData.curves[0];
-                    }
-                }
-
-                if (selectedCurve && selectedCurve.impeller_diameter_mm) {
-                    const speedInfo = this.currentChartData.speed_scaling;
-                    if (speedInfo && speedInfo.applied && Math.abs(speedInfo.speed_ratio - 1.0) > 0.01) {
-                        impellerInfo = selectedCurve.impeller_diameter_mm.toFixed(0) + "mm @ " + speedInfo.required_speed_rpm.toFixed(0) + " RPM (from curve data)";
-                    } else {
-                        impellerInfo = selectedCurve.impeller_diameter_mm.toFixed(0) + "mm Diameter (from curve data)";
-                    }
-                }
-            }
-
-            traces.push({
-                x: [operatingPointFlow],
-                y: [operatingPointHead],
-                type: 'scatter',
-                mode: 'markers',
-                name: opPoint.extrapolated ? 'Operating Point (Extrapolated)' : 'Operating Point',
-                marker: {
-                    color: 'rgba(255,255,255,0)', // Transparent fill
-                    size: 24, // Larger triangle marker for enhanced visibility
-                    symbol: pointSymbol,
-                    line: { color: '#d32f2f', width: 3 }
-                },
-                hovertemplate: '<b>🎯 OPERATING POINT ANALYSIS</b><br>' +
-                    '<b>Flow Rate:</b> ' + (opPoint.flow_m3hr || 0).toFixed(1) + ' m³/hr<br>' +
-                    '<b>Head:</b> ' + (opPoint.head_m || 0).toFixed(1) + ' m<br>' +
-                    '<b>Efficiency:</b> ' + (opPoint.efficiency_pct || 0).toFixed(1) + '% (' + efficiencyRating + ')<br>' +
-                    '<b>Power:</b> ' + (opPoint.power_kw ? opPoint.power_kw.toFixed(1) + ' kW' : 'Calculated') + '<br>' +
-                    '<b>NPSH Required:</b> ' + (opPoint.npshr_m ? opPoint.npshr_m.toFixed(1) + ' m' : 'N/A') + '<br>' +
-                    '<b>Impeller:</b> ' + impellerInfo + '<br>' +
-                    '<b>BEP Position:</b> ' + bepPercentage + '% of optimal flow<br>' +
-                    '<b>Status:</b> ' + (opPoint.extrapolated ? 'Extrapolated' : 'Within Curve') + '<extra></extra>'
-            });
-        }
-
-        const title = this.currentChartData.pump_code + " - " + config.title;
-        const yAxisTitle = config.yAxis;
-
-        // Calculate proper y-axis range based on actual data
-        let chartMaxHead = 60;
-        let chartMinHead = 0;
-        if (this.currentChartData.curves.length > 0) {
-            const allHeads = this.currentChartData.curves.flatMap(c => c.head_data || []);
-            if (allHeads.length > 0) {
-                const dataMin = Math.min(...allHeads);
-                const dataMax = Math.max(...allHeads);
-                const range = dataMax - dataMin;
-                chartMinHead = Math.max(0, dataMin - range * 0.05); // 5% padding below minimum, but not below 0
-                chartMaxHead = dataMax + range * 0.05; // 5% padding above maximum
+            // Add operating point marker using helper
+            const operatingPointMarker = this.createOperatingPointMarker(opPoint, 'head');
+            if (operatingPointMarker) {
+                traces.push(operatingPointMarker);
             }
         }
 
-        const layout = {
-            title: {
-                text: title,
-                font: { size: 18, color: '#1976d2', family: 'Roboto, sans-serif' },
-                x: 0.05,
-                xanchor: 'left'
-            },
-            xaxis: {
-                title: {
-                    text: 'Flow Rate (m³/hr)',
-                    font: { size: 14, color: '#555' }
-                },
-                gridcolor: '#e0e0e0',
-                gridwidth: 1,
-                showline: true,
-                linecolor: '#ccc',
-                linewidth: 1
-            },
-            yaxis: {
-                title: {
-                    text: yAxisTitle,
-                    font: { size: 14, color: '#555' }
-                },
-                gridcolor: '#e0e0e0',
-                gridwidth: 1,
-                showline: true,
-                linecolor: '#ccc',
-                linewidth: 1,
-                range: [chartMinHead, chartMaxHead] // Explicitly set y-axis range to match BEP zone
-            },
-            font: {
-                family: 'Roboto, sans-serif',
-                size: 12,
-                color: '#333'
-            },
-            paper_bgcolor: '#ffffff',
-            plot_bgcolor: '#fafafa',
-            margin: { l: 90, r: 90, t: 100, b: 140 },
-            showlegend: true,
-            legend: {
-                orientation: 'h',
-                x: 0.5,
-                y: -0.3,
-                xanchor: 'center',
-                yanchor: 'top',
-                bgcolor: 'rgba(255,255,255,0.95)',
-                bordercolor: '#e0e0e0',
-                borderwidth: 1,
-                font: { size: 11 }
-            }
-        };
-
-        const plotConfig = {
-            responsive: true,
-            displayModeBar: true,
-            modeBarButtonsToRemove: ['pan2d', 'select2d', 'lasso2d', 'autoScale2d'],
-            displaylogo: false
-        };
+        // Create layout and plot config using helpers
+        const layout = this.createStandardLayout(config, [dataRanges.minY, dataRanges.maxY]);
+        const plotConfig = this.createPlotConfig();
 
         try {
             console.log('Charts.js: Attempting to render head-flow chart with', traces.length, 'traces');
@@ -543,15 +578,8 @@ class PumpChartsManager {
         if (Array.isArray(this.currentChartData.curves)) {
             this.currentChartData.curves.forEach((curve, index) => {
                 if (curve && Array.isArray(curve.flow_data) && Array.isArray(curve.efficiency_data) && curve.efficiency_data.length > 0) {
-                    // Generate proper impeller size name
-                    let impellerName = 'Unknown Size';
-                    if (curve.impeller_diameter_mm) {
-                        impellerName = curve.impeller_diameter_mm + "mm Impeller";
-                    } else if (curve.impeller_size && curve.impeller_size !== "Curve " + (index + 1) && !curve.impeller_size.includes('Curve')) {
-                        impellerName = curve.impeller_size + "mm Impeller";
-                    } else {
-                        impellerName = "Impeller " + (index + 1);
-                    }
+                    // Generate proper impeller size name using helper
+                    let impellerName = this.getImpellerName(curve, index);
 
                     // Apply speed scaling to selected curve if applied
                     let flowData = [...curve.flow_data];
@@ -587,30 +615,20 @@ class PumpChartsManager {
             });
         }
 
+        // Calculate data ranges for efficiency chart
+        const dataRanges = this.calculateDataRanges(this.currentChartData.curves, 'efficiency_data');
+        
         // Add BEP Operating Range Visualization to Efficiency Chart
         const opPoint = this.currentChartData.operating_point;
         if (opPoint && opPoint.flow_m3hr && opPoint.efficiency_pct != null && opPoint.efficiency_pct > 0) {
             // Operating point coordinates are now properly scaled on the server side
             const operatingPointFlow = opPoint.flow_m3hr;
             const operatingPointEfficiency = opPoint.efficiency_pct;
-            const bep80Flow = operatingPointFlow * 0.8;
-            const bep110Flow = operatingPointFlow * 1.1;
-
-            // Get efficiency range for shaded zone based on actual data
-            let maxEffForZone = 100;
-            let minEffForZone = 0;
-            if (Array.isArray(this.currentChartData.curves) && this.currentChartData.curves.length > 0) {
-                const allEffs = this.currentChartData.curves.flatMap(c => Array.isArray(c?.efficiency_data) ? c.efficiency_data : []).filter(e => e != null && e > 0);
-                if (allEffs.length > 0) {
-                    minEffForZone = Math.max(0, Math.min(...allEffs) * 0.9); // Start 10% below minimum but not below 0
-                    maxEffForZone = Math.max(...allEffs) * 1.1; // Extend slightly beyond max for full coverage
-                }
-            }
-
-            // BEP Preferred Operating Zone for Efficiency (80%-110%) - Shaded area
+            
+            // Add BEP zone using helper (note: modified for efficiency chart colors)
             traces.push({
-                x: [bep80Flow, bep110Flow, bep110Flow, bep80Flow, bep80Flow],
-                y: [minEffForZone, minEffForZone, maxEffForZone, maxEffForZone, minEffForZone],
+                x: [operatingPointFlow * 0.8, operatingPointFlow * 1.1, operatingPointFlow * 1.1, operatingPointFlow * 0.8, operatingPointFlow * 0.8],
+                y: [dataRanges.minY, dataRanges.minY, dataRanges.maxY, dataRanges.maxY, dataRanges.minY],
                 type: 'scatter',
                 mode: 'lines',
                 fill: 'toself',
@@ -621,92 +639,14 @@ class PumpChartsManager {
                 text: 'Optimal Efficiency Range<br>80% - 110% of BEP Flow',
                 showlegend: true
             });
-            const pointColor = '#d32f2f'; // Red color for duty point
-            const pointSymbol = 'triangle-up'; // Red triangle marker
-
-            // Get chart data ranges for proper reference line scaling
-            let chartMaxFlow = 500;
-            let chartMinFlow = 0;
-            let chartMaxEff = 100;
-            let chartMinEff = 0;
-            if (Array.isArray(this.currentChartData.curves) && this.currentChartData.curves.length > 0) {
-                const allFlows = this.currentChartData.curves.flatMap(c => Array.isArray(c?.flow_data) ? c.flow_data : []);
-                const allEffs = this.currentChartData.curves.flatMap(c => Array.isArray(c?.efficiency_data) ? c.efficiency_data : []).filter(e => e != null && e > 0);
-                if (allFlows.length > 0) {
-                    chartMinFlow = Math.min(...allFlows);
-                    chartMaxFlow = Math.max(...allFlows);
-                }
-                if (allEffs.length > 0) {
-                    chartMinEff = Math.min(...allEffs);
-                    chartMaxEff = Math.max(...allEffs);
-                }
-            }
-
-            // Calculate reference line boundaries using robust logic
-            const flowRange = chartMaxFlow - chartMinFlow;
-            const effRange = chartMaxEff - chartMinEff;
-
-            // Ensure minimum extension values for small ranges
-            const minFlowExtension = Math.max(flowRange * 0.4, 100); // At least 100 units or 40% of range
-            const minEffExtension = Math.max(effRange * 0.4, 10);    // At least 10 units or 40% of range
-
-            // Calculate extended boundaries with proper bounds checking
-            const extendedMinFlow = Math.max(0, chartMinFlow - minFlowExtension);
-            const extendedMaxFlow = chartMaxFlow + minFlowExtension;
-            const extendedMinEff = Math.max(0, chartMinEff - minEffExtension);
-            const extendedMaxEff = chartMaxEff + minEffExtension;
-
-            // Vertical reference line (flow) - extends from bottom to top of chart
-            traces.push({
-                x: [operatingPointFlow, operatingPointFlow],
-                y: [extendedMinEff, extendedMaxEff],
-                type: 'scatter',
-                mode: 'lines',
-                name: 'Flow Reference',
-                line: {
-                    color: '#d32f2f',
-                    width: 2,
-                    dash: 'dot'
-                },
-                showlegend: false,
-                hoverinfo: 'skip'
-            });
-
-            // Horizontal reference line (efficiency) - extends from left to right of chart
-            traces.push({
-                x: [extendedMinFlow, extendedMaxFlow],
-                y: [operatingPointEfficiency, operatingPointEfficiency],
-                type: 'scatter',
-                mode: 'lines',
-                name: 'Efficiency Reference',
-                line: {
-                    color: '#d32f2f',
-                    width: 2,
-                    dash: 'dot'
-                },
-                showlegend: false,
-                hoverinfo: 'skip'
-            });
-
-            // Add operating point triangle marker with enhanced visibility
-            traces.push({
-                x: [operatingPointFlow],
-                y: [operatingPointEfficiency],
-                type: 'scatter',
-                mode: 'markers',
-                name: 'Operating Point',
-                marker: {
-                    color: 'rgba(255,255,255,0)', // Transparent fill
-                    size: 18,
-                    symbol: pointSymbol,
-                    line: { color: '#d32f2f', width: 3 }
-                },
-                hovertemplate: '<b>Operating Point</b><br>Flow: %{x:.0f} m³/hr<br>Efficiency: %{y:.1f}%<extra></extra>'
-            });
+            
+            // Add reference lines using helper
+            this.addReferenceLines(traces, operatingPointFlow, operatingPointEfficiency, dataRanges);
+            
+            // Add operating point marker using helper
+            this.addOperatingPointMarker(traces, operatingPointFlow, operatingPointEfficiency, 
+                'Flow: %{x:.0f} m³/hr<br>Efficiency: %{y:.1f}%');
         }
-
-        const title = this.currentChartData.pump_code + " - " + config.title;
-        const yAxisTitle = config.yAxis;
 
         // Calculate proper y-axis range based on actual efficiency data
         let maxEfficiency = 100;
@@ -722,57 +662,10 @@ class PumpChartsManager {
             }
         }
 
-        const layout = {
-            title: {
-                text: title,
-                font: { size: 18, color: '#1976d2', family: 'Roboto, sans-serif' },
-                x: 0.05,
-                xanchor: 'left'
-            },
-            xaxis: {
-                title: {
-                    text: 'Flow Rate (m³/hr)',
-                    font: { size: 14, color: '#555' }
-                },
-                gridcolor: '#e0e0e0',
-                gridwidth: 1,
-                showline: true,
-                linecolor: '#ccc',
-                linewidth: 1
-            },
-            yaxis: {
-                title: {
-                    text: yAxisTitle,
-                    font: { size: 14, color: '#555' }
-                },
-                gridcolor: '#e0e0e0',
-                gridwidth: 1,
-                showline: true,
-                linecolor: '#ccc',
-                linewidth: 1,
-                range: [minEfficiency, maxEfficiency] // Explicitly set y-axis range
-            },
-            font: {
-                family: 'Roboto, sans-serif',
-                size: 12,
-                color: '#333'
-            },
-            paper_bgcolor: '#ffffff',
-            plot_bgcolor: '#fafafa',
-            margin: { l: 90, r: 90, t: 100, b: 140 },
-            showlegend: true,
-            legend: {
-                orientation: 'h',
-                x: 0.5,
-                y: -0.3,
-                xanchor: 'center',
-                yanchor: 'top',
-                bgcolor: 'rgba(255,255,255,0.95)',
-                bordercolor: '#e0e0e0',
-                borderwidth: 1,
-                font: { size: 11 }
-            }
-        };
+        // Use helper to create standard layout
+        const layout = this.createStandardLayout(config);
+        // Set custom y-axis range for efficiency chart
+        layout.yaxis.range = [minEfficiency, maxEfficiency];
 
         const plotConfig = {
             responsive: true,
@@ -807,15 +700,8 @@ class PumpChartsManager {
         if (Array.isArray(this.currentChartData.curves)) {
             this.currentChartData.curves.forEach((curve, index) => {
                 if (curve && Array.isArray(curve.flow_data) && Array.isArray(curve.power_data) && curve.power_data.length > 0) {
-                    // Generate proper impeller size name
-                    let impellerName = 'Unknown Size';
-                    if (curve.impeller_diameter_mm) {
-                        impellerName = curve.impeller_diameter_mm + "mm Impeller";
-                    } else if (curve.impeller_size && curve.impeller_size !== "Curve " + (index + 1) && !curve.impeller_size.includes('Curve')) {
-                        impellerName = curve.impeller_size + "mm Impeller";
-                    } else {
-                        impellerName = "Impeller " + (index + 1);
-                    }
+                    // Generate proper impeller size name using helper
+                    let impellerName = this.getImpellerName(curve, index);
 
                     // Apply speed scaling to selected curve if applied
                     let flowData = [...curve.flow_data];
@@ -851,6 +737,9 @@ class PumpChartsManager {
             });
         }
 
+        // Calculate data ranges for power chart
+        const dataRanges = this.calculateDataRanges(this.currentChartData.curves, 'power_data');
+        
         // Add BEP Operating Range Visualization to Power Chart
         const opPoint = this.currentChartData.operating_point;
         if (opPoint && opPoint.flow_m3hr && opPoint.power_kw != null && opPoint.power_kw > 0) {
@@ -858,24 +747,10 @@ class PumpChartsManager {
             const operatingPointFlow = opPoint.flow_m3hr;
             const operatingPointPower = opPoint.power_kw;
             
-            const bep80Flow = operatingPointFlow * 0.8;
-            const bep110Flow = operatingPointFlow * 1.1;
-
-            // Get power range for shaded zone based on actual data
-            let maxPowerZone = 300;
-            let minPowerZone = 0;
-            if (Array.isArray(this.currentChartData.curves) && this.currentChartData.curves.length > 0) {
-                const allPowers = this.currentChartData.curves.flatMap(c => Array.isArray(c?.power_data) ? c.power_data : []).filter(p => p != null && p > 0);
-                if (allPowers.length > 0) {
-                    minPowerZone = Math.max(0, Math.min(...allPowers) * 0.9); // Start 10% below minimum but not below 0
-                    maxPowerZone = Math.max(...allPowers) * 1.2; // Extend slightly beyond max for full coverage
-                }
-            }
-
-            // BEP Preferred Operating Zone for Power (80%-110%) - Shaded area
+            // Add BEP zone using helper (note: modified for power chart colors)
             traces.push({
-                x: [bep80Flow, bep110Flow, bep110Flow, bep80Flow, bep80Flow],
-                y: [minPowerZone, minPowerZone, maxPowerZone, maxPowerZone, minPowerZone],
+                x: [operatingPointFlow * 0.8, operatingPointFlow * 1.1, operatingPointFlow * 1.1, operatingPointFlow * 0.8, operatingPointFlow * 0.8],
+                y: [dataRanges.minY, dataRanges.minY, dataRanges.maxY, dataRanges.maxY, dataRanges.minY],
                 type: 'scatter',
                 mode: 'lines',
                 fill: 'toself',
@@ -886,92 +761,14 @@ class PumpChartsManager {
                 text: 'Optimal Power Range<br>80% - 110% of BEP Flow',
                 showlegend: true
             });
-            const pointColor = '#d32f2f'; // Red color for duty point
-            const pointSymbol = 'triangle-up'; // Red triangle marker
-
-            // Get chart data ranges for proper reference line scaling
-            let maxFlowRef = 500;
-            let maxPowerRef = 200;
-            let minFlowRef = 0;
-            let minPowerRef = 0;
-            if (Array.isArray(this.currentChartData.curves) && this.currentChartData.curves.length > 0) {
-                const allFlows = this.currentChartData.curves.flatMap(c => Array.isArray(c?.flow_data) ? c.flow_data : []);
-                const allPowers = this.currentChartData.curves.flatMap(c => Array.isArray(c?.power_data) ? c.power_data : []).filter(p => p != null && p > 0);
-                if (allFlows.length > 0) {
-                    minFlowRef = Math.min(...allFlows);
-                    maxFlowRef = Math.max(...allFlows);
-                }
-                if (allPowers.length > 0) {
-                    minPowerRef = Math.min(...allPowers);
-                    maxPowerRef = Math.max(...allPowers);
-                }
-            }
-
-            // Calculate reference line boundaries using robust logic
-            const flowRange = maxFlowRef - minFlowRef;
-            const powerRange = maxPowerRef - minPowerRef;
-
-            // Ensure minimum extension values for small ranges
-            const minFlowExtension = Math.max(flowRange * 0.4, 100); // At least 100 units or 40% of range
-            const minPowerExtension = Math.max(powerRange * 0.4, 20); // At least 20 units or 40% of range
-
-            // Calculate extended boundaries with proper bounds checking
-            const extendedMinFlow = Math.max(0, minFlowRef - minFlowExtension);
-            const extendedMaxFlow = maxFlowRef + minFlowExtension;
-            const extendedMinPower = Math.max(0, minPowerRef - minPowerExtension);
-            const extendedMaxPower = maxPowerRef + minPowerExtension;
-
-            // Vertical reference line (flow) - extends from bottom to top of chart
-            traces.push({
-                x: [operatingPointFlow, operatingPointFlow],
-                y: [extendedMinPower, extendedMaxPower],
-                type: 'scatter',
-                mode: 'lines',
-                name: 'Flow Reference',
-                line: {
-                    color: '#d32f2f',
-                    width: 2,
-                    dash: 'dot'
-                },
-                showlegend: false,
-                hoverinfo: 'skip'
-            });
-
-            // Horizontal reference line (power) - extends from left to right of chart
-            traces.push({
-                x: [extendedMinFlow, extendedMaxFlow],
-                y: [operatingPointPower, operatingPointPower],
-                type: 'scatter',
-                mode: 'lines',
-                name: 'Power Reference',
-                line: {
-                    color: '#d32f2f',
-                    width: 2,
-                    dash: 'dot'
-                },
-                showlegend: false,
-                hoverinfo: 'skip'
-            });
-
-            // Add operating point triangle marker with enhanced visibility
-            traces.push({
-                x: [operatingPointFlow],
-                y: [operatingPointPower],
-                type: 'scatter',
-                mode: 'markers',
-                name: 'Operating Point',
-                marker: {
-                    color: 'rgba(255,255,255,0)', // Transparent fill
-                    size: 18,
-                    symbol: pointSymbol,
-                    line: { color: '#d32f2f', width: 3 }
-                },
-                hovertemplate: '<b>Operating Point</b><br>Flow: %{x:.0f} m³/hr<br>Power: %{y:.1f} kW<extra></extra>'
-            });
+            
+            // Add reference lines using helper
+            this.addReferenceLines(traces, operatingPointFlow, operatingPointPower, dataRanges);
+            
+            // Add operating point marker using helper
+            this.addOperatingPointMarker(traces, operatingPointFlow, operatingPointPower, 
+                'Flow: %{x:.0f} m³/hr<br>Power: %{y:.1f} kW');
         }
-
-        const title = this.currentChartData.pump_code + " - " + config.title;
-        const yAxisTitle = config.yAxis;
 
         // Calculate proper y-axis range based on actual power data
         let maxPower = 200;
@@ -987,57 +784,10 @@ class PumpChartsManager {
             }
         }
 
-        const layout = {
-            title: {
-                text: title,
-                font: { size: 18, color: '#1976d2', family: 'Roboto, sans-serif' },
-                x: 0.05,
-                xanchor: 'left'
-            },
-            xaxis: {
-                title: {
-                    text: 'Flow Rate (m³/hr)',
-                    font: { size: 14, color: '#555' }
-                },
-                gridcolor: '#e0e0e0',
-                gridwidth: 1,
-                showline: true,
-                linecolor: '#ccc',
-                linewidth: 1
-            },
-            yaxis: {
-                title: {
-                    text: yAxisTitle,
-                    font: { size: 14, color: '#555' }
-                },
-                gridcolor: '#e0e0e0',
-                gridwidth: 1,
-                showline: true,
-                linecolor: '#ccc',
-                linewidth: 1,
-                range: [minPower, maxPower] // Explicitly set y-axis range
-            },
-            font: {
-                family: 'Roboto, sans-serif',
-                size: 12,
-                color: '#333'
-            },
-            paper_bgcolor: '#ffffff',
-            plot_bgcolor: '#fafafa',
-            margin: { l: 90, r: 90, t: 100, b: 140 },
-            showlegend: true,
-            legend: {
-                orientation: 'h',
-                x: 0.5,
-                y: -0.3,
-                xanchor: 'center',
-                yanchor: 'top',
-                bgcolor: 'rgba(255,255,255,0.95)',
-                bordercolor: '#e0e0e0',
-                borderwidth: 1,
-                font: { size: 11 }
-            }
-        };
+        // Use helper to create standard layout
+        const layout = this.createStandardLayout(config);
+        // Set custom y-axis range for power chart
+        layout.yaxis.range = [minPower, maxPower];
 
         const plotConfig = {
             responsive: true,
@@ -1071,15 +821,8 @@ class PumpChartsManager {
         if (Array.isArray(this.currentChartData.curves)) {
             this.currentChartData.curves.forEach((curve, index) => {
                 if (curve && Array.isArray(curve.flow_data) && Array.isArray(curve.npshr_data) && curve.npshr_data.length > 0) {
-                    // Generate proper impeller size name
-                    let impellerName = 'Unknown Size';
-                    if (curve.impeller_diameter_mm) {
-                        impellerName = curve.impeller_diameter_mm + "mm Impeller";
-                    } else if (curve.impeller_size && curve.impeller_size !== "Curve " + (index + 1) && !curve.impeller_size.includes('Curve')) {
-                        impellerName = curve.impeller_size + "mm Impeller";
-                    } else {
-                        impellerName = "Impeller " + (index + 1);
-                    }
+                    // Generate proper impeller size name using helper
+                    let impellerName = this.getImpellerName(curve, index);
 
                     // Apply speed scaling to selected curve if applied
                     let flowData = [...curve.flow_data];
@@ -1152,6 +895,9 @@ class PumpChartsManager {
             });
         }
 
+        // Calculate data ranges for NPSH chart
+        const dataRanges = this.calculateDataRanges(this.currentChartData.curves, 'npshr_data');
+        
         // Add operating point with red triangle marker and reference lines (only if NPSH data exists)
         const opPoint = this.currentChartData.operating_point;
         const hasNpshData = Array.isArray(this.currentChartData.curves) &&
@@ -1164,92 +910,13 @@ class PumpChartsManager {
             const operatingPointFlow = opPoint.flow_m3hr;
             const operatingPointNpsh = opPoint.npshr_m;
             
-            const pointColor = '#d32f2f'; // Red color for duty point
-            const pointSymbol = 'triangle-up'; // Red triangle marker
-
-            // Get chart data ranges for proper reference line scaling
-            let maxFlowNpsh = 500;
-            let maxNpshRef = 10;
-            let minFlowNpsh = 0;
-            let minNpshRef = 0;
-            if (Array.isArray(this.currentChartData.curves) && this.currentChartData.curves.length > 0) {
-                const allFlows = this.currentChartData.curves.flatMap(c => Array.isArray(c?.flow_data) ? c.flow_data : []);
-                const allNpsh = this.currentChartData.curves.flatMap(c => Array.isArray(c?.npshr_data) ? c.npshr_data : []).filter(val => val != null && val > 0);
-                if (allFlows.length > 0) {
-                    minFlowNpsh = Math.min(...allFlows);
-                    maxFlowNpsh = Math.max(...allFlows);
-                }
-                if (allNpsh.length > 0) {
-                    minNpshRef = Math.min(...allNpsh);
-                    maxNpshRef = Math.max(...allNpsh);
-                }
-            }
-
-            // Calculate reference line boundaries using robust logic
-            const flowRange = maxFlowNpsh - minFlowNpsh;
-            const npshRange = maxNpshRef - minNpshRef;
-
-            // Ensure minimum extension values for small ranges
-            const minFlowExtension = Math.max(flowRange * 0.4, 100); // At least 100 units or 40% of range
-            const minNpshExtension = Math.max(npshRange * 0.4, 2);   // At least 2 units or 40% of range
-
-            // Calculate extended boundaries with proper bounds checking
-            const extendedMinFlow = Math.max(0, minFlowNpsh - minFlowExtension);
-            const extendedMaxFlow = maxFlowNpsh + minFlowExtension;
-            const extendedMinNpsh = Math.max(0, minNpshRef - minNpshExtension);
-            const extendedMaxNpsh = maxNpshRef + minNpshExtension;
-
-            // Vertical reference line (flow) - constrain to calculated y-axis range
-            // Use the same range calculation as the y-axis to ensure consistency
-            const yAxisMin = Math.max(0, minNpshRef - (maxNpshRef - minNpshRef) * 0.05);
-            const yAxisMax = maxNpshRef + (maxNpshRef - minNpshRef) * 0.05;
             
-            traces.push({
-                x: [operatingPointFlow, operatingPointFlow],
-                y: [yAxisMin, yAxisMax], // Use exact same range as y-axis
-                type: 'scatter',
-                mode: 'lines',
-                name: 'Flow Reference',
-                line: {
-                    color: '#d32f2f',
-                    width: 2,
-                    dash: 'dot'
-                },
-                showlegend: false,
-                hoverinfo: 'skip'
-            });
-
-            // Horizontal reference line (NPSH) - extends from left to right of chart
-            traces.push({
-                x: [extendedMinFlow, extendedMaxFlow],
-                y: [operatingPointNpsh, operatingPointNpsh],
-                type: 'scatter',
-                mode: 'lines',
-                name: 'NPSH Reference',
-                line: {
-                    color: '#d32f2f',
-                    width: 2,
-                    dash: 'dot'
-                },
-                showlegend: false,
-                hoverinfo: 'skip'
-            });
-
-            // Add operating point triangle marker with enhanced visibility
-            traces.push({
-                x: [operatingPointFlow],
-                y: [operatingPointNpsh],
-                type: 'scatter',
-                mode: 'markers',
-                name: 'Operating Point',
-                marker: {
-                    color: 'rgba(255,255,255,0)', // Transparent fill
-                    size: 18,
-                    symbol: pointSymbol,
-                    line: { color: '#d32f2f', width: 3 }
-                },
-                hovertemplate: '<b>Operating Point</b><br>Flow: %{x:.0f} m³/hr<br>NPSHr: %{y:.1f} m<extra></extra>'
-            });
+            // Add reference lines using helper
+            this.addReferenceLines(traces, operatingPointFlow, operatingPointNpsh, dataRanges);
+            
+            // Add operating point marker using helper
+            this.addOperatingPointMarker(traces, operatingPointFlow, operatingPointNpsh, 
+                'Flow: %{x:.0f} m³/hr<br>NPSHr: %{y:.1f} m');
         }
         
         if (!hasNpshData) {
@@ -1267,9 +934,6 @@ class PumpChartsManager {
                 hoverinfo: 'skip'
             });
         }
-
-        const title = this.currentChartData.pump_code + " - " + config.title;
-        const yAxisTitle = config.yAxis;
 
         // Calculate proper y-axis range based on actual NPSH data
         let maxNpsh = 4;
@@ -1301,65 +965,18 @@ class PumpChartsManager {
             }
         }
 
-        const layout = {
-            title: {
-                text: title,
-                font: { size: 18, color: '#1976d2', family: 'Roboto, sans-serif' },
-                x: 0.05,
-                xanchor: 'left'
-            },
-            xaxis: {
-                title: {
-                    text: 'Flow Rate (m³/hr)',
-                    font: { size: 14, color: '#555' }
-                },
-                gridcolor: '#e0e0e0',
-                gridwidth: 1,
-                showline: true,
-                linecolor: '#ccc',
-                linewidth: 1
-            },
-            yaxis: {
-                title: {
-                    text: yAxisTitle,
-                    font: { size: 14, color: '#555' }
-                },
-                gridcolor: '#e0e0e0',
-                gridwidth: 1,
-                showline: true,
-                linecolor: '#ccc',
-                linewidth: 1,
-                range: [minNpsh, maxNpsh], // Explicitly set y-axis range
-                autorange: false, // Disable auto-ranging to force our range
-                fixedrange: true, // Prevent user from zooming/panning y-axis
-                rangemode: 'normal', // Prevent Plotly from extending axis to 0
-                autorangeoptions: {
-                    minallowed: minNpsh,
-                    maxallowed: maxNpsh,
-                    clipmin: minNpsh,
-                    clipmax: maxNpsh
-                }
-            },
-            font: {
-                family: 'Roboto, sans-serif',
-                size: 12,
-                color: '#333'
-            },
-            paper_bgcolor: '#ffffff',
-            plot_bgcolor: '#fafafa',
-            margin: { l: 90, r: 90, t: 100, b: 140 },
-            showlegend: true,
-            legend: {
-                orientation: 'h',
-                x: 0.5,
-                y: -0.3,
-                xanchor: 'center',
-                yanchor: 'top',
-                bgcolor: 'rgba(255,255,255,0.95)',
-                bordercolor: '#e0e0e0',
-                borderwidth: 1,
-                font: { size: 11 }
-            }
+        // Use helper to create standard layout
+        const layout = this.createStandardLayout(config);
+        // Set custom y-axis configurations for NPSH chart
+        layout.yaxis.range = [minNpsh, maxNpsh];
+        layout.yaxis.autorange = false;
+        layout.yaxis.fixedrange = true;
+        layout.yaxis.rangemode = 'normal';
+        layout.yaxis.autorangeoptions = {
+            minallowed: minNpsh,
+            maxallowed: maxNpsh,
+            clipmin: minNpsh,
+            clipmax: maxNpsh
         };
 
         const plotConfig = {
