@@ -1,0 +1,39 @@
+INFO:app.route_modules.main_flow:Index route accessed.
+INFO:werkzeug:172.31.81.66 - - [05/Aug/2025 13:37:46] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:172.31.81.66 - - [05/Aug/2025 13:37:47] "GET /static/css/style.css?v=1000 HTTP/1.1" 200 -
+INFO:werkzeug:172.31.81.66 - - [05/Aug/2025 13:37:47] "GET /static/css/floating-ai-chat.css?v=9637 HTTP/1.1" 200 -
+INFO:werkzeug:172.31.81.66 - - [05/Aug/2025 13:37:48] "GET /static/js/icon-loader.js HTTP/1.1" 304 -
+INFO:werkzeug:172.31.81.66 - - [05/Aug/2025 13:37:48] "GET /static/css/icon-fixes.css?v=3281 HTTP/1.1" 200 -
+INFO:werkzeug:172.31.81.66 - - [05/Aug/2025 13:37:48] "GET /static/js/floating-ai-chat.js HTTP/1.1" 304 -
+INFO:werkzeug:172.31.81.66 - - [05/Aug/2025 13:37:48] "GET /static/js/main.js HTTP/1.1" 304 -
+INFO:werkzeug:172.31.81.66 - - [05/Aug/2025 13:37:48] "GET /static/js/force-icon-refresh.js HTTP/1.1" 304 -
+INFO:werkzeug:172.31.81.66 - - [05/Aug/2025 13:37:48] "GET /static/js/micro-interactions.js HTTP/1.1" 304 -
+INFO:app.route_modules.main_flow:Index route accessed.
+INFO:werkzeug:127.0.0.1 - - [05/Aug/2025 13:37:55] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [05/Aug/2025 13:37:55] "GET /static/css/style.css?v=6870 HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [05/Aug/2025 13:37:55] "GET /static/js/floating-ai-chat.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [05/Aug/2025 13:37:55] "GET /static/css/icon-fixes.css?v=9313 HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [05/Aug/2025 13:37:55] "GET /static/css/floating-ai-chat.css?v=8175 HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [05/Aug/2025 13:37:55] "GET /static/js/icon-loader.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [05/Aug/2025 13:37:55] "GET /static/js/main.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [05/Aug/2025 13:37:55] "GET /static/js/micro-interactions.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [05/Aug/2025 13:37:55] "GET /static/js/force-icon-refresh.js HTTP/1.1" 200 -
+INFO:app.route_modules.main_flow:Form submitted with pump type: 'GENERAL'
+INFO:werkzeug:172.31.81.66 - - [05/Aug/2025 13:38:16] "POST /pump_selection HTTP/1.1" 302 -
+INFO:app.route_modules.main_flow:Processing pump options for: flow=86.4 m³/hr, head=20.0 m
+INFO:app.route_modules.main_flow:Pump type filter requested: 'GENERAL'
+INFO:app.route_modules.main_flow:Loaded 386 pumps from catalog
+INFO:app.catalog_engine:Catalog Engine: QBP-centric selection for flow=86.4, head=20.0, type='GENERAL'
+ERROR:app.route_modules.main_flow:Error evaluating pumps with catalog engine: 'sizing_info'
+[WARNING] No suitable pumps found for your requirements. Please adjust your specifications.
+INFO:werkzeug:172.31.81.66 - - [05/Aug/2025 13:38:16] "GET /pump_options?flow=86.4&head=20.0&application_type=water&pump_type=GENERAL HTTP/1.1" 302 -
+INFO:app.route_modules.main_flow:Index route accessed.
+INFO:werkzeug:172.31.81.66 - - [05/Aug/2025 13:38:17] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:172.31.81.66 - - [05/Aug/2025 13:38:18] "GET /static/css/style.css?v=6228 HTTP/1.1" 200 -
+INFO:werkzeug:172.31.81.66 - - [05/Aug/2025 13:38:18] "GET /static/css/icon-fixes.css?v=1166 HTTP/1.1" 200 -
+INFO:werkzeug:172.31.81.66 - - [05/Aug/2025 13:38:18] "GET /static/css/floating-ai-chat.css?v=1647 HTTP/1.1" 200 -
+INFO:werkzeug:172.31.81.66 - - [05/Aug/2025 13:38:18] "GET /static/js/floating-ai-chat.js HTTP/1.1" 304 -
+INFO:werkzeug:172.31.81.66 - - [05/Aug/2025 13:38:18] "GET /static/js/icon-loader.js HTTP/1.1" 304 -
+INFO:werkzeug:172.31.81.66 - - [05/Aug/2025 13:38:18] "GET /static/js/force-icon-refresh.js HTTP/1.1" 304 -
+INFO:werkzeug:172.31.81.66 - - [05/Aug/2025 13:38:18] "GET /static/js/main.js HTTP/1.1" 304 -
+INFO:werkzeug:172.31.81.66 - - [05/Aug/2025 13:38:18] "GET /static/js/micro-interactions.js HTTP/1.1" 304 -

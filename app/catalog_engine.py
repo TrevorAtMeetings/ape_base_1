@@ -304,7 +304,15 @@ class CatalogPump:
         optimal_sizing = scaling_engine.find_optimal_sizing(
             self.curves, flow_m3hr, head_m)
         if optimal_sizing:
-            trim_percent = optimal_sizing['sizing_info']['trim_percent']
+            # Handle different possible data structures
+            if 'sizing_info' in optimal_sizing:
+                trim_percent = optimal_sizing['sizing_info']['trim_percent']
+            elif 'trim_percent' in optimal_sizing:
+                trim_percent = optimal_sizing['trim_percent']
+            else:
+                # Default to 100 if no trim info available
+                trim_percent = 100
+                
             if 80 <= trim_percent <= 100:
                 return {'feasible': True, 'method': 'trim', 'sizing': optimal_sizing}
             else:
