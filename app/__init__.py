@@ -110,6 +110,10 @@ app.register_blueprint(api_bp, url_prefix='/api')
 from .route_modules.pump_editor_routes import pump_editor_bp
 app.register_blueprint(pump_editor_bp)
 
+# Register the Admin Config blueprint
+from .route_modules.admin_config import admin_config_bp
+app.register_blueprint(admin_config_bp)
+
 # Import core functions from appropriate modules
 from .data_models import SiteRequirements
 from .pump_repository import get_pump_repository

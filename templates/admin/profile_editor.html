@@ -1,0 +1,396 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Profile - {{ profile.name }} - APE Pumps{% endblock %}
+
+{% block extra_head %}
+<style>
+    .param-group {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+    
+    .param-input {
+        margin-bottom: 15px;
+    }
+    
+    .param-input label {
+        font-weight: 600;
+        margin-bottom: 5px;
+        display: block;
+    }
+    
+    .param-input small {
+        color: #6c757d;
+        display: block;
+        margin-top: 5px;
+    }
+    
+    .weight-indicator {
+        position: absolute;
+        right: 10px;
+        top: 38px;
+        font-weight: bold;
+    }
+    
+    .audit-entry {
+        border-left: 3px solid #dee2e6;
+        padding-left: 15px;
+        margin-bottom: 15px;
+    }
+    
+    .audit-entry.update {
+        border-color: #0066cc;
+    }
+    
+    .audit-entry.create {
+        border-color: #28a745;
+    }
+    
+    .save-button {
+        position: sticky;
+        bottom: 20px;
+        float: right;
+        z-index: 100;
+    }
+    
+    .total-weight-display {
+        font-size: 1.5em;
+        padding: 10px;
+        border-radius: 5px;
+        text-align: center;
+    }
+    
+    .total-weight-display.valid {
+        background-color: #d4edda;
+        color: #155724;
+    }
+    
+    .total-weight-display.invalid {
+        background-color: #f8d7da;
+        color: #721c24;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('admin_config.index') }}">Admin Config</a></li>
+                    <li class="breadcrumb-item active">{{ profile.name }}</li>
+                </ol>
+            </nav>
+            <h1 class="mb-4">{{ profile.name }}</h1>
+            <p class="lead">{{ profile.description }}</p>
+        </div>
+    </div>
+    
+    <form id="profileForm">
+        <!-- Scoring Weights -->
+        <div class="param-group">
+            <h3>Scoring Weights</h3>
+            <p class="text-muted">These weights determine how pumps are scored. Total must equal 100.</p>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="param-input position-relative">
+                        <label for="bep_weight">BEP Proximity Weight</label>
+                        <input type="number" class="form-control" id="bep_weight" name="bep_weight" 
+                               value="{{ profile.scoring_weights.bep }}" min="0" max="100" step="0.1">
+                        <span class="weight-indicator">{{ profile.scoring_weights.bep }}%</span>
+                        <small>Weight given to operating near Best Efficiency Point (reliability)</small>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="param-input position-relative">
+                        <label for="efficiency_weight">Efficiency Weight</label>
+                        <input type="number" class="form-control" id="efficiency_weight" name="efficiency_weight" 
+                               value="{{ profile.scoring_weights.efficiency }}" min="0" max="100" step="0.1">
+                        <span class="weight-indicator">{{ profile.scoring_weights.efficiency }}%</span>
+                        <small>Weight given to pump efficiency (operating cost)</small>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="param-input position-relative">
+                        <label for="head_margin_weight">Head Margin Weight</label>
+                        <input type="number" class="form-control" id="head_margin_weight" name="head_margin_weight" 
+                               value="{{ profile.scoring_weights.head_margin }}" min="0" max="100" step="0.1">
+                        <span class="weight-indicator">{{ profile.scoring_weights.head_margin }}%</span>
+                        <small>Weight given to proper pump sizing (avoiding oversizing)</small>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="param-input position-relative">
+                        <label for="npsh_weight">NPSH Weight</label>
+                        <input type="number" class="form-control" id="npsh_weight" name="npsh_weight" 
+                               value="{{ profile.scoring_weights.npsh }}" min="0" max="100" step="0.1">
+                        <span class="weight-indicator">{{ profile.scoring_weights.npsh }}%</span>
+                        <small>Weight given to NPSH margin (cavitation prevention)</small>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="total-weight-display" id="totalWeightDisplay">
+                Total Weight: <span id="totalWeight">100</span>%
+            </div>
+        </div>
+        
+        <!-- Efficiency Thresholds -->
+        <div class="param-group">
+            <h3>Efficiency Thresholds</h3>
+            <p class="text-muted">Define efficiency categories for scoring</p>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="param-input">
+                        <label for="min_acceptable_efficiency">Minimum Acceptable Efficiency</label>
+                        <input type="number" class="form-control" id="min_acceptable_efficiency" name="min_acceptable_efficiency" 
+                               value="{{ profile.zones.efficiency_thresholds.minimum }}" min="20" max="60" step="1">
+                        <small>Pumps below this efficiency are excluded</small>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="param-input">
+                        <label for="fair_efficiency">Fair Efficiency Threshold</label>
+                        <input type="number" class="form-control" id="fair_efficiency" name="fair_efficiency" 
+                               value="{{ profile.zones.efficiency_thresholds.fair }}" min="40" max="80" step="1">
+                        <small>Efficiency considered "fair" above this value</small>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="param-input">
+                        <label for="good_efficiency">Good Efficiency Threshold</label>
+                        <input type="number" class="form-control" id="good_efficiency" name="good_efficiency" 
+                               value="{{ profile.zones.efficiency_thresholds.good }}" min="60" max="90" step="1">
+                        <small>Efficiency considered "good" above this value</small>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="param-input">
+                        <label for="excellent_efficiency">Excellent Efficiency Threshold</label>
+                        <input type="number" class="form-control" id="excellent_efficiency" name="excellent_efficiency" 
+                               value="{{ profile.zones.efficiency_thresholds.excellent }}" min="70" max="95" step="1">
+                        <small>Efficiency considered "excellent" above this value</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- BEP Operating Zones -->
+        <div class="param-group">
+            <h3>BEP Operating Zones</h3>
+            <p class="text-muted">Define the optimal flow range relative to Best Efficiency Point</p>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="param-input">
+                        <label for="bep_optimal_min">Optimal Zone Minimum</label>
+                        <input type="number" class="form-control" id="bep_optimal_min" name="bep_optimal_min" 
+                               value="{{ profile.zones.bep_optimal[0] }}" min="0.7" max="1.0" step="0.05">
+                        <small>Minimum flow ratio for optimal operation (typically 0.95)</small>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="param-input">
+                        <label for="bep_optimal_max">Optimal Zone Maximum</label>
+                        <input type="number" class="form-control" id="bep_optimal_max" name="bep_optimal_max" 
+                               value="{{ profile.zones.bep_optimal[1] }}" min="1.0" max="1.3" step="0.05">
+                        <small>Maximum flow ratio for optimal operation (typically 1.05)</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- NPSH Safety Margins -->
+        <div class="param-group">
+            <h3>NPSH Safety Margins</h3>
+            <p class="text-muted">Define safety margins above minimum NPSH requirements</p>
+            
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="param-input">
+                        <label for="npsh_minimum_margin">Minimum Margin</label>
+                        <input type="number" class="form-control" id="npsh_minimum_margin" name="npsh_minimum_margin" 
+                               value="{{ profile.zones.npsh_margins.minimum }}" min="0.3" max="2.0" step="0.1">
+                        <small>Absolute minimum NPSH margin (m)</small>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="param-input">
+                        <label for="npsh_good_margin">Good Margin</label>
+                        <input type="number" class="form-control" id="npsh_good_margin" name="npsh_good_margin" 
+                               value="{{ profile.zones.npsh_margins.good }}" min="1.0" max="3.0" step="0.1">
+                        <small>NPSH margin considered "good" (m)</small>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="param-input">
+                        <label for="npsh_excellent_margin">Excellent Margin</label>
+                        <input type="number" class="form-control" id="npsh_excellent_margin" name="npsh_excellent_margin" 
+                               value="{{ profile.zones.npsh_margins.excellent }}" min="2.0" max="5.0" step="0.1">
+                        <small>NPSH margin considered "excellent" (m)</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Modification Penalties -->
+        <div class="param-group">
+            <h3>Modification Penalties</h3>
+            <p class="text-muted">Penalties applied when pump modifications are required</p>
+            
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="param-input">
+                        <label for="speed_variation_penalty_factor">Speed Variation Penalty</label>
+                        <input type="number" class="form-control" id="speed_variation_penalty_factor" 
+                               name="speed_variation_penalty_factor" 
+                               value="{{ profile.modifications.speed_penalty }}" min="0" max="30" step="1">
+                        <small>Maximum penalty points for speed variation (VFD required)</small>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="param-input">
+                        <label for="trimming_penalty_factor">Impeller Trimming Penalty</label>
+                        <input type="number" class="form-control" id="trimming_penalty_factor" 
+                               name="trimming_penalty_factor" 
+                               value="{{ profile.modifications.trim_penalty }}" min="0" max="20" step="1">
+                        <small>Maximum penalty points for impeller trimming</small>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="param-input">
+                        <label for="max_acceptable_trim_pct">Maximum Trim Percentage</label>
+                        <input type="number" class="form-control" id="max_acceptable_trim_pct" 
+                               name="max_acceptable_trim_pct" 
+                               value="{{ profile.modifications.max_trim_pct }}" min="70" max="85" step="1">
+                        <small>Minimum impeller size allowed (% of full diameter)</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Save Button -->
+        <div class="text-end mb-5">
+            <button type="button" class="btn btn-primary btn-lg save-button" onclick="saveProfile()">
+                <i class="fas fa-save"></i> Save Changes
+            </button>
+        </div>
+    </form>
+    
+    <!-- Audit Log -->
+    <div class="row mt-5">
+        <div class="col-12">
+            <h3>Change History</h3>
+            <div class="audit-log">
+                {% for entry in audit_log %}
+                <div class="audit-entry {{ entry.change_type }}">
+                    <div class="d-flex justify-content-between">
+                        <strong>{{ entry.changed_by }}</strong>
+                        <small class="text-muted">{{ entry.timestamp.strftime('%Y-%m-%d %H:%M') }}</small>
+                    </div>
+                    {% if entry.change_type == 'update' %}
+                    <p class="mb-1">Changed <code>{{ entry.field_name }}</code> from <strong>{{ entry.old_value }}</strong> to <strong>{{ entry.new_value }}</strong></p>
+                    {% else %}
+                    <p class="mb-1">{{ entry.change_type|title }} profile</p>
+                    {% endif %}
+                    {% if entry.reason %}
+                    <small class="text-muted">Reason: {{ entry.reason }}</small>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Update weight indicators and total
+document.querySelectorAll('input[type="number"]').forEach(input => {
+    input.addEventListener('input', function() {
+        // Update indicator if it's a weight field
+        const indicator = this.parentElement.querySelector('.weight-indicator');
+        if (indicator) {
+            indicator.textContent = this.value + '%';
+        }
+        
+        // Update total weight if it's a weight field
+        if (this.name.includes('weight')) {
+            updateTotalWeight();
+        }
+    });
+});
+
+function updateTotalWeight() {
+    const total = parseFloat(document.getElementById('bep_weight').value || 0) +
+                  parseFloat(document.getElementById('efficiency_weight').value || 0) +
+                  parseFloat(document.getElementById('head_margin_weight').value || 0) +
+                  parseFloat(document.getElementById('npsh_weight').value || 0);
+    
+    document.getElementById('totalWeight').textContent = total.toFixed(1);
+    const display = document.getElementById('totalWeightDisplay');
+    
+    if (Math.abs(total - 100) < 0.01) {
+        display.classList.remove('invalid');
+        display.classList.add('valid');
+    } else {
+        display.classList.remove('valid');
+        display.classList.add('invalid');
+    }
+}
+
+function saveProfile() {
+    // Validate total weight
+    const total = parseFloat(document.getElementById('bep_weight').value || 0) +
+                  parseFloat(document.getElementById('efficiency_weight').value || 0) +
+                  parseFloat(document.getElementById('head_margin_weight').value || 0) +
+                  parseFloat(document.getElementById('npsh_weight').value || 0);
+    
+    if (Math.abs(total - 100) > 0.01) {
+        alert('Scoring weights must total exactly 100. Current total: ' + total.toFixed(1));
+        return;
+    }
+    
+    // Get reason for change
+    const reason = prompt('Please provide a reason for this change:');
+    if (!reason) {
+        return;
+    }
+    
+    // Collect all form data
+    const formData = {};
+    document.querySelectorAll('#profileForm input[type="number"]').forEach(input => {
+        formData[input.name] = parseFloat(input.value);
+    });
+    formData.reason = reason;
+    
+    // Send update request
+    fetch('{{ url_for("admin_config.api_profile", profile_id=profile.id) }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(formData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Profile updated successfully!');
+            window.location.reload();
+        } else {
+            alert('Error updating profile: ' + (data.error || 'Unknown error'));
+        }
+    })
+    .catch(error => {
+        alert('Error: ' + error);
+    });
+}
+
+// Initialize total weight display
+updateTotalWeight();
+</script>
+{% endblock %}
