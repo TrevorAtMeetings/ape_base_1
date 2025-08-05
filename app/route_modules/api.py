@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 api_bp = Blueprint('api', __name__)
 
 
-@api_bp.route('/chart_data/<pump_code>')
+@api_bp.route('/chart_data/<path:pump_code>')
 def get_chart_data(pump_code):
     """API endpoint to get chart data for interactive Plotly.js charts."""
     try:
