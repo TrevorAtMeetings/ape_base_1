@@ -1,0 +1,160 @@
+This is excellent—clear, rigorous, and business-ready. Your revised version is much more comprehensive and suitable for a requirements handover or technical spec than the shorter impeller trim excerpt I provided earlier.
+
+Your version does everything right:
+	•	Sets context and purpose
+	•	Clarifies user/data flow
+	•	Specifies core and edge-case calculations
+	•	Formalises physical rejection/exclusion rules
+	•	Details scoring, fallback, and reporting
+	•	Adds documentation and transparency expectations
+	•	Highlights the key logic changes for dev and QA alignment
+
+⸻
+
+If You Want This Even More “Final” or “Implementation-Ready,” Consider:
+	•	Adding a glossary (QBP, BEP, NPSHa/r, etc.) if non-specialists will use/read it.
+	•	Explicit table or section for “Reason for Exclusion” codes if you’ll log or display these systematically.
+	•	Checklist for QA: “Test all the following exclusion scenarios: undertrim, overspeed, head not met, curve monotonicity failure, etc.”
+	•	Example calculations or sample outputs (could be an appendix).
+	•	Explicit “change control” header (this supersedes all prior logic as you’ve stated).
+	•	If used for AI agent prompt context, highlight “Instructions for LLM/AI: strictly adhere to physical/engineering constraints before scoring. Never select unbuildable pumps.”
+
+⸻
+
+But as a business/engineering requirements document for the selection engine, this is fully ready to hand off to dev, test, or AI.
+
+If you want this in Word, PDF, or as an internal wiki page format just let me know!
+Otherwise, this version below is your “Final” as requested:
+
+⸻
+
+APE Pumps Selection Application – Revised Pump Selection and Scoring Specification
+
+(Effective August 2025 | For AI/Development Context & Implementation)
+
+⸻
+
+I. Core Selection Principles
+	•	Reliability First: Prioritise operation near the Best Efficiency Point (BEP), measured as proximity of actual duty point to BEP (QBP-centric).
+	•	Right-Sizing: Penalise both undersizing and excessive oversizing.
+	•	Total Cost of Ownership: Optimise for both initial and lifecycle operational costs.
+	•	Data-Driven Decision-Making: All scoring, filtering, and recommendations are grounded in validated, auditable pump data and site requirements.
+
+⸻
+
+II. Updated Pump Selection Workflow
+
+1. Input & Data Collection
+	•	User inputs: Flow rate, Total Head, Pump Type, Application Type, and optionally NPSHa, fluid properties, temperature.
+	•	System gathers pump model/curve data and validates range compatibility.
+
+2. Filtering & Candidate Generation
+	•	Filter pump catalog by type, basic performance envelope, and availability.
+	•	Reject pumps failing envelope checks before any scoring.
+
+3. Performance Calculation & Physical Feasibility
+	•	For each candidate pump:
+	•	Interpolate performance at exact duty point (scientific interpolation, e.g., cubic spline).
+	•	Apply affinity laws for speed variation and impeller trimming.
+	•	Validate against manufacturer physical constraints:
+	•	Min/max impeller trim (typically 80–100% of base diameter)
+	•	Speed limits (e.g., 750–3600 rpm or per motor spec)
+	•	Combined trim/speed scenarios (disqualify if outside envelope)
+	•	Enforce all physical and manufacturer boundaries before scoring.
+
+4. Scoring System (100 Points, Revised)
+
+Score Component	Max Points	Calculation Notes
+QBP Proximity	40	40 × max(0, 1 - ((Duty_Flow/BEP_Flow - 1)/0.5)²); reward operation closest to BEP
+Efficiency (Parabolic)	30	30 × (Efficiency_at_Duty_Point/100)²; higher efficiency gets more points, but plateaus
+Head Margin	15	Piecewise: see function below for penalties outside -2% to +20% margin
+NPSH Score	15	Mode A: NPSHa known – margin ratio formula; Mode B: NPSHa unknown – absolute NPSHr value
+Speed Variation Penalty	-15	Deduct: min(15, 1.5 × % speed change)
+Impeller Trim Penalty	-∞	Deduct: 0.5 × % trim; Disqualify if below min allowed diameter
+
+Head Margin Piecewise Function:
+	•	< -2% = disqualify
+	•	-2% to +5% = 15 points (ideal)
+	•	+5% to +20% = 15 - 0.5 × (Margin - 5)
+	•	+20% to +50% = 7.5 - 0.25 × (Margin - 20)
+	•	+50% = 0 - 0.1 × (Margin - 50) (negative)
+
+NPSH Scoring:
+	•	Mode A: 15 × max(0, min(1, (NPSHa/NPSHr - 1.1) / (2.0 - 1.1)))
+	•	Mode B: NPSHr ≤ 2m: 15 points, NPSHr ≥ 8m: 0 points, linear scaling between
+
+Handling Missing Data:
+	•	Missing NPSH: Do not penalise; skip NPSH score, adjust total possible score accordingly.
+	•	Missing Efficiency: Disqualify pump if unable to interpolate duty point.
+
+⸻
+
+III. Exclusion & Feasibility Rules
+	•	Reject pumps that:
+	•	Require impeller trim below minimum or above maximum allowed
+	•	Exceed max allowed speed or combined trim/speed boundaries
+	•	Fail envelope or curve monotonicity checks
+	•	Cannot achieve required head at duty flow within adjustment limits
+	•	Always show “reason for exclusion” in output/report.
+
+⸻
+
+IV. Ranking, Alternatives & Reporting
+	•	Rank all feasible candidates by total score (descending)
+	•	Generate up to 10 best-fit alternatives, prioritising:
+	•	Closest QBP match
+	•	Least physical adjustment required
+	•	Multiple pump types if applicable (axial, mixed, centrifugal)
+	•	Lifecycle cost and efficiency diversity
+
+Comparison Matrix:
+For each candidate, show:
+	•	QBP, Efficiency, Head Margin, NPSH, Penalties
+	•	Physical feasibility flags
+	•	Lifecycle cost
+	•	All calculation subcomponents (transparency)
+
+⸻
+
+V. Fallback & Robustness Mechanisms
+	•	If No Suitable Pumps:
+	•	Relax efficiency threshold (down to 35%)
+	•	Expand flow tolerance (±10%)
+	•	Allow wider VFD speed range (up to ±50%)
+	•	Prompt user to review/relax requirements if still no matches
+	•	Incomplete Data:
+	•	Use conservative estimates with warnings
+	•	Suggest user request more data from manufacturer for critical projects
+
+⸻
+
+VI. Documentation, Validation & User Guidance
+	•	Calculation methods, exclusions, and all scoring breakdowns to be stored alongside each result
+	•	User-facing summary includes:
+	•	Calculation basis
+	•	Warnings (e.g., missing NPSH, extrapolated values)
+	•	Visual plots: Duty vs BEP, efficiency curve, NPSH, and all performance data
+	•	Lifecycle cost and operational flags
+
+⸻
+
+VII. Key Changes from Previous Logic
+	•	QBP proximity (duty to BEP) now central, not BEP alone
+	•	Parabolic efficiency scoring to reflect diminishing returns at high efficiency
+	•	Strict physical feasibility check before scoring—no more selection of unbuildable/over-trimmed pumps
+	•	Comprehensive “reason for exclusion” for all rejected candidates
+	•	Better missing data handling: NPSH missing = no penalty, efficiency missing = reject
+	•	Full transparency in reporting and comparison
+
+⸻
+
+This specification supersedes all prior selection logic.
+All development and AI review should adhere to this updated, QBP-centric, auditable, physically-validated approach.
+
+⸻
+
+End of Requirements
+
+⸻
+
+Let me know if you’d like this styled for a particular audience (engineers, AI devs, QA, management) or as a downloadable doc. This is “final” by best practice standards.
