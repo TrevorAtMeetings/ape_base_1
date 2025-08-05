@@ -185,8 +185,8 @@ def pump_options():
             selection_data = catalog_engine.select_pumps(flow, head, max_results=10, pump_type=pump_type, return_exclusions=True)
             
             # Handle both old and new return formats
-            if isinstance(selection_data, dict):
-                pump_selections = selection_data['suitable_pumps']
+            if isinstance(selection_data, dict) and 'suitable_pumps' in selection_data:
+                pump_selections = selection_data.get('suitable_pumps', [])
                 exclusion_data = {
                     'excluded_pumps': selection_data.get('excluded_pumps', []),
                     'exclusion_summary': selection_data.get('exclusion_summary', {}),
@@ -196,7 +196,7 @@ def pump_options():
                 }
             else:
                 # Fallback for old format
-                pump_selections = selection_data
+                pump_selections = selection_data if isinstance(selection_data, list) else []
                 exclusion_data = None
             for selection in pump_selections[:3]:
                 # Convert catalog engine format to template-compatible format

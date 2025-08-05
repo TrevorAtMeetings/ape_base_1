@@ -18,7 +18,20 @@ logger = logging.getLogger(__name__)
 # Create blueprint
 data_management_bp = Blueprint('data_management', __name__)
 
+# Backward compatibility redirects
 @data_management_bp.route('/data-management')
+def data_management_redirect():
+    return redirect(url_for('data_management.data_management'))
+
+@data_management_bp.route('/export-csv')
+def export_csv_redirect():
+    return redirect(url_for('data_management.export_csv'))
+
+@data_management_bp.route('/upload-pump-data', methods=['POST'])
+def upload_pump_data_redirect():
+    return redirect(url_for('data_management.upload_pump_data'), code=307)
+
+@data_management_bp.route('/data_management')
 def data_management():
     """Pump data management interface with table view and export options."""
     try:
@@ -125,7 +138,7 @@ def data_management():
         safe_flash('Error loading pump data.', 'error')
         return redirect(url_for('main_flow.index'))
 
-@data_management_bp.route('/export-csv')
+@data_management_bp.route('/export_csv')
 def export_csv():
     """Export pump data to CSV format."""
     try:
@@ -208,7 +221,7 @@ def export_csv():
         safe_flash('Error exporting data to CSV.', 'error')
         return redirect(url_for('data_management'))
 
-@data_management_bp.route('/upload-pump-data', methods=['POST'])
+@data_management_bp.route('/upload_pump_data', methods=['POST'])
 def upload_pump_data():
     """Upload new pump data from file."""
     try:

@@ -55,7 +55,12 @@ logger = logging.getLogger(__name__)
 
 ai_extract_bp = Blueprint('ai_extract', __name__)
 
+# Backward compatibility redirect
 @ai_extract_bp.route('/ai-extract', methods=['GET'])
+def ai_extract_redirect():
+    return redirect(url_for('ai_extract.ai_extract_page'))
+
+@ai_extract_bp.route('/ai_extract', methods=['GET'])
 def ai_extract_page():
     """AI extraction page with simplified system."""
     # Simplified system - no model comparison needed
@@ -119,7 +124,7 @@ def ai_extract_extract():
 
         file = request.files['pdf_file']
 
-        if file.filename == '':
+        if not file.filename or file.filename == '':
             return jsonify({'success': False, 'message': 'No selected file'}), 400
 
         if not file.filename.lower().endswith('.pdf'):
@@ -139,7 +144,8 @@ def ai_extract_extract():
         import os
         import tempfile
         temp_dir = tempfile.gettempdir()
-        file_path = os.path.join(temp_dir, file.filename)
+        filename = file.filename or 'unnamed.pdf'
+        file_path = os.path.join(temp_dir, filename)
         
         # Initialize timing variables early to avoid scope issues  
         import time
@@ -170,8 +176,8 @@ def ai_extract_extract():
             
             try:
                 # Use threading for better timeout control
-                result = [None]
-                exception = [None]
+                result: list = [None]
+                exception: list = [None]
                 
                 def extraction_thread():
                     try:
@@ -192,7 +198,7 @@ def ai_extract_extract():
                     logger.error(f"[AI Extract] Extraction timed out after {extraction_timeout}s")
                     raise TimeoutError(f"Extraction process timed out after {extraction_timeout} seconds")
                 
-                if exception[0]:
+                if exception[0] is not None:
                     raise exception[0]
                 
                 extracted_data = result[0]
@@ -392,31 +398,6 @@ def ai_extract_extract():
         }
         return jsonify(response_data)
 
-    except Exception as extraction_error:
-        # Handle extraction-specific errors with enhanced error details
-        logger.error(f"[AI Extract] Extraction failed: {extraction_error}")
-        logger.error(f"[AI Extract] Full traceback: {traceback.format_exc()}")
-
-        # Try to categorize the error for better user feedback
-        error_str = str(extraction_error).lower()
-
-        if "specialist" in error_str:
-            # Specialist processing failed, but we have fallback
-            return jsonify({
-                'success': False,
-                'message': 'Advanced extraction failed, but automatic fallback succeeded. Some data may be incomplete.',
-                'error_type': 'specialist_fallback',
-                'retry_suggestion': 'Try again for full specialist processing or accept current results'
-            }), 206  # Partial content
-        else:
-            # Handle generic extraction errors with JSON response
-            return jsonify({
-                'success': False,
-                'message': get_user_friendly_error_message(extraction_error),
-                'error_type': 'extraction_error',
-                'retry_suggestion': 'Try again or check PDF quality'
-            }), 500
-
     except TimeoutError as e:
         logger.error(f"[AI Extract] Timeout error: {e}")
         error_message = f"Extraction timed out: {str(e)}"
@@ -471,25 +452,30 @@ def ai_extract_extract():
                 'retry_suggestion': 'Try again or check PDF quality'
             }), 400
 
-    except Exception as e:
-        logger.error(f"[AI Extract] Unexpected error: {e}")
-        logger.error(f"[AI Extract] Error type: {type(e).__name__}")
-        return jsonify({
-            'success': False,
-            'message': f'Unexpected error during extraction: {str(e)[:200]}...',
-            'error_type': 'unexpected_error',
-            'retry_suggestion': 'Please try again or contact support if the issue persists'
-        }), 500
-    
-    except Exception as e:
-        logger.error(f"[AI Extract] Unexpected error: {e}")
-        logger.error(f"[AI Extract] Error type: {type(e).__name__}")
-        return jsonify({
-            'success': False,
-            'message': get_user_friendly_error_message(e, 'auto'),
-            'error_type': 'unexpected_error',
-            'retry_suggestion': 'Please try again or contact support if the issue persists'
-        }), 500
+    except Exception as extraction_error:
+        # Handle extraction-specific errors with enhanced error details
+        logger.error(f"[AI Extract] Extraction failed: {extraction_error}")
+        logger.error(f"[AI Extract] Full traceback: {traceback.format_exc()}")
+
+        # Try to categorize the error for better user feedback
+        error_str = str(extraction_error).lower()
+
+        if "specialist" in error_str:
+            # Specialist processing failed, but we have fallback
+            return jsonify({
+                'success': False,
+                'message': 'Advanced extraction failed, but automatic fallback succeeded. Some data may be incomplete.',
+                'error_type': 'specialist_fallback',
+                'retry_suggestion': 'Try again for full specialist processing or accept current results'
+            }), 206  # Partial content
+        else:
+            # Handle generic extraction errors with JSON response
+            return jsonify({
+                'success': False,
+                'message': get_user_friendly_error_message(extraction_error),
+                'error_type': 'extraction_error',
+                'retry_suggestion': 'Try again or check PDF quality'
+            }), 500
 
 @ai_extract_bp.route('/ai_extract/insert', methods=['POST'])
 def ai_extract_insert():
@@ -513,7 +499,7 @@ def ai_extract_insert():
                     impeller_diameter = curve.get('impellerDiameter', 'N/A')
                     flow_points = len(curve.get('flow', []))
 
-        pump_id = insert_extracted_pump_data(data, filename=filename)
+        pump_id = insert_extracted_pump_data(data, filename=filename or 'unknown.pdf')
         return jsonify({'success': True, 'pump_id': pump_id})
 
     except Exception as e:
