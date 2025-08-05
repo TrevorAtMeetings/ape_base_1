@@ -1212,7 +1212,8 @@ class PumpChartsManager {
                 linecolor: '#ccc',
                 linewidth: 1,
                 range: [minNpsh, maxNpsh], // Explicitly set y-axis range
-                autorange: false // Disable auto-ranging to force our range
+                autorange: false, // Disable auto-ranging to force our range
+                fixedrange: true // Prevent user from zooming/panning y-axis
             },
             font: {
                 family: 'Roboto, sans-serif',
@@ -1253,6 +1254,14 @@ class PumpChartsManager {
                 yDataMax: Math.max(...(trace.y || [])),
                 yDataMin: Math.min(...(trace.y || []))
             })));
+            
+            // Debug the layout being passed to Plotly
+            console.log('NPSHr Chart Layout Y-axis details:', {
+                calculatedMin: minNpsh,
+                calculatedMax: maxNpsh,
+                layoutYAxisRange: layout.yaxis.range,
+                layoutYAxisAutorange: layout.yaxis.autorange
+            });
             
             Plotly.newPlot(containerId, traces, layout, plotConfig);
             console.log('Charts.js: NPSHr-flow chart rendered successfully');
