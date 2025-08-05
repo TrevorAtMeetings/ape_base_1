@@ -2,7 +2,7 @@ modules = ["web", "python-3.11", "postgresql-16"]
 
 [nix]
 channel = "stable-24_05"
-packages = ["poppler_utils", "pkg-config"]
+packages = ["poppler_utils", "pkg-config", "pango", "cairo", "gdk-pixbuf", "fontconfig", "harfbuzz"]
 
 [deployment]
 deploymentTarget = "autoscale"
