@@ -141,25 +141,20 @@ def pump_report(pump_code):
                     operating_flow = selected_pump['operating_point'].get('flow_m3hr', 0)
                     operating_head = selected_pump['operating_point'].get('head_m', 0)
                     
-                    # Always ensure BEP analysis is present and calculated
-                    if 'bep_analysis' not in selected_pump:
-                        # Get the pump object to calculate BEP analysis
-                        from ..catalog_engine import get_catalog_engine
-                        catalog_engine = get_catalog_engine()
-                        target_pump = catalog_engine.get_pump_by_code(pump_code)
-                        
-                        if target_pump:
-                            # Calculate BEP analysis
-                            bep_analysis = target_pump.calculate_bep_distance(operating_flow, operating_head)
-                            selected_pump['bep_analysis'] = bep_analysis
+                    # Always ensure BEP analysis is calculated (regardless of whether it exists)
+                    from ..catalog_engine import get_catalog_engine
+                    catalog_engine = get_catalog_engine()
+                    target_pump = catalog_engine.get_pump_by_code(pump_code)
                     
-                    # Always calculate QBEP percentage and operating zone if BEP analysis exists
-                    bep_analysis = selected_pump.get('bep_analysis')
-                    if bep_analysis:
-                        logger.info(f"Template data - BEP analysis: {bep_analysis}")
+                    if target_pump:
+                        # Always recalculate BEP analysis to ensure it's fresh and complete
+                        bep_analysis = target_pump.calculate_bep_distance(operating_flow, operating_head)
+                        selected_pump['bep_analysis'] = bep_analysis
+                        
+                        logger.info(f"Template data - BEP analysis recalculated: {bep_analysis}")
                         logger.info(f"Template data - Operating flow: {operating_flow}")
                         
-                        if bep_analysis.get('bep_available') and bep_analysis.get('bep_flow', 0) > 0:
+                        if bep_analysis and bep_analysis.get('bep_available') and bep_analysis.get('bep_flow', 0) > 0:
                             qbep_percentage = (operating_flow / bep_analysis['bep_flow']) * 100
                             selected_pump['qbep_percentage'] = qbep_percentage
                             logger.info(f"Template data - QBEP percentage calculated: {qbep_percentage}%")
@@ -178,10 +173,13 @@ def pump_report(pump_code):
                                 selected_pump['bep_zone_label'] = 'Outside Preferred Range'
                                 selected_pump['bep_zone_color'] = 'danger'
                         else:
+                            logger.warning(f"Template data - BEP analysis invalid or incomplete: {bep_analysis}")
                             selected_pump['qbep_percentage'] = None
                             selected_pump['bep_zone'] = 'unknown'
                             selected_pump['bep_zone_label'] = 'BEP Data Unavailable'
                             selected_pump['bep_zone_color'] = 'secondary'
+                    else:
+                        logger.error(f"Template data - Could not find pump {pump_code} in catalog")
                 
                 # Ensure scoring_details is available if not already present
                 if 'scoring_details' not in selected_pump and selected_pump.get('operating_point'):
