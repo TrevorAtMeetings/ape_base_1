@@ -265,12 +265,12 @@ class CatalogPump:
                                                        heads,
                                                        kind='linear',
                                                        bounds_error=False,
-                                                       fill_value='extrapolate')
+                                                       fill_value=0)
                     eff_interp = interpolate.interp1d(
                         flows, [p['efficiency_pct'] for p in points],
                         kind='linear',
                         bounds_error=False,
-                                                      fill_value='extrapolate')
+                                                      fill_value=0)
 
                     predicted_head = head_interp(flow_m3hr)
                     efficiency = eff_interp(flow_m3hr)
@@ -293,14 +293,20 @@ class CatalogPump:
         return best_curve
 
     def can_meet_requirements(self, flow_m3hr: float, head_m: float) -> Dict[str, Any]:
-        """Comprehensively evaluate if pump can meet requirements through ANY valid modification"""
+        """Comprehensively evaluate if pump can meet requirements through ANY valid modification on ANY curve"""
         from .impeller_scaling import get_impeller_scaling_engine
         scaling_engine = get_impeller_scaling_engine()
         
-        # Track all reasons why pump might not work
-        reasons = []
+        # Track specific exclusion reasons for transparency
+        exclusion_reasons = []
         
-        # 1. Check if any curve directly covers the duty point (with industry-standard 20% extrapolation)
+        # If no curves exist, this is truly no performance data
+        if not self.curves or not any(curve.get('performance_points') for curve in self.curves):
+            return {'feasible': False, 'reasons': [ExclusionReason.NO_PERFORMANCE_DATA]}
+        
+        # COMPREHENSIVE EVALUATION: Try ALL curves with ALL methods before exclusion
+        best_options = []
+        
         for curve in self.curves:
             points = curve['performance_points']
             if not points:
@@ -309,73 +315,102 @@ class CatalogPump:
             flows = [p['flow_m3hr'] for p in points]
             heads = [p['head_m'] for p in points]
             
+            if not flows or not heads:
+                continue
+                
             flow_min, flow_max = min(flows), max(flows)
             head_min, head_max = min(heads), max(heads)
             
-            # Progressive extrapolation: try 15% first, then 20% for comprehensive coverage
-            # This aligns with industry standards for safe pump operation beyond test points
-            if (flow_min * 0.85 <= flow_m3hr <= flow_max * 1.15 and 
-                head_min * 0.85 <= head_m <= head_max * 1.15):
-                return {'feasible': True, 'method': 'direct_15pct', 'curve': curve}
-            elif (flow_min * 0.8 <= flow_m3hr <= flow_max * 1.2 and 
-                  head_min * 0.8 <= head_m <= head_max * 1.2):
-                return {'feasible': True, 'method': 'direct_20pct', 'curve': curve}
-        
-        # 2. Check if impeller trimming can achieve duty point
-        optimal_sizing = scaling_engine.find_optimal_sizing(
-            self.curves, flow_m3hr, head_m)
-        if optimal_sizing:
-            # Handle different possible data structures
-            if 'sizing_info' in optimal_sizing:
-                trim_percent = optimal_sizing['sizing_info']['trim_percent']
-            elif 'trim_percent' in optimal_sizing:
-                trim_percent = optimal_sizing['trim_percent']
-            else:
-                # Default to 100 if no trim info available
-                trim_percent = 100
-                
-            # Industry standard allows 75-100% trim for most applications
-            if 75 <= trim_percent <= 100:
-                return {'feasible': True, 'method': 'trim', 'sizing': optimal_sizing}
-            else:
-                reasons.append(ExclusionReason.UNDERTRIM if trim_percent < 75 else ExclusionReason.OVERTRIM)
-        
-        # 3. Check if speed variation can achieve duty point
-        pump_specs = {
-            'test_speed_rpm': self.specifications.get('test_speed_rpm', 980),
-            'max_speed_rpm': self.specifications.get('max_speed_rpm', 1150),
-            'min_speed_rpm': self.specifications.get('min_speed_rpm', 700)
-        }
-        
-        for curve in self.curves:
-            speed_result = scaling_engine.calculate_speed_variation(
-                curve, flow_m3hr, head_m, pump_specs)
+            # Method 1: Direct coverage with progressive extrapolation (industry standard ±10% safe)
+            if (flow_min * 0.9 <= flow_m3hr <= flow_max * 1.1 and 
+                head_min * 0.9 <= head_m <= head_max * 1.1):
+                return {'feasible': True, 'method': 'direct', 'curve': curve, 'extrapolation': '10%'}
+            
+            # Method 2: Extended safe extrapolation (±15% engineering acceptable)  
+            elif (flow_min * 0.85 <= flow_m3hr <= flow_max * 1.15 and 
+                  head_min * 0.85 <= head_m <= head_max * 1.15):
+                best_options.append({
+                    'feasible': True, 'method': 'direct_extended', 'curve': curve, 
+                    'extrapolation': '15%', 'priority': 2
+                })
+            
+            # Method 3: Try impeller trimming on this curve
+            optimal_sizing = scaling_engine.find_optimal_sizing([curve], flow_m3hr, head_m)
+            if optimal_sizing:
+                if 'sizing_info' in optimal_sizing:
+                    trim_percent = optimal_sizing['sizing_info']['trim_percent']
+                elif 'trim_percent' in optimal_sizing:
+                    trim_percent = optimal_sizing['trim_percent']
+                else:
+                    trim_percent = 100
+                    
+                # Industry standard allows 75-100% trim
+                if 75 <= trim_percent <= 100:
+                    return {'feasible': True, 'method': 'trim', 'curve': curve, 'sizing': optimal_sizing}
+                else:
+                    # Track but continue evaluating other curves
+                    if trim_percent < 75:
+                        exclusion_reasons.append(f"Curve {curve.get('curve_index', 'N/A')}: Requires {trim_percent:.1f}% trim (below 75% minimum)")
+                    else:
+                        exclusion_reasons.append(f"Curve {curve.get('curve_index', 'N/A')}: Requires {trim_percent:.1f}% trim (above 100% maximum)")
+            
+            # Method 4: Try speed variation on this curve
+            pump_specs = {
+                'test_speed_rpm': self.specifications.get('test_speed_rpm', 980),
+                'max_speed_rpm': self.specifications.get('max_speed_rpm', 1150),
+                'min_speed_rpm': self.specifications.get('min_speed_rpm', 700)
+            }
+            
+            speed_result = scaling_engine.calculate_speed_variation(curve, flow_m3hr, head_m, pump_specs)
             if speed_result and speed_result['meets_requirements']:
                 required_speed = speed_result['test_speed_rpm']
-                # Extended speed range for comprehensive evaluation - industry allows wider range
-                if 600 <= required_speed <= 3600:
-                    return {'feasible': True, 'method': 'speed', 'result': speed_result}
+                if 600 <= required_speed <= 3600:  # Extended range for comprehensive coverage
+                    return {'feasible': True, 'method': 'speed', 'curve': curve, 'result': speed_result}
                 else:
-                    reasons.append(ExclusionReason.UNDERSPEED if required_speed < 600 else ExclusionReason.OVERSPEED)
+                    # Track but continue evaluating
+                    if required_speed < 600:
+                        exclusion_reasons.append(f"Curve {curve.get('curve_index', 'N/A')}: Requires {required_speed:.0f} RPM (below 600 minimum)")
+                    else:
+                        exclusion_reasons.append(f"Curve {curve.get('curve_index', 'N/A')}: Requires {required_speed:.0f} RPM (above 3600 maximum)")
         
-        # 4. Check absolute physical limits with extended engineering margins
+        # If we found extended extrapolation options, use the best one
+        if best_options:
+            return sorted(best_options, key=lambda x: x['priority'])[0]
+        
+        # Final check: Absolute physical impossibility 
         max_head = self._calculate_max_head()
-        max_flow = self._calculate_max_flow()
+        max_flow = self._calculate_max_flow()  
         min_flow = min(min(p['flow_m3hr'] for p in curve['performance_points']) 
                       for curve in self.curves if curve['performance_points'])
         
-        # Extended margins for comprehensive evaluation - industry standard allows more flexibility
-        if head_m > max_head * 1.3:  # 30% margin for speed increase + extrapolation
-            reasons.append(ExclusionReason.HEAD_NOT_MET)
-        if flow_m3hr > max_flow * 1.3:  # 30% margin for comprehensive coverage
-            reasons.append(ExclusionReason.FLOW_OUT_OF_RANGE)
-        if flow_m3hr < min_flow * 0.4:  # 40% of minimum (more permissive than 50%)
-            reasons.append(ExclusionReason.FLOW_OUT_OF_RANGE)
+        # Categorize specific exclusion reasons for engineering guidance
+        final_reasons = []
         
-        # Return comprehensive exclusion reasons
+        if head_m > max_head * 1.25:  # Beyond reasonable speed scaling capability
+            final_reasons.append(ExclusionReason.HEAD_NOT_MET)
+            exclusion_reasons.append(f"Required head {head_m:.1f}m exceeds pump maximum {max_head:.1f}m + 25% margin")
+            
+        if flow_m3hr > max_flow * 1.25:  # Beyond reasonable extrapolation + trimming
+            final_reasons.append(ExclusionReason.FLOW_OUT_OF_RANGE)
+            exclusion_reasons.append(f"Required flow {flow_m3hr:.1f}m³/hr exceeds pump maximum {max_flow:.1f}m³/hr + 25% margin")
+            
+        if flow_m3hr < min_flow * 0.4:  # Below practical minimum operation
+            final_reasons.append(ExclusionReason.FLOW_OUT_OF_RANGE)  
+            exclusion_reasons.append(f"Required flow {flow_m3hr:.1f}m³/hr below practical minimum {min_flow * 0.4:.1f}m³/hr")
+        
+        # Determine primary exclusion category
+        if not final_reasons:
+            if exclusion_reasons:
+                # Specific curve-level failures - this is comprehensive evaluation working
+                final_reasons = [ExclusionReason.ENVELOPE_EXCEEDED]
+            else:
+                # Shouldn't happen if evaluation is comprehensive
+                final_reasons = [ExclusionReason.NO_PERFORMANCE_DATA]
+        
         return {
             'feasible': False, 
-            'reasons': list(set(reasons)) if reasons else [ExclusionReason.ENVELOPE_EXCEEDED]
+            'reasons': final_reasons,
+            'details': exclusion_reasons  # Detailed engineering reasons for transparency
         }
 
     def _validate_physical_capability(self, flow_m3hr: float,
@@ -1196,8 +1231,8 @@ class CatalogEngine:
             formatted_results.append(formatted_result)
 
         # Log exclusion summary for transparency
+        exclusion_summary = {}
         if excluded_pumps:
-            exclusion_summary = {}
             for eval in excluded_pumps:
                 for reason in eval.exclusion_reasons:
                     # Convert enum name to lowercase with underscores for template compatibility
@@ -1229,7 +1264,7 @@ class CatalogEngine:
                 'suitable_pumps': formatted_results,
                 'excluded_pumps': excluded_pumps,
                 'near_miss_pumps': near_miss_pumps[:5],  # Return top 5 near-miss pumps
-                'exclusion_summary': exclusion_summary if excluded_pumps else {},
+                'exclusion_summary': exclusion_summary,
                 'total_evaluated': total_pumps,
                 'feasible_count': feasible_count,
                 'excluded_count': excluded_count
