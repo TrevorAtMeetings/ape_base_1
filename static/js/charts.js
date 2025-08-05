@@ -200,6 +200,34 @@ class PumpChartsManager {
             hoverinfo: 'skip'
         });
     }
+    
+    // Helper function to add operating point marker
+    addOperatingPointMarker(traces, operatingPointFlow, operatingPointY, hovertemplate) {
+        if (!operatingPointFlow || !operatingPointY) return;
+        
+        // Add operating point marker
+        traces.push({
+            x: [operatingPointFlow],
+            y: [operatingPointY],
+            type: 'scatter',
+            mode: 'markers',
+            name: 'Operating Point',
+            marker: {
+                color: 'red',
+                size: 12,
+                symbol: 'circle',
+                line: {
+                    color: 'white',
+                    width: 2
+                }
+            },
+            hovertemplate: hovertemplate,
+            hoverlabel: {
+                bgcolor: 'red',
+                font: { color: 'white' }
+            }
+        });
+    }
 
     // Helper function to calculate data ranges for charts
     calculateDataRanges(curves, dataKey) {
