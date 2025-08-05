@@ -1,0 +1,30 @@
+Guidance Matters
+	•	Realistic Engineering Context:
+Most sites have some flexibility—if the calculated “perfect” pump can’t be found, it’s useful to suggest actionable options, rather than just saying “no result.”
+	•	Supports Decision-Making:
+Many engineers will need to consider duty point adjustments or system design tweaks (parallel pumps, slight head increases, manufacturer consultation). Your tool is helping them think like an engineer, not just a “filter user.”
+	•	Right of BEP Preference:
+You’re absolutely correct—industry consensus is that operating slightly to the right of BEP (e.g., 105–115%) is preferred over the left, as it provides a margin for future wear and a bit more robustness.
+	•	Flexible, Not Rigid:
+By recognizing that 70–120% of BEP is a “good” zone (with preference toward the right), your tool remains practical and user-friendly, not just “by-the-book.”
+
+⸻
+
+Recommendations for Implementation
+	1.	Automatic Suggestions
+	•	If a user’s required duty falls just outside a feasible range (e.g., up to 10–15% over flow/head):
+	•	Display a clear, constructive message:
+“No single pump meets your requirements exactly, but…
+	•	Consider using two smaller pumps in parallel.
+	•	A slight increase in head may bring more pumps into range.
+	•	Contact the manufacturer to explore special trims or curves.”
+	2.	Right-of-BEP Indicator
+	•	In your report, highlight pumps that place the duty point right of BEP (e.g., green tick or “recommended zone” label), and perhaps warn when the selection is on the left (e.g., “may experience more wear/efficiency drop over time”).
+	3.	Interactive User Prompt
+	•	If the system detects that a small adjustment (e.g., +5% head, -10% flow) would yield many more pump options, suggest this interactively:
+	•	“Did you know? Increasing your total head by just 1.5m would make 6 additional pumps available.”
+	4.	Parallel Pump Option
+	•	For large duty points outside all single-pump envelopes, automatically calculate and propose a parallel configuration (e.g., “Two pumps in parallel, each at 50% flow, can meet your requirement with standard models.”).
+	5.	Engineering Explanation
+	•	For transparency, include a footnote:
+“Pumps operating slightly to the right of their Best Efficiency Point (BEP) are generally preferred for reliability and to allow for future wear. Our scoring system reflects this.”
