@@ -55,37 +55,62 @@ The process involves capturing user input, loading pump data, evaluating pumps a
 
 ## Master Development Plan & Roadmap
 
-### 🎯 **PHASE 2: ALGORITHM EXCELLENCE (CURRENT PRIORITY)**
-**Status: TEMPLATE REFACTORING COMPLETE, ALGORITHM ENHANCEMENT IN PROGRESS**
+### 🎯 **RECENT ACHIEVEMENTS (August 5, 2025)**
+**✅ CRITICAL ALGORITHM FIXES COMPLETED**
+- Fixed pump selection priority logic bug (impeller trimming now properly prioritized)
+- Fixed impeller trimming calculation logic (now calculates actual optimal sizes)
+- Enhanced smart trimming decisions with proper affinity law implementation
+- Added comprehensive logging for transparency in selection methodology
 
-#### **Phase 2.2: Algorithm Enhancement - Comprehensive Curve Evaluation (PRIORITY)**
+### 🎯 **PHASE 2: ALGORITHM EXCELLENCE (MAJOR PROGRESS)**
+**Status: CRITICAL IMPELLER TRIMMING LOGIC FIXED ✅**
+
+#### **Phase 2.2: Algorithm Enhancement - Core Logic Fixes (COMPLETED ✅)**
 **Objective:** Fix premature pump exclusions and implement comprehensive evaluation system
 
-**🔄 ACTIVE DEVELOPMENT:**
-- **Problem**: Current algorithm excludes pumps when duty point falls outside ANY single curve, without evaluating ALL curves or applying affinity laws
-- **Impact**: 293 pumps incorrectly excluded as "no performance data" when they actually have data but duty points fall outside individual curve ranges
+**🎉 MAJOR BREAKTHROUGHS ACHIEVED (August 5, 2025):**
 
-**REQUIRED IMPROVEMENTS:**
+1. **✅ FIXED: Pump Selection Priority Logic Bug**
+   - **Problem**: Speed scaling was being returned before checking impeller trimming results
+   - **Solution**: Restructured `get_performance_at_duty()` to properly prioritize trimming
+   - **Result**: System now correctly prefers impeller trimming over speed variation
+
+2. **✅ FIXED: Impeller Trimming Calculation Logic**
+   - **Problem**: Algorithm immediately returned 100% trim when full impeller could meet requirements
+   - **Solution**: Always calculate optimal diameter using affinity laws first
+   - **Result**: System now calculates actual trimming percentages (e.g., 98.2% instead of 100%)
+
+3. **✅ ENHANCED: Smart Trimming Decisions**
+   - **Logic**: Only use full impeller when optimal trim would be minimal (>98%)
+   - **Engineering**: Proper application of affinity law calculations (H₂ = H₁ × (D₂/D₁)²)
+   - **Logging**: Clear visibility into trimming decisions and calculations
+
+**VERIFICATION RESULTS:**
+- **Before**: "Using impeller trimming - 560.0mm → 560.0mm (100.0% trim)"
+- **After**: "Using impeller trimming - 560.0mm → 550.0mm (98.2% trim)"
+- **Evidence**: System now properly calculates when smaller impellers are optimal
+
+**REMAINING IMPROVEMENTS:**
 1. **Comprehensive Curve Evaluation**:
-   - Fix `get_best_curve_for_duty()` to evaluate ALL impeller curves before exclusion
+   - Evaluate ALL impeller curves before exclusion
    - Implement proper exclusion categorization system
    - Add interpolation between curves for intermediate trims
-   - Allow safe extrapolation (±10%) beyond tested ranges
 
-2. **Exclusion Categories** (instead of generic "no data"):
-   - "No performance data" - only when literally no curves exist
-   - "Flow outside pump capacity" - duty exceeds all curves at max trim
-   - "Head outside pump envelope" - cannot achieve within limits  
-   - "Excessive trim required" - would need <80% or >100% impeller
-   - "Speed out of range" - would exceed 750-3600 RPM
-
-3. **Engineering Guidance Features**:
+2. **Engineering Guidance Features**:
    - Near-miss analysis ("5% more head enables 6 pumps")
-   - Parallel pump suggestions for oversized duties
    - Right-of-BEP preference indicators (105-115% sweet spot)
    - Actionable alternatives when no exact match
 
-#### **Phase 2.3: Improved Results Visualization (PLANNED)**
+#### **Phase 2.3: Comprehensive Curve Evaluation (NEXT PRIORITY)**
+**Objective:** Evaluate ALL curves before pump exclusion to eliminate false negatives
+
+**ACTIVE DEVELOPMENT:**
+- Fix premature pump exclusions (293 pumps incorrectly excluded)
+- Implement proper exclusion categorization system  
+- Add interpolation between curves for intermediate trims
+- Allow safe extrapolation (±10%) beyond tested ranges
+
+#### **Phase 2.4: Improved Results Visualization (PLANNED)**
 **Objective:** Enhanced transparency and user guidance in pump selection results
 
 **PLANNED FEATURES:**
@@ -94,7 +119,7 @@ The process involves capturing user input, loading pump data, evaluating pumps a
 - Traffic light system for feasibility indicators
 - Tooltips explaining scoring components
 
-#### **Phase 2.4: Selection Process Visibility (PLANNED)**  
+#### **Phase 2.5: Selection Process Visibility (PLANNED)**  
 **Objective:** Complete transparency in selection methodology
 
 **PLANNED FEATURES:**
