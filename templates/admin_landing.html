@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Panel - APE Pumps{% endblock %}
+
+{% block content %}
+<div class="container" style="margin-top: 30px;">
+    <div class="row">
+        <div class="col s12">
+            <h1 class="center-align">Admin Panel</h1>
+            <p class="center-align">Choose an admin section to manage</p>
+        </div>
+    </div>
+    
+    <div class="row" style="margin-top: 40px;">
+        <!-- AI Knowledge Base Card -->
+        <div class="col s12 m6">
+            <div class="card hoverable">
+                <div class="card-content center-align">
+                    <i class="material-icons large" style="color: var(--md-primary);">psychology</i>
+                    <h5>AI Knowledge Base</h5>
+                    <p>Manage technical documents and test AI query functionality</p>
+                </div>
+                <div class="card-action center-align">
+                    <a href="{{ url_for('admin.ai_admin') }}" class="btn waves-effect waves-light">
+                        <i class="material-icons left">arrow_forward</i>Open AI Admin
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Configuration Settings Card -->
+        <div class="col s12 m6">
+            <div class="card hoverable">
+                <div class="card-content center-align">
+                    <i class="material-icons large" style="color: var(--md-primary);">settings</i>
+                    <h5>Configuration Settings</h5>
+                    <p>Manage pump selection parameters and application profiles</p>
+                </div>
+                <div class="card-action center-align">
+                    <a href="{{ url_for('admin_config.index') }}" class="btn waves-effect waves-light">
+                        <i class="material-icons left">arrow_forward</i>Open Configuration
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

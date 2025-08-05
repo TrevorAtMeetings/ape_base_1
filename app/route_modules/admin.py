@@ -23,10 +23,10 @@ def ai_admin():
     """AI Knowledge Base Admin page."""
     return render_template('ai_admin.html')
 
-# Optionally, make this the admin landing page as well:
+# Admin landing page with options
 @admin_bp.route('/admin')
 def admin_landing():
-    return render_template('ai_admin.html')
+    return render_template('admin_landing.html')
 
 @admin_bp.route('/admin/upload', methods=['POST'])
 def upload_document():
