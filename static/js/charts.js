@@ -1038,18 +1038,15 @@ class PumpChartsManager {
                     const minFlow = Math.min(...curve.flow_data);
                     const maxFlow = Math.max(...curve.flow_data);
                     const smoothedFlowData = [];
-                    let smoothedNpshData = [];
-                    
-                    // First, enforce monotonic behavior on the raw data
-                    const monotonicNpshData = this.enforceMonotonicNPSH(curve.npshr_data);
+                    const smoothedNpshData = [];
                     
                     // Create 100 points for very smooth curve
                     for (let i = 0; i <= 100; i++) {
                         const flow = minFlow + (maxFlow - minFlow) * i / 100;
                         smoothedFlowData.push(flow);
                         
-                        // Use cubic spline interpolation with monotonic data
-                        const npsh = this.cubicSplineInterpolate(curve.flow_data, monotonicNpshData, flow);
+                        // Use cubic spline interpolation for smooth curves
+                        const npsh = this.cubicSplineInterpolate(curve.flow_data, curve.npshr_data, flow);
                         smoothedNpshData.push(npsh);
                     }
                     
@@ -1429,29 +1426,7 @@ class PumpChartsManager {
         
         return h00 * yData[i] + h10 * h * d0 + h01 * yData[i + 1] + h11 * h * d1;
     }
-    
-    // Ensure monotonic NPSHr curves (always increasing or flat)
-    enforceMonotonicNPSH(yData) {
-        const smoothed = [...yData];
-        
-        // Forward pass: ensure each point is >= previous
-        for (let i = 1; i < smoothed.length; i++) {
-            if (smoothed[i] < smoothed[i - 1]) {
-                smoothed[i] = smoothed[i - 1];
-            }
-        }
-        
-        // Apply gentle smoothing to avoid flat sections
-        const result = [...smoothed];
-        for (let i = 1; i < result.length - 1; i++) {
-            // If we have a flat section, create a gentle slope
-            if (result[i] === result[i - 1] && result[i + 1] > result[i]) {
-                result[i] = result[i - 1] + (result[i + 1] - result[i - 1]) * 0.3;
-            }
-        }
-        
-        return result;
-    }
+
 
     removeLoadingSpinner(containerId) {
         const container = document.getElementById(containerId);
