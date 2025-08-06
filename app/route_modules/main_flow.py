@@ -178,7 +178,7 @@ def pump_options():
         logger.info(f"Loaded {len(catalog_engine.pumps)} pumps from catalog")
 
         # Evaluate pumps using catalog engine with pump type filtering and exclusion tracking
-        pump_evaluations = []
+        pump_selections = []
         exclusion_data = None  # Initialize here
         try:
             # Get pump selections with exclusion data for transparency
@@ -244,16 +244,14 @@ def pump_options():
             session['feasible_count'] = exclusion_data.get('feasible_count', len(pump_selections)) if exclusion_data else len(pump_selections)
             session['excluded_count'] = exclusion_data.get('excluded_count', 0) if exclusion_data else 0
             
-            # OLD TRANSFORMATION CODE REMOVED - We now use session data as single source of truth
-            # Create minimal pump_evaluations for redirect compatibility only
-            pump_evaluations = [{'pump_code': sel['pump'].pump_code, 'overall_score': sel.get('suitability_score', 0)} for sel in pump_selections[:3]]
+            # Data flow fixed: Use pump_selections directly instead of creating pump_evaluations
         except Exception as e:
             import traceback
             logger.error(f"Error evaluating pumps with catalog engine: {e}")
             logger.error(f"Traceback: {traceback.format_exc()}")
-            pump_evaluations = []
+            pump_selections = []
 
-        if not pump_evaluations:
+        if not pump_selections:
             safe_flash('No suitable pumps found for your requirements. Please adjust your specifications.', 'warning')
             return redirect(url_for('main_flow.index'))
 
@@ -273,7 +271,7 @@ def pump_options():
             safe_session_set('exclusion_data', exclusion_data)
 
         # Redirect to the best pump's report page with flow and head parameters
-        best_pump = pump_evaluations[0]
+        best_pump = pump_selections[0]
         return redirect(url_for('reports.pump_report', 
                               pump_code=best_pump['pump_code'],
                               flow=site_requirements.flow_m3hr,

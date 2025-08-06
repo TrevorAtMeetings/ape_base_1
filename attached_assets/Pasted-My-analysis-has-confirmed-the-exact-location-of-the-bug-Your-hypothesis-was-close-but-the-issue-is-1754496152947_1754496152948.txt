@@ -1,0 +1,31 @@
+My analysis has confirmed the exact location of the bug. Your hypothesis was close, but the issue is more subtle. You are correctly trying to save the session data, but you are overwriting it with old, incompatible data immediately afterward.
+Analysis of the Bug in pump_options
+Line 257: session['pump_selections'] = serializable_results
+This is CORRECT. At this point, you have successfully saved the complete, correct, and serializable results from the catalog_engine to the session.
+Line 264: pump_evaluations = [{'pump_code': sel['pump'].pump_code, 'overall_score': sel.get('suitability_score', 0)} for sel in pump_selections[:3]]
+This is the BUG. This line is leftover from an old version of the code. It takes the full pump_selections list and transforms it into a new, minimal list called pump_evaluations that only contains the pump_code and overall_score. This new list is what you are using later, not the rich data you saved to the session.
+Line 284: best_pump = pump_evaluations[0]
+This is where the error manifests. You are picking the best_pump from the stripped-down, incorrect pump_evaluations list, not from the full-fidelity pump_selections list that you correctly saved to the session.
+The reports.py module is looking for the rich data structure, but the main_flow.py module is only using a tiny part of it for the redirect, effectively causing the session data to be ignored.
+Directive: Final Fix for main_flow.py
+We will now fix this by removing the old, conflicting logic and using the correct data from pump_selections.
+Your task is to modify the pump_options function in app/route_modules/main_flow.py.
+Step-by-Step Instructions:
+DELETE the Conflicting Line:
+Completely delete the line that creates the pump_evaluations list.
+Delete this line (around line 264):
+Generated python
+pump_evaluations = [{'pump_code': sel['pump'].pump_code, 'overall_score': sel.get('suitability_score', 0)} for sel in pump_selections[:3]]
+Use code with caution.
+Python
+FIX the if not pump_evaluations: Check:
+This check is now broken because pump_evaluations no longer exists.
+Change it to check the correct list: pump_selections.
+Change from: if not pump_evaluations:
+Change to: if not pump_selections:
+FIX the best_pump Assignment:
+This is also broken. It needs to get the best pump from the correct list.
+Change from: best_pump = pump_evaluations[0]
+Change to: best_pump = pump_selections[0]
+These three small changes will completely resolve the data flow issue. The correct, rich pump_selections data will be saved to the session, and the redirect to the report page will use the correct best_pump data from that same list.
+This is the final backend fix. Proceed with these changes now.
