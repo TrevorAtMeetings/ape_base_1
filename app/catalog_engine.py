@@ -819,26 +819,39 @@ class CatalogPump:
 
     def to_dict(self) -> Dict[str, Any]:
         """Converts the CatalogPump object to a JSON-serializable dictionary."""
+        def _make_serializable(value):
+            """Convert non-serializable types to serializable ones."""
+            if isinstance(value, (bool, int, float, str, type(None))):
+                return value
+            elif hasattr(value, 'item'):  # numpy types
+                return value.item()
+            elif isinstance(value, dict):
+                return {k: _make_serializable(v) for k, v in value.items()}
+            elif isinstance(value, (list, tuple)):
+                return [_make_serializable(item) for item in value]
+            else:
+                return str(value)  # Convert everything else to string
+        
         return {
-            'pump_code': self.pump_code,
-            'pump_id': self.pump_id,
-            'manufacturer': self.manufacturer,
-            'pump_type': self.pump_type,
-            'model_series': self.model_series,
-            'specifications': self.specifications,
-            'curves': self.curves,
-            'curve_count': self.curve_count,
-            'total_points': self.total_points,
-            'npsh_curves': self.npsh_curves,
-            'power_curves': self.power_curves,
-            'description': self.description,
-            'max_flow_m3hr': self.max_flow_m3hr,
-            'max_head_m': self.max_head_m,
-            'max_power_kw': self.max_power_kw,
-            'min_efficiency': self.min_efficiency,
-            'max_efficiency': self.max_efficiency,
-            'connection_size': self.connection_size,
-            'materials': self.materials,
+            'pump_code': _make_serializable(self.pump_code),
+            'pump_id': _make_serializable(self.pump_id),
+            'manufacturer': _make_serializable(self.manufacturer),
+            'pump_type': _make_serializable(self.pump_type),
+            'model_series': _make_serializable(self.model_series),
+            'specifications': _make_serializable(self.specifications),
+            'curves': _make_serializable(self.curves),
+            'curve_count': _make_serializable(self.curve_count),
+            'total_points': _make_serializable(self.total_points),
+            'npsh_curves': _make_serializable(self.npsh_curves),
+            'power_curves': _make_serializable(self.power_curves),
+            'description': _make_serializable(self.description),
+            'max_flow_m3hr': _make_serializable(self.max_flow_m3hr),
+            'max_head_m': _make_serializable(self.max_head_m),
+            'max_power_kw': _make_serializable(self.max_power_kw),
+            'min_efficiency': _make_serializable(self.min_efficiency),
+            'max_efficiency': _make_serializable(self.max_efficiency),
+            'connection_size': _make_serializable(self.connection_size),
+            'materials': _make_serializable(self.materials),
         }
 
 

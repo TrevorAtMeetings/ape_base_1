@@ -511,7 +511,7 @@ class PumpChartsManager {
                     // Generate proper impeller size name using helper
                     let impellerName = this.getImpellerName(curve, index);
 
-                    // Apply speed scaling to selected curve if applied
+                    // Apply speed scaling to selected curve if applied (VFD pumps)
                     let flowData = [...curve.flow_data];
                     let headData = [...curve.head_data];
                     
@@ -525,6 +525,29 @@ class PumpChartsManager {
                         
                         impellerName += ` (${Math.round(requiredSpeed)} RPM)`;
                         console.log(`Charts.js: Applied speed scaling to selected curve - ratio: ${speedRatio.toFixed(3)}`);
+                    }
+                    
+                    // v6.0 CRITICAL FIX: Apply impeller trimming to selected curve (fixed-speed pumps)
+                    if (curve.is_selected && this.currentChartData.operating_point && this.currentChartData.operating_point.sizing_info) {
+                        const sizingInfo = this.currentChartData.operating_point.sizing_info;
+                        const trimPercent = sizingInfo.trim_percent;
+                        
+                        if (trimPercent && trimPercent < 100) {
+                            // Calculate diameter ratio: D₂/D₁ = trim_percent/100
+                            const diameterRatio = trimPercent / 100.0;
+                            
+                            // Apply affinity laws for impeller trimming:
+                            // Flow: Q₂ = Q₁ × (D₂/D₁) 
+                            // Head: H₂ = H₁ × (D₂/D₁)²
+                            const flowRatio = diameterRatio;
+                            const headRatio = diameterRatio * diameterRatio;
+                            
+                            flowData = flowData.map(flow => flow * flowRatio);
+                            headData = headData.map(head => head * headRatio);
+                            
+                            impellerName += ` (${trimPercent.toFixed(1)}% trim)`;
+                            console.log(`Charts.js: Applied impeller trimming to selected curve - trim: ${trimPercent.toFixed(1)}%, head ratio: ${headRatio.toFixed(3)}`);
+                        }
                     }
 
                     traces.push({
@@ -609,7 +632,7 @@ class PumpChartsManager {
                     // Generate proper impeller size name using helper
                     let impellerName = this.getImpellerName(curve, index);
 
-                    // Apply speed scaling to selected curve if applied
+                    // Apply speed scaling to selected curve if applied (VFD pumps)
                     let flowData = [...curve.flow_data];
                     let efficiencyData = [...curve.efficiency_data];
                     
@@ -623,6 +646,28 @@ class PumpChartsManager {
                         
                         impellerName += ` (${Math.round(requiredSpeed)} RPM)`;
                         console.log(`Charts.js: Applied speed scaling to efficiency curve - ratio: ${speedRatio.toFixed(3)}`);
+                    }
+                    
+                    // v6.0 CRITICAL FIX: Apply impeller trimming to selected curve (fixed-speed pumps)
+                    if (curve.is_selected && this.currentChartData.operating_point && this.currentChartData.operating_point.sizing_info) {
+                        const sizingInfo = this.currentChartData.operating_point.sizing_info;
+                        const trimPercent = sizingInfo.trim_percent;
+                        
+                        if (trimPercent && trimPercent < 100) {
+                            // Calculate diameter ratio: D₂/D₁ = trim_percent/100
+                            const diameterRatio = trimPercent / 100.0;
+                            
+                            // Apply affinity laws for impeller trimming:
+                            // Flow: Q₂ = Q₁ × (D₂/D₁) 
+                            // Efficiency: remains approximately constant for moderate trimming
+                            const flowRatio = diameterRatio;
+                            
+                            flowData = flowData.map(flow => flow * flowRatio);
+                            // efficiencyData remains unchanged
+                            
+                            impellerName += ` (${trimPercent.toFixed(1)}% trim)`;
+                            console.log(`Charts.js: Applied impeller trimming to efficiency curve - trim: ${trimPercent.toFixed(1)}%, flow ratio: ${flowRatio.toFixed(3)}`);
+                        }
                     }
 
                     traces.push({
@@ -731,7 +776,7 @@ class PumpChartsManager {
                     // Generate proper impeller size name using helper
                     let impellerName = this.getImpellerName(curve, index);
 
-                    // Apply speed scaling to selected curve if applied
+                    // Apply speed scaling to selected curve if applied (VFD pumps)
                     let flowData = [...curve.flow_data];
                     let powerData = [...curve.power_data];
                     
@@ -745,6 +790,29 @@ class PumpChartsManager {
                         
                         impellerName += ` (${Math.round(requiredSpeed)} RPM)`;
                         console.log(`Charts.js: Applied speed scaling to power curve - ratio: ${speedRatio.toFixed(3)}`);
+                    }
+                    
+                    // v6.0 CRITICAL FIX: Apply impeller trimming to selected curve (fixed-speed pumps)
+                    if (curve.is_selected && this.currentChartData.operating_point && this.currentChartData.operating_point.sizing_info) {
+                        const sizingInfo = this.currentChartData.operating_point.sizing_info;
+                        const trimPercent = sizingInfo.trim_percent;
+                        
+                        if (trimPercent && trimPercent < 100) {
+                            // Calculate diameter ratio: D₂/D₁ = trim_percent/100
+                            const diameterRatio = trimPercent / 100.0;
+                            
+                            // Apply affinity laws for impeller trimming:
+                            // Flow: Q₂ = Q₁ × (D₂/D₁) 
+                            // Power: P₂ = P₁ × (D₂/D₁)³
+                            const flowRatio = diameterRatio;
+                            const powerRatio = diameterRatio * diameterRatio * diameterRatio;
+                            
+                            flowData = flowData.map(flow => flow * flowRatio);
+                            powerData = powerData.map(power => power * powerRatio);
+                            
+                            impellerName += ` (${trimPercent.toFixed(1)}% trim)`;
+                            console.log(`Charts.js: Applied impeller trimming to power curve - trim: ${trimPercent.toFixed(1)}%, power ratio: ${powerRatio.toFixed(3)}`);
+                        }
                     }
 
                     traces.push({
@@ -852,7 +920,7 @@ class PumpChartsManager {
                     // Generate proper impeller size name using helper
                     let impellerName = this.getImpellerName(curve, index);
 
-                    // Apply speed scaling to selected curve if applied
+                    // Apply speed scaling to selected curve if applied (VFD pumps)
                     let flowData = [...curve.flow_data];
                     let npshData = [...curve.npshr_data];
                     
@@ -866,6 +934,29 @@ class PumpChartsManager {
                         
                         impellerName += ` (${Math.round(requiredSpeed)} RPM)`;
                         console.log(`Charts.js: Applied speed scaling to NPSH curve - ratio: ${speedRatio.toFixed(3)}`);
+                    }
+                    
+                    // v6.0 CRITICAL FIX: Apply impeller trimming to selected curve (fixed-speed pumps)
+                    if (curve.is_selected && this.currentChartData.operating_point && this.currentChartData.operating_point.sizing_info) {
+                        const sizingInfo = this.currentChartData.operating_point.sizing_info;
+                        const trimPercent = sizingInfo.trim_percent;
+                        
+                        if (trimPercent && trimPercent < 100) {
+                            // Calculate diameter ratio: D₂/D₁ = trim_percent/100
+                            const diameterRatio = trimPercent / 100.0;
+                            
+                            // Apply affinity laws for impeller trimming:
+                            // Flow: Q₂ = Q₁ × (D₂/D₁) 
+                            // NPSH: NPSHr₂ = NPSHr₁ × (D₂/D₁)²
+                            const flowRatio = diameterRatio;
+                            const npshRatio = diameterRatio * diameterRatio;
+                            
+                            flowData = flowData.map(flow => flow * flowRatio);
+                            npshData = npshData.map(npsh => npsh * npshRatio);
+                            
+                            impellerName += ` (${trimPercent.toFixed(1)}% trim)`;
+                            console.log(`Charts.js: Applied impeller trimming to NPSH curve - trim: ${trimPercent.toFixed(1)}%, NPSH ratio: ${npshRatio.toFixed(3)}`);
+                        }
                     }
                     
                     // Generate smooth mother curve using cubic spline interpolation
