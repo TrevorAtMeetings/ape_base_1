@@ -32,75 +32,65 @@ def pump_report_post():
 
 @reports_bp.route('/pump_report/<path:pump_code>')
 def pump_report(pump_code):
-    """Display comprehensive pump selection report using session data as single source of truth."""
-    try:
-        from urllib.parse import unquote
-        pump_code = unquote(pump_code)
-        
-        # Get the required flow and head from the URL for context
-        flow = request.args.get('flow')
-        head = request.args.get('head')
-
-        # DEBUG: Log entire session contents at function start
-        from flask import session as flask_session
-        logger.debug(f"=== SESSION DEBUG START ===")
-        logger.debug(f"Full session keys: {list(flask_session.keys())}")
-        logger.debug(f"Session size: {len(flask_session)}")
-        
-        # Get the TRUE results from the session
-        pump_selections = safe_session_get('pump_selections', [])
-        
-        # DEBUG: Log pump selections data
-        logger.debug(f"Retrieved pump_selections type: {type(pump_selections)}")
-        logger.debug(f"Retrieved pump_selections length: {len(pump_selections) if isinstance(pump_selections, list) else 'NOT A LIST'}")
-        logger.debug(f"Looking for pump_code: '{pump_code}'")
-
-        selected_pump = None
-        for i, pump in enumerate(pump_selections):
-            pump_code_in_data = pump.get('pump_code') if isinstance(pump, dict) else 'NOT_DICT'
-            logger.debug(f"Checking pump #{i}: '{pump_code_in_data}' == '{pump_code}' ? {pump_code_in_data == pump_code}")
-            if pump.get('pump_code') == pump_code:
-                selected_pump = pump
-                logger.debug(f"MATCH FOUND at index {i}!")
-                break
-        
-        logger.debug(f"Final result: selected_pump = {'FOUND' if selected_pump else 'NOT FOUND'}")
-        logger.debug(f"=== SESSION DEBUG END ===")
-
-        # NEW, SIMPLIFIED LOGIC
-        if not selected_pump:
-            # If the pump is not in the session, the session is invalid.
-            # DO NOT recalculate. Redirect to the start.
-            safe_flash("Your session has expired. Please run a new pump selection.", "warning")
-            return redirect(url_for('main_flow.index', flow=flow, head=head))
-
-        # The selected_pump object is now the SINGLE SOURCE OF TRUTH.
-        # It contains the correct score and performance data calculated by the engine.
-        
-        # Get additional session data
-        exclusion_summary = safe_session_get('exclusion_summary', {})
-        site_requirements_data = safe_session_get('site_requirements', {})
-        
-        logger.info(f"Report display - Pump: {pump_code}, Score: {selected_pump.get('suitability_score', 'N/A')}")
-        
-        # Add current date for report generation
-        from datetime import datetime
-        current_date = datetime.now().strftime('%Y-%m-%d')
-        
-        # Pass this correct object directly to the template.
-        return render_template(
-            'professional_pump_report.html',
-            selected_pump=selected_pump,
-            exclusion_summary=exclusion_summary,
-            site_requirements=site_requirements_data,
-            pump_code=pump_code,
-            current_date=current_date
-        )
+    from urllib.parse import unquote
+    pump_code = unquote(pump_code)
+    logger.info(f"--- Entering pump_report for pump_code: {pump_code} ---")
     
+    # Get the required flow and head from the URL for context
+    flow = request.args.get('flow')
+    head = request.args.get('head')
+    logger.debug(f"Request args: flow={flow}, head={head}")
+
+    # --- DEBUGGING STEP 1: Inspect the entire session ---
+    try:
+        # Use json.dumps for pretty printing the session dictionary
+        import json
+        session_contents = json.dumps(safe_session_get('pump_selections', []), indent=2)
+        logger.debug(f"Contents of session['pump_selections']:\n{session_contents}")
     except Exception as e:
-        logger.error(f"Error displaying pump report: {str(e)}", exc_info=True)
-        safe_flash('Error loading pump report. Please try again.', 'error')
-        return redirect(url_for('main_flow.index'))
+        logger.error(f"Could not serialize session for debugging: {e}")
+        logger.debug(f"Raw session content: {safe_session_get('pump_selections', [])}")
+
+    pump_selections = safe_session_get('pump_selections', [])
+
+    selected_pump = None
+    if pump_selections:
+        logger.debug(f"Searching for '{pump_code}' in {len(pump_selections)} pumps from session.")
+        # --- DEBUGGING STEP 2: Inspect the search loop ---
+        for pump in pump_selections:
+            pump_code_in_session = pump.get('pump_code')
+            logger.debug(f"Checking against pump in session: '{pump_code_in_session}'")
+            if pump_code_in_session == pump_code:
+                selected_pump = pump
+                logger.info(f"SUCCESS: Found matching pump in session: '{pump_code}'")
+                break
+    else:
+        logger.warning("Session 'pump_selections' is empty or not found.")
+
+    if not selected_pump:
+        logger.warning(f"Could not find pump '{pump_code}' in session. Redirecting to start.")
+        safe_flash("Your session has expired or the pump was not found. Please run a new pump selection.", "warning")
+        return redirect(url_for('main_flow.index', flow=flow, head=head))
+
+    # If we get here, the pump was found successfully.
+    logger.info(f"Proceeding to render report for '{selected_pump.get('pump_code')}'")
+    
+    # Get additional session data
+    exclusion_summary = safe_session_get('exclusion_summary', {})
+    site_requirements_data = safe_session_get('site_requirements', {})
+    
+    # Add current date for report generation
+    from datetime import datetime
+    current_date = datetime.now().strftime('%Y-%m-%d')
+    
+    return render_template(
+        'professional_pump_report.html',
+        selected_pump=selected_pump,
+        exclusion_summary=exclusion_summary,
+        site_requirements=site_requirements_data,
+        pump_code=pump_code,
+        current_date=current_date
+    )
 
 @reports_bp.route('/professional_pump_report/<path:pump_code>')
 def professional_pump_report(pump_code):
