@@ -52,23 +52,43 @@
             </a>
             <ul id="nav-mobile" class="right hide-on-med-and-down" style="font-size: 18px;">
                 <li><a href="{{ url_for('main_flow.index') }}">Selection</a></li>
-                <li><a href="https://apepumps.projectapp.ai/" target="_blank">Features</a></li>
-                <li><a href="{{ url_for('main_flow.guide') }}">Guide</a></li>
+                <li><a class="dropdown-trigger" href="#!" data-target="tools-dropdown">
+                    Tools <i class="material-icons right" style="font-size: 1.2em; vertical-align: middle; margin-left: 2px;">arrow_drop_down</i>
+                </a></li>
                 <li><a class="dropdown-trigger" href="#!" data-target="admin-dropdown">
                     Admin <i class="material-icons right" style="font-size: 1.2em; vertical-align: middle; margin-left: 2px;">arrow_drop_down</i>
                 </a></li>
-                <li><a href="#about" onclick="showAboutModal()">About</a></li>
+                <li><a class="dropdown-trigger" href="#!" data-target="help-dropdown">
+                    Help <i class="material-icons right" style="font-size: 1.2em; vertical-align: middle; margin-left: 2px;">arrow_drop_down</i>
+                </a></li>
+            </ul>
+
+            <!-- Tools Dropdown Structure -->
+            <ul id="tools-dropdown" class="dropdown-content">
+                <li><a href="{{ url_for('comparison.pump_comparison') }}"><i class="material-icons left">compare_arrows</i>Pump Comparison</a></li>
+                <li><a href="{{ url_for('comparison.shortlist_comparison') }}"><i class="material-icons left">list_alt</i>Shortlist Compare</a></li>
+                <li class="divider"></li>
+                <li><a href="{{ url_for('pump_editor.pump_editor') }}"><i class="material-icons left">edit</i>Pump Editor</a></li>
+                <li><a href="{{ url_for('ai_extract.ai_extract_page') }}"><i class="material-icons left">auto_awesome</i>AI Data Extract</a></li>
+                <li class="divider"></li>
+                <li><a href="{{ url_for('data_management.data_management') }}"><i class="material-icons left">storage</i>Database Manager</a></li>
             </ul>
 
             <!-- Admin Dropdown Structure -->
             <ul id="admin-dropdown" class="dropdown-content">
-                <li><a href="{{ url_for('data_management.data_management') }}"><i class="material-icons left">storage</i>Database</a></li>
-                <li class="divider"></li>
-                <li><a href="{{ url_for('admin.admin_landing') }}"><i class="material-icons left">library_books</i>Docs</a></li>
-                <li><a href="{{ url_for('ai_extract.ai_extract_page') }}"><i class="material-icons left">auto_awesome</i>AI Extract</a></li>
-                <li><a href="{{ url_for('chat.chat_page') }}"><i class="material-icons left">smart_toy</i>AI Console</a></li>
-                <li class="divider"></li>
                 <li><a href="{{ url_for('admin_config.index') }}"><i class="material-icons left">settings</i>Configuration</a></li>
+                <li><a href="{{ url_for('admin.ai_admin') }}"><i class="material-icons left">psychology</i>AI Admin</a></li>
+                <li class="divider"></li>
+                <li><a href="{{ url_for('admin.admin_landing') }}"><i class="material-icons left">library_books</i>Documents</a></li>
+                <li><a href="{{ url_for('chat.chat_page') }}"><i class="material-icons left">smart_toy</i>AI Console</a></li>
+            </ul>
+
+            <!-- Help Dropdown Structure -->
+            <ul id="help-dropdown" class="dropdown-content">
+                <li><a href="{{ url_for('main_flow.guide') }}"><i class="material-icons left">help_outline</i>User Guide</a></li>
+                <li><a href="https://apepumps.projectapp.ai/" target="_blank"><i class="material-icons left">star</i>Features</a></li>
+                <li class="divider"></li>
+                <li><a href="#about" onclick="showAboutModal()"><i class="material-icons left">info</i>About</a></li>
             </ul>
 
             <!-- Mobile menu trigger -->
@@ -80,12 +100,25 @@
 
     <!-- Mobile Navigation -->
     <ul class="sidenav" id="mobile-demo">
-        <li><a href="{{ url_for('main_flow.index') }}" style="font-size: 16px;">Selection</a></li>
-        <li><a href="https://apepumps.projectapp.ai/" target="_blank" style="font-size: 16px;">Features</a></li>
-        <li><a href="{{ url_for('main_flow.guide') }}" style="font-size: 16px;">Guide</a></li>
-        <li><a href="{{ url_for('admin.admin_landing') }}" style="font-size: 16px;">Document Library</a></li>
-        <li><a href="/chat" style="font-size: 16px;">AI Expert Console</a></li>
-        <li><a href="#about" onclick="showAboutModal()" style="font-size: 16px;">About</a></li>
+        <li><a href="{{ url_for('main_flow.index') }}" style="font-size: 16px;"><i class="material-icons">home</i>Selection</a></li>
+        <li class="divider"></li>
+        <li><a class="subheader">Tools</a></li>
+        <li><a href="{{ url_for('comparison.pump_comparison') }}" style="font-size: 16px;"><i class="material-icons">compare_arrows</i>Pump Comparison</a></li>
+        <li><a href="{{ url_for('comparison.shortlist_comparison') }}" style="font-size: 16px;"><i class="material-icons">list_alt</i>Shortlist Compare</a></li>
+        <li><a href="{{ url_for('pump_editor.pump_editor') }}" style="font-size: 16px;"><i class="material-icons">edit</i>Pump Editor</a></li>
+        <li><a href="{{ url_for('ai_extract.ai_extract_page') }}" style="font-size: 16px;"><i class="material-icons">auto_awesome</i>AI Data Extract</a></li>
+        <li><a href="{{ url_for('data_management.data_management') }}" style="font-size: 16px;"><i class="material-icons">storage</i>Database Manager</a></li>
+        <li class="divider"></li>
+        <li><a class="subheader">Admin</a></li>
+        <li><a href="{{ url_for('admin_config.index') }}" style="font-size: 16px;"><i class="material-icons">settings</i>Configuration</a></li>
+        <li><a href="{{ url_for('admin.ai_admin') }}" style="font-size: 16px;"><i class="material-icons">psychology</i>AI Admin</a></li>
+        <li><a href="{{ url_for('admin.admin_landing') }}" style="font-size: 16px;"><i class="material-icons">library_books</i>Documents</a></li>
+        <li><a href="{{ url_for('chat.chat_page') }}" style="font-size: 16px;"><i class="material-icons">smart_toy</i>AI Console</a></li>
+        <li class="divider"></li>
+        <li><a class="subheader">Help</a></li>
+        <li><a href="{{ url_for('main_flow.guide') }}" style="font-size: 16px;"><i class="material-icons">help_outline</i>User Guide</a></li>
+        <li><a href="https://apepumps.projectapp.ai/" target="_blank" style="font-size: 16px;"><i class="material-icons">star</i>Features</a></li>
+        <li><a href="#about" onclick="showAboutModal()" style="font-size: 16px;"><i class="material-icons">info</i>About</a></li>
     </ul>
 
 

@@ -9,6 +9,25 @@ Preferred communication style: Simple, everyday language.
 ## System Architecture
 The application employs a modular Flask architecture with a clear separation of concerns, supporting both backend and frontend components.
 
+### Navigation Structure (Updated August 2025)
+**Main Navigation:**
+- **Selection**: Primary pump selection tool (homepage)
+- **Tools Menu**: 
+  - Pump Comparison: Compare multiple pumps side-by-side
+  - Shortlist Compare: Compare shortlisted pumps from selection
+  - Pump Editor: Manual pump data entry tool
+  - AI Data Extract: Extract pump data from documents
+  - Database Manager: View and manage pump database
+- **Admin Menu**:
+  - Configuration: System configuration and profiles
+  - AI Admin: Manage AI knowledge base
+  - Documents: Document library
+  - AI Console: Interactive AI chat console
+- **Help Menu**:
+  - User Guide: Application help guide
+  - Features: External features page
+  - About: Application information
+
 ### Recent Major Update - Methodology v6.0 (August 2025)
 **CRITICAL**: New engineering methodology developed based on expert feedback identifying fundamental flaws in v5.0 approach. Key architectural changes required:
 - **Algorithm Separation**: Fixed-speed (impeller trimming) completely separated from VFD (speed variation) logic
