@@ -687,11 +687,26 @@
 
         // Initialize engineering charts
         document.addEventListener('DOMContentLoaded', function() {
+            console.log('Engineering report DOM loaded');
+            
             // Initialize Materialize components
             M.AutoInit();
             
-            // Load pump list for selector
-            loadPumpList();
+            // Check if edit controls exist
+            const editControls = document.getElementById('editControls');
+            console.log('Edit controls found:', !!editControls);
+            
+            // Check if pump selector exists
+            const pumpSelector = document.getElementById('pumpSelector');
+            console.log('Pump selector found:', !!pumpSelector);
+            
+            // Load pump list for selector when controls are active
+            if (editControls && editControls.classList.contains('active')) {
+                console.log('Edit controls are active, loading pump list');
+                loadPumpList();
+            } else {
+                console.log('Edit controls not active, will load pumps when opened');
+            }
             
             // Load and render the engineering two-chart layout
             const chartData = {
@@ -705,25 +720,61 @@
         });
 
         function toggleEditMode() {
+            console.log('Toggling edit mode');
             const editControls = document.getElementById('editControls');
             editControls.classList.toggle('active');
             
             if (editControls.classList.contains('active')) {
+                console.log('Edit mode activated');
                 document.getElementById('editFlow').value = currentFlow;
                 document.getElementById('editHead').value = currentHead;
+                
+                // Load pump list when edit mode is activated
+                console.log('Loading pump list for edit mode');
+                loadPumpList();
+                
                 document.getElementById('editFlow').focus();
+            } else {
+                console.log('Edit mode deactivated');
             }
         }
 
         function loadPumpList() {
+            console.log('Loading pump list...');
             fetch('/api/pump_list')
-                .then(response => response.json())
+                .then(response => {
+                    console.log('API response received:', response.status);
+                    return response.json();
+                })
                 .then(data => {
+                    console.log('Pump data received:', data.pumps ? data.pumps.length : 0, 'pumps');
                     const selector = document.getElementById('pumpSelector');
+                    
+                    if (!selector) {
+                        console.error('Pump selector element not found!');
+                        return;
+                    }
+                    
                     const optgroup = selector.querySelector('optgroup');
+                    
+                    if (!optgroup) {
+                        console.error('Optgroup element not found!');
+                        return;
+                    }
                     
                     // Clear existing options
                     optgroup.innerHTML = '';
+                    
+                    // Check if we have pumps
+                    if (!data.pumps || data.pumps.length === 0) {
+                        console.warn('No pumps received from API');
+                        const option = document.createElement('option');
+                        option.value = '';
+                        option.textContent = 'No pumps available';
+                        option.disabled = true;
+                        optgroup.appendChild(option);
+                        return;
+                    }
                     
                     // Sort pumps by code
                     data.pumps.sort((a, b) => a.pump_code.localeCompare(b.pump_code));
@@ -735,9 +786,19 @@
                         option.textContent = `${pump.pump_code} - ${pump.manufacturer || 'APE PUMPS'}`;
                         optgroup.appendChild(option);
                     });
+                    
+                    console.log('Successfully loaded', data.pumps.length, 'pumps into dropdown');
                 })
                 .catch(error => {
                     console.error('Error loading pump list:', error);
+                    // Add error message to dropdown
+                    const selector = document.getElementById('pumpSelector');
+                    if (selector) {
+                        const optgroup = selector.querySelector('optgroup');
+                        if (optgroup) {
+                            optgroup.innerHTML = '<option value="" disabled>Error loading pumps</option>';
+                        }
+                    }
                 });
         }
 
