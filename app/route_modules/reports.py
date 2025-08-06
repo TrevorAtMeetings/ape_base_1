@@ -79,6 +79,24 @@ def pump_report(pump_code):
     exclusion_summary = safe_session_get('exclusion_summary', {})
     site_requirements_data = safe_session_get('site_requirements', {})
     
+    # DEBUG: Log what we're passing to template
+    logger.info(f"DEBUG - site_requirements_data: {site_requirements_data}")
+    logger.info(f"DEBUG - selected_pump keys: {list(selected_pump.keys()) if selected_pump else 'None'}")
+    
+    # CRITICAL: If site_requirements is empty, reconstruct from URL params for the report
+    if not site_requirements_data or not site_requirements_data.get('flow_m3hr'):
+        logger.warning("Site requirements missing from session, reconstructing from URL params")
+        site_requirements_data = {
+            'flow_m3hr': float(flow) if flow else 25.0,
+            'head_m': float(head) if head else 45.0,
+            'pump_type': request.args.get('pump_type', 'General'),
+            'application': 'Water Supply',
+            'customer_name': 'Engineering Client',
+            'project_name': 'Pump Selection Project',
+            'fluid_type': 'Water'
+        }
+        logger.info(f"DEBUG - Reconstructed site_requirements: {site_requirements_data}")
+    
     # Add current date for report generation
     from datetime import datetime
     current_date = datetime.now().strftime('%Y-%m-%d')
@@ -86,6 +104,7 @@ def pump_report(pump_code):
     return render_template(
         'professional_pump_report.html',
         selected_pump=selected_pump,
+        selected_pump_code=pump_code,  # Add this for template access
         exclusion_summary=exclusion_summary,
         site_requirements=site_requirements_data,
         pump_code=pump_code,

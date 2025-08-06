@@ -715,12 +715,12 @@
                                             <i class="fas fa-bullseye text-primary" style="margin-right: 8px;"></i>BEP Proximity
                                         </span>
                                         <span style="font-weight: bold; color: #212529;">
-                                            {{ "%.1f"|format((selected_pump.get('score_breakdown', {}).get('bep_score') or selected_pump.get('bep_score') or 0)|float) }}/40
+                                            {{ "%.1f"|format((selected_pump.get('bep_score', 0))|float) }}/40
                                         </span>
                                     </div>
                                     <div class="progress" style="height: 10px; background-color: #e0e0e0;">
                                         <div class="determinate blue" 
-                                             style="width: {{ ((selected_pump.get('score_breakdown', {}).get('bep_score') or selected_pump.get('bep_score') or 0) / 40 * 100)|float }}%">
+                                             style="width: {{ (selected_pump.get('bep_score', 0) / 40 * 100)|float }}%">
                                         </div>
                                     </div>
                                     <small class="text-muted">Reliability factor - proximity to Best Efficiency Point</small>
@@ -733,12 +733,12 @@
                                             <i class="fas fa-tachometer-alt text-success" style="margin-right: 8px;"></i>Efficiency
                                         </span>
                                         <span style="font-weight: bold; color: #212529;">
-                                            {{ "%.1f"|format((selected_pump.get('score_breakdown', {}).get('efficiency_score') or selected_pump.get('efficiency_score') or 0)|float) }}/30
+                                            {{ "%.1f"|format((selected_pump.get('efficiency_score', 0))|float) }}/30
                                         </span>
                                     </div>
                                     <div class="progress" style="height: 10px; background-color: #e0e0e0;">
                                         <div class="determinate green" 
-                                             style="width: {{ ((selected_pump.get('score_breakdown', {}).get('efficiency_score') or selected_pump.get('efficiency_score') or 0) / 30 * 100)|float }}%">
+                                             style="width: {{ (selected_pump.get('efficiency_score', 0) / 30 * 100)|float }}%">
                                         </div>
                                     </div>
                                     <small class="text-muted">Operating cost factor - efficiency at duty point</small>
@@ -751,12 +751,12 @@
                                             <i class="fas fa-ruler-vertical text-info" style="margin-right: 8px;"></i>Head Margin
                                         </span>
                                         <span style="font-weight: bold; color: #212529;">
-                                            {{ "%.1f"|format((selected_pump.get('score_breakdown', {}).get('margin_score') or selected_pump.get('margin_score') or 0)|float) }}/15
+                                            {{ "%.1f"|format((selected_pump.get('margin_score', 0))|float) }}/15
                                         </span>
                                     </div>
                                     <div class="progress" style="height: 10px; background-color: #e0e0e0;">
                                         <div class="determinate teal" 
-                                             style="width: {{ ((selected_pump.get('score_breakdown', {}).get('margin_score') or selected_pump.get('margin_score') or 0) / 15 * 100)|float }}%">
+                                             style="width: {{ (selected_pump.get('margin_score', 0) / 15 * 100)|float }}%">
                                         </div>
                                     </div>
                                     <small class="text-muted">Right-sizing factor - optimal head delivery margin</small>
@@ -769,38 +769,38 @@
                                             <i class="fas fa-water text-warning" style="margin-right: 8px;"></i>NPSH Margin
                                         </span>
                                         <span style="font-weight: bold; color: #212529;">
-                                            {{ "%.1f"|format((selected_pump.get('score_breakdown', {}).get('npsh_score') or selected_pump.get('npsh_score') or 0)|float) }}/15
+                                            {{ "%.1f"|format((selected_pump.get('npsh_score', 0))|float) }}/15
                                         </span>
                                     </div>
                                     <div class="progress" style="height: 10px; background-color: #e0e0e0;">
                                         <div class="determinate orange" 
-                                             style="width: {{ ((selected_pump.get('score_breakdown', {}).get('npsh_score') or selected_pump.get('npsh_score') or 0) / 15 * 100)|float }}%">
+                                             style="width: {{ (selected_pump.get('npsh_score', 0) / 15 * 100)|float }}%">
                                         </div>
                                     </div>
                                     <small class="text-muted">Cavitation risk factor - NPSH requirements</small>
                                 </div>
 
                                 <!-- Penalties Section -->
-                                {% if selected_pump.get('score_breakdown', {}).get('speed_penalty', 0) > 0 or selected_pump.get('score_breakdown', {}).get('sizing_penalty', 0) > 0 %}
+                                {% if selected_pump.get('speed_penalty', 0) > 0 or selected_pump.get('sizing_penalty', 0) > 0 %}
                                 <div class="mt-4 pt-3 border-top" style="background: #fff5f5; margin: -12px -24px -24px; padding: 16px 24px; border-radius: 0 0 12px 12px;">
                                     <h6 class="text-danger mb-3"><i class="fas fa-exclamation-triangle"></i> Modifications & Penalties</h6>
-                                    {% if selected_pump.get('score_breakdown', {}).get('speed_penalty', 0) > 0 %}
+                                    {% if selected_pump.get('speed_penalty', 0) > 0 %}
                                     <div class="d-flex justify-content-between align-items-center mb-2">
                                         <span class="text-danger">
                                             <i class="fas fa-tachometer-alt"></i> Speed Variation Required
                                         </span>
                                         <span class="text-danger font-weight-bold">
-                                            -{{ "%.1f"|format(selected_pump.get('score_breakdown', {}).get('speed_penalty')|float) }} points
+                                            -{{ "%.1f"|format(selected_pump.get('speed_penalty', 0)|float) }} points
                                         </span>
                                     </div>
                                     {% endif %}
-                                    {% if selected_pump.get('score_breakdown', {}).get('sizing_penalty', 0) > 0 %}
+                                    {% if selected_pump.get('sizing_penalty', 0) > 0 %}
                                     <div class="d-flex justify-content-between align-items-center">
                                         <span class="text-danger">
                                             <i class="fas fa-cut"></i> Impeller Trimming Required
                                         </span>
                                         <span class="text-danger font-weight-bold">
-                                            -{{ "%.1f"|format(selected_pump.get('score_breakdown', {}).get('sizing_penalty')|float) }} points
+                                            -{{ "%.1f"|format(selected_pump.get('sizing_penalty', 0)|float) }} points
                                         </span>
                                     </div>
                                     {% endif %}
