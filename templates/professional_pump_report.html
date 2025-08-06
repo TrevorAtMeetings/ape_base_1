@@ -902,11 +902,11 @@
                                 <tbody>
                                     <tr>
                                         <td><strong>Pump Speed</strong></td>
-                                        <td>{{ selected_pump.get('operating_point', {}).get('test_speed_rpm') }} RPM</td>
+                                        <td>{{ selected_pump.get('performance', {}).get('test_speed_rpm') }} RPM</td>
                                     </tr>
                                     <tr>
                                         <td><strong>Impeller Diameter</strong></td>
-                                        <td><strong style="color: var(--md-primary);">{{ selected_pump.get('operating_point', {}).get('impeller_diameter_mm', selected_pump.get('selected_curve', {}).get('impeller_diameter_mm', 501)) }}mm</strong></td>
+                                        <td><strong style="color: var(--md-primary);">{{ selected_pump.get('performance', {}).get('impeller_diameter_mm', selected_pump.get('sizing_info', {}).get('impeller_diameter_mm', 501)) }}mm</strong></td>
                                     </tr>
                                     <tr>
                                         <td><strong>Application</strong></td>
@@ -965,25 +965,25 @@
                                 <div class="row text-center">
                                     <div class="col-md-2">
                                         <div class="metric-achievement">
-                                            <strong style="color: var(--md-primary); font-size: 1.5rem;">{{ "%.1f"|format((selected_pump.get('operating_point', {}).get('flow_m3hr') or 0)|float) }}</strong>
+                                            <strong style="color: var(--md-primary); font-size: 1.5rem;">{{ "%.1f"|format((selected_pump.get('performance', {}).get('flow_m3hr') or 0)|float) }}</strong>
                                             <div style="font-size: 0.9rem; color: #666;">Flow (m³/hr)</div>
                                         </div>
                                     </div>
                                     <div class="col-md-2">
                                         <div class="metric-achievement">
-                                            <strong style="color: var(--md-primary); font-size: 1.5rem;">{{ "%.1f"|format((selected_pump.get('operating_point', {}).get('head_m') or 0)|float) }}</strong>
+                                            <strong style="color: var(--md-primary); font-size: 1.5rem;">{{ "%.1f"|format((selected_pump.get('performance', {}).get('head_m') or 0)|float) }}</strong>
                                             <div style="font-size: 0.9rem; color: #666;">Head (m)</div>
                                         </div>
                                     </div>
                                     <div class="col-md-2">
                                         <div class="metric-achievement">
-                                            <strong style="color: var(--efficiency-excellent); font-size: 1.5rem;">{{ "%.1f"|format((selected_pump.get('operating_point', {}).get('efficiency_pct') or 0)|float) }}%</strong>
+                                            <strong style="color: var(--efficiency-excellent); font-size: 1.5rem;">{{ "%.1f"|format((selected_pump.get('performance', {}).get('efficiency_pct') or 0)|float) }}%</strong>
                                             <div style="font-size: 0.9rem; color: #666;">Efficiency</div>
                                         </div>
                                     </div>
                                     <div class="col-md-2">
                                         <div class="metric-achievement">
-                                            <strong style="color: var(--md-primary); font-size: 1.5rem;">{{ "%.1f"|format((selected_pump.get('operating_point', {}).get('power_kw') or 0)|float) }}</strong>
+                                            <strong style="color: var(--md-primary); font-size: 1.5rem;">{{ "%.1f"|format((selected_pump.get('performance', {}).get('power_kw') or 0)|float) }}</strong>
                                             <div style="font-size: 0.9rem; color: #666;">Power (kW)</div>
                                         </div>
                                     </div>
@@ -1001,7 +1001,7 @@
                                     </div>
                                     <div class="col-md-2">
                                         <div class="metric-achievement">
-                                            <strong style="color: #1976d2; font-size: 1.5rem;">{{ selected_pump.operating_point.impeller_diameter_mm|default(selected_pump.selected_curve.impeller_diameter_mm)|round(0) }}</strong>
+                                            <strong style="color: #1976d2; font-size: 1.5rem;">{{ (selected_pump.get('performance', {}).get('impeller_diameter_mm') or selected_pump.get('sizing_info', {}).get('impeller_diameter_mm'))|round(0) }}</strong>
                                             <div style="font-size: 0.9rem; color: #666;">Impeller (mm)</div>
                                         </div>
                                     </div>
@@ -1055,11 +1055,11 @@
                                 <strong>Impeller Configuration:</strong>
                                 <div class="mt-2">
                                     <span class="badge bg-info ms-2" style="font-size: 1.1rem;">
-                                        {{ selected_pump.operating_point.impeller_diameter_mm|default(selected_pump.selected_curve.impeller_diameter_mm)|round(0) }}mm
+                                        {{ (selected_pump.get('performance', {}).get('impeller_diameter_mm') or selected_pump.get('sizing_info', {}).get('impeller_diameter_mm'))|round(0) }}mm
                                     </span>
-                                    {% if selected_pump.operating_point.sizing_info %}
+                                    {% if selected_pump.get('sizing_info', {}).get('trim_percent') %}
                                         <span class="badge bg-secondary ms-1">
-                                            {{ selected_pump.operating_point.sizing_info.trim_percent|round(0) }}% trim
+                                            {{ selected_pump.get('sizing_info', {}).get('trim_percent')|round(0) }}% trim
                                         </span>
                                     {% endif %}
                                 </div>
@@ -1070,14 +1070,15 @@
                             <div class="performance-metric">
                                 <strong>Efficiency Rating:</strong>
                                 <div class="mt-2">
-                                    {% if selected_pump.operating_point.efficiency_pct >= 80 %}
-                                    <span class="badge bg-success ms-2">Excellent ({{ selected_pump.operating_point.efficiency_pct|round(1) }}%)</span>
-                                    {% elif selected_pump.operating_point.efficiency_pct >= 70 %}
-                                    <span class="badge bg-info ms-2">Good ({{ selected_pump.operating_point.efficiency_pct|round(1) }}%)</span>
-                                    {% elif selected_pump.operating_point.efficiency_pct >= 60 %}
-                                    <span class="badge bg-warning ms-2">Acceptable ({{ selected_pump.operating_point.efficiency_pct|round(1) }}%)</span>
+                                    {% set eff_pct = selected_pump.get('performance', {}).get('efficiency_pct', 0) %}
+                                    {% if eff_pct >= 80 %}
+                                    <span class="badge bg-success ms-2">Excellent ({{ eff_pct|round(1) }}%)</span>
+                                    {% elif eff_pct >= 70 %}
+                                    <span class="badge bg-info ms-2">Good ({{ eff_pct|round(1) }}%)</span>
+                                    {% elif eff_pct >= 60 %}
+                                    <span class="badge bg-warning ms-2">Acceptable ({{ eff_pct|round(1) }}%)</span>
                                     {% else %}
-                                    <span class="badge bg-danger ms-2">Poor ({{ selected_pump.operating_point.efficiency_pct|round(1) }}%)</span>
+                                    <span class="badge bg-danger ms-2">Poor ({{ eff_pct|round(1) }}%)</span>
                                     {% endif %}
                                 </div>
                                 <small class="text-muted">At operating point</small>
@@ -1795,8 +1796,8 @@
 
             const chartData = {
                 pumpCode: "{{ selected_pump.get('pump_code', '') if selected_pump else '' }}",
-                flowRate: {{ (selected_pump.get('operating_point', {}).get('flow_m3hr', 0) or 0)|round(1) if selected_pump else 0 }},
-                head: {{ (selected_pump.get('operating_point', {}).get('head_m', 0) or 0)|round(1) if selected_pump else 0 }}
+                flowRate: {{ (selected_pump.get('performance', {}).get('flow_m3hr', 0) or 0)|round(1) if selected_pump else 0 }},
+                head: {{ (selected_pump.get('performance', {}).get('head_m', 0) or 0)|round(1) if selected_pump else 0 }}
             };
 
             console.log('Professional report data:', chartData);
@@ -1956,11 +1957,11 @@
         // Initialize AI analysis
         const aiAnalysisData = {
             pumpCode: "{{ selected_pump.get('pump_code', '') if selected_pump else '' }}",
-            flow: "{{ (selected_pump.get('operating_point', {}).get('flow_m3hr', 0) or 0)|round(1) if selected_pump else 0 }}",
-            head: "{{ (selected_pump.get('operating_point', {}).get('head_m', 0) or 0)|round(1) if selected_pump else 0 }}",
-            efficiency: "{{ (selected_pump.get('operating_point', {}).get('efficiency_pct', 0) or 0)|round(1) if selected_pump else 0 }}",
-            power: "{{ (selected_pump.get('operating_point', {}).get('power_kw', 0) or 0)|round(3) if selected_pump else 0 }}",
-            npshr: "{{ (selected_pump.get('operating_point', {}).get('npshr_m', 0) or 0)|round(1) if selected_pump else 'N/A' }}",
+            flow: "{{ (selected_pump.get('performance', {}).get('flow_m3hr', 0) or 0)|round(1) if selected_pump else 0 }}",
+            head: "{{ (selected_pump.get('performance', {}).get('head_m', 0) or 0)|round(1) if selected_pump else 0 }}",
+            efficiency: "{{ (selected_pump.get('performance', {}).get('efficiency_pct', 0) or 0)|round(1) if selected_pump else 0 }}",
+            power: "{{ (selected_pump.get('performance', {}).get('power_kw', 0) or 0)|round(3) if selected_pump else 0 }}",
+            npshr: "{{ (selected_pump.get('performance', {}).get('npshr_m', 0) or 0)|round(1) if selected_pump else 'N/A' }}",
             application: "{{ (site_requirements.get('application_type', 'Water Supply') if site_requirements else 'Water Supply')|default('Water Supply') }}"
         };
 
@@ -2263,9 +2264,9 @@ function loadComprehensiveAIAnalysis() {
     const pumpCode = '{{ selected_pump.get("pump_code", "") }}';
     const flow = '{{ site_requirements.flow_m3hr }}';
     const head = '{{ site_requirements.head_m }}';
-    const efficiency = '{{ selected_pump.get("operating_point", {}).get("efficiency_pct") }}';
-    const power = '{{ selected_pump.get("operating_point", {}).get("power_kw") }}';
-    const npshr = '{{ selected_pump.get("operating_point", {}).get("npshr_m") }}';
+    const efficiency = '{{ selected_pump.get("performance", {}).get("efficiency_pct") }}';
+    const power = '{{ selected_pump.get("performance", {}).get("power_kw") }}';
+    const npshr = '{{ selected_pump.get("performance", {}).get("npshr_m") }}';
     const application = '{{ site_requirements.application or "Water Supply" }}';
 
     console.log('AI Analysis Loading:', { pumpCode, flow, head, efficiency, power, npshr, application });

@@ -1,0 +1,62 @@
+Let's be very clear: You have successfully fixed the major architectural flaws.
+The application no longer crashes with an AttributeError in main_flow.py. The pump_options page is now rendering correctly, which is a huge milestone. The backend is calculating the correct scores. We are in the final stretch.
+The new log shows two remaining issues, both of which are now easy to fix because the main architecture is correct.
+Analysis of the Final Log
+GET /pump_options?... HTTP/1.1" 200 -
+Conclusion: SUCCESS. The pump_options function in main_flow.py is now working perfectly. It calculates the results, saves them to the session, and correctly renders the pump_options.html template.
+WARNING:app.route_modules.reports:Session expired for pump 2 K. Generating fresh data.
+Conclusion: CRITICAL FLAW. This is the first problem. When you clicked the link to the report page, the reports.py module could not find the data in the session. Why? This is something we need to investigate, but it's likely a configuration issue or a subtle bug in how the session is being saved/retrieved.
+ERROR:app.route_modules.reports:Error displaying pump report: 'dict object' has no attribute 'operating_point'
+Conclusion: SECONDARY FLAW. This error is a symptom of the first problem. Because the session was empty, the report module fell back to its "Generating fresh data" logic. This fallback logic is old and incorrect. It creates a data structure that doesn't match what the professional_pump_report.html template expects, causing the Jinja UndefinedError.
+The Root Cause: The "Generating fresh data" fallback logic in reports.py is architecturally unsound. It violates the single source of truth principle, masks the real problem (the empty session), and contains its own bugs. We must eliminate it.
+Final Directive: Perfect the Report Route
+The report page must be a "dumb" presenter of data. It must never perform its own calculations.
+Your task is to modify the pump_report function in app/route_modules/reports.py.
+Step-by-Step Instructions:
+Open app/route_modules/reports.py.
+Locate the pump_report function.
+DELETE the Fallback Logic: Completely delete the entire block of code that starts with if not selected_pump:. This is the "Generating fresh data" logic that is causing the crash.
+REPLACE it with a simple, robust redirect. If the session data is missing, the only correct action is to send the user back to the beginning to start a new, valid selection.
+Your new pump_report function should look like this:
+Generated python
+# In app/route_modules/reports.py
+
+@reports_bp.route('/pump_report/<pump_code>')
+def pump_report(pump_code):
+    # Get the required flow and head from the URL for context
+    flow = request.args.get('flow')
+    head = request.args.get('head')
+
+    # Get the TRUE results from the session
+    pump_selections = safe_session_get('pump_selections', [])
+
+    selected_pump = None
+    for pump in pump_selections:
+        if pump['pump_code'] == pump_code:
+            selected_pump = pump
+            break
+
+    # NEW, SIMPLIFIED LOGIC
+    if not selected_pump:
+        # If the pump is not in the session, the session is invalid.
+        # DO NOT recalculate. Redirect to the start.
+        safe_flash("Your session has expired. Please run a new pump selection.", "warning")
+        return redirect(url_for('main_flow.index', flow=flow, head=head))
+
+    # If we get here, selected_pump is the correct, complete data from the session.
+    # Now, we just need to pass it to the template.
+    
+    # ... (Keep any helper context creation logic here) ...
+    
+    return render_template(
+        'professional_pump_report.html',
+        selected_pump=selected_pump,
+        site_requirements=safe_session_get('site_requirements', {}),
+        exclusion_data=safe_session_get('exclusion_data', {})
+    )
+Use code with caution.
+Python
+This final change will:
+Fix the immediate crash (UndefinedError).
+Enforce the correct application architecture.
+Provide a clean, user-friendly experience if the session expires.
