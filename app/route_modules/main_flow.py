@@ -279,6 +279,8 @@ def pump_options():
         )
 
     except Exception as e:
+        import traceback
         logger.error(f"Error in pump_options: {e}")
+        logger.error(f"Full traceback: {traceback.format_exc()}")
         safe_flash('An error occurred while processing your request. Please try again.', 'error')
         return redirect(url_for('main_flow.index'))
