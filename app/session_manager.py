@@ -153,34 +153,59 @@ def flatten_pump_data(pump_dict: Dict[str, Any]) -> Dict[str, Any]:
     
     flattened = {}
     
-    # Core pump identification
+    # Core pump identification - handle both direct and nested pump_code
     flattened['pump_code'] = pump_dict.get('pump_code', 'N/A')
-    flattened['suitability_score'] = pump_dict.get('suitability_score', 0)
+    flattened['suitability_score'] = pump_dict.get('suitability_score', pump_dict.get('selection_score', 0))
     
     # Flatten performance data to top level
-    performance = pump_dict.get('performance', {}) or pump_dict.get('operating_point', {})
-    flattened['efficiency_pct'] = performance.get('efficiency_pct', 0)
-    flattened['power_kw'] = performance.get('power_kw', 0)
-    flattened['npshr_m'] = performance.get('npshr_m', 0)
-    flattened['flow_m3hr'] = performance.get('flow_m3hr', 0)  
-    flattened['head_m'] = performance.get('head_m', 0)
+    performance = pump_dict.get('performance', {})
+    if performance:
+        flattened['efficiency_pct'] = performance.get('efficiency_pct', pump_dict.get('efficiency_at_duty', 0))
+        flattened['power_kw'] = performance.get('power_kw', 0)
+        flattened['npshr_m'] = performance.get('npshr_m', 0)
+        flattened['flow_m3hr'] = performance.get('flow_m3hr', 0)  
+        flattened['head_m'] = performance.get('head_m', 0)
+        flattened['impeller_diameter_mm'] = performance.get('impeller_diameter_mm', 187)
+    else:
+        # Use direct fields if no performance dict
+        flattened['efficiency_pct'] = pump_dict.get('efficiency_at_duty', 0)
+        flattened['power_kw'] = 0
+        flattened['npshr_m'] = 0
+        flattened['flow_m3hr'] = 0
+        flattened['head_m'] = 0
+        flattened['impeller_diameter_mm'] = 187
     
     # Flatten BEP analysis to top level
     bep_analysis = pump_dict.get('bep_analysis', {})
     flattened['qbep_percentage'] = bep_analysis.get('qbep_percentage', 100)
     flattened['operating_zone'] = bep_analysis.get('operating_zone', 'Unknown')
     
-    # Flatten sizing info to top level
-    sizing = pump_dict.get('sizing_info', {})
-    flattened['impeller_diameter_mm'] = sizing.get('impeller_diameter_mm', 187)
+    # Sizing already handled in performance section
+    # Just get trim percent if available
+    sizing = performance.get('sizing_info', {}) if performance else {}
     flattened['trim_percent'] = sizing.get('trim_percent', 100)
     
-    # Flatten pump info to top level
-    pump_info = pump_dict.get('pump', {})
-    flattened['manufacturer'] = pump_info.get('manufacturer', 'APE Pumps')
-    flattened['pump_type'] = pump_info.get('pump_type', 'Centrifugal')
-    flattened['model_series'] = pump_info.get('model_series', 'Industrial')
-    flattened['stages'] = pump_info.get('stages', '1')
+    # Flatten pump info to top level - handle CatalogPump object or dict
+    pump_info = pump_dict.get('pump')
+    if pump_info:
+        if hasattr(pump_info, 'manufacturer'):
+            # It's a CatalogPump object
+            flattened['manufacturer'] = pump_info.manufacturer
+            flattened['pump_type'] = pump_info.pump_type
+            flattened['model_series'] = pump_info.model_series
+            flattened['stages'] = '1'
+        else:
+            # It's a dict
+            flattened['manufacturer'] = pump_info.get('manufacturer', 'APE Pumps')
+            flattened['pump_type'] = pump_info.get('pump_type', 'Centrifugal')
+            flattened['model_series'] = pump_info.get('model_series', 'Industrial')
+            flattened['stages'] = pump_info.get('stages', '1')
+    else:
+        # Use direct fields if available
+        flattened['manufacturer'] = pump_dict.get('manufacturer', 'APE Pumps')
+        flattened['pump_type'] = pump_dict.get('pump_type', 'Centrifugal')
+        flattened['model_series'] = 'Industrial'
+        flattened['stages'] = '1'
     
     # Flatten individual scores to top level (v6.0 methodology)
     flattened['bep_score'] = pump_dict.get('bep_score', 0)
@@ -198,7 +223,15 @@ def store_pumps_optimized(suitable_pumps: list) -> None:
     # Flatten all pumps to reduce session size
     flattened_pumps = []
     for pump in suitable_pumps:
-        flattened_pump = flatten_pump_data(pump)
+        # Convert CatalogPump objects to dict if needed
+        if hasattr(pump, 'to_dict'):
+            pump_dict = pump.to_dict()
+        elif isinstance(pump, dict):
+            pump_dict = pump
+        else:
+            continue  # Skip invalid pump data
+            
+        flattened_pump = flatten_pump_data(pump_dict)
         flattened_pumps.append(flattened_pump)
     
     # Store only essential data - limit to top 3 to stay under 4093 byte cookie limit
