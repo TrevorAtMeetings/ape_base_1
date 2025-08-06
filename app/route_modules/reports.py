@@ -32,6 +32,7 @@ def pump_report_post():
 
 @reports_bp.route('/pump_report/<path:pump_code>')
 def pump_report(pump_code):
+    """Render pump report - supports both presentation and engineering views."""
     from urllib.parse import unquote
     pump_code = unquote(pump_code)
     logger.info(f"--- Entering pump_report for pump_code: {pump_code} ---")
@@ -140,6 +141,48 @@ def pump_report(pump_code):
 def professional_pump_report(pump_code):
     """Generate professional pump report."""
     return pump_report(pump_code)
+
+@reports_bp.route('/engineering_report/<path:pump_code>')
+def engineering_report(pump_code):
+    """Render engineering data sheet view of pump report."""
+    from urllib.parse import unquote
+    from datetime import datetime
+    
+    pump_code = unquote(pump_code)
+    logger.info(f"Rendering engineering report for pump: {pump_code}")
+    
+    # Get data from session
+    pump_selections = safe_session_get('suitable_pumps', [])
+    selected_pump = None
+    
+    for pump in pump_selections:
+        if pump.get('pump_code') == pump_code:
+            selected_pump = pump
+            break
+    
+    if not selected_pump:
+        logger.warning(f"Pump {pump_code} not found in session")
+        safe_flash("Pump data not found. Please run a new selection.", "warning")
+        return redirect(url_for('main_flow.index'))
+    
+    # Get site requirements
+    site_requirements_data = safe_session_get('site_requirements', {})
+    current_date = datetime.now().strftime("%d %B %Y")
+    
+    # Get alternative pumps
+    alternatives = []
+    for pump in pump_selections:
+        if pump.get('pump_code') != pump_code:
+            alternatives.append(pump)
+    
+    return render_template(
+        'engineering_pump_report.html',
+        selected_pump=selected_pump,
+        alternative_pumps=alternatives[:5],
+        site_requirements=site_requirements_data,
+        pump_code=pump_code,
+        current_date=current_date
+    )
 
 @reports_bp.route('/generate_pdf/<path:pump_code>')
 def generate_pdf(pump_code):

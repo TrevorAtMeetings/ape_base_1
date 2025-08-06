@@ -26,7 +26,8 @@ The application employs a modular Flask architecture with a clear separation of 
 
 ### Frontend Architecture
 - **Template-Based UI**: Jinja2 templates for server-side rendering with dynamic configuration.
-- **Interactive Charts**: Plotly.js for dynamic performance curve visualization.
+- **Dual-View System**: Engineering data sheet view (industry-standard format) and Presentation view (modern UI with visual charts).
+- **Interactive Charts**: Plotly.js for dynamic performance curve visualization, displayed one per row for easy sequential review.
 - **Responsive Design**: Bootstrap-based styling ensures mobile compatibility.
 - **Form Handling**: Multi-step workflow for pump selection input.
 - **Advanced Filtering**: Collapsible filter panel with interactive range sliders for efficiency, power, impeller diameter, and overall score.

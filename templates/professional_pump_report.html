@@ -432,6 +432,10 @@
                        class="btn btn-flat white-text">
                         <i class="material-icons left">arrow_back</i>Back
                     </a>
+                    <a href="{{ url_for('reports.engineering_report', pump_code=selected_pump.get('pump_code'), flow=site_requirements.get('flow_m3hr', 0), head=site_requirements.get('head_m', 0), pump_type=site_requirements.get('pump_type', 'GENERAL')) }}" 
+                       class="btn white blue-text">
+                        <i class="material-icons left">description</i>Engineering
+                    </a>
                     <button onclick="window.print()" class="btn white blue-text">
                         <i class="material-icons left">picture_as_pdf</i>PDF
                     </button>
