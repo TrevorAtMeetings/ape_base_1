@@ -96,19 +96,19 @@
 
         .section-title {
             background: #e0e0e0;
-            padding: 3px 8px;
+            padding: 4px 10px;
             font-weight: bold;
-            font-size: 10px;
+            font-size: 11px;
             border-bottom: 1px solid #999;
         }
 
         .data-table {
             width: 100%;
-            font-size: 10px;
+            font-size: 11px;
         }
 
         .data-table td {
-            padding: 2px 6px;
+            padding: 3px 8px;
             border-bottom: 1px solid #eee;
         }
 
@@ -116,12 +116,12 @@
             font-weight: bold;
             width: 50%;
             background: #f8f8f8;
-            font-size: 9px;
+            font-size: 10px;
         }
 
         .data-table td:last-child {
             text-align: right;
-            font-size: 10px;
+            font-size: 11px;
         }
 
         /* Chart Section */
@@ -384,7 +384,7 @@
             <div class="section-title" style="text-align: center; font-size: 12px; margin-bottom: 10px;">
                 PERFORMANCE CURVES - {{ selected_pump.get('pump_code', 'N/A') }}
             </div>
-            <div id="head-flow-chart" class="performance-chart" style="height: 250px;"></div>
+            <div id="head-flow-chart" class="performance-chart" style="height: 375px;"></div>
         </div>
 
         <!-- Data Grid - 3 Column Layout -->
@@ -779,7 +779,7 @@
                     xanchor: 'center'
                 },
                 margin: { t: 30, b: 50, l: 60, r: 60 },
-                height: 250
+                height: 375
             };
 
             Plotly.newPlot('head-flow-chart', traces, layout, {
