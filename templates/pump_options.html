@@ -29,7 +29,7 @@
                     <div class="list-group list-group-flush">
                         {% for pump in pump_selections %}
                             <a href="{{ url_for('reports.pump_report', 
-                                              pump_code=pump.pump_code, 
+                                              pump_code=pump['pump_code'], 
                                               flow=site_requirements['flow_m3hr'], 
                                               head=site_requirements['head_m'], 
                                               pump_type=site_requirements['pump_type']) }}" 
@@ -39,13 +39,13 @@
                                     <div>
                                         <h5 class="mb-1 text-primary">
                                             <i data-feather="settings" class="me-2"></i>
-                                            {{ pump.pump_code }}
+                                            {{ pump['pump_code'] }}
                                         </h5>
-                                        <p class="text-muted mb-1">{{ pump.pump.manufacturer }} - {{ pump.pump.pump_type }}</p>
+                                        <p class="text-muted mb-1">{{ pump['pump']['manufacturer'] }} - {{ pump['pump']['pump_type'] }}</p>
                                     </div>
                                     <div class="text-end">
                                         <span class="badge bg-success fs-6 px-3 py-2">
-                                            Score: {{ "%.1f"|format(pump.suitability_score) }}
+                                            Score: {{ "%.1f"|format(pump['suitability_score']) }}
                                         </span>
                                     </div>
                                 </div>
@@ -55,28 +55,28 @@
                                     <div class="col-md-3">
                                         <div class="border rounded p-2">
                                             <i data-feather="activity" class="text-primary mb-1"></i>
-                                            <div class="fw-bold">{{ "%.1f"|format(pump.performance.efficiency_pct) }}%</div>
+                                            <div class="fw-bold">{{ "%.1f"|format(pump['performance']['efficiency_pct']) }}%</div>
                                             <small class="text-muted">Efficiency</small>
                                         </div>
                                     </div>
                                     <div class="col-md-3">
                                         <div class="border rounded p-2">
                                             <i data-feather="zap" class="text-warning mb-1"></i>
-                                            <div class="fw-bold">{{ "%.1f"|format(pump.performance.power_kw) }} kW</div>
+                                            <div class="fw-bold">{{ "%.1f"|format(pump['performance']['power_kw']) }} kW</div>
                                             <small class="text-muted">Power</small>
                                         </div>
                                     </div>
                                     <div class="col-md-3">
                                         <div class="border rounded p-2">
                                             <i data-feather="droplet" class="text-info mb-1"></i>
-                                            <div class="fw-bold">{{ "%.1f"|format(pump.performance.npsh_m) }} m</div>
+                                            <div class="fw-bold">{{ "%.1f"|format(pump['performance']['npsh_m']) }} m</div>
                                             <small class="text-muted">NPSH</small>
                                         </div>
                                     </div>
                                     <div class="col-md-3">
                                         <div class="border rounded p-2">
                                             <i data-feather="rotate-cw" class="text-secondary mb-1"></i>
-                                            <div class="fw-bold">{{ pump.sizing_info.impeller_trim_pct|round|int }}%</div>
+                                            <div class="fw-bold">{{ pump['sizing_info']['impeller_trim_pct']|round|int }}%</div>
                                             <small class="text-muted">Impeller Trim</small>
                                         </div>
                                     </div>
