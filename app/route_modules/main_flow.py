@@ -204,6 +204,7 @@ def pump_options():
             def make_json_serializable(obj):
                 """Convert any object to JSON serializable format."""
                 import numpy as np
+                from enum import Enum
                 
                 if obj is None or isinstance(obj, (str, int, float)):
                     return obj
@@ -213,6 +214,8 @@ def pump_options():
                     return obj.item()  # Convert numpy numbers
                 elif hasattr(obj, 'item') and callable(getattr(obj, 'item')):  # Other numpy types
                     return obj.item()
+                elif isinstance(obj, Enum):  # Handle all enum types explicitly
+                    return obj.value  # Return the enum value instead of the enum object
                 elif hasattr(obj, 'to_dict'):  # CatalogPump objects
                     return obj.to_dict()
                 elif isinstance(obj, dict):
@@ -239,7 +242,7 @@ def pump_options():
             # Now save the serializable list to session as single source of truth
             from flask import session
             session['pump_selections'] = serializable_results  # Save the TRUE, serializable results
-            session['exclusion_summary'] = exclusion_data.get('exclusion_summary', {}) if exclusion_data else {}
+            session['exclusion_summary'] = make_json_serializable(exclusion_data.get('exclusion_summary', {})) if exclusion_data else {}
             session['total_evaluated'] = exclusion_data.get('total_evaluated', 0) if exclusion_data else len(catalog_engine.pumps)
             session['feasible_count'] = exclusion_data.get('feasible_count', len(pump_selections)) if exclusion_data else len(pump_selections)
             session['excluded_count'] = exclusion_data.get('excluded_count', 0) if exclusion_data else 0
@@ -272,9 +275,9 @@ def pump_options():
             'fluid_type': request.args.get('liquid_type', 'Water')
         })
         
-        # Store exclusion data for transparency
+        # Store exclusion data for transparency - ensure it's serializable
         if exclusion_data:
-            safe_session_set('exclusion_data', exclusion_data)
+            safe_session_set('exclusion_data', make_json_serializable(exclusion_data))
 
         # Render pump options page showing all suitable pumps
         return render_template(
