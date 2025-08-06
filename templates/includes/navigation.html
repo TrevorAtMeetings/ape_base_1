@@ -57,6 +57,49 @@
         align-items: center;
         gap: 12px;
     }
+    
+    /* Dropdown Styles */
+    .nav-dropdown {
+        position: relative;
+        display: inline-block;
+    }
+    
+    .nav-dropdown-content {
+        display: none;
+        position: absolute;
+        background-color: white;
+        min-width: 200px;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+        border-radius: 8px;
+        z-index: 10000;
+        top: 100%;
+        margin-top: 8px;
+    }
+    
+    .nav-dropdown:hover .nav-dropdown-content,
+    .nav-dropdown-content.show {
+        display: block;
+    }
+    
+    .nav-dropdown-content a {
+        color: #333;
+        padding: 12px 16px;
+        text-decoration: none;
+        display: block;
+        transition: background-color 0.2s ease;
+    }
+    
+    .nav-dropdown-content a:hover {
+        background-color: #f5f5f5;
+    }
+    
+    .nav-dropdown-content a:first-child {
+        border-radius: 8px 8px 0 0;
+    }
+    
+    .nav-dropdown-content a:last-child {
+        border-radius: 0 0 8px 8px;
+    }
 
     /* Button Styles */
     .nav-btn {
@@ -264,6 +307,48 @@
         </a>
         
         <div class="nav-actions">
+            <!-- Tools Dropdown -->
+            <div class="nav-dropdown">
+                <button class="nav-btn">
+                    <span>Tools</span>
+                    <i class="material-icons">arrow_drop_down</i>
+                </button>
+                <div class="nav-dropdown-content">
+                    <a href="/comparison_tool">Pump Comparison</a>
+                    <a href="/comparison_from_selection">Shortlist Compare</a>
+                    <a href="/pump_editor">Pump Editor</a>
+                    <a href="/ai_extraction">AI Data Extract</a>
+                    <a href="/database_manager">Database Manager</a>
+                </div>
+            </div>
+            
+            <!-- Admin Dropdown -->
+            <div class="nav-dropdown">
+                <button class="nav-btn">
+                    <span>Admin</span>
+                    <i class="material-icons">arrow_drop_down</i>
+                </button>
+                <div class="nav-dropdown-content">
+                    <a href="/admin_setup">Configuration</a>
+                    <a href="/ai_admin">AI Admin</a>
+                    <a href="/documents">Documents</a>
+                    <a href="/ai_console">AI Console</a>
+                </div>
+            </div>
+            
+            <!-- Help Dropdown -->
+            <div class="nav-dropdown">
+                <button class="nav-btn">
+                    <span>Help</span>
+                    <i class="material-icons">arrow_drop_down</i>
+                </button>
+                <div class="nav-dropdown-content">
+                    <a href="/user_guide">User Guide</a>
+                    <a href="/features">Features</a>
+                    <a href="/about">About</a>
+                </div>
+            </div>
+            
             {% if show_view_toggle %}
             <div class="view-toggle">
                 {% if current_view == 'presentation' %}
