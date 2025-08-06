@@ -274,7 +274,15 @@ def pump_options():
         return render_template(
             'pump_options.html',
             pump_selections=pump_selections,  # Use the list from the catalog engine
-            site_requirements=safe_session_get('site_requirements', {}),
+            site_requirements={
+                'flow_m3hr': flow,
+                'head_m': head,
+                'pump_type': pump_type,
+                'customer_name': request.args.get('contact_name', 'Engineering Client'),
+                'project_name': request.args.get('project_name', 'Pump Selection Project'),
+                'application': application_type,
+                'fluid_type': request.args.get('liquid_type', 'Water')
+            },
             exclusion_data=safe_session_get('exclusion_data', {})
         )
 
