@@ -1,0 +1,44 @@
+Thank you. I have the complete code.
+The log was correct. You did not implement the fix I directed. The AttributeError is happening exactly where I predicted.
+Analysis of the Bug
+Line 277: safe_session_set('site_requirements', { ... })
+This is the line that is crashing the application.
+The Cause: You are trying to save the site_requirements dictionary to the session. However, the SiteRequirements object was created much earlier in the function. The flow, head, and pump_type variables are local to this function and are the correct ones to use.
+You have already implemented the correct fix for this in your previous attempt, but it seems to have been lost.
+Final Directive: The Definitive Fix
+This is the last change required.
+Your task is to modify the pump_options function in app/route_modules/main_flow.py.
+Instructions:
+Locate the safe_session_set call for site_requirements (around line 277).
+The Problem: The dictionary being created is trying to access attributes from the site_requirements object, which is causing the AttributeError.
+The Fix: You must use the simple variables (flow, head, pump_type, application_type) that are already defined at the top of the function.
+Replace this block of code:
+Generated python
+# OLD, INCORRECT CODE
+safe_session_set('site_requirements', {
+    'flow_m3hr': site_requirements.flow_m3hr,
+    'head_m': site_requirements.head_m,
+    'pump_type': site_requirements.pump_type,
+    'customer_name': request.args.get('contact_name', 'Engineering Client'),
+    'project_name': request.args.get('project_name', 'Pump Selection Project'),
+    'application': request.args.get('application', 'Water Supply'),
+    'fluid_type': request.args.get('liquid_type', 'Water')
+})
+Use code with caution.
+Python
+With this block of code:
+Generated python
+# NEW, CORRECT CODE
+safe_session_set('site_requirements', {
+    'flow_m3hr': flow,
+    'head_m': head,
+    'pump_type': pump_type,
+    'customer_name': request.args.get('contact_name', 'Engineering Client'),
+    'project_name': request.args.get('project_name', 'Pump Selection Project'),
+    'application': application_type,
+    'fluid_type': request.args.get('liquid_type', 'Water')
+})
+Use code with caution.
+Python
+This single change will resolve the AttributeError and complete the application's data flow.
+Proceed with this final fix.
