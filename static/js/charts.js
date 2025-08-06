@@ -761,6 +761,10 @@ class PumpChartsManager {
         
         // Add BEP Operating Range Visualization to Efficiency Chart
         const opPoint = this.currentChartData.operating_point;
+        
+        // Calculate x-axis range to ensure operating point is visible (moved before usage)
+        const xAxisRange = this.calculateXAxisRange(traces, opPoint);
+        
         if (opPoint && opPoint.flow_m3hr && opPoint.efficiency_pct != null && opPoint.efficiency_pct > 0) {
             // Operating point coordinates are now properly scaled on the server side
             const operatingPointFlow = opPoint.flow_m3hr;
@@ -802,9 +806,6 @@ class PumpChartsManager {
                 maxEfficiency = Math.min(100, dataMax + range * 0.05); // 5% padding above maximum, but not above 100%
             }
         }
-
-        // Calculate x-axis range to ensure operating point is visible
-        const xAxisRange = this.calculateXAxisRange(traces, opPoint);
         
         // Use helper to create standard layout
         const layout = this.createStandardLayout(config, [minEfficiency, maxEfficiency], xAxisRange);
@@ -907,6 +908,10 @@ class PumpChartsManager {
         
         // Add BEP Operating Range Visualization to Power Chart
         const opPoint = this.currentChartData.operating_point;
+        
+        // Calculate x-axis range to ensure operating point is visible (moved before usage)
+        const xAxisRange = this.calculateXAxisRange(traces, opPoint);
+        
         if (opPoint && opPoint.flow_m3hr && opPoint.power_kw != null && opPoint.power_kw > 0) {
             // Operating point coordinates are now properly scaled on the server side
             const operatingPointFlow = opPoint.flow_m3hr;
@@ -948,9 +953,6 @@ class PumpChartsManager {
                 maxPower = dataMax + range * 0.05; // 5% padding above maximum
             }
         }
-
-        // Calculate x-axis range to ensure operating point is visible
-        const xAxisRange = this.calculateXAxisRange(traces, opPoint);
         
         // Use helper to create standard layout
         const layout = this.createStandardLayout(config, [minPower, maxPower], xAxisRange);
@@ -1089,6 +1091,10 @@ class PumpChartsManager {
         
         // Add operating point with red triangle marker and reference lines (only if NPSH data exists)
         const opPoint = this.currentChartData.operating_point;
+        
+        // Calculate x-axis range to ensure operating point is visible (moved before usage)
+        const xAxisRange = this.calculateXAxisRange(traces, opPoint);
+        
         const hasNpshData = Array.isArray(this.currentChartData.curves) &&
             this.currentChartData.curves.some(curve =>
                 curve && Array.isArray(curve.npshr_data) && curve.npshr_data.length > 0 && curve.npshr_data.some(val => val > 0)
@@ -1153,9 +1159,6 @@ class PumpChartsManager {
 
             }
         }
-
-        // Calculate x-axis range to ensure operating point is visible
-        const xAxisRange = this.calculateXAxisRange(traces, opPoint);
         
         // Use helper to create standard layout
         const layout = this.createStandardLayout(config, [minNpsh, maxNpsh], xAxisRange);
