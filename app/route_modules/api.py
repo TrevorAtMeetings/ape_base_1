@@ -7,7 +7,7 @@ import time
 import base64
 import re
 import markdown2
-from flask import Blueprint, render_template, request, redirect, url_for, session, jsonify
+from flask import Blueprint, render_template, request, redirect, url_for, session, jsonify, make_response
 from ..session_manager import safe_flash
 from ..data_models import SiteRequirements
 from ..utils import validate_site_requirements
@@ -110,18 +110,35 @@ def get_chart_data(pump_code):
         # Prepare chart data with enhanced operating point including sizing info
         operating_point_data = {}
         if operating_point and not operating_point.get('error'):
+            # Clean up any boolean values and ensure all values are JSON serializable
+            # Also clean up sizing_info to ensure booleans are properly converted
+            sizing_info = operating_point.get('sizing_info', {})
+            if sizing_info:
+                # Convert any boolean fields in sizing_info
+                cleaned_sizing_info = {}
+                for key, value in sizing_info.items():
+                    if isinstance(value, bool):
+                        cleaned_sizing_info[key] = value  # Keep booleans for JSON
+                    elif isinstance(value, (int, float, str)):
+                        cleaned_sizing_info[key] = value
+                    elif value is None:
+                        cleaned_sizing_info[key] = None
+                    else:
+                        cleaned_sizing_info[key] = str(value)  # Convert unknown types to string
+            else:
+                cleaned_sizing_info = None
+                
             operating_point_data = {
-                'flow_m3hr': operating_point.get('flow_m3hr', flow_rate),
-                'head_m': operating_point.get('head_m', head),
-                'efficiency_pct': operating_point.get('efficiency_pct'),
-                'power_kw': operating_point.get('power_kw'),
-                'npshr_m': operating_point.get('npshr_m'),
-                'impeller_size': operating_point.get('impeller_size'),
-                'curve_index': operating_point.get('curve_index'),
-                'extrapolated': operating_point.get('extrapolated', False),
-                'within_range': not operating_point.get('extrapolated', False),
-                'sizing_info': operating_point.get(
-                    'sizing_info')  # Include sizing information
+                'flow_m3hr': float(operating_point.get('flow_m3hr', flow_rate)) if operating_point.get('flow_m3hr') is not None else flow_rate,
+                'head_m': float(operating_point.get('head_m', head)) if operating_point.get('head_m') is not None else head,
+                'efficiency_pct': float(operating_point.get('efficiency_pct')) if operating_point.get('efficiency_pct') is not None else None,
+                'power_kw': float(operating_point.get('power_kw')) if operating_point.get('power_kw') is not None else None,
+                'npshr_m': float(operating_point.get('npshr_m')) if operating_point.get('npshr_m') is not None else None,
+                'impeller_size': str(operating_point.get('impeller_size')) if operating_point.get('impeller_size') is not None else None,
+                'curve_index': int(operating_point.get('curve_index')) if operating_point.get('curve_index') is not None else None,
+                'extrapolated': operating_point.get('extrapolated', False),  # Keep as native boolean
+                'within_range': not operating_point.get('extrapolated', False),  # Keep as native boolean
+                'sizing_info': cleaned_sizing_info  # Use cleaned sizing info
             }
 
         chart_data = {
@@ -134,10 +151,10 @@ def get_chart_data(pump_code):
             'curves': [],
             'operating_point': operating_point_data,
             'speed_scaling': {
-                'applied': speed_scaling_applied,
-                'speed_ratio': actual_speed_ratio,
-                'required_speed_rpm': operating_point.get('sizing_info', {}).get('required_speed_rpm') if operating_point else None,
-                'test_speed_rpm': operating_point.get('sizing_info', {}).get('test_speed_rpm') if operating_point else None
+                'applied': bool(speed_scaling_applied),
+                'speed_ratio': float(actual_speed_ratio),
+                'required_speed_rpm': float(operating_point.get('sizing_info', {}).get('required_speed_rpm')) if operating_point and operating_point.get('sizing_info', {}).get('required_speed_rpm') else None,
+                'test_speed_rpm': float(operating_point.get('sizing_info', {}).get('test_speed_rpm')) if operating_point and operating_point.get('sizing_info', {}).get('test_speed_rpm') else None
             } if speed_scaling_applied else None,
             'metadata': {
                 'flow_units': 'm³/hr',
@@ -219,14 +236,19 @@ def get_chart_data(pump_code):
                 if p.get('npshr_m') is not None
             ]
 
+            # Handle impeller diameter carefully
+            impeller_dia = curve.get('impeller_diameter_mm')
+            if isinstance(impeller_dia, bool) or impeller_dia is None:
+                # If it's a boolean or None, try to get from impeller_size
+                impeller_dia = curve.get('impeller_size', f'Curve {i+1}')
+            
             curve_data = {
                 'curve_index':
                 i,
                 'impeller_size':
                 curve.get('impeller_size', f'Curve {i+1}'),
                 'impeller_diameter_mm':
-                curve.get('impeller_diameter_mm',
-                          curve.get('impeller_size', f'Curve {i+1}')),
+                impeller_dia,
                 'flow_data':
                 flows,
                 'head_data':
@@ -238,19 +260,23 @@ def get_chart_data(pump_code):
                 'npshr_data':
                 npshrs,
                 'is_selected':
-                i == best_curve_index
+                (i == best_curve_index)  # Native boolean for JSON
             }
             chart_data['curves'].append(curve_data)
 
         # Create response with short-term caching for chart data
-        response = jsonify(chart_data)
+        # Use json.dumps directly to ensure proper serialization
+        import json
+        response = make_response(json.dumps(chart_data))
+        response.headers['Content-Type'] = 'application/json'
         response.headers[
             'Cache-Control'] = 'public, max-age=300'  # 5 minute cache
-        response.headers['Content-Type'] = 'application/json'
         return response
 
     except Exception as e:
+        import traceback
         logger.error(f"Error getting chart data: {str(e)}")
+        logger.error(f"Traceback: {traceback.format_exc()}")
         error_response = jsonify(
             {'error': f'Error retrieving chart data: {str(e)}'})
         error_response.headers[
