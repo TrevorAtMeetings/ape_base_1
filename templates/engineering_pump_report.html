@@ -752,6 +752,33 @@
             const opImpellerDia = {{ selected_pump.get('impeller_diameter_mm', 0)|round(0)|int }};
             const opTrimPercent = {{ selected_pump.get('trim_percent', 100)|round(1) }};
             
+            // Add duty point reference lines
+            // Vertical line for flow
+            traces.push({
+                x: [operatingFlow, operatingFlow],
+                y: [0, Math.max(...selectedCurve.head_data) * 1.1],
+                name: 'Duty Flow',
+                type: 'scatter',
+                mode: 'lines',
+                line: { color: '#d32f2f', width: 2, dash: 'dot' },
+                showlegend: false,
+                hoverinfo: 'skip',
+                yaxis: 'y'
+            });
+            
+            // Horizontal line for head
+            traces.push({
+                x: [0, Math.max(...selectedCurve.flow_data) * 1.1],
+                y: [operatingHead, operatingHead],
+                name: 'Duty Head',
+                type: 'scatter',
+                mode: 'lines',
+                line: { color: '#d32f2f', width: 2, dash: 'dot' },
+                showlegend: false,
+                hoverinfo: 'skip',
+                yaxis: 'y'
+            });
+            
             // Operating point with detailed hover text
             traces.push({
                 x: [operatingFlow],

@@ -166,16 +166,41 @@ class PumpChartsManager {
     }
 
     // Helper function to add reference lines for operating point
-    addReferenceLines(traces, operatingPointFlow, operatingPointY, dataRanges) {
+    addReferenceLines(traces, operatingPointFlow, operatingPointY, dataRanges, xRange) {
         if (!operatingPointFlow || !operatingPointY) return;
+        
+        // Get x-axis range from xRange parameter or calculate from traces
+        let minX = 0;
+        let maxX = operatingPointFlow * 2; // Default fallback
+        
+        if (xRange && xRange.length === 2) {
+            minX = xRange[0];
+            maxX = xRange[1];
+        } else {
+            // Calculate from traces data
+            const allXValues = [];
+            traces.forEach(trace => {
+                if (trace.x && Array.isArray(trace.x)) {
+                    allXValues.push(...trace.x);
+                }
+            });
+            if (allXValues.length > 0) {
+                minX = Math.min(...allXValues);
+                maxX = Math.max(...allXValues);
+                // Add some padding
+                const range = maxX - minX;
+                minX = Math.max(0, minX - range * 0.1);
+                maxX = maxX + range * 0.1;
+            }
+        }
         
         // Vertical reference line (flow)
         traces.push({
             x: [operatingPointFlow, operatingPointFlow],
-            y: [dataRanges.extendedMinY, dataRanges.extendedMaxY],
+            y: [dataRanges.minY, dataRanges.maxY],
             type: 'scatter',
             mode: 'lines',
-            name: 'Flow Reference Line',
+            name: 'Duty Point Flow',
             line: {
                 color: '#d32f2f',
                 width: 2,
@@ -187,11 +212,11 @@ class PumpChartsManager {
 
         // Horizontal reference line (Y-axis value)
         traces.push({
-            x: [dataRanges.extendedMinX, dataRanges.extendedMaxX],
+            x: [minX, maxX],
             y: [operatingPointY, operatingPointY],
             type: 'scatter',
             mode: 'lines',
-            name: 'Reference Line',
+            name: 'Duty Point Value',
             line: {
                 color: '#d32f2f',
                 width: 2,
@@ -617,7 +642,7 @@ class PumpChartsManager {
             const operatingPointHead = opPoint.head_m;
             
             // Add reference lines using helper
-            this.addReferenceLines(traces, operatingPointFlow, operatingPointHead, dataRanges);
+            this.addReferenceLines(traces, operatingPointFlow, operatingPointHead, dataRanges, xAxisRange);
 
             // Add operating point marker using helper
             const operatingPointMarker = this.createOperatingPointMarker(opPoint, 'head');
@@ -748,7 +773,7 @@ class PumpChartsManager {
             });
             
             // Add reference lines using helper
-            this.addReferenceLines(traces, operatingPointFlow, operatingPointEfficiency, dataRanges);
+            this.addReferenceLines(traces, operatingPointFlow, operatingPointEfficiency, dataRanges, xAxisRange);
             
             // Add operating point marker using helper
             this.addOperatingPointMarker(traces, operatingPointFlow, operatingPointEfficiency, 
@@ -894,7 +919,7 @@ class PumpChartsManager {
             });
             
             // Add reference lines using helper
-            this.addReferenceLines(traces, operatingPointFlow, operatingPointPower, dataRanges);
+            this.addReferenceLines(traces, operatingPointFlow, operatingPointPower, dataRanges, xAxisRange);
             
             // Add operating point marker using helper
             this.addOperatingPointMarker(traces, operatingPointFlow, operatingPointPower, 
@@ -1067,7 +1092,7 @@ class PumpChartsManager {
             
             
             // Add reference lines using helper
-            this.addReferenceLines(traces, operatingPointFlow, operatingPointNpsh, dataRanges);
+            this.addReferenceLines(traces, operatingPointFlow, operatingPointNpsh, dataRanges, xAxisRange);
             
             // Add operating point marker using helper
             this.addOperatingPointMarker(traces, operatingPointFlow, operatingPointNpsh, 
