@@ -230,30 +230,32 @@ def pump_options():
             for result in pump_selections:
                 pump_obj = result['pump']
                 
-                # Minimal essential result to prevent session size issues
+                # ULTRA-MINIMAL essential result - only critical display data
                 essential_result = {
                     'pump_code': make_json_serializable(result.get('pump_code', pump_obj.pump_code)),
                     'suitability_score': make_json_serializable(result.get('suitability_score', 0)),
-                    'performance': make_json_serializable(result.get('performance', {})),
-                    'sizing_info': make_json_serializable(result.get('sizing_info', {})),
                     
-                    # ESSENTIAL: Flatten key pump attributes for template access (minimal data)
+                    # Essential flattened attributes for template access
                     'manufacturer': make_json_serializable(getattr(pump_obj, 'manufacturer', 'APE Pumps')),
                     'pump_type': make_json_serializable(getattr(pump_obj, 'pump_type', 'Centrifugal')),
                     'model_series': make_json_serializable(getattr(pump_obj, 'model_series', 'Industrial')),
                     'stages': make_json_serializable(getattr(pump_obj, 'stages', '1')),
                     
-                    # Essential template data from result (minimal)
-                    'score_breakdown': make_json_serializable(result.get('score_breakdown', {})),
-                    'bep_analysis': make_json_serializable(result.get('bep_analysis', {})),
-                    'selection_reason': make_json_serializable(result.get('selection_reason', '')),
+                    # Minimal performance data
+                    'efficiency': make_json_serializable(result.get('performance', {}).get('efficiency_at_duty', 0)),
+                    'power_kw': make_json_serializable(result.get('performance', {}).get('power_at_duty', 0)),
+                    'impeller_diameter_mm': make_json_serializable(result.get('sizing_info', {}).get('impeller_diameter_mm', 187)),
+                    'test_speed_rpm': make_json_serializable(result.get('performance', {}).get('test_speed_rpm', 1450)),
                     
-                    # Remove large pump object to reduce session size - keep only essential pump info
-                    'pump_info': {
-                        'manufacturer': make_json_serializable(getattr(pump_obj, 'manufacturer', 'APE Pumps')),
-                        'model_series': make_json_serializable(getattr(pump_obj, 'model_series', 'Industrial')),
-                        'pump_type': make_json_serializable(getattr(pump_obj, 'pump_type', 'Centrifugal'))
-                    }
+                    # Essential scoring data (keep minimal)
+                    'bep_score': make_json_serializable(result.get('score_breakdown', {}).get('bep_score', 0)),
+                    'efficiency_score': make_json_serializable(result.get('score_breakdown', {}).get('efficiency_score', 0)),
+                    'margin_score': make_json_serializable(result.get('score_breakdown', {}).get('margin_score', 0)),
+                    'npsh_score': make_json_serializable(result.get('score_breakdown', {}).get('npsh_score', 0)),
+                    
+                    # BEP analysis (minimal)
+                    'qbep_percentage': make_json_serializable(result.get('bep_analysis', {}).get('qbep_percentage', 100)),
+                    'operating_zone': make_json_serializable(result.get('bep_analysis', {}).get('operating_zone', 'Acceptable')),
                 }
                 essential_results.append(essential_result)
             

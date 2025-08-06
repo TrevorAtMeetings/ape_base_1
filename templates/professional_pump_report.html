@@ -990,8 +990,8 @@
                                     <div class="col-md-2">
                                         <div class="metric-achievement">
                                             <strong style="color: #1976d2; font-size: 1.5rem;">
-                                                {% if selected_pump.qbep_percentage %}
-                                                    {{ "%.0f"|format(selected_pump.qbep_percentage) }}%
+                                                {% if selected_pump.get('qbep_percentage') %}
+                                                    {{ "%.0f"|format(selected_pump.get('qbep_percentage')) }}%
                                                 {% else %}
                                                     N/A
                                                 {% endif %}
@@ -1024,10 +1024,10 @@
                         <div class="col-md-3">
                             <div class="performance-metric">
                                 <strong>BEP Position:</strong>
-                                {% if selected_pump.qbep_percentage %}
+                                {% if selected_pump.get('qbep_percentage') %}
                                 <div class="mt-2">
                                     <span class="badge bg-primary ms-2" style="font-size: 1.1rem;">
-                                        {{ "%.1f"|format(selected_pump.qbep_percentage) }}% of QBEP
+                                        {{ "%.1f"|format(selected_pump.get('qbep_percentage')) }}% of QBEP
                                     </span>
                                 </div>
                                 <small class="text-muted">Operating flow vs BEP flow</small>
@@ -1043,8 +1043,8 @@
                             <div class="performance-metric">
                                 <strong>Operating Zone:</strong>
                                 <div class="mt-2">
-                                    <span class="badge bg-{{ selected_pump.bep_zone_color|default('secondary') }} ms-2">
-                                        {{ selected_pump.bep_zone_label|default('Unknown') }}
+                                    <span class="badge bg-{{ selected_pump.get('bep_zone_color', 'secondary') }} ms-2">
+                                        {{ selected_pump.get('bep_zone_label', 'Unknown') }}
                                     </span>
                                 </div>
                                 <small class="text-muted">Preferred range: 70-120% QBEP</small>
@@ -1087,7 +1087,7 @@
                     </div>
                     
                     <!-- BEP Operating Range Visual Indicator -->
-                    {% if selected_pump.qbep_percentage %}
+                    {% if selected_pump.get('qbep_percentage') %}
                     <div class="mt-4">
                         <strong style="color: #1976d2;">BEP Operating Range Indicator:</strong>
                         <div class="position-relative mt-2" style="height: 40px; background: #f5f5f5; border-radius: 20px; overflow: hidden;">
@@ -1113,11 +1113,11 @@
                             </div>
                             
                             <!-- Operating point marker -->
-                            {% if selected_pump.marker_position %}
-                            <div class="bep-marker" style="left: {{ selected_pump.marker_position }}%;">
+                            {% if selected_pump.get('marker_position') %}
+                            <div class="bep-marker" style="left: {{ selected_pump.get('marker_position') }}%;">
                                 <div class="bep-marker-arrow"></div>
                                 <div class="bep-marker-label">
-                                    {{ "%.0f"|format(selected_pump.qbep_percentage) }}%
+                                    {{ "%.0f"|format(selected_pump.get('qbep_percentage')) }}%
                                 </div>
                             </div>
                             {% endif %}
@@ -1490,7 +1490,7 @@
                         <h5 class="text-primary mb-3">Pump Type Alignment:</h5>
                         <p>
                             The {{ selected_pump.get('pump_type', 'Centrifugal') }} design is well-suited for 
-                            "{{ site_requirements.application or 'Water Supply' }}" applications, particularly for installations requiring reliable and efficient fluid transfer.
+                            "{{ site_requirements.get('application', 'Water Supply') }}" applications, particularly for installations requiring reliable and efficient fluid transfer.
                         </p>
                         <div class="alert alert-info">
                             <strong>Reasoning & Insight:</strong> This pump type provides a good balance between flow rate and head generation, 
@@ -1600,7 +1600,7 @@
 
                             <h6 class="text-primary">Robust Design for Application:</h6>
                             <p>The pump's specifications align well with standard requirements for robust 
-                            {{ site_requirements.application or 'water supply' }} applications.</p>
+                            {{ site_requirements.get('application', 'water supply') }} applications.</p>
                         </div>
                     </div>
                 </div>
@@ -2267,7 +2267,7 @@ function loadComprehensiveAIAnalysis() {
     const efficiency = '{{ selected_pump.get("performance", {}).get("efficiency_pct") }}';
     const power = '{{ selected_pump.get("performance", {}).get("power_kw") }}';
     const npshr = '{{ selected_pump.get("performance", {}).get("npshr_m") }}';
-    const application = '{{ site_requirements.application or "Water Supply" }}';
+    const application = '{{ site_requirements.get("application", "Water Supply") }}';
 
     console.log('AI Analysis Loading:', { pumpCode, flow, head, efficiency, power, npshr, application });
 
