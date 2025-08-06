@@ -202,7 +202,7 @@ def pump_details(pump_code):
                 'message': 'Please provide valid flow and head values'
             }), 400
         
-        performance = pump.get_performance_at_duty(flow, head)
+        performance = pump.find_best_solution_for_duty(flow, head)
         
         if not performance:
             logger.error(f"No performance data for pump {pump_code} at flow={flow}, head={head}")
@@ -265,7 +265,7 @@ def shortlist_comparison():
         for pump_code in pump_codes:
             pump = catalog_engine.get_pump_by_code(pump_code)
             if pump:
-                performance = pump.get_performance_at_duty(flow, head)
+                performance = pump.find_best_solution_for_duty(flow, head)
                 shortlist_pumps.append({
                     'pump': pump,
                     'performance': performance,

@@ -198,6 +198,14 @@ def pump_options():
                 # Fallback for old format
                 pump_selections = selection_data if isinstance(selection_data, list) else []
                 exclusion_data = None
+            
+            # CRITICAL DATA FLOW FIX: Save the TRUE results from catalog engine to session
+            from flask import session
+            session['pump_selections'] = pump_selections  # Save the raw, correct results
+            session['exclusion_summary'] = exclusion_data.get('exclusion_summary', {}) if exclusion_data else {}
+            session['total_evaluated'] = exclusion_data.get('total_evaluated', 0) if exclusion_data else len(catalog_engine.pumps)
+            session['feasible_count'] = exclusion_data.get('feasible_count', len(pump_selections)) if exclusion_data else len(pump_selections)
+            session['excluded_count'] = exclusion_data.get('excluded_count', 0) if exclusion_data else 0
             for selection in pump_selections[:3]:
                 # Convert catalog engine format to template-compatible format
                 pump = selection['pump']
