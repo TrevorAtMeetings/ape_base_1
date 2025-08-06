@@ -699,7 +699,7 @@
                             <div class="text-center mb-4">
                                 <div style="display: inline-block; width: 120px; height: 120px; border-radius: 50%; background: linear-gradient(135deg, #1976d2, #1565c0); color: white; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 16px rgba(25,118,210,0.3); position: relative;">
                                     <div>
-                                        <div style="font-size: 3rem; font-weight: 700;">{{ "%.0f"|format(selected_pump.overall_score) }}</div>
+                                        <div style="font-size: 3rem; font-weight: 700;">{{ "%.0f"|format(selected_pump.get('overall_score', 0)) }}</div>
                                         <div style="font-size: 1rem; opacity: 0.9;">/100</div>
                                     </div>
                                 </div>
@@ -832,9 +832,9 @@
                 <div class="card-header-professional" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white; padding: 24px; border: none; box-shadow: 0 2px 8px rgba(25, 118, 210, 0.2);">
                     <h4 class="mb-0" style="font-weight: 500; font-size: 1.4rem; z-index: 1; position: relative;">
                         <i class="fas fa-star me-2"></i>1. Selected Pump Summary
-                        {% if selected_pump.efficiency_rating %}
-                            <span class="efficiency-indicator {{ selected_pump.efficiency_rating.class }} float-end">
-                                <i class="fas fa-check-circle me-1"></i>{{ selected_pump.efficiency_rating.label }}
+                        {% if selected_pump.get('efficiency_rating') %}
+                            <span class="efficiency-indicator {{ selected_pump.get('efficiency_rating', {}).get('class', '') }} float-end">
+                                <i class="fas fa-check-circle me-1"></i>{{ selected_pump.get('efficiency_rating', {}).get('label', '') }}
                             </span>
                         {% endif %}
                     </h4>
@@ -853,7 +853,7 @@
                             <h6 class="mb-2" style="color: var(--md-primary); font-weight: 600;">Overall Suitability Score</h6>
                             <div class="suitability-progress">
                                 {% set score = selected_pump.get('overall_score', 0) %}
-                                <div class="suitability-progress-bar {{ selected_pump.score_classification.class if selected_pump.score_classification else 'bg-secondary' }}" 
+                                <div class="suitability-progress-bar {{ selected_pump.get('score_classification', {}).get('class', 'bg-secondary') }}" 
                                      style="width: {{ score }}%;">
                                     {{ "%.0f"|format(score) }}%
                                 </div>
@@ -1871,7 +1871,7 @@
             chartContainers.forEach((containerId, index) => {
                 const chartDiv = document.getElementById(containerId);
                 if (chartDiv) {
-                    const filename = `{{ selected_pump.pump_code }}_${chartNames[index]}_Chart.png`;
+                    const filename = `{{ selected_pump.get('pump_code', 'pump') }}_${chartNames[index]}_Chart.png`;
                     Plotly.downloadImage(chartDiv, {
                         format: 'png',
                         width: 800,

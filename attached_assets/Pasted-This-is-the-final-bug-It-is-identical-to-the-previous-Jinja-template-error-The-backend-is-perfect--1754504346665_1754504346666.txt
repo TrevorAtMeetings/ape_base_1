@@ -1,0 +1,30 @@
+This is the final bug. It is identical to the previous Jinja template error.
+The backend is perfect. The data flow is perfect. The template syntax is incorrect.
+Analysis of the Error: jinja2.exceptions.UndefinedError: 'dict object' has no attribute 'overall_score'
+What happened? The professional_pump_report.html template is trying to display the overall score for the selected pump.
+Where did it happen? The error is on line 702 of templates/professional_pump_report.html.
+The Code: <div style="font-size: 3rem; font-weight: 700;">{{ "%.0f"|format(selected_pump.overall_score) }}</div>
+Why did it fail? The code is trying to access the value using object-style access (.overall_score). However, because we correctly serialized our data, selected_pump is now a dictionary. The correct way to access a key in a dictionary is with bracket notation (['overall_score']).
+Directive: Fix the Final Template Syntax
+This is a simple syntax fix in the HTML template.
+Your task is to modify templates/professional_pump_report.html.
+Instructions:
+Open the file templates/professional_pump_report.html.
+Locate line 702.
+Change the object-style access to dictionary-style access.
+Change this line:
+Generated html
+<div style="font-size: 3rem; font-weight: 700;">{{ "%.0f"|format(selected_pump.overall_score) }}</div>
+Use code with caution.
+Html
+To this:
+Generated html
+<div style="font-size: 3rem; font-weight: 700;">{{ "%.0f"|format(selected_pump['overall_score']) }}</div>
+Use code with caution.
+Html
+Further Recommendation:
+It is highly likely that you have used object-style access (.) in many other places throughout this large template file. You must perform a thorough review of templates/professional_pump_report.html and change all instances of selected_pump.some_value to selected_pump['some_value'].
+Pay close attention to nested structures as well:
+selected_pump.performance.efficiency_pct must become selected_pump['performance']['efficiency_pct'].
+selected_pump.pump.manufacturer must become selected_pump['pump']['manufacturer'].
+This will resolve the UndefinedError and allow the report page to render correctly. 
