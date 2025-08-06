@@ -181,11 +181,9 @@ def engineering_report(pump_code):
         site_requirements_data['head_m'] = new_head
         
         # Recalculate pump performance at new duty point
-        from ..catalog_engine import CatalogEngine
         from ..pump_repository import PumpRepository
         
         repository = PumpRepository()
-        catalog = CatalogEngine(repository)
         
         # Get pump curves for recalculation
         pump_curves = repository.get_pump_curves(pump_code)
