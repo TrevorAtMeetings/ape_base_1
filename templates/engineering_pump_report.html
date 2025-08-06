@@ -784,14 +784,28 @@
                 yaxis: 'y'
             });
             
-            // Add duty point horizontal line (required head)
+            // Add system resistance curve (parabolic curve from static head)
+            // System curve follows: H = H_static + k*Q^2 where k is resistance coefficient
+            const staticHead = operatingHead * 0.5; // Estimate static head as portion of total
+            const dynamicHead = operatingHead - staticHead;
+            const k = dynamicHead / (operatingFlow * operatingFlow); // Resistance coefficient
+            
+            const systemCurveX = [];
+            const systemCurveY = [];
+            for (let i = 0; i <= 20; i++) {
+                const flow = (maxFlow / 20) * i;
+                const head = staticHead + k * flow * flow;
+                systemCurveX.push(flow);
+                systemCurveY.push(head);
+            }
+            
             traces.push({
-                x: [minFlow, maxFlow],
-                y: [operatingHead, operatingHead],
+                x: systemCurveX,
+                y: systemCurveY,
                 type: 'scatter',
                 mode: 'lines',
                 line: { color: '#000000', width: 2 },
-                name: 'Required Head',
+                name: 'System Curve',
                 showlegend: true,
                 yaxis: 'y'
             });
