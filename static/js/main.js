@@ -1,15 +1,13 @@
-// APE Pumps Main JavaScript - Simplified Version
+// APE Pumps Main JavaScript - Bootstrap Version
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize Materialize components
-    initializeMaterialize();
+    // Initialize Bootstrap components (auto-initialized)
+    console.log('Form components initialized - enhanced autocomplete ready');
     
     // Ensure all form sections are visible
     showAllFormSections();
     
     // Setup form validation and submission
     setupFormHandling();
-    
-    // Note: Essential requirements monitoring is handled in the template
     
     // Hide any persistent progress bars after page load
     hidePersistentProgressBars();
@@ -27,9 +25,9 @@ function hidePersistentProgressBars() {
         }
     });
     
-    // Also hide any indeterminate progress bars specifically
-    const indeterminateBars = document.querySelectorAll('.progress .indeterminate');
-    indeterminateBars.forEach(bar => {
+    // Also hide any Bootstrap progress bars
+    const bootstrapProgress = document.querySelectorAll('.progress-bar');
+    bootstrapProgress.forEach(bar => {
         const parent = bar.closest('.progress');
         if (parent && parent.style.display !== 'none') {
             setTimeout(() => {
@@ -37,24 +35,6 @@ function hidePersistentProgressBars() {
             }, 1000);
         }
     });
-}
-
-/**
- * Initialize all Materialize components
- */
-function initializeMaterialize() {
-    // Auto-initialize all components
-    M.AutoInit();
-    
-    // Custom initialization for specific components
-    const selects = document.querySelectorAll('select');
-    M.FormSelect.init(selects);
-    
-    const tooltips = document.querySelectorAll('.tooltipped');
-    M.Tooltip.init(tooltips);
-    
-    const modals = document.querySelectorAll('.modal');
-    M.Modal.init(modals);
 }
 
 /**
@@ -108,11 +88,8 @@ function setupFormHandling() {
     const resetBtn = document.querySelector('button[type="reset"]');
     if (resetBtn) {
         resetBtn.addEventListener('click', function() {
-            // Reinitialize Materialize selects after reset
-            setTimeout(function() {
-                const selects = document.querySelectorAll('select');
-                M.FormSelect.init(selects);
-            }, 100);
+            // Bootstrap components reinitialize automatically
+            console.log('Form reset completed - Bootstrap handles component reinitialization');
         });
     }
 }
@@ -124,10 +101,8 @@ function resetForm() {
     const form = document.getElementById('pumpSelectionForm');
     if (form) {
         form.reset();
-        // Reinitialize Materialize components
-        setTimeout(function() {
-            M.AutoInit();
-        }, 100);
+        // Bootstrap components handle reinitialization automatically
+        console.log('Form reset completed');
     }
 }
 

@@ -43,12 +43,6 @@ def pump_report(pump_code):
 
         # Get the TRUE results from the session
         pump_selections = safe_session_get('pump_selections', [])
-        
-        # Debug session data
-        logger.info(f"Session keys available: {list(session.keys())}")
-        logger.info(f"Pump selections count: {len(pump_selections)}")
-        if pump_selections:
-            logger.info(f"First pump code in session: {pump_selections[0].get('pump_code', 'NO CODE')}")
 
         selected_pump = None
         for pump in pump_selections:
@@ -57,15 +51,20 @@ def pump_report(pump_code):
                 break
 
         if not selected_pump:
-            # Let's check if the data exists but with a different format
-            logger.info(f"Could not find pump {pump_code} in {len(pump_selections)} pumps")
-            for i, pump in enumerate(pump_selections[:3]):  # Log first 3 pump codes
-                logger.info(f"Pump {i}: {pump.get('pump_code', 'NO CODE')}")
+            # ROBUST FALLBACK: If session expired, regenerate the selection for this specific pump
+            logger.warning(f"Session expired for pump {pump_code}. Regenerating selection.")
             
-            # FALLBACK: If session data is missing, redirect to the start.
-            logger.warning(f"No session data found for pump {pump_code}, redirecting to start")
-            safe_flash('Session expired. Please run a new pump selection.', 'warning')
-            return redirect(url_for('main_flow.index', flow=flow, head=head))
+            # Redirect to pump_options with parameters to regenerate the selection
+            if flow and head:
+                safe_flash('Session expired. Regenerating pump selection...', 'info')
+                return redirect(url_for('main_flow.pump_options', 
+                                      flow=flow, 
+                                      head=head, 
+                                      pump_type=request.args.get('pump_type', 'GENERAL'),
+                                      application_type=request.args.get('application_type', 'water')))
+            else:
+                safe_flash('Session expired. Please run a new pump selection.', 'warning')
+                return redirect(url_for('main_flow.index'))
 
         # The selected_pump object is now the SINGLE SOURCE OF TRUTH.
         # It contains the correct score and performance data calculated by the engine.
