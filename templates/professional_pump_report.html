@@ -4,8 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Professional Pump Selection Report - {{ selected_pump.get('pump_code', 'N/A') }} | APE Pumps</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Materialize CSS for professional styling -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 
     <!-- Plotly.js CDN -->
     <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
@@ -717,8 +718,8 @@
                                             {{ "%.1f"|format((selected_pump.get('score_breakdown', {}).get('bep_score') or selected_pump.get('bep_score') or 0)|float) }}/40
                                         </span>
                                     </div>
-                                    <div class="progress" style="height: 10px; background-color: #e9ecef;">
-                                        <div class="progress-bar bg-primary" role="progressbar" 
+                                    <div class="progress" style="height: 10px; background-color: #e0e0e0;">
+                                        <div class="determinate blue" 
                                              style="width: {{ ((selected_pump.get('score_breakdown', {}).get('bep_score') or selected_pump.get('bep_score') or 0) / 40 * 100)|float }}%">
                                         </div>
                                     </div>
@@ -735,8 +736,8 @@
                                             {{ "%.1f"|format((selected_pump.get('score_breakdown', {}).get('efficiency_score') or selected_pump.get('efficiency_score') or 0)|float) }}/30
                                         </span>
                                     </div>
-                                    <div class="progress" style="height: 10px; background-color: #e9ecef;">
-                                        <div class="progress-bar bg-success" role="progressbar" 
+                                    <div class="progress" style="height: 10px; background-color: #e0e0e0;">
+                                        <div class="determinate green" 
                                              style="width: {{ ((selected_pump.get('score_breakdown', {}).get('efficiency_score') or selected_pump.get('efficiency_score') or 0) / 30 * 100)|float }}%">
                                         </div>
                                     </div>
@@ -753,8 +754,8 @@
                                             {{ "%.1f"|format((selected_pump.get('score_breakdown', {}).get('margin_score') or selected_pump.get('margin_score') or 0)|float) }}/15
                                         </span>
                                     </div>
-                                    <div class="progress" style="height: 10px; background-color: #e9ecef;">
-                                        <div class="progress-bar bg-info" role="progressbar" 
+                                    <div class="progress" style="height: 10px; background-color: #e0e0e0;">
+                                        <div class="determinate teal" 
                                              style="width: {{ ((selected_pump.get('score_breakdown', {}).get('margin_score') or selected_pump.get('margin_score') or 0) / 15 * 100)|float }}%">
                                         </div>
                                     </div>
@@ -771,8 +772,8 @@
                                             {{ "%.1f"|format((selected_pump.get('score_breakdown', {}).get('npsh_score') or selected_pump.get('npsh_score') or 0)|float) }}/15
                                         </span>
                                     </div>
-                                    <div class="progress" style="height: 10px; background-color: #e9ecef;">
-                                        <div class="progress-bar bg-warning" role="progressbar" 
+                                    <div class="progress" style="height: 10px; background-color: #e0e0e0;">
+                                        <div class="determinate orange" 
                                              style="width: {{ ((selected_pump.get('score_breakdown', {}).get('npsh_score') or selected_pump.get('npsh_score') or 0) / 15 * 100)|float }}%">
                                         </div>
                                     </div>
@@ -1793,9 +1794,9 @@
             });
 
             const chartData = {
-                pumpCode: "{{ selected_pump.pump_code if selected_pump else '' }}",
-                flowRate: {{ selected_pump.operating_point.flow_m3hr|round(1)|default(0) if selected_pump and selected_pump.operating_point else 0 }},
-                head: {{ selected_pump.operating_point.head_m|round(1)|default(0) if selected_pump and selected_pump.operating_point else 0 }}
+                pumpCode: "{{ selected_pump.get('pump_code', '') if selected_pump else '' }}",
+                flowRate: {{ (selected_pump.get('operating_point', {}).get('flow_m3hr', 0) or 0)|round(1) if selected_pump else 0 }},
+                head: {{ (selected_pump.get('operating_point', {}).get('head_m', 0) or 0)|round(1) if selected_pump else 0 }}
             };
 
             console.log('Professional report data:', chartData);
@@ -1944,8 +1945,8 @@
             // Set global pump report data for charts
             window.pumpReportData = {
                 pump_code: pumpCode,
-                flow: {{ site_requirements.flow_m3hr|default(0) }},
-                head: {{ site_requirements.head_m|default(0) }}
+                flow: {{ (site_requirements.get('flow_m3hr', 0) if site_requirements else 0)|default(0) }},
+                head: {{ (site_requirements.get('head_m', 0) if site_requirements else 0)|default(0) }}
             };
 
         } catch (error) {
@@ -1954,13 +1955,13 @@
 
         // Initialize AI analysis
         const aiAnalysisData = {
-            pumpCode: "{{ selected_pump.pump_code }}",
-            flow: "{{ selected_pump.operating_point.flow_m3hr|round(1) }}",
-            head: "{{ selected_pump.operating_point.head_m|round(1) }}",
-            efficiency: "{{ selected_pump.operating_point.efficiency_pct|round(1) }}",
-            power: "{{ selected_pump.operating_point.power_kw|round(3) }}",
-            npshr: "{{ (selected_pump.operating_point.npshr_m|round(1)) if selected_pump.operating_point.npshr_m else 'N/A' }}",
-            application: "{{ site_requirements.application_type|default('Water Supply') }}"
+            pumpCode: "{{ selected_pump.get('pump_code', '') if selected_pump else '' }}",
+            flow: "{{ (selected_pump.get('operating_point', {}).get('flow_m3hr', 0) or 0)|round(1) if selected_pump else 0 }}",
+            head: "{{ (selected_pump.get('operating_point', {}).get('head_m', 0) or 0)|round(1) if selected_pump else 0 }}",
+            efficiency: "{{ (selected_pump.get('operating_point', {}).get('efficiency_pct', 0) or 0)|round(1) if selected_pump else 0 }}",
+            power: "{{ (selected_pump.get('operating_point', {}).get('power_kw', 0) or 0)|round(3) if selected_pump else 0 }}",
+            npshr: "{{ (selected_pump.get('operating_point', {}).get('npshr_m', 0) or 0)|round(1) if selected_pump else 'N/A' }}",
+            application: "{{ (site_requirements.get('application_type', 'Water Supply') if site_requirements else 'Water Supply')|default('Water Supply') }}"
         };
 
         console.log('AI Analysis Loading:', aiAnalysisData);
