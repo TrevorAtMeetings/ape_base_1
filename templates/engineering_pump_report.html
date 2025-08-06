@@ -12,6 +12,9 @@
     <!-- Plotly.js for Charts -->
     <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
     
+    <!-- Materialize JavaScript -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+    
     <!-- Chart Scripts -->
     <script src="{{ url_for('static', filename='js/error-handler.js') }}"></script>
     <script src="{{ url_for('static', filename='js/charts.js') }}?v=20250607-1910"></script>
@@ -648,20 +651,21 @@
 
     <script>
         // Store original values
-        let currentFlow = {{ site_requirements.get('flow_m3hr', 0)|round(1) }};
-        let currentHead = {{ site_requirements.get('head_m', 0)|round(1) }};
+        let currentFlow = {{ site_requirements.get('flow_m3hr', 0)|round(1)|float }};
+        let currentHead = {{ site_requirements.get('head_m', 0)|round(1)|float }};
         const pumpCode = "{{ selected_pump.get('pump_code', '') }}";
 
         // Initialize engineering charts
         document.addEventListener('DOMContentLoaded', function() {
-            const chartData = {
-                pumpCode: pumpCode,
-                flowRate: currentFlow,
-                head: currentHead
-            };
-
-            // Load chart data and render two-chart layout
-            loadEngineeringCharts(chartData);
+            // Initialize Materialize components
+            M.AutoInit();
+            
+            // Initialize chart manager and render charts
+            if (typeof window.pumpChartsManager !== 'undefined') {
+                window.pumpChartsManager.renderAllCharts(pumpCode, currentFlow, currentHead);
+            } else {
+                console.error('Charts manager not available');
+            }
         });
 
         function toggleEditMode() {
