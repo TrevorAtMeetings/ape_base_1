@@ -365,22 +365,48 @@
         <!-- Edit Controls -->
         <div class="edit-controls" id="editControls">
             <div style="font-weight: bold; margin-bottom: 10px; font-size: 12px;">
-                Adjust Operating Conditions
-                <span style="font-weight: normal; font-size: 10px; color: #666;">(Changes will recalculate pump performance)</span>
+                Engineering Analysis Controls
+                <span style="font-weight: normal; font-size: 10px; color: #666;">(Analyze any pump against your requirements)</span>
             </div>
-            <div class="edit-grid">
-                <div class="edit-field">
-                    <label for="editFlow">Flow Rate (m³/hr)</label>
-                    <input type="number" id="editFlow" step="0.1" min="0" value="{{ site_requirements.get('flow_m3hr', 0)|round(1) }}">
+            
+            <!-- Pump Selection Section -->
+            <div class="edit-section" style="margin-bottom: 15px; padding: 10px; background: #f9f9f9; border-radius: 4px;">
+                <div style="font-weight: 600; font-size: 11px; color: #1976d2; margin-bottom: 8px;">
+                    <i class="material-icons" style="font-size: 14px; vertical-align: middle;">search</i>
+                    Force Pump Selection
                 </div>
-                <div class="edit-field">
-                    <label for="editHead">Total Head (m)</label>
-                    <input type="number" id="editHead" step="0.1" min="0" value="{{ site_requirements.get('head_m', 0)|round(1) }}">
+                <div class="edit-field" style="width: 100%;">
+                    <label for="pumpSelector" style="font-size: 10px;">Select Any Pump to Analyze</label>
+                    <select id="pumpSelector" style="width: 100%; padding: 6px; font-size: 11px; border: 1px solid #ccc; border-radius: 3px;">
+                        <option value="">-- Keep Current Selection ({{ selected_pump.get('pump_code', 'N/A') }}) --</option>
+                        <optgroup label="Available Pumps">
+                            <!-- This will be populated dynamically -->
+                        </optgroup>
+                    </select>
                 </div>
             </div>
-            <div class="edit-actions">
+            
+            <!-- Operating Conditions Section -->
+            <div class="edit-section" style="padding: 10px; background: #f9f9f9; border-radius: 4px;">
+                <div style="font-weight: 600; font-size: 11px; color: #1976d2; margin-bottom: 8px;">
+                    <i class="material-icons" style="font-size: 14px; vertical-align: middle;">tune</i>
+                    Adjust Operating Conditions
+                </div>
+                <div class="edit-grid">
+                    <div class="edit-field">
+                        <label for="editFlow">Flow Rate (m³/hr)</label>
+                        <input type="number" id="editFlow" step="0.1" min="0" value="{{ site_requirements.get('flow_m3hr', 0)|round(1) }}">
+                    </div>
+                    <div class="edit-field">
+                        <label for="editHead">Total Head (m)</label>
+                        <input type="number" id="editHead" step="0.1" min="0" value="{{ site_requirements.get('head_m', 0)|round(1) }}">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="edit-actions" style="margin-top: 12px;">
                 <button class="edit-btn" onclick="cancelEdit()">Cancel</button>
-                <button class="edit-btn primary" onclick="applyChanges()">Apply Changes</button>
+                <button class="edit-btn primary" onclick="applyChanges()">Apply Analysis</button>
             </div>
         </div>
 
@@ -664,6 +690,9 @@
             // Initialize Materialize components
             M.AutoInit();
             
+            // Load pump list for selector
+            loadPumpList();
+            
             // Load and render the engineering two-chart layout
             const chartData = {
                 pumpCode: pumpCode,
@@ -686,13 +715,43 @@
             }
         }
 
+        function loadPumpList() {
+            fetch('/api/pump_list')
+                .then(response => response.json())
+                .then(data => {
+                    const selector = document.getElementById('pumpSelector');
+                    const optgroup = selector.querySelector('optgroup');
+                    
+                    // Clear existing options
+                    optgroup.innerHTML = '';
+                    
+                    // Sort pumps by code
+                    data.pumps.sort((a, b) => a.pump_code.localeCompare(b.pump_code));
+                    
+                    // Add pump options
+                    data.pumps.forEach(pump => {
+                        const option = document.createElement('option');
+                        option.value = pump.pump_code;
+                        option.textContent = `${pump.pump_code} - ${pump.manufacturer || 'APE PUMPS'}`;
+                        optgroup.appendChild(option);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error loading pump list:', error);
+                });
+        }
+
         function cancelEdit() {
             document.getElementById('editControls').classList.remove('active');
+            // Reset pump selector
+            document.getElementById('pumpSelector').value = '';
         }
 
         function applyChanges() {
             const newFlow = parseFloat(document.getElementById('editFlow').value);
             const newHead = parseFloat(document.getElementById('editHead').value);
+            const pumpSelector = document.getElementById('pumpSelector');
+            const selectedPumpCode = pumpSelector.value || pumpCode;
             
             // Validate inputs
             if (isNaN(newFlow) || newFlow <= 0) {
@@ -715,7 +774,12 @@
                 pump_type: '{{ site_requirements.get("pump_type", "GENERAL") }}'
             });
             
-            window.location.href = `/engineering_report/${encodeURIComponent(pumpCode)}?${params.toString()}`;
+            // Add force parameter if a different pump was selected
+            if (selectedPumpCode !== pumpCode && pumpSelector.value) {
+                params.append('force', 'true');
+            }
+            
+            window.location.href = `/engineering_report/${encodeURIComponent(selectedPumpCode)}?${params.toString()}`;
         }
 
         function loadEngineeringCharts(data) {

@@ -19,6 +19,32 @@ logger = logging.getLogger(__name__)
 api_bp = Blueprint('api', __name__)
 
 
+@api_bp.route('/pump_list')
+def get_pump_list():
+    """API endpoint to get list of all available pumps for selection."""
+    try:
+        from ..catalog_engine import get_catalog_engine
+        catalog_engine = get_catalog_engine()
+        
+        # Get all pumps from catalog
+        pump_list = []
+        for pump in catalog_engine.pumps:
+            pump_list.append({
+                'pump_code': pump.pump_code,
+                'manufacturer': pump.manufacturer or 'APE PUMPS',
+                'pump_type': pump.pump_type or 'Centrifugal',
+                'series': pump.model_series
+            })
+        
+        # Sort by pump code
+        pump_list.sort(key=lambda x: x['pump_code'])
+        
+        return jsonify({'pumps': pump_list, 'total': len(pump_list)})
+    except Exception as e:
+        logger.error(f"Error getting pump list: {str(e)}")
+        return jsonify({'error': 'Failed to load pump list'}), 500
+
+
 @api_bp.route('/chart_data/<path:pump_code>')
 def get_chart_data(pump_code):
     """API endpoint to get chart data for interactive Plotly.js charts."""

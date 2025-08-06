@@ -154,6 +154,7 @@ def engineering_report(pump_code):
     # Get flow and head from URL parameters (for recalculation)
     new_flow = request.args.get('flow', type=float)
     new_head = request.args.get('head', type=float)
+    force_selection = request.args.get('force', type=str) == 'true'
     
     # Get data from session
     pump_selections = safe_session_get('suitable_pumps', [])
@@ -164,8 +165,48 @@ def engineering_report(pump_code):
             selected_pump = pump.copy()  # Make a copy to avoid modifying session data
             break
     
+    # If pump not in session but force selection is requested, load it directly
+    if not selected_pump and force_selection:
+        logger.info(f"Force selecting pump {pump_code} for engineering analysis")
+        
+        from ..catalog_engine import get_catalog_engine
+        catalog_engine = get_catalog_engine()
+        
+        # Get pump from catalog
+        target_pump = catalog_engine.get_pump_by_code(pump_code)
+        
+        if target_pump:
+            # Create minimal pump data for analysis
+            selected_pump = {
+                'pump_code': pump_code,
+                'manufacturer': target_pump.manufacturer or 'APE PUMPS',
+                'pump_type': target_pump.pump_type or 'Centrifugal',
+                'model_series': target_pump.model_series,
+                'stages': 1,  # Default
+                'speed_rpm': target_pump.get_speed_rpm() if hasattr(target_pump, 'get_speed_rpm') else 2950,
+                'bep_flow_m3hr': target_pump.bep_flow_m3hr if hasattr(target_pump, 'bep_flow_m3hr') else new_flow
+            }
+            
+            # Calculate performance if flow and head are provided
+            if new_flow and new_head:
+                solution = target_pump.find_best_solution_for_duty(new_flow, new_head)
+                if solution:
+                    selected_pump.update({
+                        'flow_m3hr': new_flow,
+                        'head_m': new_head,
+                        'efficiency_pct': solution.get('efficiency_pct', 0),
+                        'power_kw': solution.get('power_kw', 0),
+                        'npshr_m': solution.get('npshr_m', 0),
+                        'trim_percent': solution.get('trim_percent', 100),
+                        'impeller_diameter_mm': solution.get('impeller_diameter_mm', 0),
+                        'qbep_percentage': solution.get('qbep_percentage', 100),
+                        'suitability_score': 0  # Force selected, no score
+                    })
+        else:
+            logger.warning(f"Pump {pump_code} not found in catalog")
+    
     if not selected_pump:
-        logger.warning(f"Pump {pump_code} not found in session")
+        logger.warning(f"Pump {pump_code} not found in session or catalog")
         safe_flash("Pump data not found. Please run a new selection.", "warning")
         return redirect(url_for('main_flow.index'))
     
