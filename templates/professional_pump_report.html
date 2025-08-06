@@ -1164,7 +1164,7 @@
 
                                     <!-- Efficiency Indicator -->
                                     <div class="mb-3">
-                                        {% set alt_efficiency = alternative.get('efficiency_at_duty', 0) %}
+                                        {% set alt_efficiency = alternative.get('efficiency_pct', 0) %}
                                         {% set alt_efficiency_rating = alternative.get('efficiency_rating') %}
                                         {% if alt_efficiency_rating %}
                                             <span class="efficiency-indicator {{ alt_efficiency_rating.badge_class }} alternative-badge">
@@ -1207,11 +1207,11 @@
                                     <!-- Key Specifications -->
                                     <div class="small text-muted mb-3">
                                         <div><strong>Manufacturer:</strong> {{ alternative.get('manufacturer', 'APE PUMPS') }}</div>
-                                        {% if alternative.get('performance', {}).get('power_kw') %}
-                                        <div><strong>Power:</strong> {{ "%.1f"|format(alternative.get('performance', {}).get('power_kw')) }} kW</div>
+                                        {% if alternative.get('power_kw') %}
+                                        <div><strong>Power:</strong> {{ "%.1f"|format(alternative.get('power_kw')) }} kW</div>
                                         {% endif %}
-                                        {% if alternative.get('performance', {}).get('npshr_m') %}
-                                        <div><strong>NPSHr:</strong> {{ "%.1f"|format(alternative.get('performance', {}).get('npshr_m')) }} m</div>
+                                        {% if alternative.get('npshr_m') %}
+                                        <div><strong>NPSHr:</strong> {{ "%.1f"|format(alternative.get('npshr_m')) }} m</div>
                                         {% endif %}
                                     </div>
 

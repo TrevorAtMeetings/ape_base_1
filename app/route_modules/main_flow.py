@@ -225,54 +225,18 @@ def pump_options():
                 else:
                     return str(obj)  # Convert everything else to string
             
-            # Apply comprehensive serialization - REDUCE SESSION SIZE by keeping only essential data
-            # ULTRA-LEAN STRUCTURE WITH CORRECT SCORE EXTRACTION
-            essential_results = []
-            for result in pump_selections:
-                # Extract scores with fallback calculation from total suitability score
-                total_score = result.get('suitability_score', 86)
-                evaluation = result.get('evaluation', {})
-                score_components = evaluation.get('score_components', {})
-                
-                bep_score = score_components.get('qbp_proximity', total_score * 0.4)
-                eff_score = score_components.get('efficiency', total_score * 0.3) 
-                margin_score = score_components.get('head_margin', total_score * 0.15)
-                npsh_score = score_components.get('npsh_margin', total_score * 0.15)
-
-                # MINIMAL ESSENTIAL DATA ONLY - Target <600 bytes per pump
-                lean_result = {
-                    'pump_code': result.get('pump_code'),
-                    'suitability_score': total_score,
-                    # Flatten for template access - no nested structures
-                    'efficiency_pct': result.get('performance', {}).get('efficiency_at_duty', 61.9),
-                    'power_kw': result.get('performance', {}).get('power_at_duty', 5.07),
-                    'npshr_m': result.get('performance', {}).get('npshr_m', 1.91),
-                    'impeller_diameter_mm': result.get('sizing_info', {}).get('impeller_diameter_mm', 187),
-                    'qbep_percentage': result.get('bep_analysis', {}).get('qbep_percentage', 100),
-                    'operating_zone': result.get('bep_analysis', {}).get('operating_zone', 'Optimal'),
-                    # Score components at top level for template access
-                    'bep_score': round(bep_score, 1),
-                    'efficiency_score': round(eff_score, 1),
-                    'margin_score': round(margin_score, 1),
-                    'npsh_score': round(npsh_score, 1),
-                    # Static pump info
-                    'manufacturer': 'APE Pumps',
-                    'pump_type': 'Centrifugal', 
-                    'model_series': 'Industrial',
-                    'stages': '1',
-                }
-                
-                essential_results.append(make_json_serializable(lean_result))
+            # CRITICAL FIX: Use optimized session storage from session_manager
+            from ..session_manager import store_pumps_optimized
+            store_pumps_optimized(pump_selections)
             
-            # Store lean pump selections in session
-            safe_session_set('pump_selections', essential_results)
-            
-            serializable_results = essential_results
-            # Store minimal exclusion data using safe_session_set
-            safe_session_set('exclusion_summary', make_json_serializable(exclusion_data.get('exclusion_summary', {})) if exclusion_data else {})
-            safe_session_set('total_evaluated', exclusion_data.get('total_evaluated', 0) if exclusion_data else len(catalog_engine.pumps))
-            safe_session_set('feasible_count', exclusion_data.get('feasible_count', len(pump_selections)) if exclusion_data else len(pump_selections))
-            safe_session_set('excluded_count', exclusion_data.get('excluded_count', 0) if exclusion_data else 0)
+            # Store minimal exclusion data for transparency
+            if exclusion_data:
+                safe_session_set('exclusion_data', {
+                    'total_evaluated': exclusion_data.get('total_evaluated', len(catalog_engine.pumps)),
+                    'feasible_count': exclusion_data.get('feasible_count', len(pump_selections)),
+                    'excluded_count': exclusion_data.get('excluded_count', 0),
+                    'suitable_pumps_count': len(pump_selections)
+                })
             
             # Data flow fixed: Use pump_selections directly instead of creating pump_evaluations
         except Exception as e:
@@ -296,14 +260,13 @@ def pump_options():
             'fluid_type': request.args.get('liquid_type', 'Water')
         })
         
-        # Store exclusion data for transparency - ensure it's serializable
-        if exclusion_data:
-            safe_session_set('exclusion_data', make_json_serializable(exclusion_data))
+        # Get pump selections from session (already stored by store_pumps_optimized above)
+        stored_pumps = safe_session_get('suitable_pumps', pump_selections)
 
         # Render pump options page showing all suitable pumps
         return render_template(
             'pump_options.html',
-            pump_selections=pump_selections,  # Use the list from the catalog engine
+            pump_selections=stored_pumps,  # Use optimized session data
             site_requirements={
                 'flow_m3hr': flow,
                 'head_m': head,

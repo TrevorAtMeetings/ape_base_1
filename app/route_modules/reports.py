@@ -45,13 +45,13 @@ def pump_report(pump_code):
     try:
         # Use json.dumps for pretty printing the session dictionary
         import json
-        session_contents = json.dumps(safe_session_get('pump_selections', []), indent=2)
-        logger.debug(f"Contents of session['pump_selections']:\n{session_contents}")
+        session_contents = json.dumps(safe_session_get('suitable_pumps', []), indent=2)
+        logger.debug(f"Contents of session['suitable_pumps']:\n{session_contents}")
     except Exception as e:
         logger.error(f"Could not serialize session for debugging: {e}")
-        logger.debug(f"Raw session content: {safe_session_get('pump_selections', [])}")
+        logger.debug(f"Raw session content: {safe_session_get('suitable_pumps', [])}")
 
-    pump_selections = safe_session_get('pump_selections', [])
+    pump_selections = safe_session_get('suitable_pumps', [])
 
     selected_pump = None
     if pump_selections:
@@ -65,7 +65,7 @@ def pump_report(pump_code):
                 logger.info(f"SUCCESS: Found matching pump in session: '{pump_code}'")
                 break
     else:
-        logger.warning("Session 'pump_selections' is empty or not found.")
+        logger.warning("Session 'suitable_pumps' is empty or not found.")
 
     if not selected_pump:
         logger.warning(f"Could not find pump '{pump_code}' in session. Redirecting to start.")
@@ -101,11 +101,15 @@ def pump_report(pump_code):
     from datetime import datetime
     current_date = datetime.now().strftime('%Y-%m-%d')
     
+    # Get alternative pumps (other pumps from session excluding selected one)
+    alternatives = [p for p in pump_selections if p.get('pump_code') != pump_code][:2]  # Top 2 alternatives
+    
     return render_template(
         'professional_pump_report.html',
         selected_pump=selected_pump,
         selected_pump_code=pump_code,  # Add this for template access
-        exclusion_summary=exclusion_summary,
+        alternatives=alternatives,  # Add alternatives for template
+        exclusion_data=safe_session_get('exclusion_data', {}),  # Add exclusion data
         site_requirements=site_requirements_data,
         pump_code=pump_code,
         current_date=current_date
@@ -124,7 +128,7 @@ def generate_pdf(pump_code):
         pump_code = unquote(pump_code)
         
         # Get data from session as single source of truth
-        pump_selections = safe_session_get('pump_selections', [])
+        pump_selections = safe_session_get('suitable_pumps', [])
         selected_pump = None
         
         for pump in pump_selections:
@@ -136,9 +140,9 @@ def generate_pdf(pump_code):
             safe_flash('Pump data not found. Please run a new selection.', 'error')
             return redirect(url_for('main_flow.index'))
             
-        # Use PDF generation logic with session data
-        from ..pdf_generator import generate_pump_report_pdf
-        return generate_pump_report_pdf(selected_pump, safe_session_get('site_requirements', {}))
+        # PDF generation temporarily disabled - redirect to HTML report
+        safe_flash('PDF generation is currently unavailable. Please use the HTML report.', 'info')
+        return redirect(url_for('reports.pump_report', pump_code=pump_code))
         
     except Exception as e:
         logger.error(f"Error generating PDF: {str(e)}", exc_info=True)
