@@ -660,12 +660,15 @@
             // Initialize Materialize components
             M.AutoInit();
             
-            // Initialize chart manager and render charts
-            if (typeof window.pumpChartsManager !== 'undefined') {
-                window.pumpChartsManager.renderAllCharts(pumpCode, currentFlow, currentHead);
-            } else {
-                console.error('Charts manager not available');
-            }
+            // Load and render the engineering two-chart layout
+            const chartData = {
+                pumpCode: pumpCode,
+                flowRate: currentFlow,
+                head: currentHead
+            };
+            
+            // Use the custom engineering charts function
+            loadEngineeringCharts(chartData);
         });
 
         function toggleEditMode() {
