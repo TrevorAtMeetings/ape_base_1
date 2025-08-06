@@ -279,8 +279,21 @@ def pump_report(pump_code):
                 catalog_engine = get_catalog_engine()
                 target_pump = catalog_engine.get_pump_by_code(pump_code)
                 if target_pump:
-                    performance = target_pump.get_performance_at_duty(flow, head)
-                    if performance:
+                    # Use v6.0 unified evaluation method
+                    solution = target_pump.find_best_solution_for_duty(flow, head)
+                    if solution:
+                        # Convert solution format to performance format for backward compatibility
+                        performance = {
+                            'flow_m3hr': solution['flow_m3hr'],
+                            'head_m': solution['head_m'],
+                            'efficiency_pct': solution['efficiency_pct'],
+                            'power_kw': solution['power_kw'],
+                            'npshr_m': solution.get('npshr_m'),
+                            'impeller_diameter_mm': solution['impeller_diameter_mm'],
+                            'test_speed_rpm': solution['test_speed_rpm'],
+                            'curve': solution.get('curve', {}),
+                            'sizing_info': solution.get('sizing_info', {})
+                        }
                         # Calculate BEP analysis
                         bep_analysis = target_pump.calculate_bep_distance(flow, head)
                         
