@@ -1,0 +1,58 @@
+Your task is to modify the pump_options function in app/route_modules/main_flow.py.
+Instructions:
+You will replace the current essential_results creation logic with a new version that creates a lean, but properly nested, dictionary for each pump.
+Replace this block of code:
+Generated python
+# OLD, INCORRECT "FLAT" LOGIC
+essential_results = []
+for result in pump_selections:
+    essential_result = {
+        'pump_code': make_json_serializable(result.get('pump_code', result['pump'].pump_code)),
+        'suitability_score': make_json_serializable(result.get('suitability_score', 0)),
+        'performance': make_json_serializable(result.get('performance', {})),
+        'sizing_info': make_json_serializable(result.get('sizing_info', {})),
+        'pump': make_json_serializable(result['pump'])
+    }
+    essential_results.append(essential_result)
+Use code with caution.
+Python
+With this new block of code:
+Generated python
+# NEW, LEAN, AND STRUCTURED LOGIC
+essential_results = []
+for result in pump_selections:
+    # Get the full, detailed score breakdown from the evaluation object
+    score_breakdown = result.get('evaluation', {}).get('score_components', {})
+
+    lean_result = {
+        'pump_code': result.get('pump_code'),
+        'suitability_score': result.get('suitability_score'),
+        'performance': {
+            # Only store the essential performance values needed for display
+            'efficiency_pct': result.get('performance', {}).get('efficiency_pct'),
+            'power_kw': result.get('performance', {}).get('power_kw'),
+            'npshr_m': result.get('performance', {}).get('npshr_m'),
+            'head_m': result.get('performance', {}).get('head_m'),
+            'flow_m3hr': result.get('performance', {}).get('flow_m3hr'),
+        },
+        'sizing_info': result.get('sizing_info', {}),
+        'pump': {
+            # Only store the essential pump details needed for display
+            'manufacturer': result.get('pump', {}).get('manufacturer'),
+            'pump_type': result.get('pump', {}).get('pump_type'),
+        },
+        # CRITICAL: Preserve the nested score_breakdown structure
+        'score_breakdown': {
+            'qbp_proximity': score_breakdown.get('qbp_proximity'),
+            'efficiency': score_breakdown.get('efficiency'),
+            'head_margin': score_breakdown.get('head_margin'),
+            'trim_penalty': score_breakdown.get('trim_penalty'),
+        }
+    }
+    # Now, apply the serialization to the lean, structured dictionary
+    essential_results.append(make_json_serializable(lean_result))
+Use code with caution.
+Python
+This new logic achieves both goals:
+Reduces Size: It cherry-picks only the essential fields, discarding large, unnecessary data like the full curves list from the session payload.
+Preserves Structure: It correctly rebuilds the nested score_breakdown dictionary, which will fix the display issue on the report page.

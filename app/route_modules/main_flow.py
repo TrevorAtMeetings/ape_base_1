@@ -226,42 +226,55 @@ def pump_options():
                     return str(obj)  # Convert everything else to string
             
             # Apply comprehensive serialization - REDUCE SESSION SIZE by keeping only essential data
+            # NEW, LEAN, AND STRUCTURED LOGIC
             essential_results = []
             for result in pump_selections:
-                pump_obj = result['pump']
+                # Get the full, detailed score breakdown from the evaluation object
+                score_breakdown = result.get('score_breakdown', {})
                 
-                # BARE-MINIMUM essential result - only top-level display data
-                essential_result = {
-                    'pump_code': make_json_serializable(result.get('pump_code', pump_obj.pump_code)),
-                    'suitability_score': make_json_serializable(result.get('suitability_score', 0)),
-                    
-                    # Essential flattened attributes
-                    'manufacturer': 'APE Pumps',  # Static to reduce size
-                    'pump_type': 'Centrifugal',   # Static to reduce size 
-                    'model_series': 'Industrial', # Static to reduce size
-                    'stages': '1',                # Static to reduce size
-                    
-                    # Core performance data only
-                    'efficiency': make_json_serializable(result.get('performance', {}).get('efficiency_at_duty', 61.9)),
-                    'power_kw': make_json_serializable(result.get('performance', {}).get('power_at_duty', 5.0)),
-                    'impeller_diameter_mm': make_json_serializable(result.get('sizing_info', {}).get('impeller_diameter_mm', 187)),
-                    'test_speed_rpm': 2900,  # Static to reduce size
-                    
-                    # Score breakdown data - extract actual values from result
-                    'bep_score': make_json_serializable(result.get('score_breakdown', {}).get('bep_score', 0)),
-                    'efficiency_score': make_json_serializable(result.get('score_breakdown', {}).get('efficiency_score', 0)), 
-                    'margin_score': make_json_serializable(result.get('score_breakdown', {}).get('margin_score', 0)),
-                    'npsh_score': make_json_serializable(result.get('score_breakdown', {}).get('npsh_score', 0)),
-                    
-                    # BEP analysis
-                    'qbep_percentage': make_json_serializable(result.get('bep_analysis', {}).get('qbep_percentage', 0)),
-                    'operating_zone': make_json_serializable(result.get('bep_analysis', {}).get('operating_zone', 'Unknown')),
+                # Debug logging to verify score values being extracted
+                logger.info(f"SCORE DEBUG - {result.get('pump_code')}: bep={score_breakdown.get('bep_score')}, eff={score_breakdown.get('efficiency_score')}, margin={score_breakdown.get('margin_score')}, npsh={score_breakdown.get('npsh_score')}")
+
+                lean_result = {
+                    'pump_code': result.get('pump_code'),
+                    'suitability_score': result.get('suitability_score'),
+                    'performance': {
+                        # Only store the essential performance values needed for display
+                        'efficiency_pct': result.get('performance', {}).get('efficiency_at_duty'),
+                        'power_kw': result.get('performance', {}).get('power_at_duty'),
+                        'npshr_m': result.get('performance', {}).get('npshr_m'),
+                        'head_m': result.get('performance', {}).get('head_m'),
+                        'flow_m3hr': result.get('performance', {}).get('flow_m3hr'),
+                        'impeller_diameter_mm': result.get('sizing_info', {}).get('impeller_diameter_mm'),
+                        'test_speed_rpm': result.get('performance', {}).get('test_speed_rpm', 2900),
+                    },
+                    'sizing_info': {
+                        'impeller_diameter_mm': result.get('sizing_info', {}).get('impeller_diameter_mm'),
+                        'trim_percentage': result.get('sizing_info', {}).get('trim_percentage'),
+                    },
+                    'pump': {
+                        # Only store the essential pump details needed for display
+                        'manufacturer': 'APE Pumps',  # Static to reduce size
+                        'pump_type': 'Centrifugal',   # Static to reduce size
+                        'model_series': 'Industrial', # Static to reduce size
+                        'stages': '1',                # Static to reduce size
+                    },
+                    'bep_analysis': {
+                        'qbep_percentage': result.get('bep_analysis', {}).get('qbep_percentage'),
+                        'operating_zone': result.get('bep_analysis', {}).get('operating_zone', 'Unknown'),
+                    },
+                    # CRITICAL: Preserve the nested score_breakdown structure
+                    'score_breakdown': {
+                        'bep_score': score_breakdown.get('bep_score'),
+                        'efficiency_score': score_breakdown.get('efficiency_score'),
+                        'margin_score': score_breakdown.get('margin_score'),
+                        'npsh_score': score_breakdown.get('npsh_score'),
+                        'speed_penalty': score_breakdown.get('speed_penalty', 0),
+                        'sizing_penalty': score_breakdown.get('sizing_penalty', 0),
+                    }
                 }
-                
-                # Debug logging to verify score values
-                logger.info(f"SCORE DEBUG - {result.get('pump_code')}: bep={result.get('score_breakdown', {}).get('bep_score')}, eff={result.get('score_breakdown', {}).get('efficiency_score')}, margin={result.get('score_breakdown', {}).get('margin_score')}, npsh={result.get('score_breakdown', {}).get('npsh_score')}")
-                
-                essential_results.append(essential_result)
+                # Now, apply the serialization to the lean, structured dictionary
+                essential_results.append(make_json_serializable(lean_result))
             
             # Use safe_session_set instead of direct session access for consistency
             logger.info(f"SESSION SIZE CHECK: Storing {len(essential_results)} pumps")
