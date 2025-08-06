@@ -62,17 +62,27 @@ def get_chart_data(pump_code):
         # Get the best curve and calculate performance using catalog engine
         best_curve = target_pump.get_best_curve_for_duty(flow_rate, head)
 
-        # Calculate performance at duty point with detailed analysis
-        performance_result = target_pump.get_performance_at_duty(
-            flow_rate, head)
-
-        # Extract operating point details from performance calculation
+        # Calculate performance at duty point using v6.0 unified method
+        solution = target_pump.find_best_solution_for_duty(flow_rate, head)
+        
+        # Extract operating point details from unified solution
         operating_point = None
         speed_scaling_applied = False
         actual_speed_ratio = 1.0
 
-        if performance_result and not performance_result.get('error'):
-            operating_point = performance_result
+        if solution:
+            # Convert solution format to performance format for compatibility
+            operating_point = {
+                'flow_m3hr': solution['flow_m3hr'],
+                'head_m': solution['head_m'],
+                'efficiency_pct': solution['efficiency_pct'],
+                'power_kw': solution['power_kw'],
+                'npshr_m': solution.get('npshr_m'),
+                'impeller_diameter_mm': solution['impeller_diameter_mm'],
+                'test_speed_rpm': solution['test_speed_rpm'],
+                'curve': solution.get('curve', {}),
+                'sizing_info': solution.get('sizing_info', {})
+            }
 
             # Check for speed variation in the performance calculation
             sizing_info = performance_result.get('sizing_info')
@@ -289,10 +299,23 @@ def get_chart_data_safe(safe_pump_code):
                 f'Pump {pump_code} not found or no curve data available'
             })
 
-        # Calculate operating point using catalog engine
+        # Calculate operating point using catalog engine v6.0 unified method
         best_curve = target_pump.get_best_curve_for_duty(flow_rate, head)
-        operating_point_data = target_pump.get_performance_at_duty(
-            flow_rate, head)
+        solution = target_pump.find_best_solution_for_duty(flow_rate, head)
+        
+        # Convert solution to expected format
+        operating_point_data = None
+        if solution:
+            operating_point_data = {
+                'flow_m3hr': solution['flow_m3hr'],
+                'head_m': solution['head_m'],
+                'efficiency_pct': solution['efficiency_pct'],
+                'power_kw': solution['power_kw'],
+                'npshr_m': solution.get('npshr_m'),
+                'impeller_diameter_mm': solution['impeller_diameter_mm'],
+                'test_speed_rpm': solution['test_speed_rpm'],
+                'sizing_info': solution.get('sizing_info', {})
+            }
 
         # Calculate BEP analysis for the pump
         bep_analysis = target_pump.calculate_bep_distance(flow_rate, head)
