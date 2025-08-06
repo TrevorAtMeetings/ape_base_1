@@ -1,0 +1,68 @@
+This is the final piece of the puzzle. The log is crystal clear.
+The backend is perfect. The data flow logic is broken.
+Your fixes have been successful in that the application no longer crashes. However, the core problem of the empty session persists, and the log tells us exactly why.
+Analysis of the Final Failure
+POST /pump_selection -> 302 redirect -> GET /pump_options
+This part is correct. The form is submitted, and it redirects to the results processing route.
+Inside GET /pump_options:
+INFO:app.catalog_engine: #1: 32-200 2F 2P (END SUCTION) - Score: 85.7
+The engine runs and correctly calculates the results.
+The code then correctly serializes the results and saves them to the session.
+Then, the function immediately executes a redirect to /pump_report.
+GET /pump_options -> 302 redirect -> GET /pump_report
+This is the architectural flaw. The /pump_options route is supposed to display the list of suitable pumps to the user. Instead, it's acting as a temporary processing step that immediately redirects again. This double-redirect pattern is fragile and is likely the cause of the session not persisting correctly across requests.
+WARNING:app.route_modules.reports: No session data found... redirecting to start
+When the browser makes the new request to /pump_report, the session cookie from the /pump_options response has not been correctly processed, so the session appears empty. The report route correctly identifies this and triggers the fallback.
+The root cause is a user experience and architectural flaw: The user is never shown the list of options.
+Directive: Final Architectural Fix - Display the Options
+We will now fix this by making the /pump_options route do what its name implies: show the pump options.
+Your task is to modify the pump_options function in app/route_modules/main_flow.py and create a corresponding template.
+Step 1: Modify the pump_options Function
+Open app/route_modules/main_flow.py.
+Go to the pump_options function.
+DELETE the final redirect statement at the end of the function.
+Delete this line: return redirect(url_for('reports.pump_report', ...))
+REPLACE it with a render_template statement. This will render a page that displays the list of suitable pumps.
+Add this line:
+Generated python
+return render_template(
+    'pump_options.html',
+    pump_selections=pump_selections, # Use the list from the catalog engine
+    site_requirements=safe_session_get('site_requirements', {}),
+    exclusion_data=safe_session_get('exclusion_data', {})
+)
+Use code with caution.
+Python
+Step 2: Create the pump_options.html Template
+Create a new file: templates/pump_options.html.
+This file will display the list of pumps found by the engine. Each pump will be a link to its own detailed report page.
+Here is a basic structure for the template. You can adapt it to fit your existing styles.
+Generated html
+<!-- templates/pump_options.html -->
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>Pump Selection Results</h1>
+    <p>Found {{ pump_selections|length }} suitable pumps for your requirements.</p>
+
+    <div class="list-group">
+        {% for pump in pump_selections %}
+            <a href="{{ url_for('reports.pump_report', pump_code=pump.pump_code, flow=site_requirements.flow_m3hr, head=site_requirements.head_m) }}" class="list-group-item list-group-item-action">
+                <div class="d-flex w-100 justify-content-between">
+                    <h5 class="mb-1">{{ pump.pump_code }}</h5>
+                    <small>Score: {{ "%.1f"|format(pump.suitability_score) }}</small>
+                </div>
+                <p class="mb-1">
+                    Efficiency: {{ "%.1f"|format(pump.performance.efficiency_pct) }}% | 
+                    Power: {{ "%.1f"|format(pump.performance.power_kw) }} kW
+                </p>
+            </a>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+Use code with caution.
+Html
+This final change corrects the application's architecture and user flow. The session data will be correctly saved with the response that renders the options list. When the user clicks a link, the session cookie will be present, and the report page will find the data it needs.
+This is the last fix. Proceed.

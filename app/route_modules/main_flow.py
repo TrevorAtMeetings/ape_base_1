@@ -270,13 +270,13 @@ def pump_options():
         if exclusion_data:
             safe_session_set('exclusion_data', exclusion_data)
 
-        # Redirect to the best pump's report page with flow and head parameters
-        best_pump = pump_selections[0]
-        return redirect(url_for('reports.pump_report', 
-                              pump_code=best_pump['pump_code'],
-                              flow=site_requirements.flow_m3hr,
-                              head=site_requirements.head_m,
-                              pump_type=site_requirements.pump_type))
+        # Render pump options page showing all suitable pumps
+        return render_template(
+            'pump_options.html',
+            pump_selections=pump_selections,  # Use the list from the catalog engine
+            site_requirements=safe_session_get('site_requirements', {}),
+            exclusion_data=safe_session_get('exclusion_data', {})
+        )
 
     except Exception as e:
         logger.error(f"Error in pump_options: {e}")

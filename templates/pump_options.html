@@ -1,585 +1,115 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pump Selection Options | APE Pumps</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <style>
-        .hero-section {
-            background: linear-gradient(135deg, #495057, #6c757d);
-            color: white;
-            padding: 40px 0;
-        }
-        .pump-card {
-            border: 2px solid #dee2e6;
-            border-radius: 10px;
-            transition: all 0.3s ease;
-            height: 100%;
-        }
-        .pump-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-        }
-        .recommended-badge {
-            background: #28a745;
-            color: white;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 0.9em;
-            font-weight: bold;
-        }
-        .spec-item {
-            background: #f8f9fa;
-            padding: 10px;
-            border-radius: 5px;
-            margin-bottom: 8px;
-        }
-        .efficiency-bar {
-            height: 10px;
-            background: #e9ecef;
-            border-radius: 5px;
-            overflow: hidden;
-        }
-        .efficiency-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #28a745, #20c997);
-            transition: width 0.5s ease;
-        }
-        
-        /* Score Breakdown Styles */
-        .overall-score-circle {
-            display: inline-block;
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #007bff, #0056b3);
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 4px 12px rgba(0,123,255,0.3);
-            margin-bottom: 10px;
-        }
-        .score-number {
-            font-size: 2rem;
-            font-weight: bold;
-        }
-        .score-total {
-            font-size: 1rem;
-            opacity: 0.9;
-        }
-        .score-breakdown {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 8px;
-            border: 1px solid #e9ecef;
-        }
-        .score-component {
-            margin-bottom: 12px;
-        }
-        .score-label {
-            font-weight: 600;
-            color: #495057;
-        }
-        .score-value {
-            font-weight: bold;
-            color: #212529;
-        }
-        .progress {
-            background-color: #e9ecef;
-            border-radius: 4px;
-            overflow: hidden;
-        }
-        .progress-bar {
-            transition: width 0.6s ease;
-        }
-        .penalties-section {
-            background: #fff5f5;
-            padding: 10px;
-            border-radius: 5px;
-            margin-top: 10px;
-        }
-        .penalty-item {
-            margin: 5px 0;
-        }
-        .operating-zone {
-            text-align: center;
-            padding: 10px;
-            background: #f8f9fa;
-            border-radius: 5px;
-            margin-top: 10px;
-        }
-        
-        /* Modification Indicators */
-        .modification-indicator {
-            display: inline-block;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            margin-left: 8px;
-        }
-        .vfd-required {
-            background: #fff3cd;
-            color: #856404;
-            border: 1px solid #ffeeba;
-        }
-        .trimming-required {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-    </style>
-</head>
-<body>
-    <!-- Navigation -->
-    <nav class="navbar navbar-light bg-light">
-        <div class="container-fluid">
-            <a class="btn btn-outline-secondary" href="{{ url_for('main_flow.index') }}">
-                <i class="fas fa-arrow-left"></i> Back to Requirements
-            </a>
-            <span class="navbar-brand mb-0 h1">
-                <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiByeD0iOCIgZmlsbD0iIzQ5NTA1NyIvPgo8dGV4dCB4PSIyMCIgeT0iMjYiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZm9udC13ZWlnaHQ9ImJvbGQiIGZpbGw9IndoaXRlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5BUEU8L3RleHQ+Cjwvc3ZnPgo=" alt="APE Pumps" class="me-2">
-                APE Pumps Selection
-            </span>
-        </div>
-    </nav>
+{% extends "base.html" %}
 
-    <!-- Hero Section -->
-    <section class="hero-section">
-        <div class="container">
-            <div class="row">
-                <div class="col-lg-8">
-                    <h1 class="display-5 mb-3">Pump Selection Results</h1>
-                    <p class="lead mb-4">Based on your requirements, we've identified the best pump options for your application.</p>
-                </div>
-                <div class="col-lg-4">
-                    <div class="bg-white bg-opacity-10 p-3 rounded">
-                        <h6 class="mb-2">Your Requirements:</h6>
-                        <p class="mb-1"><strong>Flow Rate:</strong> {{ site_requirements.flow_m3hr }} m³/hr</p>
-                        <p class="mb-1"><strong>Head:</strong> {{ site_requirements.head_m }} m</p>
-                        <p class="mb-0"><strong>Application:</strong> {{ site_requirements.get('application', 'Water Supply') }}</p>
-                    </div>
-                </div>
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-lg-12">
+            <!-- Header Section -->
+            <div class="bg-primary text-white p-4 rounded mb-4">
+                <h1 class="mb-2">
+                    <i data-feather="check-circle" class="me-2"></i>
+                    Pump Selection Results
+                </h1>
+                <p class="mb-0 fs-5">
+                    Found {{ pump_selections|length }} suitable pump{{ 's' if pump_selections|length != 1 else '' }} 
+                    for your requirements: <strong>{{ "%.1f"|format(site_requirements.flow_m3hr) }} m³/hr</strong> 
+                    at <strong>{{ "%.1f"|format(site_requirements.head_m) }} m</strong> head
+                </p>
             </div>
-        </div>
-    </section>
 
-    <!-- Pump Options -->
-    <section class="py-5">
-        <div class="container">
-            {% if pump_evaluations %}
-            <div class="row">
-                {% for pump_eval in pump_evaluations %}
-                <div class="col-lg-6 mb-4">
-                    <div class="pump-card card h-100">
-                        <div class="card-header d-flex justify-content-between align-items-center bg-light">
-                            <h5 class="mb-0">{{ pump_eval.get('pump_code', 'N/A') }}</h5>
-                            {% if loop.index == 1 %}
-                            <span class="recommended-badge">
-                                <i class="fas fa-star"></i> Recommended
-                            </span>
-                            {% endif %}
-                        </div>
-                        <div class="card-body">
-                            <!-- Key Performance Metrics -->
-                            <div class="row mb-3">
-                                <div class="col-6">
-                                    <div class="spec-item text-center">
-                                        <h6 class="text-secondary mb-1">Efficiency</h6>
-                                        <h4 class="text-success mb-0">
-                                            {{ "%.1f"|format((pump_eval.get('operating_point', {}).get('achieved_efficiency_pct') or 0)|float) }}%
-                                            {% if pump_eval.get('operating_point', {}).get('efficiency_was_extrapolated') %}
-                                            <span class="text-warning" title="Value extrapolated - may be less accurate">*</span>
-                                            {% endif %}
-                                        </h4>
-                                    </div>
-                                </div>
-                                <div class="col-6">
-                                    <div class="spec-item text-center">
-                                        <h6 class="text-secondary mb-1">Power</h6>
-                                        <h4 class="text-primary mb-0">
-                                            {{ "%.1f"|format((pump_eval.get('operating_point', {}).get('achieved_power_kw') or 0)|float) }} kW
-                                            {% if pump_eval.get('operating_point', {}).get('power_was_extrapolated') %}
-                                            <span class="text-warning" title="Value extrapolated - may be less accurate">*</span>
-                                            {% endif %}
-                                        </h4>
-                                    </div>
-                                </div>
-                            </div>
-
-
-
-                            <!-- Technical Specifications -->
-                            <div class="row mb-3">
-                                <div class="col-12">
-                                    <h6 class="text-secondary mb-2">Technical Specifications</h6>
-                                    <div class="spec-item">
-                                        <div class="row">
-                                            <div class="col-6"><small><strong>Achieved Head:</strong></div>
-                                            <div class="col-6"><small>{{ "%.1f"|format((pump_eval.get('operating_point', {}).get('achieved_head_m') or 0)|float) }} m{% if pump_eval.get('operating_point', {}).get('head_was_extrapolated') %}<span class="text-warning" title="Value extrapolated - may be less accurate">*</span>{% endif %}</small></div>
-                                        </div>
-                                    </div>
-                                    <div class="spec-item">
-                                        <div class="row">
-                                            <div class="col-6"><small><strong>NPSH Required:</strong></div>
-                                            <div class="col-6"><small>{% if pump_eval.get('operating_point', {}).get('achieved_npshr_m') is not none %}{{ "%.1f"|format(pump_eval.get('operating_point', {}).get('achieved_npshr_m')|float) }} m{% else %}N/A{% endif %}</small></div>
-                                        </div>
-                                    </div>
-                                    <div class="spec-item">
-                                        <div class="row">
-                                            <div class="col-6"><small><strong>Impeller Size:</strong></div>
-                                            <div class="col-6"><small>{{ pump_eval.get('operating_point', {}).get('impeller_size', 'N/A') }}mm</small></div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Enhanced Score Breakdown -->
-                            {% if pump_eval.get('suitability_analysis') %}
-                            <div class="mb-3">
-                                <h6 class="text-secondary mb-2">
-                                    <i class="fas fa-chart-line"></i> Performance Score Breakdown
-                                </h6>
+            <!-- Pump Selection List -->
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i data-feather="list" class="me-2"></i>
+                        Recommended Pumps (Ranked by Suitability Score)
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        {% for pump in pump_selections %}
+                            <a href="{{ url_for('reports.pump_report', 
+                                              pump_code=pump.pump_code, 
+                                              flow=site_requirements.flow_m3hr, 
+                                              head=site_requirements.head_m, 
+                                              pump_type=site_requirements.pump_type) }}" 
+                               class="list-group-item list-group-item-action p-4 border-bottom">
                                 
-                                <!-- Overall Score Display -->
-                                <div class="text-center mb-3">
-                                    <div class="overall-score-circle">
-                                        <span class="score-number">{{ "%.0f"|format((pump_eval.get('overall_score') or 0)|float) }}</span>
-                                        <span class="score-total">/100</span>
+                                <div class="d-flex w-100 justify-content-between align-items-start mb-3">
+                                    <div>
+                                        <h5 class="mb-1 text-primary">
+                                            <i data-feather="settings" class="me-2"></i>
+                                            {{ pump.pump_code }}
+                                        </h5>
+                                        <p class="text-muted mb-1">{{ pump.pump.manufacturer }} - {{ pump.pump.pump_type }}</p>
                                     </div>
-                                    <small class="text-muted">Overall Selection Score</small>
-                                </div>
-
-                                <!-- Individual Score Components -->
-                                <div class="score-breakdown">
-                                    <!-- BEP Proximity Score -->
-                                    <div class="score-component mb-2">
-                                        <div class="d-flex justify-content-between align-items-center mb-1">
-                                            <small class="score-label">
-                                                <i class="fas fa-bullseye text-primary"></i> BEP Proximity
-                                            </small>
-                                            <small class="score-value">
-                                                {{ "%.1f"|format((pump_eval.get('score_breakdown', {}).get('bep_score') or 0)|float) }}/40
-                                            </small>
-                                        </div>
-                                        <div class="progress" style="height: 8px;">
-                                            <div class="progress-bar bg-primary" role="progressbar" 
-                                                 style="width: {{ ((pump_eval.get('score_breakdown', {}).get('bep_score') or 0) / 40 * 100)|float }}%">
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <!-- Efficiency Score -->
-                                    <div class="score-component mb-2">
-                                        <div class="d-flex justify-content-between align-items-center mb-1">
-                                            <small class="score-label">
-                                                <i class="fas fa-tachometer-alt text-success"></i> Efficiency
-                                            </small>
-                                            <small class="score-value">
-                                                {{ "%.1f"|format((pump_eval.get('score_breakdown', {}).get('efficiency_score') or 0)|float) }}/30
-                                            </small>
-                                        </div>
-                                        <div class="progress" style="height: 8px;">
-                                            <div class="progress-bar bg-success" role="progressbar" 
-                                                 style="width: {{ ((pump_eval.get('score_breakdown', {}).get('efficiency_score') or 0) / 30 * 100)|float }}%">
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <!-- Head Margin Score -->
-                                    <div class="score-component mb-2">
-                                        <div class="d-flex justify-content-between align-items-center mb-1">
-                                            <small class="score-label">
-                                                <i class="fas fa-ruler-vertical text-info"></i> Head Margin
-                                            </small>
-                                            <small class="score-value">
-                                                {{ "%.1f"|format((pump_eval.get('score_breakdown', {}).get('margin_score') or 0)|float) }}/15
-                                            </small>
-                                        </div>
-                                        <div class="progress" style="height: 8px;">
-                                            <div class="progress-bar bg-info" role="progressbar" 
-                                                 style="width: {{ ((pump_eval.get('score_breakdown', {}).get('margin_score') or 0) / 15 * 100)|float }}%">
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <!-- NPSH Score -->
-                                    <div class="score-component mb-2">
-                                        <div class="d-flex justify-content-between align-items-center mb-1">
-                                            <small class="score-label">
-                                                <i class="fas fa-water text-warning"></i> NPSH Margin
-                                            </small>
-                                            <small class="score-value">
-                                                {{ "%.1f"|format((pump_eval.get('score_breakdown', {}).get('npsh_score') or 0)|float) }}/15
-                                            </small>
-                                        </div>
-                                        <div class="progress" style="height: 8px;">
-                                            <div class="progress-bar bg-warning" role="progressbar" 
-                                                 style="width: {{ ((pump_eval.get('score_breakdown', {}).get('npsh_score') or 0) / 15 * 100)|float }}%">
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <!-- Penalties Section -->
-                                    {% if pump_eval.get('score_breakdown', {}).get('speed_penalty', 0) > 0 or pump_eval.get('score_breakdown', {}).get('sizing_penalty', 0) > 0 %}
-                                    <div class="penalties-section mt-3 pt-2 border-top">
-                                        <small class="text-danger"><strong>Modifications & Penalties:</strong></small>
-                                        {% if pump_eval.get('score_breakdown', {}).get('speed_penalty', 0) > 0 %}
-                                        <div class="penalty-item">
-                                            <small class="text-danger">
-                                                <i class="fas fa-exclamation-triangle"></i> Speed Variation: -{{ "%.1f"|format(pump_eval.get('score_breakdown', {}).get('speed_penalty')|float) }} points
-                                            </small>
-                                        </div>
-                                        {% endif %}
-                                        {% if pump_eval.get('score_breakdown', {}).get('sizing_penalty', 0) > 0 %}
-                                        <div class="penalty-item">
-                                            <small class="text-danger">
-                                                <i class="fas fa-cut"></i> Impeller Trimming: -{{ "%.1f"|format(pump_eval.get('score_breakdown', {}).get('sizing_penalty')|float) }} points
-                                            </small>
-                                        </div>
-                                        {% endif %}
-                                    </div>
-                                    {% endif %}
-                                </div>
-
-                                <!-- Operating Zone Indicator -->
-                                {% if pump_eval.get('suitability_analysis', {}).get('operating_zone') %}
-                                <div class="operating-zone mt-3">
-                                    <small class="text-muted">Operating Zone:</small>
-                                    <span class="badge 
-                                        {% if 'optimal' in pump_eval.get('suitability_analysis', {}).get('operating_zone', '').lower() %}bg-success
-                                        {% elif 'good' in pump_eval.get('suitability_analysis', {}).get('operating_zone', '').lower() %}bg-primary
-                                        {% elif 'acceptable' in pump_eval.get('suitability_analysis', {}).get('operating_zone', '').lower() %}bg-info
-                                        {% else %}bg-warning{% endif %}">
-                                        {{ pump_eval.get('suitability_analysis', {}).get('operating_zone', 'Unknown') }}
-                                    </span>
-                                </div>
-                                {% endif %}
-                            </div>
-                            {% endif %}
-
-                            <!-- Selection Reason -->
-                            {% if pump_eval.get('selection_reason') %}
-                            <div class="mb-3">
-                                <h6 class="text-secondary mb-2">Why This Pump?</h6>
-                                <div class="alert alert-info border">
-                                    <small>{{ pump_eval.get('selection_reason') }}</small>
-                                </div>
-                            </div>
-                            {% endif %}
-
-                            <!-- AI Technical Insights -->
-                            <div class="mb-3">
-                                <h6 class="text-secondary mb-2">
-                                    <i class="fas fa-brain text-purple"></i> AI Technical Insights
-                                </h6>
-                                <div class="card border-0" style="background: #f8f9ff;">
-                                    <div class="card-body p-2">
-                                        <div id="aiInsights_{{ loop.index }}" class="ai-insights-container">
-                                            <div class="d-flex align-items-center">
-                                                <div class="spinner-border spinner-border-sm text-primary me-2" role="status">
-                                                    <span class="visually-hidden">Loading...</span>
-                                                </div>
-                                                <small class="text-muted">Loading AI technical analysis...</small>
-                                            </div>
-                                        </div>
-                                        <button class="btn btn-outline-primary btn-sm mt-2" 
-                                                onclick="getDetailedAIAnalysis('{{ pump_eval.get('pump_code') }}', {{ loop.index }})"
-                                                style="font-size: 0.8em;">
-                                            <i class="fas fa-search-plus"></i> Get Detailed Analysis
-                                        </button>
+                                    <div class="text-end">
+                                        <span class="badge bg-success fs-6 px-3 py-2">
+                                            Score: {{ "%.1f"|format(pump.suitability_score) }}
+                                        </span>
                                     </div>
                                 </div>
-                            </div>
-                        </div>
-                        <div class="card-footer">
-                            <a href="{{ url_for('professional_pump_report', pump_code=pump_eval.get('pump_code'), flow=site_requirements.flow_m3hr, head=site_requirements.head_m) }}" 
-                               class="btn btn-primary w-100">
-                                <i class="fas fa-chart-line"></i> View Detailed Report
+                                
+                                <!-- Performance Summary -->
+                                <div class="row text-center">
+                                    <div class="col-md-3">
+                                        <div class="border rounded p-2">
+                                            <i data-feather="activity" class="text-primary mb-1"></i>
+                                            <div class="fw-bold">{{ "%.1f"|format(pump.performance.efficiency_pct) }}%</div>
+                                            <small class="text-muted">Efficiency</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="border rounded p-2">
+                                            <i data-feather="zap" class="text-warning mb-1"></i>
+                                            <div class="fw-bold">{{ "%.1f"|format(pump.performance.power_kw) }} kW</div>
+                                            <small class="text-muted">Power</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="border rounded p-2">
+                                            <i data-feather="droplet" class="text-info mb-1"></i>
+                                            <div class="fw-bold">{{ "%.1f"|format(pump.performance.npsh_m) }} m</div>
+                                            <small class="text-muted">NPSH</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="border rounded p-2">
+                                            <i data-feather="rotate-cw" class="text-secondary mb-1"></i>
+                                            <div class="fw-bold">{{ pump.sizing_info.impeller_trim_pct|round|int }}%</div>
+                                            <small class="text-muted">Impeller Trim</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Action Hint -->
+                                <div class="mt-3 text-center">
+                                    <small class="text-primary">
+                                        <i data-feather="eye" style="width: 14px; height: 14px;"></i>
+                                        Click to view detailed performance analysis & PDF report
+                                    </small>
+                                </div>
                             </a>
-                        </div>
+                        {% endfor %}
                     </div>
                 </div>
-                {% endfor %}
             </div>
 
-            <!-- Additional Information -->
-            <div class="row mt-5">
-                <div class="col-12">
-                    <div class="card bg-light border-0">
-                        <div class="card-body">
-                            <h5 class="card-title">Need Help Choosing?</h5>
-                            <p class="card-text">
-                                Our AI-powered selection engine has analyzed your requirements and ranked these pumps based on efficiency, 
-                                performance characteristics, and operational suitability. The recommended pump offers the best balance 
-                                of efficiency and reliability for your specific application.
-                            </p>
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <h6>Selection Criteria:</h6>
-                                    <ul class="list-unstyled">
-                                        <li><i class="fas fa-check text-success me-2"></i>Operating efficiency at duty point</li>
-                                        <li><i class="fas fa-check text-success me-2"></i>Distance from Best Efficiency Point (BEP)</li>
-                                        <li><i class="fas fa-check text-success me-2"></i>NPSH requirements compatibility</li>
-                                        <li><i class="fas fa-check text-success me-2"></i>Power consumption optimization</li>
-                                    </ul>
-                                </div>
-                                <div class="col-md-6">
-                                    <h6>Next Steps:</h6>
-                                    <ul class="list-unstyled">
-                                        <li><i class="fas fa-arrow-right text-primary me-2"></i>Review detailed performance analysis</li>
-                                        <li><i class="fas fa-arrow-right text-primary me-2"></i>Download professional PDF report</li>
-                                        <li><i class="fas fa-arrow-right text-primary me-2"></i>Contact APE Pumps for quotation</li>
-                                        <li><i class="fas fa-arrow-right text-primary me-2"></i>Technical support available</li>
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            <!-- Actions -->
+            <div class="mt-4 text-center">
+                <a href="{{ url_for('main_flow.index') }}" class="btn btn-outline-secondary">
+                    <i data-feather="arrow-left" class="me-2"></i>
+                    Start New Selection
+                </a>
             </div>
-            {% else %}
-            <div class="row">
-                <div class="col-12">
-                    <div class="alert alert-warning text-center">
-                        <h4>No Suitable Pumps Found</h4>
-                        <p>Based on your requirements, we couldn't find pumps that match your specifications.</p>
-                        <a href="{{ url_for('main_flow.index') }}" class="btn btn-primary">
-                            <i class="fas fa-arrow-left"></i> Modify Requirements
-                        </a>
-                    </div>
-                </div>
-            </div>
-            {% endif %}
         </div>
-    </section>
+    </div>
+</div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-
-    <script>
-    // Load AI insights for all pumps when page loads
-    document.addEventListener('DOMContentLoaded', function() {
-        {% for pump_eval in pump_evaluations %}
-        loadAIInsights('{{ pump_eval.get('pump_code') }}', {{ loop.index }});
-        {% endfor %}
-    });
-
-    function loadAIInsights(pumpCode, cardIndex) {
-        const insightsContainer = document.getElementById(`aiInsights_${cardIndex}`);
-
-        // Generate contextual query based on pump specifications
-        const contextQuery = `Analyze the ${pumpCode} pump for {{ site_requirements.flow_m3hr }} m³/h flow and {{ site_requirements.head_m }} m head. What are the key technical considerations and efficiency optimization aspects?`;
-
-        fetch('/api/chat/query', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                query: contextQuery
-            })
-        })
-        .then(response => response.json())
-        .then(data => {
-            const insights = data.response;
-            const sources = data.source_documents || [];
-
-            // Extract key insights (first 2 sentences for summary)
-            const summaryInsights = insights.split('.').slice(0, 2).join('.') + '.';
-
-            insightsContainer.innerHTML = `
-                <div class="ai-insights-content">
-                    <div class="d-flex align-items-start mb-2">
-                        <i class="fas fa-brain text-primary me-2 mt-1" style="font-size: 0.9em;"></i>
-                        <div>
-                            <small class="text-dark"><strong>AI Analysis:</strong></small>
-                            <div style="font-size: 0.85em; line-height: 1.4; color: #555;">
-                                ${summaryInsights}
-                            </div>
-                            ${sources.length > 0 ? `
-                                <div style="font-size: 0.75em; color: #666; margin-top: 4px;">
-                                    <i class="fas fa-book me-1"></i>Sources: ${sources.slice(0, 2).join(', ')}
-                                </div>
-                            ` : ''}
-                        </div>
-                    </div>
-                </div>
-            `;
-        })
-        .catch(error => {
-            insightsContainer.innerHTML = `
-                <div class="d-flex align-items-center">
-                    <i class="fas fa-exclamation-triangle text-warning me-2"></i>
-                    <small class="text-muted">AI insights temporarily unavailable</small>
-                </div>
-            `;
-        });
-    }
-
-    function getDetailedAIAnalysis(pumpCode, cardIndex) {
-        const detailedQuery = `Provide a comprehensive technical analysis of the ${pumpCode} pump including efficiency characteristics, NPSH considerations, and suitability for {{ site_requirements.flow_m3hr }} m³/h at {{ site_requirements.head_m }} m head. Include maintenance and operational considerations.`;
-
-        const insightsContainer = document.getElementById(`aiInsights_${cardIndex}`);
-
-        // Show loading state
-        insightsContainer.innerHTML = `
-            <div class="d-flex align-items-center mb-2">
-                <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
-                <small class="text-muted">Loading detailed AI analysis...</small>
-            </div>
-        `;
-
-        fetch('/api/chat/query', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                query: detailedQuery
-            })
-        })
-        .then(response => response.json())
-        .then(data => {
-            const insights = data.response;
-            const sources = data.source_documents || [];
-
-            insightsContainer.innerHTML = `
-                <div class="ai-insights-detailed">
-                    <div class="d-flex align-items-start mb-2">
-                        <i class="fas fa-brain text-primary me-2 mt-1"></i>
-                        <div>
-                            <small class="text-dark"><strong>Detailed AI Analysis:</strong></small>
-                            <div style="font-size: 0.85em; line-height: 1.4; color: #555; max-height: 200px; overflow-y: auto;">
-                                ${insights.replace(/\n/g, '<br>')}
-                            </div>
-                            ${sources.length > 0 ? `
-                                <div style="font-size: 0.75em; color: #666; margin-top: 8px;">
-                                    <i class="fas fa-book me-1"></i>
-                                    <strong>Technical Sources:</strong> ${sources.slice(0, 3).join(', ')}
-                                </div>
-                            ` : ''}
-                            <button class="btn btn-outline-secondary btn-sm mt-2" 
-                                    onclick="loadAIInsights('${pumpCode}', ${cardIndex})"
-                                    style="font-size: 0.75em;">
-                                <i class="fas fa-compress"></i> Show Summary
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            `;
-        })
-        .catch(error => {
-            insightsContainer.innerHTML = `
-                <div class="alert alert-warning p-2 mb-0">
-                    <small><i class="fas fa-exclamation-triangle me-2"></i>
-                    Detailed analysis temporarily unavailable. Please try again or use the full AI Expert interface.</small>
-                </div>
-            `;
-        });
-    }
-    </script>
-</body>
-</html>
+<script>
+// Initialize Feather Icons
+if (typeof feather !== 'undefined') {
+    feather.replace();
+}
+</script>
+{% endblock %}
