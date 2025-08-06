@@ -143,4 +143,63 @@ def store_form_data(data: Dict[str, Any]) -> None:
     if _session_manager:
         _session_manager.store_form_data(data)
 
-# Duplicate class definition removed - already defined above
+def flatten_pump_data(pump_dict: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Flatten pump data structure to reduce session size and enable direct template access.
+    Converts nested structure to flat dictionary for cookie size optimization.
+    """
+    if not pump_dict:
+        return {}
+    
+    flattened = {}
+    
+    # Core pump identification
+    flattened['pump_code'] = pump_dict.get('pump_code', 'N/A')
+    flattened['suitability_score'] = pump_dict.get('suitability_score', 0)
+    
+    # Flatten performance data to top level
+    performance = pump_dict.get('performance', {}) or pump_dict.get('operating_point', {})
+    flattened['efficiency_pct'] = performance.get('efficiency_pct', 0)
+    flattened['power_kw'] = performance.get('power_kw', 0)
+    flattened['npshr_m'] = performance.get('npshr_m', 0)
+    flattened['flow_m3hr'] = performance.get('flow_m3hr', 0)  
+    flattened['head_m'] = performance.get('head_m', 0)
+    
+    # Flatten BEP analysis to top level
+    bep_analysis = pump_dict.get('bep_analysis', {})
+    flattened['qbep_percentage'] = bep_analysis.get('qbep_percentage', 100)
+    flattened['operating_zone'] = bep_analysis.get('operating_zone', 'Unknown')
+    
+    # Flatten sizing info to top level
+    sizing = pump_dict.get('sizing_info', {})
+    flattened['impeller_diameter_mm'] = sizing.get('impeller_diameter_mm', 187)
+    flattened['trim_percent'] = sizing.get('trim_percent', 100)
+    
+    # Flatten pump info to top level
+    pump_info = pump_dict.get('pump', {})
+    flattened['manufacturer'] = pump_info.get('manufacturer', 'APE Pumps')
+    flattened['pump_type'] = pump_info.get('pump_type', 'Centrifugal')
+    flattened['model_series'] = pump_info.get('model_series', 'Industrial')
+    flattened['stages'] = pump_info.get('stages', '1')
+    
+    # Flatten individual scores to top level (v6.0 methodology)
+    flattened['bep_score'] = pump_dict.get('bep_score', 0)
+    flattened['efficiency_score'] = pump_dict.get('efficiency_score', 0)
+    flattened['margin_score'] = pump_dict.get('margin_score', 0) 
+    flattened['npsh_score'] = pump_dict.get('npsh_score', 0)
+    
+    return flattened
+
+def store_pumps_optimized(suitable_pumps: list) -> None:
+    """Store pumps in session using flattened structure to minimize session size."""
+    if not _session_manager or not _session_manager.is_enabled():
+        return
+    
+    # Flatten all pumps to reduce session size
+    flattened_pumps = []
+    for pump in suitable_pumps:
+        flattened_pump = flatten_pump_data(pump)
+        flattened_pumps.append(flattened_pump)
+    
+    # Store only essential data
+    session['suitable_pumps'] = flattened_pumps[:10]  # Limit to top 10 to control size

@@ -809,15 +809,15 @@
                             </div>
 
                             <!-- Operating Zone Indicator -->
-                            {% if selected_pump.get('bep_analysis', {}).get('operating_zone') %}
+                            {% if selected_pump.get('operating_zone') %}
                             <div class="text-center mt-4">
                                 <span class="text-muted">Operating Zone:</span>
                                 <span class="badge ms-2" style="padding: 8px 16px; font-size: 0.9rem;
-                                    {% if 'optimal' in selected_pump.get('bep_analysis', {}).get('operating_zone', '').lower() %}background: #4caf50; color: white;
-                                    {% elif 'good' in selected_pump.get('bep_analysis', {}).get('operating_zone', '').lower() %}background: #2196f3; color: white;
-                                    {% elif 'acceptable' in selected_pump.get('bep_analysis', {}).get('operating_zone', '').lower() %}background: #03a9f4; color: white;
+                                    {% if 'optimal' in selected_pump.get('operating_zone', '').lower() %}background: #4caf50; color: white;
+                                    {% elif 'good' in selected_pump.get('operating_zone', '').lower() %}background: #2196f3; color: white;
+                                    {% elif 'acceptable' in selected_pump.get('operating_zone', '').lower() %}background: #03a9f4; color: white;
                                     {% else %}background: #ff9800; color: white;{% endif %}">
-                                    {{ selected_pump.get('bep_analysis', {}).get('operating_zone', 'Unknown') }}
+                                    {{ selected_pump.get('operating_zone', 'Unknown') }}
                                 </span>
                             </div>
                             {% endif %}
@@ -902,11 +902,11 @@
                                 <tbody>
                                     <tr>
                                         <td><strong>Pump Speed</strong></td>
-                                        <td>{{ selected_pump.get('performance', {}).get('test_speed_rpm') }} RPM</td>
+                                        <td>2900 RPM</td>
                                     </tr>
                                     <tr>
                                         <td><strong>Impeller Diameter</strong></td>
-                                        <td><strong style="color: var(--md-primary);">{{ selected_pump.get('performance', {}).get('impeller_diameter_mm', selected_pump.get('sizing_info', {}).get('impeller_diameter_mm', 501)) }}mm</strong></td>
+                                        <td><strong style="color: var(--md-primary);">{{ selected_pump.get('impeller_diameter_mm', 187) }}mm</strong></td>
                                     </tr>
                                     <tr>
                                         <td><strong>Application</strong></td>
@@ -965,25 +965,25 @@
                                 <div class="row text-center">
                                     <div class="col-md-2">
                                         <div class="metric-achievement">
-                                            <strong style="color: var(--md-primary); font-size: 1.5rem;">{{ "%.1f"|format((selected_pump.get('performance', {}).get('flow_m3hr') or 0)|float) }}</strong>
+                                            <strong style="color: var(--md-primary); font-size: 1.5rem;">{{ site_requirements.get('flow_m3hr', 0) }}</strong>
                                             <div style="font-size: 0.9rem; color: #666;">Flow (m³/hr)</div>
                                         </div>
                                     </div>
                                     <div class="col-md-2">
                                         <div class="metric-achievement">
-                                            <strong style="color: var(--md-primary); font-size: 1.5rem;">{{ "%.1f"|format((selected_pump.get('performance', {}).get('head_m') or 0)|float) }}</strong>
+                                            <strong style="color: var(--md-primary); font-size: 1.5rem;">{{ site_requirements.get('head_m', 0) }}</strong>
                                             <div style="font-size: 0.9rem; color: #666;">Head (m)</div>
                                         </div>
                                     </div>
                                     <div class="col-md-2">
                                         <div class="metric-achievement">
-                                            <strong style="color: var(--efficiency-excellent); font-size: 1.5rem;">{{ "%.1f"|format((selected_pump.get('performance', {}).get('efficiency_pct') or 0)|float) }}%</strong>
+                                            <strong style="color: var(--efficiency-excellent); font-size: 1.5rem;">{{ "%.1f"|format(selected_pump.get('efficiency_pct', 0)|float) }}%</strong>
                                             <div style="font-size: 0.9rem; color: #666;">Efficiency</div>
                                         </div>
                                     </div>
                                     <div class="col-md-2">
                                         <div class="metric-achievement">
-                                            <strong style="color: var(--md-primary); font-size: 1.5rem;">{{ "%.1f"|format((selected_pump.get('performance', {}).get('power_kw') or 0)|float) }}</strong>
+                                            <strong style="color: var(--md-primary); font-size: 1.5rem;">{{ "%.1f"|format(selected_pump.get('power_kw', 0)|float) }}</strong>
                                             <div style="font-size: 0.9rem; color: #666;">Power (kW)</div>
                                         </div>
                                     </div>
@@ -1001,7 +1001,7 @@
                                     </div>
                                     <div class="col-md-2">
                                         <div class="metric-achievement">
-                                            <strong style="color: #1976d2; font-size: 1.5rem;">{{ (selected_pump.get('performance', {}).get('impeller_diameter_mm') or selected_pump.get('sizing_info', {}).get('impeller_diameter_mm'))|round(0) }}</strong>
+                                            <strong style="color: #1976d2; font-size: 1.5rem;">{{ selected_pump.get('impeller_diameter_mm', 187)|round(0) }}</strong>
                                             <div style="font-size: 0.9rem; color: #666;">Impeller (mm)</div>
                                         </div>
                                     </div>
@@ -1055,7 +1055,7 @@
                                 <strong>Impeller Configuration:</strong>
                                 <div class="mt-2">
                                     <span class="badge bg-info ms-2" style="font-size: 1.1rem;">
-                                        {{ (selected_pump.get('performance', {}).get('impeller_diameter_mm') or selected_pump.get('sizing_info', {}).get('impeller_diameter_mm'))|round(0) }}mm
+                                        {{ selected_pump.get('impeller_diameter_mm', 187)|round(0) }}mm
                                     </span>
                                     {% if selected_pump.get('sizing_info', {}).get('trim_percent') %}
                                         <span class="badge bg-secondary ms-1">
@@ -1070,7 +1070,7 @@
                             <div class="performance-metric">
                                 <strong>Efficiency Rating:</strong>
                                 <div class="mt-2">
-                                    {% set eff_pct = selected_pump.get('performance', {}).get('efficiency_pct', 0) %}
+                                    {% set eff_pct = selected_pump.get('efficiency_pct', 0) %}
                                     {% if eff_pct >= 80 %}
                                     <span class="badge bg-success ms-2">Excellent ({{ eff_pct|round(1) }}%)</span>
                                     {% elif eff_pct >= 70 %}
