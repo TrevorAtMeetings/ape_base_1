@@ -293,7 +293,7 @@ class CatalogPump:
         return best_curve
 
     def can_meet_requirements(self, flow_m3hr: float, head_m: float) -> Dict[str, Any]:
-        """Comprehensively evaluate if pump can meet requirements through ANY valid modification on ANY curve"""
+        """Comprehensively evaluate if pump can meet requirements through impeller trimming (v6.0: Fixed-speed only)"""
         from .impeller_scaling import get_impeller_scaling_engine
         scaling_engine = get_impeller_scaling_engine()
         
@@ -303,6 +303,15 @@ class CatalogPump:
         # If no curves exist, this is truly no performance data
         if not self.curves or not any(curve.get('performance_points') for curve in self.curves):
             return {'feasible': False, 'reasons': [ExclusionReason.NO_PERFORMANCE_DATA]}
+        
+        # v6.0 HARD GATES: Apply QBP and NPSH gates before comprehensive evaluation
+        qbp_gate_result = self._validate_qbp_range(flow_m3hr)
+        if not qbp_gate_result['passed']:
+            return {
+                'feasible': False, 
+                'reasons': [ExclusionReason.ENVELOPE_EXCEEDED],
+                'details': [qbp_gate_result['reason']]
+            }
         
         # COMPREHENSIVE EVALUATION: Try ALL curves with ALL methods before exclusion
         best_options = []
@@ -354,24 +363,9 @@ class CatalogPump:
                     else:
                         exclusion_reasons.append(f"Curve {curve.get('curve_index', 'N/A')}: Requires {trim_percent:.1f}% trim (above 100% maximum)")
             
-            # Method 4: Try speed variation on this curve
-            pump_specs = {
-                'test_speed_rpm': self.specifications.get('test_speed_rpm', 980),
-                'max_speed_rpm': self.specifications.get('max_speed_rpm', 1150),
-                'min_speed_rpm': self.specifications.get('min_speed_rpm', 700)
-            }
-            
-            speed_result = scaling_engine.calculate_speed_variation(curve, flow_m3hr, head_m, pump_specs)
-            if speed_result and speed_result['meets_requirements']:
-                required_speed = speed_result['test_speed_rpm']
-                if 600 <= required_speed <= 3600:  # Extended range for comprehensive coverage
-                    return {'feasible': True, 'method': 'speed', 'curve': curve, 'result': speed_result}
-                else:
-                    # Track but continue evaluating
-                    if required_speed < 600:
-                        exclusion_reasons.append(f"Curve {curve.get('curve_index', 'N/A')}: Requires {required_speed:.0f} RPM (below 600 minimum)")
-                    else:
-                        exclusion_reasons.append(f"Curve {curve.get('curve_index', 'N/A')}: Requires {required_speed:.0f} RPM (above 3600 maximum)")
+            # v6.0 UPDATE: Speed variation DISABLED - Fixed-speed methodology only
+            # Method 4: Speed variation DISABLED in v6.0
+            # VFD logic will be re-implemented in v7.0 as separate workflow
         
         # If we found extended extrapolation options, use the best one
         if best_options:
@@ -489,101 +483,139 @@ class CatalogPump:
 
         return True
 
+    def _validate_qbp_range(self, required_flow: float) -> Dict[str, Any]:
+        """v6.0 HARD GATE: Validate QBP operating range (60-130% of BEP)"""
+        try:
+            # Get pump's nominal BEP flow
+            bep_flow = self.specifications.get('q_bep', 0)
+            
+            # If no BEP data in specs, estimate from curves
+            if bep_flow <= 0:
+                bep_point = self.get_bep_point()
+                if bep_point:
+                    bep_flow = bep_point.get('flow_m3hr', 0)
+            
+            if bep_flow > 0:
+                qbp_percentage = (required_flow / bep_flow) * 100
+                if qbp_percentage < 60 or qbp_percentage > 130:
+                    return {
+                        'passed': False,
+                        'reason': f"Operating point {qbp_percentage:.1f}% outside acceptable 60-130% BEP range"
+                    }
+            
+            # Pass if we can't determine BEP (will rely on other evaluation methods)
+            return {'passed': True, 'reason': ''}
+            
+        except Exception as e:
+            logger.debug(f"QBP validation error for {self.pump_code}: {e}")
+            return {'passed': True, 'reason': ''}  # Don't exclude on validation errors
+
+    def _validate_npsh_safety_gate(self, performance: Dict[str, Any], npsha_available: float = None) -> Dict[str, Any]:
+        """v6.0 HARD GATE: Validate NPSH safety margin (NPSHa >= 1.5 × NPSHr)"""
+        if not npsha_available:
+            return {'passed': True, 'reason': ''}  # Only apply when NPSHa is provided
+        
+        try:
+            npshr = performance.get('npshr_m', 0)
+            if npshr and npshr > 0:
+                required_margin = npshr * 1.5
+                if npsha_available < required_margin:
+                    return {
+                        'passed': False,
+                        'reason': f"NPSH safety margin insufficient: {npsha_available:.1f}m < {required_margin:.1f}m required (1.5× {npshr:.1f}m)"
+                    }
+            
+            return {'passed': True, 'reason': ''}
+            
+        except Exception as e:
+            logger.debug(f"NPSH validation error for {self.pump_code}: {e}")
+            return {'passed': True, 'reason': ''}  # Don't exclude on validation errors
+
     def _calculate_solution_score(self, performance: Dict[str, Any], 
                                  sizing_info: Dict[str, Any],
                                  target_flow: float,
                                  target_head: float) -> float:
-        """Calculate comprehensive score for a pump solution
+        """Calculate comprehensive score for a pump solution (v6.0: 85-point system)
         
-        Returns total score (0-100) based on:
-        - BEP proximity (35 points)
-        - Efficiency (30 points)
-        - Head margin (15 points)
-        - NPSH margin (15 points)
-        - Speed/trim penalties (negative points)
+        Returns total score (0-85) based on:
+        - BEP proximity (45 points) - THE RELIABILITY FACTOR  
+        - Efficiency (35 points) - THE OPERATING COST FACTOR
+        - Head margin (20 points) - THE RIGHT-SIZING FACTOR
+        - Impeller trim penalties (negative points)
+        
+        v6.0 Changes: NPSH removed from scoring, VFD penalties removed, rebalanced weights
         """
         score = 0.0
         
-        # 1. BEP Proximity Score (35 points max)
+        # 1. BEP Proximity Score (45 points max) - v6.0: Increased from 35 to 45
         bep_analysis = self.calculate_bep_distance(target_flow, target_head)
         if bep_analysis.get('bep_available'):
             flow_ratio = bep_analysis.get('flow_ratio', 1.0)
-            if 0.7 <= flow_ratio <= 1.3:
-                if 1.05 <= flow_ratio <= 1.15:
-                    bep_score = 35  # Optimal zone
-                elif 0.95 <= flow_ratio <= 1.05:
-                    bep_score = 30  # Good zone
-                elif 0.85 <= flow_ratio <= 1.25:
-                    bep_score = 25  # Acceptable zone
-                else:
-                    bep_score = 15  # Marginal zone
-            else:
-                bep_score = 0  # Outside acceptable range
+            if 0.95 <= flow_ratio <= 1.05:  # Sweet spot
+                bep_score = 45
+            elif 0.90 <= flow_ratio < 0.95 or 1.05 < flow_ratio <= 1.10:
+                bep_score = 40
+            elif 0.80 <= flow_ratio < 0.90 or 1.10 < flow_ratio <= 1.20:
+                bep_score = 30
+            elif 0.70 <= flow_ratio < 0.80 or 1.20 < flow_ratio <= 1.30:
+                bep_score = 20
+            else:  # 0.60-0.70 or 1.30-1.40 (gate allows up to 60-130%)
+                bep_score = 10
         else:
-            bep_score = 17.5  # Default if no BEP data
+            bep_score = 22.5  # Default if no BEP data (50% of max)
         
         score += bep_score
         
-        # 2. Efficiency Score (30 points max)
+        # 2. Efficiency Score (35 points max) - v6.0: Increased from 30 to 35
         efficiency = performance.get('efficiency_pct', 0)
-        if efficiency >= 80:
-            eff_score = 30
-        elif efficiency >= 70:
-            eff_score = 25
-        elif efficiency >= 60:
-            eff_score = 20
-        elif efficiency >= 50:
-            eff_score = 15
-        else:
-            eff_score = 10
+        if efficiency >= 85:
+            eff_score = 35
+        elif efficiency >= 75:
+            eff_score = 30 + (efficiency - 75) * 0.5
+        elif efficiency >= 65:
+            eff_score = 25 + (efficiency - 65) * 0.5
+        elif efficiency >= 45:
+            eff_score = 10 + (efficiency - 45) * 0.75
+        else:  # 40-45% (gate excludes below 40%)
+            eff_score = max(0, (efficiency - 40) * 2)
         
         score += eff_score
         
-        # 3. Head Margin Score (15 points max)
+        # 3. Head Margin Score (20 points max) - v6.0: Increased from 15 to 20
         head_margin = performance.get('head_m', 0) - target_head
         head_margin_pct = (head_margin / target_head) * 100 if target_head > 0 else 0
         
-        if 2 <= head_margin_pct <= 8:
-            margin_score = 15  # Optimal margin
-        elif 0 <= head_margin_pct < 2:
-            margin_score = 10  # Minimal margin
-        elif 8 < head_margin_pct <= 15:
-            margin_score = 12  # Acceptable margin
-        else:
-            margin_score = 5  # Excessive margin
+        if head_margin_pct <= 5:  # Perfect sizing
+            margin_score = 20
+        elif 5 < head_margin_pct <= 10:  # Good sizing
+            margin_score = 20 - (head_margin_pct - 5) * 2
+        elif 10 < head_margin_pct <= 15:  # Acceptable sizing  
+            margin_score = 10 - (head_margin_pct - 10) * 1
+        else:  # 15-20% (higher margins penalized more heavily)
+            margin_score = 5 - (head_margin_pct - 15) * 2
+            margin_score = max(0, margin_score)  # Floor at 0
         
         score += margin_score
         
-        # 4. NPSH Score (15 points max)
-        npshr = performance.get('npshr_m', 0) or 0  # Ensure None becomes 0
-        if npshr and npshr > 0:
-            if npshr <= 2.0:
-                npsh_score = 15
-            elif npshr <= 4.0:
-                npsh_score = 12
-            elif npshr <= 6.0:
-                npsh_score = 9
-            elif npshr <= 8.0:
-                npsh_score = 6
-            else:
-                npsh_score = 3
-        else:
-            npsh_score = 7.5  # Default if no NPSH data
+        # v6.0: NPSH Score REMOVED - inconsistent data makes fair comparison impossible
+        # NPSH safety is now handled by hard gate only
         
-        score += npsh_score
-        
-        # 5. Apply penalties for modifications
-        # Speed variation penalty (up to -15 points)
-        if sizing_info.get('vfd_required', False):
-            speed_var_pct = abs(sizing_info.get('speed_variation_pct', 0))
-            speed_penalty = min(15, 1.5 * speed_var_pct)
-            score -= speed_penalty
-        
-        # Impeller trimming penalty (up to -10 points)
+        # 4. Apply Impeller Trim Penalty (negative points only)
         trim_percent = sizing_info.get('trim_percent', 100)
-        if trim_percent < 100:
-            trim_penalty = 0.5 * (100 - trim_percent)
-            score -= trim_penalty
+        if trim_percent >= 95:  # Minimal trim
+            trim_penalty = 0
+        elif trim_percent >= 90:  # Light trim
+            trim_penalty = -2
+        elif trim_percent >= 85:  # Moderate trim
+            trim_penalty = -5
+        elif trim_percent >= 80:  # Heavy trim
+            trim_penalty = -8
+        else:  # 75-80% trim (maximum allowed)
+            trim_penalty = -12
+            
+        score += trim_penalty  # Add negative penalty
+        
+        # v6.0: VFD/Speed variation penalties REMOVED - fixed-speed only
         
         # Ensure score doesn't go negative
         return max(0, score)
@@ -637,57 +669,8 @@ class CatalogPump:
                 possible_solutions.append(solution)
                 logger.debug(f"Pump {self.pump_code}: Impeller trimming solution - {sizing['base_diameter_mm']}mm → {sizing['required_diameter_mm']}mm ({sizing['trim_percent']:.1f}% trim), Score: {score:.1f}")
         
-        # Method 2: Try speed variation
-        pump_specs = {
-            'test_speed_rpm': self.specifications.get('test_speed_rpm', 980),
-            'max_speed_rpm': self.specifications.get('max_speed_rpm', 1150),
-            'min_speed_rpm': self.specifications.get('min_speed_rpm', 700)
-        }
-        
-        # Try speed variation on each curve
-        for curve in self.curves:
-            speed_result = scaling_engine.calculate_speed_variation(
-                curve, flow_m3hr, head_m, pump_specs)
-            if speed_result and speed_result['meets_requirements']:
-                # Validate speed variation is within engineering limits
-                if self._validate_speed_variation_limits(speed_result, curve):
-                    # Final physical capability check
-                    if self._validate_physical_capability(flow_m3hr, head_m):
-                        # Calculate score for this solution
-                        sizing_info = {
-                            'base_diameter_mm': speed_result['impeller_diameter_mm'],
-                            'required_diameter_mm': speed_result['impeller_diameter_mm'],
-                            'trim_percent': 100.0,
-                            'speed_variation_pct': speed_result['speed_variation_pct'],
-                            'vfd_required': True
-                        }
-                        score = self._calculate_solution_score(speed_result, sizing_info, flow_m3hr, head_m)
-                        
-                        solution = {
-                            'curve': curve,
-                            'flow_m3hr': speed_result['flow_m3hr'],
-                            'head_m': speed_result['head_m'],
-                            'efficiency_pct': speed_result['efficiency_pct'],
-                            'power_kw': speed_result['power_kw'],
-                            'npshr_m': speed_result['npshr_m'],
-                            'impeller_diameter_mm': speed_result['impeller_diameter_mm'],
-                            'test_speed_rpm': speed_result['test_speed_rpm'],
-                            'sizing_info': {
-                                'base_diameter_mm': speed_result['impeller_diameter_mm'],
-                                'required_diameter_mm': speed_result['impeller_diameter_mm'],
-                                'trim_percent': 100.0,
-                                'meets_requirements': True,
-                                'head_margin_m': speed_result['head_margin_m'],
-                                'required_speed_rpm': speed_result['required_speed_rpm'],
-                                'speed_variation_pct': speed_result['speed_variation_pct'],
-                                'vfd_required': True,
-                                'sizing_method': 'speed_variation'
-                            },
-                            'total_score': score
-                        }
-                        
-                        possible_solutions.append(solution)
-                        logger.debug(f"Pump {self.pump_code}: Speed variation solution - {speed_result['test_speed_rpm']}→{speed_result['required_speed_rpm']} RPM ({speed_result['speed_variation_pct']:.1f}% variation), Score: {score:.1f}")
+        # v6.0: Method 2 (Speed variation) DISABLED - Fixed-speed methodology only
+        # VFD logic will be re-implemented in v7.0 as separate workflow
         
         # Method 3: Try direct interpolation (if within existing curves)
         interpolated = self._get_performance_interpolated(flow_m3hr, head_m)
@@ -1224,16 +1207,7 @@ class CatalogEngine:
                     if 'sizing_info' in performance:
                         sizing_info = performance['sizing_info']
 
-                        # VFD Speed Variation Penalty (up to -15 points)
-                        if sizing_info.get('vfd_required', False):
-                            speed_variation_pct = abs(
-                                sizing_info.get('speed_variation_pct', 0))
-                            if speed_variation_pct > 0:
-                                # New formula: Penalty = 1.5 × Speed_Change % (capped at 15)
-                                speed_penalty = min(15, 1.5 * speed_variation_pct)
-                                logger.debug(
-                                    f"Speed penalty for {pump.pump_code}: -{speed_penalty:.1f} points ({speed_variation_pct:.1f}% speed change)"
-                                )
+                        # v6.0: VFD Speed Variation Penalty REMOVED - fixed-speed only
 
                         # Impeller Trimming Penalty
                         trim_percent = sizing_info.get('trim_percent', 100)
@@ -1337,7 +1311,12 @@ class CatalogEngine:
                     suitable_pumps.append(result)
 
         # Sort by suitability score (descending)
-        suitable_pumps.sort(key=lambda x: x['suitability_score'], reverse=True)
+        # v6.0 RANKING: Multi-criteria ranking with power-based tie-breaking
+        suitable_pumps.sort(key=lambda x: (
+            -x['suitability_score'],                    # Primary: highest score
+            x.get('power_kw', float('inf')),            # Secondary: lowest power (tie-breaker)
+            abs(x.get('qbp_percentage', 100) - 100)     # Tertiary: closest to 100% BEP
+        ))
 
         # Log filtering results with transparency
         logger.info(
