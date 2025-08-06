@@ -247,33 +247,40 @@ def pump_options():
                     'impeller_diameter_mm': make_json_serializable(result.get('sizing_info', {}).get('impeller_diameter_mm', 187)),
                     'test_speed_rpm': 2900,  # Static to reduce size
                     
-                    # Score breakdown data
-                    'bep_score': make_json_serializable(result.get('score_breakdown', {}).get('bep_score', 40)),
-                    'efficiency_score': make_json_serializable(result.get('score_breakdown', {}).get('efficiency_score', 30)),
-                    'margin_score': make_json_serializable(result.get('score_breakdown', {}).get('margin_score', 15)),
-                    'npsh_score': make_json_serializable(result.get('score_breakdown', {}).get('npsh_score', 15)),
+                    # Score breakdown data - extract actual values from result
+                    'bep_score': make_json_serializable(result.get('score_breakdown', {}).get('bep_score', 0)),
+                    'efficiency_score': make_json_serializable(result.get('score_breakdown', {}).get('efficiency_score', 0)), 
+                    'margin_score': make_json_serializable(result.get('score_breakdown', {}).get('margin_score', 0)),
+                    'npsh_score': make_json_serializable(result.get('score_breakdown', {}).get('npsh_score', 0)),
                     
                     # BEP analysis
-                    'qbep_percentage': make_json_serializable(result.get('bep_analysis', {}).get('qbep_percentage', 100)),
-                    'operating_zone': 'Acceptable',  # Static to reduce size
+                    'qbep_percentage': make_json_serializable(result.get('bep_analysis', {}).get('qbep_percentage', 0)),
+                    'operating_zone': make_json_serializable(result.get('bep_analysis', {}).get('operating_zone', 'Unknown')),
                 }
+                
+                # Debug logging to verify score values
+                logger.info(f"SCORE DEBUG - {result.get('pump_code')}: bep={result.get('score_breakdown', {}).get('bep_score')}, eff={result.get('score_breakdown', {}).get('efficiency_score')}, margin={result.get('score_breakdown', {}).get('margin_score')}, npsh={result.get('score_breakdown', {}).get('npsh_score')}")
+                
                 essential_results.append(essential_result)
             
+            # Use safe_session_set instead of direct session access for consistency
+            logger.info(f"SESSION SIZE CHECK: Storing {len(essential_results)} pumps")
+            safe_session_set('pump_selections', essential_results)
+            
+            # Log session size
+            import json
+            try:
+                session_json = json.dumps(essential_results)
+                logger.info(f"SESSION SIZE: {len(session_json)} characters")
+            except Exception as e:
+                logger.error(f"Could not measure session size: {e}")
+            
             serializable_results = essential_results
-
-            # Now save the serializable list to session as single source of truth
-            from flask import session
-            session['pump_selections'] = serializable_results  # Save the TRUE, serializable results
-            session['exclusion_summary'] = make_json_serializable(exclusion_data.get('exclusion_summary', {})) if exclusion_data else {}
-            session['total_evaluated'] = exclusion_data.get('total_evaluated', 0) if exclusion_data else len(catalog_engine.pumps)
-            session['feasible_count'] = exclusion_data.get('feasible_count', len(pump_selections)) if exclusion_data else len(pump_selections)
-            session['excluded_count'] = exclusion_data.get('excluded_count', 0) if exclusion_data else 0
-            
-            # THE FIX: Explicitly mark the session as modified
-            session.modified = True
-            
-            # THE FIX: Explicitly mark the session as modified
-            session.modified = True
+            # Store minimal exclusion data using safe_session_set
+            safe_session_set('exclusion_summary', make_json_serializable(exclusion_data.get('exclusion_summary', {})) if exclusion_data else {})
+            safe_session_set('total_evaluated', exclusion_data.get('total_evaluated', 0) if exclusion_data else len(catalog_engine.pumps))
+            safe_session_set('feasible_count', exclusion_data.get('feasible_count', len(pump_selections)) if exclusion_data else len(pump_selections))
+            safe_session_set('excluded_count', exclusion_data.get('excluded_count', 0) if exclusion_data else 0)
             
             # Data flow fixed: Use pump_selections directly instead of creating pump_evaluations
         except Exception as e:
