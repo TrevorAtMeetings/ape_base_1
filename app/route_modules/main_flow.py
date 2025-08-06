@@ -200,44 +200,29 @@ def pump_options():
                 exclusion_data = None
             
             # CRITICAL DATA FLOW FIX: Save the TRUE results from catalog engine to session
+            # Convert pump objects to serializable dictionaries
+            serializable_results = []
+            for result in pump_selections:
+                # Make a copy of the result to avoid modifying the original
+                serializable_result = result.copy()
+                
+                # Replace the CatalogPump object with its dictionary representation
+                if 'pump' in serializable_result and hasattr(serializable_result['pump'], 'to_dict'):
+                    serializable_result['pump'] = serializable_result['pump'].to_dict()
+                
+                serializable_results.append(serializable_result)
+
+            # Now save the serializable list to session as single source of truth
             from flask import session
-            session['pump_selections'] = pump_selections  # Save the raw, correct results
+            session['pump_selections'] = serializable_results  # Save the TRUE, serializable results
             session['exclusion_summary'] = exclusion_data.get('exclusion_summary', {}) if exclusion_data else {}
             session['total_evaluated'] = exclusion_data.get('total_evaluated', 0) if exclusion_data else len(catalog_engine.pumps)
             session['feasible_count'] = exclusion_data.get('feasible_count', len(pump_selections)) if exclusion_data else len(pump_selections)
             session['excluded_count'] = exclusion_data.get('excluded_count', 0) if exclusion_data else 0
-            for selection in pump_selections[:3]:
-                # Convert catalog engine format to template-compatible format
-                pump = selection['pump']
-                performance = selection['performance']
-
-                standardized_eval = {
-                    'pump_code': pump.pump_code,
-                    'overall_score': selection.get('suitability_score', 0),
-                    'selection_reason': f'Efficiency: {performance.get("efficiency_pct", 0):.1f}%, Head error: {selection.get("head_error_pct", 0):.1f}%',
-                    'operating_point': performance,
-                    'pump_info': {
-                        'manufacturer': pump.manufacturer,
-                        'model_series': pump.model_series,
-                        'pump_type': pump.pump_type
-                    },
-                    'curve_index': 0,  # Will be determined from performance data
-                    'suitable': selection.get('suitability_score', 0) > 50,
-                    # Add score breakdown for Phase 4.1 enhancement
-                    'score_breakdown': {
-                        'bep_score': selection.get('bep_score', 0),
-                        'efficiency_score': selection.get('efficiency_score', 0),
-                        'margin_score': selection.get('margin_score', 0),
-                        'npsh_score': selection.get('npsh_score', 0),
-                        'speed_penalty': abs(selection.get('scoring_details', {}).get('speed_penalty', {}).get('score', 0)),
-                        'sizing_penalty': abs(selection.get('scoring_details', {}).get('trim_penalty', {}).get('score', 0))
-                    },
-                    'suitability_analysis': {
-                        'bep_distance_pct': selection.get('bep_analysis', {}).get('distance_pct', 0),
-                        'operating_zone': selection.get('bep_analysis', {}).get('operating_zone', 'Unknown')
-                    }
-                }
-                pump_evaluations.append(standardized_eval)
+            
+            # OLD TRANSFORMATION CODE REMOVED - We now use session data as single source of truth
+            # Create minimal pump_evaluations for redirect compatibility only
+            pump_evaluations = [{'pump_code': sel['pump'].pump_code, 'overall_score': sel.get('suitability_score', 0)} for sel in pump_selections[:3]]
         except Exception as e:
             import traceback
             logger.error(f"Error evaluating pumps with catalog engine: {e}")
@@ -248,8 +233,7 @@ def pump_options():
             safe_flash('No suitable pumps found for your requirements. Please adjust your specifications.', 'warning')
             return redirect(url_for('main_flow.index'))
 
-        # Store results in session for detailed reports
-        safe_session_set('pump_selections', pump_evaluations)
+        # Store site requirements for reports (pump_selections already saved above with correct data)
         safe_session_set('site_requirements', {
             'flow_m3hr': site_requirements.flow_m3hr,
             'head_m': site_requirements.head_m,

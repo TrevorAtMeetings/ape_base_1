@@ -817,6 +817,30 @@ class CatalogPump:
                 'calculation_error': True
             }
 
+    def to_dict(self) -> Dict[str, Any]:
+        """Converts the CatalogPump object to a JSON-serializable dictionary."""
+        return {
+            'pump_code': self.pump_code,
+            'pump_id': self.pump_id,
+            'manufacturer': self.manufacturer,
+            'pump_type': self.pump_type,
+            'model_series': self.model_series,
+            'specifications': self.specifications,
+            'curves': self.curves,
+            'curve_count': self.curve_count,
+            'total_points': self.total_points,
+            'npsh_curves': self.npsh_curves,
+            'power_curves': self.power_curves,
+            'description': self.description,
+            'max_flow_m3hr': self.max_flow_m3hr,
+            'max_head_m': self.max_head_m,
+            'max_power_kw': self.max_power_kw,
+            'min_efficiency': self.min_efficiency,
+            'max_efficiency': self.max_efficiency,
+            'connection_size': self.connection_size,
+            'materials': self.materials,
+        }
+
 
 class CatalogEngine:
     """APE Catalog-based pump selection engine"""

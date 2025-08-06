@@ -1,0 +1,70 @@
+Analysis of the Error: TypeError: Object of type CatalogPump is not JSON serializable
+What happened? You correctly tried to save the formatted_results list to the Flask session. The session stores its data as a secure cookie on the user's browser. To do this, all the data must be converted into a simple text format called JSON.
+Why did it fail? Your formatted_results list contains the full CatalogPump Python object. The JSON encoder does not know how to convert a complex, custom Python object with its own methods (like get_bep_point()) into simple text. It only knows how to handle basic data types like dictionaries, lists, strings, and numbers.
+Why is this a good sign? It proves that you are now correctly trying to save the rich, complete data object, which is the right architectural approach. We just need to make it "session-friendly."
+The Solution: Convert Objects to Dictionaries
+The solution is to convert the CatalogPump object into a simple dictionary before saving it to the session. A dictionary is easily converted to JSON.
+We will create a helper method on the CatalogPump class to do this cleanly.
+Directive: Make the CatalogPump Object JSON Serializable
+Step 1: Create a to_dict() Method in app/catalog_engine.py
+Open the file app/catalog_engine.py.
+Inside the CatalogPump class, add the following new method. This method will convert the object's important attributes into a simple dictionary.
+Generated python
+# Inside the CatalogPump class in app/catalog_engine.py
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Converts the CatalogPump object to a JSON-serializable dictionary."""
+        return {
+            'pump_code': self.pump_code,
+            'pump_id': self.pump_id,
+            'manufacturer': self.manufacturer,
+            'pump_type': self.pump_type,
+            'model_series': self.model_series,
+            'specifications': self.specifications,
+            'curves': self.curves,
+            'curve_count': self.curve_count,
+            'total_points': self.total_points,
+            'npsh_curves': self.npsh_curves,
+            'power_curves': self.power_curves,
+            'description': self.description,
+            'max_flow_m3hr': self.max_flow_m3hr,
+            'max_head_m': self.max_head_m,
+            'max_power_kw': self.max_power_kw,
+            'min_efficiency': self.min_efficiency,
+            'max_efficiency': self.max_efficiency,
+            'connection_size': self.connection_size,
+            'materials': self.materials,
+        }
+Use code with caution.
+Python
+Step 2: Use the to_dict() Method in app/route_modules/main_flow.py
+Open the file app/route_modules/main_flow.py.
+Locate the /pump_options route where you are preparing the results to be saved to the session.
+You need to modify the formatted_results list before you save it. Loop through the list and replace the pump object with its dictionary representation.
+Here is the pseudo-code for the change:
+Generated python
+# Inside the /pump_options route in app/route_modules/main_flow.py
+
+# ... after you get the suitable_pumps list from the catalog_engine ...
+
+# Prepare results for session storage
+serializable_results = []
+for result in suitable_pumps:
+    # Make a copy of the result to avoid modifying the original
+    serializable_result = result.copy()
+    
+    # Replace the CatalogPump object with its dictionary representation
+    if 'pump' in serializable_result and hasattr(serializable_result['pump'], 'to_dict'):
+        serializable_result['pump'] = serializable_result['pump'].to_dict()
+    
+    serializable_results.append(serializable_result)
+
+# Now, save the serializable list to the session
+session['pump_selections'] = serializable_results
+# ... save other data as needed ...
+Use code with caution.
+Python
+Step 3: Adjust the Report Route in app/route_modules/reports.py (Minor Change)
+The pump_report function will now receive a dictionary for selected_pump['pump'] instead of an object.
+When you pass the data to the template, you will access the data using dictionary syntax (e.g., selected_pump['pump']['pump_code']) instead of object syntax (e.g., selected_pump.pump.pump_code). You may need to adjust your template (professional_pump_report.html) slightly to reflect this.
+This change will resolve the TypeError and complete the data flow architecture. Proceed with these three steps now.
