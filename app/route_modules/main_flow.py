@@ -244,6 +244,12 @@ def pump_options():
             session['feasible_count'] = exclusion_data.get('feasible_count', len(pump_selections)) if exclusion_data else len(pump_selections)
             session['excluded_count'] = exclusion_data.get('excluded_count', 0) if exclusion_data else 0
             
+            # THE FIX: Explicitly mark the session as modified
+            session.modified = True
+            
+            # THE FIX: Explicitly mark the session as modified
+            session.modified = True
+            
             # Data flow fixed: Use pump_selections directly instead of creating pump_evaluations
         except Exception as e:
             import traceback
