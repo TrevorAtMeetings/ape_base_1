@@ -292,84 +292,125 @@ class CatalogPump:
 
         return best_curve
 
-    def can_meet_requirements(self, flow_m3hr: float, head_m: float) -> Dict[str, Any]:
-        """Comprehensively evaluate if pump can meet requirements through impeller trimming (v6.0: Fixed-speed only)"""
+    def find_best_solution_for_duty(self, flow_m3hr: float, head_m: float, npsha_available: float = None) -> Optional[Dict[str, Any]]:
+        """v6.0 UNIFIED EVALUATION: Single authoritative "Best Fit" function that replaces both can_meet_requirements and get_performance_at_duty
+        
+        This function embodies the true "Best Fit" philosophy by:
+        1. Applying hard gates first (QBP, NPSH)
+        2. Evaluating ALL possible fixed-speed methods
+        3. Scoring each viable solution  
+        4. Returning the single best solution (or None if no solution exists)
+        
+        Returns: Complete solution dict with performance data and score, or None if infeasible
+        """
         from .impeller_scaling import get_impeller_scaling_engine
         scaling_engine = get_impeller_scaling_engine()
         
-        # Track specific exclusion reasons for transparency
-        exclusion_reasons = []
-        
-        # If no curves exist, this is truly no performance data
+        # Step 1: Basic validation - Check if curves exist
         if not self.curves or not any(curve.get('performance_points') for curve in self.curves):
-            return {'feasible': False, 'reasons': [ExclusionReason.NO_PERFORMANCE_DATA]}
+            logger.debug(f"Pump {self.pump_code}: No performance data available")
+            return None
         
-        # v6.0 HARD GATES: Apply QBP and NPSH gates before comprehensive evaluation
+        # Step 2: Apply v6.0 HARD GATES first
+        
+        # Hard Gate 1: QBP Range (60-130% of BEP)
         qbp_gate_result = self._validate_qbp_range(flow_m3hr)
         if not qbp_gate_result['passed']:
-            return {
-                'feasible': False, 
-                'reasons': [ExclusionReason.ENVELOPE_EXCEEDED],
-                'details': [qbp_gate_result['reason']]
-            }
+            logger.debug(f"Pump {self.pump_code}: Failed QBP gate - {qbp_gate_result['reason']}")
+            return None
         
-        # COMPREHENSIVE EVALUATION: Try ALL curves with ALL methods before exclusion
-        best_options = []
+        # Step 3: Initialize solutions list for "Best Fit" evaluation
+        possible_solutions = []
         
-        for curve in self.curves:
-            points = curve['performance_points']
-            if not points:
-                continue
+        # Step 4: Systematically evaluate ALL fixed-speed methods
+        
+        # Method 1: Direct Interpolation (within existing curves, 100% trim)
+        interpolated = self._get_performance_interpolated(flow_m3hr, head_m)
+        if interpolated and interpolated.get('head_m', 0) >= head_m * 0.98:  # 2% tolerance
+            performance = interpolated
+            
+            # Hard Gate 2: NPSH Safety (apply to this solution)
+            npsh_gate_result = self._validate_npsh_safety_gate(performance, npsha_available)
+            if npsh_gate_result['passed']:
+                # Calculate score for this solution
+                sizing_info = {
+                    'method': 'direct_interpolation',
+                    'trim_percent': 100.0,
+                    'meets_requirements': True,
+                    'head_margin_m': performance['head_m'] - head_m,
+                    'sizing_method': 'direct_interpolation'
+                }
+                score = self._calculate_solution_score(performance, sizing_info, flow_m3hr, head_m)
                 
-            flows = [p['flow_m3hr'] for p in points]
-            heads = [p['head_m'] for p in points]
+                solution = {
+                    'method': 'direct_interpolation',
+                    'performance': performance,
+                    'sizing_info': sizing_info,
+                    'score': score
+                }
+                possible_solutions.append(solution)
+                logger.debug(f"Pump {self.pump_code}: Direct interpolation solution - Score: {score:.1f}")
+            else:
+                logger.debug(f"Pump {self.pump_code}: Direct solution failed NPSH gate - {npsh_gate_result['reason']}")
+        
+        # Method 2: Impeller Trimming (75-99% trim)  
+        optimal_sizing = scaling_engine.find_optimal_sizing(self.curves, flow_m3hr, head_m)
+        if optimal_sizing:
+            performance = optimal_sizing['performance']
+            sizing = optimal_sizing['sizing']
             
-            if not flows or not heads:
-                continue
+            # Validate trim percentage is within acceptable range
+            trim_percent = sizing.get('trim_percent', 100)
+            if 75 <= trim_percent <= 99:  # Valid trimming range
                 
-            flow_min, flow_max = min(flows), max(flows)
-            head_min, head_max = min(heads), max(heads)
-            
-            # Method 1: Direct coverage with progressive extrapolation (industry standard ±10% safe)
-            if (flow_min * 0.9 <= flow_m3hr <= flow_max * 1.1 and 
-                head_min * 0.9 <= head_m <= head_max * 1.1):
-                return {'feasible': True, 'method': 'direct', 'curve': curve, 'extrapolation': '10%'}
-            
-            # Method 2: Extended safe extrapolation (±15% engineering acceptable)  
-            elif (flow_min * 0.85 <= flow_m3hr <= flow_max * 1.15 and 
-                  head_min * 0.85 <= head_m <= head_max * 1.15):
-                best_options.append({
-                    'feasible': True, 'method': 'direct_extended', 'curve': curve, 
-                    'extrapolation': '15%', 'priority': 2
-                })
-            
-            # Method 3: Try impeller trimming on this curve
-            optimal_sizing = scaling_engine.find_optimal_sizing([curve], flow_m3hr, head_m)
-            if optimal_sizing:
-                if 'sizing_info' in optimal_sizing:
-                    trim_percent = optimal_sizing['sizing_info']['trim_percent']
-                elif 'trim_percent' in optimal_sizing:
-                    trim_percent = optimal_sizing['trim_percent']
-                else:
-                    trim_percent = 100
+                # Hard Gate 2: NPSH Safety (apply to this solution)
+                npsh_gate_result = self._validate_npsh_safety_gate(performance, npsha_available)
+                if npsh_gate_result['passed']:
+                    # Calculate score for this solution
+                    score = self._calculate_solution_score(performance, sizing, flow_m3hr, head_m)
                     
-                # Industry standard allows 75-100% trim
-                if 75 <= trim_percent <= 100:
-                    return {'feasible': True, 'method': 'trim', 'curve': curve, 'sizing': optimal_sizing}
+                    solution = {
+                        'method': 'impeller_trimming',
+                        'performance': performance,
+                        'sizing_info': sizing,
+                        'score': score
+                    }
+                    possible_solutions.append(solution)
+                    logger.debug(f"Pump {self.pump_code}: Impeller trimming solution - {sizing['base_diameter_mm']}mm → {sizing['required_diameter_mm']}mm ({trim_percent:.1f}% trim), Score: {score:.1f}")
                 else:
-                    # Track but continue evaluating other curves
-                    if trim_percent < 75:
-                        exclusion_reasons.append(f"Curve {curve.get('curve_index', 'N/A')}: Requires {trim_percent:.1f}% trim (below 75% minimum)")
-                    else:
-                        exclusion_reasons.append(f"Curve {curve.get('curve_index', 'N/A')}: Requires {trim_percent:.1f}% trim (above 100% maximum)")
-            
-            # v6.0 UPDATE: Speed variation DISABLED - Fixed-speed methodology only
-            # Method 4: Speed variation DISABLED in v6.0
-            # VFD logic will be re-implemented in v7.0 as separate workflow
+                    logger.debug(f"Pump {self.pump_code}: Trimming solution failed NPSH gate - {npsh_gate_result['reason']}")
+            else:
+                logger.debug(f"Pump {self.pump_code}: Trimming requires {trim_percent:.1f}% (outside 75-99% range)")
         
-        # If we found extended extrapolation options, use the best one
-        if best_options:
-            return sorted(best_options, key=lambda x: x['priority'])[0]
+        # v6.0: Method 3 (Speed Variation) DISABLED - Fixed-speed methodology only
+        
+        # Step 5: Make the final decision
+        if not possible_solutions:
+            logger.debug(f"Pump {self.pump_code}: No viable solutions found")
+            return None
+        
+        # Select the solution with the highest score (True "Best Fit")
+        best_solution = max(possible_solutions, key=lambda x: x['score'])
+        
+        logger.debug(f"Pump {self.pump_code}: Selected best solution - {best_solution['method']} with score {best_solution['score']:.1f}")
+        
+        # Return complete solution with all data needed for ranking
+        return {
+            'method': best_solution['method'],
+            'flow_m3hr': best_solution['performance']['flow_m3hr'],
+            'head_m': best_solution['performance']['head_m'], 
+            'efficiency_pct': best_solution['performance']['efficiency_pct'],
+            'power_kw': best_solution['performance']['power_kw'],
+            'npshr_m': best_solution['performance'].get('npshr_m', 0),
+            'impeller_diameter_mm': best_solution['performance']['impeller_diameter_mm'],
+            'test_speed_rpm': best_solution['performance']['test_speed_rpm'],
+            'sizing_info': best_solution['sizing_info'],
+            'score': best_solution['score'],
+            'curve': best_solution['performance'].get('curve', {}),
+            # v6.0: Fixed-speed values
+            'speed_variation_pct': 0.0,
+            'vfd_required': False
+        }
         
         # Final check: Absolute physical impossibility 
         max_head = self._calculate_max_head()
@@ -620,104 +661,8 @@ class CatalogPump:
         # Ensure score doesn't go negative
         return max(0, score)
 
-    def get_performance_at_duty(self, flow_m3hr: float,
-                                head_m: float) -> Optional[Dict[str, Any]]:
-        """Get performance characteristics at specific duty point using Best Fit approach
-        
-        PHASE 2 IMPLEMENTATION: Evaluates ALL possible methods and returns the one with highest score
-        """
-        from .impeller_scaling import get_impeller_scaling_engine
-        scaling_engine = get_impeller_scaling_engine()
-        
-        # Initialize list to store all possible solutions
-        possible_solutions = []
-        
-        # Method 1: Try impeller trimming (most common and precise)
-        optimal_sizing = scaling_engine.find_optimal_sizing(
-            self.curves, flow_m3hr, head_m)
-        
-        if optimal_sizing:
-            # Validate that trimming solution meets physical constraints
-            if self._validate_physical_capability(flow_m3hr, head_m):
-                performance = optimal_sizing['performance']
-                sizing = optimal_sizing['sizing']
-                curve = optimal_sizing['curve']
-                
-                # Calculate score for this solution
-                score = self._calculate_solution_score(performance, sizing, flow_m3hr, head_m)
-                
-                solution = {
-                    'curve': curve,
-                    'flow_m3hr': performance['flow_m3hr'],
-                    'head_m': performance['head_m'],
-                    'efficiency_pct': performance['efficiency_pct'],
-                    'power_kw': performance['power_kw'],
-                    'npshr_m': performance['npshr_m'],
-                    'impeller_diameter_mm': performance['impeller_diameter_mm'],
-                    'test_speed_rpm': performance['test_speed_rpm'],
-                    'sizing_info': {
-                        'base_diameter_mm': sizing['base_diameter_mm'],
-                        'required_diameter_mm': sizing['required_diameter_mm'],
-                        'trim_percent': sizing['trim_percent'],
-                        'meets_requirements': True,
-                        'head_margin_m': performance['head_m'] - head_m,
-                        'sizing_method': 'impeller_trimming'
-                    },
-                    'total_score': score
-                }
-                
-                possible_solutions.append(solution)
-                logger.debug(f"Pump {self.pump_code}: Impeller trimming solution - {sizing['base_diameter_mm']}mm → {sizing['required_diameter_mm']}mm ({sizing['trim_percent']:.1f}% trim), Score: {score:.1f}")
-        
-        # v6.0: Method 2 (Speed variation) DISABLED - Fixed-speed methodology only
-        # VFD logic will be re-implemented in v7.0 as separate workflow
-        
-        # Method 3: Try direct interpolation (if within existing curves)
-        interpolated = self._get_performance_interpolated(flow_m3hr, head_m)
-        if interpolated and interpolated['head_m'] >= head_m * 0.98:  # Allow 2% tolerance
-            # Calculate score for interpolated solution
-            sizing_info = {
-                'base_diameter_mm': interpolated['impeller_diameter_mm'],
-                'required_diameter_mm': interpolated['impeller_diameter_mm'],
-                'trim_percent': 100.0,
-                'speed_variation_pct': 0.0,
-                'vfd_required': False
-            }
-            score = self._calculate_solution_score(interpolated, sizing_info, flow_m3hr, head_m)
-            
-            solution = {
-                **interpolated,
-                'sizing_info': {
-                    'base_diameter_mm': interpolated['impeller_diameter_mm'],
-                    'required_diameter_mm': interpolated['impeller_diameter_mm'],
-                    'trim_percent': 100.0,
-                    'meets_requirements': True,
-                    'head_margin_m': interpolated['head_m'] - head_m,
-                    'sizing_method': 'direct_interpolation'
-                },
-                'total_score': score
-            }
-            
-            possible_solutions.append(solution)
-            logger.debug(f"Pump {self.pump_code}: Direct interpolation solution - Score: {score:.1f}")
-        
-        # Check if we have any valid solutions
-        if not possible_solutions:
-            logger.debug(f"Pump {self.pump_code}: No valid solutions found")
-            return None
-        
-        # Return the solution with the highest score
-        best_solution = max(possible_solutions, key=lambda x: x['total_score'])
-        
-        # Remove the total_score from the return value (not needed in output)
-        best_score = best_solution.pop('total_score')
-        
-        logger.info(f"Pump {self.pump_code}: Selected best solution - {best_solution['sizing_info']['sizing_method']} with score {best_score:.1f}")
-        
-        return best_solution
-
-        # Fallback to old method if no sizing possible
-        return self._get_performance_interpolated(flow_m3hr, head_m)
+    # v6.0: get_performance_at_duty() REMOVED - replaced by find_best_solution_for_duty()
+    # The old method is part of the "First Fit vs Best Fit" conflict that has been resolved
 
     def _get_performance_interpolated(
             self, flow_m3hr: float, head_m: float) -> Optional[Dict[str, Any]]:
@@ -1039,276 +984,69 @@ class CatalogEngine:
                     )
                     continue  # Skip pumps that don't match the selected type
 
-            # Comprehensive evaluation - check ALL curves and modifications before exclusion
-            can_meet_result = pump.can_meet_requirements(flow_m3hr, head_m)
+            # v6.0 UNIFIED EVALUATION: Single "Best Fit" function call eliminates "First Fit vs Best Fit" conflict
+            best_solution = pump.find_best_solution_for_duty(flow_m3hr, head_m)
             
-            if not can_meet_result['feasible']:
-                # Add specific exclusion reasons from comprehensive check
-                for reason in can_meet_result['reasons']:
-                    evaluation.add_exclusion(reason)
-                excluded_pumps.append(evaluation)
-                excluded_count += 1
-                continue
-            
-            # Get performance at duty point (we know it's feasible now)
-            performance = pump.get_performance_at_duty(flow_m3hr, head_m)
-            
-            # Fallback - if performance calculation fails despite feasibility check
-            if not performance:
+            if best_solution is None:
+                # Pump failed hard gates or has no viable solutions
                 evaluation.add_exclusion(ExclusionReason.ENVELOPE_EXCEEDED)
                 excluded_pumps.append(evaluation)
                 excluded_count += 1
+                logger.debug(f"Pump {pump.pump_code} excluded: Failed unified evaluation (hard gates or no viable solutions)")
                 continue
-
-            # Store performance data for scoring
-            evaluation.performance_data = performance
-
-            # PHYSICAL FEASIBILITY GATE - Check before any scoring
-            is_feasible = self._validate_physical_feasibility(pump, performance, head_m, evaluation)
             
-            if not is_feasible:
-                excluded_pumps.append(evaluation)
-                excluded_count += 1
-                
-                # Check if this is a near-miss pump
-                is_near_miss = False
-                near_miss_reasons = []
-                
-                # Check if head is within 5% of requirement
-                delivered_head = performance.get('head_m', 0)
-                if delivered_head > 0 and delivered_head >= head_m * 0.95:
-                    is_near_miss = True
-                    near_miss_reasons.append(f"Head {delivered_head:.1f}m is within 5% of required {head_m:.1f}m")
-                
-                # Check if efficiency is just below threshold (35-40%)
-                efficiency = performance.get('efficiency_pct', 0)
-                if 35 <= efficiency < 40:
-                    is_near_miss = True
-                    near_miss_reasons.append(f"Efficiency {efficiency:.1f}% just below 40% threshold")
-                
-                # Check if NPSH margin is close (within 1m)
-                npshr = performance.get('npshr_m')
-                npsha = 10.0  # Default NPSHa if not specified
-                if npshr and npshr > npsha and (npshr - npsha) <= 1.0:
-                    is_near_miss = True
-                    near_miss_reasons.append(f"NPSHr {npshr:.1f}m is within 1m of NPSHa {npsha:.1f}m")
-                
-                if is_near_miss:
-                    # Generate actionable engineering guidance for near-miss pumps
-                    engineering_guidance = []
-                    
-                    if delivered_head >= head_m * 0.95:
-                        head_deficit = head_m - delivered_head
-                        engineering_guidance.append(f"Consider reducing system head by {head_deficit:.1f}m or accepting {head_deficit:.1f}m deficit")
-                        engineering_guidance.append("Alternative: Use booster pump for additional head")
-                        
-                    if 35 <= efficiency < 40:
-                        engineering_guidance.append("Consider VFD to optimize operating point")
-                        engineering_guidance.append("Alternative: Accept lower efficiency for backup/standby duty")
-                        
-                    if npshr and npshr > npsha and (npshr - npsha) <= 1.0:
-                        npsh_margin = npshr - npsha
-                        engineering_guidance.append(f"Increase NPSHa by {npsh_margin:.1f}m through suction tank elevation")
-                        engineering_guidance.append("Alternative: Add suction booster pump")
-                    
-                    near_miss_pumps.append({
-                        'pump': pump,
-                        'performance': performance,
-                        'evaluation': evaluation,
-                        'near_miss_reasons': near_miss_reasons,
-                        'engineering_guidance': engineering_guidance,
-                        'pump_code': pump.pump_code,
-                        'efficiency_at_duty': efficiency,
-                        'head_at_duty': delivered_head,
-                        'head_deficit': max(0, head_m - delivered_head),
-                        'head_deficit_pct': max(0, (head_m - delivered_head) / head_m * 100) if head_m > 0 else 0,
-                        'right_of_bep_preference': self._assess_right_of_bep_potential(pump, flow_m3hr)
-                    })
-                
-                logger.debug(f"Pump {pump.pump_code} excluded: {evaluation.get_exclusion_summary()}")
-                continue
-
-            # Pump passed physical feasibility - proceed to scoring
+            # Extract performance data and score from the unified best solution
+            performance = {
+                'flow_m3hr': best_solution['flow_m3hr'],
+                'head_m': best_solution['head_m'], 
+                'efficiency_pct': best_solution['efficiency_pct'],
+                'power_kw': best_solution['power_kw'],
+                'npshr_m': best_solution['npshr_m'],
+                'impeller_diameter_mm': best_solution['impeller_diameter_mm'],
+                'test_speed_rpm': best_solution['test_speed_rpm'],
+                'curve': best_solution['curve'],
+                'sizing_info': best_solution['sizing_info']
+            }
+            
+            # Score is already calculated by the unified function
+            score = best_solution['score']
+            
+            # v6.0: Physical feasibility and scoring handled by unified function
+            # Pump passed all hard gates and has optimal solution with calculated score
             feasible_count += 1
             evaluation.feasible = True
+            evaluation.performance_data = performance
 
-            if performance:
-                original_delivered_head = performance['head_m']
-                original_efficiency = performance['efficiency_pct']
+            # v6.0: Performance values are already optimal from unified function
+            delivered_head = performance['head_m']
+            efficiency = performance['efficiency_pct']
+            
+            # Calculate head margin for display
+            head_margin = delivered_head - head_m
+            head_margin_pct = (head_margin / head_m) * 100
+            
+            # Calculate BEP analysis for this pump (for display purposes)
+            bep_analysis = pump.calculate_bep_distance(flow_m3hr, head_m)
+            
+            # Store sizing validation flag
+            sizing_validated = performance.get('sizing_info', {}).get('meets_requirements', True)
+            
+            # Create result using unified function's score and data
+            result = {
+                'pump': pump,
+                'performance': performance,
+                'suitability_score': score,
+                'head_margin_m': head_margin,
+                'head_margin_pct': head_margin_pct, 
+                'efficiency_at_duty': efficiency,
+                'meets_requirements': True,  # All pumps in results meet requirements via hard gates
+                'sizing_validated': sizing_validated,
+                'bep_analysis': bep_analysis,
+                'evaluation': evaluation
+            }
+            suitable_pumps.append(result)
 
-                # Apply tolerance logic to find best operating point
-                delivered_head, efficiency, best_flow = self._find_best_operating_point(
-                    performance, flow_m3hr, head_m)
-
-                # Always use the best operating point values for evaluation
-                # Update performance object to reflect best operating point
-                if best_flow != performance['flow_m3hr']:
-                    performance['head_m'] = delivered_head
-                    performance['efficiency_pct'] = efficiency
-                    performance['flow_m3hr'] = best_flow
-                    logger.debug(
-                        f"Updated pump {pump.pump_code} to optimal point: {best_flow:.1f} m³/hr at {delivered_head:.1f}m head"
-                    )
-
-                # Check if pump meets requirements at best operating point
-                meets_head_requirement = delivered_head >= head_m
-
-                if meets_head_requirement and efficiency >= 40:
-                    # Calculate head margin (positive indicates over-delivery)
-                    head_margin = delivered_head - head_m
-                    head_margin_pct = (head_margin / head_m) * 100
-
-                    # COMPREHENSIVE SCORING SYSTEM: Advanced Pump Selection (100 points total)
-                    # 1. BEP proximity (40 points max) - PRIMARY: Reliability factor
-                    # 2. Efficiency at duty point (30 points max) - SECONDARY: Operating cost
-                    # 3. Head margin score (15 points max to -∞) - TERTIARY: Right-sizing factor
-                    # 4. NPSH score (15 points max) - QUATERNARY: Cavitation risk factor
-                    # 5. Speed variation penalty (up to -15 points) - Graduated penalty
-                    # 6. Impeller trimming penalty - Linear penalty
-
-                    # Calculate BEP analysis for this pump
-                    bep_analysis = pump.calculate_bep_distance(
-                        flow_m3hr, head_m)
-                    
-                    # 1. BEP PROXIMITY SCORE (40 points max) - Squared decay function
-                    bep_flow = bep_analysis.get('bep_flow', 0)
-                    flow_ratio = flow_m3hr / bep_flow if bep_flow and bep_flow > 0 else 1.0
-                    bep_score_raw = max(0, 1 - ((flow_ratio - 1) / 0.5) ** 2)
-                    bep_score = 40 * bep_score_raw
-
-                    # 2. EFFICIENCY SCORE (30 points max) - Parabolic scaling
-                    # Reflects diminishing returns at high efficiency
-                    efficiency_score = ((efficiency / 100.0) ** 2) * 30
-
-                    # 3. HEAD MARGIN SCORE (15 points max to -∞) - Piece-wise function
-                    if head_margin_pct < -2:
-                        # Under-sized - should have been filtered out earlier
-                        continue  # Skip this pump
-                    elif -2 <= head_margin_pct <= 5:
-                        # Ideal margin range
-                        margin_score = 15  # Perfect sizing
-                    elif 5 < head_margin_pct <= 20:
-                        # Good margin - linear decrease
-                        margin_score = 15 - 0.5 * (head_margin_pct - 5)  # 15 to 7.5 points
-                    elif 20 < head_margin_pct <= 50:
-                        # Excessive margin - steeper penalty
-                        margin_score = 7.5 - 0.25 * (head_margin_pct - 20)  # 7.5 to 0 points
-                    else:
-                        # Wasteful oversizing (>50%) - negative score continues to decrease
-                        margin_score = 0 - 0.1 * (head_margin_pct - 50)  # Negative and decreasing
-                        logger.debug(
-                            f"Wasteful oversizing penalty for {pump.pump_code}: {margin_score:.1f} points ({head_margin_pct:.1f}% over-delivery)"
-                        )
-
-                    # CRITICAL: Speed variation penalty
-                    speed_penalty = 0
-                    sizing_penalty = 0
-
-                    if 'sizing_info' in performance:
-                        sizing_info = performance['sizing_info']
-
-                        # v6.0: VFD Speed Variation Penalty REMOVED - fixed-speed only
-
-                        # Impeller Trimming Penalty
-                        trim_percent = sizing_info.get('trim_percent', 100)
-                        if trim_percent < 100:  # Any trimming
-                            # New formula: Penalty = 0.5 × Trim %
-                            trim_penalty = 0.5 * (100 - trim_percent)
-                            sizing_penalty += trim_penalty
-                            logger.debug(
-                                f"Trimming penalty for {pump.pump_code}: -{trim_penalty:.1f} points ({100 - trim_percent:.1f}% trimmed)"
-                            )
-
-                    # 4. NPSH SCORE (15 points max) - Dual mode based on NPSHa availability
-                    npsh_score = 0
-                    npshr_value = performance.get('npshr_m')
-                    
-                    # For now, we'll implement Mode B (NPSHa unknown) as the default
-                    # Mode A will be activated when user provides NPSHa value in the form
-                    if npshr_value is not None and npshr_value > 0:
-                        # Mode B: Requirement-based scoring (NPSHa unknown)
-                        # Score based on absolute NPSHr value - lower is better
-                        if npshr_value <= 2.0:
-                            npsh_score = 15  # Excellent - very low requirement
-                        elif npshr_value >= 8.0:
-                            npsh_score = 0  # Very demanding
-                        else:
-                            # Linear scaling between 2m and 8m
-                            npsh_score = 15 * max(0, (8 - npshr_value) / (8 - 2))
-                        
-                        logger.debug(
-                            f"NPSH score for {pump.pump_code}: {npsh_score:.1f} points (NPSHr={npshr_value:.1f}m)"
-                        )
-                    else:
-                        # No NPSH data available - don't penalize
-                        logger.debug(
-                            f"No NPSH data for {pump.pump_code} - skipping NPSH scoring"
-                        )
-
-                    # Total score with penalties
-                    base_score = bep_score + efficiency_score + margin_score + npsh_score
-                    total_penalties = speed_penalty + sizing_penalty
-                    score = base_score - total_penalties
-
-                    # Store score components in evaluation
-                    evaluation.score_components = {
-                        'qbp_proximity': bep_score,
-                        'efficiency': efficiency_score,
-                        'head_margin': margin_score,
-                        'npsh': npsh_score,
-                        'speed_penalty': -speed_penalty,
-                        'trim_penalty': -sizing_penalty,
-                        'base_score': base_score,
-                        'total_penalties': total_penalties
-                    }
-                    evaluation.total_score = score
-                    
-                    # Store calculation metadata for transparency
-                    evaluation.calculation_metadata = {
-                        'flow_ratio': flow_ratio,
-                        'efficiency_pct': efficiency,
-                        'head_margin_pct': head_margin_pct,
-                        'npshr_m': npshr_value,
-                        'speed_variation_pct': sizing_info.get('speed_variation_pct', 0) if 'sizing_info' in performance else 0,
-                        'trim_percent': sizing_info.get('trim_percent', 100) if 'sizing_info' in performance else 100,
-                        'bep_flow': bep_analysis.get('bep_flow', 0),
-                        'bep_head': bep_analysis.get('bep_head', 0)
-                    }
-
-                    logger.debug(
-                        f"Scoring for {pump.pump_code}: QBP={bep_score:.1f}, Eff={efficiency_score:.1f}, Margin={margin_score:.1f}, NPSH={npsh_score:.1f}, Speed Penalty=-{speed_penalty:.1f}, Final={score:.1f}"
-                    )
-
-                    # Check if sizing information is available from requirement-driven approach
-                    sizing_validated = False
-                    if 'sizing_info' in performance:
-                        sizing_info = performance['sizing_info']
-                        sizing_validated = sizing_info.get(
-                            'meets_requirements', False)
-                    else:
-                        # For pumps without sizing info, they passed tolerance validation above
-                        sizing_validated = True
-
-                    # Create result compatible with existing format
-                    result = {
-                        'pump': pump,
-                        'performance': performance,
-                        'suitability_score': score,
-                        'head_margin_m': head_margin,
-                        'head_margin_pct': head_margin_pct,
-                        'efficiency_at_duty': efficiency,
-                        'meets_requirements': True,  # All pumps in results meet requirements
-                        'sizing_validated': sizing_validated,
-                        # BEP analysis data for display and further processing
-                        'bep_analysis': bep_analysis,
-                        'bep_score': bep_score,
-                        'efficiency_score': efficiency_score,
-                        'margin_score': margin_score,
-                        'npsh_score': npsh_score,
-                        # Add evaluation data for transparency
-                        'evaluation': evaluation
-                    }
-                    suitable_pumps.append(result)
+        # v6.0 UNIFIED EVALUATION COMPLETE: All pumps processed with unified "Best Fit" methodology
 
         # Sort by suitability score (descending)
         # v6.0 RANKING: Multi-criteria ranking with power-based tie-breaking
@@ -1537,12 +1275,7 @@ class CatalogEngine:
             evaluation.add_exclusion(ExclusionReason.NO_PERFORMANCE_DATA)
             logger.debug(f"Pump {pump.pump_code} excluded: invalid performance data")
         
-        # 6. Check combined speed and trim limits
-        if sizing_info.get('vfd_required', False) and trim_percent < 100:
-            # Combined adjustment - more restrictive limits
-            if trim_percent < 85 or abs(speed_variation_pct) > 30:
-                evaluation.add_exclusion(ExclusionReason.COMBINED_LIMITS_EXCEEDED)
-                logger.debug(f"Pump {pump.pump_code} excluded: combined trim/speed limits exceeded")
+        # v6.0: Combined VFD/trim limits check REMOVED - fixed-speed only
         
         # 7. Check NPSH if available
         npsha = performance.get('npsha_m')

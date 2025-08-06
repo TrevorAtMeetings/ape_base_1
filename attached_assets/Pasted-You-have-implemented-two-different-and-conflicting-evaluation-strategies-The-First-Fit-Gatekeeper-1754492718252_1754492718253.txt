@@ -1,0 +1,32 @@
+You have implemented two different and conflicting evaluation strategies.
+The "First Fit" Gatekeeper (can_meet_requirements): This function is called first. It checks for a solution and returns immediately as soon as it finds any viable method (e.g., it finds that 15% extrapolation works and immediately returns {'feasible': True}).
+The "Best Fit" Engine (get_performance_at_duty): This function is called second. It correctly attempts to find all possible solutions, score each one, and select the best.
+The Problem:
+The "First Fit" gatekeeper prevents the "Best Fit" engine from ever doing its job properly.
+Consider this scenario:
+A pump is evaluated by select_pumps.
+It calls can_meet_requirements first.
+can_meet_requirements discovers the pump can work with a 15% data extrapolation. It immediately returns {'feasible': True}.
+Because the pump is deemed "feasible," the code proceeds to call get_performance_at_duty.
+However, the get_performance_at_duty function might have discovered that a 95% impeller trim is a much better solution (higher score, lower penalties) than the 15% extrapolation.
+It's too late. The system is already locked into the first, inferior solution found by the gatekeeper.
+The current logic does not find the best solution; it finds the first solution and then tries to score it.
+Directive: Unify the Logic into a Single "Best Fit" Function
+To fix this, we must refactor the code to have a single, unified evaluation function that embodies the "Best Fit" principle.
+Your primary task is to refactor can_meet_requirements and get_performance_at_duty into a single, authoritative evaluation function. Let's call the new conceptual function find_best_solution_for_pump.
+New Logic Flow:
+A Single Entry Point: The main select_pumps loop will call a single function for each pump (e.g., pump.find_best_solution(...)).
+This new function will be responsible for EVERYTHING:
+a. Run Hard Gates First: It will immediately call _validate_qbp_range and _validate_npsh_safety_gate. If either fails, it returns None.
+b. Initialize Solutions List: It will create an empty list, possible_solutions.
+c. Evaluate ALL Methods: It will systematically try all fixed-speed methods:
+* Direct Interpolation (100% trim).
+* Impeller Trimming (75-99% trim).
+d. Score and Collect: For each method that yields a valid result, it will calculate the full v6.0 score and append the complete solution object (performance data + score) to the possible_solutions list.
+e. Make the Final Decision: After trying all methods:
+* If possible_solutions is empty, it returns None (the pump is not feasible).
+* If possible_solutions has one or more entries, it returns the single solution with the highest score.
+This refactoring will eliminate the logical conflict and ensure that for every single pump, we are truly finding and scoring the absolute best possible configuration.
+Minor Cleanup:
+In _validate_physical_feasibility, I see a leftover check for sizing_info.get('vfd_required', False). Since VFD logic is disabled, this entire if block should be removed to avoid confusion.
+Please confirm you understand this critical architectural change. You are to refactor the logic in app/catalog_engine.py to create a single, unified "Best Fit" evaluation function. Proceed with this refactoring now.
