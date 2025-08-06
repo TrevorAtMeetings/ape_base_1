@@ -242,15 +242,31 @@
     <!-- Navigation and Modal JavaScript -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            console.log('Base template: Initializing Materialize components');
+            
             // Initialize only navigation components - forms handle their own selects
             var modals = document.querySelectorAll('.modal');
             M.Modal.init(modals);
+            console.log('Initialized', modals.length, 'modals');
             
             var sidenavs = document.querySelectorAll('.sidenav');
             M.Sidenav.init(sidenavs);
+            console.log('Initialized', sidenavs.length, 'sidenavs');
             
+            // Initialize dropdown menus with options
             var dropdowns = document.querySelectorAll('.dropdown-trigger');
-            M.Dropdown.init(dropdowns);
+            M.Dropdown.init(dropdowns, {
+                coverTrigger: false,
+                constrainWidth: false,
+                hover: false,
+                closeOnClick: true
+            });
+            console.log('Initialized', dropdowns.length, 'dropdown triggers');
+            
+            // Debug dropdown initialization
+            dropdowns.forEach(function(dropdown) {
+                console.log('Dropdown:', dropdown.textContent.trim(), 'Target:', dropdown.getAttribute('data-target'));
+            });
         });
 
         function showAboutModal() {

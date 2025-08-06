@@ -69,12 +69,18 @@ main {
     margin-top: auto;
 }
 
-/* Admin Dropdown Fixes */
-#admin-dropdown {
+/* Navigation Dropdown Fixes */
+#tools-dropdown,
+#admin-dropdown,
+#help-dropdown {
+    display: none;
+    position: absolute !important;
+    background-color: white !important;
     box-shadow: 0 4px 16px rgba(0,0,0,0.15) !important;
     border-radius: 8px !important;
-    overflow: visible !important;
+    z-index: 9999 !important;
     min-width: 200px !important;
+    overflow: visible !important;
     max-height: none !important;
     z-index: 999999 !important;
     position: absolute !important;
@@ -500,6 +506,15 @@ nav.teal {
 }
 
 /* Select Styling - Professional Theme */
+/* Active state for navigation dropdowns */
+#tools-dropdown.active,
+#admin-dropdown.active,
+#help-dropdown.active,
+.dropdown-content.active {
+    display: block !important;
+    opacity: 1 !important;
+}
+
 .dropdown-content {
     z-index: 9999 !important;
     position: absolute !important;
