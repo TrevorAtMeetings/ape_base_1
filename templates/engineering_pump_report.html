@@ -589,15 +589,15 @@
                     </tr>
                     <tr>
                         <td>Supplier</td>
-                        <td>WEG</td>
+                        <td>APE PUMPS</td>
                     </tr>
                     <tr>
                         <td>Efficiency</td>
-                        <td>95 %</td>
+                        <td>{{ selected_pump.get('motor_efficiency', 95) }} %</td>
                     </tr>
                     <tr>
                         <td>Frame Size</td>
-                        <td>315L</td>
+                        <td>{{ selected_pump.get('frame_size', 'N/A') }}</td>
                     </tr>
                 </table>
             </div>
@@ -616,10 +616,6 @@
                     <tr>
                         <td>BEP Score</td>
                         <td>{{ selected_pump.get('bep_score', 0)|round(1) }}/40</td>
-                    </tr>
-                    <tr>
-                        <td>NPSH Score</td>
-                        <td>{{ selected_pump.get('npsh_score', 0)|round(1) }}/15</td>
                     </tr>
                     <tr>
                         <td>Selection Method</td>
