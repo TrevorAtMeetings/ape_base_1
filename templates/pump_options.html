@@ -41,7 +41,7 @@
                                             <i class="material-icons left" style="color: #1976d2;">settings</i>
                                             {{ pump['pump_code'] }}
                                         </h5>
-                                        <p style="color: #757575; margin: 0; font-size: 0.95rem;">{{ pump['pump']['manufacturer'] }} - {{ pump['pump']['pump_type'] }}</p>
+                                        <p style="color: #757575; margin: 0; font-size: 0.95rem;">{{ pump['manufacturer'] }} - {{ pump['pump_type'] }}</p>
                                     </div>
                                     <div>
                                         <span class="chip green white-text" style="font-size: 0.9rem; font-weight: 500; padding: 8px 16px;">
@@ -55,21 +55,21 @@
                                     <div class="col s6 m3">
                                         <div class="card-panel white z-depth-1" style="padding: 15px; margin: 0 5px;">
                                             <i class="material-icons" style="color: #1976d2; font-size: 1.8rem; display: block; margin-bottom: 8px;">trending_up</i>
-                                            <div style="font-weight: 500; font-size: 1.2rem; color: #212121;">{{ "%.1f"|format(pump['performance'].get('efficiency_pct') or 0) }}%</div>
+                                            <div style="font-weight: 500; font-size: 1.2rem; color: #212121;">{{ "%.1f"|format(pump.get('efficiency_pct', 0)) }}%</div>
                                             <small style="color: #757575; font-size: 0.8rem;">Efficiency</small>
                                         </div>
                                     </div>
                                     <div class="col s6 m3">
                                         <div class="card-panel white z-depth-1" style="padding: 15px; margin: 0 5px;">
                                             <i class="material-icons" style="color: #ff9800; font-size: 1.8rem; display: block; margin-bottom: 8px;">flash_on</i>
-                                            <div style="font-weight: 500; font-size: 1.2rem; color: #212121;">{{ "%.1f"|format(pump['performance'].get('power_kw') or 0) }} kW</div>
+                                            <div style="font-weight: 500; font-size: 1.2rem; color: #212121;">{{ "%.1f"|format(pump.get('power_kw', 0)) }} kW</div>
                                             <small style="color: #757575; font-size: 0.8rem;">Power</small>
                                         </div>
                                     </div>
                                     <div class="col s6 m3">
                                         <div class="card-panel white z-depth-1" style="padding: 15px; margin: 0 5px;">
                                             <i class="material-icons" style="color: #2196f3; font-size: 1.8rem; display: block; margin-bottom: 8px;">opacity</i>
-                                            <div style="font-weight: 500; font-size: 1.2rem; color: #212121;">{{ "%.1f"|format(pump['performance'].get('npshr_m') or 0) }} m</div>
+                                            <div style="font-weight: 500; font-size: 1.2rem; color: #212121;">{{ "%.1f"|format(pump.get('npshr_m', 0)) }} m</div>
                                             <small style="color: #757575; font-size: 0.8rem;">NPSH</small>
                                         </div>
                                     </div>
@@ -77,12 +77,10 @@
                                         <div class="card-panel white z-depth-1" style="padding: 15px; margin: 0 5px;">
                                             <i class="material-icons" style="color: #607d8b; font-size: 1.8rem; display: block; margin-bottom: 8px;">rotate_right</i>
                                             <div style="font-weight: 500; font-size: 1.2rem; color: #212121;">
-                                                {% if pump['sizing_info'] and pump['sizing_info'].get('impeller_trim_pct') %}
-                                                    {{ pump['sizing_info']['impeller_trim_pct']|round|int }}%
-                                                {% elif pump['performance'].get('sizing_info') and pump['performance']['sizing_info'].get('impeller_trim_pct') %}
-                                                    {{ pump['performance']['sizing_info']['impeller_trim_pct']|round|int }}%
+                                                {% if pump.get('trim_percent') %}
+                                                    {{ pump['trim_percent']|round|int }}%
                                                 {% else %}
-                                                    --
+                                                    100%
                                                 {% endif %}
                                             </div>
                                             <small style="color: #757575; font-size: 0.8rem;">Impeller Trim</small>
