@@ -418,37 +418,19 @@
     </style>
 </head>
 <body>
-    <!-- Compact Header -->
-    <div class="report-header">
-        <div class="container">
-            <div class="header-content">
-                <div class="header-title">
-                    <h4>{{ selected_pump.get('pump_code', 'N/A') }} - Professional Report</h4>
-                    <div class="header-subtitle">
-                        {{ selected_pump.get('manufacturer', 'APE PUMPS') }} | 
-                        {{ selected_pump.get('pump_type', 'Centrifugal') }} | 
-                        Generated {{ current_date }}
-                    </div>
-                </div>
-                <div class="header-actions">
-                    <a href="{{ url_for('main_flow.pump_options', flow=site_requirements.get('flow_m3hr', 0), head=site_requirements.get('head_m', 0), application_type=site_requirements.get('application', 'water'), pump_type=site_requirements.get('pump_type', 'GENERAL')) }}" 
-                       class="btn btn-flat white-text">
-                        <i class="material-icons left">arrow_back</i>Back
-                    </a>
-                    <a href="{{ url_for('reports.engineering_report', pump_code=selected_pump.get('pump_code'), flow=site_requirements.get('flow_m3hr', 0), head=site_requirements.get('head_m', 0), pump_type=site_requirements.get('pump_type', 'GENERAL')) }}" 
-                       class="btn white blue-text">
-                        <i class="material-icons left">description</i>Engineering
-                    </a>
-                    <button onclick="window.print()" class="btn white blue-text">
-                        <i class="material-icons left">picture_as_pdf</i>PDF
-                    </button>
-                    <a href="{{ url_for('comparison.pump_comparison') }}" class="btn white blue-text">
-                        <i class="material-icons left">compare</i>Compare
-                    </a>
-                </div>
-            </div>
-        </div>
-    </div>
+    <!-- Navigation -->
+    {% set engineering_url = url_for('reports.engineering_report', pump_code=selected_pump.get('pump_code'), flow=site_requirements.get('flow_m3hr', 0), head=site_requirements.get('head_m', 0), pump_type=site_requirements.get('pump_type', 'GENERAL')) %}
+    {% set presentation_url = '#' %}
+    {% set show_view_toggle = true %}
+    {% set current_view = 'presentation' %}
+    {% set show_print = true %}
+    {% set show_new_search = true %}
+    {% set breadcrumbs = [
+        {'label': 'Home', 'url': '/', 'icon': 'home'},
+        {'label': 'Pump Selection', 'url': '/pump_options?flow=' ~ site_requirements.get('flow_m3hr', 0) ~ '&head=' ~ site_requirements.get('head_m', 0)},
+        {'label': selected_pump.get('pump_code', 'N/A')}
+    ] %}
+    {% include 'includes/navigation.html' %}
 
     <div class="container" style="margin-top: 24px;">
         <!-- Row 1: Key Metrics -->

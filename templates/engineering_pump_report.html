@@ -346,20 +346,20 @@
 </head>
 <body>
     <div class="engineering-container">
-        <!-- Header -->
-        <div class="eng-header">
-            <div>
-                <div class="eng-title">PUMP DATA SHEET - {{ selected_pump.get('pump_code', 'N/A') }}</div>
-                <div class="eng-subtitle">APE PUMPS | Generated: {{ current_date }}</div>
-            </div>
-            <div class="view-toggle">
-                <a href="{{ url_for('reports.pump_report', pump_code=selected_pump.get('pump_code'), flow=site_requirements.get('flow_m3hr', 0), head=site_requirements.get('head_m', 0), pump_type=site_requirements.get('pump_type', 'GENERAL')) }}" 
-                   class="view-btn">Presentation View</a>
-                <span class="view-btn active">Engineering View</span>
-                <span class="edit-trigger" onclick="toggleEditMode()">Edit</span>
-                <a href="javascript:window.print()" class="view-btn">Print/PDF</a>
-            </div>
-        </div>
+        <!-- Navigation -->
+        {% set presentation_url = url_for('reports.pump_report', pump_code=selected_pump.get('pump_code'), flow=site_requirements.get('flow_m3hr', 0), head=site_requirements.get('head_m', 0), pump_type=site_requirements.get('pump_type', 'GENERAL')) %}
+        {% set engineering_url = '#' %}
+        {% set show_view_toggle = true %}
+        {% set current_view = 'engineering' %}
+        {% set show_edit = true %}
+        {% set show_print = true %}
+        {% set show_new_search = true %}
+        {% set breadcrumbs = [
+            {'label': 'Home', 'url': '/', 'icon': 'home'},
+            {'label': 'Pump Selection', 'url': '/pump_options?flow=' ~ site_requirements.get('flow_m3hr', 0) ~ '&head=' ~ site_requirements.get('head_m', 0)},
+            {'label': selected_pump.get('pump_code', 'N/A') ~ ' - Engineering'}
+        ] %}
+        {% include 'includes/navigation.html' %}
 
         <!-- Edit Controls -->
         <div class="edit-controls" id="editControls">
