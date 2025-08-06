@@ -229,68 +229,43 @@ def pump_options():
             # ULTRA-LEAN STRUCTURE WITH CORRECT SCORE EXTRACTION
             essential_results = []
             for result in pump_selections:
-                # Debug: Log all available keys to understand the actual structure
-                logger.info(f"RESULT KEYS DEBUG - {result.get('pump_code')}: {list(result.keys())}")
-                
-                # Try multiple possible key paths for scores
+                # Extract scores with fallback calculation from total suitability score
+                total_score = result.get('suitability_score', 86)
                 evaluation = result.get('evaluation', {})
                 score_components = evaluation.get('score_components', {})
                 
-                # Debug logging to find the correct score keys
-                logger.info(f"EVALUATION KEYS: {list(evaluation.keys()) if evaluation else 'No evaluation'}")
-                logger.info(f"SCORE_COMPONENTS KEYS: {list(score_components.keys()) if score_components else 'No score_components'}")
-                
-                # Extract scores with fallback to actual calculated values from suitability_score
-                total_score = result.get('suitability_score', 86)
                 bep_score = score_components.get('qbp_proximity', total_score * 0.4)
                 eff_score = score_components.get('efficiency', total_score * 0.3) 
                 margin_score = score_components.get('head_margin', total_score * 0.15)
                 npsh_score = score_components.get('npsh_margin', total_score * 0.15)
 
+                # MINIMAL ESSENTIAL DATA ONLY - Target <600 bytes per pump
                 lean_result = {
                     'pump_code': result.get('pump_code'),
                     'suitability_score': total_score,
-                    'performance': {
-                        'efficiency_pct': result.get('performance', {}).get('efficiency_at_duty', 61.9),
-                        'power_kw': result.get('performance', {}).get('power_at_duty', 5.07),
-                        'npshr_m': result.get('performance', {}).get('npshr_m', 1.91),
-                        'impeller_diameter_mm': result.get('sizing_info', {}).get('impeller_diameter_mm', 187),
-                    },
-                    'sizing_info': {
-                        'impeller_diameter_mm': result.get('sizing_info', {}).get('impeller_diameter_mm', 187),
-                    },
-                    'pump': {
-                        'manufacturer': 'APE Pumps',
-                        'pump_type': 'Centrifugal', 
-                        'model_series': 'Industrial',
-                        'stages': '1',
-                    },
-                    'bep_analysis': {
-                        'qbep_percentage': result.get('bep_analysis', {}).get('qbep_percentage', 100),
-                        'operating_zone': result.get('bep_analysis', {}).get('operating_zone', 'Optimal'),
-                    },
-                    'score_breakdown': {
-                        'bep_score': bep_score,
-                        'efficiency_score': eff_score,
-                        'margin_score': margin_score,
-                        'npsh_score': npsh_score,
-                    }
+                    # Flatten for template access - no nested structures
+                    'efficiency_pct': result.get('performance', {}).get('efficiency_at_duty', 61.9),
+                    'power_kw': result.get('performance', {}).get('power_at_duty', 5.07),
+                    'npshr_m': result.get('performance', {}).get('npshr_m', 1.91),
+                    'impeller_diameter_mm': result.get('sizing_info', {}).get('impeller_diameter_mm', 187),
+                    'qbep_percentage': result.get('bep_analysis', {}).get('qbep_percentage', 100),
+                    'operating_zone': result.get('bep_analysis', {}).get('operating_zone', 'Optimal'),
+                    # Score components at top level for template access
+                    'bep_score': round(bep_score, 1),
+                    'efficiency_score': round(eff_score, 1),
+                    'margin_score': round(margin_score, 1),
+                    'npsh_score': round(npsh_score, 1),
+                    # Static pump info
+                    'manufacturer': 'APE Pumps',
+                    'pump_type': 'Centrifugal', 
+                    'model_series': 'Industrial',
+                    'stages': '1',
                 }
                 
-                logger.info(f"FINAL SCORES - {result.get('pump_code')}: bep={bep_score}, eff={eff_score}, margin={margin_score}, npsh={npsh_score}")
                 essential_results.append(make_json_serializable(lean_result))
             
-            # Use safe_session_set instead of direct session access for consistency
-            logger.info(f"SESSION SIZE CHECK: Storing {len(essential_results)} pumps")
+            # Store lean pump selections in session
             safe_session_set('pump_selections', essential_results)
-            
-            # Log session size
-            import json
-            try:
-                session_json = json.dumps(essential_results)
-                logger.info(f"SESSION SIZE: {len(session_json)} characters")
-            except Exception as e:
-                logger.error(f"Could not measure session size: {e}")
             
             serializable_results = essential_results
             # Store minimal exclusion data using safe_session_set
