@@ -225,13 +225,10 @@ def pump_options():
             # Apply comprehensive serialization and keep only essential data to reduce session size
             essential_results = []
             for result in pump_selections:
-                performance_data = result.get('performance', {})
-                logger.info(f"DEBUG: Performance data keys for {result.get('pump_code', 'unknown')}: {list(performance_data.keys()) if isinstance(performance_data, dict) else 'not a dict'}")
-                
                 essential_result = {
                     'pump_code': make_json_serializable(result.get('pump_code', result['pump'].pump_code)),
                     'suitability_score': make_json_serializable(result.get('suitability_score', 0)),
-                    'performance': make_json_serializable(performance_data),
+                    'performance': make_json_serializable(result.get('performance', {})),
                     'sizing_info': make_json_serializable(result.get('sizing_info', {})),
                     'pump': make_json_serializable(result['pump'])  # Essential pump data
                 }
