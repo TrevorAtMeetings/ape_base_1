@@ -1,0 +1,53 @@
+Excellent work on the refactoring. You have successfully implemented the individual components of Methodology v6.0, including the new scoring system, the hard gates, and the power-based tie-breaking. The code is cleaner, and the application is running, which is a great step forward.
+However, my review of app/catalog_engine.py reveals that the critical architectural flaw has not been resolved.
+The system is still operating with a two-step "First Fit" gatekeeper (can_meet_requirements) followed by a separate evaluation engine (get_performance_at_duty). This means we are still not finding the true "Best Fit" solution for each pump. Your claim "✓ UNIFIED EVALUATION" is incorrect; the logic remains separated and conflicted.
+Let me be perfectly clear about the remaining issue.
+Analysis of the Unresolved Architectural Flaw
+The main selection loop in select_pumps still does this:
+It calls pump.can_meet_requirements(...) first.
+This function finds the first way the pump can work (e.g., via 15% extrapolation) and returns {'feasible': True}.
+The loop then proceeds, calling pump.get_performance_at_duty(...) on a pump that has already been "approved" based on an inferior solution.
+We are still not comparing all possible methods (e.g., extrapolation vs. trimming) and picking the one with the highest score.
+Directive: Final Refactoring to Achieve a True "Best Fit" System
+We will now perform the final refactoring to fix this architectural flaw once and for all. The goal is to have one function call per pump inside the main selection loop.
+Your task is to refactor app/catalog_engine.py to create a single, unified evaluation function.
+Step-by-Step Instructions:
+Completely DELETE the can_meet_requirements function. It is the source of the conflict and must be removed entirely.
+Rename get_performance_at_duty to find_best_solution. This new name better reflects its purpose.
+Move All Logic into find_best_solution: This function must now be responsible for the entire evaluation process from start to finish.
+Hard Gates First: The very first thing this function must do is call _validate_qbp_range and _validate_npsh_safety_gate. If either gate fails, the function must immediately return None.
+Evaluate All Methods: It must then proceed to evaluate all possible fixed-speed methods (direct interpolation, impeller trimming), score each one, and add them to a possible_solutions list.
+Return the Best or Nothing: Finally, it must return the single best solution from the list (the one with the highest score) or return None if no solutions were found.
+Update the Main Selection Loop (select_pumps):
+The loop must be simplified to call your new unified function once.
+Here is a pseudo-code example of what the new loop inside select_pumps should look like:
+Generated python
+# Inside select_pumps function...
+
+for pump in pumps_to_evaluate:
+    evaluation = PumpEvaluation(pump_code=pump.pump_code)
+
+    # ONE function call to get the best possible solution for this pump
+    best_solution = pump.find_best_solution(flow_m3hr, head_m, npsha_available)
+
+    if best_solution:
+        # If a solution was found, it's already the best one.
+        # Add it to the list of suitable pumps.
+        evaluation.feasible = True
+        evaluation.performance_data = best_solution
+        evaluation.total_score = best_solution['score']
+        # ... create the final result object ...
+        suitable_pumps.append(result)
+        feasible_count += 1
+    else:
+        # If no solution was found, the pump is not feasible.
+        # The reasons for exclusion should be logged inside find_best_solution.
+        evaluation.add_exclusion(ExclusionReason.ENVELOPE_EXCEEDED) # Or a more specific reason
+        excluded_pumps.append(evaluation)
+        excluded_count += 1
+
+# ... proceed with sorting suitable_pumps ...
+Use code with caution.
+Python
+This change is not optional. It is the final and most critical step to ensure the engineering integrity of our selection engine.
+Proceed with this refactoring now. Show me the final diff for app/catalog_engine.py.

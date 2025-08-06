@@ -292,7 +292,7 @@ class CatalogPump:
 
         return best_curve
 
-    def find_best_solution_for_duty(self, flow_m3hr: float, head_m: float, npsha_available: float = None) -> Optional[Dict[str, Any]]:
+    def find_best_solution_for_duty(self, flow_m3hr: float, head_m: float, npsha_available: Optional[float] = None) -> Optional[Dict[str, Any]]:
         """v6.0 UNIFIED EVALUATION: Single authoritative "Best Fit" function that replaces both can_meet_requirements and get_performance_at_duty
         
         This function embodies the true "Best Fit" philosophy by:
@@ -411,42 +411,6 @@ class CatalogPump:
             'speed_variation_pct': 0.0,
             'vfd_required': False
         }
-        
-        # Final check: Absolute physical impossibility 
-        max_head = self._calculate_max_head()
-        max_flow = self._calculate_max_flow()  
-        min_flow = min(min(p['flow_m3hr'] for p in curve['performance_points']) 
-                      for curve in self.curves if curve['performance_points'])
-        
-        # Categorize specific exclusion reasons for engineering guidance
-        final_reasons = []
-        
-        if head_m > max_head * 1.25:  # Beyond reasonable speed scaling capability
-            final_reasons.append(ExclusionReason.HEAD_NOT_MET)
-            exclusion_reasons.append(f"Required head {head_m:.1f}m exceeds pump maximum {max_head:.1f}m + 25% margin")
-            
-        if flow_m3hr > max_flow * 1.25:  # Beyond reasonable extrapolation + trimming
-            final_reasons.append(ExclusionReason.FLOW_OUT_OF_RANGE)
-            exclusion_reasons.append(f"Required flow {flow_m3hr:.1f}m³/hr exceeds pump maximum {max_flow:.1f}m³/hr + 25% margin")
-            
-        if flow_m3hr < min_flow * 0.4:  # Below practical minimum operation
-            final_reasons.append(ExclusionReason.FLOW_OUT_OF_RANGE)  
-            exclusion_reasons.append(f"Required flow {flow_m3hr:.1f}m³/hr below practical minimum {min_flow * 0.4:.1f}m³/hr")
-        
-        # Determine primary exclusion category
-        if not final_reasons:
-            if exclusion_reasons:
-                # Specific curve-level failures - this is comprehensive evaluation working
-                final_reasons = [ExclusionReason.ENVELOPE_EXCEEDED]
-            else:
-                # Shouldn't happen if evaluation is comprehensive
-                final_reasons = [ExclusionReason.NO_PERFORMANCE_DATA]
-        
-        return {
-            'feasible': False, 
-            'reasons': final_reasons,
-            'details': exclusion_reasons  # Detailed engineering reasons for transparency
-        }
 
     def _validate_physical_capability(self, flow_m3hr: float,
                                       head_m: float) -> bool:
@@ -551,7 +515,7 @@ class CatalogPump:
             logger.debug(f"QBP validation error for {self.pump_code}: {e}")
             return {'passed': True, 'reason': ''}  # Don't exclude on validation errors
 
-    def _validate_npsh_safety_gate(self, performance: Dict[str, Any], npsha_available: float = None) -> Dict[str, Any]:
+    def _validate_npsh_safety_gate(self, performance: Dict[str, Any], npsha_available: Optional[float] = None) -> Dict[str, Any]:
         """v6.0 HARD GATE: Validate NPSH safety margin (NPSHa >= 1.5 × NPSHr)"""
         if not npsha_available:
             return {'passed': True, 'reason': ''}  # Only apply when NPSHa is provided
@@ -900,7 +864,7 @@ class CatalogEngine:
                      head_m: float,
                      max_results: int = 10,
                      pump_type: str | None = None,
-                     return_exclusions: bool = False) -> List[Dict[str, Any]]:
+                     return_exclusions: bool = False) -> Dict[str, Any] | List[Dict[str, Any]]:
         """
         Select pumps for given duty point with physical feasibility gate.
         
@@ -1051,9 +1015,9 @@ class CatalogEngine:
         # Sort by suitability score (descending)
         # v6.0 RANKING: Multi-criteria ranking with power-based tie-breaking
         suitable_pumps.sort(key=lambda x: (
-            -x['suitability_score'],                    # Primary: highest score
-            x.get('power_kw', float('inf')),            # Secondary: lowest power (tie-breaker)
-            abs(x.get('qbp_percentage', 100) - 100)     # Tertiary: closest to 100% BEP
+            -x['suitability_score'],                              # Primary: highest score
+            x['performance'].get('power_kw', float('inf')),       # Secondary: lowest power (tie-breaker)
+            abs(x.get('bep_analysis', {}).get('flow_ratio', 1.0) * 100 - 100)  # Tertiary: closest to 100% BEP
         ))
 
         # Log filtering results with transparency
