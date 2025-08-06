@@ -772,7 +772,7 @@
                 });
             }
             
-            // Add duty point vertical line
+            // Add duty point vertical line (flow)
             traces.push({
                 x: [operatingFlow, operatingFlow],
                 y: [0, Math.max(...curves.flatMap(c => c.head_data)) * 1.1],
@@ -784,14 +784,26 @@
                 yaxis: 'y'
             });
             
-            // Add operating point marker
+            // Add duty point horizontal line (required head)
+            traces.push({
+                x: [minFlow, maxFlow],
+                y: [operatingHead, operatingHead],
+                type: 'scatter',
+                mode: 'lines',
+                line: { color: '#000000', width: 2 },
+                name: 'Required Head',
+                showlegend: true,
+                yaxis: 'y'
+            });
+            
+            // Add operating point marker (intersection of duty lines)
             traces.push({
                 x: [operatingFlow],
                 y: [operatingHead],
-                name: 'Duty Point',
+                name: 'Operating Point',
                 type: 'scatter',
                 mode: 'markers',
-                marker: { size: 10, color: '#ff0000', symbol: 'circle' },
+                marker: { size: 12, color: '#ff0000', symbol: 'star' },
                 yaxis: 'y',
                 hovertemplate: 
                     '<b>Operating Point</b><br>' +
