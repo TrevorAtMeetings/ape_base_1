@@ -734,11 +734,11 @@
             const minFlow = 0;
             const maxFlow = Math.max(...allFlows) * 1.2;
             
-            // CHART 1: Head, NPSH, and Efficiency
+            // CHART 1: Head and NPSH (Hydraulic Performance)
             renderHydraulicChart(curves, selectedCurve, opPoint, operatingFlow, operatingHead, minFlow, maxFlow);
             
-            // CHART 2: Power
-            renderPowerChart(curves, selectedCurve, opPoint, operatingFlow, minFlow, maxFlow);
+            // CHART 2: Power and Efficiency
+            renderPowerEfficiencyChart(curves, selectedCurve, opPoint, operatingFlow, minFlow, maxFlow);
         }
         
         function renderHydraulicChart(curves, selectedCurve, opPoint, operatingFlow, operatingHead, minFlow, maxFlow) {
@@ -756,7 +756,6 @@
                         color: curve.is_selected ? '#1976d2' : '#90caf9', 
                         width: curve.is_selected ? 3 : 2
                     },
-                    yaxis: 'y',
                     showlegend: curve.is_selected || index === 0 || index === curves.length - 1
                 });
             });
@@ -769,30 +768,9 @@
                     name: 'NPSHr',
                     type: 'scatter',
                     mode: 'lines',
-                    line: { color: '#00acc1', width: 2, dash: 'dash' },
-                    yaxis: 'y'
+                    line: { color: '#00acc1', width: 2, dash: 'dash' }
                 });
             }
-            
-            // Add Efficiency curves
-            curves.forEach((curve, index) => {
-                if (curve.efficiency_data && curve.efficiency_data.length > 0) {
-                    traces.push({
-                        x: curve.flow_data,
-                        y: curve.efficiency_data,
-                        name: `Eff ${curve.impeller_diameter_mm}mm`,
-                        type: 'scatter',
-                        mode: 'lines',
-                        line: { 
-                            color: curve.is_selected ? '#4caf50' : '#a5d6a7', 
-                            width: curve.is_selected ? 3 : 2,
-                            dash: 'dot'
-                        },
-                        yaxis: 'y2',
-                        showlegend: curve.is_selected || index === 0 || index === curves.length - 1
-                    });
-                }
-            });
             
             // Add duty point vertical line
             traces.push({
@@ -834,14 +812,6 @@
                     gridcolor: '#e0e0e0',
                     side: 'left'
                 },
-                yaxis2: {
-                    title: 'Efficiency (%)',
-                    overlaying: 'y',
-                    side: 'right',
-                    gridcolor: '#e0e0e0',
-                    showgrid: false,
-                    range: [0, 100]
-                },
                 showlegend: true,
                 legend: {
                     x: 0.5,
@@ -864,7 +834,7 @@
             });
         }
         
-        function renderPowerChart(curves, selectedCurve, opPoint, operatingFlow, minFlow, maxFlow) {
+        function renderPowerEfficiencyChart(curves, selectedCurve, opPoint, operatingFlow, minFlow, maxFlow) {
             const traces = [];
             
             // Add Power curves for all impeller sizes
@@ -880,6 +850,27 @@
                             color: curve.is_selected ? '#ff6f00' : '#ffb74d', 
                             width: curve.is_selected ? 3 : 2
                         },
+                        yaxis: 'y',
+                        showlegend: curve.is_selected || index === 0 || index === curves.length - 1
+                    });
+                }
+            });
+            
+            // Add Efficiency curves for all impeller sizes
+            curves.forEach((curve, index) => {
+                if (curve.efficiency_data && curve.efficiency_data.length > 0) {
+                    traces.push({
+                        x: curve.flow_data,
+                        y: curve.efficiency_data,
+                        name: `Eff ${curve.impeller_diameter_mm}mm`,
+                        type: 'scatter',
+                        mode: 'lines',
+                        line: { 
+                            color: curve.is_selected ? '#4caf50' : '#a5d6a7', 
+                            width: curve.is_selected ? 3 : 2,
+                            dash: 'dot'
+                        },
+                        yaxis: 'y2',
                         showlegend: curve.is_selected || index === 0 || index === curves.length - 1
                     });
                 }
@@ -922,7 +913,16 @@
                 },
                 yaxis: {
                     title: 'Power (kW)',
-                    gridcolor: '#e0e0e0'
+                    gridcolor: '#e0e0e0',
+                    side: 'left'
+                },
+                yaxis2: {
+                    title: 'Efficiency (%)',
+                    overlaying: 'y',
+                    side: 'right',
+                    gridcolor: '#e0e0e0',
+                    showgrid: false,
+                    range: [0, 100]
                 },
                 showlegend: true,
                 legend: {
