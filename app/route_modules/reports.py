@@ -104,6 +104,27 @@ def pump_report(pump_code):
     # Get alternative pumps (other pumps from session excluding selected one)
     alternatives = [p for p in pump_selections if p.get('pump_code') != pump_code][:2]  # Top 2 alternatives
     
+    # Calculate BEP marker position for the visual indicator
+    qbep_percentage = selected_pump.get('qbep_percentage', 100)
+    if qbep_percentage <= 70:
+        # Linear mapping from 0-70% to 0-20% position
+        marker_position = (qbep_percentage / 70) * 20
+    elif qbep_percentage <= 90:
+        # Linear mapping from 70-90% to 20-30% position
+        marker_position = 20 + ((qbep_percentage - 70) / 20) * 10
+    elif qbep_percentage <= 110:
+        # Linear mapping from 90-110% to 30-70% position
+        marker_position = 30 + ((qbep_percentage - 90) / 20) * 40
+    elif qbep_percentage <= 120:
+        # Linear mapping from 110-120% to 70-80% position
+        marker_position = 70 + ((qbep_percentage - 110) / 10) * 10
+    else:
+        # Linear mapping from 120-150% to 80-100% position
+        marker_position = min(80 + ((qbep_percentage - 120) / 30) * 20, 100)
+    
+    # Add marker position to selected pump data
+    selected_pump['marker_position'] = marker_position
+    
     return render_template(
         'professional_pump_report.html',
         selected_pump=selected_pump,

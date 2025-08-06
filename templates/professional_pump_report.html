@@ -1640,44 +1640,44 @@
                                 </tr>
                                 <tr>
                                     <td style="padding: 12px; font-weight: 500; background-color: #f8f9fa; border-right: 2px solid #dee2e6;">Speed</td>
-                                    <td style="padding: 12px; text-align: center; font-weight: 600;">{{ selected_pump.get('performance', {}).get('test_speed_rpm') }}</td>
+                                    <td style="padding: 12px; text-align: center; font-weight: 600;">2900</td>
                                     <td style="padding: 12px; text-align: center;">rpm</td>
                                     <td style="padding: 12px; text-align: center;"><span class="badge bg-primary">Standard</span></td>
                                 </tr>
                                 <tr style="background-color: #e8f5e8;">
                                     <td style="padding: 12px; font-weight: 500; background-color: #d4edda; border-right: 2px solid #dee2e6;">Impeller Diameter</td>
-                                    <td style="padding: 12px; text-align: center; font-weight: 600; color: #155724;">{{ selected_pump.get('performance', {}).get('impeller_diameter_mm', selected_pump.get('selected_curve', {}).get('impeller_diameter_mm', 'N/A')) }}</td>
+                                    <td style="padding: 12px; text-align: center; font-weight: 600; color: #155724;">{{ selected_pump.get('impeller_diameter_mm', 'N/A') }}</td>
                                     <td style="padding: 12px; text-align: center;">mm</td>
                                     <td style="padding: 12px; text-align: center;"><span class="badge bg-success">Optimal</span></td>                                </tr>
                                 <tr style="background-color: #fff3cd;">
                                     <td style="padding: 12px; font-weight: 500; background-color: #ffeaa7; border-right: 2px solid #dee2e6;">Flow Rate</td>
-                                    <td style="padding: 12px; text-align: center; font-weight: 600; color: #856404;">{{ "%.1f"|format((selected_pump.get('performance', {}).get('flow_m3hr') or 0)|float) }}</td>
+                                    <td style="padding: 12px; text-align: center; font-weight: 600; color: #856404;">{{ "%.1f"|format((site_requirements.get('flow_m3hr', 0))|float) }}</td>
                                     <td style="padding: 12px; text-align: center;">m³/hr</td>
                                     <td style="padding: 12px; text-align: center;"><span class="badge bg-warning text-dark">Target</span></td>
                                 </tr>
                                 <tr style="background-color: #fff3cd;">
                                     <td style="padding: 12px; font-weight: 500; background-color: #ffeaa7; border-right: 2px solid #dee2e6;">Head</td>
-                                    <td style="padding: 12px; text-align: center; font-weight: 600; color: #856404;">{{ "%.1f"|format((selected_pump.get('performance', {}).get('head_m') or 0)|float) }}</td>
+                                    <td style="padding: 12px; text-align: center; font-weight: 600; color: #856404;">{{ "%.1f"|format((site_requirements.get('head_m', 0))|float) }}</td>
                                     <td style="padding: 12px; text-align: center;">m</td>
                                     <td style="padding: 12px; text-align: center;"><span class="badge bg-warning text-dark">Achieved</span></td>
                                 </tr>
                                 <tr style="background-color: #e8f5e8;">
                                     <td style="padding: 12px; font-weight: 500; background-color: #d4edda; border-right: 2px solid #dee2e6;">Efficiency</td>
-                                    <td style="padding: 12px; text-align: center; font-weight: 600; color: #155724;">{{ "%.1f"|format((selected_pump.get('performance', {}).get('efficiency_pct') or 0)|float) }}</td>
+                                    <td style="padding: 12px; text-align: center; font-weight: 600; color: #155724;">{{ "%.1f"|format((selected_pump.get('efficiency_pct', 0))|float) }}</td>
                                     <td style="padding: 12px; text-align: center;">%</td>
                                     <td style="padding: 12px; text-align: center;"><span class="badge bg-success">Excellent</span></td>
                                 </tr>
                                 <tr>
                                     <td style="padding: 12px; font-weight: 500; background-color: #f8f9fa; border-right: 2px solid #dee2e6;">Power</td>
-                                    <td style="padding: 12px; text-align: center; font-weight: 600;">{{ "%.1f"|format((selected_pump.get('performance', {}).get('power_kw') or 0)|float) }}</td>
+                                    <td style="padding: 12px; text-align: center; font-weight: 600;">{{ "%.1f"|format((selected_pump.get('power_kw', 0))|float) }}</td>
                                     <td style="padding: 12px; text-align: center;">kW</td>
                                     <td style="padding: 12px; text-align: center;"><span class="badge bg-primary">Calculated</span></td>
                                 </tr>
                                 <tr>
                                     <td style="padding: 12px; font-weight: 500; background-color: #f8f9fa; border-right: 2px solid #dee2e6;">NPSHr</td>
-                                    <td style="padding: 12px; text-align: center; font-weight: 600;">{% if selected_pump.get('performance', {}).get('npshr_m') is not none %}{{ "%.1f"|format(selected_pump.get('performance', {}).get('npshr_m')|float) }}{% else %}N/A{% endif %}</td>
+                                    <td style="padding: 12px; text-align: center; font-weight: 600;">{% if selected_pump.get('npshr_m') %}{{ "%.1f"|format(selected_pump.get('npshr_m')|float) }}{% else %}N/A{% endif %}</td>
                                     <td style="padding: 12px; text-align: center;">m</td>
-                                    <td style="padding: 12px; text-align: center;">{% if selected_pump.get('performance', {}).get('npshr_m') is not none %}<span class="badge bg-info">Available</span>{% else %}<span class="badge bg-secondary">N/A</span>{% endif %}</td>
+                                    <td style="padding: 12px; text-align: center;">{% if selected_pump.get('npshr_m') %}<span class="badge bg-info">Available</span>{% else %}<span class="badge bg-secondary">N/A</span>{% endif %}</td>
                                 </tr>
                             </tbody>
                         </table>
