@@ -421,19 +421,19 @@
                         <td>{{ selected_pump.get('npshr_m', 0)|round(2) }} m</td>
                     </tr>
                     <tr>
-                        <td>Impeller Diameter</td>
-                        <td>{{ selected_pump.get('impeller_diameter_mm', 0)|round(0)|int }} mm</td>
+                        <td>Operating Impeller Ø</td>
+                        <td style="font-weight: bold; color: #1976d2;">{{ selected_pump.get('impeller_diameter_mm', 0)|round(0)|int }} mm</td>
                     </tr>
                     <tr>
                         <td>Impeller Trim</td>
                         <td>{{ selected_pump.get('trim_percent', 100)|round(1) }} %</td>
                     </tr>
                     <tr>
-                        <td>Max Diameter</td>
+                        <td>Max Impeller Ø</td>
                         <td>{{ (selected_pump.get('impeller_diameter_mm', 0) / (selected_pump.get('trim_percent', 100) / 100))|round(0)|int }} mm</td>
                     </tr>
                     <tr>
-                        <td>Min Diameter</td>
+                        <td>Min Impeller Ø</td>
                         <td>{{ ((selected_pump.get('impeller_diameter_mm', 0) / (selected_pump.get('trim_percent', 100) / 100)) * 0.85)|round(0)|int }} mm</td>
                     </tr>
                 </table>
@@ -624,6 +624,7 @@
                 <li>Tolerance as per ISO 9906 Grade 2B</li>
                 <li>NPSHr values include safety margin of 0.5m</li>
                 <li>Motor sizing includes 15% safety factor</li>
+                <li><strong>Operating impeller diameter: {{ selected_pump.get('impeller_diameter_mm', 0)|round(0)|int }} mm ({{ selected_pump.get('trim_percent', 100)|round(1) }}% of max)</strong></li>
                 <li>Impeller can be trimmed between 85% and 100% of maximum diameter</li>
             </ul>
         </div>
@@ -744,7 +745,14 @@
                 yaxis: 'y2'
             });
 
-            // Operating point
+            // Get performance values at operating point
+            const opEfficiency = {{ selected_pump.get('efficiency_pct', 0)|round(1) }};
+            const opPower = {{ selected_pump.get('power_kw', 0)|round(2) }};
+            const opNPSHr = {{ selected_pump.get('npshr_m', 0)|round(2) }};
+            const opImpellerDia = {{ selected_pump.get('impeller_diameter_mm', 0)|round(0)|int }};
+            const opTrimPercent = {{ selected_pump.get('trim_percent', 100)|round(1) }};
+            
+            // Operating point with detailed hover text
             traces.push({
                 x: [operatingFlow],
                 y: [operatingHead],
@@ -752,7 +760,17 @@
                 type: 'scatter',
                 mode: 'markers',
                 marker: { size: 12, color: '#ff0000', symbol: 'star' },
-                yaxis: 'y'
+                yaxis: 'y',
+                hovertemplate: 
+                    '<b>Operating Point Details</b><br>' +
+                    'Flow: %{x:.1f} m³/hr<br>' +
+                    'Head: %{y:.1f} m<br>' +
+                    'Efficiency: ' + opEfficiency + ' %<br>' +
+                    'Power: ' + opPower + ' kW<br>' +
+                    'NPSHr: ' + opNPSHr + ' m<br>' +
+                    'Impeller Ø: ' + opImpellerDia + ' mm<br>' +
+                    'Trim: ' + opTrimPercent + ' %<br>' +
+                    '<extra></extra>'
             });
 
             const layout = {
