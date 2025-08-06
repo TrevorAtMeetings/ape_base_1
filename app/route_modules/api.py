@@ -684,13 +684,26 @@ def ai_analysis_fast():
         npshr = data.get('npshr', 'N/A')
         application = data.get('application', 'Water Supply')
         topic = data.get('topic', None)  # Handle specific topic requests
+        
+        # Handle None and string 'None' values
+        if efficiency == 'None' or efficiency is None or efficiency == '':
+            efficiency = 75
+        if power == 'None' or power is None or power == '':
+            power = 50
+        if npshr == 'None' or npshr is None or npshr == '':
+            npshr = 5
+            
+        # Convert to float for calculations
+        try:
+            efficiency = float(efficiency)
+            power = float(power)
+        except (ValueError, TypeError):
+            efficiency = 75.0
+            power = 50.0
 
         # Generate technical analysis based on pump parameters
-        efficiency_rating = "excellent" if float(
-            efficiency) >= 80 else "good" if float(
-                efficiency) >= 70 else "acceptable"
-        power_analysis = "efficient" if float(
-            power) < 150 else "moderate power consumption"
+        efficiency_rating = "excellent" if efficiency >= 80 else "good" if efficiency >= 70 else "acceptable"
+        power_analysis = "efficient" if power < 150 else "moderate power consumption"
 
         # Handle topic-specific analysis requests
         if topic == 'efficiency optimization':
@@ -978,9 +991,15 @@ Follow IEEE and manufacturer guidelines for installation procedures. Document ba
 def _generate_efficiency_optimization_analysis(pump_code, efficiency, power,
                                                flow, head):
     """Generate focused efficiency optimization analysis"""
-    efficiency_val = float(efficiency)
-    power_val = float(power)
-    flow_val = float(flow)
+    # Handle None values gracefully
+    try:
+        efficiency_val = float(efficiency) if efficiency and efficiency != 'None' else 75.0
+        power_val = float(power) if power and power != 'None' else 50.0
+        flow_val = float(flow) if flow and flow != 'None' else 100.0
+    except (ValueError, TypeError):
+        efficiency_val = 75.0
+        power_val = 50.0
+        flow_val = 100.0
 
     analysis = f"""## Efficiency Optimization Analysis for {pump_code}
 
@@ -1017,8 +1036,13 @@ def _generate_efficiency_optimization_analysis(pump_code, efficiency, power,
 def _generate_maintenance_recommendations(pump_code, efficiency, power,
                                           application):
     """Generate focused maintenance recommendations"""
-    efficiency_val = float(efficiency)
-    power_val = float(power)
+    # Handle None values gracefully
+    try:
+        efficiency_val = float(efficiency) if efficiency and efficiency != 'None' else 75.0
+        power_val = float(power) if power and power != 'None' else 50.0
+    except (ValueError, TypeError):
+        efficiency_val = 75.0
+        power_val = 50.0
 
     analysis = f"""## Maintenance Recommendations for {pump_code}
 
