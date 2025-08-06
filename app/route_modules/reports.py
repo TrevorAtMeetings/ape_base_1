@@ -185,8 +185,9 @@ def engineering_report(pump_code):
         
         repository = PumpRepository()
         
-        # Get pump curves for recalculation
-        pump_curves = repository.get_pump_curves(pump_code)
+        # Get pump data including curves for recalculation
+        pump_data = repository.get_pump_by_code(pump_code)
+        pump_curves = pump_data.get('curves', []) if pump_data else []
         if pump_curves:
             # Recalculate performance at new operating point
             from ..impeller_scaling import evaluate_pump_at_conditions
