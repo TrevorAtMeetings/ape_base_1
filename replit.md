@@ -9,6 +9,13 @@ Preferred communication style: Simple, everyday language.
 ## System Architecture
 The application employs a modular Flask architecture with a clear separation of concerns, supporting both backend and frontend components.
 
+### Recent Major Update - Methodology v6.0 (August 2025)
+**CRITICAL**: New engineering methodology developed based on expert feedback identifying fundamental flaws in v5.0 approach. Key architectural changes required:
+- **Algorithm Separation**: Fixed-speed (impeller trimming) completely separated from VFD (speed variation) logic
+- **Hard Safety Gates**: NPSH and QBP operating range implemented as pass/fail filters before scoring
+- **Rebalanced Scoring**: 85-point system with NPSH removed from ranking, power-based tie-breaking added
+- **Chart Display Fix**: Must show trimmed curves instead of maximum impeller curves
+
 ### Backend Architecture
 - **Flask Framework**: Handles routing and HTTP requests.
 - **Repository Pattern**: Centralized data access via `pump_repository.py`, supporting JSON and PostgreSQL.
@@ -26,7 +33,7 @@ The application employs a modular Flask architecture with a clear separation of 
 
 ### Key Components
 - **Data Management**: Unified access via `PumpRepository`, `Catalog Engine` for processing performance curves, and `SCG Processor` for authentic APE data conversion with validation.
-- **Selection Engine**: Analyzes user input (flow, head, application) using intelligent scoring algorithms, performs curve interpolation/extrapolation, and applies affinity law for impeller scaling. It evaluates all possible methods (direct interpolation, impeller trimming, speed variation) and returns the highest scoring solution based on BEP proximity, efficiency, head margin, and NPSH.
+- **Selection Engine**: Analyzes user input (flow, head, application) using intelligent scoring algorithms, performs curve interpolation/extrapolation, and applies affinity law for impeller scaling. **v6.0 UPDATE**: Now focuses exclusively on fixed-speed pumps with impeller trimming, implements hard safety gates (QBP 60-130% range, NPSH 1.5x margin), and uses power consumption as tie-breaker for similar scores.
 - **Report Generation**: Professional PDF reports using WeasyPrint, embedding static Matplotlib charts, comprehensive analysis, scoring breakdowns, and detailed technical information via Jinja2 templates.
 - **File Processing**: Native support for APE's SCG format, with batch processing, automatic format detection, and robust error handling.
 
