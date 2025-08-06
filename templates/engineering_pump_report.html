@@ -489,7 +489,14 @@
                     </tr>
                     <tr>
                         <td>NPSHa Available</td>
-                        <td>{{ (selected_pump.get('npshr_m', 0) * 1.5)|round(1) }} m</td>
+                        <td>
+                            {% set npshr = selected_pump.get('npshr_m') %}
+                            {% if npshr is not none %}
+                                {{ (npshr * 1.5)|round(1) }} m
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </td>
                     </tr>
                 </table>
             </div>
