@@ -92,7 +92,8 @@ def pump_report(pump_code):
                             'total_evaluated': selection_data.get('total_evaluated', 0),
                             'feasible_count': selection_data.get('feasible_count', 0),
                             'excluded_count': selection_data.get('excluded_count', 0),
-                            'near_miss_pumps': selection_data.get('near_miss_pumps', [])  # Add near-miss data
+                            'near_miss_pumps': selection_data.get('near_miss_pumps', []),  # Add near-miss data
+                            'suitable_pumps_count': len(selection_data.get('suitable_pumps', []))  # Add count of recommended pumps
                         }
                         # Use the selection results for pump_selections if not already set
                         if 'suitable_pumps' in selection_data:
@@ -928,7 +929,8 @@ def pump_report(pump_code):
             'selected_pump_code': pump_code,
             'current_date': __import__('datetime').datetime.now().strftime('%Y-%m-%d'),
             'direct_selection_validation': validation_data,
-            'exclusion_data': exclusion_data  # Add exclusion data for transparency
+            'exclusion_data': exclusion_data,  # Add exclusion data for transparency
+            'pump_selections': pump_selections  # Add pump selections for Top Recommendations count
         }
 
         # Ensure selected_curve data is available for all pumps
