@@ -200,17 +200,26 @@ def pump_options():
                 exclusion_data = None
             
             # CRITICAL DATA FLOW FIX: Save the TRUE results from catalog engine to session
-            # Convert pump objects to serializable dictionaries
-            serializable_results = []
-            for result in pump_selections:
-                # Make a copy of the result to avoid modifying the original
-                serializable_result = result.copy()
-                
-                # Replace the CatalogPump object with its dictionary representation
-                if 'pump' in serializable_result and hasattr(serializable_result['pump'], 'to_dict'):
-                    serializable_result['pump'] = serializable_result['pump'].to_dict()
-                
-                serializable_results.append(serializable_result)
+            # Convert ALL data to serializable formats
+            def make_json_serializable(obj):
+                """Convert any object to JSON serializable format."""
+                if obj is None or isinstance(obj, (str, int, float)):
+                    return obj
+                elif isinstance(obj, bool):
+                    return bool(obj)  # Ensure it's native Python bool
+                elif hasattr(obj, 'item'):  # numpy types
+                    return obj.item()
+                elif hasattr(obj, 'to_dict'):  # CatalogPump objects
+                    return obj.to_dict()
+                elif isinstance(obj, dict):
+                    return {key: make_json_serializable(value) for key, value in obj.items()}
+                elif isinstance(obj, (list, tuple)):
+                    return [make_json_serializable(item) for item in obj]
+                else:
+                    return str(obj)  # Convert everything else to string
+            
+            # Apply comprehensive serialization to all pump results
+            serializable_results = [make_json_serializable(result) for result in pump_selections]
 
             # Now save the serializable list to session as single source of truth
             from flask import session
