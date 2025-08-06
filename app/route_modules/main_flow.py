@@ -225,28 +225,35 @@ def pump_options():
                 else:
                     return str(obj)  # Convert everything else to string
             
-            # Apply comprehensive serialization and flatten essential pump data for template access
+            # Apply comprehensive serialization - REDUCE SESSION SIZE by keeping only essential data
             essential_results = []
             for result in pump_selections:
                 pump_obj = result['pump']
+                
+                # Minimal essential result to prevent session size issues
                 essential_result = {
                     'pump_code': make_json_serializable(result.get('pump_code', pump_obj.pump_code)),
                     'suitability_score': make_json_serializable(result.get('suitability_score', 0)),
                     'performance': make_json_serializable(result.get('performance', {})),
                     'sizing_info': make_json_serializable(result.get('sizing_info', {})),
-                    'pump': make_json_serializable(pump_obj),  # Keep full pump data
                     
-                    # ESSENTIAL: Flatten key pump attributes for template access
+                    # ESSENTIAL: Flatten key pump attributes for template access (minimal data)
                     'manufacturer': make_json_serializable(getattr(pump_obj, 'manufacturer', 'APE Pumps')),
                     'pump_type': make_json_serializable(getattr(pump_obj, 'pump_type', 'Centrifugal')),
                     'model_series': make_json_serializable(getattr(pump_obj, 'model_series', 'Industrial')),
                     'stages': make_json_serializable(getattr(pump_obj, 'stages', '1')),
                     
-                    # Add other essential template data from result
+                    # Essential template data from result (minimal)
                     'score_breakdown': make_json_serializable(result.get('score_breakdown', {})),
                     'bep_analysis': make_json_serializable(result.get('bep_analysis', {})),
-                    'exclusion_reasons': make_json_serializable(result.get('exclusion_reasons', [])),
                     'selection_reason': make_json_serializable(result.get('selection_reason', '')),
+                    
+                    # Remove large pump object to reduce session size - keep only essential pump info
+                    'pump_info': {
+                        'manufacturer': make_json_serializable(getattr(pump_obj, 'manufacturer', 'APE Pumps')),
+                        'model_series': make_json_serializable(getattr(pump_obj, 'model_series', 'Industrial')),
+                        'pump_type': make_json_serializable(getattr(pump_obj, 'pump_type', 'Centrifugal'))
+                    }
                 }
                 essential_results.append(essential_result)
             
