@@ -12,6 +12,9 @@
     <!-- Plotly.js for Charts -->
     <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
     
+    <!-- Materialize JavaScript -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+    
     <!-- Chart Scripts -->
     <script src="{{ url_for('static', filename='js/error-handler.js') }}"></script>
     <script src="{{ url_for('static', filename='js/charts.js') }}?v=20250607-1910"></script>
@@ -632,11 +635,7 @@
                         {% if left_pos < 0 %}{% set left_pos = 0 %}{% endif %}
                         {% if left_pos > 90 %}{% set left_pos = 90 %}{% endif %}
                         
-                        <div class="bep-range 
-                            {% if 80 <= qbep <= 110 %}bep-optimal
-                            {% elif 70 <= qbep <= 120 %}bep-good
-                            {% else %}bep-marginal{% endif %}"
-                            style="left: {{ left_pos }}%; width: 10%;">
+                        <div class="bep-range {% if 80 <= qbep <= 110 %}bep-optimal{% elif 70 <= qbep <= 120 %}bep-good{% else %}bep-marginal{% endif %}" style="left: {{ left_pos }}%; width: 10%;">
                             {{ qbep|round(0)|int }}%
                         </div>
                     </div>
@@ -710,8 +709,7 @@
                                     <div class="pump-name">{{ pump.pump_code }}</div>
                                     <div style="color: #999; font-size: 0.85rem;">{{ pump.pump_type }}</div>
                                 </div>
-                                <div class="pump-score" style="color: {% if pump.suitability_score >= 80 %}#4caf50{% elif pump.suitability_score >= 60 %}#2196f3{% else %}#ff9800{% endif %};">
-                                    {{ pump.suitability_score|round(0)|int }}
+                                <div class="pump-score" style="color: {% if pump.suitability_score >= 80 %}#4caf50{% elif pump.suitability_score >= 60 %}#2196f3{% else %}#ff9800{% endif %};">{{ pump.suitability_score|round(0)|int }}
                                 </div>
                             </div>
                             <div class="inline-metrics" style="gap: 16px;">
@@ -790,8 +788,8 @@
         document.addEventListener('DOMContentLoaded', function() {
             const chartData = {
                 pumpCode: "{{ selected_pump.get('pump_code', '') }}",
-                flowRate: {{ site_requirements.get('flow_m3hr', 0)|round(1) }},
-                head: {{ site_requirements.get('head_m', 0)|round(1) }}
+                flowRate: {{ site_requirements.get('flow_m3hr', 0)|round(1)|float }},
+                head: {{ site_requirements.get('head_m', 0)|round(1)|float }}
             };
 
             // Initialize Materialize components if available
