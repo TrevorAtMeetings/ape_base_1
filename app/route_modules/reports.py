@@ -151,13 +151,17 @@ def engineering_report(pump_code):
     pump_code = unquote(pump_code)
     logger.info(f"Rendering engineering report for pump: {pump_code}")
     
+    # Get flow and head from URL parameters (for recalculation)
+    new_flow = request.args.get('flow', type=float)
+    new_head = request.args.get('head', type=float)
+    
     # Get data from session
     pump_selections = safe_session_get('suitable_pumps', [])
     selected_pump = None
     
     for pump in pump_selections:
         if pump.get('pump_code') == pump_code:
-            selected_pump = pump
+            selected_pump = pump.copy()  # Make a copy to avoid modifying session data
             break
     
     if not selected_pump:
@@ -166,7 +170,52 @@ def engineering_report(pump_code):
         return redirect(url_for('main_flow.index'))
     
     # Get site requirements
-    site_requirements_data = safe_session_get('site_requirements', {})
+    site_requirements_data = safe_session_get('site_requirements', {}).copy()
+    
+    # If new flow/head provided, recalculate performance
+    if new_flow and new_head:
+        logger.info(f"Recalculating for new conditions: Flow={new_flow}, Head={new_head}")
+        
+        # Update site requirements with new values
+        site_requirements_data['flow_m3hr'] = new_flow
+        site_requirements_data['head_m'] = new_head
+        
+        # Recalculate pump performance at new duty point
+        from ..catalog_engine import CatalogEngine
+        from ..pump_repository import PumpRepository
+        
+        repository = PumpRepository()
+        catalog = CatalogEngine(repository)
+        
+        # Get pump curves for recalculation
+        pump_curves = repository.get_pump_curves(pump_code)
+        if pump_curves:
+            # Recalculate performance at new operating point
+            from ..impeller_scaling import evaluate_pump_at_conditions
+            
+            result = evaluate_pump_at_conditions(
+                pump_curves, 
+                new_flow, 
+                new_head,
+                allow_trimming=True
+            )
+            
+            if result:
+                # Update selected pump with new performance data
+                selected_pump['flow_m3hr'] = new_flow
+                selected_pump['head_m'] = new_head
+                selected_pump['efficiency_pct'] = result.get('efficiency_pct', selected_pump.get('efficiency_pct', 0))
+                selected_pump['power_kw'] = result.get('power_kw', selected_pump.get('power_kw', 0))
+                selected_pump['npshr_m'] = result.get('npshr_m', selected_pump.get('npshr_m', 0))
+                selected_pump['trim_percent'] = result.get('trim_percent', selected_pump.get('trim_percent', 100))
+                selected_pump['impeller_diameter_mm'] = result.get('impeller_diameter_mm', selected_pump.get('impeller_diameter_mm', 0))
+                
+                # Recalculate QBEP percentage
+                bep_flow = selected_pump.get('bep_flow_m3hr', new_flow)
+                selected_pump['qbep_percentage'] = (new_flow / bep_flow * 100) if bep_flow > 0 else 100
+                
+                logger.info(f"Recalculated performance: Efficiency={selected_pump['efficiency_pct']:.1f}%, Power={selected_pump['power_kw']:.2f}kW")
+    
     current_date = datetime.now().strftime("%d %B %Y")
     
     # Get alternative pumps

@@ -217,6 +217,122 @@
                 grid-template-columns: 1fr;
             }
         }
+
+        /* Editable Fields */
+        .edit-controls {
+            background: #fffde7;
+            padding: 10px;
+            border: 2px solid #ffc107;
+            border-radius: 4px;
+            margin: 15px 0;
+            display: none;
+        }
+
+        .edit-controls.active {
+            display: block;
+        }
+
+        .edit-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 10px;
+        }
+
+        .edit-field {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .edit-field label {
+            font-size: 11px;
+            font-weight: bold;
+            margin-bottom: 3px;
+        }
+
+        .edit-field input {
+            padding: 5px;
+            border: 1px solid #999;
+            font-size: 12px;
+            width: 100%;
+        }
+
+        .edit-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .edit-btn {
+            padding: 5px 15px;
+            font-size: 11px;
+            border: 1px solid #333;
+            background: #f0f0f0;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        .edit-btn:hover {
+            background: #e0e0e0;
+        }
+
+        .edit-btn.primary {
+            background: #4caf50;
+            color: white;
+            border-color: #4caf50;
+        }
+
+        .edit-btn.primary:hover {
+            background: #45a049;
+        }
+
+        .edit-trigger {
+            display: inline-block;
+            margin-left: 10px;
+            padding: 2px 8px;
+            background: #2196f3;
+            color: white;
+            font-size: 10px;
+            cursor: pointer;
+            border-radius: 3px;
+        }
+
+        .edit-trigger:hover {
+            background: #1976d2;
+        }
+
+        .warning-note {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 8px;
+            margin: 10px 0;
+            font-size: 11px;
+            color: #856404;
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .loading-overlay.active {
+            display: flex;
+        }
+
+        .loading-message {
+            background: white;
+            padding: 20px;
+            border-radius: 5px;
+            font-size: 14px;
+        }
     </style>
 </head>
 <body>
@@ -235,8 +351,29 @@
             </div>
         </div>
 
+        <!-- Edit Controls -->
+        <div class="edit-controls" id="editControls">
+            <div style="font-weight: bold; margin-bottom: 10px; font-size: 12px;">
+                Adjust Operating Conditions
+                <span style="font-weight: normal; font-size: 10px; color: #666;">(Changes will recalculate pump performance)</span>
+            </div>
+            <div class="edit-grid">
+                <div class="edit-field">
+                    <label for="editFlow">Flow Rate (m³/hr)</label>
+                    <input type="number" id="editFlow" step="0.1" min="0" value="{{ site_requirements.get('flow_m3hr', 0)|round(1) }}">
+                </div>
+                <div class="edit-field">
+                    <label for="editHead">Total Head (m)</label>
+                    <input type="number" id="editHead" step="0.1" min="0" value="{{ site_requirements.get('head_m', 0)|round(1) }}">
+                </div>
+            </div>
+            <div class="edit-actions">
+                <button class="edit-btn" onclick="cancelEdit()">Cancel</button>
+                <button class="edit-btn primary" onclick="applyChanges()">Apply Changes</button>
+            </div>
+        </div>
+
         <!-- Data Grid -->
-        <div class="data-grid">
             <!-- Pump Details -->
             <div class="data-section">
                 <div class="section-title">PUMP DETAILS (Rated Duty)</div>
@@ -247,11 +384,14 @@
                     </tr>
                     <tr>
                         <td>Rated Flow</td>
-                        <td>{{ site_requirements.get('flow_m3hr', 0)|round(1) }} m³/hr</td>
+                        <td>
+                            <span id="ratedFlow">{{ site_requirements.get('flow_m3hr', 0)|round(1) }}</span> m³/hr
+                            <span class="edit-trigger" onclick="toggleEdit()">✏️ Edit</span>
+                        </td>
                     </tr>
                     <tr>
                         <td>Rated Head</td>
-                        <td>{{ site_requirements.get('head_m', 0)|round(1) }} m</td>
+                        <td><span id="ratedHead">{{ site_requirements.get('head_m', 0)|round(1) }}</span> m</td>
                     </tr>
                     <tr>
                         <td>Power Absorbed</td>
@@ -302,7 +442,12 @@
                     </tr>
                     <tr>
                         <td>Required Flow</td>
-                        <td>{{ site_requirements.get('flow_m3hr', 0)|round(1) }} m³/hr</td>
+                        <td>
+                            {{ site_requirements.get('flow_m3hr', 0)|round(1) }} m³/hr
+                            {% if request.args.get('flow') %}
+                                <span style="color: #ff9800; font-size: 10px;">(Modified)</span>
+                            {% endif %}
+                        </td>
                     </tr>
                     <tr>
                         <td>Static Head</td>
@@ -314,7 +459,12 @@
                     </tr>
                     <tr>
                         <td>Total Head</td>
-                        <td>{{ site_requirements.get('head_m', 0)|round(1) }} m</td>
+                        <td>
+                            {{ site_requirements.get('head_m', 0)|round(1) }} m
+                            {% if request.args.get('head') %}
+                                <span style="color: #ff9800; font-size: 10px;">(Modified)</span>
+                            {% endif %}
+                        </td>
                     </tr>
                     <tr>
                         <td>Total Power</td>
@@ -502,18 +652,73 @@
         </div>
     </div>
 
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-message">
+            Recalculating pump performance...
+        </div>
+    </div>
+
     <script>
+        // Store original values
+        let currentFlow = {{ site_requirements.get('flow_m3hr', 0)|round(1) }};
+        let currentHead = {{ site_requirements.get('head_m', 0)|round(1) }};
+        const pumpCode = "{{ selected_pump.get('pump_code', '') }}";
+
         // Initialize combined chart
         document.addEventListener('DOMContentLoaded', function() {
             const chartData = {
-                pumpCode: "{{ selected_pump.get('pump_code', '') }}",
-                flowRate: {{ site_requirements.get('flow_m3hr', 0)|round(1) }},
-                head: {{ site_requirements.get('head_m', 0)|round(1) }}
+                pumpCode: pumpCode,
+                flowRate: currentFlow,
+                head: currentHead
             };
 
             // Load chart data and create combined view
             loadEngineeringChart(chartData);
         });
+
+        function toggleEdit() {
+            const editControls = document.getElementById('editControls');
+            editControls.classList.toggle('active');
+            
+            if (editControls.classList.contains('active')) {
+                document.getElementById('editFlow').value = currentFlow;
+                document.getElementById('editHead').value = currentHead;
+                document.getElementById('editFlow').focus();
+            }
+        }
+
+        function cancelEdit() {
+            document.getElementById('editControls').classList.remove('active');
+        }
+
+        function applyChanges() {
+            const newFlow = parseFloat(document.getElementById('editFlow').value);
+            const newHead = parseFloat(document.getElementById('editHead').value);
+            
+            // Validate inputs
+            if (isNaN(newFlow) || newFlow <= 0) {
+                alert('Please enter a valid flow rate greater than 0');
+                return;
+            }
+            
+            if (isNaN(newHead) || newHead <= 0) {
+                alert('Please enter a valid head greater than 0');
+                return;
+            }
+            
+            // Show loading
+            document.getElementById('loadingOverlay').classList.add('active');
+            
+            // Reload page with new parameters
+            const params = new URLSearchParams({
+                flow: newFlow,
+                head: newHead,
+                pump_type: '{{ site_requirements.get("pump_type", "GENERAL") }}'
+            });
+            
+            window.location.href = `/engineering_report/${encodeURIComponent(pumpCode)}?${params.toString()}`;
+        }
 
         function loadEngineeringChart(data) {
             const url = `/api/chart_data/${encodeURIComponent(data.pumpCode)}?flow=${data.flowRate}&head=${data.head}`;
