@@ -59,25 +59,13 @@ def pump_report(pump_code):
                 from app.catalog_engine import CatalogEngine
                 catalog_engine = CatalogEngine()
                 
-                # Find this specific pump in the catalog
-                available_pumps = catalog_engine.get_all_pumps()
-                target_pump = None
-                for pump_data in available_pumps:
-                    if pump_data.get('pump_code') == pump_code:
-                        target_pump = pump_data
-                        break
+                # Try to get the pump by its code first
+                target_pump = catalog_engine.get_pump_by_code(pump_code)
                 
                 if target_pump:
-                    # Generate fresh evaluation for this pump
-                    site_requirements = {
-                        'flow_m3hr': float(flow),
-                        'head_m': float(head),
-                        'pump_type': request.args.get('pump_type', 'GENERAL'),
-                        'application_type': request.args.get('application_type', 'water')
-                    }
-                    
                     try:
-                        # Use catalog engine to get a full evaluation including this pump
+                        # Generate fresh evaluation for this specific pump
+                        # Run the evaluation system to get proper performance data
                         results = catalog_engine.select_pumps(
                             flow_m3hr=float(flow),
                             head_m=float(head),
@@ -93,9 +81,34 @@ def pump_report(pump_code):
                                 logger.info(f"Successfully generated fresh data for pump {pump_code}")
                                 break
                         
+                        # If not found in suitable pumps, create a basic evaluation
                         if not selected_pump:
-                            safe_flash('Unable to generate report for this pump.', 'error')
-                            return redirect(url_for('main_flow.index'))
+                            # Create a basic pump evaluation for display
+                            performance = target_pump.get_any_performance_point(float(flow), float(head))
+                            if performance:
+                                selected_pump = {
+                                    'pump_code': pump_code,
+                                    'manufacturer': target_pump.manufacturer,
+                                    'pump_type': target_pump.pump_type,
+                                    'model_series': target_pump.model_series,
+                                    'specifications': target_pump.specifications,
+                                    'operating_point': {
+                                        'flow_m3hr': performance['flow_m3hr'],
+                                        'head_m': performance['head_m'],
+                                        'efficiency_pct': performance['efficiency_pct'],
+                                        'power_kw': performance['power_kw'],
+                                        'npshr_m': performance.get('npshr_m'),
+                                        'impeller_diameter_mm': performance['impeller_diameter_mm'],
+                                        'test_speed_rpm': performance['test_speed_rpm']
+                                    },
+                                    'overall_score': 0,  # No scoring for direct lookup
+                                    'suitable': True,
+                                    'curves': target_pump.curves
+                                }
+                                logger.info(f"Created basic evaluation for pump {pump_code}")
+                            else:
+                                safe_flash('Unable to generate performance data for this pump.', 'error')
+                                return redirect(url_for('main_flow.index'))
                             
                     except Exception as e:
                         logger.error(f"Error generating fresh pump data: {e}")
