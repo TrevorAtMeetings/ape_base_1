@@ -418,7 +418,7 @@
                     </tr>
                     <tr>
                         <td>NPSHr Required</td>
-                        <td>{{ selected_pump.get('npshr_m', 0)|round(2) }} m</td>
+                        <td>{% if selected_pump.get('npshr_m') is not none %}{{ selected_pump.get('npshr_m')|round(2) }} m{% else %}N/A{% endif %}</td>
                     </tr>
                     <tr>
                         <td>Operating Impeller Ø</td>

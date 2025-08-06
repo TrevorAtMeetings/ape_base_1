@@ -304,11 +304,20 @@ class PumpChartsManager {
             maxX = Math.max(...allXValues);
         }
         
-        // Add padding to ensure operating point is visible
+        // Add more generous padding to prevent cramped display
         const range = maxX - minX;
-        const padding = range * 0.15; // 15% padding on each side
+        const padding = range * 0.25; // 25% padding on each side for better visibility
         
-        return [Math.max(0, minX - padding), maxX + padding];
+        // Ensure minimum range for very narrow data sets
+        const finalMinX = Math.max(0, minX - padding);
+        const finalMaxX = maxX + padding;
+        
+        // If the range is too narrow, expand it
+        if (finalMaxX - finalMinX < maxX * 0.5) {
+            return [0, maxX * 1.5];
+        }
+        
+        return [finalMinX, finalMaxX];
     }
 
     // Helper function to add system curve
@@ -635,6 +644,9 @@ class PumpChartsManager {
             this.addSystemCurve(traces, opPoint);
         }
 
+        // Calculate x-axis range to ensure operating point is visible
+        const xAxisRange = this.calculateXAxisRange(traces, opPoint);
+        
         // Add operating point, reference lines and marker
         if (opPoint && opPoint.flow_m3hr && opPoint.head_m) {
             // Operating point coordinates are now properly scaled on the server side
@@ -650,9 +662,6 @@ class PumpChartsManager {
                 traces.push(operatingPointMarker);
             }
         }
-
-        // Calculate x-axis range to ensure operating point is visible
-        const xAxisRange = this.calculateXAxisRange(traces, opPoint);
         
         // Create layout and plot config using helpers
         const layout = this.createStandardLayout(config, [dataRanges.minY, dataRanges.maxY], xAxisRange);
