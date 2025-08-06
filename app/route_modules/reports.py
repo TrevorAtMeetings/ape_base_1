@@ -190,9 +190,9 @@ def engineering_report(pump_code):
         pump_curves = pump_data.get('curves', []) if pump_data else []
         if pump_curves:
             # Recalculate performance at new operating point
-            from ..impeller_scaling import ImpellerScaling
+            from ..impeller_scaling import ImpellerScalingEngine
             
-            scaler = ImpellerScaling()
+            scaler = ImpellerScalingEngine()
             result = scaler.find_optimal_sizing(
                 pump_curves, 
                 new_flow, 
