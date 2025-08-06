@@ -55,28 +55,36 @@
                                     <div class="col-md-3">
                                         <div class="border rounded p-2">
                                             <i data-feather="activity" class="text-primary mb-1"></i>
-                                            <div class="fw-bold">{{ "%.1f"|format(pump['performance']['efficiency_pct']) }}%</div>
+                                            <div class="fw-bold">{{ "%.1f"|format(pump['performance'].get('efficiency_pct', 0)) }}%</div>
                                             <small class="text-muted">Efficiency</small>
                                         </div>
                                     </div>
                                     <div class="col-md-3">
                                         <div class="border rounded p-2">
                                             <i data-feather="zap" class="text-warning mb-1"></i>
-                                            <div class="fw-bold">{{ "%.1f"|format(pump['performance']['power_kw']) }} kW</div>
+                                            <div class="fw-bold">{{ "%.1f"|format(pump['performance'].get('power_kw', 0)) }} kW</div>
                                             <small class="text-muted">Power</small>
                                         </div>
                                     </div>
                                     <div class="col-md-3">
                                         <div class="border rounded p-2">
                                             <i data-feather="droplet" class="text-info mb-1"></i>
-                                            <div class="fw-bold">{{ "%.1f"|format(pump['performance']['npshr_m']) }} m</div>
+                                            <div class="fw-bold">{{ "%.1f"|format(pump['performance'].get('npshr_m', 0)) }} m</div>
                                             <small class="text-muted">NPSH</small>
                                         </div>
                                     </div>
                                     <div class="col-md-3">
                                         <div class="border rounded p-2">
                                             <i data-feather="rotate-cw" class="text-secondary mb-1"></i>
-                                            <div class="fw-bold">{{ pump['performance']['sizing_info']['impeller_trim_pct']|round|int }}%</div>
+                                            <div class="fw-bold">
+                                                {% if pump['sizing_info'] and pump['sizing_info'].get('impeller_trim_pct') %}
+                                                    {{ pump['sizing_info']['impeller_trim_pct']|round|int }}%
+                                                {% elif pump['performance'].get('sizing_info') and pump['performance']['sizing_info'].get('impeller_trim_pct') %}
+                                                    {{ pump['performance']['sizing_info']['impeller_trim_pct']|round|int }}%
+                                                {% else %}
+                                                    --
+                                                {% endif %}
+                                            </div>
                                             <small class="text-muted">Impeller Trim</small>
                                         </div>
                                     </div>
