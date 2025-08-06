@@ -8,7 +8,7 @@ from typing import Optional, Dict, Any
 from flask import Flask, session, flash, request
 
 # Global configuration
-SESSION_ENABLED = False  # Set to False to disable all session functionality
+SESSION_ENABLED = True  # Enable session functionality when SECRET_KEY is available
 SECRET_KEY_FALLBACK = "dev-secret-key-change-in-production"
 
 class SessionManager:
