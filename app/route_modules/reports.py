@@ -41,14 +41,31 @@ def pump_report(pump_code):
         flow = request.args.get('flow')
         head = request.args.get('head')
 
+        # DEBUG: Log entire session contents at function start
+        from flask import session as flask_session
+        logger.debug(f"=== SESSION DEBUG START ===")
+        logger.debug(f"Full session keys: {list(flask_session.keys())}")
+        logger.debug(f"Session size: {len(flask_session)}")
+        
         # Get the TRUE results from the session
         pump_selections = safe_session_get('pump_selections', [])
+        
+        # DEBUG: Log pump selections data
+        logger.debug(f"Retrieved pump_selections type: {type(pump_selections)}")
+        logger.debug(f"Retrieved pump_selections length: {len(pump_selections) if isinstance(pump_selections, list) else 'NOT A LIST'}")
+        logger.debug(f"Looking for pump_code: '{pump_code}'")
 
         selected_pump = None
-        for pump in pump_selections:
+        for i, pump in enumerate(pump_selections):
+            pump_code_in_data = pump.get('pump_code') if isinstance(pump, dict) else 'NOT_DICT'
+            logger.debug(f"Checking pump #{i}: '{pump_code_in_data}' == '{pump_code}' ? {pump_code_in_data == pump_code}")
             if pump.get('pump_code') == pump_code:
                 selected_pump = pump
+                logger.debug(f"MATCH FOUND at index {i}!")
                 break
+        
+        logger.debug(f"Final result: selected_pump = {'FOUND' if selected_pump else 'NOT FOUND'}")
+        logger.debug(f"=== SESSION DEBUG END ===")
 
         # NEW, SIMPLIFIED LOGIC
         if not selected_pump:
