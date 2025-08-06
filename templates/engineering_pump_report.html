@@ -78,12 +78,16 @@
             color: white;
         }
 
-        /* Data Tables */
+        /* Data Tables - Compact Layout */
         .data-grid {
             display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .data-grid.two-column {
             grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-            margin-bottom: 20px;
         }
 
         .data-section {
@@ -92,30 +96,32 @@
 
         .section-title {
             background: #e0e0e0;
-            padding: 5px 10px;
+            padding: 3px 8px;
             font-weight: bold;
-            font-size: 11px;
+            font-size: 10px;
             border-bottom: 1px solid #999;
         }
 
         .data-table {
             width: 100%;
-            font-size: 11px;
+            font-size: 10px;
         }
 
         .data-table td {
-            padding: 3px 8px;
-            border-bottom: 1px solid #ddd;
+            padding: 2px 6px;
+            border-bottom: 1px solid #eee;
         }
 
         .data-table td:first-child {
             font-weight: bold;
-            width: 40%;
+            width: 50%;
             background: #f8f8f8;
+            font-size: 9px;
         }
 
         .data-table td:last-child {
             text-align: right;
+            font-size: 10px;
         }
 
         /* Chart Section */
@@ -373,7 +379,16 @@
             </div>
         </div>
 
-        <!-- Data Grid -->
+        <!-- Performance Chart Section (Moved to Top) -->
+        <div class="chart-section">
+            <div class="section-title" style="text-align: center; font-size: 12px; margin-bottom: 10px;">
+                PERFORMANCE CURVES - {{ selected_pump.get('pump_code', 'N/A') }}
+            </div>
+            <div id="head-flow-chart" class="performance-chart" style="height: 250px;"></div>
+        </div>
+
+        <!-- Data Grid - 3 Column Layout -->
+        <div class="data-grid">
             <!-- Pump Details -->
             <div class="data-section">
                 <div class="section-title">PUMP DETAILS (Rated Duty)</div>
@@ -420,14 +435,6 @@
                     <tr>
                         <td>Min Diameter</td>
                         <td>{{ ((selected_pump.get('impeller_diameter_mm', 0) / (selected_pump.get('trim_percent', 100) / 100)) * 0.85)|round(0)|int }} mm</td>
-                    </tr>
-                    <tr>
-                        <td>Pump Speed</td>
-                        <td>{{ selected_pump.get('speed_rpm', 2950) }} rpm</td>
-                    </tr>
-                    <tr>
-                        <td>No of Stages</td>
-                        <td>{{ selected_pump.get('stages', 1) }}</td>
                     </tr>
                 </table>
             </div>
@@ -508,9 +515,13 @@
                 </table>
             </div>
 
+        </div>
+
+        <!-- Second Row - BEP, Motor and Selection Metrics -->
+        <div class="data-grid">
             <!-- Best Efficiency Point (BEP) -->
             <div class="data-section">
-                <div class="section-title">BEST EFFICIENCY POINT (BEP)</div>
+                <div class="section-title">BEP DETAILS</div>
                 <table class="data-table">
                     <tr>
                         <td>BEP Flow</td>
@@ -525,7 +536,7 @@
                         <td>{{ (selected_pump.get('efficiency_pct', 0) * 1.02)|round(1) }} %</td>
                     </tr>
                     <tr>
-                        <td>QBEP % of BEP Flow</td>
+                        <td>QBEP %</td>
                         <td>{{ selected_pump.get('qbep_percentage', 0)|round(0)|int }} %</td>
                     </tr>
                     <tr>
@@ -533,55 +544,27 @@
                         <td>
                             {% set qbep = selected_pump.get('qbep_percentage', 100) %}
                             {% if 80 <= qbep <= 110 %}
-                                Preferred (80-110%)
+                                Preferred
                             {% elif 70 <= qbep <= 120 %}
-                                Acceptable (70-120%)
+                                Acceptable
                             {% else %}
                                 Marginal
                             {% endif %}
                         </td>
                     </tr>
+                    <tr>
+                        <td>Pump Speed</td>
+                        <td>{{ selected_pump.get('speed_rpm', 2950) }} rpm</td>
+                    </tr>
+                    <tr>
+                        <td>No of Stages</td>
+                        <td>{{ selected_pump.get('stages', 1) }}</td>
+                    </tr>
                 </table>
             </div>
-        </div>
-
-        <!-- Performance Curves with Data Tables -->
-        <div class="chart-section">
-            <div class="chart-wrapper">
-                <div class="chart-title">PERFORMANCE CURVES - {{ selected_pump.get('pump_code', 'N/A') }}</div>
-                <div id="combined-chart" class="performance-chart"></div>
-            </div>
-
-            <!-- Curve Data Points Table -->
-            <table class="points-table">
-                <thead>
-                    <tr>
-                        <th>Flow (m³/hr)</th>
-                        <th>Head (m)</th>
-                        <th>Efficiency (%)</th>
-                        <th>Power (kW)</th>
-                        <th>NPSHr (m)</th>
-                        <th>Remarks</th>
-                    </tr>
-                </thead>
-                <tbody id="curve-data-points">
-                    <!-- Data points will be populated by JavaScript -->
-                    <tr class="operating-point">
-                        <td>{{ site_requirements.get('flow_m3hr', 0)|round(1) }}</td>
-                        <td>{{ site_requirements.get('head_m', 0)|round(1) }}</td>
-                        <td>{{ selected_pump.get('efficiency_pct', 0)|round(1) }}</td>
-                        <td>{{ selected_pump.get('power_kw', 0)|round(2) }}</td>
-                        <td>{{ selected_pump.get('npshr_m', 0)|round(2) }}</td>
-                        <td>Operating Point</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-
-        <!-- Electric Motor Details -->
-        <div class="data-grid">
+            <!-- Electric Motor Details -->
             <div class="data-section">
-                <div class="section-title">ELECTRIC MOTOR DETAILS</div>
+                <div class="section-title">MOTOR DETAILS</div>
                 <table class="data-table">
                     <tr>
                         <td>Min Power Required</td>
@@ -728,7 +711,6 @@
                 .then(result => {
                     if (result.curves && result.curves.length > 0) {
                         renderCombinedChart(result.curves, data.flowRate, data.head);
-                        populateDataTable(result.curves, data.flowRate, data.head);
                     }
                 })
                 .catch(error => console.error('Error loading chart data:', error));
@@ -792,45 +774,19 @@
                 showlegend: true,
                 legend: {
                     x: 0.5,
-                    y: 1.1,
-                    orientation: 'h'
+                    y: 1.05,
+                    orientation: 'h',
+                    xanchor: 'center'
                 },
-                margin: { t: 40, b: 60, l: 60, r: 60 },
-                height: 400
+                margin: { t: 30, b: 50, l: 60, r: 60 },
+                height: 250
             };
 
-            Plotly.newPlot('combined-chart', traces, layout, {
+            Plotly.newPlot('head-flow-chart', traces, layout, {
                 displayModeBar: true,
                 displaylogo: false,
                 modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d']
             });
-        }
-
-        function populateDataTable(curves, operatingFlow, operatingHead) {
-            const tbody = document.getElementById('curve-data-points');
-            const selectedCurve = curves.find(c => c.is_selected) || curves[0];
-            
-            // Clear existing rows except operating point
-            const operatingRow = tbody.querySelector('.operating-point');
-            tbody.innerHTML = '';
-            
-            // Add curve data points
-            for (let i = 0; i < selectedCurve.flow_data.length; i++) {
-                const row = tbody.insertRow();
-                row.innerHTML = `
-                    <td>${selectedCurve.flow_data[i].toFixed(1)}</td>
-                    <td>${selectedCurve.head_data[i].toFixed(1)}</td>
-                    <td>${selectedCurve.efficiency_data[i].toFixed(1)}</td>
-                    <td>${selectedCurve.power_data ? selectedCurve.power_data[i].toFixed(2) : '--'}</td>
-                    <td>${selectedCurve.npshr_data ? selectedCurve.npshr_data[i].toFixed(2) : '--'}</td>
-                    <td>Curve Point</td>
-                `;
-            }
-            
-            // Re-add operating point row
-            if (operatingRow) {
-                tbody.appendChild(operatingRow);
-            }
         }
     </script>
 </body>
