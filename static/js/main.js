@@ -1,7 +1,7 @@
-// APE Pumps Main JavaScript - Bootstrap Version
+// APE Pumps Main JavaScript - Sophisticated Interface
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize Bootstrap components (auto-initialized)
-    console.log('Form components initialized - enhanced autocomplete ready');
+    // Initialize Materialize components for professional interface
+    initializeMaterialize();
     
     // Ensure all form sections are visible
     showAllFormSections();
@@ -11,7 +11,27 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Hide any persistent progress bars after page load
     hidePersistentProgressBars();
+    
+    console.log('Form components initialized - enhanced autocomplete ready');
 });
+
+/**
+ * Initialize all Materialize components for professional interface
+ */
+function initializeMaterialize() {
+    // Auto-initialize all components
+    M.AutoInit();
+    
+    // Custom initialization for specific components
+    const selects = document.querySelectorAll('select');
+    M.FormSelect.init(selects);
+    
+    const tooltips = document.querySelectorAll('.tooltipped');
+    M.Tooltip.init(tooltips);
+    
+    const modals = document.querySelectorAll('.modal');
+    M.Modal.init(modals);
+}
 
 function hidePersistentProgressBars() {
     // Hide any progress bars that might be stuck visible
@@ -88,8 +108,11 @@ function setupFormHandling() {
     const resetBtn = document.querySelector('button[type="reset"]');
     if (resetBtn) {
         resetBtn.addEventListener('click', function() {
-            // Bootstrap components reinitialize automatically
-            console.log('Form reset completed - Bootstrap handles component reinitialization');
+            // Reinitialize Materialize selects after reset
+            setTimeout(function() {
+                const selects = document.querySelectorAll('select');
+                M.FormSelect.init(selects);
+            }, 100);
         });
     }
 }
@@ -101,8 +124,10 @@ function resetForm() {
     const form = document.getElementById('pumpSelectionForm');
     if (form) {
         form.reset();
-        // Bootstrap components handle reinitialization automatically
-        console.log('Form reset completed');
+        // Reinitialize Materialize components
+        setTimeout(function() {
+            M.AutoInit();
+        }, 100);
     }
 }
 
