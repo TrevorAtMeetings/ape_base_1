@@ -1064,10 +1064,10 @@ class CatalogEngine:
                 # Additional analysis data
                 'suitability_score': result['suitability_score'],
                 'bep_analysis': result['bep_analysis'],
-                'bep_score': result['bep_score'],
-                'efficiency_score': result['efficiency_score'],
-                'margin_score': result.get('margin_score', 0),
-                'npsh_score': result.get('npsh_score', 0),
+                'bep_score': result['bep_analysis'].get('bep_score', 0),
+                'efficiency_score': result['efficiency_at_duty'],  # Use actual efficiency
+                'margin_score': result['head_margin_pct'],  # Use head margin percentage
+                'npsh_score': 0,  # v6.0: NPSH removed from scoring
                 'sizing_validated': result['sizing_validated'],
                 
                 # Scoring details for transparency
