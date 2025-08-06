@@ -1,0 +1,35 @@
+INFO:app.catalog_engine:Catalog Engine: Loaded 386 pump models from repository
+INFO:app.catalog_engine:Catalog Engine: Total curves: 869
+INFO:app.catalog_engine:Catalog Engine: NPSH curves: 612 (70.4%)
+INFO:app.route_modules.main_flow:Loaded 386 pumps from catalog
+INFO:app.catalog_engine:Catalog Engine: QBP-centric selection for flow=25.0, head=45.0, type='GENERAL'
+INFO:app.catalog_engine:Catalog Engine: Pre-sorted 386 pumps by BEP proximity
+INFO:app.impeller_scaling:Impeller trimming: 197.0mm → 184.8mm (93.8% trim)
+INFO:app.impeller_scaling:Impeller trimming: 212.0mm → 183.0mm (86.3% trim)
+INFO:app.impeller_scaling:Impeller trimming: 215.0mm → 194.8mm (90.6% trim)
+INFO:app.impeller_scaling:Impeller trimming: 180.0mm → 172.8mm (96.0% trim)
+INFO:app.catalog_engine:Catalog Engine: Evaluated 386 pumps - 5 feasible, 381 excluded
+INFO:app.catalog_engine:Catalog Engine: Found 5 suitable pumps meeting all criteria
+INFO:app.catalog_engine:  #1: 32-200 2F 2P (END SUCTION) - Score: 85.7
+INFO:app.catalog_engine:  #2: 1.5X2X8.5 H (END SUCTION) - Score: 63.3
+INFO:app.catalog_engine:  #3: 1.5X2X10.5 H (END SUCTION) - Score: 42.3
+INFO:app.catalog_engine:  #4: WXH-65-185 2P (MULTI-STAGE) - Score: 41.8
+INFO:app.catalog_engine:  #5: 4505-48190 (MULTI-STAGE) - Score: 32.9
+INFO:app.catalog_engine:Exclusion Summary:
+INFO:app.catalog_engine:  Outside manufacturer's operating envelope: 381 pumps
+/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/werkzeug/sansio/response.py:232: UserWarning: The 'session' cookie is too large: the value was 4795 bytes but the header required 26 extra bytes. The final size was 4821 bytes but the limit is 4093 bytes. Browsers may silently ignore cookies larger than this.
+  dump_cookie(
+INFO:werkzeug:172.31.119.2 - - [06/Aug/2025 15:57:23] "GET /pump_options?flow=25.0&head=45.0&application_type=water&pump_type=GENERAL HTTP/1.1" 302 -
+WARNING:app.route_modules.reports:No session data found for pump 32-200 2F 2P, redirecting to start
+[WARNING] Session expired. Please run a new pump selection.
+INFO:werkzeug:172.31.119.2 - - [06/Aug/2025 15:57:23] "GET /pump_report/32-200%202F%202P?flow=25.0&head=45.0&pump_type=GENERAL HTTP/1.1" 302 -
+INFO:app.route_modules.main_flow:Index route accessed.
+INFO:werkzeug:172.31.119.2 - - [06/Aug/2025 15:57:24] "GET /?flow=25.0&head=45.0 HTTP/1.1" 200 -
+INFO:werkzeug:172.31.119.2 - - [06/Aug/2025 15:57:24] "GET /static/css/icon-fixes.css?v=4659 HTTP/1.1" 200 -
+INFO:werkzeug:172.31.119.2 - - [06/Aug/2025 15:57:24] "GET /static/css/floating-ai-chat.css?v=7794 HTTP/1.1" 200 -
+INFO:werkzeug:172.31.119.2 - - [06/Aug/2025 15:57:24] "GET /static/css/style.css?v=7957 HTTP/1.1" 200 -
+INFO:werkzeug:172.31.119.2 - - [06/Aug/2025 15:57:24] "GET /static/js/floating-ai-chat.js HTTP/1.1" 304 -
+INFO:werkzeug:172.31.119.2 - - [06/Aug/2025 15:57:24] "GET /static/js/icon-loader.js HTTP/1.1" 304 -
+INFO:werkzeug:172.31.119.2 - - [06/Aug/2025 15:57:24] "GET /static/js/main.js HTTP/1.1" 304 -
+INFO:werkzeug:172.31.119.2 - - [06/Aug/2025 15:57:25] "GET /static/js/micro-interactions.js HTTP/1.1" 304 -
+INFO:werkzeug:172.31.119.2 - - [06/Aug/2025 15:57:25] "GET /static/js/force-icon-refresh.js HTTP/1.1" 304 -

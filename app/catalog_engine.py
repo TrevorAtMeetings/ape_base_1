@@ -821,11 +821,22 @@ class CatalogPump:
         """Converts the CatalogPump object to a JSON-serializable dictionary."""
         def _make_serializable(value):
             """Convert non-serializable types to serializable ones."""
-            if isinstance(value, (bool, int, float, str, type(None))):
+            import numpy as np
+            
+            if isinstance(value, (str, int, float, type(None))):
                 return value
-            elif hasattr(value, 'item'):  # numpy types
+            elif isinstance(value, (bool, np.bool_)):
+                return bool(value)  # Convert numpy bool to native Python bool
+            elif isinstance(value, (np.integer, np.floating)):
+                return value.item()  # Convert numpy numbers
+            elif hasattr(value, 'item') and callable(getattr(value, 'item')):  # Other numpy types
                 return value.item()
             elif isinstance(value, dict):
+                # Only include essential pump data to reduce size
+                if len(value) > 10:  # Large dict, filter essentials
+                    essential_keys = ['pump_code', 'manufacturer', 'pump_type', 'specifications', 'description']
+                    filtered_value = {k: v for k, v in value.items() if k in essential_keys}
+                    return {k: _make_serializable(v) for k, v in filtered_value.items()}
                 return {k: _make_serializable(v) for k, v in value.items()}
             elif isinstance(value, (list, tuple)):
                 return [_make_serializable(item) for item in value]

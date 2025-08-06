@@ -203,11 +203,15 @@ def pump_options():
             # Convert ALL data to serializable formats
             def make_json_serializable(obj):
                 """Convert any object to JSON serializable format."""
+                import numpy as np
+                
                 if obj is None or isinstance(obj, (str, int, float)):
                     return obj
-                elif isinstance(obj, bool):
-                    return bool(obj)  # Ensure it's native Python bool
-                elif hasattr(obj, 'item'):  # numpy types
+                elif isinstance(obj, (bool, np.bool_)):
+                    return bool(obj)  # Convert numpy bool to native Python bool
+                elif isinstance(obj, (np.integer, np.floating)):
+                    return obj.item()  # Convert numpy numbers
+                elif hasattr(obj, 'item') and callable(getattr(obj, 'item')):  # Other numpy types
                     return obj.item()
                 elif hasattr(obj, 'to_dict'):  # CatalogPump objects
                     return obj.to_dict()
@@ -218,8 +222,19 @@ def pump_options():
                 else:
                     return str(obj)  # Convert everything else to string
             
-            # Apply comprehensive serialization to all pump results
-            serializable_results = [make_json_serializable(result) for result in pump_selections]
+            # Apply comprehensive serialization and keep only essential data to reduce session size
+            essential_results = []
+            for result in pump_selections:
+                essential_result = {
+                    'pump_code': make_json_serializable(result.get('pump_code', result['pump'].pump_code)),
+                    'suitability_score': make_json_serializable(result.get('suitability_score', 0)),
+                    'performance': make_json_serializable(result.get('performance', {})),
+                    'sizing_info': make_json_serializable(result.get('sizing_info', {})),
+                    'pump': make_json_serializable(result['pump'])  # Essential pump data
+                }
+                essential_results.append(essential_result)
+            
+            serializable_results = essential_results
 
             # Now save the serializable list to session as single source of truth
             from flask import session
