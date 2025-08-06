@@ -353,6 +353,7 @@
                 <a href="{{ url_for('reports.pump_report', pump_code=selected_pump.get('pump_code'), flow=site_requirements.get('flow_m3hr', 0), head=site_requirements.get('head_m', 0), pump_type=site_requirements.get('pump_type', 'GENERAL')) }}" 
                    class="view-btn">Presentation View</a>
                 <span class="view-btn active">Engineering View</span>
+                <span class="edit-trigger" onclick="toggleEditMode()">Edit</span>
                 <a href="javascript:window.print()" class="view-btn">Print/PDF</a>
             </div>
         </div>
@@ -379,12 +380,15 @@
             </div>
         </div>
 
-        <!-- Performance Chart Section (Moved to Top) -->
+        <!-- Performance Charts Section - Two Chart Layout -->
         <div class="chart-section">
             <div class="section-title" style="text-align: center; font-size: 12px; margin-bottom: 10px;">
                 PERFORMANCE CURVES - {{ selected_pump.get('pump_code', 'N/A') }}
             </div>
-            <div id="head-flow-chart" class="performance-chart" style="height: 375px;"></div>
+            <!-- Top Chart: Head, NPSH, and Efficiency -->
+            <div id="hydraulic-performance-chart" class="performance-chart" style="height: 375px; margin-bottom: 10px;"></div>
+            <!-- Bottom Chart: Power -->
+            <div id="power-performance-chart" class="performance-chart" style="height: 375px;"></div>
         </div>
 
         <!-- Data Grid - 3 Column Layout -->
@@ -401,7 +405,6 @@
                         <td>Rated Flow</td>
                         <td>
                             <span id="ratedFlow">{{ site_requirements.get('flow_m3hr', 0)|round(1) }}</span> m³/hr
-                            <span class="edit-trigger" onclick="toggleEdit()">✏️ Edit</span>
                         </td>
                     </tr>
                     <tr>
@@ -649,7 +652,7 @@
         let currentHead = {{ site_requirements.get('head_m', 0)|round(1) }};
         const pumpCode = "{{ selected_pump.get('pump_code', '') }}";
 
-        // Initialize combined chart
+        // Initialize engineering charts
         document.addEventListener('DOMContentLoaded', function() {
             const chartData = {
                 pumpCode: pumpCode,
@@ -657,11 +660,11 @@
                 head: currentHead
             };
 
-            // Load chart data and create combined view
-            loadEngineeringChart(chartData);
+            // Load chart data and render two-chart layout
+            loadEngineeringCharts(chartData);
         });
 
-        function toggleEdit() {
+        function toggleEditMode() {
             const editControls = document.getElementById('editControls');
             editControls.classList.toggle('active');
             
@@ -704,60 +707,97 @@
             window.location.href = `/engineering_report/${encodeURIComponent(pumpCode)}?${params.toString()}`;
         }
 
-        function loadEngineeringChart(data) {
+        function loadEngineeringCharts(data) {
             const url = `/api/chart_data/${encodeURIComponent(data.pumpCode)}?flow=${data.flowRate}&head=${data.head}`;
             
             fetch(url)
                 .then(response => response.json())
                 .then(result => {
                     if (result.curves && result.curves.length > 0) {
-                        renderCombinedChart(result.curves, data.flowRate, data.head);
+                        renderEngineeringTwoCharts(result, data.flowRate, data.head);
                     }
                 })
                 .catch(error => console.error('Error loading chart data:', error));
         }
 
-        function renderCombinedChart(curves, operatingFlow, operatingHead) {
+        function renderEngineeringTwoCharts(chartData, operatingFlow, operatingHead) {
+            const curves = chartData.curves;
+            const opPoint = chartData.operating_point || {};
+            
+            // Find all curves (min and max impeller diameters)
+            const selectedCurve = curves.find(c => c.is_selected) || curves[curves.length - 1];
+            const minCurve = curves[0]; // Assuming first curve is minimum diameter
+            const maxCurve = curves[curves.length - 1]; // Assuming last curve is maximum diameter
+            
+            // Calculate x-axis range to fit all data
+            const allFlows = curves.flatMap(c => c.flow_data);
+            const minFlow = 0;
+            const maxFlow = Math.max(...allFlows) * 1.2;
+            
+            // CHART 1: Head, NPSH, and Efficiency
+            renderHydraulicChart(curves, selectedCurve, opPoint, operatingFlow, operatingHead, minFlow, maxFlow);
+            
+            // CHART 2: Power
+            renderPowerChart(curves, selectedCurve, opPoint, operatingFlow, minFlow, maxFlow);
+        }
+        
+        function renderHydraulicChart(curves, selectedCurve, opPoint, operatingFlow, operatingHead, minFlow, maxFlow) {
             const traces = [];
             
-            // Find selected curve
-            const selectedCurve = curves.find(c => c.is_selected) || curves[0];
-            
-            // Head curve
-            traces.push({
-                x: selectedCurve.flow_data,
-                y: selectedCurve.head_data,
-                name: 'Head',
-                type: 'scatter',
-                mode: 'lines+markers',
-                line: { color: '#1976d2', width: 2 },
-                yaxis: 'y'
+            // Add Head curves for all impeller sizes
+            curves.forEach((curve, index) => {
+                traces.push({
+                    x: curve.flow_data,
+                    y: curve.head_data,
+                    name: `Head ${curve.impeller_diameter_mm}mm`,
+                    type: 'scatter',
+                    mode: 'lines',
+                    line: { 
+                        color: curve.is_selected ? '#1976d2' : '#90caf9', 
+                        width: curve.is_selected ? 3 : 2
+                    },
+                    yaxis: 'y',
+                    showlegend: curve.is_selected || index === 0 || index === curves.length - 1
+                });
             });
-
-            // Efficiency curve
-            traces.push({
-                x: selectedCurve.flow_data,
-                y: selectedCurve.efficiency_data,
-                name: 'Efficiency',
-                type: 'scatter',
-                mode: 'lines+markers',
-                line: { color: '#4caf50', width: 2, dash: 'dot' },
-                yaxis: 'y2'
-            });
-
-            // Get performance values at operating point
-            const opEfficiency = {{ selected_pump.get('efficiency_pct', 0)|round(1) }};
-            const opPower = {{ selected_pump.get('power_kw', 0)|round(2) }};
-            const opNPSHr = {{ selected_pump.get('npshr_m', 0)|round(2) }};
-            const opImpellerDia = {{ selected_pump.get('impeller_diameter_mm', 0)|round(0)|int }};
-            const opTrimPercent = {{ selected_pump.get('trim_percent', 100)|round(1) }};
             
-            // Add duty point reference lines
-            // Vertical line for flow
+            // Add NPSH curve (only for selected/trimmed impeller)
+            if (selectedCurve.npshr_data && selectedCurve.npshr_data.length > 0) {
+                traces.push({
+                    x: selectedCurve.flow_data,
+                    y: selectedCurve.npshr_data,
+                    name: 'NPSHr',
+                    type: 'scatter',
+                    mode: 'lines',
+                    line: { color: '#00acc1', width: 2, dash: 'dash' },
+                    yaxis: 'y'
+                });
+            }
+            
+            // Add Efficiency curves
+            curves.forEach((curve, index) => {
+                if (curve.efficiency_data && curve.efficiency_data.length > 0) {
+                    traces.push({
+                        x: curve.flow_data,
+                        y: curve.efficiency_data,
+                        name: `Eff ${curve.impeller_diameter_mm}mm`,
+                        type: 'scatter',
+                        mode: 'lines',
+                        line: { 
+                            color: curve.is_selected ? '#4caf50' : '#a5d6a7', 
+                            width: curve.is_selected ? 3 : 2,
+                            dash: 'dot'
+                        },
+                        yaxis: 'y2',
+                        showlegend: curve.is_selected || index === 0 || index === curves.length - 1
+                    });
+                }
+            });
+            
+            // Add duty point vertical line
             traces.push({
                 x: [operatingFlow, operatingFlow],
-                y: [0, Math.max(...selectedCurve.head_data) * 1.1],
-                name: 'Duty Flow',
+                y: [0, Math.max(...curves.flatMap(c => c.head_data)) * 1.1],
                 type: 'scatter',
                 mode: 'lines',
                 line: { color: '#d32f2f', width: 2, dash: 'dot' },
@@ -766,71 +806,143 @@
                 yaxis: 'y'
             });
             
-            // Horizontal line for head
-            traces.push({
-                x: [0, Math.max(...selectedCurve.flow_data) * 1.1],
-                y: [operatingHead, operatingHead],
-                name: 'Duty Head',
-                type: 'scatter',
-                mode: 'lines',
-                line: { color: '#d32f2f', width: 2, dash: 'dot' },
-                showlegend: false,
-                hoverinfo: 'skip',
-                yaxis: 'y'
-            });
-            
-            // Operating point with detailed hover text
+            // Add operating point marker
             traces.push({
                 x: [operatingFlow],
                 y: [operatingHead],
-                name: 'Operating Point',
+                name: 'Duty Point',
                 type: 'scatter',
                 mode: 'markers',
-                marker: { size: 12, color: '#ff0000', symbol: 'star' },
+                marker: { size: 10, color: '#ff0000', symbol: 'circle' },
                 yaxis: 'y',
                 hovertemplate: 
-                    '<b>Operating Point Details</b><br>' +
+                    '<b>Operating Point</b><br>' +
                     'Flow: %{x:.1f} m³/hr<br>' +
                     'Head: %{y:.1f} m<br>' +
-                    'Efficiency: ' + opEfficiency + ' %<br>' +
-                    'Power: ' + opPower + ' kW<br>' +
-                    'NPSHr: ' + opNPSHr + ' m<br>' +
-                    'Impeller Ø: ' + opImpellerDia + ' mm<br>' +
-                    'Trim: ' + opTrimPercent + ' %<br>' +
                     '<extra></extra>'
             });
-
+            
             const layout = {
-                title: '',
                 xaxis: {
                     title: 'Flow (m³/hr)',
-                    gridcolor: '#ddd'
+                    gridcolor: '#e0e0e0',
+                    range: [minFlow, maxFlow],
+                    dtick: 200
                 },
                 yaxis: {
-                    title: 'Head (m)',
-                    gridcolor: '#ddd'
+                    title: 'Head (m) / NPSHr (m)',
+                    gridcolor: '#e0e0e0',
+                    side: 'left'
                 },
                 yaxis2: {
                     title: 'Efficiency (%)',
                     overlaying: 'y',
                     side: 'right',
-                    gridcolor: '#ddd'
+                    gridcolor: '#e0e0e0',
+                    showgrid: false,
+                    range: [0, 100]
                 },
                 showlegend: true,
                 legend: {
                     x: 0.5,
-                    y: 1.05,
+                    y: 1.1,
                     orientation: 'h',
-                    xanchor: 'center'
+                    xanchor: 'center',
+                    font: { size: 10 }
                 },
-                margin: { t: 30, b: 50, l: 60, r: 60 },
-                height: 375
+                margin: { t: 50, b: 60, l: 70, r: 70 },
+                height: 375,
+                paper_bgcolor: 'white',
+                plot_bgcolor: 'white'
             };
-
-            Plotly.newPlot('head-flow-chart', traces, layout, {
+            
+            Plotly.newPlot('hydraulic-performance-chart', traces, layout, {
                 displayModeBar: true,
                 displaylogo: false,
-                modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d']
+                modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d', 'autoScale2d'],
+                responsive: true
+            });
+        }
+        
+        function renderPowerChart(curves, selectedCurve, opPoint, operatingFlow, minFlow, maxFlow) {
+            const traces = [];
+            
+            // Add Power curves for all impeller sizes
+            curves.forEach((curve, index) => {
+                if (curve.power_data && curve.power_data.length > 0) {
+                    traces.push({
+                        x: curve.flow_data,
+                        y: curve.power_data,
+                        name: `Power ${curve.impeller_diameter_mm}mm`,
+                        type: 'scatter',
+                        mode: 'lines',
+                        line: { 
+                            color: curve.is_selected ? '#ff6f00' : '#ffb74d', 
+                            width: curve.is_selected ? 3 : 2
+                        },
+                        showlegend: curve.is_selected || index === 0 || index === curves.length - 1
+                    });
+                }
+            });
+            
+            // Add duty point vertical line
+            traces.push({
+                x: [operatingFlow, operatingFlow],
+                y: [0, Math.max(...curves.flatMap(c => c.power_data || [])) * 1.1],
+                type: 'scatter',
+                mode: 'lines',
+                line: { color: '#d32f2f', width: 2, dash: 'dot' },
+                showlegend: false,
+                hoverinfo: 'skip'
+            });
+            
+            // Add operating point marker if we have power data
+            if (opPoint.power_kw) {
+                traces.push({
+                    x: [operatingFlow],
+                    y: [opPoint.power_kw],
+                    name: 'Operating Power',
+                    type: 'scatter',
+                    mode: 'markers',
+                    marker: { size: 10, color: '#ff0000', symbol: 'circle' },
+                    hovertemplate: 
+                        '<b>Operating Power</b><br>' +
+                        'Flow: %{x:.1f} m³/hr<br>' +
+                        'Power: %{y:.1f} kW<br>' +
+                        '<extra></extra>'
+                });
+            }
+            
+            const layout = {
+                xaxis: {
+                    title: 'Flow (m³/hr)',
+                    gridcolor: '#e0e0e0',
+                    range: [minFlow, maxFlow],
+                    dtick: 200
+                },
+                yaxis: {
+                    title: 'Power (kW)',
+                    gridcolor: '#e0e0e0'
+                },
+                showlegend: true,
+                legend: {
+                    x: 0.5,
+                    y: 1.1,
+                    orientation: 'h',
+                    xanchor: 'center',
+                    font: { size: 10 }
+                },
+                margin: { t: 50, b: 60, l: 70, r: 70 },
+                height: 375,
+                paper_bgcolor: 'white',
+                plot_bgcolor: 'white'
+            };
+            
+            Plotly.newPlot('power-performance-chart', traces, layout, {
+                displayModeBar: true,
+                displaylogo: false,
+                modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d', 'autoScale2d'],
+                responsive: true
             });
         }
     </script>
