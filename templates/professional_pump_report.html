@@ -795,8 +795,10 @@
                 head: {{ site_requirements.get('head_m', 0)|round(1) }}
             };
 
-            // Initialize Materialize components
-            M.AutoInit();
+            // Initialize Materialize components if available
+            if (typeof M !== 'undefined') {
+                M.AutoInit();
+            }
 
             // Wait for chart manager to be ready
             function initializeCharts() {

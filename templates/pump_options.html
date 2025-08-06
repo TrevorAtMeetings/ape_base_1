@@ -1,114 +1,395 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="container" style="margin-top: 30px;">
-    <div class="row">
-        <div class="col s12">
-            <!-- Header Section -->
-            <div class="card-panel teal white-text z-depth-2" style="margin-bottom: 30px;">
-                <h1 style="margin-bottom: 10px; font-size: 2.2rem; font-weight: 500;">
-                    <i class="material-icons left" style="font-size: 2.2rem; margin-right: 15px;">check_circle</i>
-                    Pump Selection Results
-                </h1>
-                <p style="margin: 0; font-size: 1.15rem; font-weight: 300;">
-                    Found {{ pump_selections|length }} suitable pump{{ 's' if pump_selections|length != 1 else '' }} 
-                    for your requirements: <strong>{{ "%.1f"|format(site_requirements['flow_m3hr']) }} m³/hr</strong> 
-                    at <strong>{{ "%.1f"|format(site_requirements['head_m']) }} m</strong> head
-                </p>
-            </div>
+<style>
+    /* Compact Results Page Design */
+    .results-header {
+        background: linear-gradient(135deg, #1e3c72 0%, #0d2240 100%);
+        color: white;
+        padding: 16px 0;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
 
-            <!-- Pump Selection List -->
-            <div class="card z-depth-1">
-                <div class="card-content grey lighten-5" style="padding: 20px;">
-                    <h5 style="margin: 0; color: #1976d2; font-weight: 500;">
-                        <i class="material-icons left" style="color: #1976d2;">list</i>
-                        Recommended Pumps (Ranked by Suitability Score)
-                    </h5>
-                </div>
-                <div class="card-content" style="padding: 0;">
-                    <div class="collection">
-                        {% for pump in pump_selections %}
-                            <a href="{{ url_for('reports.pump_report', 
-                                              pump_code=pump['pump_code'], 
-                                              flow=site_requirements['flow_m3hr'], 
-                                              head=site_requirements['head_m'], 
-                                              pump_type=site_requirements['pump_type']) }}" 
-                               class="collection-item" style="padding: 25px; transition: background-color 0.2s ease; border-left: 4px solid #1976d2;">
-                                
-                                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
-                                    <div>
-                                        <h5 style="margin: 0 0 8px 0; color: #1976d2; font-weight: 500;">
-                                            <i class="material-icons left" style="color: #1976d2;">settings</i>
-                                            {{ pump['pump_code'] }}
-                                        </h5>
-                                        <p style="color: #757575; margin: 0; font-size: 0.95rem;">{{ pump['manufacturer'] }} - {{ pump['pump_type'] }}</p>
-                                    </div>
-                                    <div>
-                                        <span class="chip green white-text" style="font-size: 0.9rem; font-weight: 500; padding: 8px 16px;">
-                                            Score: {{ "%.1f"|format(pump['suitability_score']) }}
-                                        </span>
-                                    </div>
-                                </div>
-                                
-                                <!-- Performance Summary -->
-                                <div class="row" style="text-align: center;">
-                                    <div class="col s6 m3">
-                                        <div class="card-panel white z-depth-1" style="padding: 15px; margin: 0 5px;">
-                                            <i class="material-icons" style="color: #1976d2; font-size: 1.8rem; display: block; margin-bottom: 8px;">trending_up</i>
-                                            <div style="font-weight: 500; font-size: 1.2rem; color: #212121;">{{ "%.1f"|format(pump.get('efficiency_pct', 0)) }}%</div>
-                                            <small style="color: #757575; font-size: 0.8rem;">Efficiency</small>
-                                        </div>
-                                    </div>
-                                    <div class="col s6 m3">
-                                        <div class="card-panel white z-depth-1" style="padding: 15px; margin: 0 5px;">
-                                            <i class="material-icons" style="color: #ff9800; font-size: 1.8rem; display: block; margin-bottom: 8px;">flash_on</i>
-                                            <div style="font-weight: 500; font-size: 1.2rem; color: #212121;">{{ "%.1f"|format(pump.get('power_kw', 0)) }} kW</div>
-                                            <small style="color: #757575; font-size: 0.8rem;">Power</small>
-                                        </div>
-                                    </div>
-                                    <div class="col s6 m3">
-                                        <div class="card-panel white z-depth-1" style="padding: 15px; margin: 0 5px;">
-                                            <i class="material-icons" style="color: #2196f3; font-size: 1.8rem; display: block; margin-bottom: 8px;">opacity</i>
-                                            <div style="font-weight: 500; font-size: 1.2rem; color: #212121;">{{ "%.1f"|format(pump.get('npshr_m', 0)) }} m</div>
-                                            <small style="color: #757575; font-size: 0.8rem;">NPSH</small>
-                                        </div>
-                                    </div>
-                                    <div class="col s6 m3">
-                                        <div class="card-panel white z-depth-1" style="padding: 15px; margin: 0 5px;">
-                                            <i class="material-icons" style="color: #607d8b; font-size: 1.8rem; display: block; margin-bottom: 8px;">rotate_right</i>
-                                            <div style="font-weight: 500; font-size: 1.2rem; color: #212121;">
-                                                {% if pump.get('trim_percent') %}
-                                                    {{ pump['trim_percent']|round|int }}%
-                                                {% else %}
-                                                    100%
-                                                {% endif %}
-                                            </div>
-                                            <small style="color: #757575; font-size: 0.8rem;">Impeller Trim</small>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <!-- Action Hint -->
-                                <div style="margin-top: 20px; text-align: center;">
-                                    <small style="color: #1976d2; font-size: 0.9rem;">
-                                        <i class="material-icons" style="font-size: 16px; vertical-align: middle; margin-right: 4px;">visibility</i>
-                                        Click to view detailed performance analysis & PDF report
-                                    </small>
-                                </div>
-                            </a>
-                        {% endfor %}
-                    </div>
-                </div>
-            </div>
+    .results-title {
+        margin: 0;
+        font-size: 1.5rem;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
 
-            <!-- Actions -->
-            <div style="margin-top: 30px; text-align: center;">
-                <a href="{{ url_for('main_flow.index') }}" class="btn waves-effect waves-light grey darken-1">
-                    <i class="material-icons left">arrow_back</i>
-                    Start New Selection
-                </a>
-            </div>
+    .results-subtitle {
+        margin-top: 4px;
+        opacity: 0.9;
+        font-size: 0.95rem;
+    }
+
+    .pump-table {
+        background: white;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .pump-table-header {
+        background: #f5f5f5;
+        border-bottom: 2px solid #e0e0e0;
+        padding: 12px 16px;
+        font-weight: 600;
+        color: #263238;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .pump-row {
+        display: flex;
+        align-items: center;
+        padding: 12px 16px;
+        border-bottom: 1px solid #e0e0e0;
+        transition: all 0.2s ease;
+        cursor: pointer;
+        text-decoration: none;
+        color: inherit;
+    }
+
+    .pump-row:hover {
+        background: #f8f9fa;
+        transform: translateX(4px);
+    }
+
+    .pump-row:last-child {
+        border-bottom: none;
+    }
+
+    .pump-rank {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        background: #e3f2fd;
+        color: #1976d2;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 0.9rem;
+        margin-right: 16px;
+    }
+
+    .pump-rank.top {
+        background: linear-gradient(135deg, #4caf50, #66bb6a);
+        color: white;
+    }
+
+    .pump-info {
+        flex: 1;
+        min-width: 200px;
+    }
+
+    .pump-name {
+        font-weight: 600;
+        color: #263238;
+        font-size: 1rem;
+        margin-bottom: 2px;
+    }
+
+    .pump-type {
+        color: #607d8b;
+        font-size: 0.85rem;
+    }
+
+    .pump-metrics {
+        display: flex;
+        gap: 32px;
+        flex: 2;
+        align-items: center;
+    }
+
+    .metric-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-width: 80px;
+    }
+
+    .metric-icon {
+        font-size: 20px;
+        margin-bottom: 4px;
+    }
+
+    .metric-value {
+        font-weight: 600;
+        font-size: 1rem;
+        color: #263238;
+    }
+
+    .metric-label {
+        font-size: 0.75rem;
+        color: #90a4ae;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .pump-score {
+        min-width: 100px;
+        text-align: right;
+    }
+
+    .score-badge {
+        display: inline-block;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+
+    .score-excellent {
+        background: #e8f5e9;
+        color: #2e7d32;
+    }
+
+    .score-good {
+        background: #e3f2fd;
+        color: #1565c0;
+    }
+
+    .score-fair {
+        background: #fff3e0;
+        color: #e65100;
+    }
+
+    .pump-action {
+        margin-left: 16px;
+        color: #1976d2;
+    }
+
+    .summary-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 12px;
+        margin-bottom: 20px;
+    }
+
+    .summary-card {
+        background: white;
+        border-radius: 8px;
+        padding: 12px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        text-align: center;
+    }
+
+    .summary-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #263238;
+    }
+
+    .summary-label {
+        font-size: 0.75rem;
+        color: #90a4ae;
+        text-transform: uppercase;
+        margin-top: 4px;
+    }
+
+    /* Mobile Responsive */
+    @media (max-width: 768px) {
+        .pump-metrics {
+            display: none;
+        }
+        
+        .pump-row {
+            flex-direction: column;
+            align-items: flex-start;
+            padding: 16px;
+        }
+        
+        .pump-rank {
+            position: absolute;
+            right: 16px;
+            top: 16px;
+        }
+        
+        .pump-info {
+            margin-bottom: 8px;
+        }
+        
+        .pump-score {
+            width: 100%;
+            text-align: left;
+        }
+    }
+
+    /* Compact action bar */
+    .action-bar {
+        margin-top: 16px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .view-hint {
+        color: #607d8b;
+        font-size: 0.85rem;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+</style>
+
+<div class="results-header">
+    <div class="container">
+        <h1 class="results-title">
+            <i class="material-icons">check_circle</i>
+            Pump Selection Results
+        </h1>
+        <div class="results-subtitle">
+            Found <strong>{{ pump_selections|length }}</strong> suitable pump{{ 's' if pump_selections|length != 1 else '' }} 
+            for <strong>{{ "%.1f"|format(site_requirements['flow_m3hr']) }} m³/hr</strong> 
+            at <strong>{{ "%.1f"|format(site_requirements['head_m']) }} m</strong> head
         </div>
     </div>
 </div>
+
+<div class="container">
+    <!-- Quick Summary Cards -->
+    <div class="summary-cards">
+        <div class="summary-card">
+            <div class="summary-value">{{ pump_selections|length }}</div>
+            <div class="summary-label">Pumps Found</div>
+        </div>
+        <div class="summary-card">
+            <div class="summary-value">{{ "%.1f"|format(site_requirements['flow_m3hr']) }}</div>
+            <div class="summary-label">Flow (m³/hr)</div>
+        </div>
+        <div class="summary-card">
+            <div class="summary-value">{{ "%.1f"|format(site_requirements['head_m']) }}</div>
+            <div class="summary-label">Head (m)</div>
+        </div>
+        {% if pump_selections %}
+        <div class="summary-card">
+            <div class="summary-value" style="color: #4caf50;">{{ "%.1f"|format(pump_selections[0]['suitability_score']) }}</div>
+            <div class="summary-label">Best Score</div>
+        </div>
+        <div class="summary-card">
+            <div class="summary-value">{{ "%.1f"|format(pump_selections[0].get('efficiency_pct', 0)) }}%</div>
+            <div class="summary-label">Best Efficiency</div>
+        </div>
+        <div class="summary-card">
+            <div class="summary-value">{{ "%.1f"|format(pump_selections[0].get('power_kw', 0)) }}</div>
+            <div class="summary-label">Min Power (kW)</div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Pump Results Table -->
+    <div class="pump-table">
+        <div class="pump-table-header">
+            Recommended Pumps (Ranked by Suitability Score)
+        </div>
+        
+        {% for pump in pump_selections[:10] %}
+        <a href="{{ url_for('reports.pump_report', 
+                          pump_code=pump['pump_code'], 
+                          flow=site_requirements['flow_m3hr'], 
+                          head=site_requirements['head_m'], 
+                          pump_type=site_requirements['pump_type']) }}" 
+           class="pump-row">
+            
+            <div class="pump-rank {% if loop.index <= 3 %}top{% endif %}">
+                {{ loop.index }}
+            </div>
+            
+            <div class="pump-info">
+                <div class="pump-name">{{ pump['pump_code'] }}</div>
+                <div class="pump-type">{{ pump['manufacturer'] }} - {{ pump['pump_type'] }}</div>
+            </div>
+            
+            <div class="pump-metrics">
+                <div class="metric-item">
+                    <i class="material-icons metric-icon" style="color: #1976d2;">trending_up</i>
+                    <div class="metric-value">{{ "%.1f"|format(pump.get('efficiency_pct', 0)) }}%</div>
+                    <div class="metric-label">Efficiency</div>
+                </div>
+                
+                <div class="metric-item">
+                    <i class="material-icons metric-icon" style="color: #ff9800;">flash_on</i>
+                    <div class="metric-value">{{ "%.1f"|format(pump.get('power_kw', 0)) }}</div>
+                    <div class="metric-label">Power kW</div>
+                </div>
+                
+                <div class="metric-item">
+                    <i class="material-icons metric-icon" style="color: #2196f3;">opacity</i>
+                    <div class="metric-value">{{ "%.1f"|format(pump.get('npshr_m', 0)) }}</div>
+                    <div class="metric-label">NPSHr m</div>
+                </div>
+                
+                <div class="metric-item">
+                    <i class="material-icons metric-icon" style="color: #607d8b;">rotate_right</i>
+                    <div class="metric-value">
+                        {% if pump.get('trim_percent') %}
+                            {{ pump['trim_percent']|round|int }}%
+                        {% else %}
+                            100%
+                        {% endif %}
+                    </div>
+                    <div class="metric-label">Trim</div>
+                </div>
+
+                <div class="metric-item">
+                    <i class="material-icons metric-icon" style="color: #9c27b0;">donut_large</i>
+                    <div class="metric-value">
+                        {% if pump.get('qbep_percentage') %}
+                            {{ pump['qbep_percentage']|round|int }}%
+                        {% else %}
+                            --
+                        {% endif %}
+                    </div>
+                    <div class="metric-label">QBEP</div>
+                </div>
+            </div>
+            
+            <div class="pump-score">
+                {% set score = pump['suitability_score'] %}
+                <span class="score-badge 
+                    {% if score >= 80 %}score-excellent
+                    {% elif score >= 60 %}score-good
+                    {% else %}score-fair{% endif %}">
+                    Score: {{ "%.1f"|format(score) }}
+                </span>
+            </div>
+            
+            <div class="pump-action">
+                <i class="material-icons">chevron_right</i>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+
+    <!-- Action Bar -->
+    <div class="action-bar">
+        <div class="view-hint">
+            <i class="material-icons" style="font-size: 16px;">info_outline</i>
+            Click any pump for detailed analysis & PDF report
+        </div>
+        <a href="{{ url_for('main_flow.index') }}" class="btn-flat waves-effect">
+            <i class="material-icons left">refresh</i>
+            New Selection
+        </a>
+    </div>
+</div>
+
+<script>
+    // Add keyboard navigation
+    document.addEventListener('keydown', function(e) {
+        if (e.key >= '1' && e.key <= '9') {
+            const index = parseInt(e.key) - 1;
+            const pumps = document.querySelectorAll('.pump-row');
+            if (pumps[index]) {
+                pumps[index].click();
+            }
+        }
+    });
+</script>
 {% endblock %}
