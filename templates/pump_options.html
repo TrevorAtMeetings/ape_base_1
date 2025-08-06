@@ -55,21 +55,21 @@
                                     <div class="col s6 m3">
                                         <div class="card-panel white z-depth-1" style="padding: 15px; margin: 0 5px;">
                                             <i class="material-icons" style="color: #1976d2; font-size: 1.8rem; display: block; margin-bottom: 8px;">trending_up</i>
-                                            <div style="font-weight: 500; font-size: 1.2rem; color: #212121;">{{ "%.1f"|format(pump['performance'].get('efficiency_pct', 0)) }}%</div>
+                                            <div style="font-weight: 500; font-size: 1.2rem; color: #212121;">{{ "%.1f"|format(pump['performance'].get('efficiency_pct') or 0) }}%</div>
                                             <small style="color: #757575; font-size: 0.8rem;">Efficiency</small>
                                         </div>
                                     </div>
                                     <div class="col s6 m3">
                                         <div class="card-panel white z-depth-1" style="padding: 15px; margin: 0 5px;">
                                             <i class="material-icons" style="color: #ff9800; font-size: 1.8rem; display: block; margin-bottom: 8px;">flash_on</i>
-                                            <div style="font-weight: 500; font-size: 1.2rem; color: #212121;">{{ "%.1f"|format(pump['performance'].get('power_kw', 0)) }} kW</div>
+                                            <div style="font-weight: 500; font-size: 1.2rem; color: #212121;">{{ "%.1f"|format(pump['performance'].get('power_kw') or 0) }} kW</div>
                                             <small style="color: #757575; font-size: 0.8rem;">Power</small>
                                         </div>
                                     </div>
                                     <div class="col s6 m3">
                                         <div class="card-panel white z-depth-1" style="padding: 15px; margin: 0 5px;">
                                             <i class="material-icons" style="color: #2196f3; font-size: 1.8rem; display: block; margin-bottom: 8px;">opacity</i>
-                                            <div style="font-weight: 500; font-size: 1.2rem; color: #212121;">{{ "%.1f"|format(pump['performance'].get('npshr_m', 0)) }} m</div>
+                                            <div style="font-weight: 500; font-size: 1.2rem; color: #212121;">{{ "%.1f"|format(pump['performance'].get('npshr_m') or 0) }} m</div>
                                             <small style="color: #757575; font-size: 0.8rem;">NPSH</small>
                                         </div>
                                     </div>

@@ -130,13 +130,18 @@ def pump_report(pump_code):
         
         logger.info(f"Report display - Pump: {pump_code}, Score: {selected_pump.get('suitability_score', 'N/A')}")
         
+        # Add current date for report generation
+        from datetime import datetime
+        current_date = datetime.now().strftime('%Y-%m-%d')
+        
         # Pass this correct object directly to the template.
         return render_template(
             'professional_pump_report.html',
             selected_pump=selected_pump,
             exclusion_summary=exclusion_summary,
             site_requirements=site_requirements_data,
-            pump_code=pump_code
+            pump_code=pump_code,
+            current_date=current_date
         )
     
     except Exception as e:
