@@ -309,19 +309,37 @@
             <div class="pump-metrics">
                 <div class="metric-item">
                     <i class="material-icons metric-icon" style="color: #1976d2;">trending_up</i>
-                    <div class="metric-value">{{ "%.1f"|format(pump.get('efficiency_pct', 0)) }}%</div>
+                    <div class="metric-value">
+                        {% if pump.get('efficiency_pct') is not none %}
+                            {{ "%.1f"|format(pump.get('efficiency_pct')) }}%
+                        {% else %}
+                            --%
+                        {% endif %}
+                    </div>
                     <div class="metric-label">Efficiency</div>
                 </div>
                 
                 <div class="metric-item">
                     <i class="material-icons metric-icon" style="color: #ff9800;">flash_on</i>
-                    <div class="metric-value">{{ "%.1f"|format(pump.get('power_kw', 0)) }}</div>
+                    <div class="metric-value">
+                        {% if pump.get('power_kw') is not none %}
+                            {{ "%.1f"|format(pump.get('power_kw')) }}
+                        {% else %}
+                            --
+                        {% endif %}
+                    </div>
                     <div class="metric-label">Power kW</div>
                 </div>
                 
                 <div class="metric-item">
                     <i class="material-icons metric-icon" style="color: #2196f3;">opacity</i>
-                    <div class="metric-value">{{ "%.1f"|format(pump.get('npshr_m', 0)) }}</div>
+                    <div class="metric-value">
+                        {% if pump.get('npshr_m') is not none %}
+                            {{ "%.1f"|format(pump.get('npshr_m')) }}
+                        {% else %}
+                            --
+                        {% endif %}
+                    </div>
                     <div class="metric-label">NPSHr m</div>
                 </div>
                 
