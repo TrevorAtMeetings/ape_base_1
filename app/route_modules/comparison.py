@@ -32,7 +32,7 @@ def pump_comparison():
         if pump_selections and not pump_selections[0].get('lifecycle_cost'):
             flow = site_requirements.get('flow_m3hr', 100)
             for selection in pump_selections:
-                performance = selection.get('operating_point', {})
+                performance = selection.get('performance', {})
                 power_kw = performance.get('power_kw', 0)
                 efficiency_pct = performance.get('efficiency_pct', 0)
                 
@@ -70,7 +70,7 @@ def pump_comparison():
                 flow_ratio = bep_analysis.get('flow_ratio', 1.0)
                 qbep_percentage = flow_ratio * 100  # Convert to percentage
                 
-                selection['operating_point'] = mapped_performance
+                selection['performance'] = mapped_performance
                 selection['lifecycle_cost'] = lifecycle_cost
                 selection['bep_analysis'] = bep_analysis
                 selection['qbep_percentage'] = qbep_percentage
@@ -129,7 +129,7 @@ def pump_comparison():
                     
                     evaluation = {
                         'pump_code': pump.pump_code,
-                        'overall_score': selection.get('suitability_score', 0),
+                        'suitability_score': selection.get('suitability_score', 0),
                         'selection_reason': f"Efficiency: {efficiency_pct:.1f}%, Head error: {selection.get('head_error_pct', 0):.1f}%",
                         'operating_point': mapped_performance,
                         'pump_info': {
@@ -322,7 +322,7 @@ def generate_comparison_pdf():
                         'pump_code': pump_code.strip(),
                         'manufacturer': catalog_pump.manufacturer,
                         'model_series': catalog_pump.model_series,
-                        'overall_score': performance.get('efficiency_pct', 0),
+                        'suitability_score': performance.get('efficiency_pct', 0),
                         'performance': performance,
                         'selection_reason': f"Efficiency: {performance.get('efficiency_pct', 0):.1f}%"
                     })

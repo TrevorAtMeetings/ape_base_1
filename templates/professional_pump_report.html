@@ -539,11 +539,11 @@
                     </div>
                     <div class="text-end ms-5">
                         <div class="d-flex flex-column gap-3 align-items-end">
-                            <a href="{{ url_for('reports.generate_pdf', pump_code=selected_pump_code) }}?flow={{ site_requirements.flow_m3hr }}&head={{ site_requirements.head_m }}" 
+                            <a href="{{ url_for('reports.generate_pdf', pump_code=selected_pump_code) }}?flow={{ site_requirements.get("flow_m3hr", 0) }}&head={{ site_requirements.get("head_m", 0) }}" 
                                class="btn" style="background: white; color: var(--md-primary); border: none; padding: 16px 32px; font-size: 1.1rem; font-weight: 600; border-radius: 12px; text-decoration: none; display: flex; align-items: center; gap: 12px; box-shadow: var(--md-shadow);">
                                 <i class="fas fa-download"></i>Download PDF Report
                             </a>
-                            <a href="{{ url_for('comparison.pump_comparison', flow=site_requirements.flow_m3hr, head=site_requirements.head_m, pump_type=site_requirements.pump_type or 'General') }}" 
+                            <a href="{{ url_for('comparison.pump_comparison', flow=site_requirements.get("flow_m3hr", 0), head=site_requirements.get("head_m", 0), pump_type=site_requirements.get("pump_type", "General") or 'General') }}" 
                                class="btn" style="background: var(--md-primary); color: white; border: none; padding: 16px 32px; font-size: 1.1rem; font-weight: 600; border-radius: 12px; text-decoration: none; display: flex; align-items: center; gap: 12px; box-shadow: var(--md-shadow);">
                                 <i class="fas fa-balance-scale"></i>View Comparison
                             </a>
@@ -564,28 +564,28 @@
                                 <div class="col-lg-3 col-md-6 col-sm-6 mb-3">
                                     <div class="requirement-metric" style="text-align: center; padding: 20px; background: var(--md-surface-variant); border-radius: var(--md-border-radius); border: 1px solid var(--md-outline-variant);">
                                         <div style="color: #666; font-size: 14px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Flow Rate</div>
-                                        <div style="color: var(--md-primary); font-size: 24px; font-weight: 600;">{{ site_requirements.flow_m3hr }} <span style="font-size: 16px; font-weight: 400;">m³/hr</span></div>
+                                        <div style="color: var(--md-primary); font-size: 24px; font-weight: 600;">{{ site_requirements.get("flow_m3hr", 0) }} <span style="font-size: 16px; font-weight: 400;">m³/hr</span></div>
                                     </div>
                                 </div>
                                 <div class="col-lg-3 col-md-6 col-sm-6 mb-3">
                                     <div class="requirement-metric" style="text-align: center; padding: 20px; background: var(--md-surface-variant); border-radius: var(--md-border-radius); border: 1px solid var(--md-outline-variant);">
                                         <div style="color: #666; font-size: 14px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Total Head</div>
-                                        <div style="color: var(--md-primary); font-size: 24px; font-weight: 600;">{{ site_requirements.head_m }} <span style="font-size: 16px; font-weight: 400;">m</span></div>
+                                        <div style="color: var(--md-primary); font-size: 24px; font-weight: 600;">{{ site_requirements.get("head_m", 0) }} <span style="font-size: 16px; font-weight: 400;">m</span></div>
                                     </div>
                                 </div>
-                                {% if site_requirements.customer_name %}
+                                {% if site_requirements.get("customer_name", "Client") %}
                                 <div class="col-lg-3 col-md-6 col-sm-6 mb-3">
                                     <div class="requirement-metric" style="text-align: center; padding: 20px; background: var(--md-surface-variant); border-radius: var(--md-border-radius); border: 1px solid var(--md-outline-variant);">
                                         <div style="color: #666; font-size: 14px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Customer</div>
-                                        <div style="color: #333; font-size: 16px; font-weight: 500;">{{ site_requirements.customer_name }}</div>
+                                        <div style="color: #333; font-size: 16px; font-weight: 500;">{{ site_requirements.get("customer_name", "Client") }}</div>
                                     </div>
                                 </div>
                                 {% endif %}
-                                {% if site_requirements.project_name %}
+                                {% if site_requirements.get("project_name", "Project") %}
                                 <div class="col-lg-3 col-md-6 col-sm-6 mb-3">
                                     <div class="requirement-metric" style="text-align: center; padding: 20px; background: var(--md-surface-variant); border-radius: var(--md-border-radius); border: 1px solid var(--md-outline-variant);">
                                         <div style="color: #666; font-size: 14px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Project</div>
-                                        <div style="color: #333; font-size: 16px; font-weight: 500;">{{ site_requirements.project_name }}</div>
+                                        <div style="color: #333; font-size: 16px; font-weight: 500;">{{ site_requirements.get("project_name", "Project") }}</div>
                                     </div>
                                 </div>
                                 {% endif %}
@@ -934,14 +934,14 @@
                     <div class="row g-4">
                         <div class="col-md-4">
                             <div class="metric-display">
-                                <span class="metric-value">{{ site_requirements.flow_m3hr }}</span>
+                                <span class="metric-value">{{ site_requirements.get('flow_m3hr', 0) }}</span>
                                 <span class="metric-unit">m³/hr</span>
                                 <div class="metric-label">Required Flow Rate</div>
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="metric-display">
-                                <span class="metric-value">{{ site_requirements.head_m }}</span>
+                                <span class="metric-value">{{ site_requirements.get('head_m', 0) }}</span>
                                 <span class="metric-unit">m</span>
                                 <div class="metric-label">Total Head</div>
                             </div>
@@ -1222,7 +1222,7 @@
                                     </div>
 
                                     <!-- View Report Button -->
-                                    <a href="{{ url_for('reports.pump_report', pump_code=alternative.get('pump_code')) }}?flow={{ site_requirements.flow_m3hr }}&head={{ site_requirements.head_m }}&pump_type={{ site_requirements.pump_type }}" 
+                                    <a href="{{ url_for('reports.pump_report', pump_code=alternative.get('pump_code')) }}?flow={{ site_requirements.get("flow_m3hr", 0) }}&head={{ site_requirements.get("head_m", 0) }}&pump_type={{ site_requirements.get("pump_type", "General") }}" 
                                        class="btn btn-outline-warning btn-sm w-100" style="border-color: #ffc107; color: #333;">
                                         <i class="fas fa-eye me-1"></i>View Report
                                     </a>
@@ -1685,7 +1685,7 @@
                     <div style="padding: 16px; background-color: #f8f9fa; border-top: 1px solid #dee2e6;">
                         <small class="text-muted">
                             <i class="fas fa-info-circle me-1"></i>
-                            Operating results based on authentic APE pump performance data at duty point: {{ "%.0f"|format((site_requirements.flow_m3hr or 0)|float) }} m³/hr @ {{ "%.1f"|format((site_requirements.head_m or 0)|float) }}m head
+                            Operating results based on authentic APE pump performance data at duty point: {{ "%.0f"|format((site_requirements.get("flow_m3hr", 0) or 0)|float) }} m³/hr @ {{ "%.1f"|format((site_requirements.get("head_m", 0) or 0)|float) }}m head
                         </small>
                     </div>
                 </div>
@@ -1759,8 +1759,8 @@
 <!-- Chart data for JavaScript -->
 <div id="chartData" 
      data-pump-code="{{ selected_pump.get('pump_code', 'N/A') }}" 
-     data-flow-rate="{{ site_requirements.flow_m3hr }}" 
-     data-head="{{ site_requirements.head_m }}" 
+     data-flow-rate="{{ site_requirements.get("flow_m3hr", 0) }}" 
+     data-head="{{ site_requirements.get("head_m", 0) }}" 
      style="display: none;"></div>
 
 
@@ -2262,8 +2262,8 @@ document.addEventListener('DOMContentLoaded', function() {
 function loadComprehensiveAIAnalysis() {
 
     const pumpCode = '{{ selected_pump.get("pump_code", "") }}';
-    const flow = '{{ site_requirements.flow_m3hr }}';
-    const head = '{{ site_requirements.head_m }}';
+    const flow = '{{ site_requirements.get("flow_m3hr", 0) }}';
+    const head = '{{ site_requirements.get("head_m", 0) }}';
     const efficiency = '{{ selected_pump.get("performance", {}).get("efficiency_pct") }}';
     const power = '{{ selected_pump.get("performance", {}).get("power_kw") }}';
     const npshr = '{{ selected_pump.get("performance", {}).get("npshr_m") }}';
@@ -2386,8 +2386,8 @@ function loadComprehensiveAIAnalysis() {
 function getSpecificAnalysis(topic) {
 
     const pumpCode = '{{ selected_pump.get("pump_code", "") }}';
-    const flow = '{{ site_requirements.flow_m3hr }}';
-    const head = '{{ site_requirements.head_m }}';
+    const flow = '{{ site_requirements.get("flow_m3hr", 0) }}';
+    const head = '{{ site_requirements.get("head_m", 0) }}';
 
     const specificQuery = `Provide detailed analysis of ${topic} for the ${pumpCode} pump operating at ${flow} m³/h and ${head} m head. Include specific technical recommendations and industry best practices.`;
 

@@ -225,15 +225,28 @@ def pump_options():
                 else:
                     return str(obj)  # Convert everything else to string
             
-            # Apply comprehensive serialization and keep only essential data to reduce session size
+            # Apply comprehensive serialization and flatten essential pump data for template access
             essential_results = []
             for result in pump_selections:
+                pump_obj = result['pump']
                 essential_result = {
-                    'pump_code': make_json_serializable(result.get('pump_code', result['pump'].pump_code)),
+                    'pump_code': make_json_serializable(result.get('pump_code', pump_obj.pump_code)),
                     'suitability_score': make_json_serializable(result.get('suitability_score', 0)),
                     'performance': make_json_serializable(result.get('performance', {})),
                     'sizing_info': make_json_serializable(result.get('sizing_info', {})),
-                    'pump': make_json_serializable(result['pump'])  # Essential pump data
+                    'pump': make_json_serializable(pump_obj),  # Keep full pump data
+                    
+                    # ESSENTIAL: Flatten key pump attributes for template access
+                    'manufacturer': make_json_serializable(getattr(pump_obj, 'manufacturer', 'APE Pumps')),
+                    'pump_type': make_json_serializable(getattr(pump_obj, 'pump_type', 'Centrifugal')),
+                    'model_series': make_json_serializable(getattr(pump_obj, 'model_series', 'Industrial')),
+                    'stages': make_json_serializable(getattr(pump_obj, 'stages', '1')),
+                    
+                    # Add other essential template data from result
+                    'score_breakdown': make_json_serializable(result.get('score_breakdown', {})),
+                    'bep_analysis': make_json_serializable(result.get('bep_analysis', {})),
+                    'exclusion_reasons': make_json_serializable(result.get('exclusion_reasons', [])),
+                    'selection_reason': make_json_serializable(result.get('selection_reason', '')),
                 }
                 essential_results.append(essential_result)
             
