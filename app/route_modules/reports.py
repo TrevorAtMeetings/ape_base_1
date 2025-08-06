@@ -43,6 +43,12 @@ def pump_report(pump_code):
 
         # Get the TRUE results from the session
         pump_selections = safe_session_get('pump_selections', [])
+        
+        # Debug session data
+        logger.info(f"Session keys available: {list(session.keys())}")
+        logger.info(f"Pump selections count: {len(pump_selections)}")
+        if pump_selections:
+            logger.info(f"First pump code in session: {pump_selections[0].get('pump_code', 'NO CODE')}")
 
         selected_pump = None
         for pump in pump_selections:
@@ -51,9 +57,12 @@ def pump_report(pump_code):
                 break
 
         if not selected_pump:
+            # Let's check if the data exists but with a different format
+            logger.info(f"Could not find pump {pump_code} in {len(pump_selections)} pumps")
+            for i, pump in enumerate(pump_selections[:3]):  # Log first 3 pump codes
+                logger.info(f"Pump {i}: {pump.get('pump_code', 'NO CODE')}")
+            
             # FALLBACK: If session data is missing, redirect to the start.
-            # This forces a re-run of the correct logic.
-            # DO NOT try to recalculate here.
             logger.warning(f"No session data found for pump {pump_code}, redirecting to start")
             safe_flash('Session expired. Please run a new pump selection.', 'warning')
             return redirect(url_for('main_flow.index', flow=flow, head=head))
