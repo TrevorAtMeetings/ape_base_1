@@ -375,14 +375,20 @@
                     <i class="material-icons" style="font-size: 14px; vertical-align: middle;">search</i>
                     Force Pump Selection
                 </div>
-                <div class="edit-field" style="width: 100%;">
-                    <label for="pumpSelector" style="font-size: 10px;">Select Any Pump to Analyze</label>
-                    <select id="pumpSelector" style="width: 100%; padding: 6px; font-size: 11px; border: 1px solid #ccc; border-radius: 3px;">
-                        <option value="">-- Keep Current Selection ({{ selected_pump.get('pump_code', 'N/A') }}) --</option>
-                        <optgroup label="Available Pumps">
-                            <!-- This will be populated dynamically -->
-                        </optgroup>
-                    </select>
+                <div class="edit-field" style="width: 100%; position: relative;">
+                    <label for="pumpSearch" style="font-size: 10px;">Search Any Pump to Analyze</label>
+                    <input type="text" 
+                           id="pumpSearch" 
+                           placeholder="Type pump code (e.g. 10-WLN-26A)"
+                           style="width: 100%; padding: 6px; font-size: 11px; border: 1px solid #ccc; border-radius: 3px;"
+                           autocomplete="off">
+                    <input type="hidden" id="pumpSelector" value="">
+                    <div id="pumpSearchResults" style="position: absolute; top: 100%; left: 0; right: 0; max-height: 200px; overflow-y: auto; background: white; border: 1px solid #ccc; border-radius: 3px; margin-top: 2px; display: none; z-index: 1000; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                        <!-- Search results will appear here -->
+                    </div>
+                    <div style="font-size: 9px; color: #888; margin-top: 4px;">
+                        Current: {{ selected_pump.get('pump_code', 'N/A') }} | <span id="pumpCount">Loading...</span> pumps available
+                    </div>
                 </div>
             </div>
             
@@ -739,6 +745,8 @@
             }
         }
 
+        let allPumps = [];
+        
         function loadPumpList() {
             console.log('Loading pump list...');
             fetch('/api/pump_list')
@@ -748,64 +756,92 @@
                 })
                 .then(data => {
                     console.log('Pump data received:', data.pumps ? data.pumps.length : 0, 'pumps');
-                    const selector = document.getElementById('pumpSelector');
                     
-                    if (!selector) {
-                        console.error('Pump selector element not found!');
-                        return;
-                    }
+                    // Store all pumps for search
+                    allPumps = data.pumps || [];
                     
-                    const optgroup = selector.querySelector('optgroup');
+                    // Update pump count
+                    document.getElementById('pumpCount').textContent = allPumps.length;
                     
-                    if (!optgroup) {
-                        console.error('Optgroup element not found!');
-                        return;
-                    }
-                    
-                    // Clear existing options
-                    optgroup.innerHTML = '';
-                    
-                    // Check if we have pumps
-                    if (!data.pumps || data.pumps.length === 0) {
-                        console.warn('No pumps received from API');
-                        const option = document.createElement('option');
-                        option.value = '';
-                        option.textContent = 'No pumps available';
-                        option.disabled = true;
-                        optgroup.appendChild(option);
-                        return;
-                    }
-                    
-                    // Sort pumps by code
-                    data.pumps.sort((a, b) => a.pump_code.localeCompare(b.pump_code));
-                    
-                    // Add pump options
-                    data.pumps.forEach(pump => {
-                        const option = document.createElement('option');
-                        option.value = pump.pump_code;
-                        option.textContent = `${pump.pump_code} - ${pump.manufacturer || 'APE PUMPS'}`;
-                        optgroup.appendChild(option);
-                    });
-                    
-                    console.log('Successfully loaded', data.pumps.length, 'pumps into dropdown');
+                    // Setup search functionality
+                    setupPumpSearch();
                 })
                 .catch(error => {
-                    console.error('Error loading pump list:', error);
-                    // Add error message to dropdown
-                    const selector = document.getElementById('pumpSelector');
-                    if (selector) {
-                        const optgroup = selector.querySelector('optgroup');
-                        if (optgroup) {
-                            optgroup.innerHTML = '<option value="" disabled>Error loading pumps</option>';
-                        }
-                    }
+                    console.error('Error loading pumps:', error);
+                    document.getElementById('pumpCount').textContent = 'Error loading';
                 });
         }
 
+        function setupPumpSearch() {
+            const searchInput = document.getElementById('pumpSearch');
+            const resultsDiv = document.getElementById('pumpSearchResults');
+            const hiddenSelector = document.getElementById('pumpSelector');
+            
+            if (!searchInput || !resultsDiv) return;
+            
+            // Handle search input
+            searchInput.addEventListener('input', function() {
+                const searchTerm = this.value.toLowerCase().trim();
+                
+                if (searchTerm.length === 0) {
+                    resultsDiv.style.display = 'none';
+                    hiddenSelector.value = '';
+                    return;
+                }
+                
+                // Filter pumps
+                const filtered = allPumps.filter(pump => 
+                    pump.pump_code.toLowerCase().includes(searchTerm)
+                );
+                
+                // Display results
+                if (filtered.length > 0) {
+                    resultsDiv.innerHTML = '';
+                    filtered.slice(0, 20).forEach(pump => {
+                        const item = document.createElement('div');
+                        item.style.cssText = 'padding: 6px 10px; cursor: pointer; font-size: 11px; border-bottom: 1px solid #eee;';
+                        item.textContent = `${pump.pump_code} - ${pump.manufacturer || 'APE PUMPS'}`;
+                        item.addEventListener('mouseover', () => {
+                            item.style.backgroundColor = '#f0f0f0';
+                        });
+                        item.addEventListener('mouseout', () => {
+                            item.style.backgroundColor = 'white';
+                        });
+                        item.addEventListener('click', () => {
+                            searchInput.value = pump.pump_code;
+                            hiddenSelector.value = pump.pump_code;
+                            resultsDiv.style.display = 'none';
+                        });
+                        resultsDiv.appendChild(item);
+                    });
+                    
+                    if (filtered.length > 20) {
+                        const more = document.createElement('div');
+                        more.style.cssText = 'padding: 6px 10px; font-size: 10px; color: #666; font-style: italic;';
+                        more.textContent = `... and ${filtered.length - 20} more results`;
+                        resultsDiv.appendChild(more);
+                    }
+                    
+                    resultsDiv.style.display = 'block';
+                } else {
+                    resultsDiv.innerHTML = '<div style="padding: 6px 10px; font-size: 10px; color: #999;">No pumps found</div>';
+                    resultsDiv.style.display = 'block';
+                }
+            });
+            
+            // Hide results when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!searchInput.contains(e.target) && !resultsDiv.contains(e.target)) {
+                    resultsDiv.style.display = 'none';
+                }
+            });
+        }
+        
         function cancelEdit() {
             document.getElementById('editControls').classList.remove('active');
-            // Reset pump selector
+            // Reset pump selector and search
             document.getElementById('pumpSelector').value = '';
+            document.getElementById('pumpSearch').value = '';
         }
 
         function applyChanges() {

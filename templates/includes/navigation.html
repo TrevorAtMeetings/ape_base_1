@@ -72,12 +72,17 @@
         box-shadow: 0 4px 16px rgba(0,0,0,0.15);
         border-radius: 8px;
         z-index: 10000;
-        top: 100%;
-        margin-top: 8px;
+        top: calc(100% + 4px);
+        left: 0;
     }
     
     .nav-dropdown:hover .nav-dropdown-content,
     .nav-dropdown-content.show {
+        display: block;
+    }
+    
+    /* Keep dropdown open when hovering over content */
+    .nav-dropdown-content:hover {
         display: block;
     }
     
