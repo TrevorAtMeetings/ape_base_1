@@ -1280,10 +1280,10 @@
                                     <i class="fas fa-info-circle me-2 text-primary"></i>
                                     <div>
                                         <strong>Operating Point Analysis:</strong> 
-                                        The selected pump operates at <strong>{{ selected_pump.operating_point.flow_m3hr|round(1) }} m³/hr</strong> 
-                                        and <strong>{{ selected_pump.operating_point.head_m|round(1) }} m</strong> head 
-                                        with <strong>{{ selected_pump.operating_point.efficiency_pct|round(1) }}%</strong> efficiency.
-                                        {% if selected_pump.operating_point.extrapolated %}
+                                        The selected pump operates at <strong>{{ (selected_pump.get('performance', {}).get('flow_m3hr', 0))|round(1) }} m³/hr</strong> 
+                                        and <strong>{{ (selected_pump.get('performance', {}).get('head_m', 0))|round(1) }} m</strong> head 
+                                        with <strong>{{ (selected_pump.get('performance', {}).get('efficiency_pct', 0))|round(1) }}%</strong> efficiency.
+                                        {% if selected_pump.get('performance', {}).get('extrapolated') %}
                                         <span class="badge bg-warning ms-2">Extrapolated</span>
                                         {% else %}
                                         <span class="badge bg-success ms-2">Within Curve</span>
@@ -1304,7 +1304,7 @@
                                         <i class="fas fa-arrow-up me-2"></i>Head vs Flow Rate with BEP Operating Range
                                     </h6>
                                     <div class="chart-indicators">
-                                        <span class="badge bg-primary">{{ selected_pump.operating_point.head_m|round(1) }} m</span>
+                                        <span class="badge bg-primary">{{ (selected_pump.get('performance', {}).get('head_m', 0))|round(1) }} m</span>
                                         <span class="badge bg-success ms-2">BEP Zone</span>
                                     </div>
                                 </div>
