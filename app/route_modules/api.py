@@ -85,7 +85,7 @@ def get_chart_data(pump_code):
             }
 
             # Check for speed variation in the performance calculation
-            sizing_info = performance_result.get('sizing_info')
+            sizing_info = operating_point.get('sizing_info')
             if sizing_info and sizing_info.get(
                     'sizing_method') == 'speed_variation':
                 speed_scaling_applied = True
@@ -100,7 +100,7 @@ def get_chart_data(pump_code):
                         f"Chart API: Speed variation detected - {base_speed}→{required_speed} RPM (ratio: {actual_speed_ratio:.3f})"
                     )
                     logger.info(
-                        f"Chart API: Performance at scaled speed - power: {performance_result.get('power_kw')}kW"
+                        f"Chart API: Performance at scaled speed - power: {operating_point.get('power_kw')}kW"
                     )
 
         logger.info(
@@ -136,8 +136,8 @@ def get_chart_data(pump_code):
             'speed_scaling': {
                 'applied': speed_scaling_applied,
                 'speed_ratio': actual_speed_ratio,
-                'required_speed_rpm': performance_result.get('sizing_info', {}).get('required_speed_rpm') if performance_result else None,
-                'test_speed_rpm': performance_result.get('sizing_info', {}).get('test_speed_rpm') if performance_result else None
+                'required_speed_rpm': operating_point.get('sizing_info', {}).get('required_speed_rpm') if operating_point else None,
+                'test_speed_rpm': operating_point.get('sizing_info', {}).get('test_speed_rpm') if operating_point else None
             } if speed_scaling_applied else None,
             'metadata': {
                 'flow_units': 'm³/hr',
