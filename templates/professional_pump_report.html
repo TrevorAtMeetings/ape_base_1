@@ -1328,8 +1328,8 @@
                                         <i class="fas fa-percentage me-2"></i>Efficiency vs Flow Rate with BEP Analysis
                                     </h6>
                                     <div class="chart-indicators">
-                                        <span class="badge bg-success">{{ selected_pump.operating_point.efficiency_pct|round(1) }}%</span>
-                                        <span class="badge bg-info ms-2">BEP: {{ ((selected_pump.operating_point.efficiency_pct or 0) * 1.0)|round(1) }}%</span>
+                                        <span class="badge bg-success">{{ selected_pump.get('operating_point', {}).get('efficiency_pct', 0)|round(1) }}%</span>
+                                        <span class="badge bg-info ms-2">BEP: {{ ((selected_pump.get('operating_point', {}).get('efficiency_pct', 0) or 0) * 1.0)|round(1) }}%</span>
                                     </div>
                                 </div>
                                 <div id="efficiency-flow-chart" style="height: 450px; width: 100%; min-height: 450px; background: #fafafa; border: 1px dashed #ccc; display: block !important; position: relative;"></div>
@@ -1351,7 +1351,7 @@
                                         <i class="fas fa-bolt me-2"></i>Power Consumption vs Flow Rate with System Analysis
                                     </h6>
                                     <div class="chart-indicators">
-                                        <span class="badge bg-warning">{{ selected_pump.operating_point.power_kw|round(1) }} kW</span>
+                                        <span class="badge bg-warning">{{ selected_pump.get('operating_point', {}).get('power_kw', 0)|round(1) }} kW</span>
                                         <span class="badge bg-secondary ms-2">System Load</span>
                                     </div>
                                 </div>
@@ -1374,7 +1374,7 @@
                                         <i class="fas fa-tint me-2"></i>NPSH Required vs Flow Rate with Cavitation Analysis
                                     </h6>
                                     <div class="chart-indicators">
-                                        <span class="badge bg-danger">{{ (selected_pump.operating_point.npshr_m|round(1)) if selected_pump.operating_point.npshr_m else 'N/A' }} m</span>
+                                        <span class="badge bg-danger">{{ (selected_pump.get('operating_point', {}).get('npshr_m', 0)|round(1)) if selected_pump.get('operating_point', {}).get('npshr_m') else 'N/A' }} m</span>
                                         <span class="badge bg-warning ms-2">Cavitation Zone</span>
                                     </div>
                                 </div>
