@@ -257,12 +257,12 @@ def pump_options():
 
         # Store site requirements for reports (pump_selections already saved above with correct data)
         safe_session_set('site_requirements', {
-            'flow_m3hr': site_requirements.flow_m3hr,
-            'head_m': site_requirements.head_m,
-            'pump_type': site_requirements.pump_type,
+            'flow_m3hr': flow,  # Use the 'flow' variable
+            'head_m': head,     # Use the 'head' variable
+            'pump_type': pump_type, # Use the 'pump_type' variable
             'customer_name': request.args.get('contact_name', 'Engineering Client'),
             'project_name': request.args.get('project_name', 'Pump Selection Project'),
-            'application': request.args.get('application', 'Water Supply'),
+            'application': application_type, # Use the 'application_type' variable
             'fluid_type': request.args.get('liquid_type', 'Water')
         })
         

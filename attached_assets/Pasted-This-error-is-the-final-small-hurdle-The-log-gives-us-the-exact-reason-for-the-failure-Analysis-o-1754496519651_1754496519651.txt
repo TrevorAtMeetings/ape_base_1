@@ -1,0 +1,39 @@
+This error is the final, small hurdle. The log gives us the exact reason for the failure.
+Analysis of the Error: AttributeError: 'dict object' has no attribute 'flow_m3hr'
+What happened? The pump_options function in main_flow.py is trying to access an attribute on an object, but because of our serialization fix, it's now dealing with a dictionary.
+Where did it happen? The error is in the SiteRequirements object creation.
+site_requirements = SiteRequirements(flow_m3hr=flow, head_m=head, ...)
+This part is fine.
+The error is in the safe_session_set('site_requirements', ...) call. You are trying to access site_requirements.flow_m3hr, but site_requirements is an object, and we need to pass a dictionary to the session.
+Why did it happen? We correctly serialized the pump_selections data, but we forgot to do the same for the site_requirements data before trying to save it to the session.
+Directive: Fix the AttributeError
+This is a simple fix. We just need to use the correct variables that are already available.
+Your task is to modify the pump_options function in app/route_modules/main_flow.py.
+Step-by-Step Instructions:
+Locate the safe_session_set call for site_requirements.
+The Problem: You are trying to read the values back from the site_requirements object.
+Generated python
+# OLD, INCORRECT CODE
+safe_session_set('site_requirements', {
+    'flow_m3hr': site_requirements.flow_m3hr,
+    'head_m': site_requirements.head_m,
+    # ... and so on
+})
+Use code with caution.
+Python
+The Fix: You already have these values in simple variables (flow, head, pump_type, etc.) at the top of the function. Use those directly.
+Generated python
+# NEW, CORRECT CODE
+safe_session_set('site_requirements', {
+    'flow_m3hr': flow,  # Use the 'flow' variable
+    'head_m': head,    # Use the 'head' variable
+    'pump_type': pump_type, # Use the 'pump_type' variable
+    'customer_name': request.args.get('contact_name', 'Engineering Client'),
+    'project_name': request.args.get('project_name', 'Pump Selection Project'),
+    'application': application_type, # Use the 'application_type' variable
+    'fluid_type': request.args.get('liquid_type', 'Water')
+})
+Use code with caution.
+Python
+This change ensures that you are saving a simple, serializable dictionary to the session, which will resolve the AttributeError.
+This is the last bug. After this fix, the application flow will be complete and correct. Proceed with this final change.
