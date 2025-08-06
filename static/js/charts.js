@@ -32,7 +32,7 @@ class PumpChartsManager {
     }
 
     // Helper function to create standard layout for all charts
-    createStandardLayout(config, yAxisRange) {
+    createStandardLayout(config, yAxisRange, xAxisRange) {
         const title = this.currentChartData.pump_code + " - " + config.title;
         
         return {
@@ -51,7 +51,8 @@ class PumpChartsManager {
                 gridwidth: 1,
                 showline: true,
                 linecolor: '#ccc',
-                linewidth: 1
+                linewidth: 1,
+                range: xAxisRange
             },
             yaxis: {
                 title: {
@@ -253,6 +254,36 @@ class PumpChartsManager {
             extendedMinX: 0,
             extendedMaxX: maxValue + range * 0.6
         };
+    }
+    
+    // Helper function to calculate x-axis range that includes operating point
+    calculateXAxisRange(traces, operatingPoint) {
+        let minX = 0;
+        let maxX = 100;
+        
+        // Get all x values from traces
+        const allXValues = [];
+        traces.forEach(trace => {
+            if (trace.x && Array.isArray(trace.x)) {
+                allXValues.push(...trace.x);
+            }
+        });
+        
+        // Include operating point if available
+        if (operatingPoint && operatingPoint.flow_m3hr) {
+            allXValues.push(operatingPoint.flow_m3hr);
+        }
+        
+        if (allXValues.length > 0) {
+            minX = Math.min(...allXValues);
+            maxX = Math.max(...allXValues);
+        }
+        
+        // Add padding to ensure operating point is visible
+        const range = maxX - minX;
+        const padding = range * 0.15; // 15% padding on each side
+        
+        return [Math.max(0, minX - padding), maxX + padding];
     }
 
     // Helper function to add system curve
@@ -595,8 +626,11 @@ class PumpChartsManager {
             }
         }
 
+        // Calculate x-axis range to ensure operating point is visible
+        const xAxisRange = this.calculateXAxisRange(traces, opPoint);
+        
         // Create layout and plot config using helpers
-        const layout = this.createStandardLayout(config, [dataRanges.minY, dataRanges.maxY]);
+        const layout = this.createStandardLayout(config, [dataRanges.minY, dataRanges.maxY], xAxisRange);
         const plotConfig = this.createPlotConfig();
 
         try {
@@ -735,10 +769,11 @@ class PumpChartsManager {
             }
         }
 
+        // Calculate x-axis range to ensure operating point is visible
+        const xAxisRange = this.calculateXAxisRange(traces, opPoint);
+        
         // Use helper to create standard layout
-        const layout = this.createStandardLayout(config);
-        // Set custom y-axis range for efficiency chart
-        layout.yaxis.range = [minEfficiency, maxEfficiency];
+        const layout = this.createStandardLayout(config, [minEfficiency, maxEfficiency], xAxisRange);
 
         const plotConfig = {
             responsive: true,
@@ -880,10 +915,11 @@ class PumpChartsManager {
             }
         }
 
+        // Calculate x-axis range to ensure operating point is visible
+        const xAxisRange = this.calculateXAxisRange(traces, opPoint);
+        
         // Use helper to create standard layout
-        const layout = this.createStandardLayout(config);
-        // Set custom y-axis range for power chart
-        layout.yaxis.range = [minPower, maxPower];
+        const layout = this.createStandardLayout(config, [minPower, maxPower], xAxisRange);
 
         const plotConfig = {
             responsive: true,
@@ -1084,10 +1120,12 @@ class PumpChartsManager {
             }
         }
 
+        // Calculate x-axis range to ensure operating point is visible
+        const xAxisRange = this.calculateXAxisRange(traces, opPoint);
+        
         // Use helper to create standard layout
-        const layout = this.createStandardLayout(config);
+        const layout = this.createStandardLayout(config, [minNpsh, maxNpsh], xAxisRange);
         // Set custom y-axis configurations for NPSH chart
-        layout.yaxis.range = [minNpsh, maxNpsh];
         layout.yaxis.autorange = false;
         layout.yaxis.fixedrange = true;
         layout.yaxis.rangemode = 'normal';
