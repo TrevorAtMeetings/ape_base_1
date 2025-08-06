@@ -1280,9 +1280,9 @@
                                     <i class="fas fa-info-circle me-2 text-primary"></i>
                                     <div>
                                         <strong>Operating Point Analysis:</strong> 
-                                        The selected pump operates at <strong>{{ (selected_pump.get('performance', {}).get('flow_m3hr', 0))|round(1) }} m³/hr</strong> 
-                                        and <strong>{{ (selected_pump.get('performance', {}).get('head_m', 0))|round(1) }} m</strong> head 
-                                        with <strong>{{ (selected_pump.get('performance', {}).get('efficiency_pct', 0))|round(1) }}%</strong> efficiency.
+                                        The selected pump operates at <strong>{{ site_requirements.get('flow_m3hr', 0)|round(1) }} m³/hr</strong> 
+                                        and <strong>{{ site_requirements.get('head_m', 0)|round(1) }} m</strong> head 
+                                        with <strong>{{ selected_pump.get('efficiency_pct', 0)|round(1) }}%</strong> efficiency.
                                         {% if selected_pump.get('performance', {}).get('extrapolated') %}
                                         <span class="badge bg-warning ms-2">Extrapolated</span>
                                         {% else %}
@@ -1796,8 +1796,8 @@
 
             const chartData = {
                 pumpCode: "{{ selected_pump.get('pump_code', '') if selected_pump else '' }}",
-                flowRate: {{ (selected_pump.get('performance', {}).get('flow_m3hr', 0) or 0)|round(1) if selected_pump else 0 }},
-                head: {{ (selected_pump.get('performance', {}).get('head_m', 0) or 0)|round(1) if selected_pump else 0 }}
+                flowRate: {{ site_requirements.get('flow_m3hr', 0)|round(1) if site_requirements else 0 }},
+                head: {{ site_requirements.get('head_m', 0)|round(1) if site_requirements else 0 }}
             };
 
             console.log('Professional report data:', chartData);
@@ -1806,7 +1806,11 @@
             function initializeCharts() {
                 if (typeof Plotly !== 'undefined' && window.pumpChartsManager) {
                     try {
-                        window.pumpChartsManager.renderAllCharts(chartData.pumpCode, chartData.flowRate, chartData.head);
+                        // Ensure we pass the correct flow and head values
+                        const flowValue = chartData.flowRate || {{ site_requirements.get('flow_m3hr', 0)|round(1) }};
+                        const headValue = chartData.head || {{ site_requirements.get('head_m', 0)|round(1) }};
+                        console.log('Initializing charts with flow:', flowValue, 'head:', headValue);
+                        window.pumpChartsManager.renderAllCharts(chartData.pumpCode, flowValue, headValue);
                     } catch (error) {
                         console.error('Error initializing charts:', error);
                         chartContainers.forEach(containerId => {
