@@ -36,9 +36,11 @@
                                 <label for="head">Head (m)</label>
                             </div>
                             <div class="input-field col s12 m3">
-                                <input type="text" id="pump_code" name="pump_code" placeholder="e.g., 125-250 2F">
+                                <input type="text" id="pump_code" name="pump_code" placeholder="e.g., 125-250 2F" autocomplete="off">
                                 <label for="pump_code">Pump Code (Optional)</label>
                                 <span class="helper-text">Leave empty to test all suitable pumps</span>
+                                <!-- Autocomplete dropdown -->
+                                <div id="pump_code_autocomplete" class="autocomplete-dropdown" style="display: none; position: absolute; background: white; border: 1px solid #ddd; border-radius: 4px; max-height: 200px; overflow-y: auto; z-index: 1000; width: 100%; top: 100%; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"></div>
                             </div>
                             <div class="col s12 m3">
                                 <button type="submit" class="btn waves-effect waves-light" style="margin-top: 25px;">
@@ -290,6 +292,130 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Auto-focus first input
     document.getElementById('flow_rate').focus();
+    
+    // Setup pump code autocomplete
+    setupPumpCodeAutocomplete();
 });
+
+function setupPumpCodeAutocomplete() {
+    const pumpCodeInput = document.getElementById('pump_code');
+    const autocompleteDropdown = document.getElementById('pump_code_autocomplete');
+    let searchTimeout;
+    
+    if (!pumpCodeInput || !autocompleteDropdown) return;
+    
+    // Input event listener for real-time search
+    pumpCodeInput.addEventListener('input', function() {
+        const query = this.value.trim();
+        
+        // Clear previous timeout
+        if (searchTimeout) {
+            clearTimeout(searchTimeout);
+        }
+        
+        // Hide dropdown if query is too short
+        if (query.length < 2) {
+            autocompleteDropdown.style.display = 'none';
+            return;
+        }
+        
+        // Debounce search requests
+        searchTimeout = setTimeout(() => {
+            searchPumps(query);
+        }, 300);
+    });
+    
+    // Hide dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!pumpCodeInput.contains(e.target) && !autocompleteDropdown.contains(e.target)) {
+            autocompleteDropdown.style.display = 'none';
+        }
+    });
+    
+    // Hide dropdown on escape key
+    pumpCodeInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            autocompleteDropdown.style.display = 'none';
+        }
+    });
+}
+
+function searchPumps(query) {
+    const autocompleteDropdown = document.getElementById('pump_code_autocomplete');
+    
+    // Show loading state
+    autocompleteDropdown.innerHTML = '<div style="padding: 10px; text-align: center; color: #666;"><i class="material-icons tiny">hourglass_empty</i> Searching...</div>';
+    autocompleteDropdown.style.display = 'block';
+    
+    // Make API call
+    fetch(`/api/pumps/search?q=${encodeURIComponent(query)}`)
+        .then(response => response.json())
+        .then(data => {
+            displaySearchResults(data.pumps || []);
+        })
+        .catch(error => {
+            console.error('Error searching pumps:', error);
+            autocompleteDropdown.innerHTML = '<div style="padding: 10px; text-align: center; color: #f44336;"><i class="material-icons tiny">error</i> Search failed</div>';
+        });
+}
+
+function displaySearchResults(pumps) {
+    const autocompleteDropdown = document.getElementById('pump_code_autocomplete');
+    
+    if (pumps.length === 0) {
+        autocompleteDropdown.innerHTML = '<div style="padding: 10px; text-align: center; color: #666;"><i class="material-icons tiny">search_off</i> No pumps found</div>';
+        return;
+    }
+    
+    // Build results HTML
+    let html = '';
+    pumps.forEach(pump => {
+        html += `
+            <div class="autocomplete-item" onclick="selectPump('${pump.pump_code}')" style="padding: 10px; cursor: pointer; border-bottom: 1px solid #eee;">
+                <div style="font-weight: 600; color: #1976d2;">${pump.pump_code}</div>
+                <div style="font-size: 12px; color: #666;">${pump.pump_type} - ${pump.manufacturer}</div>
+                <div style="font-size: 11px; color: #999;">${pump.model_series}</div>
+            </div>
+        `;
+    });
+    
+    autocompleteDropdown.innerHTML = html;
+    autocompleteDropdown.style.display = 'block';
+    
+    // Add hover effects
+    const items = autocompleteDropdown.querySelectorAll('.autocomplete-item');
+    items.forEach(item => {
+        item.addEventListener('mouseenter', function() {
+            this.style.backgroundColor = '#f5f5f5';
+        });
+        item.addEventListener('mouseleave', function() {
+            this.style.backgroundColor = 'white';
+        });
+    });
+}
+
+function selectPump(pumpCode) {
+    const pumpCodeInput = document.getElementById('pump_code');
+    const autocompleteDropdown = document.getElementById('pump_code_autocomplete');
+    
+    // Set the selected pump code
+    pumpCodeInput.value = pumpCode;
+    
+    // Hide dropdown
+    autocompleteDropdown.style.display = 'none';
+    
+    // Update Materialize label
+    M.updateTextFields();
+    
+    // Focus next field or submit button
+    const headInput = document.getElementById('head');
+    if (headInput && headInput.value) {
+        // If head is filled, focus submit button
+        document.querySelector('[type="submit"]').focus();
+    } else if (headInput) {
+        // Focus head input
+        headInput.focus();
+    }
+}
 </script>
 {% endblock %}
