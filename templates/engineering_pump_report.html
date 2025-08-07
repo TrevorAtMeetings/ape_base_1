@@ -358,7 +358,7 @@
     {% set engineering_url = '#' %}
     {% set show_view_toggle = true %}
     {% set current_view = 'engineering' %}
-    {% set show_edit = true %}
+    {% set show_edit = false %}
     {% set show_print = true %}
     {% set show_new_search = true %}
     {% set breadcrumbs = [
@@ -370,58 +370,67 @@
 
     <div class="engineering-container" style="padding-top: 20px;">
 
-
-        <!-- Edit Controls -->
-        <div class="edit-controls" id="editControls">
-            <div style="font-weight: bold; margin-bottom: 10px; font-size: 12px;">
-                Engineering Analysis Controls
-                <span style="font-weight: normal; font-size: 10px; color: #666;">(Analyze any pump against your requirements)</span>
+        <!-- Engineering Analysis Controls - Positioned in White Space -->
+        <div class="analysis-controls" style="background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 6px; padding: 15px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <i class="material-icons" style="color: #1976d2; font-size: 20px;">tune</i>
+                    <span style="font-weight: 600; color: #1976d2; font-size: 13px;">Engineering Analysis Controls</span>
+                    <span style="color: #666; font-size: 11px;">• Analyze any pump against your requirements</span>
+                </div>
             </div>
             
-            <!-- Pump Selection Section -->
-            <div class="edit-section" style="margin-bottom: 15px; padding: 10px; background: #f9f9f9; border-radius: 4px;">
-                <div style="font-weight: 600; font-size: 11px; color: #1976d2; margin-bottom: 8px;">
-                    <i class="material-icons" style="font-size: 14px; vertical-align: middle;">search</i>
-                    Force Pump Selection
-                </div>
-                <div class="edit-field" style="width: 100%; position: relative;">
-                    <label for="pumpSearch" style="font-size: 10px;">Search Any Pump to Analyze</label>
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 20px; align-items: end;">
+                <!-- Pump Search -->
+                <div style="position: relative;">
+                    <label for="pumpSearch" style="display: block; font-weight: 500; font-size: 11px; color: #495057; margin-bottom: 4px;">
+                        <i class="material-icons" style="font-size: 14px; vertical-align: middle; margin-right: 4px;">search</i>
+                        Force Pump Selection
+                    </label>
                     <input type="text" 
                            id="pumpSearch" 
                            placeholder="Type pump code (e.g. 10-WLN-26A)"
-                           style="width: 100%; padding: 6px; font-size: 11px; border: 1px solid #ccc; border-radius: 3px;"
+                           style="width: 100%; padding: 8px 12px; font-size: 11px; border: 1px solid #ced4da; border-radius: 4px; background: white;"
                            autocomplete="off">
                     <input type="hidden" id="pumpSelector" value="">
-                    <div id="pumpSearchResults" style="position: absolute; top: 100%; left: 0; right: 0; max-height: 200px; overflow-y: auto; background: white; border: 1px solid #ccc; border-radius: 3px; margin-top: 2px; display: none; z-index: 1000; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                    <div id="pumpSearchResults" style="position: absolute; top: 100%; left: 0; right: 0; max-height: 200px; overflow-y: auto; background: white; border: 1px solid #ced4da; border-radius: 4px; margin-top: 2px; display: none; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
                         <!-- Search results will appear here -->
                     </div>
-                    <div style="font-size: 9px; color: #888; margin-top: 4px;">
-                        Current: {{ selected_pump.get('pump_code', 'N/A') }} | <span id="pumpCount">Loading...</span> pumps available
+                    <div style="font-size: 9px; color: #6c757d; margin-top: 3px;">
+                        Current: <strong>{{ selected_pump.get('pump_code', 'N/A') }}</strong> | <span id="pumpCount">Loading...</span> pumps available
                     </div>
                 </div>
-            </div>
-            
-            <!-- Operating Conditions Section -->
-            <div class="edit-section" style="padding: 10px; background: #f9f9f9; border-radius: 4px;">
-                <div style="font-weight: 600; font-size: 11px; color: #1976d2; margin-bottom: 8px;">
-                    <i class="material-icons" style="font-size: 14px; vertical-align: middle;">tune</i>
-                    Adjust Operating Conditions
+                
+                <!-- Flow Rate -->
+                <div>
+                    <label for="editFlow" style="display: block; font-weight: 500; font-size: 11px; color: #495057; margin-bottom: 4px;">
+                        <i class="material-icons" style="font-size: 14px; vertical-align: middle; margin-right: 4px;">water_drop</i>
+                        Flow Rate (m³/hr)
+                    </label>
+                    <input type="number" id="editFlow" step="0.1" min="0" value="{{ site_requirements.get('flow_m3hr', 0)|round(1) }}"
+                           style="width: 100%; padding: 8px 12px; font-size: 11px; border: 1px solid #ced4da; border-radius: 4px; background: white;">
                 </div>
-                <div class="edit-grid">
-                    <div class="edit-field">
-                        <label for="editFlow">Flow Rate (m³/hr)</label>
-                        <input type="number" id="editFlow" step="0.1" min="0" value="{{ site_requirements.get('flow_m3hr', 0)|round(1) }}">
-                    </div>
-                    <div class="edit-field">
-                        <label for="editHead">Total Head (m)</label>
-                        <input type="number" id="editHead" step="0.1" min="0" value="{{ site_requirements.get('head_m', 0)|round(1) }}">
-                    </div>
+                
+                <!-- Total Head -->
+                <div>
+                    <label for="editHead" style="display: block; font-weight: 500; font-size: 11px; color: #495057; margin-bottom: 4px;">
+                        <i class="material-icons" style="font-size: 14px; vertical-align: middle; margin-right: 4px;">height</i>
+                        Total Head (m)
+                    </label>
+                    <input type="number" id="editHead" step="0.1" min="0" value="{{ site_requirements.get('head_m', 0)|round(1) }}"
+                           style="width: 100%; padding: 8px 12px; font-size: 11px; border: 1px solid #ced4da; border-radius: 4px; background: white;">
                 </div>
-            </div>
-            
-            <div class="edit-actions" style="margin-top: 12px;">
-                <button class="edit-btn" onclick="cancelEdit()">Cancel</button>
-                <button class="edit-btn primary" onclick="applyChanges()">Apply Analysis</button>
+                
+                <!-- Apply Button -->
+                <div>
+                    <button onclick="applyChanges()" 
+                            style="padding: 10px 20px; background: #1976d2; color: white; border: none; border-radius: 4px; font-size: 11px; font-weight: 500; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: background-color 0.2s;"
+                            onmouseover="this.style.background='#1565c0'"
+                            onmouseout="this.style.background='#1976d2'">
+                        <i class="material-icons" style="font-size: 16px;">refresh</i>
+                        Apply Analysis
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -707,21 +716,9 @@
             // Initialize Materialize components
             M.AutoInit();
             
-            // Check if edit controls exist
-            const editControls = document.getElementById('editControls');
-            console.log('Edit controls found:', !!editControls);
-            
-            // Check if pump selector exists
-            const pumpSelector = document.getElementById('pumpSelector');
-            console.log('Pump selector found:', !!pumpSelector);
-            
-            // Load pump list for selector when controls are active
-            if (editControls && editControls.classList.contains('active')) {
-                console.log('Edit controls are active, loading pump list');
-                loadPumpList();
-            } else {
-                console.log('Edit controls not active, will load pumps when opened');
-            }
+            // Load pump list immediately since controls are always visible
+            console.log('Loading pump list for analysis controls');
+            loadPumpList();
             
             // Load and render the engineering two-chart layout
             const chartData = {
@@ -734,25 +731,7 @@
             loadEngineeringCharts(chartData);
         });
 
-        function toggleEditMode() {
-            console.log('Toggling edit mode');
-            const editControls = document.getElementById('editControls');
-            editControls.classList.toggle('active');
-            
-            if (editControls.classList.contains('active')) {
-                console.log('Edit mode activated');
-                document.getElementById('editFlow').value = currentFlow;
-                document.getElementById('editHead').value = currentHead;
-                
-                // Load pump list when edit mode is activated
-                console.log('Loading pump list for edit mode');
-                loadPumpList();
-                
-                document.getElementById('editFlow').focus();
-            } else {
-                console.log('Edit mode deactivated');
-            }
-        }
+        // Analysis controls are now always visible, no toggle needed
 
         let allPumps = [];
         
@@ -846,12 +825,7 @@
             });
         }
         
-        function cancelEdit() {
-            document.getElementById('editControls').classList.remove('active');
-            // Reset pump selector and search
-            document.getElementById('pumpSelector').value = '';
-            document.getElementById('pumpSearch').value = '';
-        }
+        // Analysis controls are always visible - no cancel needed
 
         function applyChanges() {
             const newFlow = parseFloat(document.getElementById('editFlow').value);
