@@ -695,17 +695,17 @@ nav.teal {
 /* Metric Cards - Consistent sizing for presentation view */
 .metric-card {
     text-align: center;
-    padding: 24px 16px;
+    padding: 16px;
     background: var(--md-surface);
     border-radius: var(--md-border-radius);
     box-shadow: var(--md-shadow);
     margin-bottom: 16px;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     border: 1px solid var(--md-outline-variant);
-    min-height: 140px;
+    height: 140px;
     display: flex;
     flex-direction: column;
-    justify-content: flex-end;
+    justify-content: space-between;
 }
 
 .metric-card:hover {
@@ -726,8 +726,8 @@ nav.teal {
     font-size: 2.5rem;
     font-weight: 700;
     color: var(--md-primary);
-    margin-bottom: 8px;
     line-height: 1;
+    margin: 0;
 }
 
 .score-label {
@@ -736,16 +736,29 @@ nav.teal {
     text-transform: uppercase;
     letter-spacing: 0.5px;
     font-weight: 500;
+    margin-top: 8px;
 }
 
-/* Metric Display (other cards) */
+/* Metric Display (other cards) - Fixed layout */
 .metric-label {
     font-size: 0.875rem;
     color: var(--text-secondary);
     text-transform: uppercase;
     letter-spacing: 0.5px;
     font-weight: 500;
-    margin-bottom: 8px;
+    margin: 0;
+    flex-shrink: 0;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.metric-main {
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .metric-value {
@@ -753,16 +766,25 @@ nav.teal {
     font-weight: 600;
     color: var(--md-primary);
     line-height: 1.2;
-    margin-bottom: 4px;
+    margin: 0;
 }
 
 .metric-unit {
     font-size: 1rem;
     color: var(--text-secondary);
     font-weight: 400;
+    margin-left: 4px;
 }
 
-/* Efficiency Badge */
+.metric-badge-space {
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+/* Efficiency Badge - Fixed positioning */
 .efficiency-badge {
     display: inline-block;
     padding: 4px 12px;
@@ -771,6 +793,7 @@ nav.teal {
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    margin: 0;
 }
 
 .efficiency-excellent {

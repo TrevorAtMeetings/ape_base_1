@@ -447,34 +447,42 @@
             <div class="col s12 m3">
                 <div class="metric-card">
                     <div class="metric-label">Flow Rate</div>
-                    <div class="metric-value">
-                        {{ site_requirements.get('flow_m3hr', 0)|round(1) }}
-                        <span class="metric-unit">m³/hr</span>
+                    <div class="metric-main">
+                        <div class="metric-value">
+                            {{ site_requirements.get('flow_m3hr', 0)|round(1) }}
+                            <span class="metric-unit">m³/hr</span>
+                        </div>
                     </div>
+                    <div class="metric-badge-space"></div>
                 </div>
             </div>
             <div class="col s12 m3">
                 <div class="metric-card">
                     <div class="metric-label">Total Head</div>
-                    <div class="metric-value">
-                        {{ site_requirements.get('head_m', 0)|round(1) }}
-                        <span class="metric-unit">m</span>
+                    <div class="metric-main">
+                        <div class="metric-value">
+                            {{ site_requirements.get('head_m', 0)|round(1) }}
+                            <span class="metric-unit">m</span>
+                        </div>
                     </div>
+                    <div class="metric-badge-space"></div>
                 </div>
             </div>
             <div class="col s12 m3">
                 <div class="metric-card">
                     <div class="metric-label">Efficiency</div>
-                    <div class="metric-value">
-                        {% if selected_pump.get('efficiency_pct') %}
-                            {{ selected_pump.get('efficiency_pct', 0)|round(1) }}%
-                        {% else %}
-                            --
-                        {% endif %}
+                    <div class="metric-main">
+                        <div class="metric-value">
+                            {% if selected_pump.get('efficiency_pct') %}
+                                {{ selected_pump.get('efficiency_pct', 0)|round(1) }}%
+                            {% else %}
+                                --
+                            {% endif %}
+                        </div>
                     </div>
-                    {% set eff = selected_pump.get('efficiency_pct', 0) %}
-                    {% if eff %}
-                        <div style="margin-top: 8px;">
+                    <div class="metric-badge-space">
+                        {% set eff = selected_pump.get('efficiency_pct', 0) %}
+                        {% if eff %}
                             <span class="efficiency-badge 
                                 {% if eff >= 80 %}efficiency-excellent
                                 {% elif eff >= 70 %}efficiency-good
@@ -483,8 +491,8 @@
                                 {% elif eff >= 70 %}Good
                                 {% else %}Acceptable{% endif %}
                             </span>
-                        </div>
-                    {% endif %}
+                        {% endif %}
+                    </div>
                 </div>
             </div>
         </div>
