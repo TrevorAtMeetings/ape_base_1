@@ -31,7 +31,7 @@ The application employs a modular Flask architecture with a clear separation of 
 
 **Enhanced Test Coverage Implementation**:
 - **Phase 1 Complete**: BEP-centered envelope testing with systematic flow percentages (9 test points)
-- **BEP-Centered Approach**: 4 points decreasing (60%, 70%, 80%, 90%), BEP (100%), 4 points increasing (110%, 120%, 130%, 140%)
+- **BEP-Anchored Approach**: 4 points decreasing both flow and head (60%, 70%, 80%, 90%), BEP (100%), 4 points increasing both flow and head (110%, 120%, 130%, 140%)
 - **Statistical Analysis**: Comprehensive accuracy metrics, error distribution, and confidence intervals
 - **Improved Table Display**: Professional comparison format with clear status explanations and testing insights
 - **Status Legend Integration**: Clear definitions for Match (≤2% efficiency, ≤0.5kW power), Minor (2-5%, 0.5-2kW), Major (>5%, >2kW)

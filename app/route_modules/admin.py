@@ -443,38 +443,32 @@ def _test_pump_performance_envelope(pump, base_flow, base_head, pump_repo, catal
         return None
 
 def _generate_envelope_test_points(pump, bep_flow, bep_head, base_head):
-    """Generate BEP-centered test points: 4 points decreasing, BEP, 4 points increasing"""
+    """Generate BEP-anchored test points: proportionally vary both flow and head from BEP"""
     test_points = []
     
-    # BEP-centered approach: 4 points less (10% decrements), BEP, 4 points more (10% increments)
-    flow_percentages = [60, 70, 80, 90, 100, 110, 120, 130, 140]
+    # BEP-anchored approach: 4 points decreasing, BEP, 4 points increasing (both flow AND head)
+    bep_percentages = [60, 70, 80, 90, 100, 110, 120, 130, 140]
     
-    for flow_pct in flow_percentages:
-        flow = bep_flow * (flow_pct / 100.0)
+    for bep_pct in bep_percentages:
+        # Scale BOTH flow and head proportionally from BEP
+        flow = bep_flow * (bep_pct / 100.0)
+        head = bep_head * (bep_pct / 100.0)
         
-        # Determine operating region and category
-        if flow_pct < 80:
+        # Determine operating region based on BEP percentage
+        if bep_pct < 80:
             operating_region = "Part Load"
             test_category = "efficiency_validation"
-        elif flow_pct <= 110: 
+        elif bep_pct <= 110: 
             operating_region = "Optimal Zone"
             test_category = "accuracy_validation"
         else:
             operating_region = "Overload"
             test_category = "extrapolation_validation"
         
-        # Use base head for duty point testing, or calculate head for BEP envelope
-        if base_head:
-            head = base_head
-        else:
-            # For BEP envelope testing, use proportional head reduction
-            head_reduction_factor = max(0.7, 1.0 - (flow_pct - 100) * 0.002)
-            head = bep_head * head_reduction_factor
-        
         test_points.append({
             'flow': flow,
             'head': head,
-            'flow_percent_bep': flow_pct,
+            'flow_percent_bep': bep_pct,
             'operating_region': operating_region,
             'test_category': test_category
         })
