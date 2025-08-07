@@ -75,7 +75,13 @@
         top: 100%;
         left: 0;
         margin-top: 0;
-        padding: 4px 0;
+        padding: 2px 0;
+    }
+    
+    /* Adjust position for rightmost dropdown to prevent overflow */
+    .nav-dropdown:last-child .nav-dropdown-content {
+        right: 0;
+        left: auto;
     }
     
     .nav-dropdown:hover .nav-dropdown-content {
@@ -84,11 +90,12 @@
     
     .nav-dropdown-content a {
         color: #333;
-        padding: 8px 16px;
+        padding: 6px 16px;
         text-decoration: none;
         display: block;
         transition: background-color 0.2s ease;
-        font-size: 14px;
+        font-size: 13px;
+        line-height: 1.2;
     }
     
     .nav-dropdown-content a:hover {
