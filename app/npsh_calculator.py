@@ -138,7 +138,6 @@ class NPSHCalculator:
             'elevation_m': 0.0,  # Sea level
             'static_suction_head_m': 1.0,  # Flooded suction
             'friction_losses_m': 0.5,  # Typical piping losses
-            'description': 'Conservative engineering assumptions for general applications'
         }
     
     @staticmethod
