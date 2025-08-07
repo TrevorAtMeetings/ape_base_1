@@ -20,6 +20,7 @@ The application employs a modular Flask architecture with a clear separation of 
 - **Admin Menu**:
   - Configuration: System configuration and profiles - `/admin_config`
   - AI Admin: Manage AI knowledge base - `/admin/ai`
+  - Performance Testing: Database vs UI validation tool - `/admin/testing`
   - Documents: Document library - `/admin`
 - **Help Menu**:
   - User Guide: Application help guide - `/guide`
