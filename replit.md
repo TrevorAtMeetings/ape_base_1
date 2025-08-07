@@ -9,142 +9,62 @@ Preferred communication style: Simple, everyday language.
 ## System Architecture
 The application employs a modular Flask architecture with a clear separation of concerns, supporting both backend and frontend components.
 
-### Navigation Structure (Updated August 2025)
+### Navigation Structure
 **Main Navigation:**
 - **Selection**: Primary pump selection tool (homepage) - `/`
-- **Tools Menu**: 
-  - Pump Comparison: Compare multiple pumps side-by-side - `/pump_comparison`
-  - Shortlist Compare: Compare shortlisted pumps from selection - `/shortlist_comparison`
-  - Pump Editor: Manual pump data entry tool - `/pump_editor`
-  - AI Data Extract: Extract pump data from documents - `/ai_extract`
-- **Admin Menu**:
-  - Configuration: System configuration and profiles - `/admin_config`
-  - AI Admin: Manage AI knowledge base - `/admin/ai`
-  - Performance Testing: Database vs UI validation tool - `/admin/testing`
-  - Documents: Document library - `/admin`
-- **Help Menu**:
-  - User Guide: Application help guide - `/guide`
-  - Features: External features page (external link)
-  - About: Application information - `/about`
+- **Tools Menu**: Pump Comparison, Shortlist Compare, Pump Editor, AI Data Extract
+- **Admin Menu**: Configuration, AI Admin, Performance Testing, Documents
+- **Help Menu**: User Guide, Features, About
 
-### Recent Major Update - CRITICAL Data Integrity Fixes (August 7, 2025)
+### Data Integrity & Validation
+The system prioritizes authentic manufacturer specifications for pump performance data, specifically for Best Efficiency Point (BEP) metrics. It has a strict no-fallback policy for missing BEP data, ensuring that calculations are based on genuine information. Validation prevents artificial matches and uses pump-specific thresholds and operating envelopes based on database values.
 
-**CRITICAL DATA INTEGRITY OVERHAUL - PHASE 2 COMPLETE**:
-- **Eliminated All Fallback Logic**: Removed dangerous UI performance fallbacks that created artificial agreement between database and UI calculations
-- **Fixed BEP Field Mapping**: Corrected database field mapping to use authentic manufacturer specifications (bep_flow_m3hr, bep_head_m) instead of missing fields
-- **Strict No-Fallback Policy**: System now fails clearly when authentic BEP data is missing instead of using estimated/interpolated values
-- **Artificial Match Prevention**: Added validation to prevent counting None=None as "exact matches" - only real data comparisons are considered valid
-- **Authentic Data Enforcement**: Envelope testing now anchors to authentic manufacturer BEP specifications (12.33 m³/hr @ 23.45m) instead of curve-estimated values (10 m³/hr @ 13.6m)
-- **Clear Failure Reporting**: UI calculation failures now report as 'ui_calculation_failed' instead of falling back to database interpolation methods
+### Enhanced Performance Testing
+The system includes comprehensive BEP-centered envelope testing with statistical analysis and improved tabular display for comparison. It defines clear status legends (Match, Minor, Major) for accuracy metrics.
 
-**CRITICAL BUG FIXES (August 7, 2025)**:
-- **Status Case Mismatch Fixed**: Corrected return values from 'MATCH'/'MINOR'/'MAJOR' to 'match'/'minor_diff'/'major_diff' to fix completely broken accuracy statistics
-- **Default Value Contamination Removed**: Eliminated hardcoded defaults like trim_percent=100 and method assumptions that injected fake data into validation
-- **Invalid Power Comparisons Removed**: Discovered database contains NO authentic power data - removed all power validation to prevent false accuracy metrics 
-- **Pump-Specific Thresholds Implemented**: Replaced universal hardcoded thresholds with pump-specific logic based on max_power_kw specifications
-- **Authentic Operating Envelopes**: Replaced fixed BEP percentages (60-140%) with authentic pump curve operating ranges from database
-- **Real Operating Regions**: Removed fake "Part Load/Optimal/Overload" assumptions, now uses authentic flow ranges from pump curves
+### AI Chatbot Enhancement
+The chatbot supports natural language pump selection queries, metric-first design, template card results, and seamless integration for detailed analysis and comparison. It includes shorthand query support, `@pump` lookup with autocomplete, and flexible unit recognition. The chatbot is globally available with keyboard navigation.
 
-**PHASE 3 - Trust Manufacturer Data (August 7, 2025)**:
-- **Root Cause Identified**: UI calculations failing because of overly restrictive validation gates that don't trust manufacturer data
-- **QBP Gate Conflict**: Test points at 137% BEP are within manufacturer's documented range but exceed 130% QBP gate limit
-- **Solution Implemented**: Modified physical capability validation to trust manufacturer data ranges with minimal extrapolation margins
-- **Interpolation Enhanced**: Enabled edge value extrapolation for manufacturer-provided operating ranges
-- **Core Principle**: If data exists in database = manufacturer says it's viable for operation
-- **Test Method Clarification**: Envelope testing uses fixed head at BEP value across all flow points - this creates unrealistic test conditions beyond optimal zone where pump cannot physically deliver BEP head at extreme flows
+### Navigation System Unification
+The application utilizes a unified navigation system across all pages, resolving blueprint conflicts and template inconsistencies to ensure a consistent user experience.
 
-### Recent Major Update - Enhanced Performance Testing with Table Format (August 7, 2025)
+### User Experience Improvements
+Default views are set to "engineering view" for all pump selections, and the shortlist capacity has been increased to 10 pumps for better comparison options.
 
-**Enhanced Test Coverage Implementation**:
-- **Phase 1 Complete**: BEP-centered envelope testing with systematic flow percentages (9 test points)
-- **BEP-Anchored Approach**: 4 points decreasing both flow and head (60%, 70%, 80%, 90%), BEP (100%), 4 points increasing both flow and head (110%, 120%, 130%, 140%)
-- **Statistical Analysis**: Comprehensive accuracy metrics, error distribution, and confidence intervals
-- **Improved Table Display**: Professional comparison format with clear status explanations and testing insights
-- **Status Legend Integration**: Clear definitions for Match (≤2% efficiency, ≤0.5kW power), Minor (2-5%, 0.5-2kW), Major (>5%, >2kW)
-- **Enhanced Summary Statistics**: Percentage breakdowns and acceptable accuracy metrics with validation explanations
+### Chart Improvements
+Operating point markers are enhanced with transparent red triangles on the X-axis, crosshairs, and a small red dot at the actual operating point. Consistent X-axis ranges are maintained across engineering view charts, and hover templates provide comprehensive data.
 
-### Recent Major Update - AI Chatbot Enhancement (August 7, 2025)
-**Hero Feature Implementation - Natural Language Pump Selection**:
-- **Smart Query Processing**: Chatbot now understands natural language pump selection queries (e.g., "I need a pump for 1500 m³/hr at 25 meters")
-- **Metric-First Design**: Clearly states expectation of metric units (m³/hr for flow, meters for head) with helpful unit guidance
-- **Template Card Results**: Returns pump selections as interactive cards with key specifications (efficiency, power, trim, method)
-- **Seamless Integration**: Direct click-through from chat cards to detailed engineering reports for full analysis
-- **Comparison Support**: One-click comparison feature to add pumps to comparison list from chat results
-- **Flexible Application Recognition**: Identifies water supply, industrial, irrigation, and other application types from natural language
-- **Top 5 Display**: Shows the best 5 pumps with visual ranking, score badges, and comprehensive specifications
-
-**Enhanced Shorthand and @ Pump Lookup Features (August 7, 2025)**:
-- **Shorthand Query Support**: Understands formats like "1781 @ 24", "800 30 HSC", "1500 25" with intelligent flow/head detection
-- **@ Pump Name Autocomplete**: Type @ followed by pump name for instant lookup (e.g., "@10 WLN 18A")
-- **BEP Data Return**: When entering just "@pump_name", returns pump details at Best Efficiency Point from database specifications
-- **Smart Pattern Recognition**: Distinguishes between "flow @ head" and "@pump_name" patterns correctly
-- **Global Chat Availability**: Floating chat button accessible on all pages via base.html template inclusion
-- **Keyboard Navigation**: Full keyboard support for autocomplete suggestions with arrow keys and Enter
-- **Repository Integration**: Fixed pump data access using correct `.get_pump_models()` method with dictionary access patterns
-- **Flexible Unit Recognition**: Now accepts "m/hr", "m³", "m3" in addition to standard "m³/hr" format for flow rates
-- **Pump Code Field Fix**: Chat now searches both pump_code and pump_name fields, allowing lookups like "@8 K" with spaces
-
-### Recent Major Update - Navigation System Unification (August 7, 2025)
-**CRITICAL Navigation Architecture Overhaul**:
-- **Resolved Blueprint Conflicts**: Removed duplicate `reports_bp` registration by eliminating dead code (`reports_old.py`)
-- **Unified Navigation System**: Converted all pages to use single navigation architecture instead of conflicting dual systems
-- **Template System Consolidation**: Fixed hybrid templates (input_form.html, pump_options.html) that were showing double navigation bars
-- **Route Reference Standardization**: All unified navigation now uses Flask `url_for()` instead of hardcoded paths for maintainability
-- **Template Block Cleanup**: Removed orphaned Jinja2 template blocks causing rendering errors
-- **Consistent Navigation Experience**: All pages now follow unified navigation design patterns with proper dropdown styling
-
-**User Experience Improvements (August 7, 2025)**:
-- **Engineering View Default**: Changed all pump selections (main results and shortlist) to default to engineering view instead of presentation view
-- **Expanded Shortlist Capacity**: Increased shortlist limit from 3 to 10 pumps for better comparison options when available
-- **Comprehensive Limit Updates**: Updated all backend validation, frontend JavaScript, session storage, and report generation to support 10-pump shortlists
-
-**Chart Improvements (August 7, 2025)**:
-- Fixed operating point markers to use transparent red triangles positioned at X-axis (Y=0) pointing upward
-- Triangle now sits on the X-axis with tip pointing toward the operating point intersection
-- Added both vertical (flow) and horizontal (value) red dotted reference lines forming crosshairs
-- Small red dot added at actual operating point for visual clarity
-- Ensured consistent X-axis ranges across engineering view charts for proper comparison
-- Enhanced hover templates with comprehensive pump performance data including BEP position
-
-### Recent Major Update - Methodology v6.1 (August 7, 2025) - COMPLETE
-**SUCCESSFULLY IMPLEMENTED**: Engineering methodology refined based on operational requirements and manufacturer data trust principles:
-- **Algorithm Separation**: Fixed-speed (impeller trimming) completely separated from VFD (speed variation) logic
-- **Hard Safety Gates**: NPSH (1.5x margin) and QBP operating range (60-130% preferred, but manufacturer data trusted beyond)
-- **Impeller Trim Range**: 85-100% of maximum diameter (15% maximum reduction per engineering standards) - VERIFIED
-- **Manufacturer Data Trust**: If performance data exists in database, pump can operate at those conditions - VERIFIED
-- **Flow Operating Range**: 60-130% of BEP for selection, but allows manufacturer-documented points beyond - VERIFIED
-- **Rebalanced Scoring**: 85-point system with NPSH removed from ranking, power-based tie-breaking added
-- **Chart Display Requirement**: Trimmed curves supported in API for actual impeller diameter display
-- **Envelope Testing**: Now uses curve-following methodology for realistic test conditions - VERIFIED
+### Methodology
+The pump selection methodology separates fixed-speed (impeller trimming) from VFD (speed variation) logic. It incorporates hard safety gates for NPSH (1.5x margin) and QBP operating range (60-130%). Impeller trim is limited to 85-100% of maximum diameter. The system trusts manufacturer data if performance data exists in the database. Scoring is rebalanced, and trimmed curves are supported in the API. Envelope testing uses a curve-following methodology.
 
 ### Backend Architecture
 - **Flask Framework**: Handles routing and HTTP requests.
-- **Repository Pattern**: Centralized data access via `pump_repository.py`, supporting JSON and PostgreSQL.
-- **Processing Engine**: Core pump analysis and selection logic in `pump_engine.py`.
-- **File Processing**: Support for SCG and TXT pump data files, including batch processing.
-- **Chart Generation**: Capabilities for both static (Matplotlib) and interactive (Plotly.js) charts.
-- **Configuration Management System**: Centralized threshold and classification management with dynamic status determination, helper functions, and environment-based configuration.
+- **Repository Pattern**: Centralized data access via `pump_repository.py`.
+- **Processing Engine**: Core pump analysis and selection logic.
+- **File Processing**: Support for SCG and TXT pump data files.
+- **Chart Generation**: Static (Matplotlib) and interactive (Plotly.js) charts.
+- **Configuration Management System**: Centralized threshold and classification management.
 
 ### Frontend Architecture
-- **Template-Based UI**: Jinja2 templates for server-side rendering with dynamic configuration.
-- **Dual-View System**: Engineering data sheet view (industry-standard format) and Presentation view (modern UI with visual charts).
-- **Interactive Charts**: Plotly.js for dynamic performance curve visualization, displayed one per row for easy sequential review.
-- **Responsive Design**: Bootstrap-based styling ensures mobile compatibility.
+- **Template-Based UI**: Jinja2 templates for server-side rendering.
+- **Dual-View System**: Engineering data sheet view and Presentation view.
+- **Interactive Charts**: Plotly.js for dynamic performance curve visualization.
+- **Responsive Design**: Bootstrap-based styling.
 - **Form Handling**: Multi-step workflow for pump selection input.
-- **Advanced Filtering**: Collapsible filter panel with interactive range sliders for efficiency, power, impeller diameter, and overall score.
+- **Advanced Filtering**: Collapsible filter panel with interactive range sliders.
 
 ### Key Components
-- **Data Management**: Unified access via `PumpRepository`, `Catalog Engine` for processing performance curves, and `SCG Processor` for authentic APE data conversion with validation.
-- **Selection Engine**: Analyzes user input (flow, head, application) using intelligent scoring algorithms, performs curve interpolation/extrapolation, and applies affinity law for impeller scaling. **v6.0 UPDATE**: Now focuses exclusively on fixed-speed pumps with impeller trimming, implements hard safety gates (QBP 60-130% range, NPSH 1.5x margin), and uses power consumption as tie-breaker for similar scores.
-- **Report Generation**: Professional PDF reports using WeasyPrint, embedding static Matplotlib charts, comprehensive analysis, scoring breakdowns, and detailed technical information via Jinja2 templates.
-- **File Processing**: Native support for APE's SCG format, with batch processing, automatic format detection, and robust error handling.
+- **Data Management**: Unified access via `PumpRepository`, `Catalog Engine`, and `SCG Processor`.
+- **Selection Engine**: Analyzes user input using intelligent scoring algorithms, performs curve interpolation/extrapolation, and applies affinity law. Focuses on fixed-speed pumps with impeller trimming, hard safety gates, and power consumption as a tie-breaker.
+- **Report Generation**: Professional PDF reports using WeasyPrint, embedding static Matplotlib charts, comprehensive analysis, and scoring breakdowns.
+- **File Processing**: Native support for APE's SCG format with batch processing and error handling.
 
 ### System Design Choices
 - **Modular Flask Architecture**: Ensures maintainability and scalability.
 - **Repository Pattern**: Decouples data access logic from business logic.
-- **Comprehensive Algorithm**: Prioritizes impeller trimming over speed scaling and evaluates all curves with all methods before exclusion, using industry-standard extrapolation and modification ranges.
-- **Admin Configuration System**: Allows for dynamic threshold and scoring weight configuration through a dedicated UI with application profiles and an audit trail.
-- **Enhanced PDF Reports**: Provide detailed scoring breakdowns, performance charts, and comprehensive technical information.
+- **Comprehensive Algorithm**: Prioritizes impeller trimming and evaluates all curves with all methods.
+- **Admin Configuration System**: Allows for dynamic threshold and scoring weight configuration.
+- **Enhanced PDF Reports**: Provide detailed scoring breakdowns and performance charts.
 
 ## External Dependencies
 - **Flask**: Web application framework.
