@@ -664,7 +664,7 @@
             <ul style="margin-left: 20px; font-size: 10px;">
                 <li>Performance curves based on clean water at 20°C</li>
 
-                <li>NPSHr values include safety margin of 0.5m</li>
+                <li>NPSHr values based on methodology: NPSHa ≥ 1.5 × NPSHr safety factor</li>
                 <li>Motor sizing includes 15% safety factor</li>
                 <li><strong>Operating impeller diameter: {{ selected_pump.get('impeller_diameter_mm', 0)|round(0)|int }} mm ({{ selected_pump.get('trim_percent', 100)|round(1) }}% of max)</strong></li>
                 <li>Impeller can be trimmed between 85% and 100% of maximum diameter</li>
@@ -1002,17 +1002,17 @@
                 yaxis: 'y'
             });
             
-            // Add operating point marker with transparent red triangle at X-axis
+            // Add operating point marker with star symbol at actual operating point
             traces.push({
                 x: [operatingFlow],
-                y: [0],  // Position triangle at X-axis
-                name: 'Operating Point Marker',
+                y: [operatingHead],
+                name: 'Operating Point',
                 type: 'scatter',
                 mode: 'markers',
                 marker: { 
                     size: 18, 
                     color: 'rgba(255, 0, 0, 0.3)',  // Transparent red fill
-                    symbol: 'triangle-up',  // Triangle points upward from X-axis
+                    symbol: 'star',  // Use star symbol for clear visibility
                     line: { color: 'rgba(255, 0, 0, 0.8)', width: 2 }  // Solid red border
                 },
                 yaxis: 'y',
@@ -1027,23 +1027,6 @@
                     'Impeller: {{ selected_pump.get("impeller_diameter_mm", 0)|round(0)|int }}mm ({{ selected_pump.get("trim_percent", 100)|round(1) }}% trim)<br>' +
                     'BEP Position: {{ selected_pump.get("qbep_percentage", 0)|round(0) }}% of optimal flow<br>' +
                     '<extra></extra>'
-            });
-            
-            // Add small dot at actual operating point
-            traces.push({
-                x: [operatingFlow],
-                y: [operatingHead],
-                name: 'Operating Point',
-                type: 'scatter',
-                mode: 'markers',
-                marker: { 
-                    size: 6, 
-                    color: 'rgba(255, 0, 0, 0.8)',
-                    symbol: 'circle'
-                },
-                yaxis: 'y',
-                showlegend: false,
-                hoverinfo: 'skip'
             });
             
             const layout = {
@@ -1147,18 +1130,18 @@
                 });
             }
             
-            // Add operating point marker with transparent red triangle at X-axis
+            // Add operating point marker with star symbol at actual operating power
             if (opPoint.power_kw) {
                 traces.push({
                     x: [operatingFlow],
-                    y: [0],  // Position triangle at X-axis
-                    name: 'Operating Power Marker',
+                    y: [opPoint.power_kw],
+                    name: 'Operating Power',
                     type: 'scatter',
                     mode: 'markers',
                     marker: { 
                         size: 18, 
                         color: 'rgba(255, 0, 0, 0.3)',  // Transparent red fill
-                        symbol: 'triangle-up',  // Triangle points upward from X-axis
+                        symbol: 'star',  // Use star symbol for clear visibility
                         line: { color: 'rgba(255, 0, 0, 0.8)', width: 2 }  // Solid red border
                     },
                     showlegend: false,
@@ -1172,22 +1155,6 @@
                         'Impeller: {{ selected_pump.get("impeller_diameter_mm", 0)|round(0)|int }}mm ({{ selected_pump.get("trim_percent", 100)|round(1) }}% trim)<br>' +
                         'BEP Position: {{ selected_pump.get("qbep_percentage", 0)|round(0) }}% of optimal flow<br>' +
                         '<extra></extra>'
-                });
-                
-                // Add small dot at actual operating point
-                traces.push({
-                    x: [operatingFlow],
-                    y: [opPoint.power_kw],
-                    name: 'Operating Power',
-                    type: 'scatter',
-                    mode: 'markers',
-                    marker: { 
-                        size: 6, 
-                        color: 'rgba(255, 0, 0, 0.8)',
-                        symbol: 'circle'
-                    },
-                    showlegend: false,
-                    hoverinfo: 'skip'
                 });
             }
             

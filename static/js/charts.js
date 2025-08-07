@@ -231,32 +231,7 @@ class PumpChartsManager {
     addOperatingPointMarker(traces, operatingPointFlow, operatingPointY, hovertemplate) {
         if (!operatingPointFlow || !operatingPointY) return;
         
-        // Position triangle at the base (Y=0) with its tip pointing to the operating point
-        // Triangle sits on the X-axis
-        traces.push({
-            x: [operatingPointFlow],
-            y: [0],  // Position at the X-axis
-            type: 'scatter',
-            mode: 'markers',
-            name: 'Operating Point',
-            marker: {
-                color: 'rgba(255, 0, 0, 0.3)',  // Transparent red fill
-                size: 18,
-                symbol: 'triangle-up',  // Triangle points upward from X-axis to the data point
-                line: {
-                    color: 'rgba(255, 0, 0, 0.8)',  // Solid red border
-                    width: 2
-                }
-            },
-            hovertemplate: hovertemplate,
-            hoverlabel: {
-                bgcolor: '#d32f2f',
-                font: { color: 'white', size: 12 }
-            },
-            showlegend: false
-        });
-        
-        // Add a small dot at the actual operating point for visual clarity
+        // Add operating point marker at the actual operating point
         traces.push({
             x: [operatingPointFlow],
             y: [operatingPointY],
@@ -264,9 +239,13 @@ class PumpChartsManager {
             mode: 'markers',
             name: 'Operating Point',
             marker: {
-                color: 'rgba(255, 0, 0, 0.8)',
-                size: 6,
-                symbol: 'circle'
+                color: 'rgba(255, 0, 0, 0.3)',  // Transparent red fill
+                size: 18,
+                symbol: 'star',  // Use star symbol for clear visibility
+                line: {
+                    color: 'rgba(255, 0, 0, 0.8)',  // Solid red border
+                    width: 2
+                }
             },
             hovertemplate: hovertemplate,
             hoverlabel: {
