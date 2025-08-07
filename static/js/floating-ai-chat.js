@@ -172,7 +172,7 @@ async function sendAIMessage() {
         if (data.error) {
             addAIMessage('assistant', `I apologize, but I encountered an error: ${data.error}`);
         } else {
-            addAIMessage('assistant', data.response, data.processing_time, data.confidence_score, data.source_documents || []);
+            addAIMessage('assistant', data.response, data.processing_time, data.confidence_score, data.source_documents || [], data.is_html || false);
         }
         
     } catch (error) {
@@ -186,16 +186,16 @@ async function sendAIMessage() {
     if (input) input.focus();
 }
 
-function addAIMessage(sender, content, processingTime = null, confidence = null, sources = []) {
+function addAIMessage(sender, content, processingTime = null, confidence = null, sources = [], isHtml = false) {
     const messagesContainer = document.getElementById('ai-chat-messages');
     if (!messagesContainer) return;
     
     const messageDiv = document.createElement('div');
     messageDiv.className = `ai-message ${sender}`;
     
-    // Process content for LaTeX if it's an assistant message
+    // Process content for LaTeX if it's an assistant message and not already HTML
     let processedContent = content;
-    if (sender === 'assistant') {
+    if (sender === 'assistant' && !isHtml) {
         processedContent = parseMarkdownContentForAI(content);
     }
     
