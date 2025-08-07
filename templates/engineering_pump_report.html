@@ -1002,10 +1002,14 @@
                 yaxis: 'y'
             });
             
-            // Add operating point marker with transparent red triangle
+            // Calculate offset for triangle position
+            const headRange = Math.max(...curves.flatMap(c => c.head_data)) - Math.min(...curves.flatMap(c => c.head_data));
+            const triangleOffset = headRange * 0.05; // Position triangle 5% below the point
+            
+            // Add operating point marker with transparent red triangle positioned below
             traces.push({
                 x: [operatingFlow],
-                y: [operatingHead],
+                y: [operatingHead - triangleOffset],  // Position triangle below the actual point
                 name: 'Operating Point',
                 type: 'scatter',
                 mode: 'markers',
@@ -1016,10 +1020,11 @@
                     line: { color: 'rgba(255, 0, 0, 0.8)', width: 2 }  // Solid red border
                 },
                 yaxis: 'y',
+                showlegend: false,
                 hovertemplate: 
                     '<b>🎯 OPERATING POINT ANALYSIS</b><br>' +
-                    'Flow Rate: %{x:.1f} m³/hr<br>' +
-                    'Head: %{y:.1f} m<br>' +
+                    'Flow Rate: ' + operatingFlow.toFixed(1) + ' m³/hr<br>' +
+                    'Head: ' + operatingHead.toFixed(1) + ' m<br>' +
                     'Efficiency: {{ selected_pump.get("efficiency_pct", 0)|round(1) }}%<br>' +
                     'Power: {{ selected_pump.get("power_kw", 0)|round(1) }} kW<br>' +
                     'NPSH Required: {{ selected_pump.get("npshr_m", 0)|round(1) }} m<br>' +
@@ -1129,11 +1134,16 @@
                 });
             }
             
-            // Add operating point marker with transparent red triangle
+            // Add operating point marker with transparent red triangle positioned below
             if (opPoint.power_kw) {
+                // Calculate offset for triangle position
+                const powerRange = Math.max(...curves.flatMap(c => c.power_data || [])) - 
+                                   Math.min(...curves.flatMap(c => c.power_data || []));
+                const triangleOffset = powerRange * 0.05; // Position triangle 5% below the point
+                
                 traces.push({
                     x: [operatingFlow],
-                    y: [opPoint.power_kw],
+                    y: [opPoint.power_kw - triangleOffset],  // Position triangle below the actual point
                     name: 'Operating Power',
                     type: 'scatter',
                     mode: 'markers',
@@ -1143,10 +1153,11 @@
                         symbol: 'triangle-up',  // Triangle points upward to the data point
                         line: { color: 'rgba(255, 0, 0, 0.8)', width: 2 }  // Solid red border
                     },
+                    showlegend: false,
                     hovertemplate: 
                         '<b>🎯 OPERATING POINT ANALYSIS</b><br>' +
-                        'Flow Rate: %{x:.1f} m³/hr<br>' +
-                        'Power: %{y:.1f} kW<br>' +
+                        'Flow Rate: ' + operatingFlow.toFixed(1) + ' m³/hr<br>' +
+                        'Power: ' + opPoint.power_kw.toFixed(1) + ' kW<br>' +
                         'Efficiency: {{ selected_pump.get("efficiency_pct", 0)|round(1) }}%<br>' +
                         'Head: {{ selected_pump.get("head_m", 0)|round(1) }} m<br>' +
                         'NPSH Required: {{ selected_pump.get("npshr_m", 0)|round(1) }} m<br>' +

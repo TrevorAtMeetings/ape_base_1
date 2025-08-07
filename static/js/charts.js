@@ -231,10 +231,17 @@ class PumpChartsManager {
     addOperatingPointMarker(traces, operatingPointFlow, operatingPointY, hovertemplate) {
         if (!operatingPointFlow || !operatingPointY) return;
         
-        // Add operating point marker - transparent red triangle pointing to BEP
+        // Calculate offset to position triangle below the point
+        // The offset should be proportional to the y-axis range
+        const yRange = traces.length > 0 ? 
+            Math.max(...traces.filter(t => t.y).flatMap(t => t.y)) - 
+            Math.min(...traces.filter(t => t.y).flatMap(t => t.y)) : 100;
+        const triangleOffset = yRange * 0.05; // Position triangle 5% below the point
+        
+        // Add operating point marker - transparent red triangle positioned below, pointing up to the point
         traces.push({
             x: [operatingPointFlow],
-            y: [operatingPointY],
+            y: [operatingPointY - triangleOffset],  // Position below the actual point
             type: 'scatter',
             mode: 'markers',
             name: 'Operating Point',
@@ -251,7 +258,27 @@ class PumpChartsManager {
             hoverlabel: {
                 bgcolor: '#d32f2f',
                 font: { color: 'white', size: 12 }
-            }
+            },
+            showlegend: false
+        });
+        
+        // Add the actual operating point (invisible) for accurate hover
+        traces.push({
+            x: [operatingPointFlow],
+            y: [operatingPointY],
+            type: 'scatter',
+            mode: 'markers',
+            name: 'Operating Point Data',
+            marker: {
+                color: 'transparent',
+                size: 1
+            },
+            hovertemplate: hovertemplate,
+            hoverlabel: {
+                bgcolor: '#d32f2f',
+                font: { color: 'white', size: 12 }
+            },
+            showlegend: false
         });
     }
 
