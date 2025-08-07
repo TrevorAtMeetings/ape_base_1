@@ -22,17 +22,24 @@
     <style>
         /* Engineering Data Sheet Style */
         * {
-            margin: 0;
-            padding: 0;
             box-sizing: border-box;
         }
 
         body {
+            margin: 0;
+            padding: 0;
             font-family: Arial, sans-serif;
             font-size: 11px;
             line-height: 1.3;
             color: #000;
             background: white;
+        }
+        
+        /* Preserve navigation styling */
+        .unified-nav, .unified-nav * {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+            margin: initial;
+            padding: initial;
         }
 
         .engineering-container {
@@ -346,21 +353,23 @@
 </head>
 <body>
     <!-- Content Container with proper spacing -->
+    <!-- Navigation -->
+    {% set presentation_url = url_for('reports.pump_report', pump_code=selected_pump.get('pump_code'), flow=site_requirements.get('flow_m3hr', 0), head=site_requirements.get('head_m', 0), pump_type=site_requirements.get('pump_type', 'GENERAL')) %}
+    {% set engineering_url = '#' %}
+    {% set show_view_toggle = true %}
+    {% set current_view = 'engineering' %}
+    {% set show_edit = true %}
+    {% set show_print = true %}
+    {% set show_new_search = true %}
+    {% set breadcrumbs = [
+        {'label': 'Home', 'url': '/', 'icon': 'home'},
+        {'label': 'Pump Selection', 'url': '/pump_options?flow=' ~ site_requirements.get('flow_m3hr', 0) ~ '&head=' ~ site_requirements.get('head_m', 0)},
+        {'label': selected_pump.get('pump_code', 'N/A') ~ ' - Engineering'}
+    ] %}
+    {% include 'includes/navigation.html' %}
+
     <div class="engineering-container" style="padding-top: 20px;">
-        <!-- Navigation -->
-        {% set presentation_url = url_for('reports.pump_report', pump_code=selected_pump.get('pump_code'), flow=site_requirements.get('flow_m3hr', 0), head=site_requirements.get('head_m', 0), pump_type=site_requirements.get('pump_type', 'GENERAL')) %}
-        {% set engineering_url = '#' %}
-        {% set show_view_toggle = true %}
-        {% set current_view = 'engineering' %}
-        {% set show_edit = true %}
-        {% set show_print = true %}
-        {% set show_new_search = true %}
-        {% set breadcrumbs = [
-            {'label': 'Home', 'url': '/', 'icon': 'home'},
-            {'label': 'Pump Selection', 'url': '/pump_options?flow=' ~ site_requirements.get('flow_m3hr', 0) ~ '&head=' ~ site_requirements.get('head_m', 0)},
-            {'label': selected_pump.get('pump_code', 'N/A') ~ ' - Engineering'}
-        ] %}
-        {% include 'includes/navigation.html' %}
+
 
         <!-- Edit Controls -->
         <div class="edit-controls" id="editControls">
