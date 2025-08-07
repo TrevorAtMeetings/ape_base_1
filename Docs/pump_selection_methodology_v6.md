@@ -2,9 +2,9 @@
 ## Fixed-Speed "Best Fit" System with Engineering Safety Gates
 
 **Document Version**: 6.0  
-**Date**: August 6, 2025  
+**Date**: August 7, 2025  
 **Status**: Critical Engineering Update - Implementation Required  
-**Major Update**: Separated Fixed-Speed from VFD Logic + NPSH Safety Gate + QBP Hard Cutoff
+**Major Update**: Power Calculation Enhancement + NPSHa Engineering Calculation + Authentic Database Integration
 
 ---
 
@@ -24,12 +24,49 @@
 4. **Power-Based Tie-Breaking**: Secondary ranking criterion for pumps with similar scores
 5. **Authentic Curve Display**: Charts show trimmed impeller curves, not maximum curves
 6. **Rebalanced Scoring**: 85-point system with NPSH removed from ranking score
+7. **Enhanced Power Calculations**: Proper RPM affinity laws with authentic test speed reference
+8. **Engineering NPSHa Calculation**: Automatic calculation using atmospheric pressure, elevation, and system conditions
 
 ---
 
 ## Core Philosophy
 
 **"Best Fit" Fixed-Speed System**: Evaluates all pumps against the duty point using only impeller trimming modifications. Filters pumps through physical and operational safety gates, then ranks viable solutions based on a comprehensive 85-point scoring system prioritizing reliability, efficiency, and right-sizing.
+
+---
+
+## August 2025 Update: Power & NPSH Calculation Enhancements
+
+### Power Calculation Improvements
+**Issue Resolved**: Previous versions used inconsistent power calculations that didn't properly account for RPM variations.
+
+**New Implementation**:
+- **Hydraulic Power Formula**: P(kW) = (Q × H × ρ × g) / (3600 × η)
+- **Speed Affinity Laws**: P₂ = P₁ × (N₂/N₁)³ when operating speed differs from test speed
+- **Test Speed Reference**: Uses authentic manufacturer test speeds from database
+- **Impeller Trimming**: Power scales with diameter cubed: P₂ = P₁ × (D₂/D₁)³
+
+### NPSHa Calculation Implementation
+**Issue Resolved**: System previously used inappropriate 10.0 m default value.
+
+**New Engineering Calculation**:
+```
+NPSHa = Atmospheric Pressure Head + Static Suction Head - Vapor Pressure Head - Friction Losses
+
+Engineering Defaults:
+- Atmospheric Pressure: 10.33 m (sea level, adjustable for elevation)
+- Static Suction Head: +1.0 m (flooded suction assumption)
+- Vapor Pressure: 0.02 m (water at 20°C using Antoine equation)
+- Friction Losses: 0.5 m (typical piping losses)
+
+Result: NPSHa = 10.81 m (calculated, not dummy value)
+```
+
+**Professional Features**:
+- Transparent calculation breakdown shown in engineering reports
+- Clear assumptions documented for verification
+- Elevation-based atmospheric pressure correction
+- Temperature-dependent vapor pressure calculation
 
 ---
 

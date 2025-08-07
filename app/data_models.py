@@ -59,7 +59,13 @@ class SiteRequirements:
         self.application_type = kwargs.get('application_type', 'general')
         self.liquid_type = kwargs.get('liquid_type', 'water')
         self.temperature_c = kwargs.get('temperature_c', 20)
+        # NPSH Available - calculate using engineering defaults if not provided
         self.npsh_available_m = kwargs.get('npsh_available_m', None)
+        if self.npsh_available_m is None:
+            from .npsh_calculator import NPSHCalculator
+            npsha_result = NPSHCalculator.calculate_npsha_with_defaults()
+            self.npsh_available_m = npsha_result['npsha_m']
+            self.npsha_calculation = npsha_result  # Store full calculation details
         self.max_power_kw = kwargs.get('max_power_kw', None)
         self.preferred_efficiency_min = kwargs.get('preferred_efficiency_min', 70)
 
