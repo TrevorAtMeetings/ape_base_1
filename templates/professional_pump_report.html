@@ -999,46 +999,25 @@
             }
         }
         
-        // Toggle Chart Data Function - FIXED VERSION
+        // SIMPLE Show Data Function - NO OVERCOMPLICATION
         function toggleChartData() {
-            console.log('toggleChartData called');
-            const container = document.getElementById('chartDataContainer');
-            const btn = document.getElementById('showDataBtn');
+            var container = document.getElementById('chartDataContainer');
+            var btn = document.getElementById('showDataBtn');
+            var label = btn.querySelector('.action-btn-label');
+            var icon = btn.querySelector('i');
             
-            if (!container) {
-                console.error('chartDataContainer not found');
-                return;
-            }
-            
-            if (!btn) {
-                console.error('showDataBtn not found');
-                return;
-            }
-            
-            const btnLabel = btn.querySelector('.action-btn-label');
-            const btnIcon = btn.querySelector('i');
-            
-            if (!btnLabel || !btnIcon) {
-                console.error('Button elements not found');
-                return;
-            }
-            
-            const isHidden = container.style.display === 'none' || container.style.display === '';
-            
-            if (isHidden) {
+            if (container.style.display === 'none' || container.style.display === '') {
                 container.style.display = 'block';
-                btnLabel.textContent = 'Hide Data';
-                btnIcon.textContent = 'visibility_off';
-                console.log('Data shown');
-                if (typeof M !== 'undefined') {
-                    M.toast({html: 'Pump data displayed'});
-                }
+                label.textContent = 'Hide Data';
+                icon.textContent = 'visibility_off';
+                M.toast({html: 'Data shown'});
             } else {
                 container.style.display = 'none';
-                btnLabel.textContent = 'Show Data';
-                btnIcon.textContent = 'table_chart';
-                console.log('Data hidden');
+                label.textContent = 'Show Data';
+                icon.textContent = 'table_chart';
+                M.toast({html: 'Data hidden'});
             }
+        }
         }
 
         // Comparison Functions
@@ -1093,7 +1072,9 @@
             window.location.href = `/pump_options?flow=${flow}&head=${head}&pump_type=${pumpType}`;
         }
 
+        // SIMPLE View Comparison Function
         function viewComparison() {
+            M.toast({html: 'Opening comparison page...'});
             window.location.href = '/compare';
         }
 
