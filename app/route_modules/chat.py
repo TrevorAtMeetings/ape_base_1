@@ -201,10 +201,14 @@ def chat_query():
                 
                 # Get catalog engine and find suitable pumps
                 catalog_engine = get_catalog_engine()
+                # Don't pass pump_type filter - it's too restrictive for chat queries
+                # Let the selection engine find all suitable pumps regardless of type
+                pump_type_filter = None
+                    
                 results = catalog_engine.select_pumps(
                     flow_m3hr=flow,
                     head_m=head,
-                    pump_type=application_type.upper() if application_type != 'general' else None,
+                    pump_type=pump_type_filter,
                     max_results=10
                 )
                 

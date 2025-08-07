@@ -688,12 +688,12 @@ class CatalogPump:
                                                heads,
                                                kind='linear',
                                                bounds_error=False,
-                                               fill_value=(heads[0], heads[-1]))  # Use edge values for extrapolation
+                                               fill_value='extrapolate')  # Allow extrapolation
             eff_interp = interpolate.interp1d(flows,
                                               effs,
                                               kind='linear',
                                               bounds_error=False,
-                                              fill_value=(effs[0], effs[-1]))  # Use edge values for extrapolation
+                                              fill_value='extrapolate')  # Allow extrapolation
 
             predicted_head = float(head_interp(flow_m3hr))
             efficiency = float(eff_interp(flow_m3hr))

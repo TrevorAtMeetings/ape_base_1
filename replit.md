@@ -63,6 +63,16 @@ The application employs a modular Flask architecture with a clear separation of 
 - **Status Legend Integration**: Clear definitions for Match (≤2% efficiency, ≤0.5kW power), Minor (2-5%, 0.5-2kW), Major (>5%, >2kW)
 - **Enhanced Summary Statistics**: Percentage breakdowns and acceptable accuracy metrics with validation explanations
 
+### Recent Major Update - AI Chatbot Enhancement (August 7, 2025)
+**Hero Feature Implementation - Natural Language Pump Selection**:
+- **Smart Query Processing**: Chatbot now understands natural language pump selection queries (e.g., "I need a pump for 1500 m³/hr at 25 meters")
+- **Metric-First Design**: Clearly states expectation of metric units (m³/hr for flow, meters for head) with helpful unit guidance
+- **Template Card Results**: Returns pump selections as interactive cards with key specifications (efficiency, power, trim, method)
+- **Seamless Integration**: Direct click-through from chat cards to detailed engineering reports for full analysis
+- **Comparison Support**: One-click comparison feature to add pumps to comparison list from chat results
+- **Flexible Application Recognition**: Identifies water supply, industrial, irrigation, and other application types from natural language
+- **Top 5 Display**: Shows the best 5 pumps with visual ranking, score badges, and comprehensive specifications
+
 ### Recent Major Update - Navigation System Unification (August 7, 2025)
 **CRITICAL Navigation Architecture Overhaul**:
 - **Resolved Blueprint Conflicts**: Removed duplicate `reports_bp` registration by eliminating dead code (`reports_old.py`)

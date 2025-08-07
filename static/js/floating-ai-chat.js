@@ -355,6 +355,30 @@ function setupAIChatInput() {
     }
 }
 
+// Helper function for pump comparison from chat
+function addToComparison(pumpCode) {
+    // Store in session storage for comparison page
+    let comparisonPumps = JSON.parse(sessionStorage.getItem('comparisonPumps') || '[]');
+    if (!comparisonPumps.includes(pumpCode)) {
+        comparisonPumps.push(pumpCode);
+        sessionStorage.setItem('comparisonPumps', JSON.stringify(comparisonPumps));
+        
+        // Show feedback
+        const button = event.target.closest('.compare-btn');
+        if (button) {
+            const originalText = button.innerHTML;
+            button.innerHTML = '<i class="material-icons">check</i> Added';
+            button.style.background = '#10b981';
+            button.style.color = 'white';
+            setTimeout(() => {
+                button.innerHTML = originalText;
+                button.style.background = '';
+                button.style.color = '';
+            }, 2000);
+        }
+    }
+}
+
 // Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
     initializeFloatingAIChat();
