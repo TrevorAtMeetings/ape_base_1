@@ -72,11 +72,11 @@
                     {% for result in test_results %}
                         {% if result.get('envelope_testing') %}
                             <!-- Envelope Testing Results -->
-                            <div class="card" style="margin: 20px 0; border: 2px solid #2196f3;">
+                            <div class="card envelope-testing" style="margin: 20px 0; border: 2px solid #2196f3;">
                                 <div class="card-content">
                                     <span class="card-title blue-text">
                                         <i class="material-icons left">timeline</i>
-                                        {{ result.pump_code }} - Envelope Testing
+                                        {{ result.pump_code }} - Envelope Testing (Database vs UI Comparison)
                                         <span class="badge new blue">{{ result.test_points_count }} points</span>
                                     </span>
                                     
@@ -108,39 +108,72 @@
                                     <table class="striped responsive-table">
                                         <thead>
                                             <tr>
-                                                <th>Flow (m³/hr)</th>
-                                                <th>% BEP</th>
-                                                <th>Operating Region</th>
-                                                <th>Efficiency Δ</th>
-                                                <th>Power Δ</th>
-                                                <th>Status</th>
+                                                <th rowspan="2">Flow<br>(m³/hr)</th>
+                                                <th rowspan="2">% BEP</th>
+                                                <th rowspan="2">Operating<br>Region</th>
+                                                <th colspan="3" class="center-align">Efficiency (%)</th>
+                                                <th colspan="3" class="center-align">Power (kW)</th>
+                                                <th colspan="3" class="center-align">NPSH (m)</th>
+                                                <th rowspan="2">Status</th>
+                                            </tr>
+                                            <tr>
+                                                <th class="center-align">Database</th>
+                                                <th class="center-align">UI Calc</th>
+                                                <th class="center-align">Delta</th>
+                                                <th class="center-align">Database</th>
+                                                <th class="center-align">UI Calc</th>
+                                                <th class="center-align">Delta</th>
+                                                <th class="center-align">Database</th>
+                                                <th class="center-align">UI Calc</th>
+                                                <th class="center-align">Delta</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             {% for point in result.envelope_results %}
                                             <tr>
-                                                <td>{{ "%.0f"|format(point.test_point.flow_m3hr) }}</td>
-                                                <td>{{ "%.0f"|format(point.test_point.flow_percent_bep) }}%</td>
+                                                <td><strong>{{ "%.0f"|format(point.test_point.flow_m3hr) }}</strong></td>
+                                                <td class="center-align">{{ "%.0f"|format(point.test_point.flow_percent_bep) }}%</td>
                                                 <td>
                                                     <span class="badge {% if point.test_point.operating_region == 'Part Load' %}orange{% elif point.test_point.operating_region == 'Optimal Zone' %}green{% else %}red{% endif %}">
                                                         {{ point.test_point.operating_region }}
                                                     </span>
                                                 </td>
-                                                <td>
+                                                
+                                                <!-- Efficiency -->
+                                                <td class="center-align">{{ "%.1f"|format(point.db_efficiency) if point.db_efficiency else "N/A" }}</td>
+                                                <td class="center-align">{{ "%.1f"|format(point.ui_efficiency) if point.ui_efficiency else "N/A" }}</td>
+                                                <td class="center-align">
                                                     {% if point.efficiency_delta is not none %}
                                                         <span class="{% if point.efficiency_delta|abs > 5 %}red-text{% elif point.efficiency_delta|abs > 2 %}orange-text{% else %}green-text{% endif %}">
-                                                            {{ "%+.1f"|format(point.efficiency_delta) }}%
+                                                            {{ "%+.1f"|format(point.efficiency_delta) }}
                                                         </span>
                                                     {% else %}N/A{% endif %}
                                                 </td>
-                                                <td>
+                                                
+                                                <!-- Power -->
+                                                <td class="center-align">{{ "%.1f"|format(point.db_power) if point.db_power else "N/A" }}</td>
+                                                <td class="center-align">{{ "%.1f"|format(point.ui_power) if point.ui_power else "N/A" }}</td>
+                                                <td class="center-align">
                                                     {% if point.power_delta is not none %}
                                                         <span class="{% if point.power_delta|abs > 2 %}red-text{% elif point.power_delta|abs > 0.5 %}orange-text{% else %}green-text{% endif %}">
-                                                            {{ "%+.1f"|format(point.power_delta) }}kW
+                                                            {{ "%+.1f"|format(point.power_delta) }}
                                                         </span>
                                                     {% else %}N/A{% endif %}
                                                 </td>
-                                                <td>
+                                                
+                                                <!-- NPSH -->
+                                                <td class="center-align">{{ "%.2f"|format(point.db_npsh) if point.db_npsh else "N/A" }}</td>
+                                                <td class="center-align">{{ "%.2f"|format(point.ui_npsh) if point.ui_npsh else "N/A" }}</td>
+                                                <td class="center-align">
+                                                    {% if point.npsh_delta is not none %}
+                                                        <span class="{% if point.npsh_delta|abs > 1 %}red-text{% elif point.npsh_delta|abs > 0.3 %}orange-text{% else %}green-text{% endif %}">
+                                                            {{ "%+.2f"|format(point.npsh_delta) }}
+                                                        </span>
+                                                    {% else %}N/A{% endif %}
+                                                </td>
+                                                
+                                                <!-- Status -->
+                                                <td class="center-align">
                                                     {% if point.status == 'match' %}
                                                         <span class="badge green">✓ Match</span>
                                                     {% elif point.status == 'minor_diff' %}
@@ -419,6 +452,31 @@ function selectPumpCode(pumpCode) {
     M.updateTextFields();
 }
 </script>
+
+<style>
+/* Enhanced responsive table styling */
+.responsive-table table {
+    min-width: 1200px;
+}
+
+/* Envelope testing table needs extra width for all columns */
+.envelope-testing .responsive-table table {
+    min-width: 1600px;
+}
+
+/* Better spacing for two-row headers */
+.responsive-table th {
+    padding: 8px 5px;
+    font-size: 0.9em;
+    line-height: 1.2;
+}
+
+/* Ensure proper column alignment */
+.responsive-table td {
+    padding: 8px 5px;
+    vertical-align: middle;
+}
+</style>
 
 </div>
 {% endblock %}
