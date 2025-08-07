@@ -291,10 +291,18 @@ def _get_ui_performance(pump, flow_rate, head, catalog_engine):
             fallback_performance = pump._get_performance_interpolated(flow_rate, head)
             if fallback_performance:
                 logger.info(f"Using fallback performance for UI calculation: {fallback_performance}")
+                
+                # Fix NPSH handling in fallback - 0.0 is valid NPSH data
+                npsh_value = fallback_performance.get('npshr_m')
+                if npsh_value is not None and npsh_value >= 0:
+                    npsh_result = npsh_value
+                else:
+                    npsh_result = None
+                    
                 return {
                     'efficiency_pct': fallback_performance.get('efficiency_pct'),
                     'power_kw': fallback_performance.get('power_kw'), 
-                    'npshr_m': fallback_performance.get('npshr_m'),
+                    'npshr_m': npsh_result,
                     'suitability_score': 0,  # No score available from fallback
                     'trim_percent': 100,  # Assume no trim
                     'method': 'fallback_interpolation'
