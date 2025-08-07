@@ -80,6 +80,7 @@ The application employs a modular Flask architecture with a clear separation of 
 - **Global Chat Availability**: Floating chat button accessible on all pages via base.html template inclusion
 - **Keyboard Navigation**: Full keyboard support for autocomplete suggestions with arrow keys and Enter
 - **Repository Integration**: Fixed pump data access using correct `.get_pump_models()` method with dictionary access patterns
+- **Flexible Unit Recognition**: Now accepts "m/hr", "m³", "m3" in addition to standard "m³/hr" format for flow rates
 
 ### Recent Major Update - Navigation System Unification (August 7, 2025)
 **CRITICAL Navigation Architecture Overhaul**:

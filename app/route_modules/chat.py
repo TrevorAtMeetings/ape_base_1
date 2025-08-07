@@ -84,10 +84,11 @@ def extract_pump_parameters(query):
     if not flow or not head:
         # Extract flow rate (look for patterns like "1500 m³/hr", "1500 m3/hr", "1500m³/hr", etc.)
         flow_patterns = [
-            r'(\d+(?:\.\d+)?)\s*(?:m³/hr|m3/hr|m³/h|m3/h|cubic\s*meters?\s*per\s*hour)',
+            r'(\d+(?:\.\d+)?)\s*(?:m³/hr|m3/hr|m³/h|m3/h|m/hr|m/h|m³|m3|cubic\s*meters?\s*per\s*hour)',
             r'(\d+(?:\.\d+)?)\s*flow',
             r'flow\s*(?:rate)?\s*(?:of)?\s*(\d+(?:\.\d+)?)',
             r'(\d+(?:\.\d+)?)\s*(?:at|@)',  # e.g., "1500 at 25m"
+            r'(\d+(?:\.\d+)?)\s*(?:for|with)',  # e.g., "pump for 1500"
         ]
         
         if not flow:
