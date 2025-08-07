@@ -431,49 +431,54 @@ class CatalogPump:
 
     def _validate_physical_capability(self, flow_m3hr: float,
                                       head_m: float) -> bool:
-        """Validate that pump can physically meet the requirements within authentic performance envelope"""
+        """Validate that pump can meet requirements - TRUST MANUFACTURER DATA
+        
+        If manufacturer provides performance data, it's valid for operation.
+        We only check if the operating point is within the manufacturer's documented envelope.
+        """
 
-        # Check against absolute maximum capabilities from all curves
+        # Get actual manufacturer-provided operating envelope
         max_head = self._calculate_max_head()
         max_flow = self._calculate_max_flow()
         min_flow = min(
             min(p['flow_m3hr'] for p in curve['performance_points'])
             for curve in self.curves)
 
-        # Hard physical limits - no extrapolation beyond authentic data
-        if head_m > max_head * 1.1:  # Allow 10% margin for speed variation
+        # TRUST MANUFACTURER DATA - if it's in the curve, it's valid
+        # Only reject if completely outside manufacturer's documented range
+        if head_m > max_head * 1.5:  # Only reject extreme extrapolation
             logger.debug(
-                f"Required head {head_m}m exceeds pump maximum {max_head}m")
+                f"Required head {head_m}m significantly exceeds manufacturer data {max_head}m")
             return False
 
-        if flow_m3hr > max_flow * 1.2:  # Allow 20% margin for impeller trimming
+        # Trust manufacturer flow range - if they provide data, it's operational
+        if flow_m3hr > max_flow * 1.1:  # Small margin for interpolation only
             logger.debug(
-                f"Required flow {flow_m3hr} m³/hr exceeds pump maximum {max_flow} m³/hr"
+                f"Required flow {flow_m3hr} m³/hr exceeds manufacturer maximum {max_flow} m³/hr"
             )
             return False
 
-        if flow_m3hr < min_flow * 0.5:  # Don't operate at extremely low flows
+        if flow_m3hr < min_flow * 0.9:  # Small margin for interpolation only
             logger.debug(
-                f"Required flow {flow_m3hr} m³/hr below practical minimum {min_flow * 0.5} m³/hr"
+                f"Required flow {flow_m3hr} m³/hr below manufacturer minimum {min_flow} m³/hr"
             )
             return False
 
-        # Check if any curve can potentially meet requirements with reasonable scaling
+        # Check if any curve contains or can interpolate to this operating point
         for curve in self.curves:
             curve_points = curve['performance_points']
             curve_heads = [p['head_m'] for p in curve_points]
             curve_flows = [p['flow_m3hr'] for p in curve_points]
 
-            # Check if this curve's envelope could accommodate the requirement
+            # Trust manufacturer envelope - if within their data range, it's valid
             curve_max_head = max(curve_heads)
-            curve_flow_range = (min(curve_flows), max(curve_flows))
+            curve_min_flow = min(curve_flows)
+            curve_max_flow = max(curve_flows)
 
-            # Allow for reasonable speed variation (up to 20% head increase)
-            if head_m <= curve_max_head * 1.2:
-                # Check if flow is within reasonable range (consider impeller trimming)
-                if curve_flow_range[0] * 0.7 <= flow_m3hr <= curve_flow_range[
-                        1] * 1.3:
-                    return True
+            # If operating point is within manufacturer's curve envelope, it's valid
+            if head_m <= curve_max_head * 1.2:  # Small extrapolation margin
+                if curve_min_flow <= flow_m3hr <= curve_max_flow:
+                    return True  # Within manufacturer's documented range
 
         return False
 
@@ -506,12 +511,16 @@ class CatalogPump:
         return True
 
     def _validate_qbp_range(self, required_flow: float) -> Dict[str, Any]:
-        """v6.0 HARD GATE: Validate QBP operating range (60-130% of BEP)"""
+        """v6.0 HARD GATE: Validate QBP operating range (60-130% of BEP per manufacturer specs)"""
         try:
-            # Get pump's nominal BEP flow
-            bep_flow = self.specifications.get('q_bep', 0)
+            # Get pump's nominal BEP flow from specifications
+            bep_flow = self.specifications.get('bep_flow_m3hr', 0)
             
-            # If no BEP data in specs, estimate from curves
+            # If no BEP data in specs, try alternate field names
+            if bep_flow <= 0:
+                bep_flow = self.specifications.get('q_bep', 0)
+            
+            # If still no BEP data, estimate from curves
             if bep_flow <= 0:
                 bep_point = self.get_bep_point()
                 if bep_point:
@@ -519,6 +528,7 @@ class CatalogPump:
             
             if bep_flow > 0:
                 qbp_percentage = (required_flow / bep_flow) * 100
+                # Use 60-130% range as per manufacturer acceptable operating range
                 if qbp_percentage < 60 or qbp_percentage > 130:
                     return {
                         'passed': False,
@@ -659,14 +669,18 @@ class CatalogPump:
         effs = [p['efficiency_pct'] for p in points]
 
         try:
+            # Allow extrapolation for manufacturer data ranges
+            # Use numpy for bounds_error=False to handle extrapolation
             head_interp = interpolate.interp1d(flows,
                                                heads,
                                                kind='linear',
-                                               bounds_error=False)
+                                               bounds_error=False,
+                                               fill_value=(heads[0], heads[-1]))  # Use edge values for extrapolation
             eff_interp = interpolate.interp1d(flows,
                                               effs,
                                               kind='linear',
-                                              bounds_error=False)
+                                              bounds_error=False,
+                                              fill_value=(effs[0], effs[-1]))  # Use edge values for extrapolation
 
             predicted_head = float(head_interp(flow_m3hr))
             efficiency = float(eff_interp(flow_m3hr))

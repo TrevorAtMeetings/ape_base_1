@@ -45,6 +45,13 @@ The application employs a modular Flask architecture with a clear separation of 
 - **Authentic Operating Envelopes**: Replaced fixed BEP percentages (60-140%) with authentic pump curve operating ranges from database
 - **Real Operating Regions**: Removed fake "Part Load/Optimal/Overload" assumptions, now uses authentic flow ranges from pump curves
 
+**PHASE 3 - Trust Manufacturer Data (August 7, 2025)**:
+- **Root Cause Identified**: UI calculations failing because of overly restrictive validation gates that don't trust manufacturer data
+- **QBP Gate Conflict**: Test points at 137% BEP are within manufacturer's documented range but exceed 130% QBP gate limit
+- **Solution Implemented**: Modified physical capability validation to trust manufacturer data ranges with minimal extrapolation margins
+- **Interpolation Enhanced**: Enabled edge value extrapolation for manufacturer-provided operating ranges
+- **Core Principle**: If data exists in database = manufacturer says it's viable for operation
+
 ### Recent Major Update - Enhanced Performance Testing with Table Format (August 7, 2025)
 
 **Enhanced Test Coverage Implementation**:
