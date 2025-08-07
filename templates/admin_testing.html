@@ -374,11 +374,11 @@ function searchPumpCodes(query) {
     autocompleteDropdown.style.display = 'block';
     
     // Fetch pump codes from API
-    fetch('/api/pump_codes?q=' + encodeURIComponent(query))
+    fetch('/api/pumps/search?q=' + encodeURIComponent(query))
         .then(response => response.json())
         .then(data => {
-            if (data.success && data.pump_codes && data.pump_codes.length > 0) {
-                displayAutocompleteResults(data.pump_codes);
+            if (data.pumps && data.pumps.length > 0) {
+                displayAutocompleteResults(data.pumps);
             } else {
                 autocompleteDropdown.innerHTML = '<div style="padding: 10px; color: #666; font-style: italic;">No matching pump codes found</div>';
             }
