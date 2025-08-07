@@ -673,6 +673,10 @@
                             <i class="material-icons">compare_arrows</i>
                             <div class="action-btn-label">Add to Compare</div>
                         </div>
+                        <div class="action-btn" onclick="viewComparison()">
+                            <i class="material-icons">analytics</i>
+                            <div class="action-btn-label">View Comparison</div>
+                        </div>
                         <div class="action-btn" onclick="viewAllAlternatives()">
                             <i class="material-icons">view_list</i>
                             <div class="action-btn-label">View All Options</div>
@@ -995,28 +999,45 @@
             }
         }
         
-        // Toggle Chart Data Function
+        // Toggle Chart Data Function - FIXED VERSION
         function toggleChartData() {
+            console.log('toggleChartData called');
             const container = document.getElementById('chartDataContainer');
             const btn = document.getElementById('showDataBtn');
+            
+            if (!container) {
+                console.error('chartDataContainer not found');
+                return;
+            }
+            
+            if (!btn) {
+                console.error('showDataBtn not found');
+                return;
+            }
+            
             const btnLabel = btn.querySelector('.action-btn-label');
             const btnIcon = btn.querySelector('i');
             
-            if (container && btn) {
-                if (container.style.display === 'none' || container.style.display === '') {
-                    container.style.display = 'block';
-                    btnLabel.textContent = 'Hide Data';
-                    btnIcon.textContent = 'visibility_off';
-                    if (typeof M !== 'undefined') {
-                        M.toast({html: 'Pump data displayed'});
-                    }
-                } else {
-                    container.style.display = 'none';
-                    btnLabel.textContent = 'Show Data';
-                    btnIcon.textContent = 'table_chart';
+            if (!btnLabel || !btnIcon) {
+                console.error('Button elements not found');
+                return;
+            }
+            
+            const isHidden = container.style.display === 'none' || container.style.display === '';
+            
+            if (isHidden) {
+                container.style.display = 'block';
+                btnLabel.textContent = 'Hide Data';
+                btnIcon.textContent = 'visibility_off';
+                console.log('Data shown');
+                if (typeof M !== 'undefined') {
+                    M.toast({html: 'Pump data displayed'});
                 }
             } else {
-                console.error('Chart data container or button not found');
+                container.style.display = 'none';
+                btnLabel.textContent = 'Show Data';
+                btnIcon.textContent = 'table_chart';
+                console.log('Data hidden');
             }
         }
 
@@ -1070,6 +1091,10 @@
             const pumpType = "{{ site_requirements.get('pump_type', 'GENERAL') }}";
             
             window.location.href = `/pump_options?flow=${flow}&head=${head}&pump_type=${pumpType}`;
+        }
+
+        function viewComparison() {
+            window.location.href = '/compare';
         }
 
         function generatePDF() {
