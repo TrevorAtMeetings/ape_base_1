@@ -51,6 +51,7 @@ The application employs a modular Flask architecture with a clear separation of 
 - **Solution Implemented**: Modified physical capability validation to trust manufacturer data ranges with minimal extrapolation margins
 - **Interpolation Enhanced**: Enabled edge value extrapolation for manufacturer-provided operating ranges
 - **Core Principle**: If data exists in database = manufacturer says it's viable for operation
+- **Test Method Clarification**: Envelope testing uses fixed head at BEP value across all flow points - this creates unrealistic test conditions beyond optimal zone where pump cannot physically deliver BEP head at extreme flows
 
 ### Recent Major Update - Enhanced Performance Testing with Table Format (August 7, 2025)
 

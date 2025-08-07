@@ -419,70 +419,128 @@ def _test_pump_performance_envelope(pump, base_flow, base_head, pump_repo, catal
         return None
 
 def _generate_envelope_test_points(pump, bep_flow, bep_head, base_head):
-    """Generate authentic envelope test points based on pump operating curves"""
+    """Generate authentic envelope test points that follow the actual pump curve"""
     test_points = []
     
-    # Get authentic pump operating ranges from database
-    min_flow = None
-    max_flow = None
-    
-    # Extract authentic operating ranges from pump curve data
+    # Get the best curve for the pump
+    best_curve = None
     if hasattr(pump, 'curves') and pump.curves:
-        all_flows = []
-        
+        # Find curve closest to BEP conditions
         for curve in pump.curves:
             if 'performance_points' in curve:
-                for point in curve['performance_points']:
-                    if point.get('flow_m3hr'):
-                        all_flows.append(point['flow_m3hr'])
+                points = curve['performance_points']
+                flows = [p['flow_m3hr'] for p in points if 'flow_m3hr' in p]
+                heads = [p['head_m'] for p in points if 'head_m' in p]
+                
+                if flows and heads and min(flows) <= bep_flow <= max(flows):
+                    best_curve = curve
+                    break
         
-        if all_flows:
-            min_flow = min(all_flows)
-            max_flow = max(all_flows)
+        # Use first curve if no perfect match
+        if not best_curve and pump.curves:
+            best_curve = pump.curves[0]
     
-    # Fallback to conservative BEP-based ranges if no curve data available
-    if not min_flow or not max_flow:
-        min_flow = bep_flow * 0.6  # 60% of BEP
-        max_flow = bep_flow * 1.4  # 140% of BEP
+    if not best_curve or 'performance_points' not in best_curve:
+        # Fallback: use BEP-based estimates
+        test_flows = [
+            bep_flow * 0.6,   # 60% of BEP
+            bep_flow * 0.8,   # 80% of BEP
+            bep_flow * 0.9,   # 90% of BEP
+            bep_flow,         # 100% BEP
+            bep_flow * 1.1,   # 110% of BEP
+            bep_flow * 1.2,   # 120% of BEP
+            bep_flow * 1.3    # 130% of BEP
+        ]
         
-    # Generate 7 test points across authentic operating envelope
-    flow_points = [
-        min_flow,
-        min_flow + (bep_flow - min_flow) * 0.33,  
-        min_flow + (bep_flow - min_flow) * 0.67,
-        bep_flow,                                # BEP center
-        bep_flow + (max_flow - bep_flow) * 0.33,
-        bep_flow + (max_flow - bep_flow) * 0.67,
-        max_flow
-    ]
+        for flow in test_flows:
+            flow_pct_bep = (flow / bep_flow * 100) if bep_flow > 0 else 100
+            test_points.append({
+                'flow': flow,
+                'head': bep_head,  # Use BEP head as estimate
+                'flow_percent_bep': flow_pct_bep,
+                'operating_region': _determine_operating_region(flow_pct_bep),
+                'test_category': _determine_test_category(flow_pct_bep),
+                'authentic_range': False
+            })
+    else:
+        # Use actual pump curve data for realistic test points
+        points = best_curve['performance_points']
+        flows = [p['flow_m3hr'] for p in points if 'flow_m3hr' in p]
+        heads = [p['head_m'] for p in points if 'head_m' in p]
+        
+        # Create interpolation function for the curve
+        if len(flows) >= 2 and len(heads) >= 2:
+            from scipy import interpolate
+            head_interp = interpolate.interp1d(flows, heads, kind='linear', 
+                                             bounds_error=False, 
+                                             fill_value=(heads[0], heads[-1]))
+            
+            # Generate test points at specific BEP percentages
+            test_percentages = [60, 70, 80, 90, 100, 110, 120, 130, 140]
+            
+            for pct in test_percentages:
+                test_flow = bep_flow * (pct / 100)
+                
+                # Only include points within manufacturer's documented range
+                if min(flows) <= test_flow <= max(flows):
+                    # Get the actual head at this flow from the pump curve
+                    test_head = float(head_interp(test_flow))
+                    
+                    test_points.append({
+                        'flow': test_flow,
+                        'head': test_head,  # Use actual curve head, not fixed BEP head
+                        'flow_percent_bep': pct,
+                        'operating_region': _determine_operating_region(pct),
+                        'test_category': _determine_test_category(pct),
+                        'authentic_range': True,
+                        'curve_based': True  # Flag to indicate we're following the actual curve
+                    })
     
-    # Use base_head for all points to maintain consistent system curve
-    for i, flow in enumerate(flow_points):
-        flow_pct_bep = (flow / bep_flow * 100) if bep_flow > 0 else 100
-        
-        # Determine operating region based on position relative to BEP and authentic flow ranges
-        if flow <= min_flow + (bep_flow - min_flow) * 0.5:
-            operating_region = "Low Flow"
-            test_category = "low_flow_validation"
-        elif flow <= bep_flow + (max_flow - bep_flow) * 0.5: 
-            operating_region = "Optimal Zone" 
-            test_category = "bep_validation"
-        else:
-            operating_region = "High Flow"
-            test_category = "high_flow_validation"
-        
-        test_points.append({
-            'flow': flow,
-            'head': base_head,  # Use system head requirement
-            'flow_percent_bep': flow_pct_bep,
-            'operating_region': operating_region,
-            'test_category': test_category,
-            'authentic_range': True,  # Flag indicating use of real operating data
-            'min_flow_range': min_flow,
-            'max_flow_range': max_flow
-        })
+    # If we have fewer than 5 points, add some intermediate points
+    if len(test_points) < 5 and best_curve:
+        # Use actual curve points as test points
+        points = best_curve['performance_points']
+        for point in points[:9]:  # Limit to 9 points max
+            if 'flow_m3hr' in point and 'head_m' in point:
+                flow = point['flow_m3hr']
+                head = point['head_m']
+                flow_pct_bep = (flow / bep_flow * 100) if bep_flow > 0 else 100
+                
+                # Check if we already have a test point near this flow
+                duplicate = any(abs(tp['flow'] - flow) < 50 for tp in test_points)
+                if not duplicate:
+                    test_points.append({
+                        'flow': flow,
+                        'head': head,
+                        'flow_percent_bep': flow_pct_bep,
+                        'operating_region': _determine_operating_region(flow_pct_bep),
+                        'test_category': _determine_test_category(flow_pct_bep),
+                        'authentic_range': True,
+                        'curve_based': True
+                    })
+    
+    # Sort by flow rate
+    test_points.sort(key=lambda x: x['flow'])
     
     return test_points
+
+def _determine_operating_region(flow_pct_bep):
+    """Determine operating region based on flow percentage of BEP"""
+    if flow_pct_bep < 80:
+        return "Part Load"
+    elif flow_pct_bep <= 110:
+        return "Optimal Zone"
+    else:
+        return "Overload"
+
+def _determine_test_category(flow_pct_bep):
+    """Determine test category based on flow percentage of BEP"""
+    if flow_pct_bep < 80:
+        return "part_load_validation"
+    elif flow_pct_bep <= 110:
+        return "bep_validation"
+    else:
+        return "overload_validation"
 
 def _calculate_envelope_statistics(envelope_results):
     """Calculate statistical analysis of envelope test results"""
