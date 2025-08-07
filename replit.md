@@ -76,11 +76,13 @@ The application employs a modular Flask architecture with a clear separation of 
 **Enhanced Shorthand and @ Pump Lookup Features (August 7, 2025)**:
 - **Shorthand Query Support**: Understands formats like "1781 @ 24", "800 30 HSC", "1500 25" with intelligent flow/head detection
 - **@ Pump Name Autocomplete**: Type @ followed by pump name for instant lookup (e.g., "@10 WLN 18A")
+- **BEP Data Return**: When entering just "@pump_name", returns pump details at Best Efficiency Point from database specifications
 - **Smart Pattern Recognition**: Distinguishes between "flow @ head" and "@pump_name" patterns correctly
 - **Global Chat Availability**: Floating chat button accessible on all pages via base.html template inclusion
 - **Keyboard Navigation**: Full keyboard support for autocomplete suggestions with arrow keys and Enter
 - **Repository Integration**: Fixed pump data access using correct `.get_pump_models()` method with dictionary access patterns
 - **Flexible Unit Recognition**: Now accepts "m/hr", "m³", "m3" in addition to standard "m³/hr" format for flow rates
+- **Pump Code Field Fix**: Chat now searches both pump_code and pump_name fields, allowing lookups like "@8 K" with spaces
 
 ### Recent Major Update - Navigation System Unification (August 7, 2025)
 **CRITICAL Navigation Architecture Overhaul**:

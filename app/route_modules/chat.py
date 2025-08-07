@@ -241,13 +241,20 @@ def handle_pump_bep_query(pump_name):
                 'confidence_score': 0.9
             }
         
-        # Get BEP conditions
-        bep_flow = target_pump.get('bep_flow_m3hr')
-        bep_head = target_pump.get('bep_head_m')
+        # Get BEP data from database specifications
+        specifications = target_pump.get('specifications', {})
+        bep_flow = specifications.get('bep_flow_m3hr')
+        bep_head = specifications.get('bep_head_m')
+        max_eff = target_pump.get('max_efficiency', 0)
+        
+        if not bep_flow or not bep_head:
+            # Try alternative locations for BEP data
+            bep_flow = target_pump.get('bep_flow_m3hr') or target_pump.get('bep_flow')
+            bep_head = target_pump.get('bep_head_m') or target_pump.get('bep_head')
         
         if not bep_flow or not bep_head:
             return {
-                'response': f"BEP data not available for {pump_name}. Please specify flow and head values.",
+                'response': f"BEP data not available for {pump_name}. Please specify flow and head values, e.g., '@{pump_name} at 100 m³/hr 50m'",
                 'is_html': False,
                 'processing_time': 0.1,
                 'confidence_score': 0.8
@@ -255,7 +262,7 @@ def handle_pump_bep_query(pump_name):
         
         # Generate report URL for BEP conditions
         pump_url = url_for('reports.engineering_report', 
-                          pump_code=target_pump.get('pump_name'),
+                          pump_code=target_pump.get('pump_code'),
                           flow=bep_flow, 
                           head=bep_head,
                           force='true',
@@ -263,7 +270,7 @@ def handle_pump_bep_query(pump_name):
         
         html_response = f"""
         <div class="pump-specific-result">
-            <h3 style="color: #10b981; margin-bottom: 0.5rem;">🎯 {target_pump.get('pump_name')} at BEP</h3>
+            <h3 style="color: #10b981; margin-bottom: 0.5rem;">🎯 {target_pump.get('pump_code')} at BEP</h3>
             <p style="color: #64748b; margin-bottom: 1rem;">Best Efficiency Point: {bep_flow:.1f} m³/hr @ {bep_head:.1f}m</p>
             <div class="pump-result-card" style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 0.75rem;">
                 <div class="pump-specs" style="margin-bottom: 0.75rem;">
