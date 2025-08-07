@@ -73,6 +73,14 @@ The application employs a modular Flask architecture with a clear separation of 
 - **Flexible Application Recognition**: Identifies water supply, industrial, irrigation, and other application types from natural language
 - **Top 5 Display**: Shows the best 5 pumps with visual ranking, score badges, and comprehensive specifications
 
+**Enhanced Shorthand and @ Pump Lookup Features (August 7, 2025)**:
+- **Shorthand Query Support**: Understands formats like "1781 @ 24", "800 30 HSC", "1500 25" with intelligent flow/head detection
+- **@ Pump Name Autocomplete**: Type @ followed by pump name for instant lookup (e.g., "@10 WLN 18A")
+- **Smart Pattern Recognition**: Distinguishes between "flow @ head" and "@pump_name" patterns correctly
+- **Global Chat Availability**: Floating chat button accessible on all pages via base.html template inclusion
+- **Keyboard Navigation**: Full keyboard support for autocomplete suggestions with arrow keys and Enter
+- **Repository Integration**: Fixed pump data access using correct `.get_pump_models()` method with dictionary access patterns
+
 ### Recent Major Update - Navigation System Unification (August 7, 2025)
 **CRITICAL Navigation Architecture Overhaul**:
 - **Resolved Blueprint Conflicts**: Removed duplicate `reports_bp` registration by eliminating dead code (`reports_old.py`)

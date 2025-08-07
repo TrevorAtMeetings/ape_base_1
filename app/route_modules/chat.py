@@ -31,19 +31,28 @@ def extract_pump_parameters(query):
     pump_name = None
     
     # Check for pump name with @ symbol (e.g., "@12 WLN 14A" or "@12 WLN 14A 1400 30")
+    # But exclude shorthand "flow @ head" patterns
     if '@' in query:
-        # Pattern to extract pump name and optional flow/head
-        pump_pattern = r'@([A-Za-z0-9\s/\-]+?)(?:\s+(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?))?$'
-        match = re.search(pump_pattern, query)
+        # First check if it's a "flow @ head" pattern (e.g., "1781 @ 24")
+        flow_head_pattern = r'(\d+(?:\.\d+)?)\s*@\s*(\d+(?:\.\d+)?)'
+        flow_head_match = re.search(flow_head_pattern, query)
         
-        if match:
-            pump_name = match.group(1).strip()
-            if match.group(2) and match.group(3):
-                # Flow and head provided with pump name
-                flow = float(match.group(2))
-                head = float(match.group(3))
-            # Return with pump name prefixed by PUMP: to distinguish from application type
-            return flow, head, f'PUMP:{pump_name}'
+        if flow_head_match:
+            # This is a flow @ head pattern, not a pump name
+            pass  # Will be handled by shorthand patterns below
+        else:
+            # Pattern to extract pump name and optional flow/head
+            pump_pattern = r'@([A-Za-z0-9\s/\-]+?)(?:\s+(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?))?$'
+            match = re.search(pump_pattern, query)
+            
+            if match:
+                pump_name = match.group(1).strip()
+                if match.group(2) and match.group(3):
+                    # Flow and head provided with pump name
+                    flow = float(match.group(2))
+                    head = float(match.group(3))
+                # Return with pump name prefixed by PUMP: to distinguish from application type
+                return flow, head, f'PUMP:{pump_name}'
     
     # First check for shorthand patterns like "1781 @ 24" or "1781 24"
     shorthand_patterns = [
