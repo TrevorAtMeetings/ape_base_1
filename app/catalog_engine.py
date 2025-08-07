@@ -1098,7 +1098,7 @@ class CatalogEngine:
             )
 
         # Log top results for debugging
-        for i, pump in enumerate(suitable_pumps[:5]):
+        for i, pump in enumerate(suitable_pumps[:10]):
             logger.info(
                 f"  #{i+1}: {pump['pump'].pump_code} ({pump['pump'].pump_type}) - Score: {pump['suitability_score']:.1f}"
             )

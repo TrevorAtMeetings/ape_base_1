@@ -284,7 +284,7 @@ def engineering_report(pump_code):
     return render_template(
         'engineering_pump_report.html',
         selected_pump=selected_pump,
-        alternative_pumps=alternatives[:5],
+        alternative_pumps=alternatives[:10],
         site_requirements=site_requirements_data,
         pump_code=pump_code,
         current_date=current_date

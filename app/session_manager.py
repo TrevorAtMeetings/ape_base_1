@@ -234,5 +234,5 @@ def store_pumps_optimized(suitable_pumps: list) -> None:
         flattened_pump = flatten_pump_data(pump_dict)
         flattened_pumps.append(flattened_pump)
     
-    # Store only essential data - limit to top 3 to stay under 4093 byte cookie limit
-    session['suitable_pumps'] = flattened_pumps[:3]  # Cookie size optimization
+    # Store only essential data - limit to top 10 for shortlist functionality
+    session['suitable_pumps'] = flattened_pumps[:10]  # Allow more pumps for shortlist

@@ -37,7 +37,8 @@ The application employs a modular Flask architecture with a clear separation of 
 
 **User Experience Improvements (August 7, 2025)**:
 - **Engineering View Default**: Changed all pump selections (main results and shortlist) to default to engineering view instead of presentation view
-- **Expanded Shortlist Capacity**: Increased shortlist limit from 3 to 5 pumps for better comparison options when available
+- **Expanded Shortlist Capacity**: Increased shortlist limit from 3 to 10 pumps for better comparison options when available
+- **Comprehensive Limit Updates**: Updated all backend validation, frontend JavaScript, session storage, and report generation to support 10-pump shortlists
 
 **Chart Improvements (August 7, 2025)**:
 - Fixed operating point markers to use transparent red triangles positioned at X-axis (Y=0) pointing upward

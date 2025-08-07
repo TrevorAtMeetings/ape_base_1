@@ -247,8 +247,8 @@ def shortlist_comparison():
     """Display side-by-side comparison of selected pumps"""
     try:
         pump_codes = request.args.getlist('pumps')
-        if len(pump_codes) < 2 or len(pump_codes) > 5:
-            safe_flash('Please select 2-5 pumps for shortlist comparison', 'error')
+        if len(pump_codes) < 2 or len(pump_codes) > 10:
+            safe_flash('Please select 2-10 pumps for shortlist comparison', 'error')
             return redirect(url_for('comparison.pump_comparison'))
             
         flow = request.args.get('flow', type=float)
@@ -308,7 +308,7 @@ def generate_comparison_pdf():
         catalog_engine = get_catalog_engine()
         
         comparison_data = []
-        for pump_code in pump_codes[:5]:  # Top 5 pumps
+        for pump_code in pump_codes[:10]:  # Top 10 pumps
             if not pump_code.strip():
                 continue
                 
