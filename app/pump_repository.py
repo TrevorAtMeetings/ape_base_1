@@ -333,7 +333,11 @@ class PumpRepository:
                                 'max_impeller_mm': float(pump_row_dict.get('max_impeller_diameter_mm', 0)) if pump_row_dict.get('max_impeller_diameter_mm') is not None else 0,
                                 'test_speed_rpm': int(pump_row_dict.get('test_speed_rpm', 0)) if pump_row_dict.get('test_speed_rpm') is not None else 0,
                                 'min_speed_rpm': int(pump_row_dict.get('min_speed_rpm', 0)) if pump_row_dict.get('min_speed_rpm') is not None else 0,
-                                'max_speed_rpm': int(pump_row_dict.get('max_speed_rpm', 0)) if pump_row_dict.get('max_speed_rpm') is not None else 0
+                                'max_speed_rpm': int(pump_row_dict.get('max_speed_rpm', 0)) if pump_row_dict.get('max_speed_rpm') is not None else 0,
+                                # CRITICAL: Add BEP data from database specifications (authentic manufacturer data)
+                                'bep_flow_m3hr': float(pump_row_dict.get('bep_flow_m3hr')) if pump_row_dict.get('bep_flow_m3hr') is not None else None,
+                                'bep_head_m': float(pump_row_dict.get('bep_head_m')) if pump_row_dict.get('bep_head_m') is not None else None,
+                                'npshr_at_bep': float(pump_row_dict.get('npshr_at_bep')) if pump_row_dict.get('npshr_at_bep') is not None else None
                             },
                             'curves': curves,
                             # Use aggregated statistics from SQL

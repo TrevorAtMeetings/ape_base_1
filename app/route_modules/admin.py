@@ -329,77 +329,54 @@ def _get_ui_performance(pump, flow_rate, head, catalog_engine):
         }
 
 def _get_bep_analysis(pump, pump_repo, catalog_engine):
-    """Get BEP analysis for the pump including BEP coordinates and performance"""
+    """Get BEP analysis using ONLY authentic database specifications - NO FALLBACKS"""
     try:
-        # Get BEP from pump specifications
-        bep_flow = pump.specifications.get('q_bep', 0)
-        bep_head = pump.specifications.get('h_bep', 0)
-        bep_efficiency = pump.specifications.get('eff_bep', 0)
+        # Get BEP from AUTHENTIC database specifications only
+        bep_flow = pump.specifications.get('bep_flow_m3hr')
+        bep_head = pump.specifications.get('bep_head_m') 
+        bep_efficiency = pump.specifications.get('eff_bep')
         
-        logger.info(f"BEP specifications for {pump.pump_code}: Flow={bep_flow}, Head={bep_head}, Efficiency={bep_efficiency}")
+        logger.info(f"Database BEP specifications for {pump.pump_code}: Flow={bep_flow}, Head={bep_head}, Efficiency={bep_efficiency}")
         
-        # If no BEP specs, try to estimate from curve data
+        # CRITICAL: If no authentic BEP data exists, FAIL - never use fallbacks
         if not bep_flow or not bep_head:
-            bep_estimate = _estimate_bep_from_curves(pump)
-            if bep_estimate:
-                bep_flow = bep_estimate.get('flow_m3hr', 0)
-                bep_head = bep_estimate.get('head_m', 0)
-                bep_efficiency = bep_estimate.get('efficiency_pct', 0)
-                logger.info(f"Estimated BEP for {pump.pump_code}: Flow={bep_flow}, Head={bep_head}, Efficiency={bep_efficiency}")
+            error_msg = f"CRITICAL ERROR: No authentic BEP data found for {pump.pump_code}. BEP Flow={bep_flow}, Head={bep_head}. Testing cannot proceed with estimated data."
+            logger.error(error_msg)
+            raise ValueError(error_msg)
         
-        if bep_flow and bep_head:
-            # Calculate performance at BEP using both methods
-            bep_db_performance = _get_database_performance(pump, bep_flow, bep_head)
-            bep_ui_performance = _get_ui_performance(pump, bep_flow, bep_head, catalog_engine)
-            
-            return {
-                'bep_flow_m3hr': bep_flow,
-                'bep_head_m': bep_head,
-                'bep_efficiency_pct': bep_efficiency,
-                'db_performance': bep_db_performance,
-                'ui_performance': bep_ui_performance,
-                'has_bep_data': True
-            }
-        else:
-            logger.warning(f"No BEP data available for {pump.pump_code}")
-            return {'has_bep_data': False}
+        # Calculate performance at authentic BEP using both methods
+        bep_db_performance = _get_database_performance(pump, bep_flow, bep_head)
+        bep_ui_performance = _get_ui_performance(pump, bep_flow, bep_head, catalog_engine)
+        
+        return {
+            'bep_flow_m3hr': bep_flow,
+            'bep_head_m': bep_head,
+            'bep_efficiency_pct': bep_efficiency,
+            'db_performance': bep_db_performance,
+            'ui_performance': bep_ui_performance,
+            'has_bep_data': True,
+            'data_source': 'authentic_database_specifications'
+        }
             
     except Exception as e:
-        logger.error(f"Error getting BEP analysis for {pump.pump_code}: {str(e)}")
-        return {'has_bep_data': False}
+        logger.error(f"Error getting authentic BEP data for {pump.pump_code}: {str(e)}")
+        raise e
 
-def _estimate_bep_from_curves(pump):
-    """Estimate BEP from curve data by finding peak efficiency point"""
-    try:
-        best_efficiency = 0
-        bep_point = None
-        
-        for curve in pump.curves:
-            points = curve.get('performance_points', [])
-            for point in points:
-                efficiency = point.get('efficiency_pct', 0)
-                if efficiency > best_efficiency:
-                    best_efficiency = efficiency
-                    bep_point = {
-                        'flow_m3hr': point.get('flow_m3hr'),
-                        'head_m': point.get('head_m'),
-                        'efficiency_pct': efficiency
-                    }
-        
-        return bep_point
-        
-    except Exception as e:
-        logger.warning(f"Error estimating BEP from curves for {pump.pump_code}: {str(e)}")
-        return None
+# REMOVED: _estimate_bep_from_curves function
+# Data integrity policy: NEVER use estimated/fallback data for BEP validation
+# If authentic BEP specifications don't exist, the test must fail
 
 def _test_pump_performance_envelope(pump, base_flow, base_head, pump_repo, catalog_engine):
-    """Test pump performance across full operating envelope (10-20 points)"""
+    """Test pump performance across operating envelope using AUTHENTIC BEP data only"""
     try:
-        # Get BEP for envelope calculation
+        # Get AUTHENTIC BEP data - will raise exception if not found
         bep_data = _get_bep_analysis(pump, pump_repo, catalog_engine)
+        
+        # This should never execute due to exception handling above, but keeping for clarity
         if not bep_data.get('has_bep_data'):
-            logger.warning(f"No BEP data for envelope testing of {pump.pump_code}")
-            return None
+            error_msg = f"CRITICAL: No authentic BEP data available for envelope testing of {pump.pump_code}"
+            logger.error(error_msg)
+            raise ValueError(error_msg)
         
         bep_flow = bep_data['bep_flow_m3hr']
         bep_head = bep_data['bep_head_m'] 
