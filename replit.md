@@ -83,9 +83,10 @@ The pump selection methodology separates fixed-speed (impeller trimming) from VF
 - **markdown2**: Markdown processing.
 
 ## Recent Changes
-### August 7, 2025 - Show Data Enhancement & Issues Resolution
-- **Enhanced Show Data Functionality**: Implemented comprehensive data display for presentation page with pump specifications, performance metrics, and impeller details
-- **Fixed Template Syntax Issues**: Resolved 40 LSP diagnostics by simplifying CSS/JS implementation, reduced to 32 diagnostics
-- **Created Issues Log**: Comprehensive forensic analysis documented in `Docs/issues_log_2025_08_07.md`
-- **Verified Application State**: Confirmed main pump selection flow functional, charts rendering correctly, database integration stable
-- **Identified Critical Logic Issues**: Documented existing impeller scaling and validation issues requiring future attention
+### August 7, 2025 - Quality Issues Resolution & Comparison Enhancement
+- **Fixed JavaScript Errors**: Resolved `resetZoom()` function call errors by converting from object method to standalone function
+- **Enhanced Show Data Functionality**: Improved toggleChartData() with better error handling and user feedback
+- **Restored Comparison Page**: Fixed data structure mismatch (overall_score vs suitability_score) and restored original cost breakdown functionality
+- **Added Comparison Navigation**: Verified "Add to Compare" buttons working on pump report pages with proper API integration
+- **Improved User Experience**: Added explanation of "Add to Compare" feature in comparison page hero banner
+- **Enhanced Cost Analysis**: Full lifecycle cost analysis with R/kWh calculations, annual costs, and 10-year financial impact comparisons

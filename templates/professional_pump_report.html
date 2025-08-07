@@ -745,7 +745,7 @@
                     </div>
                     
                     <div class="action-buttons">
-                        <div class="action-btn" onclick="window.pumpChartsManager.resetZoom()">
+                        <div class="action-btn" onclick="resetZoom()">
                             <i class="material-icons">zoom_out_map</i>
                             <div class="action-btn-label">Reset Zoom</div>
                         </div>
@@ -981,20 +981,18 @@
         }
 
         // Reset zoom for all charts
-        if (!window.pumpChartsManager) {
-            window.pumpChartsManager = {
-                resetZoom: function() {
-                    ['head-flow-chart', 'efficiency-flow-chart', 'power-flow-chart', 'npshr-flow-chart'].forEach(id => {
-                        if (document.getElementById(id)) {
-                            Plotly.relayout(id, {
-                                'xaxis.autorange': true,
-                                'yaxis.autorange': true
-                            });
-                        }
+        function resetZoom() {
+            ['head-flow-chart', 'efficiency-flow-chart', 'power-flow-chart', 'npshr-flow-chart'].forEach(id => {
+                if (document.getElementById(id)) {
+                    Plotly.relayout(id, {
+                        'xaxis.autorange': true,
+                        'yaxis.autorange': true
                     });
-                    M.toast({html: 'Zoom reset'});
                 }
-            };
+            });
+            if (typeof M !== 'undefined') {
+                M.toast({html: 'Chart zoom reset'});
+            }
         }
         
         // Toggle Chart Data Function
@@ -1004,14 +1002,21 @@
             const btnLabel = btn.querySelector('.action-btn-label');
             const btnIcon = btn.querySelector('i');
             
-            if (container.style.display === 'none') {
-                container.style.display = 'block';
-                btnLabel.textContent = 'Hide Data';
-                btnIcon.textContent = 'visibility_off';
+            if (container && btn) {
+                if (container.style.display === 'none' || container.style.display === '') {
+                    container.style.display = 'block';
+                    btnLabel.textContent = 'Hide Data';
+                    btnIcon.textContent = 'visibility_off';
+                    if (typeof M !== 'undefined') {
+                        M.toast({html: 'Pump data displayed'});
+                    }
+                } else {
+                    container.style.display = 'none';
+                    btnLabel.textContent = 'Show Data';
+                    btnIcon.textContent = 'table_chart';
+                }
             } else {
-                container.style.display = 'none';
-                btnLabel.textContent = 'Show Data';
-                btnIcon.textContent = 'table_chart';
+                console.error('Chart data container or button not found');
             }
         }
 
