@@ -376,9 +376,9 @@ class CatalogPump:
             performance = optimal_sizing['performance']
             sizing = optimal_sizing['sizing']
             
-            # Validate trim percentage is within acceptable range
+            # Validate trim percentage is within acceptable range (85-100% per engineering specs)
             trim_percent = sizing.get('trim_percent', 100)
-            if 75 <= trim_percent <= 99:  # Valid trimming range
+            if 85 <= trim_percent <= 99:  # Valid trimming range: 85% minimum (15% max reduction)
                 
                 # Hard Gate 2: NPSH Safety (apply to this solution)
                 npsh_gate_result = self._validate_npsh_safety_gate(performance, npsha_available)
@@ -397,7 +397,7 @@ class CatalogPump:
                 else:
                     logger.debug(f"Pump {self.pump_code}: Trimming solution failed NPSH gate - {npsh_gate_result['reason']}")
             else:
-                logger.debug(f"Pump {self.pump_code}: Trimming requires {trim_percent:.1f}% (outside 75-99% range)")
+                logger.debug(f"Pump {self.pump_code}: Trimming requires {trim_percent:.1f}% (outside 85-99% range)")
         
         # v6.0: Method 3 (Speed Variation) DISABLED - Fixed-speed methodology only
         
@@ -511,7 +511,7 @@ class CatalogPump:
         return True
 
     def _validate_qbp_range(self, required_flow: float) -> Dict[str, Any]:
-        """v6.0 HARD GATE: Validate QBP operating range (60-130% of BEP per manufacturer specs)"""
+        """v6.0 HARD GATE: Validate QBP operating range (60-130% of BEP, but allow manufacturer data beyond)"""
         try:
             # Get pump's nominal BEP flow from specifications
             bep_flow = self.specifications.get('bep_flow_m3hr', 0)
@@ -528,11 +528,24 @@ class CatalogPump:
             
             if bep_flow > 0:
                 qbp_percentage = (required_flow / bep_flow) * 100
-                # Use 60-130% range as per manufacturer acceptable operating range
+                
+                # Check if this flow is within manufacturer's documented range
+                max_flow = self._calculate_max_flow()
+                min_flow = min(
+                    min(p['flow_m3hr'] for p in curve['performance_points'])
+                    for curve in self.curves) if self.curves else 0
+                
+                # CRITICAL: Trust manufacturer data - if they provide it, it's operational
+                if min_flow <= required_flow <= max_flow:
+                    # Flow is within manufacturer's documented range - ALLOW IT
+                    logger.debug(f"Flow at {qbp_percentage:.1f}% BEP is within manufacturer range ({min_flow:.1f}-{max_flow:.1f} m³/hr)")
+                    return {'passed': True, 'reason': 'Within manufacturer documented range'}
+                
+                # Only apply 60-130% gate if outside manufacturer's range
                 if qbp_percentage < 60 or qbp_percentage > 130:
                     return {
                         'passed': False,
-                        'reason': f"Operating point {qbp_percentage:.1f}% outside acceptable 60-130% BEP range"
+                        'reason': f"Operating point {qbp_percentage:.1f}% outside acceptable 60-130% BEP range and not in manufacturer data"
                     }
             
             # Pass if we can't determine BEP (will rely on other evaluation methods)

@@ -207,8 +207,16 @@ def get_chart_data(pump_code):
             performance_points = curve.get('performance_points', [])
             is_selected_curve = (i == best_curve_index)
 
-            # For the selected curve, use the same calculation methodology as operating point
+            # For the selected curve, apply impeller trimming if required
             if is_selected_curve and operating_point:
+                # Check if impeller trimming was applied
+                trim_applied = False
+                trim_ratio = 1.0
+                if sizing_info and sizing_info.get('trim_percent', 100) < 100:
+                    trim_applied = True
+                    trim_ratio = sizing_info.get('trim_percent', 100) / 100.0
+                    logger.info(f"Chart API: Impeller trimming detected - {trim_ratio*100:.1f}%")
+                
                 # Generate chart data that matches the operating point calculation
                 # This ensures consistency between chart visualization and performance results
 
@@ -230,8 +238,26 @@ def get_chart_data(pump_code):
                     logger.info(
                         f"Chart API: Speed scaling applied to selected curve - ratio={actual_speed_ratio:.3f}"
                     )
+                elif trim_applied:
+                    # Apply impeller trimming using affinity laws
+                    flows = [
+                        p['flow_m3hr'] * trim_ratio
+                        for p in performance_points if 'flow_m3hr' in p
+                    ]
+                    heads = [
+                        p['head_m'] * (trim_ratio**2)
+                        for p in performance_points if 'head_m' in p
+                    ]
+                    base_powers = calculate_power_curve(performance_points)
+                    powers = [
+                        power * (trim_ratio**3)
+                        for power in base_powers
+                    ]
+                    logger.info(
+                        f"Chart API: Impeller trimming applied to selected curve - ratio={trim_ratio:.3f}"
+                    )
                 else:
-                    # Use original data for non-speed-varied cases
+                    # Use original data for non-speed-varied and non-trimmed cases
                     flows = [
                         p['flow_m3hr'] for p in performance_points
                         if 'flow_m3hr' in p

@@ -84,12 +84,15 @@ The application employs a modular Flask architecture with a clear separation of 
 - Ensured consistent X-axis ranges across engineering view charts for proper comparison
 - Enhanced hover templates with comprehensive pump performance data including BEP position
 
-### Recent Major Update - Methodology v6.0 (August 2025)
-**CRITICAL**: New engineering methodology developed based on expert feedback identifying fundamental flaws in v5.0 approach. Key architectural changes required:
+### Recent Major Update - Methodology v6.1 (August 2025)
+**CRITICAL**: Engineering methodology refined based on operational requirements and manufacturer data trust principles:
 - **Algorithm Separation**: Fixed-speed (impeller trimming) completely separated from VFD (speed variation) logic
-- **Hard Safety Gates**: NPSH and QBP operating range implemented as pass/fail filters before scoring
+- **Hard Safety Gates**: NPSH (1.5x margin) and QBP operating range (60-130% preferred, but manufacturer data trusted beyond)
+- **Impeller Trim Range**: 85-100% of maximum diameter (15% maximum reduction per engineering standards)
+- **Manufacturer Data Trust**: If performance data exists in database, pump can operate at those conditions
+- **Flow Operating Range**: 60-130% of BEP for selection, but allows manufacturer-documented points beyond
 - **Rebalanced Scoring**: 85-point system with NPSH removed from ranking, power-based tie-breaking added
-- **Chart Display Fix**: Must show trimmed curves instead of maximum impeller curves
+- **Chart Display Requirement**: Must show trimmed curves reflecting actual impeller diameter, not maximum curves
 
 ### Backend Architecture
 - **Flask Framework**: Handles routing and HTTP requests.
