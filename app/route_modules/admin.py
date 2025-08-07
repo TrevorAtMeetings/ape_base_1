@@ -97,6 +97,8 @@ def run_performance_test():
                 test_pumps = [catalog_pump]
             else:
                 # Get suitable pumps from catalog engine (limit to top 10 for testing)
+                # Create site requirements - flow_rate and head are guaranteed to be floats here
+                assert flow_rate is not None and head is not None, "Flow rate and head must be provided for duty point testing"
                 site_requirements = SiteRequirements(flow_rate, head)
                 selection_results = catalog_engine.select_pumps(
                     flow_rate, head, pump_type='GENERAL', max_results=10
@@ -107,7 +109,7 @@ def run_performance_test():
                 
                 # Extract pump objects from selection results
                 test_pumps = []
-                limited_results = selection_results[:10] if len(selection_results) > 10 else selection_results
+                limited_results = selection_results[:10]  # Take max 10 results
                 for result in limited_results:
                     if isinstance(result, dict) and 'pump' in result:
                         test_pumps.append(result['pump'])
@@ -118,6 +120,9 @@ def run_performance_test():
                     flash('Unable to extract pump objects from selection results', 'error')
                     return render_template('admin_testing.html')
             test_mode = 'Duty Point Testing'
+        
+        # At this point, flow_rate and head are guaranteed to be float values
+        assert flow_rate is not None and head is not None, "Flow rate and head must be defined at this point"
         
         # Run comparison tests
         test_results = []
@@ -232,14 +237,18 @@ def _get_database_performance(pump, flow_rate, head):
 def _get_ui_performance(pump, flow_rate, head, catalog_engine):
     """Get UI calculated performance using catalog engine's full methodology"""
     try:
-        # Use catalog engine's unified evaluation method (includes all transformations, scaling, scoring)
+        # Primary method: Use catalog engine's unified evaluation method
         ui_solution = pump.find_best_solution_for_duty(flow_rate, head)
         
         logger.info(f"UI solution for {pump.pump_code}: {ui_solution}")
         
-        if ui_solution and ui_solution.get('performance'):
-            # Extract performance data from the solution
-            performance = ui_solution.get('performance', {})
+        # Check if we have a complete solution with performance data
+        if ui_solution and ui_solution.get('score') is not None:
+            # Extract performance data - it might be in different places
+            performance = ui_solution
+            if 'performance' in ui_solution:
+                performance = ui_solution['performance']
+                
             logger.info(f"UI performance data for {pump.pump_code}: {performance}")
             
             return {
@@ -247,11 +256,11 @@ def _get_ui_performance(pump, flow_rate, head, catalog_engine):
                 'power_kw': performance.get('power_kw'), 
                 'npshr_m': performance.get('npshr_m'),
                 'suitability_score': ui_solution.get('score'),
-                'trim_percent': performance.get('trim_percent'),
-                'method': ui_solution.get('method', 'unknown')
+                'trim_percent': performance.get('trim_percent', 100),
+                'method': ui_solution.get('method', 'direct_interpolation')
             }
         else:
-            logger.warning(f"No UI solution found for {pump.pump_code} at {flow_rate} m³/hr, {head} m")
+            logger.warning(f"No scored UI solution found for {pump.pump_code} at {flow_rate} m³/hr, {head} m")
             # Fallback: try direct performance calculation if find_best_solution_for_duty fails
             fallback_performance = pump._get_performance_interpolated(flow_rate, head)
             if fallback_performance:
@@ -260,7 +269,7 @@ def _get_ui_performance(pump, flow_rate, head, catalog_engine):
                     'efficiency_pct': fallback_performance.get('efficiency_pct'),
                     'power_kw': fallback_performance.get('power_kw'), 
                     'npshr_m': fallback_performance.get('npshr_m'),
-                    'suitability_score': 0,  # No score available
+                    'suitability_score': 0,  # No score available from fallback
                     'trim_percent': 100,  # Assume no trim
                     'method': 'fallback_interpolation'
                 }
