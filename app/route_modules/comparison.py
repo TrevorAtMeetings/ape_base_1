@@ -247,8 +247,8 @@ def shortlist_comparison():
     """Display side-by-side comparison of selected pumps"""
     try:
         pump_codes = request.args.getlist('pumps')
-        if len(pump_codes) < 2 or len(pump_codes) > 3:
-            safe_flash('Please select 2-3 pumps for shortlist comparison', 'error')
+        if len(pump_codes) < 2 or len(pump_codes) > 5:
+            safe_flash('Please select 2-5 pumps for shortlist comparison', 'error')
             return redirect(url_for('comparison.pump_comparison'))
             
         flow = request.args.get('flow', type=float)
