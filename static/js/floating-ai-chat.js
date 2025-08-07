@@ -41,19 +41,20 @@ function initializeFloatingAIChat() {
                             <i class="material-icons">lightbulb</i>
                         </div>
                         <div class="ai-message-content">
-                            <p><strong>Hello! I'm your AI Pump Expert.</strong></p>
-                            <p>I can help you with pump selection, performance calculations, technical specifications, and engineering guidance.</p>
+                            <p><strong>APE Pumps AI Assistant</strong></p>
+                            <p style="font-size: 0.85rem; color: #64748b;">Find your perfect pump. Try:</p>
                             <div class="ai-quick-actions">
-                                <button class="ai-quick-btn" onclick="sendQuickQuery('What pumps are suitable for water supply applications?')">
-                                    Water Supply Pumps
+                                <button class="ai-quick-btn" onclick="sendQuickQuery('I need pumps for 1500 m³/hr at 25 meters')">
+                                    💧 "1500 m³/hr at 25 meters"
                                 </button>
-                                <button class="ai-quick-btn" onclick="sendQuickQuery('How do I calculate NPSH requirements?')">
-                                    NPSH Calculations
+                                <button class="ai-quick-btn" onclick="sendQuickQuery('Find pumps for 800 m³/hr at 30m')">
+                                    🏭 "800 m³/hr at 30m"
                                 </button>
-                                <button class="ai-quick-btn" onclick="sendQuickQuery('What maintenance is required for centrifugal pumps?')">
-                                    Maintenance Guide
+                                <button class="ai-quick-btn" onclick="sendQuickQuery('What pumps work for 2000 m³/hr at 15 meters?')">
+                                    📊 "2000 m³/hr at 15 meters"
                                 </button>
                             </div>
+                            <p style="font-size: 0.75rem; color: #94a3b8; margin-top: 0.75rem;">💡 I work with metric units (m³/hr, meters)</p>
                         </div>
                     </div>
                 </div>
@@ -63,7 +64,7 @@ function initializeFloatingAIChat() {
                         <textarea 
                             id="ai-chat-input" 
                             class="ai-chat-input" 
-                            placeholder="Ask about pump specifications, performance, applications..."
+                            placeholder="Type flow & head (e.g., 500 m³/hr at 40m)"
                             rows="1"
                             maxlength="1000"></textarea>
                         <button id="ai-send-button" class="ai-send-button" onclick="sendAIMessage()">
@@ -226,7 +227,9 @@ function addAIMessage(sender, content, processingTime = null, confidence = null,
         }
     }
     
+    // Append message at the end
     messagesContainer.appendChild(messageDiv);
+    // Scroll to bottom to show newest message
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
     
     // Store in history
