@@ -1748,5 +1748,9 @@
             M.toast({html: 'Filters reset - showing all pumps'});
         }
     </script>
+    
+    <!-- Floating AI Chat -->
+    <link href="{{ url_for('static', filename='css/floating-ai-chat.css') }}?v={{ range(1000, 9999) | random }}" rel="stylesheet">
+    <script src="{{ url_for('static', filename='js/floating-ai-chat.js') }}"></script>
 </body>
 </html>
