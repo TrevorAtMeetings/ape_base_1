@@ -303,7 +303,6 @@
 <nav class="unified-nav">
     <div class="nav-container">
         <a href="{{ url_for('main_flow.index') }}" class="nav-brand">
-            <span style="font-size: 28px;">💧</span>
             <span>APE Pumps Selection</span>
         </a>
         
@@ -312,7 +311,7 @@
             <div class="nav-dropdown">
                 <button class="nav-btn">
                     <span>Tools</span>
-                    <span style="font-size: 16px;">▼</span>
+                    <span style="margin-left: 4px;">▾</span>
                 </button>
                 <div class="nav-dropdown-content">
                     <a href="{{ url_for('comparison.pump_comparison') }}">Pump Comparison</a>
@@ -326,7 +325,7 @@
             <div class="nav-dropdown">
                 <button class="nav-btn">
                     <span>Admin</span>
-                    <span style="font-size: 16px;">▼</span>
+                    <span style="margin-left: 4px;">▾</span>
                 </button>
                 <div class="nav-dropdown-content">
                     <a href="{{ url_for('admin_config.index') }}">Configuration</a>
@@ -339,7 +338,7 @@
             <div class="nav-dropdown">
                 <button class="nav-btn">
                     <span>Help</span>
-                    <span style="font-size: 16px;">▼</span>
+                    <span style="margin-left: 4px;">▾</span>
                 </button>
                 <div class="nav-dropdown-content">
                     <a href="{{ url_for('main_flow.guide') }}">User Guide</a>
@@ -351,20 +350,16 @@
             <div class="view-toggle">
                 {% if current_view == 'presentation' %}
                 <span class="nav-btn active">
-                    <span style="font-size: 18px;">📊</span>
                     <span>Presentation</span>
                 </span>
                 <a href="{{ engineering_url }}" class="nav-btn">
-                    <span style="font-size: 18px;">⚙️</span>
                     <span>Engineering</span>
                 </a>
                 {% else %}
                 <a href="{{ presentation_url }}" class="nav-btn">
-                    <span style="font-size: 18px;">📊</span>
                     <span>Presentation</span>
                 </a>
                 <span class="nav-btn active">
-                    <span style="font-size: 18px;">⚙️</span>
                     <span>Engineering</span>
                 </span>
                 {% endif %}
@@ -373,21 +368,19 @@
             
             {% if show_edit %}
             <button class="nav-btn" onclick="toggleEditMode()">
-                <span style="font-size: 18px;">✏️</span>
                 <span>Edit</span>
             </button>
             {% endif %}
             
             {% if show_print %}
             <button class="nav-btn" onclick="window.print()">
-                <span style="font-size: 18px;">🖨️</span>
+                <span>⎙</span>
                 <span>Print</span>
             </button>
             {% endif %}
             
             {% if show_new_search %}
             <a href="/" class="nav-btn primary">
-                <span style="font-size: 18px;">🔍</span>
                 <span>New Search</span>
             </a>
             {% endif %}
@@ -403,12 +396,6 @@
         <li class="breadcrumb-item">
             {% if not loop.last %}
             <a href="{{ crumb.url }}" class="breadcrumb-link">
-                {% if crumb.icon %}
-                    {% if crumb.icon == 'home' %}🏠
-                    {% elif crumb.icon == 'search' %}🔍
-                    {% elif crumb.icon == 'settings' %}⚙️
-                    {% else %}📄{% endif %}
-                {% endif %}
                 {{ crumb.label }}
             </a>
             {% if not loop.last %}
