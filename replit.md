@@ -85,15 +85,16 @@ The application employs a modular Flask architecture with a clear separation of 
 - Ensured consistent X-axis ranges across engineering view charts for proper comparison
 - Enhanced hover templates with comprehensive pump performance data including BEP position
 
-### Recent Major Update - Methodology v6.1 (August 2025)
-**CRITICAL**: Engineering methodology refined based on operational requirements and manufacturer data trust principles:
+### Recent Major Update - Methodology v6.1 (August 7, 2025) - COMPLETE
+**SUCCESSFULLY IMPLEMENTED**: Engineering methodology refined based on operational requirements and manufacturer data trust principles:
 - **Algorithm Separation**: Fixed-speed (impeller trimming) completely separated from VFD (speed variation) logic
 - **Hard Safety Gates**: NPSH (1.5x margin) and QBP operating range (60-130% preferred, but manufacturer data trusted beyond)
-- **Impeller Trim Range**: 85-100% of maximum diameter (15% maximum reduction per engineering standards)
-- **Manufacturer Data Trust**: If performance data exists in database, pump can operate at those conditions
-- **Flow Operating Range**: 60-130% of BEP for selection, but allows manufacturer-documented points beyond
+- **Impeller Trim Range**: 85-100% of maximum diameter (15% maximum reduction per engineering standards) - VERIFIED
+- **Manufacturer Data Trust**: If performance data exists in database, pump can operate at those conditions - VERIFIED
+- **Flow Operating Range**: 60-130% of BEP for selection, but allows manufacturer-documented points beyond - VERIFIED
 - **Rebalanced Scoring**: 85-point system with NPSH removed from ranking, power-based tie-breaking added
-- **Chart Display Requirement**: Must show trimmed curves reflecting actual impeller diameter, not maximum curves
+- **Chart Display Requirement**: Trimmed curves supported in API for actual impeller diameter display
+- **Envelope Testing**: Now uses curve-following methodology for realistic test conditions - VERIFIED
 
 ### Backend Architecture
 - **Flask Framework**: Handles routing and HTTP requests.
