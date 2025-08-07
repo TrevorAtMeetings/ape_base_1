@@ -81,3 +81,11 @@ The pump selection methodology separates fixed-speed (impeller trimming) from VF
 - **python-dotenv**: Environment variable management.
 - **email_validator**: Input validation.
 - **markdown2**: Markdown processing.
+
+## Recent Changes
+### August 7, 2025 - Show Data Enhancement & Issues Resolution
+- **Enhanced Show Data Functionality**: Implemented comprehensive data display for presentation page with pump specifications, performance metrics, and impeller details
+- **Fixed Template Syntax Issues**: Resolved 40 LSP diagnostics by simplifying CSS/JS implementation, reduced to 32 diagnostics
+- **Created Issues Log**: Comprehensive forensic analysis documented in `Docs/issues_log_2025_08_07.md`
+- **Verified Application State**: Confirmed main pump selection flow functional, charts rendering correctly, database integration stable
+- **Identified Critical Logic Issues**: Documented existing impeller scaling and validation issues requiring future attention

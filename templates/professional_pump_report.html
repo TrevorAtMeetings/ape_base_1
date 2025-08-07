@@ -359,181 +359,7 @@
             border-color: var(--primary);
         }
         
-        /* Chart Data Container Styles */
-        .chart-data-container {
-            margin-top: 24px;
-            padding: 20px;
-            background: #f8f9fa;
-            border-radius: 12px;
-            border: 1px solid #e0e0e0;
-            animation: slideDown 0.3s ease-out;
-        }
-        
-        @keyframes slideDown {
-            from {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        
-        .data-header {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 20px;
-            font-size: 1.2rem;
-            font-weight: 600;
-            color: #333;
-        }
-        
-        .data-header i {
-            color: #2196f3;
-        }
-        
-        .data-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-            gap: 16px;
-        }
-        
-        .data-card {
-            background: white;
-            border-radius: 8px;
-            padding: 16px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            border: 1px solid #e0e0e0;
-        }
-        
-        .data-card.full-width {
-            grid-column: 1 / -1;
-        }
-        
-        .data-card-title {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-weight: 600;
-            color: #333;
-            margin-bottom: 12px;
-            font-size: 0.95rem;
-        }
-        
-        .data-card-title i {
-            color: #2196f3;
-            font-size: 1.1rem;
-        }
-        
-        .data-content {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-        
-        .data-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 6px 0;
-            border-bottom: 1px solid #f0f0f0;
-        }
-        
-        .data-row:last-child {
-            border-bottom: none;
-        }
-        
-        .data-label {
-            font-size: 0.85rem;
-            color: #666;
-            flex: 1;
-        }
-        
-        .data-value {
-            font-weight: 600;
-            color: #333;
-            font-size: 0.9rem;
-            text-align: right;
-        }
-        
-        .data-value.primary-value {
-            color: #2196f3;
-            font-size: 1rem;
-        }
-        
-        .data-value.efficiency-value {
-            color: #4caf50;
-        }
-        
-        .zone-badge, .score-badge {
-            background: #e3f2fd;
-            color: #1976d2;
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-size: 0.8rem;
-        }
-        
-        /* Score Grid Styles */
-        .score-grid {
-            display: grid;
-            gap: 12px;
-        }
-        
-        .score-item {
-            display: grid;
-            grid-template-columns: 120px 1fr 60px;
-            align-items: center;
-            gap: 12px;
-        }
-        
-        .score-label {
-            font-size: 0.85rem;
-            color: #666;
-        }
-        
-        .score-bar {
-            height: 8px;
-            background: #e0e0e0;
-            border-radius: 4px;
-            overflow: hidden;
-        }
-        
-        .score-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #4caf50 0%, #2196f3 50%, #ff9800 100%);
-            transition: width 0.5s ease;
-        }
-        
-        .score-number {
-            font-weight: 600;
-            font-size: 0.85rem;
-            text-align: right;
-            color: #333;
-        }
-        
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            .data-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .score-item {
-                grid-template-columns: 100px 1fr 50px;
-                gap: 8px;
-            }
-            
-            .data-row {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 4px;
-            }
-            
-            .data-value {
-                text-align: left;
-            }
-        }
+
 
         .action-btn i {
             display: block;
@@ -881,207 +707,27 @@
                         </div>
                     </div>
                     
-                    <!-- Hidden Data Section -->
-                    <div id="chartDataContainer" class="chart-data-container" style="display: none;">
-                        <div class="data-header">
-                            <i class="material-icons">analytics</i>
-                            <span>Comprehensive Pump Data</span>
-                        </div>
-                        
-                        <div class="data-grid">
-                            <!-- Pump Specifications -->
-                            <div class="data-card">
-                                <div class="data-card-title">
-                                    <i class="material-icons">settings</i>
-                                    Pump Specifications
-                                </div>
-                                <div class="data-content">
-                                    <div class="data-row">
-                                        <span class="data-label">Model Code:</span>
-                                        <span class="data-value">{{ selected_pump.get('pump_code', 'N/A') }}</span>
-                                    </div>
-                                    <div class="data-row">
-                                        <span class="data-label">Manufacturer:</span>
-                                        <span class="data-value">{{ selected_pump.get('manufacturer', 'APE PUMPS') }}</span>
-                                    </div>
-                                    <div class="data-row">
-                                        <span class="data-label">Series:</span>
-                                        <span class="data-value">{{ selected_pump.get('model_series', 'N/A') }}</span>
-                                    </div>
-                                    <div class="data-row">
-                                        <span class="data-label">Pump Type:</span>
-                                        <span class="data-value">{{ selected_pump.get('pump_type', 'CENTRIFUGAL') }}</span>
-                                    </div>
-                                    <div class="data-row">
-                                        <span class="data-label">Stages:</span>
-                                        <span class="data-value">{{ selected_pump.get('stages', 1) }}</span>
-                                    </div>
-                                </div>
+                    <!-- Data Container (Hidden by Default) -->
+                    <div id="chartDataContainer" style="display: none; margin-top: 20px; padding: 16px; background: #f8f9fa; border-radius: 8px;">
+                        <h5 style="margin: 0 0 16px 0; color: #333;">Comprehensive Pump Data</h5>
+                        <div style="display: grid; gap: 16px;">
+                            <div style="background: white; padding: 12px; border-radius: 6px;">
+                                <strong>Pump Specifications</strong><br>
+                                Model: {{ selected_pump.get('pump_code', 'N/A') }}<br>
+                                Manufacturer: {{ selected_pump.get('manufacturer', 'APE PUMPS') }}<br>
+                                Type: {{ selected_pump.get('pump_type', 'CENTRIFUGAL') }}
                             </div>
-                            
-                            <!-- Operating Performance -->
-                            <div class="data-card">
-                                <div class="data-card-title">
-                                    <i class="material-icons">speed</i>
-                                    Operating Performance
-                                </div>
-                                <div class="data-content">
-                                    <div class="data-row">
-                                        <span class="data-label">Flow Rate:</span>
-                                        <span class="data-value">{{ site_requirements.get('flow_m3hr', 0)|round(1) }} m³/hr</span>
-                                    </div>
-                                    <div class="data-row">
-                                        <span class="data-label">Total Head:</span>
-                                        <span class="data-value">{{ site_requirements.get('head_m', 0)|round(1) }} m</span>
-                                    </div>
-                                    <div class="data-row">
-                                        <span class="data-label">Efficiency:</span>
-                                        <span class="data-value efficiency-value">{{ selected_pump.get('efficiency_pct', 0)|round(1) }}%</span>
-                                    </div>
-                                    <div class="data-row">
-                                        <span class="data-label">Power Absorbed:</span>
-                                        <span class="data-value">{{ selected_pump.get('power_kw', 0)|round(2) }} kW</span>
-                                    </div>
-                                    <div class="data-row">
-                                        <span class="data-label">NPSHr Required:</span>
-                                        <span class="data-value">
-                                            {% if selected_pump.get('npshr_m') is not none %}
-                                                {{ selected_pump.get('npshr_m')|round(2) }} m
-                                            {% else %}
-                                                N/A
-                                            {% endif %}
-                                        </span>
-                                    </div>
-                                </div>
+                            <div style="background: white; padding: 12px; border-radius: 6px;">
+                                <strong>Operating Performance</strong><br>
+                                Flow: {{ site_requirements.get('flow_m3hr', 0)|round(1) }} m³/hr<br>
+                                Head: {{ site_requirements.get('head_m', 0)|round(1) }} m<br>
+                                Efficiency: {{ selected_pump.get('efficiency_pct', 0)|round(1) }}%<br>
+                                Power: {{ selected_pump.get('power_kw', 0)|round(2) }} kW
                             </div>
-                            
-                            <!-- Impeller Details -->
-                            <div class="data-card">
-                                <div class="data-card-title">
-                                    <i class="material-icons">donut_large</i>
-                                    Impeller Details
-                                </div>
-                                <div class="data-content">
-                                    <div class="data-row">
-                                        <span class="data-label">Operating Diameter:</span>
-                                        <span class="data-value primary-value">{{ selected_pump.get('impeller_diameter_mm', 0)|round(0)|int }} mm</span>
-                                    </div>
-                                    <div class="data-row">
-                                        <span class="data-label">Impeller Trim:</span>
-                                        <span class="data-value">{{ (100 - selected_pump.get('trim_percent', 100))|round(1) }}%</span>
-                                    </div>
-                                    <div class="data-row">
-                                        <span class="data-label">Maximum Diameter:</span>
-                                        <span class="data-value">{{ (selected_pump.get('impeller_diameter_mm', 0) / (selected_pump.get('trim_percent', 100) / 100))|round(0)|int }} mm</span>
-                                    </div>
-                                    <div class="data-row">
-                                        <span class="data-label">Minimum Diameter:</span>
-                                        <span class="data-value">{{ ((selected_pump.get('impeller_diameter_mm', 0) / (selected_pump.get('trim_percent', 100) / 100)) * 0.85)|round(0)|int }} mm</span>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <!-- BEP Analysis -->
-                            <div class="data-card">
-                                <div class="data-card-title">
-                                    <i class="material-icons">target</i>
-                                    BEP Analysis
-                                </div>
-                                <div class="data-content">
-                                    <div class="data-row">
-                                        <span class="data-label">QBEP Position:</span>
-                                        <span class="data-value">{{ selected_pump.get('qbep_percentage', 0)|round(0)|int }}% of optimal</span>
-                                    </div>
-                                    <div class="data-row">
-                                        <span class="data-label">Operating Zone:</span>
-                                        <span class="data-value zone-badge">{{ selected_pump.get('operating_zone', 'Optimal').title() }}</span>
-                                    </div>
-                                    <div class="data-row">
-                                        <span class="data-label">BEP Score:</span>
-                                        <span class="data-value">{{ selected_pump.get('bep_score', 0)|round(1) }}/100</span>
-                                    </div>
-                                    <div class="data-row">
-                                        <span class="data-label">Overall Score:</span>
-                                        <span class="data-value score-badge">{{ selected_pump.get('suitability_score', 0)|round(1) }}/100</span>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <!-- System Analysis -->
-                            <div class="data-card">
-                                <div class="data-card-title">
-                                    <i class="material-icons">tune</i>
-                                    System Analysis
-                                </div>
-                                <div class="data-content">
-                                    <div class="data-row">
-                                        <span class="data-label">Number of Pumps:</span>
-                                        <span class="data-value">1</span>
-                                    </div>
-                                    <div class="data-row">
-                                        <span class="data-label">Static Head (Est.):</span>
-                                        <span class="data-value">{{ (site_requirements.get('head_m', 0) * 0.7)|round(1) }} m</span>
-                                    </div>
-                                    <div class="data-row">
-                                        <span class="data-label">Friction Head (Est.):</span>
-                                        <span class="data-value">{{ (site_requirements.get('head_m', 0) * 0.3)|round(1) }} m</span>
-                                    </div>
-                                    <div class="data-row">
-                                        <span class="data-label">Specific Energy:</span>
-                                        <span class="data-value">{{ (selected_pump.get('power_kw', 0) / site_requirements.get('flow_m3hr', 1) * 1000)|round(2) }} W·hr/m³</span>
-                                    </div>
-                                    <div class="data-row">
-                                        <span class="data-label">NPSHa Required:</span>
-                                        <span class="data-value">
-                                            {% set npshr = selected_pump.get('npshr_m') %}
-                                            {% if npshr is not none %}
-                                                {{ (npshr * 1.5)|round(1) }} m
-                                            {% else %}
-                                                N/A
-                                            {% endif %}
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <!-- Scoring Breakdown -->
-                            <div class="data-card full-width">
-                                <div class="data-card-title">
-                                    <i class="material-icons">assessment</i>
-                                    Scoring Breakdown
-                                </div>
-                                <div class="data-content">
-                                    <div class="score-grid">
-                                        <div class="score-item">
-                                            <div class="score-label">BEP Score</div>
-                                            <div class="score-bar">
-                                                <div class="score-fill" style="width: {{ selected_pump.get('bep_score', 0) }}%"></div>
-                                            </div>
-                                            <div class="score-number">{{ selected_pump.get('bep_score', 0)|round(1) }}</div>
-                                        </div>
-                                        <div class="score-item">
-                                            <div class="score-label">Efficiency Score</div>
-                                            <div class="score-bar">
-                                                <div class="score-fill" style="width: {{ selected_pump.get('efficiency_score', 0) }}%"></div>
-                                            </div>
-                                            <div class="score-number">{{ selected_pump.get('efficiency_score', 0)|round(1) }}</div>
-                                        </div>
-                                        <div class="score-item">
-                                            <div class="score-label">NPSH Score</div>
-                                            <div class="score-bar">
-                                                <div class="score-fill" style="width: {{ selected_pump.get('npsh_score', 0) }}%"></div>
-                                            </div>
-                                            <div class="score-number">{{ selected_pump.get('npsh_score', 0)|round(1) }}</div>
-                                        </div>
-                                        <div class="score-item">
-                                            <div class="score-label">Margin Score</div>
-                                            <div class="score-bar">
-                                                <div class="score-fill" style="width: {{ selected_pump.get('margin_score', 0) }}%"></div>
-                                            </div>
-                                            <div class="score-number">{{ selected_pump.get('margin_score', 0)|round(1) }}</div>
-                                        </div>
-                                    </div>
-                                </div>
+                            <div style="background: white; padding: 12px; border-radius: 6px;">
+                                <strong>Impeller Details</strong><br>
+                                Operating Diameter: {{ selected_pump.get('impeller_diameter_mm', 0)|round(0)|int }} mm<br>
+                                Trim: {{ (100 - selected_pump.get('trim_percent', 100))|round(1) }}%
                             </div>
                         </div>
                     </div>
@@ -1307,24 +953,10 @@
             const btnIcon = btn.querySelector('i');
             
             if (container.style.display === 'none') {
-                // Show data
                 container.style.display = 'block';
                 btnLabel.textContent = 'Hide Data';
                 btnIcon.textContent = 'visibility_off';
-                
-                // Animate score bars
-                setTimeout(() => {
-                    const scoreFills = document.querySelectorAll('.score-fill');
-                    scoreFills.forEach(fill => {
-                        const width = fill.style.width;
-                        fill.style.width = '0%';
-                        setTimeout(() => {
-                            fill.style.width = width;
-                        }, 100);
-                    });
-                }, 200);
             } else {
-                // Hide data
                 container.style.display = 'none';
                 btnLabel.textContent = 'Show Data';
                 btnIcon.textContent = 'table_chart';
