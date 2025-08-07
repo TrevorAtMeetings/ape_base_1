@@ -104,13 +104,35 @@
                                     </div>
                                     {% endif %}
                                     
+                                    <!-- Operating Region Legend -->
+                                    <div class="row" style="margin-bottom: 15px; padding: 10px; background-color: #f8f9fa; border-radius: 4px;">
+                                        <div class="col s12">
+                                            <h6 style="margin-bottom: 8px;">Operating Region Legend:</h6>
+                                            <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+                                                <div style="display: flex; align-items: center; gap: 5px;">
+                                                    <div style="width: 12px; height: 12px; background-color: #4CAF50; border-radius: 50%;"></div>
+                                                    <small>Optimal Zone (80-110% BEP)</small>
+                                                </div>
+                                                <div style="display: flex; align-items: center; gap: 5px;">
+                                                    <div style="width: 12px; height: 12px; background-color: #FF9800; border-radius: 50%;"></div>
+                                                    <small>Part Load (60-80% BEP)</small>
+                                                </div>
+                                                <div style="display: flex; align-items: center; gap: 5px;">
+                                                    <div style="width: 12px; height: 12px; background-color: #F44336; border-radius: 50%;"></div>
+                                                    <small>Overload (>110% BEP)</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
                                     <!-- Detailed Results Table -->
                                     <table class="striped responsive-table">
                                         <thead>
                                             <tr>
                                                 <th rowspan="2">Flow<br>(m³/hr)</th>
+                                                <th rowspan="2">Head<br>(m)</th>
                                                 <th rowspan="2">% BEP</th>
-                                                <th rowspan="2">Operating<br>Region</th>
+                                                <th rowspan="2">Region</th>
                                                 <th colspan="3" class="center-align">Efficiency (%)</th>
                                                 <th colspan="3" class="center-align">Power (kW)</th>
                                                 <th colspan="3" class="center-align">NPSH (m)</th>
@@ -132,11 +154,11 @@
                                             {% for point in result.envelope_results %}
                                             <tr>
                                                 <td><strong>{{ "%.0f"|format(point.test_point.flow_m3hr) }}</strong></td>
+                                                <td><strong>{{ "%.1f"|format(point.test_point.head_m) }}</strong></td>
                                                 <td class="center-align">{{ "%.0f"|format(point.test_point.flow_percent_bep) }}%</td>
-                                                <td>
-                                                    <span class="badge {% if point.test_point.operating_region == 'Part Load' %}orange{% elif point.test_point.operating_region == 'Optimal Zone' %}green{% else %}red{% endif %}">
-                                                        {{ point.test_point.operating_region }}
-                                                    </span>
+                                                <td class="center-align">
+                                                    {% set region_class = 'region-optimal' if point.test_point.operating_region == 'Optimal Zone' else ('region-partload' if point.test_point.operating_region == 'Part Load' else 'region-overload') %}
+                                                    <div class="operating-region-indicator {{ region_class }}" title="{{ point.test_point.operating_region }}"></div>
                                                 </td>
                                                 
                                                 <!-- Efficiency -->
@@ -461,7 +483,7 @@ function selectPumpCode(pumpCode) {
 
 /* Envelope testing table needs extra width for all columns */
 .envelope-testing .responsive-table table {
-    min-width: 1600px;
+    min-width: 1700px;
 }
 
 /* Better spacing for two-row headers */
@@ -475,6 +497,26 @@ function selectPumpCode(pumpCode) {
 .responsive-table td {
     padding: 8px 5px;
     vertical-align: middle;
+}
+
+/* Operating region indicator styles */
+.operating-region-indicator {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    margin: 0 auto;
+}
+
+.region-optimal {
+    background-color: #4CAF50;
+}
+
+.region-partload {
+    background-color: #FF9800;
+}
+
+.region-overload {
+    background-color: #F44336;
 }
 </style>
 
