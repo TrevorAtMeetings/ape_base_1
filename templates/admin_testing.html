@@ -221,6 +221,82 @@
                         {% endif %}
                     {% endfor %}
                     
+                    <!-- Testing Insights Section for Envelope Testing -->
+                    {% if test_results and test_results[0].get('envelope_testing', False) %}
+                    <div class="card" style="margin-top: 20px;">
+                        <div class="card-content">
+                            <span class="card-title">
+                                <i class="material-icons left">info</i>
+                                Testing Insights: Database vs UI Validation
+                            </span>
+                            
+                            <div class="row">
+                                <div class="col s12 m4">
+                                    <h6><i class="material-icons tiny">trending_up</i> Efficiency Comparison</h6>
+                                    <p><strong>What we test:</strong> Database stored efficiency vs UI calculated efficiency at each operating point</p>
+                                    <p><strong>Why it matters:</strong> Efficiency directly affects operating costs and energy consumption. Accurate predictions are critical for lifecycle cost analysis.</p>
+                                    <p><strong>Expected results:</strong></p>
+                                    <ul class="browser-default">
+                                        <li><span class="green-text">✓ Match:</span> ≤2% difference (excellent prediction accuracy)</li>
+                                        <li><span class="orange-text">⚠ Minor:</span> 2-5% difference (acceptable for preliminary sizing)</li>
+                                        <li><span class="red-text">✗ Major:</span> >5% difference (requires investigation)</li>
+                                    </ul>
+                                </div>
+                                
+                                <div class="col s12 m4">
+                                    <h6><i class="material-icons tiny">flash_on</i> Power Comparison</h6>
+                                    <p><strong>What we test:</strong> Database stored power consumption vs UI calculated power at each operating point</p>
+                                    <p><strong>Why it matters:</strong> Power consumption determines motor sizing, electrical infrastructure requirements, and operational costs.</p>
+                                    <p><strong>Expected results:</strong></p>
+                                    <ul class="browser-default">
+                                        <li><span class="green-text">✓ Match:</span> ≤0.5 kW difference (precise motor sizing)</li>
+                                        <li><span class="orange-text">⚠ Minor:</span> 0.5-2 kW difference (adequate for most applications)</li>
+                                        <li><span class="red-text">✗ Major:</span> >2 kW difference (may affect motor selection)</li>
+                                    </ul>
+                                </div>
+                                
+                                <div class="col s12 m4">
+                                    <h6><i class="material-icons tiny">water</i> NPSH Comparison</h6>
+                                    <p><strong>What we test:</strong> Database stored NPSH requirements vs UI calculated NPSH at each operating point</p>
+                                    <p><strong>Why it matters:</strong> NPSH (Net Positive Suction Head) determines if the pump will cavitate. Critical for suction system design and pump reliability.</p>
+                                    <p><strong>Expected results:</strong></p>
+                                    <ul class="browser-default">
+                                        <li><span class="green-text">✓ Match:</span> Exact agreement (essential for cavitation prevention)</li>
+                                        <li><span class="orange-text">⚠ Minor:</span> Small differences (review suction conditions)</li>
+                                        <li><span class="red-text">✗ Major:</span> Significant differences (potential cavitation risk)</li>
+                                    </ul>
+                                    <p><em>Note: "N/A" indicates no NPSH data available for comparison</em></p>
+                                </div>
+                            </div>
+                            
+                            <div class="divider" style="margin: 20px 0;"></div>
+                            
+                            <div class="row">
+                                <div class="col s12">
+                                    <h6><i class="material-icons tiny">assessment</i> How to Interpret Results</h6>
+                                    <div class="row">
+                                        <div class="col s12 m6">
+                                            <p><strong>High Accuracy Zones (90-110% BEP):</strong></p>
+                                            <p>Expect excellent matches in the pump's optimal operating range. This is where manufacturers optimize performance curves and where most applications operate.</p>
+                                            
+                                            <p><strong>Part-Load Challenges (60-85% BEP):</strong></p>
+                                            <p>Greater discrepancies are common due to complex flow patterns, increased losses, and curve interpolation challenges at off-design conditions.</p>
+                                        </div>
+                                        
+                                        <div class="col s12 m6">
+                                            <p><strong>Overload Performance (>110% BEP):</strong></p>
+                                            <p>Good accuracy expected, but consider that extended operation beyond BEP reduces pump life and increases maintenance requirements.</p>
+                                            
+                                            <p><strong>Statistical Summary:</strong></p>
+                                            <p>Target >75% exact matches for reliable pump selection. Higher percentages indicate better algorithm accuracy and data quality.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
                     <!-- Single Point Testing Results Table -->
                     {% if test_results and not test_results[0].get('envelope_testing', False) %}
                     <div class="card" style="margin-top: 30px;">
