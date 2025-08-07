@@ -77,12 +77,17 @@ def run_performance_test():
             
             # Extract pump objects from selection results
             test_pumps = []
-            for result in selection_results[:10]:
+            limited_results = selection_results[:10] if len(selection_results) > 10 else selection_results
+            for result in limited_results:
                 # selection_results is a list of dicts, each with a 'pump' key
-                if 'pump' in result:
+                if isinstance(result, dict) and 'pump' in result:
                     test_pumps.append(result['pump'])
                 elif hasattr(result, 'pump'):
                     test_pumps.append(result.pump)
+                    
+            if not test_pumps:
+                flash('Unable to extract pump objects from selection results', 'error')
+                return render_template('admin_testing.html')
         
         # Run comparison tests
         test_results = []
@@ -180,9 +185,13 @@ def _get_ui_performance(pump, flow_rate, head, catalog_engine):
         # Use catalog engine's unified evaluation method (includes all transformations, scaling, scoring)
         ui_solution = pump.find_best_solution_for_duty(flow_rate, head)
         
-        if ui_solution:
+        logger.info(f"UI solution for {pump.pump_code}: {ui_solution}")
+        
+        if ui_solution and ui_solution.get('performance'):
             # Extract performance data from the solution
             performance = ui_solution.get('performance', {})
+            logger.info(f"UI performance data for {pump.pump_code}: {performance}")
+            
             return {
                 'efficiency_pct': performance.get('efficiency_pct'),
                 'power_kw': performance.get('power_kw'), 
@@ -192,14 +201,28 @@ def _get_ui_performance(pump, flow_rate, head, catalog_engine):
                 'method': ui_solution.get('method', 'unknown')
             }
         else:
-            return {
-                'efficiency_pct': None,
-                'power_kw': None,
-                'npshr_m': None,
-                'suitability_score': None,
-                'trim_percent': None,
-                'method': 'no_solution'
-            }
+            logger.warning(f"No UI solution found for {pump.pump_code} at {flow_rate} m³/hr, {head} m")
+            # Fallback: try direct performance calculation if find_best_solution_for_duty fails
+            fallback_performance = pump._get_performance_interpolated(flow_rate, head)
+            if fallback_performance:
+                logger.info(f"Using fallback performance for UI calculation: {fallback_performance}")
+                return {
+                    'efficiency_pct': fallback_performance.get('efficiency_pct'),
+                    'power_kw': fallback_performance.get('power_kw'), 
+                    'npshr_m': fallback_performance.get('npshr_m'),
+                    'suitability_score': 0,  # No score available
+                    'trim_percent': 100,  # Assume no trim
+                    'method': 'fallback_interpolation'
+                }
+            else:
+                return {
+                    'efficiency_pct': None,
+                    'power_kw': None,
+                    'npshr_m': None,
+                    'suitability_score': None,
+                    'trim_percent': None,
+                    'method': 'no_solution'
+                }
         
     except Exception as e:
         logger.warning(f"Could not get UI performance for {pump.pump_code}: {str(e)}")
