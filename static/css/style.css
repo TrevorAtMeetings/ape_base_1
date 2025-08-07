@@ -705,7 +705,7 @@ nav.teal {
     min-height: 140px;
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: flex-end;
 }
 
 .metric-card:hover {
