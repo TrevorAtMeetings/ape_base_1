@@ -1,8 +1,46 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI PDF Extraction - APE Pumps</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚙️</text></svg>">
+    
+    <!-- Materialize CSS -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet">
 
-{% block title %}AI PDF Extraction - APE Pumps{% endblock %}
+    <!-- Custom CSS -->
+    <link href="{{ url_for('static', filename='css/style.css') }}?v={{ range(1000, 9999) | random }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/floating-ai-chat.css') }}?v={{ range(1000, 9999) | random }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/icon-fixes.css') }}?v={{ range(1000, 9999) | random }}" rel="stylesheet">
 
-{% block content %}
+    <!-- MathJax for LaTeX rendering -->
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['\\(', '\\)'], ['$', '$']],
+                displayMath: [['\\[', '\\]'], ['$$', '$$']],
+                processEscapes: true,
+                processEnvironments: true
+            },
+            startup: {
+                ready: () => {
+                    MathJax.startup.defaultReady();
+                    console.log('MathJax is loaded and ready');
+                }
+            },
+            options: {
+                skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+            }
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/polyfill@3.0.0/dist/polyfill.min.js"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
 <style>
     .compact-card {
         margin: 10px 0;
@@ -106,6 +144,13 @@
         }
     }
 </style>
+
+<!-- Navigation -->
+{% set breadcrumbs = [
+    {'label': 'Home', 'url': '/', 'icon': 'home'},
+    {'label': 'AI Data Extract'}
+] %}
+{% include 'includes/navigation.html' %}
 
 <div class="container" style="margin-top: 20px;">
     <!-- Compact Upload Section -->
@@ -1170,4 +1215,47 @@ document.addEventListener('DOMContentLoaded', function() {
     // Model selection initialization removed - using simplified system
 });
 </script>
-{% endblock %}
+
+<!-- JavaScript -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+<script src="{{ url_for('static', filename='js/icon-loader.js') }}"></script>
+<script src="{{ url_for('static', filename='js/micro-interactions.js') }}"></script>
+<script src="{{ url_for('static', filename='js/force-icon-refresh.js') }}"></script>
+<script src="{{ url_for('static', filename='js/floating-ai-chat.js') }}"></script>
+<script src="{{ url_for('static', filename='js/chart_tabs.js') }}"></script>
+
+<!-- Initialize Materialize components -->
+<script>
+    console.log('MathJax is loaded and ready');
+    console.log('chart_tabs.js loaded');
+    console.log('Base template: Initializing Materialize components');
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize modals
+        var modals = document.querySelectorAll('.modal');
+        console.log('Initialized', modals.length, 'modals');
+        M.Modal.init(modals);
+
+        // Initialize sidenav
+        var sidenavs = document.querySelectorAll('.sidenav');
+        console.log('Initialized', sidenavs.length, 'sidenavs');
+        M.Sidenav.init(sidenavs);
+
+        // Initialize dropdowns
+        var dropdowns = document.querySelectorAll('.dropdown-trigger');
+        console.log('Initialized', dropdowns.length, 'dropdown triggers');
+        dropdowns.forEach(dropdown => {
+            console.log('Dropdown:', dropdown.textContent.trim(), 'Target:', dropdown.getAttribute('data-target'));
+        });
+        M.Dropdown.init(dropdowns);
+
+        // Initialize form components
+        M.updateTextFields();
+        M.FormSelect.init(document.querySelectorAll('select'));
+        console.log('Form components initialized - enhanced autocomplete ready');
+    });
+</script>
+
+</body>
+</html>
