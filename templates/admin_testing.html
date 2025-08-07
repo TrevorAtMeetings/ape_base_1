@@ -34,9 +34,12 @@
                                 <input type="number" id="head" name="head" step="0.1" min="0.1">
                                 <label for="head">Head (m)</label>
                             </div>
-                            <div class="input-field col s12 m3">
-                                <input type="text" id="pump_code" name="pump_code" placeholder="e.g., 28 HC 6P">
+                            <div class="input-field col s12 m3" style="position: relative;">
+                                <input type="text" id="pump_code" name="pump_code" placeholder="e.g., 28 HC 6P" autocomplete="off">
                                 <label for="pump_code">Pump Code (Optional)</label>
+                                <span class="helper-text">Start typing for suggestions</span>
+                                <!-- Autocomplete dropdown -->
+                                <div id="pump_code_autocomplete" class="autocomplete-dropdown" style="display: none; position: absolute; background: white; border: 1px solid #ddd; border-radius: 4px; max-height: 200px; overflow-y: auto; z-index: 1000; width: 100%; top: 100%; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"></div>
                             </div>
                             <div class="col s12 m3">
                                 <p style="margin-top: 15px;">
@@ -310,5 +313,112 @@
         </div>
     </div>
     {% endif %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Materialize components
+    M.updateTextFields();
+    
+    // Auto-focus first input
+    document.getElementById('flow_rate').focus();
+    
+    // Setup pump code autocomplete
+    setupPumpCodeAutocomplete();
+});
+
+function setupPumpCodeAutocomplete() {
+    const pumpCodeInput = document.getElementById('pump_code');
+    const autocompleteDropdown = document.getElementById('pump_code_autocomplete');
+    let searchTimeout;
+    
+    if (!pumpCodeInput || !autocompleteDropdown) {
+        console.log('Autocomplete elements not found');
+        return;
+    }
+    
+    // Handle input events
+    pumpCodeInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        const query = this.value.trim();
+        
+        if (query.length < 2) {
+            autocompleteDropdown.style.display = 'none';
+            return;
+        }
+        
+        // Debounce search requests
+        searchTimeout = setTimeout(() => {
+            searchPumpCodes(query);
+        }, 300);
+    });
+    
+    // Handle focus/blur
+    pumpCodeInput.addEventListener('focus', function() {
+        if (this.value.length >= 2) {
+            searchPumpCodes(this.value.trim());
+        }
+    });
+    
+    // Hide dropdown when clicking outside
+    document.addEventListener('click', function(event) {
+        if (!pumpCodeInput.contains(event.target) && !autocompleteDropdown.contains(event.target)) {
+            autocompleteDropdown.style.display = 'none';
+        }
+    });
+}
+
+function searchPumpCodes(query) {
+    const autocompleteDropdown = document.getElementById('pump_code_autocomplete');
+    
+    // Show loading state
+    autocompleteDropdown.innerHTML = '<div style="padding: 10px; text-align: center; color: #666;"><i>Searching...</i></div>';
+    autocompleteDropdown.style.display = 'block';
+    
+    // Fetch pump codes from API
+    fetch('/api/pump_codes?q=' + encodeURIComponent(query))
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.pump_codes && data.pump_codes.length > 0) {
+                displayAutocompleteResults(data.pump_codes);
+            } else {
+                autocompleteDropdown.innerHTML = '<div style="padding: 10px; color: #666; font-style: italic;">No matching pump codes found</div>';
+            }
+        })
+        .catch(error => {
+            console.error('Autocomplete search error:', error);
+            autocompleteDropdown.innerHTML = '<div style="padding: 10px; color: #f44336;">Search error</div>';
+        });
+}
+
+function displayAutocompleteResults(pumpCodes) {
+    const autocompleteDropdown = document.getElementById('pump_code_autocomplete');
+    
+    let html = '';
+    pumpCodes.slice(0, 10).forEach(pump => {
+        html += `<div class="autocomplete-item" style="padding: 8px 12px; cursor: pointer; border-bottom: 1px solid #eee;" 
+                      data-pump-code="${pump.pump_code}" 
+                      onmouseover="this.style.backgroundColor='#f5f5f5'" 
+                      onmouseout="this.style.backgroundColor='white'"
+                      onclick="selectPumpCode('${pump.pump_code}')">
+                    <strong>${pump.pump_code}</strong>
+                    <small style="display: block; color: #666;">${pump.pump_type}</small>
+                 </div>`;
+    });
+    
+    autocompleteDropdown.innerHTML = html;
+    autocompleteDropdown.style.display = 'block';
+}
+
+function selectPumpCode(pumpCode) {
+    const pumpCodeInput = document.getElementById('pump_code');
+    const autocompleteDropdown = document.getElementById('pump_code_autocomplete');
+    
+    pumpCodeInput.value = pumpCode;
+    autocompleteDropdown.style.display = 'none';
+    
+    // Update Materialize label
+    M.updateTextFields();
+}
+</script>
+
 </div>
 {% endblock %}
