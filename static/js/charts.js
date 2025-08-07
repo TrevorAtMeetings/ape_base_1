@@ -241,7 +241,7 @@ class PumpChartsManager {
             marker: {
                 color: 'rgba(255, 0, 0, 0.3)',  // Transparent red fill
                 size: 18,
-                symbol: 'triangle-down',  // Point facing down to indicate exact operating point
+                symbol: 'triangle-up',  // Triangle points upward to the data point
                 line: {
                     color: 'rgba(255, 0, 0, 0.8)',  // Solid red border
                     width: 2
@@ -445,7 +445,7 @@ class PumpChartsManager {
             marker: {
                 color: 'rgba(255, 0, 0, 0.3)',  // Transparent red fill
                 size: 20,
-                symbol: 'triangle-down',  // Point facing down to indicate exact operating point
+                symbol: 'triangle-up',  // Triangle points upward to the data point
                 line: { color: 'rgba(255, 0, 0, 0.8)', width: 2 }  // Solid red border
             },
             hovertemplate: '<b>🎯 OPERATING POINT ANALYSIS</b><br>' +

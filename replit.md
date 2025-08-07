@@ -27,6 +27,13 @@ The application employs a modular Flask architecture with a clear separation of 
   - About: Application information - `/about`
 
 ### Recent Major Update - Methodology v6.0 (August 2025)
+**Chart Improvements (August 7, 2025)**:
+- Fixed operating point markers to use transparent red triangles pointing upward to data points
+- Added both vertical and horizontal reference lines (red dotted) intersecting at operating points
+- Ensured consistent X-axis ranges across engineering view charts for proper comparison
+- Enhanced hover templates with comprehensive pump performance data including BEP position
+
+### Recent Major Update - Methodology v6.0 (August 2025)
 **CRITICAL**: New engineering methodology developed based on expert feedback identifying fundamental flaws in v5.0 approach. Key architectural changes required:
 - **Algorithm Separation**: Fixed-speed (impeller trimming) completely separated from VFD (speed variation) logic
 - **Hard Safety Gates**: NPSH and QBP operating range implemented as pass/fail filters before scoring

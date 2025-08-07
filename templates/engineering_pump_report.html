@@ -964,6 +964,18 @@
                 yaxis: 'y'
             });
             
+            // Add duty point horizontal line (head)
+            traces.push({
+                x: [minFlow, maxFlow],
+                y: [operatingHead, operatingHead],
+                type: 'scatter',
+                mode: 'lines',
+                line: { color: '#d32f2f', width: 2, dash: 'dot' },
+                showlegend: false,
+                hoverinfo: 'skip',
+                yaxis: 'y'
+            });
+            
             // Add system resistance curve (parabolic curve from static head)
             // System curve follows: H = H_static + k*Q^2 where k is resistance coefficient
             const staticHead = operatingHead * 0.5; // Estimate static head as portion of total
@@ -1000,7 +1012,7 @@
                 marker: { 
                     size: 18, 
                     color: 'rgba(255, 0, 0, 0.3)',  // Transparent red fill
-                    symbol: 'triangle-down',  // Point facing down to indicate exact operating point
+                    symbol: 'triangle-up',  // Triangle points upward to the data point
                     line: { color: 'rgba(255, 0, 0, 0.8)', width: 2 }  // Solid red border
                 },
                 yaxis: 'y',
@@ -1104,6 +1116,19 @@
                 hoverinfo: 'skip'
             });
             
+            // Add duty point horizontal line (power) if we have operating power
+            if (opPoint.power_kw) {
+                traces.push({
+                    x: [minFlow, maxFlow],
+                    y: [opPoint.power_kw, opPoint.power_kw],
+                    type: 'scatter',
+                    mode: 'lines',
+                    line: { color: '#d32f2f', width: 2, dash: 'dot' },
+                    showlegend: false,
+                    hoverinfo: 'skip'
+                });
+            }
+            
             // Add operating point marker with transparent red triangle
             if (opPoint.power_kw) {
                 traces.push({
@@ -1115,7 +1140,7 @@
                     marker: { 
                         size: 18, 
                         color: 'rgba(255, 0, 0, 0.3)',  // Transparent red fill
-                        symbol: 'triangle-down',  // Point facing down to indicate exact operating point
+                        symbol: 'triangle-up',  // Triangle points upward to the data point
                         line: { color: 'rgba(255, 0, 0, 0.8)', width: 2 }  // Solid red border
                     },
                     hovertemplate: 
