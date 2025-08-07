@@ -303,7 +303,7 @@
 <nav class="unified-nav">
     <div class="nav-container">
         <a href="{{ url_for('main_flow.index') }}" class="nav-brand">
-            <i class="material-icons">water_drop</i>
+            <span style="font-size: 28px;">💧</span>
             <span>APE Pumps Selection</span>
         </a>
         
@@ -312,7 +312,7 @@
             <div class="nav-dropdown">
                 <button class="nav-btn">
                     <span>Tools</span>
-                    <i class="material-icons">arrow_drop_down</i>
+                    <span style="font-size: 16px;">▼</span>
                 </button>
                 <div class="nav-dropdown-content">
                     <a href="{{ url_for('comparison.pump_comparison') }}">Pump Comparison</a>
@@ -326,7 +326,7 @@
             <div class="nav-dropdown">
                 <button class="nav-btn">
                     <span>Admin</span>
-                    <i class="material-icons">arrow_drop_down</i>
+                    <span style="font-size: 16px;">▼</span>
                 </button>
                 <div class="nav-dropdown-content">
                     <a href="{{ url_for('admin_config.index') }}">Configuration</a>
@@ -339,7 +339,7 @@
             <div class="nav-dropdown">
                 <button class="nav-btn">
                     <span>Help</span>
-                    <i class="material-icons">arrow_drop_down</i>
+                    <span style="font-size: 16px;">▼</span>
                 </button>
                 <div class="nav-dropdown-content">
                     <a href="{{ url_for('main_flow.guide') }}">User Guide</a>
@@ -351,20 +351,20 @@
             <div class="view-toggle">
                 {% if current_view == 'presentation' %}
                 <span class="nav-btn active">
-                    <i class="material-icons">dashboard</i>
+                    <span style="font-size: 18px;">📊</span>
                     <span>Presentation</span>
                 </span>
                 <a href="{{ engineering_url }}" class="nav-btn">
-                    <i class="material-icons">engineering</i>
+                    <span style="font-size: 18px;">⚙️</span>
                     <span>Engineering</span>
                 </a>
                 {% else %}
                 <a href="{{ presentation_url }}" class="nav-btn">
-                    <i class="material-icons">dashboard</i>
+                    <span style="font-size: 18px;">📊</span>
                     <span>Presentation</span>
                 </a>
                 <span class="nav-btn active">
-                    <i class="material-icons">engineering</i>
+                    <span style="font-size: 18px;">⚙️</span>
                     <span>Engineering</span>
                 </span>
                 {% endif %}
@@ -373,21 +373,21 @@
             
             {% if show_edit %}
             <button class="nav-btn" onclick="toggleEditMode()">
-                <i class="material-icons">edit</i>
+                <span style="font-size: 18px;">✏️</span>
                 <span>Edit</span>
             </button>
             {% endif %}
             
             {% if show_print %}
             <button class="nav-btn" onclick="window.print()">
-                <i class="material-icons">print</i>
+                <span style="font-size: 18px;">🖨️</span>
                 <span>Print</span>
             </button>
             {% endif %}
             
             {% if show_new_search %}
             <a href="/" class="nav-btn primary">
-                <i class="material-icons">search</i>
+                <span style="font-size: 18px;">🔍</span>
                 <span>New Search</span>
             </a>
             {% endif %}
@@ -403,7 +403,12 @@
         <li class="breadcrumb-item">
             {% if not loop.last %}
             <a href="{{ crumb.url }}" class="breadcrumb-link">
-                {% if crumb.icon %}<i class="material-icons">{{ crumb.icon }}</i>{% endif %}
+                {% if crumb.icon %}
+                    {% if crumb.icon == 'home' %}🏠
+                    {% elif crumb.icon == 'search' %}🔍
+                    {% elif crumb.icon == 'settings' %}⚙️
+                    {% else %}📄{% endif %}
+                {% endif %}
                 {{ crumb.label }}
             </a>
             {% if not loop.last %}
