@@ -27,6 +27,16 @@ The application employs a modular Flask architecture with a clear separation of 
   - Features: External features page (external link)
   - About: Application information - `/about`
 
+### Recent Major Update - CRITICAL Data Integrity Fixes (August 7, 2025)
+
+**CRITICAL DATA INTEGRITY OVERHAUL**:
+- **Eliminated All Fallback Logic**: Removed dangerous UI performance fallbacks that created artificial agreement between database and UI calculations
+- **Fixed BEP Field Mapping**: Corrected database field mapping to use authentic manufacturer specifications (bep_flow_m3hr, bep_head_m) instead of missing fields
+- **Strict No-Fallback Policy**: System now fails clearly when authentic BEP data is missing instead of using estimated/interpolated values
+- **Artificial Match Prevention**: Added validation to prevent counting None=None as "exact matches" - only real data comparisons are considered valid
+- **Authentic Data Enforcement**: Envelope testing now anchors to authentic manufacturer BEP specifications (12.33 m³/hr @ 23.45m) instead of curve-estimated values (10 m³/hr @ 13.6m)
+- **Clear Failure Reporting**: UI calculation failures now report as 'ui_calculation_failed' instead of falling back to database interpolation methods
+
 ### Recent Major Update - Enhanced Performance Testing with Table Format (August 7, 2025)
 
 **Enhanced Test Coverage Implementation**:

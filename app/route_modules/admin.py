@@ -188,8 +188,23 @@ def _compare_pump_performance(pump, flow_rate, head, pump_repo, catalog_engine):
         if db_performance.get('npshr_m') is not None and ui_performance.get('npshr_m') is not None:
             npsh_delta = ui_performance['npshr_m'] - db_performance['npshr_m']
         
-        # Determine status based on deltas
-        status = _determine_status(efficiency_delta, power_delta, npsh_delta)
+        # CRITICAL: Only determine status if we have REAL data to compare
+        # Prevent artificial "matches" when both sides have missing data
+        has_valid_comparison = False
+        if (db_performance.get('efficiency') is not None and ui_performance.get('efficiency_pct') is not None and 
+            ui_performance.get('method') != 'ui_calculation_failed'):
+            has_valid_comparison = True
+        elif (db_performance.get('power_kw') is not None and ui_performance.get('power_kw') is not None and 
+              ui_performance.get('method') != 'ui_calculation_failed'):
+            has_valid_comparison = True
+        elif (db_performance.get('npshr_m') is not None and ui_performance.get('npshr_m') is not None and 
+              ui_performance.get('method') != 'ui_calculation_failed'):
+            has_valid_comparison = True
+            
+        if has_valid_comparison:
+            status = _determine_status(efficiency_delta, power_delta, npsh_delta)
+        else:
+            status = 'NO_DATA'  # Both sides missing data or UI calculation failed
         
         return {
             'pump_code': pump.pump_code,
@@ -286,36 +301,20 @@ def _get_ui_performance(pump, flow_rate, head, catalog_engine):
                 'method': ui_solution.get('method', 'direct_interpolation')
             }
         else:
-            logger.warning(f"No scored UI solution found for {pump.pump_code} at {flow_rate} m³/hr, {head} m")
-            # Fallback: try direct performance calculation if find_best_solution_for_duty fails
-            fallback_performance = pump._get_performance_interpolated(flow_rate, head)
-            if fallback_performance:
-                logger.info(f"Using fallback performance for UI calculation: {fallback_performance}")
-                
-                # Fix NPSH handling in fallback - 0.0 is valid NPSH data
-                npsh_value = fallback_performance.get('npshr_m')
-                if npsh_value is not None and npsh_value >= 0:
-                    npsh_result = npsh_value
-                else:
-                    npsh_result = None
-                    
-                return {
-                    'efficiency_pct': fallback_performance.get('efficiency_pct'),
-                    'power_kw': fallback_performance.get('power_kw'), 
-                    'npshr_m': npsh_result,
-                    'suitability_score': 0,  # No score available from fallback
-                    'trim_percent': 100,  # Assume no trim
-                    'method': 'fallback_interpolation'
-                }
-            else:
-                return {
-                    'efficiency_pct': None,
-                    'power_kw': None,
-                    'npshr_m': None,
-                    'suitability_score': None,
-                    'trim_percent': None,
-                    'method': 'no_solution'
-                }
+            # CRITICAL: NO FALLBACKS ALLOWED - UI method failed, report authentic failure
+            error_msg = f"CRITICAL: UI calculation failed for {pump.pump_code} at {flow_rate} m³/hr, {head} m - operating point outside pump design envelope or insufficient data quality"
+            logger.error(error_msg)
+            
+            # Return clear failure instead of fake interpolation to maintain data integrity
+            return {
+                'efficiency_pct': None,
+                'power_kw': None,
+                'npshr_m': None,
+                'suitability_score': None,
+                'trim_percent': None,
+                'method': 'ui_calculation_failed',
+                'failure_reason': 'operating_point_outside_design_envelope'
+            }
         
     except Exception as e:
         logger.warning(f"Could not get UI performance for {pump.pump_code}: {str(e)}")
@@ -334,7 +333,7 @@ def _get_bep_analysis(pump, pump_repo, catalog_engine):
         # Get BEP from AUTHENTIC database specifications only
         bep_flow = pump.specifications.get('bep_flow_m3hr')
         bep_head = pump.specifications.get('bep_head_m') 
-        bep_efficiency = pump.specifications.get('eff_bep')
+        bep_efficiency = None  # BEP efficiency not stored as separate specification - would need calculation from curves
         
         logger.info(f"Database BEP specifications for {pump.pump_code}: Flow={bep_flow}, Head={bep_head}, Efficiency={bep_efficiency}")
         
@@ -534,11 +533,11 @@ def _determine_status(efficiency_delta, power_delta, npsh_delta):
         minor_diff = True
     
     if major_diff:
-        return 'major_diff'
+        return 'MAJOR'
     elif minor_diff:
-        return 'minor_diff'
+        return 'MINOR'
     else:
-        return 'match'
+        return 'MATCH'
 
 @admin_bp.route('/admin/upload', methods=['POST'])
 def upload_document():
