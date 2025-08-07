@@ -144,7 +144,12 @@ def handle_specific_pump_query(pump_name, flow, head):
         pumps = catalog_engine.repository.get_pump_models()
         target_pump = None
         for pump in pumps:
-            if pump.get('pump_name', '').upper() == pump_name.upper():
+            # Check both pump_name and pump_code fields
+            pump_code = pump.get('pump_code', '').upper().strip()
+            pump_display_name = pump.get('pump_name', '').upper().strip()
+            search_name = pump_name.upper().strip()
+            
+            if pump_code == search_name or pump_display_name == search_name:
                 target_pump = pump
                 break
         
@@ -158,7 +163,7 @@ def handle_specific_pump_query(pump_name, flow, head):
         
         # Generate report URL for this pump at these conditions
         pump_url = url_for('reports.engineering_report', 
-                          pump_code=target_pump.get('pump_name'),
+                          pump_code=target_pump.get('pump_code', target_pump.get('pump_name')),
                           flow=flow, 
                           head=head,
                           force='true',
@@ -166,7 +171,7 @@ def handle_specific_pump_query(pump_name, flow, head):
         
         html_response = f"""
         <div class="pump-specific-result">
-            <h3 style="color: #10b981; margin-bottom: 0.5rem;">🎯 {target_pump.get('pump_name')}</h3>
+            <h3 style="color: #10b981; margin-bottom: 0.5rem;">🎯 {target_pump.get('pump_code', target_pump.get('pump_name'))}</h3>
             <p style="color: #64748b; margin-bottom: 1rem;">Performance at {flow} m³/hr @ {head}m</p>
             <div class="pump-result-card" style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 0.75rem;">
                 <div class="pump-specs" style="margin-bottom: 0.75rem;">
@@ -219,7 +224,12 @@ def handle_pump_bep_query(pump_name):
         pumps = catalog_engine.repository.get_pump_models()
         target_pump = None
         for pump in pumps:
-            if pump.get('pump_name', '').upper() == pump_name.upper():
+            # Check both pump_name and pump_code fields
+            pump_code = pump.get('pump_code', '').upper().strip()
+            pump_display_name = pump.get('pump_name', '').upper().strip()
+            search_name = pump_name.upper().strip()
+            
+            if pump_code == search_name or pump_display_name == search_name:
                 target_pump = pump
                 break
         
