@@ -27,6 +27,15 @@ The application employs a modular Flask architecture with a clear separation of 
   - Features: External features page (external link)
   - About: Application information - `/about`
 
+### Recent Major Update - Enhanced Performance Testing with Table Format (August 7, 2025)
+
+**Enhanced Test Coverage Implementation**:
+- **Phase 1 Complete**: Multi-point envelope testing across 60-130% BEP flow range (10-20 test points)
+- **Statistical Analysis**: Comprehensive accuracy metrics, error distribution, and confidence intervals
+- **Improved Table Display**: Professional comparison format with clear status explanations
+- **Status Legend Integration**: Clear definitions for Match (≤2% efficiency, ≤0.5kW power), Minor (2-5%, 0.5-2kW), Major (>5%, >2kW)
+- **Enhanced Summary Statistics**: Percentage breakdowns and acceptable accuracy metrics
+
 ### Recent Major Update - Navigation System Unification (August 7, 2025)
 **CRITICAL Navigation Architecture Overhaul**:
 - **Resolved Blueprint Conflicts**: Removed duplicate `reports_bp` registration by eliminating dead code (`reports_old.py`)

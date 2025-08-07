@@ -153,29 +153,158 @@
                                 </div>
                             </div>
                         {% else %}
-                            <!-- Single Point Testing Results -->
-                            <div class="card" style="margin: 20px 0;">
-                                <div class="card-content">
-                                    <span class="card-title">{{ result.pump_code }} - Single Point Testing</span>
-                                    <p><strong>Efficiency:</strong> DB: {{ "%.1f"|format(result.db_efficiency) if result.db_efficiency else "N/A" }}%, 
-                                       UI: {{ "%.1f"|format(result.ui_efficiency) if result.ui_efficiency else "N/A" }}%, 
-                                       Δ: {{ "%+.1f"|format(result.efficiency_delta) if result.efficiency_delta else "N/A" }}%</p>
-                                    <p><strong>Power:</strong> DB: {{ "%.1f"|format(result.db_power) if result.db_power else "N/A" }}kW, 
-                                       UI: {{ "%.1f"|format(result.ui_power) if result.ui_power else "N/A" }}kW, 
-                                       Δ: {{ "%+.1f"|format(result.power_delta) if result.power_delta else "N/A" }}kW</p>
-                                    <p><strong>Status:</strong>
-                                        {% if result.status == 'match' %}
-                                            <span class="green-text">✓ Match</span>
-                                        {% elif result.status == 'minor_diff' %}
-                                            <span class="orange-text">△ Minor Difference</span>
-                                        {% else %}
-                                            <span class="red-text">✗ Major Difference</span>
-                                        {% endif %}
-                                    </p>
-                                </div>
-                            </div>
+                            <!-- Will be handled by the single point table below -->
                         {% endif %}
                     {% endfor %}
+                    
+                    <!-- Single Point Testing Results Table -->
+                    {% if test_results and not test_results[0].get('envelope_testing', False) %}
+                    <div class="card" style="margin-top: 30px;">
+                        <div class="card-content">
+                            <span class="card-title">
+                                <i class="material-icons left">compare_arrows</i>
+                                Single Point Testing Results - Database vs UI Comparison
+                            </span>
+                            
+                            <!-- Status Legend -->
+                            <div class="row" style="margin-bottom: 20px; background-color: #f5f5f5; padding: 15px; border-radius: 4px;">
+                                <div class="col s12">
+                                    <h6 style="margin-bottom: 10px;">Status Explanation:</h6>
+                                    <div class="row">
+                                        <div class="col s12 m4">
+                                            <span class="badge green">✓ Match</span>
+                                            <small style="display: block; margin-top: 5px;">
+                                                Efficiency Δ ≤2%, Power Δ ≤0.5kW, NPSH Δ ≤0.3m
+                                            </small>
+                                        </div>
+                                        <div class="col s12 m4">
+                                            <span class="badge orange">△ Minor</span>
+                                            <small style="display: block; margin-top: 5px;">
+                                                Efficiency Δ 2-5%, Power Δ 0.5-2kW, NPSH Δ 0.3-1m
+                                            </small>
+                                        </div>
+                                        <div class="col s12 m4">
+                                            <span class="badge red">✗ Major</span>
+                                            <small style="display: block; margin-top: 5px;">
+                                                Efficiency Δ >5%, Power Δ >2kW, NPSH Δ >1m
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Comparison Table -->
+                            <table class="striped highlight responsive-table">
+                                <thead>
+                                    <tr>
+                                        <th rowspan="2">Pump Code</th>
+                                        <th rowspan="2">Type</th>
+                                        <th colspan="3" class="center-align">Efficiency (%)</th>
+                                        <th colspan="3" class="center-align">Power (kW)</th>
+                                        <th colspan="3" class="center-align">NPSH (m)</th>
+                                        <th rowspan="2">Status</th>
+                                    </tr>
+                                    <tr>
+                                        <th class="center-align">Database</th>
+                                        <th class="center-align">UI Calc</th>
+                                        <th class="center-align">Delta</th>
+                                        <th class="center-align">Database</th>
+                                        <th class="center-align">UI Calc</th>
+                                        <th class="center-align">Delta</th>
+                                        <th class="center-align">Database</th>
+                                        <th class="center-align">UI Calc</th>
+                                        <th class="center-align">Delta</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for result in test_results %}
+                                    <tr>
+                                        <td><strong>{{ result.pump_code }}</strong></td>
+                                        <td><span class="badge blue lighten-4 blue-text text-darken-2">{{ result.pump_type }}</span></td>
+                                        
+                                        <!-- Efficiency -->
+                                        <td class="center-align">{{ "%.1f"|format(result.db_efficiency) if result.db_efficiency else "N/A" }}</td>
+                                        <td class="center-align">{{ "%.1f"|format(result.ui_efficiency) if result.ui_efficiency else "N/A" }}</td>
+                                        <td class="center-align">
+                                            {% if result.efficiency_delta is not none %}
+                                                <span class="{% if result.efficiency_delta|abs > 5 %}red-text{% elif result.efficiency_delta|abs > 2 %}orange-text{% else %}green-text{% endif %}">
+                                                    {{ "%+.1f"|format(result.efficiency_delta) }}
+                                                </span>
+                                            {% else %}N/A{% endif %}
+                                        </td>
+                                        
+                                        <!-- Power -->
+                                        <td class="center-align">{{ "%.1f"|format(result.db_power) if result.db_power else "N/A" }}</td>
+                                        <td class="center-align">{{ "%.1f"|format(result.ui_power) if result.ui_power else "N/A" }}</td>
+                                        <td class="center-align">
+                                            {% if result.power_delta is not none %}
+                                                <span class="{% if result.power_delta|abs > 2 %}red-text{% elif result.power_delta|abs > 0.5 %}orange-text{% else %}green-text{% endif %}">
+                                                    {{ "%+.1f"|format(result.power_delta) }}
+                                                </span>
+                                            {% else %}N/A{% endif %}
+                                        </td>
+                                        
+                                        <!-- NPSH -->
+                                        <td class="center-align">{{ "%.2f"|format(result.db_npsh) if result.db_npsh else "N/A" }}</td>
+                                        <td class="center-align">{{ "%.2f"|format(result.ui_npsh) if result.ui_npsh else "N/A" }}</td>
+                                        <td class="center-align">
+                                            {% if result.npsh_delta is not none %}
+                                                <span class="{% if result.npsh_delta|abs > 1 %}red-text{% elif result.npsh_delta|abs > 0.3 %}orange-text{% else %}green-text{% endif %}">
+                                                    {{ "%+.2f"|format(result.npsh_delta) }}
+                                                </span>
+                                            {% else %}N/A{% endif %}
+                                        </td>
+                                        
+                                        <!-- Status -->
+                                        <td class="center-align">
+                                            {% if result.status == 'match' %}
+                                                <span class="badge green">✓ Match</span>
+                                            {% elif result.status == 'minor_diff' %}
+                                                <span class="badge orange">△ Minor</span>
+                                            {% else %}
+                                                <span class="badge red">✗ Major</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                            
+                            <!-- Summary Statistics -->
+                            <div class="row" style="margin-top: 20px;">
+                                {% set matches = test_results | selectattr('status', 'equalto', 'match') | list | length %}
+                                {% set minor_diffs = test_results | selectattr('status', 'equalto', 'minor_diff') | list | length %}
+                                {% set major_diffs = test_results | selectattr('status', 'equalto', 'major_diff') | list | length %}
+                                {% set total = test_results | length %}
+                                
+                                <div class="col s12 m3">
+                                    <div class="card-panel green lighten-4 center-align">
+                                        <h5 class="green-text">{{ matches }}</h5>
+                                        <p>Exact Matches<br><small>{{ "%.1f"|format((matches/total)*100) if total > 0 else 0 }}%</small></p>
+                                    </div>
+                                </div>
+                                <div class="col s12 m3">
+                                    <div class="card-panel orange lighten-4 center-align">
+                                        <h5 class="orange-text">{{ minor_diffs }}</h5>
+                                        <p>Minor Differences<br><small>{{ "%.1f"|format((minor_diffs/total)*100) if total > 0 else 0 }}%</small></p>
+                                    </div>
+                                </div>
+                                <div class="col s12 m3">
+                                    <div class="card-panel red lighten-4 center-align">
+                                        <h5 class="red-text">{{ major_diffs }}</h5>
+                                        <p>Major Differences<br><small>{{ "%.1f"|format((major_diffs/total)*100) if total > 0 else 0 }}%</small></p>
+                                    </div>
+                                </div>
+                                <div class="col s12 m3">
+                                    <div class="card-panel blue lighten-4 center-align">
+                                        <h5 class="blue-text">{{ "%.1f"|format(((matches + minor_diffs)/total)*100) if total > 0 else 0 }}%</h5>
+                                        <p>Acceptable Accuracy<br><small>Match + Minor</small></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
