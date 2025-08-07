@@ -374,9 +374,9 @@
                     <i class="material-icons metric-icon" style="color: #607d8b;">rotate_right</i>
                     <div class="metric-value">
                         {% if pump.get('trim_percent') %}
-                            {{ pump['trim_percent']|round|int }}%
+                            {{ (100 - pump['trim_percent'])|round|int }}%
                         {% else %}
-                            100%
+                            0%
                         {% endif %}
                     </div>
                     <div class="metric-label">Trim</div>

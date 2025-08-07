@@ -147,6 +147,26 @@ def get_score_classification(score):
     else:
         return SCORE_THRESHOLDS['poor']
 
+def format_trim_display(trim_percent):
+    """
+    Format impeller trim percentage for display.
+    Shows 0% when no trimming (100% of diameter), otherwise shows actual trim amount.
+    
+    Args:
+        trim_percent (float): Trim percentage (100 = no trim, <100 = trimmed)
+        
+    Returns:
+        str: Formatted trim display string
+    """
+    if trim_percent is None:
+        return "0"
+    
+    # Convert from diameter percentage to trim amount
+    # 100% diameter = 0% trim
+    # 85% diameter = 15% trim
+    trim_amount = 100 - float(trim_percent)
+    return f"{trim_amount:.1f}".rstrip('0').rstrip('.')
+
 def get_pump_status_badges(pump_data):
     """
     Generate status badges for pump operating parameters

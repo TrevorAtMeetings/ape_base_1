@@ -358,7 +358,8 @@ def format_pump_selection_response(pumps, flow, head, application_type):
         score = pump.get('suitability_score', 0)
         efficiency = pump.get('performance', {}).get('efficiency_pct', 0)
         power = pump.get('performance', {}).get('power_kw', 0)
-        trim = pump.get('performance', {}).get('sizing_info', {}).get('trim_percent', 100)
+        trim_raw = pump.get('performance', {}).get('sizing_info', {}).get('trim_percent', 100)
+        trim = 100 - trim_raw  # Convert to actual trim amount (0% = no trim)
         method = pump.get('performance', {}).get('sizing_info', {}).get('sizing_method', 'direct')
         
         # Determine badge color based on score
