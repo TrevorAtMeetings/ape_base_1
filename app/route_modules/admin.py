@@ -169,6 +169,8 @@ def _get_database_performance(pump, flow_rate, head):
         # Use the existing _get_performance_interpolated method which gives raw curve data
         raw_performance = pump._get_performance_interpolated(flow_rate, head)
         
+        logger.debug(f"Database performance for {pump.pump_code} at {flow_rate}/{head}: {raw_performance}")
+        
         if raw_performance:
             return {
                 'efficiency': raw_performance.get('efficiency_pct'),
@@ -176,10 +178,24 @@ def _get_database_performance(pump, flow_rate, head):
                 'npshr_m': raw_performance.get('npshr_m')
             }
         
+        # Enhanced debug info when no data found
+        logger.warning(f"No database performance data for {pump.pump_code} at {flow_rate} m³/hr, {head} m")
+        logger.debug(f"Available curves for {pump.pump_code}: {len(pump.curves) if pump.curves else 0}")
+        
+        if pump.curves:
+            for i, curve in enumerate(pump.curves):
+                points = curve.get('performance_points', [])
+                if points:
+                    flow_range = f"{min(p.get('flow_m3hr', 0) for p in points):.0f}-{max(p.get('flow_m3hr', 0) for p in points):.0f}"
+                    head_range = f"{min(p.get('head_m', 0) for p in points):.1f}-{max(p.get('head_m', 0) for p in points):.1f}"
+                    logger.debug(f"Curve {i} flow range: {flow_range} m³/hr, head range: {head_range} m")
+        
         return {'efficiency': None, 'power_kw': None, 'npshr_m': None}
         
     except Exception as e:
         logger.warning(f"Database performance calculation failed for {pump.pump_code}: {str(e)}")
+        import traceback
+        logger.debug(f"Full traceback: {traceback.format_exc()}")
         return {'efficiency': None, 'power_kw': None, 'npshr_m': None}
 
 def _get_ui_performance(pump, flow_rate, head, catalog_engine):
