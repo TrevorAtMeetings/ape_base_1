@@ -83,22 +83,28 @@
                                     <!-- Statistics Summary -->
                                     {% if result.envelope_statistics %}
                                     <div class="row" style="margin: 20px 0;">
-                                        <div class="col s12 m4">
+                                        <div class="col s12 m3">
                                             <div class="card-panel green lighten-4 center-align">
                                                 <h5>{{ "%.1f"|format(result.envelope_statistics.accuracy.accuracy_percentage) }}%</h5>
                                                 <p>Exact Matches</p>
                                             </div>
                                         </div>
-                                        <div class="col s12 m4">
+                                        <div class="col s12 m3">
                                             <div class="card-panel orange lighten-4 center-align">
                                                 <h5>{{ "%.1f"|format(result.envelope_statistics.accuracy.acceptable_percentage) }}%</h5>
                                                 <p>Acceptable Accuracy</p>
                                             </div>
                                         </div>
-                                        <div class="col s12 m4">
+                                        <div class="col s12 m3">
                                             <div class="card-panel blue lighten-4 center-align">
                                                 <h5>{{ result.test_points_count }}</h5>
                                                 <p>Test Points</p>
+                                            </div>
+                                        </div>
+                                        <div class="col s12 m3">
+                                            <div class="card-panel teal lighten-4 center-align">
+                                                <h5>{{ "%.0f"|format(result.bep_analysis.bep_flow_m3hr) if result.bep_analysis and result.bep_analysis.bep_flow_m3hr else "N/A" }}</h5>
+                                                <p>QBEP (m³/hr)</p>
                                             </div>
                                         </div>
                                     </div>

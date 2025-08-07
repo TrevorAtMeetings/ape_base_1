@@ -220,10 +220,17 @@ def _get_database_performance(pump, flow_rate, head):
         logger.debug(f"Database performance for {pump.pump_code} at {flow_rate}/{head}: {raw_performance}")
         
         if raw_performance:
+            # Fix NPSH handling - 0.0 is valid NPSH data, not "no data"
+            npsh_value = raw_performance.get('npshr_m')
+            if npsh_value is not None and npsh_value >= 0:
+                npsh_result = npsh_value
+            else:
+                npsh_result = None
+                
             return {
                 'efficiency': raw_performance.get('efficiency_pct'),
                 'power_kw': raw_performance.get('power_kw'),
-                'npshr_m': raw_performance.get('npshr_m')
+                'npshr_m': npsh_result
             }
         
         # Enhanced debug info when no data found
@@ -263,10 +270,17 @@ def _get_ui_performance(pump, flow_rate, head, catalog_engine):
                 
             logger.info(f"UI performance data for {pump.pump_code}: {performance}")
             
+            # Fix NPSH handling - 0.0 is valid NPSH data, not "no data"
+            npsh_value = performance.get('npshr_m')
+            if npsh_value is not None and npsh_value >= 0:
+                npsh_result = npsh_value
+            else:
+                npsh_result = None
+                
             return {
                 'efficiency_pct': performance.get('efficiency_pct'),
                 'power_kw': performance.get('power_kw'), 
-                'npshr_m': performance.get('npshr_m'),
+                'npshr_m': npsh_result,
                 'suitability_score': ui_solution.get('score'),
                 'trim_percent': performance.get('trim_percent', 100),
                 'method': ui_solution.get('method', 'direct_interpolation')
