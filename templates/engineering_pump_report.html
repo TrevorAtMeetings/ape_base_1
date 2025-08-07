@@ -370,8 +370,46 @@
 
     <div class="engineering-container" style="padding-top: 20px;">
 
-        <!-- Engineering Analysis Controls - Clean Professional Layout -->
-        <div class="analysis-controls" style="background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 6px; padding: 20px; margin-bottom: 25px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+        <!-- Engineering Analysis Controls - Forced Horizontal Layout -->
+        <style>
+            .analysis-controls-fixed {
+                background: #f8f9fa !important;
+                border: 1px solid #dee2e6 !important;
+                border-radius: 6px !important;
+                padding: 20px !important;
+                margin-bottom: 25px !important;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.05) !important;
+                width: 100% !important;
+                box-sizing: border-box !important;
+            }
+            
+            .controls-row-fixed {
+                display: flex !important;
+                flex-direction: row !important;
+                flex-wrap: nowrap !important;
+                gap: 16px !important;
+                align-items: flex-end !important;
+                width: 100% !important;
+            }
+            
+            .pump-search-fixed {
+                flex: 1.8 !important;
+                min-width: 0 !important;
+                position: relative !important;
+            }
+            
+            .input-field-fixed {
+                flex: 1 !important;
+                min-width: 0 !important;
+            }
+            
+            .button-container-fixed {
+                flex-shrink: 0 !important;
+                flex-grow: 0 !important;
+            }
+        </style>
+        
+        <div class="analysis-controls-fixed">
             <!-- Header -->
             <div style="margin-bottom: 18px; padding-bottom: 12px; border-bottom: 1px solid #e9ecef;">
                 <div style="display: flex; align-items: center; gap: 10px;">
@@ -381,9 +419,9 @@
             </div>
             
             <!-- Controls Row -->
-            <div style="display: flex; gap: 16px; align-items: flex-end;">
+            <div class="controls-row-fixed">
                 <!-- Pump Search -->
-                <div style="flex: 1.8; position: relative;">
+                <div class="pump-search-fixed">
                     <label for="pumpSearch" style="display: block; font-weight: 500; font-size: 12px; color: #495057; margin-bottom: 6px;">
                         Force Pump Selection
                     </label>
@@ -402,7 +440,7 @@
                 </div>
                 
                 <!-- Flow Rate -->
-                <div style="flex: 1;">
+                <div class="input-field-fixed">
                     <label for="editFlow" style="display: block; font-weight: 500; font-size: 12px; color: #495057; margin-bottom: 6px;">
                         Flow Rate (m³/hr)
                     </label>
@@ -411,7 +449,7 @@
                 </div>
                 
                 <!-- Total Head -->
-                <div style="flex: 1;">
+                <div class="input-field-fixed">
                     <label for="editHead" style="display: block; font-weight: 500; font-size: 12px; color: #495057; margin-bottom: 6px;">
                         Total Head (m)
                     </label>
@@ -420,7 +458,7 @@
                 </div>
                 
                 <!-- Apply Button -->
-                <div style="flex-shrink: 0;">
+                <div class="button-container-fixed">
                     <button onclick="applyChanges()" 
                             id="applyBtn"
                             style="padding: 12px 24px; background: #1976d2; color: white; border: none; border-radius: 4px; font-size: 12px; font-weight: 500; cursor: pointer; transition: all 0.2s; white-space: nowrap; box-shadow: 0 2px 4px rgba(25, 118, 210, 0.3);"
@@ -703,8 +741,8 @@
 
     <script>
         // Store original values
-        let currentFlow = {{ site_requirements.get('flow_m3hr', 0)|round(1)|float }};
-        let currentHead = {{ site_requirements.get('head_m', 0)|round(1)|float }};
+        let currentFlow = {{ site_requirements.get('flow_m3hr', 0)|round(1) }};
+        let currentHead = {{ site_requirements.get('head_m', 0)|round(1) }};
         const pumpCode = "{{ selected_pump.get('pump_code', '') }}";
 
         // Initialize engineering charts
