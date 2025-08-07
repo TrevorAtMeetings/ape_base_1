@@ -41,53 +41,83 @@ def run_performance_test():
     """Run performance comparison test between database and UI calculations"""
     try:
         # Get form data
-        flow_rate = float(request.form.get('flow_rate', 0))
-        head = float(request.form.get('head', 0))
+        flow_rate = request.form.get('flow_rate', '').strip()
+        head = request.form.get('head', '').strip()
         pump_code = request.form.get('pump_code', '').strip()
         
-        if flow_rate <= 0 or head <= 0:
-            flash('Please enter valid flow rate and head values', 'error')
-            return render_template('admin_testing.html')
+        # Convert to float if provided
+        flow_rate = float(flow_rate) if flow_rate else None
+        head = float(head) if head else None
         
-        logger.info(f"Running performance test: Flow={flow_rate} m³/hr, Head={head} m, Pump={pump_code or 'ALL'}")
+        # Validate input combinations
+        if not pump_code and (not flow_rate or not head):
+            flash('Either provide pump code for BEP testing, or flow rate and head for duty point testing', 'error')
+            return render_template('admin_testing.html')
+            
+        if (flow_rate and flow_rate <= 0) or (head and head <= 0):
+            flash('Flow rate and head must be positive values when provided', 'error')
+            return render_template('admin_testing.html')
         
         # Initialize engines
         catalog_engine = get_catalog_engine()
         pump_repo = PumpRepository()
         
-        # Create site requirements
-        site_requirements = SiteRequirements(flow_rate, head)
+        # Determine testing mode
+        bep_testing_mode = pump_code and not flow_rate and not head
         
-        # Get test pumps - either specific pump or all suitable pumps
-        if pump_code:
-            # Test specific pump
+        if bep_testing_mode:
+            logger.info(f"Running BEP testing mode for pump: {pump_code}")
+            # BEP Testing Mode: Test pump at its optimal efficiency point
             catalog_pump = catalog_engine.get_pump_by_code(pump_code)
             if not catalog_pump:
                 flash(f'Pump code "{pump_code}" not found in database', 'error')
                 return render_template('admin_testing.html')
-            test_pumps = [catalog_pump]
-        else:
-            # Get suitable pumps from catalog engine (limit to top 10 for testing)
-            selection_results = catalog_engine.select_pumps(
-                flow_rate, head, pump_type='GENERAL', max_results=10
-            )
-            if not selection_results:
-                flash('No suitable pumps found for the given conditions', 'error')
-                return render_template('admin_testing.html')
             
-            # Extract pump objects from selection results
-            test_pumps = []
-            limited_results = selection_results[:10] if len(selection_results) > 10 else selection_results
-            for result in limited_results:
-                # selection_results is a list of dicts, each with a 'pump' key
-                if isinstance(result, dict) and 'pump' in result:
-                    test_pumps.append(result['pump'])
-                elif hasattr(result, 'pump'):
-                    test_pumps.append(result.pump)
-                    
-            if not test_pumps:
-                flash('Unable to extract pump objects from selection results', 'error')
+            # Get BEP coordinates
+            bep_data = _get_bep_analysis(catalog_pump, pump_repo, catalog_engine)
+            if not bep_data.get('has_bep_data'):
+                flash(f'No BEP data available for pump "{pump_code}"', 'error')
                 return render_template('admin_testing.html')
+                
+            # Use BEP coordinates as test conditions
+            flow_rate = bep_data['bep_flow_m3hr']
+            head = bep_data['bep_head_m']
+            test_pumps = [catalog_pump]
+            test_mode = 'BEP Testing'
+            
+        else:
+            logger.info(f"Running duty point testing: Flow={flow_rate} m³/hr, Head={head} m, Pump={pump_code or 'ALL'}")
+            # Duty Point Testing Mode: Test at specified operating conditions
+            if pump_code:
+                # Test specific pump at specified conditions
+                catalog_pump = catalog_engine.get_pump_by_code(pump_code)
+                if not catalog_pump:
+                    flash(f'Pump code "{pump_code}" not found in database', 'error')
+                    return render_template('admin_testing.html')
+                test_pumps = [catalog_pump]
+            else:
+                # Get suitable pumps from catalog engine (limit to top 10 for testing)
+                site_requirements = SiteRequirements(flow_rate, head)
+                selection_results = catalog_engine.select_pumps(
+                    flow_rate, head, pump_type='GENERAL', max_results=10
+                )
+                if not selection_results:
+                    flash('No suitable pumps found for the given conditions', 'error')
+                    return render_template('admin_testing.html')
+                
+                # Extract pump objects from selection results
+                test_pumps = []
+                limited_results = selection_results[:10] if len(selection_results) > 10 else selection_results
+                for result in limited_results:
+                    if isinstance(result, dict) and 'pump' in result:
+                        test_pumps.append(result['pump'])
+                    elif hasattr(result, 'pump'):
+                        test_pumps.append(result.pump)
+                        
+                if not test_pumps:
+                    flash('Unable to extract pump objects from selection results', 'error')
+                    return render_template('admin_testing.html')
+            test_mode = 'Duty Point Testing'
         
         # Run comparison tests
         test_results = []
@@ -106,7 +136,8 @@ def run_performance_test():
                              test_conditions={
                                  'flow_m3hr': flow_rate,
                                  'head_m': head,
-                                 'pump_code': pump_code if pump_code else None
+                                 'pump_code': pump_code if pump_code else None,
+                                 'test_mode': test_mode if 'test_mode' in locals() else 'Duty Point Testing'
                              })
         
     except ValueError as e:

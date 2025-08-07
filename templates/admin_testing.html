@@ -28,17 +28,19 @@
                     <form id="testingForm" method="POST" action="{{ url_for('admin.run_performance_test') }}">
                         <div class="row">
                             <div class="input-field col s12 m3">
-                                <input type="number" id="flow_rate" name="flow_rate" step="0.1" min="0.1" required>
+                                <input type="number" id="flow_rate" name="flow_rate" step="0.1" min="0.1">
                                 <label for="flow_rate">Flow Rate (m³/hr)</label>
+                                <span class="helper-text">Leave blank for BEP testing</span>
                             </div>
                             <div class="input-field col s12 m3">
-                                <input type="number" id="head" name="head" step="0.1" min="0.1" required>
+                                <input type="number" id="head" name="head" step="0.1" min="0.1">
                                 <label for="head">Head (m)</label>
+                                <span class="helper-text">Leave blank for BEP testing</span>
                             </div>
                             <div class="input-field col s12 m3">
                                 <input type="text" id="pump_code" name="pump_code" placeholder="e.g., 125-250 2F" autocomplete="off">
-                                <label for="pump_code">Pump Code (Optional)</label>
-                                <span class="helper-text">Leave empty to test all suitable pumps</span>
+                                <label for="pump_code">Pump Code</label>
+                                <span class="helper-text">Required for BEP testing mode</span>
                                 <!-- Autocomplete dropdown -->
                                 <div id="pump_code_autocomplete" class="autocomplete-dropdown" style="display: none; position: absolute; background: white; border: 1px solid #ddd; border-radius: 4px; max-height: 200px; overflow-y: auto; z-index: 1000; width: 100%; top: 100%; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"></div>
                             </div>
@@ -70,11 +72,14 @@
                     <div class="row" style="margin-bottom: 20px;">
                         <div class="col s12">
                             <div style="background-color: #f5f5f5; padding: 15px; border-radius: 4px;">
-                                <strong>Test Conditions:</strong> 
+                                <strong>{{ test_conditions.test_mode or 'Test Conditions' }}:</strong> 
                                 Flow = {{ "%.1f"|format(test_conditions.flow_m3hr) }} m³/hr, 
                                 Head = {{ "%.1f"|format(test_conditions.head_m) }} m
                                 {% if test_conditions.pump_code %}
                                 , Pump = {{ test_conditions.pump_code }}
+                                {% endif %}
+                                {% if test_conditions.test_mode == 'BEP Testing' %}
+                                <br><em>Testing pump at its Best Efficiency Point (BEP) for optimal performance comparison</em>
                                 {% endif %}
                             </div>
                         </div>
