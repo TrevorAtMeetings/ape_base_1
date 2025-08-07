@@ -161,6 +161,9 @@ def handle_specific_pump_query(pump_name, flow, head):
                 'confidence_score': 0.9
             }
         
+        # Get specifications for additional details
+        specifications = target_pump.get('specifications', {})
+        
         # Generate report URL for this pump at these conditions
         pump_url = url_for('reports.engineering_report', 
                           pump_code=target_pump.get('pump_code', target_pump.get('pump_name')),
@@ -176,9 +179,9 @@ def handle_specific_pump_query(pump_name, flow, head):
             <div class="pump-result-card" style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 0.75rem;">
                 <div class="pump-specs" style="margin-bottom: 0.75rem;">
                     <div style="font-size: 0.875rem; color: #4b5563;">
-                        <strong>Type:</strong> {target_pump.get('pump_type')}<br>
-                        <strong>Speed:</strong> {target_pump.get('speed_rpm')} RPM<br>
-                        <strong>Impeller:</strong> {target_pump.get('impeller_dia_mm')}mm
+                        <strong>Type:</strong> {target_pump.get('pump_type', 'N/A')}<br>
+                        <strong>Speed:</strong> {specifications.get('test_speed_rpm', 'N/A')} RPM<br>
+                        <strong>Impeller:</strong> {specifications.get('max_impeller_mm', specifications.get('max_impeller_diameter_mm', 'N/A'))}mm
                     </div>
                 </div>
                 <a href="{pump_url}" target="_blank" class="view-details-btn" style="
@@ -268,6 +271,18 @@ def handle_pump_bep_query(pump_name):
                           force='true',
                           _external=False)
         
+        # Get additional pump details from specifications
+        test_speed = specifications.get('test_speed_rpm', 'N/A')
+        max_impeller = specifications.get('max_impeller_mm', specifications.get('max_impeller_diameter_mm', 'N/A'))
+        min_impeller = specifications.get('min_impeller_mm', specifications.get('min_impeller_diameter_mm', 'N/A'))
+        
+        # Format impeller range
+        impeller_display = 'N/A'
+        if max_impeller != 'N/A' and min_impeller != 'N/A':
+            impeller_display = f"{min_impeller:.0f}-{max_impeller:.0f}mm"
+        elif max_impeller != 'N/A':
+            impeller_display = f"{max_impeller:.0f}mm"
+        
         html_response = f"""
         <div class="pump-specific-result">
             <h3 style="color: #10b981; margin-bottom: 0.5rem;">🎯 {target_pump.get('pump_code')} at BEP</h3>
@@ -275,10 +290,10 @@ def handle_pump_bep_query(pump_name):
             <div class="pump-result-card" style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 0.75rem;">
                 <div class="pump-specs" style="margin-bottom: 0.75rem;">
                     <div style="font-size: 0.875rem; color: #4b5563;">
-                        <strong>Type:</strong> {target_pump.get('pump_type')}<br>
-                        <strong>Speed:</strong> {target_pump.get('speed_rpm')} RPM<br>
-                        <strong>Impeller:</strong> {target_pump.get('impeller_dia_mm')}mm<br>
-                        <strong>Max Efficiency:</strong> {target_pump.get('max_efficiency', 0):.1f}% (at BEP)
+                        <strong>Type:</strong> {target_pump.get('pump_type', 'N/A')}<br>
+                        <strong>Speed:</strong> {test_speed} RPM<br>
+                        <strong>Impeller Range:</strong> {impeller_display}<br>
+                        <strong>Max Efficiency:</strong> {max_eff:.1f}% (at BEP)
                     </div>
                 </div>
                 <a href="{pump_url}" target="_blank" class="view-details-btn" style="
