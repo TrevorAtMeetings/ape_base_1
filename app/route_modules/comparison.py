@@ -155,18 +155,80 @@ def pump_comparison():
         # If we have comparison_list from new API, convert it to pump_selections format
         if comparison_list and not pump_selections:
             pump_selections = []
+            from ..catalog_engine import get_catalog_engine
+            catalog_engine = get_catalog_engine()
+            
             for comp_pump in comparison_list:
                 pump_data = comp_pump.get('pump_data', {})
                 if pump_data:
-                    evaluation = {
-                        'pump_code': comp_pump['pump_code'],
-                        'suitability_score': 85,
-                        'selection_reason': 'Manually added for comparison',
-                        'operating_point': {
+                    # Get actual pump performance from catalog
+                    try:
+                        pump = catalog_engine.get_pump_by_code(comp_pump['pump_code'])
+                        if pump:
+                            performance_result = pump.get_performance_at_duty(comp_pump['flow'], comp_pump['head'])
+                            if performance_result:
+                                performance = performance_result['performance']
+                            else:
+                                # Fallback values
+                                performance = {
+                                    'flow_m3hr': comp_pump['flow'],
+                                    'head_m': comp_pump['head'],
+                                    'efficiency_pct': 75,
+                                    'power_kw': 100,
+                                    'impeller_diameter_mm': 350
+                                }
+                        else:
+                            # Fallback values
+                            performance = {
+                                'flow_m3hr': comp_pump['flow'],
+                                'head_m': comp_pump['head'],
+                                'efficiency_pct': 75,
+                                'power_kw': 100,
+                                'impeller_diameter_mm': 350
+                            }
+                    except:
+                        # Fallback values
+                        performance = {
                             'flow_m3hr': comp_pump['flow'],
                             'head_m': comp_pump['head'],
                             'efficiency_pct': 75,
-                            'power_kw': 100
+                            'power_kw': 100,
+                            'impeller_diameter_mm': 350
+                        }
+                    
+                    # Calculate lifecycle costs
+                    power_kw = performance.get('power_kw', 100)
+                    annual_hours = 8760
+                    electricity_rate = 2.50  # R/kWh
+                    annual_energy_cost = (power_kw * annual_hours * electricity_rate) / 1000
+                    initial_cost = 50000
+                    total_10_year_cost = initial_cost + (annual_energy_cost * 10)
+                    cost_per_m3 = (annual_energy_cost * 1000) / (comp_pump['flow'] * 8760) if comp_pump['flow'] > 0 else 0
+                    
+                    lifecycle_cost = {
+                        'initial_cost': initial_cost,
+                        'annual_energy_cost': annual_energy_cost * 1000,
+                        'total_10_year_cost': total_10_year_cost,
+                        'cost_per_m3': cost_per_m3
+                    }
+                    
+                    evaluation = {
+                        'pump_code': comp_pump['pump_code'],
+                        'suitability_score': 85,
+                        'overall_score': 85,  # Add this for template compatibility
+                        'selection_reason': 'Manually added for comparison',
+                        'pump_type': pump_data.get('pump_type', 'CENTRIFUGAL'),
+                        'operating_point': {
+                            'flow_m3hr': performance.get('flow_m3hr', comp_pump['flow']),
+                            'head_m': performance.get('head_m', comp_pump['head']),
+                            'efficiency_pct': performance.get('efficiency_pct', 75),
+                            'power_kw': performance.get('power_kw', 100),
+                            'achieved_efficiency_pct': performance.get('efficiency_pct', 75),
+                            'achieved_head_m': performance.get('head_m', comp_pump['head']),
+                            'achieved_power_kw': performance.get('power_kw', 100),
+                            'achieved_flow_m3hr': performance.get('flow_m3hr', comp_pump['flow']),
+                            'impeller_size': f"{performance.get('impeller_diameter_mm', 350)}mm",
+                            'achieved_npshr_m': performance.get('npshr_m', 3.0) if performance.get('npshr_m') else None
                         },
                         'pump_info': {
                             'manufacturer': pump_data.get('manufacturer', 'APE PUMPS'),
@@ -174,7 +236,7 @@ def pump_comparison():
                             'pump_type': pump_data.get('pump_type', 'CENTRIFUGAL')
                         },
                         'suitable': True,
-                        'lifecycle_cost': 50000,
+                        'lifecycle_cost': lifecycle_cost,
                         'qbep_percentage': 100
                     }
                     pump_selections.append(evaluation)
@@ -196,9 +258,11 @@ def pump_comparison():
             pump_type = request.args.get('pump_type', 'GENERAL')
             
             if flow and head:
-                # Redirect to pump options to get selections first
-                safe_flash('Please select pumps for comparison first.', 'info')
-                return redirect(url_for('main_flow.pump_options', flow=flow, head=head, pump_type=pump_type))
+                # If we have flow and head but no selections, create a simple comparison message
+                safe_flash('Please add pumps to comparison first by clicking "Add to Compare" on pump report pages.', 'info')
+                return render_template('pump_comparison.html', 
+                                     pump_comparisons=[], 
+                                     site_requirements={'flow_m3hr': flow, 'head_m': head, 'pump_type': pump_type})
             else:
                 safe_flash('No pump selections available for comparison. Please run pump selection first.', 'info')
                 return redirect(url_for('main_flow.index'))
