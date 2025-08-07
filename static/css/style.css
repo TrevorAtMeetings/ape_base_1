@@ -692,6 +692,102 @@ nav.teal {
     margin: 20px 0;
 }
 
+/* Metric Cards - Consistent sizing for presentation view */
+.metric-card {
+    text-align: center;
+    padding: 24px 16px;
+    background: var(--md-surface);
+    border-radius: var(--md-border-radius);
+    box-shadow: var(--md-shadow);
+    margin-bottom: 16px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid var(--md-outline-variant);
+    min-height: 140px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.metric-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--md-shadow-elevated);
+}
+
+/* Score Display (Overall Score card) */
+.score-display {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+}
+
+.score-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--md-primary);
+    margin-bottom: 8px;
+    line-height: 1;
+}
+
+.score-label {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 500;
+}
+
+/* Metric Display (other cards) */
+.metric-label {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 500;
+    margin-bottom: 8px;
+}
+
+.metric-value {
+    font-size: 2rem;
+    font-weight: 600;
+    color: var(--md-primary);
+    line-height: 1.2;
+    margin-bottom: 4px;
+}
+
+.metric-unit {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    font-weight: 400;
+}
+
+/* Efficiency Badge */
+.efficiency-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 16px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.efficiency-excellent {
+    background-color: rgba(76, 175, 80, 0.1);
+    color: #2e7d32;
+}
+
+.efficiency-good {
+    background-color: rgba(255, 152, 0, 0.1);
+    color: #f57c00;
+}
+
+.efficiency-acceptable {
+    background-color: rgba(158, 158, 158, 0.1);
+    color: #616161;
+}
+
 .stat-box {
     text-align: center;
     padding: 20px;
