@@ -163,6 +163,20 @@ def engineering_report(pump_code):
     for pump in pump_selections:
         if pump.get('pump_code') == pump_code:
             selected_pump = pump.copy()  # Make a copy to avoid modifying session data
+            
+            # CRITICAL FIX: Ensure speed data is populated from database if missing
+            if not selected_pump.get('test_speed_rpm') or not selected_pump.get('min_speed_rpm'):
+                from ..catalog_engine import get_catalog_engine
+                catalog_engine = get_catalog_engine()
+                target_pump = catalog_engine.get_pump_by_code(pump_code)
+                
+                if target_pump:
+                    # Add missing speed data from authentic database values
+                    selected_pump['speed_rpm'] = target_pump.get_speed_rpm()
+                    selected_pump['test_speed_rpm'] = target_pump.get_speed_rpm()
+                    selected_pump['min_speed_rpm'] = target_pump.get_min_speed_rpm()
+                    selected_pump['max_speed_rpm'] = target_pump.get_max_speed_rpm()
+            
             break
     
     # If pump not in session but force selection is requested, load it directly
@@ -176,14 +190,17 @@ def engineering_report(pump_code):
         target_pump = catalog_engine.get_pump_by_code(pump_code)
         
         if target_pump:
-            # Create minimal pump data for analysis
+            # Create minimal pump data for analysis - using AUTHENTIC database values
             selected_pump = {
                 'pump_code': pump_code,
                 'manufacturer': target_pump.manufacturer or 'APE PUMPS',
                 'pump_type': target_pump.pump_type or 'Centrifugal',
                 'model_series': target_pump.model_series,
                 'stages': 1,  # Default
-                'speed_rpm': target_pump.get_speed_rpm() if hasattr(target_pump, 'get_speed_rpm') else 2950,
+                'speed_rpm': target_pump.get_speed_rpm(),  # Authentic test speed from database
+                'test_speed_rpm': target_pump.get_speed_rpm(),  # Explicit test speed field
+                'min_speed_rpm': target_pump.get_min_speed_rpm(),  # Authentic min speed
+                'max_speed_rpm': target_pump.get_max_speed_rpm(),  # Authentic max speed
                 'bep_flow_m3hr': target_pump.bep_flow_m3hr if hasattr(target_pump, 'bep_flow_m3hr') else new_flow
             }
             

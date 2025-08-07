@@ -47,6 +47,11 @@ class CatalogPump:
                                             self._calculate_max_efficiency())
         self.connection_size = pump_data.get('connection_size', 'Standard')
         self.materials = pump_data.get('materials', 'Cast Iron')
+        
+        # Speed data from specifications
+        self.test_speed_rpm = self.specifications.get('test_speed_rpm', 0)
+        self.min_speed_rpm = self.specifications.get('min_speed_rpm', 0) 
+        self.max_speed_rpm = self.specifications.get('max_speed_rpm', 0)
 
     def _calculate_max_flow(self) -> float:
         """Calculate maximum flow from all curves"""
@@ -125,6 +130,18 @@ class CatalogPump:
                     }
 
         return best_bep
+
+    def get_speed_rpm(self) -> int:
+        """Get the pump test speed in RPM from specifications"""
+        return self.test_speed_rpm
+
+    def get_min_speed_rpm(self) -> int:
+        """Get the pump minimum speed in RPM from specifications"""
+        return self.min_speed_rpm
+
+    def get_max_speed_rpm(self) -> int:
+        """Get the pump maximum speed in RPM from specifications"""
+        return self.max_speed_rpm
 
     def calculate_bep_distance(self, target_flow: float,
                                target_head: float) -> Dict[str, Any]:

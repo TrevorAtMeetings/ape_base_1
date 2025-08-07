@@ -737,7 +737,7 @@
                     </tr>
                     <tr>
                         <td>Pump Speed</td>
-                        <td>{{ selected_pump.get('speed_rpm', 2950) }} rpm</td>
+                        <td>{{ selected_pump.get('test_speed_rpm', selected_pump.get('speed_rpm', 'N/A')) }} rpm</td>
                     </tr>
                     <tr>
                         <td>No of Stages</td>
@@ -768,6 +768,14 @@
                     <tr>
                         <td>Frame Size</td>
                         <td>{{ selected_pump.get('frame_size', 'N/A') }}</td>
+                    </tr>
+                    <tr>
+                        <td>Min Speed</td>
+                        <td>{{ selected_pump.get('min_speed_rpm', 'N/A') }} rpm</td>
+                    </tr>
+                    <tr>
+                        <td>Max Speed</td>
+                        <td>{{ selected_pump.get('max_speed_rpm', 'N/A') }} rpm</td>
                     </tr>
                 </table>
             </div>
