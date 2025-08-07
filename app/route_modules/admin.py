@@ -4,6 +4,7 @@ Routes for administrative functions including AI admin interface
 """
 import logging
 import os
+import numpy as np
 from flask import render_template, Blueprint, request, jsonify, current_app, flash
 from werkzeug.utils import secure_filename
 from ..catalog_engine import get_catalog_engine
@@ -124,14 +125,24 @@ def run_performance_test():
         # At this point, flow_rate and head are guaranteed to be float values
         assert flow_rate is not None and head is not None, "Flow rate and head must be defined at this point"
         
+        # Check if envelope testing is requested
+        envelope_testing = request.form.get('envelope_testing') == 'on'
+        
         # Run comparison tests
         test_results = []
         for pump in test_pumps:
-            result = _compare_pump_performance(pump, flow_rate, head, pump_repo, catalog_engine)
+            if envelope_testing:
+                # Run comprehensive envelope testing (10-20 points)
+                result = _test_pump_performance_envelope(pump, flow_rate, head, pump_repo, catalog_engine)
+            else:
+                # Run single-point testing (existing behavior)
+                result = _compare_pump_performance(pump, flow_rate, head, pump_repo, catalog_engine)
+                if result:
+                    # Add BEP analysis to each pump result
+                    bep_data = _get_bep_analysis(pump, pump_repo, catalog_engine)
+                    result['bep_analysis'] = bep_data
+            
             if result:
-                # Add BEP analysis to each pump result
-                bep_data = _get_bep_analysis(pump, pump_repo, catalog_engine)
-                result['bep_analysis'] = bep_data
                 test_results.append(result)
         
         logger.info(f"Performance test completed: {len(test_results)} pumps tested")
@@ -142,7 +153,8 @@ def run_performance_test():
                                  'flow_m3hr': flow_rate,
                                  'head_m': head,
                                  'pump_code': pump_code if pump_code else None,
-                                 'test_mode': test_mode if 'test_mode' in locals() else 'Duty Point Testing'
+                                 'test_mode': test_mode if 'test_mode' in locals() else 'Duty Point Testing',
+                                 'envelope_testing': envelope_testing
                              })
         
     except ValueError as e:
@@ -357,6 +369,150 @@ def _estimate_bep_from_curves(pump):
     except Exception as e:
         logger.warning(f"Error estimating BEP from curves for {pump.pump_code}: {str(e)}")
         return None
+
+def _test_pump_performance_envelope(pump, base_flow, base_head, pump_repo, catalog_engine):
+    """Test pump performance across full operating envelope (10-20 points)"""
+    try:
+        # Get BEP for envelope calculation
+        bep_data = _get_bep_analysis(pump, pump_repo, catalog_engine)
+        if not bep_data.get('has_bep_data'):
+            logger.warning(f"No BEP data for envelope testing of {pump.pump_code}")
+            return None
+        
+        bep_flow = bep_data['bep_flow_m3hr']
+        bep_head = bep_data['bep_head_m'] 
+        
+        # Generate test points across operating envelope
+        test_points = _generate_envelope_test_points(pump, bep_flow, bep_head, base_head)
+        
+        # Run tests at all points
+        envelope_results = []
+        for point in test_points:
+            point_result = _compare_pump_performance(pump, point['flow'], point['head'], pump_repo, catalog_engine)
+            if point_result:
+                point_result['test_point'] = {
+                    'flow_m3hr': point['flow'],
+                    'head_m': point['head'],
+                    'flow_percent_bep': point['flow_percent_bep'],
+                    'operating_region': point['operating_region'],
+                    'test_category': point['test_category']
+                }
+                envelope_results.append(point_result)
+        
+        # Calculate envelope statistics
+        envelope_stats = _calculate_envelope_statistics(envelope_results)
+        
+        return {
+            'pump_code': pump.pump_code,
+            'pump_type': pump.pump_type,
+            'envelope_testing': True,
+            'bep_analysis': bep_data,
+            'test_points_count': len(envelope_results),
+            'envelope_results': envelope_results,
+            'envelope_statistics': envelope_stats
+        }
+        
+    except Exception as e:
+        logger.error(f"Error in envelope testing for {pump.pump_code}: {str(e)}")
+        return None
+
+def _generate_envelope_test_points(pump, bep_flow, bep_head, base_head):
+    """Generate 10-20 test points across pump operating envelope"""
+    test_points = []
+    
+    # Operating envelope flow percentages (60% to 130% of BEP)
+    flow_percentages = [60, 70, 80, 85, 90, 95, 100, 105, 110, 115, 120, 125, 130]
+    
+    for flow_pct in flow_percentages:
+        flow = bep_flow * (flow_pct / 100.0)
+        
+        # Determine operating region and category
+        if flow_pct < 80:
+            operating_region = "Part Load"
+            test_category = "efficiency_validation"
+        elif flow_pct <= 110: 
+            operating_region = "Optimal Zone"
+            test_category = "accuracy_validation"
+        else:
+            operating_region = "Overload"
+            test_category = "extrapolation_validation"
+        
+        # Use base head for duty point testing, or calculate head for BEP envelope
+        if base_head:
+            head = base_head
+        else:
+            # For BEP envelope testing, use proportional head reduction
+            head_reduction_factor = max(0.7, 1.0 - (flow_pct - 100) * 0.002)
+            head = bep_head * head_reduction_factor
+        
+        test_points.append({
+            'flow': flow,
+            'head': head,
+            'flow_percent_bep': flow_pct,
+            'operating_region': operating_region,
+            'test_category': test_category
+        })
+    
+    return test_points
+
+def _calculate_envelope_statistics(envelope_results):
+    """Calculate statistical analysis of envelope test results"""
+    if not envelope_results:
+        return {}
+    
+    # Extract deltas for statistical analysis
+    efficiency_deltas = [r['efficiency_delta'] for r in envelope_results if r['efficiency_delta'] is not None]
+    power_deltas = [r['power_delta'] for r in envelope_results if r['power_delta'] is not None] 
+    npsh_deltas = [r['npsh_delta'] for r in envelope_results if r['npsh_delta'] is not None]
+    
+    stats = {}
+    
+    # Efficiency statistics
+    if efficiency_deltas:
+        stats['efficiency'] = {
+            'mean_delta': np.mean(efficiency_deltas),
+            'std_delta': np.std(efficiency_deltas),
+            'max_delta': max(efficiency_deltas),
+            'min_delta': min(efficiency_deltas),
+            'mean_abs_delta': np.mean([abs(d) for d in efficiency_deltas])
+        }
+    
+    # Power statistics  
+    if power_deltas:
+        stats['power'] = {
+            'mean_delta': np.mean(power_deltas),
+            'std_delta': np.std(power_deltas),
+            'max_delta': max(power_deltas),
+            'min_delta': min(power_deltas),
+            'mean_abs_delta': np.mean([abs(d) for d in power_deltas])
+        }
+        
+    # NPSH statistics
+    if npsh_deltas:
+        stats['npsh'] = {
+            'mean_delta': np.mean(npsh_deltas),
+            'std_delta': np.std(npsh_deltas), 
+            'max_delta': max(npsh_deltas),
+            'min_delta': min(npsh_deltas),
+            'mean_abs_delta': np.mean([abs(d) for d in npsh_deltas])
+        }
+    
+    # Overall accuracy metrics
+    all_points = len(envelope_results)
+    accurate_points = len([r for r in envelope_results if r['status'] == 'match'])
+    minor_diff_points = len([r for r in envelope_results if r['status'] == 'minor_diff']) 
+    major_diff_points = len([r for r in envelope_results if r['status'] == 'major_diff'])
+    
+    stats['accuracy'] = {
+        'total_points': all_points,
+        'accurate_points': accurate_points,
+        'minor_diff_points': minor_diff_points,
+        'major_diff_points': major_diff_points,
+        'accuracy_percentage': (accurate_points / all_points) * 100 if all_points > 0 else 0,
+        'acceptable_percentage': ((accurate_points + minor_diff_points) / all_points) * 100 if all_points > 0 else 0
+    }
+    
+    return stats
 
 def _determine_status(efficiency_delta, power_delta, npsh_delta):
     """Determine test status based on deltas between database and UI values"""

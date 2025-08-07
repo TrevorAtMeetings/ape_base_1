@@ -1,0 +1,544 @@
+{% extends "base.html" %}
+
+{% block title %}Performance Testing - APE Pumps Admin{% endblock %}
+
+{% block content %}
+<div class="container" style="margin-top: 30px;">
+    <!-- Header -->
+    <div class="row">
+        <div class="col s12">
+            <div class="card">
+                <div class="card-content">
+                    <span class="card-title">
+                        <i class="material-icons left">bug_report</i>
+                        Performance Testing & Validation
+                    </span>
+                    <p>Compare raw database interpolation against UI calculation engine to identify gaps and validate engineering logic.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Testing Form -->
+    <div class="row">
+        <div class="col s12">
+            <div class="card">
+                <div class="card-content">
+                    <span class="card-title">Test Parameters</span>
+                    <form id="testingForm" method="POST" action="{{ url_for('admin.run_performance_test') }}">
+                        <div class="row">
+                            <div class="input-field col s12 m3">
+                                <input type="number" id="flow_rate" name="flow_rate" step="0.1" min="0.1">
+                                <label for="flow_rate">Flow Rate (m³/hr)</label>
+                                <span class="helper-text">Leave blank for BEP testing</span>
+                            </div>
+                            <div class="input-field col s12 m3">
+                                <input type="number" id="head" name="head" step="0.1" min="0.1">
+                                <label for="head">Head (m)</label>
+                                <span class="helper-text">Leave blank for BEP testing</span>
+                            </div>
+                            <div class="input-field col s12 m3">
+                                <input type="text" id="pump_code" name="pump_code" placeholder="e.g., 125-250 2F" autocomplete="off">
+                                <label for="pump_code">Pump Code</label>
+                                <span class="helper-text">Required for BEP testing mode</span>
+                                <!-- Autocomplete dropdown -->
+                                <div id="pump_code_autocomplete" class="autocomplete-dropdown" style="display: none; position: absolute; background: white; border: 1px solid #ddd; border-radius: 4px; max-height: 200px; overflow-y: auto; z-index: 1000; width: 100%; top: 100%; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"></div>
+                            </div>
+                            <div class="col s12 m3">
+                                <p style="margin-top: 15px;">
+                                    <label>
+                                        <input type="checkbox" id="envelope_testing" name="envelope_testing" />
+                                        <span>Envelope Testing</span>
+                                    </label>
+                                </p>
+                                <span class="helper-text" style="font-size: 11px;">Test 10-20 points across operating envelope</span>
+                                <button type="submit" class="btn waves-effect waves-light" style="margin-top: 15px;">
+                                    <i class="material-icons left">play_arrow</i>
+                                    Run Test
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results Section -->
+    {% if test_results %}
+    <div class="row">
+        <div class="col s12">
+            <div class="card">
+                <div class="card-content">
+                    <span class="card-title">
+                        Test Results 
+                        <span class="badge new" style="background-color: #4caf50;">{{ test_results|length }} pumps</span>
+                    </span>
+                    
+                    <!-- Test Parameters Display -->
+                    <div class="row" style="margin-bottom: 20px;">
+                        <div class="col s12">
+                            <div style="background-color: #f5f5f5; padding: 15px; border-radius: 4px;">
+                                <strong>{{ test_conditions.test_mode or 'Test Conditions' }}:</strong> 
+                                Flow = {{ "%.1f"|format(test_conditions.flow_m3hr) }} m³/hr, 
+                                Head = {{ "%.1f"|format(test_conditions.head_m) }} m
+                                {% if test_conditions.pump_code %}
+                                , Pump = {{ test_conditions.pump_code }}
+                                {% endif %}
+                                {% if test_conditions.envelope_testing %}
+                                <br><strong><i class="material-icons tiny">timeline</i> Envelope Testing:</strong> Testing 10-20 points across operating envelope (60-130% BEP)
+                                {% elif test_conditions.test_mode == 'BEP Testing' %}
+                                <br><em>Testing pump at its Best Efficiency Point (BEP) for optimal performance comparison</em>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Results Table -->
+                    <div class="responsive-table">
+                        {% for result in test_results %}
+                            {% if result.envelope_testing %}
+                                <!-- Envelope Testing Results -->
+                                <div class="card" style="margin-bottom: 30px;">
+                                    <div class="card-content">
+                                        <span class="card-title">
+                                            <i class="material-icons left">timeline</i>
+                                            {{ result.pump_code }} - Envelope Testing Results
+                                            <span class="badge new blue" style="margin-left: 10px;">{{ result.test_points_count }} points</span>
+                                        </span>
+                                        
+                                        <!-- Envelope Statistics -->
+                                        {% if result.envelope_statistics %}
+                                        <div class="row" style="margin-bottom: 20px;">
+                                            <div class="col s12">
+                                                <h6><i class="material-icons tiny">assessment</i> Statistical Summary</h6>
+                                                <div class="row">
+                                                    <div class="col s12 m4">
+                                                        <div style="background-color: #e8f5e8; padding: 10px; border-radius: 4px;">
+                                                            <strong>Accuracy</strong><br>
+                                                            Exact Match: {{ "%.1f"|format(result.envelope_statistics.accuracy.accuracy_percentage) }}%<br>
+                                                            Acceptable: {{ "%.1f"|format(result.envelope_statistics.accuracy.acceptable_percentage) }}%<br>
+                                                            <small>{{ result.envelope_statistics.accuracy.accurate_points }}/{{ result.envelope_statistics.accuracy.total_points }} exact, {{ result.envelope_statistics.accuracy.minor_diff_points }} minor diff</small>
+                                                        </div>
+                                                    </div>
+                                                    {% if result.envelope_statistics.efficiency %}
+                                                    <div class="col s12 m4">
+                                                        <div style="background-color: #e3f2fd; padding: 10px; border-radius: 4px;">
+                                                            <strong>Efficiency Δ</strong><br>
+                                                            Mean: {{ "%+.2f"|format(result.envelope_statistics.efficiency.mean_delta) }}%<br>
+                                                            Std Dev: {{ "%.2f"|format(result.envelope_statistics.efficiency.std_delta) }}%<br>
+                                                            <small>Range: {{ "%+.2f"|format(result.envelope_statistics.efficiency.min_delta) }} to {{ "%+.2f"|format(result.envelope_statistics.efficiency.max_delta) }}%</small>
+                                                        </div>
+                                                    </div>
+                                                    {% endif %}
+                                                    {% if result.envelope_statistics.power %}
+                                                    <div class="col s12 m4">
+                                                        <div style="background-color: #fff3e0; padding: 10px; border-radius: 4px;">
+                                                            <strong>Power Δ</strong><br>
+                                                            Mean: {{ "%+.2f"|format(result.envelope_statistics.power.mean_delta) }}kW<br>
+                                                            Std Dev: {{ "%.2f"|format(result.envelope_statistics.power.std_delta) }}kW<br>
+                                                            <small>Range: {{ "%+.2f"|format(result.envelope_statistics.power.min_delta) }} to {{ "%+.2f"|format(result.envelope_statistics.power.max_delta) }}kW</small>
+                                                        </div>
+                                                    </div>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {% endif %}
+                                        
+                                        <!-- Detailed Test Points -->
+                                        <table class="striped highlight responsive-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Flow</th>
+                                                    <th>%BEP</th>
+                                                    <th>Region</th>
+                                                    <th>Eff Δ</th>
+                                                    <th>Pwr Δ</th>
+                                                    <th>NPSH Δ</th>
+                                                    <th>Status</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for point in result.envelope_results %}
+                                                <tr>
+                                                    <td>{{ "%.0f"|format(point.test_point.flow_m3hr) }}</td>
+                                                    <td>{{ "%.0f"|format(point.test_point.flow_percent_bep) }}%</td>
+                                                    <td>
+                                                        <span class="badge 
+                                                            {% if point.test_point.operating_region == 'Part Load' %}orange{% elif point.test_point.operating_region == 'Optimal Zone' %}green{% else %}red{% endif %}">
+                                                            {{ point.test_point.operating_region }}
+                                                        </span>
+                                                    </td>
+                                                    <td>{% if point.efficiency_delta is not none %}{{ "%+.1f"|format(point.efficiency_delta) }}%{% else %}N/A{% endif %}</td>
+                                                    <td>{% if point.power_delta is not none %}{{ "%+.1f"|format(point.power_delta) }}kW{% else %}N/A{% endif %}</td>
+                                                    <td>{% if point.npsh_delta is not none %}{{ "%+.2f"|format(point.npsh_delta) }}m{% else %}N/A{% endif %}</td>
+                                                    <td>
+                                                        {% if point.status == 'match' %}
+                                                            <span class="badge green">✓ Match</span>
+                                                        {% elif point.status == 'minor_diff' %}
+                                                            <span class="badge orange">△ Minor</span>
+                                                        {% else %}
+                                                            <span class="badge red">✗ Major</span>
+                                                        {% endif %}
+                                                    </td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            {% else %}
+                                <!-- Single Point Testing Results (existing format) - placeholder -->
+                            {% endif %}
+                        {% endfor %}
+                        
+                        <!-- Single Point Results Table (when not envelope testing) -->
+                        {% if test_results and not test_results[0].envelope_testing %}
+                        <table class="striped highlight">
+                            <thead>
+                                <tr>
+                                    <th rowspan="3">Pump Code</th>
+                                    <th rowspan="3">Type</th>
+                                    <th colspan="3" class="center-align" style="border-bottom: 1px solid #ddd;">Duty Point Performance</th>
+                                    <th colspan="3" class="center-align" style="border-bottom: 1px solid #ddd;">BEP Information</th>
+                                    <th rowspan="3">UI Score</th>
+                                    <th rowspan="3">Status</th>
+                                </tr>
+                                <tr>
+                                    <th colspan="3" class="center-align" style="border-bottom: 1px solid #ddd;">Efficiency (%) | Power (kW) | NPSH (m)</th>
+                                    <th colspan="3" class="center-align" style="border-bottom: 1px solid #ddd;">BEP Coordinates | BEP Performance</th>
+                                </tr>
+                                <tr>
+                                    <th class="center-align">Database</th>
+                                    <th class="center-align">UI Calc</th>
+                                    <th class="center-align">Delta</th>
+                                    <th class="center-align">Flow/Head</th>
+                                    <th class="center-align">BEP DB</th>
+                                    <th class="center-align">BEP UI</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for result in test_results %}
+                                <tr>
+                                    <td><strong>{{ result.pump_code }}</strong></td>
+                                    <td>{{ result.pump_type }}</td>
+                                    
+                                    <!-- Duty Point Performance (Database) -->
+                                    <td class="center-align" style="font-size: 11px;">
+                                        <div style="margin-bottom: 2px;">
+                                            <strong>Eff:</strong> 
+                                            {% if result.db_efficiency is not none %}{{ "%.1f"|format(result.db_efficiency) }}%{% else %}N/A{% endif %}
+                                        </div>
+                                        <div style="margin-bottom: 2px;">
+                                            <strong>Pwr:</strong> 
+                                            {% if result.db_power is not none %}{{ "%.1f"|format(result.db_power) }}kW{% else %}N/A{% endif %}
+                                        </div>
+                                        <div>
+                                            <strong>NPSH:</strong> 
+                                            {% if result.db_npsh is not none %}{{ "%.2f"|format(result.db_npsh) }}m{% else %}N/A{% endif %}
+                                        </div>
+                                    </td>
+                                    
+                                    <!-- Duty Point Performance (UI) -->
+                                    <td class="center-align" style="font-size: 11px;">
+                                        <div style="margin-bottom: 2px;">
+                                            <strong>Eff:</strong> 
+                                            {% if result.ui_efficiency is not none %}{{ "%.1f"|format(result.ui_efficiency) }}%{% else %}N/A{% endif %}
+                                        </div>
+                                        <div style="margin-bottom: 2px;">
+                                            <strong>Pwr:</strong> 
+                                            {% if result.ui_power is not none %}{{ "%.1f"|format(result.ui_power) }}kW{% else %}N/A{% endif %}
+                                        </div>
+                                        <div>
+                                            <strong>NPSH:</strong> 
+                                            {% if result.ui_npsh is not none %}{{ "%.2f"|format(result.ui_npsh) }}m{% else %}N/A{% endif %}
+                                        </div>
+                                    </td>
+                                    
+                                    <!-- Delta Summary -->
+                                    <td class="center-align" style="font-size: 11px;">
+                                        <div style="margin-bottom: 2px;">
+                                            {% if result.efficiency_delta is not none %}
+                                                <span class="{% if result.efficiency_delta|abs > 5 %}red-text{% elif result.efficiency_delta|abs > 2 %}orange-text{% else %}green-text{% endif %}">
+                                                    {{ "%+.1f"|format(result.efficiency_delta) }}%
+                                                </span>
+                                            {% else %}N/A{% endif %}
+                                        </div>
+                                        <div style="margin-bottom: 2px;">
+                                            {% if result.power_delta is not none %}
+                                                <span class="{% if result.power_delta|abs > 2 %}red-text{% elif result.power_delta|abs > 0.5 %}orange-text{% else %}green-text{% endif %}">
+                                                    {{ "%+.1f"|format(result.power_delta) }}kW
+                                                </span>
+                                            {% else %}N/A{% endif %}
+                                        </div>
+                                        <div>
+                                            {% if result.npsh_delta is not none %}
+                                                <span class="{% if result.npsh_delta|abs > 1 %}red-text{% elif result.npsh_delta|abs > 0.3 %}orange-text{% else %}green-text{% endif %}">
+                                                    {{ "%+.2f"|format(result.npsh_delta) }}m
+                                                </span>
+                                            {% else %}N/A{% endif %}
+                                        </div>
+                                    </td>
+                                    
+                                    <!-- BEP Coordinates -->
+                                    <td class="center-align" style="font-size: 11px;">
+                                        {% if result.bep_analysis and result.bep_analysis.has_bep_data %}
+                                            <div><strong>Flow:</strong> {{ "%.0f"|format(result.bep_analysis.bep_flow_m3hr) }} m³/hr</div>
+                                            <div><strong>Head:</strong> {{ "%.1f"|format(result.bep_analysis.bep_head_m) }} m</div>
+                                            <div><strong>BEP Eff:</strong> {{ "%.1f"|format(result.bep_analysis.bep_efficiency_pct) }}%</div>
+                                        {% else %}
+                                            <em style="color: #999;">No BEP Data</em>
+                                        {% endif %}
+                                    </td>
+                                    
+                                    <!-- BEP Performance (Database) -->
+                                    <td class="center-align" style="font-size: 11px;">
+                                        {% if result.bep_analysis and result.bep_analysis.has_bep_data and result.bep_analysis.db_performance %}
+                                            {% set bep_db = result.bep_analysis.db_performance %}
+                                            <div>{{ "%.1f"|format(bep_db.efficiency) if bep_db.efficiency else "N/A" }}%</div>
+                                            <div>{{ "%.1f"|format(bep_db.power_kw) if bep_db.power_kw else "N/A" }}kW</div>
+                                            <div>{{ "%.2f"|format(bep_db.npshr_m) if bep_db.npshr_m else "N/A" }}m</div>
+                                        {% else %}
+                                            <em style="color: #999;">N/A</em>
+                                        {% endif %}
+                                    </td>
+                                    
+                                    <!-- BEP Performance (UI) -->
+                                    <td class="center-align" style="font-size: 11px;">
+                                        {% if result.bep_analysis and result.bep_analysis.has_bep_data and result.bep_analysis.ui_performance %}
+                                            {% set bep_ui = result.bep_analysis.ui_performance %}
+                                            <div>{{ "%.1f"|format(bep_ui.efficiency_pct) if bep_ui.efficiency_pct else "N/A" }}%</div>
+                                            <div>{{ "%.1f"|format(bep_ui.power_kw) if bep_ui.power_kw else "N/A" }}kW</div>
+                                            <div>{{ "%.2f"|format(bep_ui.npshr_m) if bep_ui.npshr_m else "N/A" }}m</div>
+                                        {% else %}
+                                            <em style="color: #999;">N/A</em>
+                                        {% endif %}
+                                    </td>
+                                    
+                                    <td class="center-align">
+                                        {% if result.ui_score is not none %}
+                                            {{ "%.1f"|format(result.ui_score) }}
+                                        {% else %}
+                                            <em>N/A</em>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if result.status == 'match' %}
+                                            <span class="green-text"><i class="material-icons tiny">check_circle</i> Match</span>
+                                        {% elif result.status == 'minor_diff' %}
+                                            <span class="orange-text"><i class="material-icons tiny">warning</i> Minor Diff</span>
+                                        {% elif result.status == 'major_diff' %}
+                                            <span class="red-text"><i class="material-icons tiny">error</i> Major Diff</span>
+                                        {% else %}
+                                            <span class="grey-text"><i class="material-icons tiny">help</i> {{ result.status }}</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Summary Statistics (Only for single point testing) -->
+                    {% if test_results and not test_results[0].get('envelope_testing', False) %}
+                    <div class="row" style="margin-top: 30px;">
+                        <div class="col s12">
+                            <h6>Summary</h6>
+                            {% set matches = test_results | selectattr('status', 'equalto', 'match') | list | length %}
+                            {% set minor_diffs = test_results | selectattr('status', 'equalto', 'minor_diff') | list | length %}
+                            {% set major_diffs = test_results | selectattr('status', 'equalto', 'major_diff') | list | length %}
+                            
+                            <div class="row">
+                                <div class="col s4">
+                                    <div class="card-panel green lighten-4 center-align">
+                                        <h5 class="green-text">{{ matches }}</h5>
+                                        <p>Exact Matches</p>
+                                    </div>
+                                </div>
+                                <div class="col s4">
+                                    <div class="card-panel orange lighten-4 center-align">
+                                        <h5 class="orange-text">{{ minor_diffs }}</h5>
+                                        <p>Minor Differences</p>
+                                    </div>
+                                </div>
+                                <div class="col s4">
+                                    <div class="card-panel red lighten-4 center-align">
+                                        <h5 class="red-text">{{ major_diffs }}</h5>
+                                        <p>Major Differences</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+.responsive-table {
+    overflow-x: auto;
+    margin: 20px 0;
+}
+
+.responsive-table table {
+    min-width: 1400px;
+}
+
+.responsive-table th, 
+.responsive-table td {
+    padding: 12px 8px;
+    font-size: 12px;
+}
+
+.responsive-table th {
+    background-color: #f5f5f5;
+    font-weight: 600;
+}
+
+.badge {
+    border-radius: 12px;
+    padding: 4px 8px;
+    font-size: 11px;
+    color: white;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Materialize components
+    M.updateTextFields();
+    
+    // Auto-focus first input
+    document.getElementById('flow_rate').focus();
+    
+    // Setup pump code autocomplete
+    setupPumpCodeAutocomplete();
+});
+
+function setupPumpCodeAutocomplete() {
+    const pumpCodeInput = document.getElementById('pump_code');
+    const autocompleteDropdown = document.getElementById('pump_code_autocomplete');
+    let searchTimeout;
+    
+    if (!pumpCodeInput || !autocompleteDropdown) return;
+    
+    // Input event listener for real-time search
+    pumpCodeInput.addEventListener('input', function() {
+        const query = this.value.trim();
+        
+        // Clear previous timeout
+        if (searchTimeout) {
+            clearTimeout(searchTimeout);
+        }
+        
+        // Hide dropdown if query is too short
+        if (query.length < 2) {
+            autocompleteDropdown.style.display = 'none';
+            return;
+        }
+        
+        // Debounce search requests
+        searchTimeout = setTimeout(() => {
+            searchPumps(query);
+        }, 300);
+    });
+    
+    // Hide dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!pumpCodeInput.contains(e.target) && !autocompleteDropdown.contains(e.target)) {
+            autocompleteDropdown.style.display = 'none';
+        }
+    });
+    
+    // Hide dropdown on escape key
+    pumpCodeInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            autocompleteDropdown.style.display = 'none';
+        }
+    });
+}
+
+function searchPumps(query) {
+    const autocompleteDropdown = document.getElementById('pump_code_autocomplete');
+    
+    // Show loading state
+    autocompleteDropdown.innerHTML = '<div style="padding: 10px; text-align: center; color: #666;"><i class="material-icons tiny">hourglass_empty</i> Searching...</div>';
+    autocompleteDropdown.style.display = 'block';
+    
+    // Make API call
+    fetch(`/api/pumps/search?q=${encodeURIComponent(query)}`)
+        .then(response => response.json())
+        .then(data => {
+            displaySearchResults(data.pumps || []);
+        })
+        .catch(error => {
+            console.error('Error searching pumps:', error);
+            autocompleteDropdown.innerHTML = '<div style="padding: 10px; text-align: center; color: #f44336;"><i class="material-icons tiny">error</i> Search failed</div>';
+        });
+}
+
+function displaySearchResults(pumps) {
+    const autocompleteDropdown = document.getElementById('pump_code_autocomplete');
+    
+    if (pumps.length === 0) {
+        autocompleteDropdown.innerHTML = '<div style="padding: 10px; text-align: center; color: #666;"><i class="material-icons tiny">search_off</i> No pumps found</div>';
+        return;
+    }
+    
+    // Build results HTML
+    let html = '';
+    pumps.forEach(pump => {
+        html += `
+            <div class="autocomplete-item" onclick="selectPump('${pump.pump_code}')" style="padding: 10px; cursor: pointer; border-bottom: 1px solid #eee;">
+                <div style="font-weight: 600; color: #1976d2;">${pump.pump_code}</div>
+                <div style="font-size: 12px; color: #666;">${pump.pump_type} - ${pump.manufacturer}</div>
+                <div style="font-size: 11px; color: #999;">${pump.model_series}</div>
+            </div>
+        `;
+    });
+    
+    autocompleteDropdown.innerHTML = html;
+    autocompleteDropdown.style.display = 'block';
+    
+    // Add hover effects
+    const items = autocompleteDropdown.querySelectorAll('.autocomplete-item');
+    items.forEach(item => {
+        item.addEventListener('mouseenter', function() {
+            this.style.backgroundColor = '#f5f5f5';
+        });
+        item.addEventListener('mouseleave', function() {
+            this.style.backgroundColor = 'white';
+        });
+    });
+}
+
+function selectPump(pumpCode) {
+    const pumpCodeInput = document.getElementById('pump_code');
+    const autocompleteDropdown = document.getElementById('pump_code_autocomplete');
+    
+    // Set the selected pump code
+    pumpCodeInput.value = pumpCode;
+    
+    // Hide dropdown
+    autocompleteDropdown.style.display = 'none';
+    
+    // Update Materialize label
+    M.updateTextFields();
+    
+    // Focus next field or submit button
+    const headInput = document.getElementById('head');
+    if (headInput && headInput.value) {
+        // If head is filled, focus submit button
+        document.querySelector('[type="submit"]').focus();
+    } else if (headInput) {
+        // Focus head input
+        headInput.focus();
+    }
+}
+</script>
+{% endblock %}
