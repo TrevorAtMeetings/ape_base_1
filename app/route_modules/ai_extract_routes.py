@@ -1,6 +1,6 @@
 # Applying the provided changes to enhance error handling and response in the AI extraction routes.
 import logging
-from flask import Blueprint, request, jsonify, render_template, session
+from flask import Blueprint, request, jsonify, render_template, session, redirect, url_for
 import os
 import tempfile
 import threading
