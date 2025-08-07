@@ -44,17 +44,17 @@ function initializeFloatingAIChat() {
                             <p><strong>APE Pumps AI Assistant</strong></p>
                             <p style="font-size: 0.85rem; color: #64748b;">Find your perfect pump. Try:</p>
                             <div class="ai-quick-actions">
-                                <button class="ai-quick-btn" onclick="sendQuickQuery('I need pumps for 1500 m³/hr at 25 meters')">
-                                    💧 "1500 m³/hr at 25 meters"
+                                <button class="ai-quick-btn" onclick="sendQuickQuery('1781 @ 24')">
+                                    💧 Quick: "1781 @ 24"
                                 </button>
-                                <button class="ai-quick-btn" onclick="sendQuickQuery('Find pumps for 800 m³/hr at 30m')">
-                                    🏭 "800 m³/hr at 30m"
+                                <button class="ai-quick-btn" onclick="sendQuickQuery('1500 m³/hr at 25 meters')">
+                                    📊 Full: "1500 m³/hr at 25m"
                                 </button>
-                                <button class="ai-quick-btn" onclick="sendQuickQuery('What pumps work for 2000 m³/hr at 15 meters?')">
-                                    📊 "2000 m³/hr at 15 meters"
+                                <button class="ai-quick-btn" onclick="sendQuickQuery('800 30 HSC')">
+                                    🏭 Type: "800 30 HSC"
                                 </button>
                             </div>
-                            <p style="font-size: 0.75rem; color: #94a3b8; margin-top: 0.75rem;">💡 I work with metric units (m³/hr, meters)</p>
+                            <p style="font-size: 0.75rem; color: #94a3b8; margin-top: 0.75rem;">💡 Shorthand works! Just type numbers: "1781 24" = 1781 m³/hr @ 24m</p>
                         </div>
                     </div>
                 </div>
@@ -64,7 +64,7 @@ function initializeFloatingAIChat() {
                         <textarea 
                             id="ai-chat-input" 
                             class="ai-chat-input" 
-                            placeholder="Type flow & head (e.g., 500 m³/hr at 40m)"
+                            placeholder="Try: 1781 @ 24 or 500 m³/hr at 40m"
                             rows="1"
                             maxlength="1000"></textarea>
                         <button id="ai-send-button" class="ai-send-button" onclick="sendAIMessage()">

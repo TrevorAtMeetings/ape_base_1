@@ -25,34 +25,65 @@ def extract_pump_parameters(query):
     """Extract flow, head, and pump type from natural language query"""
     query_lower = query.lower()
     
-    # Extract flow rate (look for patterns like "1500 m³/hr", "1500 m3/hr", "1500m³/hr", etc.)
-    flow_patterns = [
-        r'(\d+(?:\.\d+)?)\s*(?:m³/hr|m3/hr|m³/h|m3/h|cubic\s*meters?\s*per\s*hour)',
-        r'(\d+(?:\.\d+)?)\s*flow',
-        r'flow\s*(?:rate)?\s*(?:of)?\s*(\d+(?:\.\d+)?)',
-        r'(\d+(?:\.\d+)?)\s*(?:at|@)',  # e.g., "1500 at 25m"
-    ]
-    
     flow = None
-    for pattern in flow_patterns:
-        match = re.search(pattern, query_lower)
-        if match:
-            flow = float(match.group(1))
-            break
+    head = None
     
-    # Extract head (look for patterns like "25 meters", "25m", "25 m head", etc.)
-    head_patterns = [
-        r'(\d+(?:\.\d+)?)\s*(?:meters?\s*head|m\s*head|meters?|m)(?:\s|$|,)',
-        r'head\s*(?:of)?\s*(\d+(?:\.\d+)?)\s*(?:meters?|m)?',
-        r'(?:at|@)\s*(\d+(?:\.\d+)?)\s*(?:meters?|m)?(?:\s|$|,)',
+    # First check for shorthand patterns like "1781 @ 24" or "1781 24"
+    shorthand_patterns = [
+        r'(\d+(?:\.\d+)?)\s*[@]\s*(\d+(?:\.\d+)?)',  # 1781 @ 24
+        r'(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)\s*(?:hsc|vsp|pump)?',  # 1781 24 HSC
+        r'(\d+(?:\.\d+)?)\s+and\s+(\d+(?:\.\d+)?)',  # 1781 and 24
     ]
     
-    head = None
-    for pattern in head_patterns:
+    for pattern in shorthand_patterns:
         match = re.search(pattern, query_lower)
         if match:
-            head = float(match.group(1))
+            num1 = float(match.group(1))
+            num2 = float(match.group(2))
+            # Assume larger number is flow (m³/hr), smaller is head (m)
+            # Unless the second number is clearly too large for head (>200m)
+            if num1 > num2 and num2 < 200:
+                flow = num1
+                head = num2
+            elif num2 > num1 and num1 < 200:
+                flow = num2
+                head = num1
+            else:
+                # Default assumption: first is flow, second is head
+                flow = num1
+                head = num2
             break
+    
+    # If shorthand didn't match, try standard patterns
+    if not flow or not head:
+        # Extract flow rate (look for patterns like "1500 m³/hr", "1500 m3/hr", "1500m³/hr", etc.)
+        flow_patterns = [
+            r'(\d+(?:\.\d+)?)\s*(?:m³/hr|m3/hr|m³/h|m3/h|cubic\s*meters?\s*per\s*hour)',
+            r'(\d+(?:\.\d+)?)\s*flow',
+            r'flow\s*(?:rate)?\s*(?:of)?\s*(\d+(?:\.\d+)?)',
+            r'(\d+(?:\.\d+)?)\s*(?:at|@)',  # e.g., "1500 at 25m"
+        ]
+        
+        if not flow:
+            for pattern in flow_patterns:
+                match = re.search(pattern, query_lower)
+                if match:
+                    flow = float(match.group(1))
+                    break
+        
+        # Extract head (look for patterns like "25 meters", "25m", "25 m head", etc.)
+        head_patterns = [
+            r'(\d+(?:\.\d+)?)\s*(?:meters?\s*head|m\s*head|meters?|m)(?:\s|$|,)',
+            r'head\s*(?:of)?\s*(\d+(?:\.\d+)?)\s*(?:meters?|m)?',
+            r'(?:at|@)\s*(\d+(?:\.\d+)?)\s*(?:meters?|m)?(?:\s|$|,)',
+        ]
+        
+        if not head:
+            for pattern in head_patterns:
+                match = re.search(pattern, query_lower)
+                if match:
+                    head = float(match.group(1))
+                    break
     
     # Extract pump type or application
     pump_types = {
@@ -62,6 +93,8 @@ def extract_pump_parameters(query):
         'irrigation': ['irrigation', 'agricultural', 'farming'],
         'fire': ['fire', 'firefighting', 'fire protection'],
         'booster': ['booster', 'pressure boost'],
+        'hsc': ['hsc'],
+        'vertical': ['vsp', 'vertical', 'turbine'],
         'general': ['general', 'standard', 'normal']
     }
     
