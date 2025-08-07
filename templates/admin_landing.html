@@ -13,7 +13,7 @@
     
     <div class="row" style="margin-top: 40px;">
         <!-- AI Knowledge Base Card -->
-        <div class="col s12 m6">
+        <div class="col s12 m4">
             <div class="card hoverable">
                 <div class="card-content center-align">
                     <i class="material-icons large" style="color: var(--md-primary);">psychology</i>
@@ -29,7 +29,7 @@
         </div>
         
         <!-- Configuration Settings Card -->
-        <div class="col s12 m6">
+        <div class="col s12 m4">
             <div class="card hoverable">
                 <div class="card-content center-align">
                     <i class="material-icons large" style="color: var(--md-primary);">settings</i>
@@ -39,6 +39,22 @@
                 <div class="card-action center-align">
                     <a href="{{ url_for('admin_config.index') }}" class="btn waves-effect waves-light">
                         <i class="material-icons left">arrow_forward</i>Open Configuration
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Performance Testing Card -->
+        <div class="col s12 m4">
+            <div class="card hoverable">
+                <div class="card-content center-align">
+                    <i class="material-icons large" style="color: var(--md-primary);">bug_report</i>
+                    <h5>Performance Testing</h5>
+                    <p>Compare database vs UI calculations for validation and debugging</p>
+                </div>
+                <div class="card-action center-align">
+                    <a href="{{ url_for('admin.testing_interface') }}" class="btn waves-effect waves-light">
+                        <i class="material-icons left">arrow_forward</i>Open Testing
                     </a>
                 </div>
             </div>
