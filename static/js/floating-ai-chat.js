@@ -54,7 +54,7 @@ function initializeFloatingAIChat() {
                                     🏭 Type: "800 30 HSC"
                                 </button>
                             </div>
-                            <p style="font-size: 0.75rem; color: #94a3b8; margin-top: 0.75rem;">💡 Shorthand works! Just type numbers: "1781 24" = 1781 m³/hr @ 24m</p>
+                            <p style="font-size: 0.75rem; color: #94a3b8; margin-top: 0.75rem;">💡 Type @ to search pump names (e.g., "@12 WLN" or "@12 WLN 14A 1400 30")</p>
                         </div>
                     </div>
                 </div>
@@ -64,7 +64,7 @@ function initializeFloatingAIChat() {
                         <textarea 
                             id="ai-chat-input" 
                             class="ai-chat-input" 
-                            placeholder="Try: 1781 @ 24 or 500 m³/hr at 40m"
+                            placeholder="Try: 1781 @ 24 or @12 WLN for pump lookup"
                             rows="1"
                             maxlength="1000"></textarea>
                         <button id="ai-send-button" class="ai-send-button" onclick="sendAIMessage()">
@@ -91,6 +91,9 @@ function initializeFloatingAIChat() {
     
     // Setup input handlers
     setupAIChatInput();
+    
+    // Setup pump autocomplete
+    setupPumpAutocomplete();
 }
 
 function toggleAIChat() {
@@ -380,6 +383,147 @@ function addToComparison(pumpCode) {
             }, 2000);
         }
     }
+}
+
+// Function to setup pump autocomplete
+function setupPumpAutocomplete() {
+    const input = document.getElementById('ai-chat-input');
+    if (!input) return;
+    
+    let pumpNames = [];
+    let autocompleteActive = false;
+    let selectedIndex = -1;
+    
+    // Fetch pump names from API
+    fetch('/api/pump_list')
+        .then(response => response.json())
+        .then(data => {
+            pumpNames = data.pumps || [];
+        })
+        .catch(error => console.error('Error loading pump names:', error));
+    
+    // Create autocomplete dropdown
+    const autocompleteDiv = document.createElement('div');
+    autocompleteDiv.id = 'pump-autocomplete';
+    autocompleteDiv.style.cssText = `
+        position: absolute;
+        bottom: 100%;
+        left: 0;
+        right: 0;
+        max-height: 200px;
+        overflow-y: auto;
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        display: none;
+        z-index: 1000;
+        box-shadow: 0 -4px 6px rgba(0,0,0,0.1);
+        margin-bottom: 5px;
+    `;
+    
+    const inputWrapper = input.parentElement;
+    inputWrapper.style.position = 'relative';
+    inputWrapper.appendChild(autocompleteDiv);
+    
+    // Handle input events
+    input.addEventListener('input', function(e) {
+        const value = e.target.value;
+        const atIndex = value.lastIndexOf('@');
+        
+        if (atIndex !== -1) {
+            const searchTerm = value.substring(atIndex + 1).toLowerCase();
+            showPumpSuggestions(searchTerm);
+        } else {
+            hideAutocomplete();
+        }
+    });
+    
+    // Handle keyboard navigation
+    input.addEventListener('keydown', function(e) {
+        if (!autocompleteActive) return;
+        
+        const items = autocompleteDiv.querySelectorAll('.pump-suggestion');
+        
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            selectedIndex = Math.min(selectedIndex + 1, items.length - 1);
+            updateSelection(items);
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            selectedIndex = Math.max(selectedIndex - 1, 0);
+            updateSelection(items);
+        } else if (e.key === 'Enter' && selectedIndex >= 0) {
+            e.preventDefault();
+            selectPump(items[selectedIndex].textContent);
+        } else if (e.key === 'Escape') {
+            hideAutocomplete();
+        }
+    });
+    
+    function showPumpSuggestions(searchTerm) {
+        const matches = pumpNames.filter(name => 
+            name.toLowerCase().includes(searchTerm)
+        ).slice(0, 10);
+        
+        if (matches.length === 0) {
+            hideAutocomplete();
+            return;
+        }
+        
+        autocompleteDiv.innerHTML = matches.map((pump, index) => `
+            <div class="pump-suggestion" style="
+                padding: 8px 12px;
+                cursor: pointer;
+                font-size: 0.875rem;
+                border-bottom: 1px solid #f3f4f6;
+                ${index === selectedIndex ? 'background: #eff6ff;' : ''}
+            " onmouseover="this.style.background='#eff6ff'" 
+               onmouseout="this.style.background='${index === selectedIndex ? '#eff6ff' : 'white'}'"
+               onclick="selectPumpFromClick('${pump.replace(/'/g, "\\'")}')">${pump}</div>
+        `).join('');
+        
+        autocompleteDiv.style.display = 'block';
+        autocompleteActive = true;
+        selectedIndex = -1;
+    }
+    
+    function updateSelection(items) {
+        items.forEach((item, index) => {
+            if (index === selectedIndex) {
+                item.style.background = '#eff6ff';
+            } else {
+                item.style.background = 'white';
+            }
+        });
+    }
+    
+    window.selectPumpFromClick = function(pumpName) {
+        selectPump(pumpName);
+    }
+    
+    function selectPump(pumpName) {
+        const value = input.value;
+        const atIndex = value.lastIndexOf('@');
+        
+        if (atIndex !== -1) {
+            input.value = value.substring(0, atIndex) + '@' + pumpName + ' ';
+            hideAutocomplete();
+            input.focus();
+        }
+    }
+    
+    function hideAutocomplete() {
+        autocompleteDiv.style.display = 'none';
+        autocompleteActive = false;
+        selectedIndex = -1;
+    }
+    
+    // Hide on click outside
+    document.addEventListener('click', function(e) {
+        if (!inputWrapper.contains(e.target)) {
+            hideAutocomplete();
+        }
+    });
 }
 
 // Initialize when DOM is loaded

@@ -23,10 +23,27 @@ def chat_page():
 
 def extract_pump_parameters(query):
     """Extract flow, head, and pump type from natural language query"""
+    import re
     query_lower = query.lower()
     
     flow = None
     head = None
+    pump_name = None
+    
+    # Check for pump name with @ symbol (e.g., "@12 WLN 14A" or "@12 WLN 14A 1400 30")
+    if '@' in query:
+        # Pattern to extract pump name and optional flow/head
+        pump_pattern = r'@([A-Za-z0-9\s/\-]+?)(?:\s+(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?))?$'
+        match = re.search(pump_pattern, query)
+        
+        if match:
+            pump_name = match.group(1).strip()
+            if match.group(2) and match.group(3):
+                # Flow and head provided with pump name
+                flow = float(match.group(2))
+                head = float(match.group(3))
+            # Return with pump name prefixed by PUMP: to distinguish from application type
+            return flow, head, f'PUMP:{pump_name}'
     
     # First check for shorthand patterns like "1781 @ 24" or "1781 24"
     shorthand_patterns = [
@@ -106,6 +123,169 @@ def extract_pump_parameters(query):
                 break
     
     return flow, head, application_type
+
+def handle_specific_pump_query(pump_name, flow, head):
+    """Handle query for specific pump at specific conditions"""
+    try:
+        from ..catalog_engine import get_catalog_engine
+        catalog_engine = get_catalog_engine()
+        
+        # Find the pump and evaluate at specified conditions
+        pumps = catalog_engine.repository.get_pumps()
+        target_pump = None
+        for pump in pumps:
+            if pump.pump_name.upper() == pump_name.upper():
+                target_pump = pump
+                break
+        
+        if not target_pump:
+            return {
+                'response': f"I couldn't find pump '{pump_name}' in the database. Please check the name and try again.",
+                'is_html': False,
+                'processing_time': 0.1,
+                'confidence_score': 0.9
+            }
+        
+        # Generate report URL for this pump at these conditions
+        pump_url = url_for('reports.engineering_report', 
+                          pump_code=target_pump.pump_name,
+                          flow=flow, 
+                          head=head,
+                          force='true',
+                          _external=False)
+        
+        html_response = f"""
+        <div class="pump-specific-result">
+            <h3 style="color: #10b981; margin-bottom: 0.5rem;">🎯 {target_pump.pump_name}</h3>
+            <p style="color: #64748b; margin-bottom: 1rem;">Performance at {flow} m³/hr @ {head}m</p>
+            <div class="pump-result-card" style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 0.75rem;">
+                <div class="pump-specs" style="margin-bottom: 0.75rem;">
+                    <div style="font-size: 0.875rem; color: #4b5563;">
+                        <strong>Type:</strong> {target_pump.pump_type}<br>
+                        <strong>Speed:</strong> {target_pump.speed_rpm} RPM<br>
+                        <strong>Impeller:</strong> {target_pump.impeller_dia_mm}mm
+                    </div>
+                </div>
+                <a href="{pump_url}" target="_blank" class="view-details-btn" style="
+                    display: inline-block;
+                    width: 100%;
+                    padding: 0.5rem;
+                    background: #3b82f6;
+                    color: white;
+                    text-align: center;
+                    border-radius: 4px;
+                    text-decoration: none;
+                    font-size: 0.875rem;
+                ">
+                    <i class="material-icons" style="vertical-align: middle; font-size: 18px;">visibility</i>
+                    View Full Engineering Report
+                </a>
+            </div>
+        </div>
+        """
+        
+        return {
+            'response': html_response,
+            'is_html': True,
+            'processing_time': 0.3,
+            'confidence_score': 0.95
+        }
+    except Exception as e:
+        logger.error(f"Error handling specific pump query: {str(e)}")
+        return {
+            'response': "I encountered an error while looking up that pump. Please try again.",
+            'is_html': False,
+            'processing_time': 0.1,
+            'confidence_score': 0.5
+        }
+
+def handle_pump_bep_query(pump_name):
+    """Handle query for pump at BEP conditions"""
+    try:
+        from ..catalog_engine import get_catalog_engine
+        catalog_engine = get_catalog_engine()
+        
+        # Find the pump
+        pumps = catalog_engine.repository.get_pumps()
+        target_pump = None
+        for pump in pumps:
+            if pump.pump_name.upper() == pump_name.upper():
+                target_pump = pump
+                break
+        
+        if not target_pump:
+            return {
+                'response': f"I couldn't find pump '{pump_name}' in the database. Please check the name and try again.",
+                'is_html': False,
+                'processing_time': 0.1,
+                'confidence_score': 0.9
+            }
+        
+        # Get BEP conditions
+        bep_flow = target_pump.bep_flow_m3hr if hasattr(target_pump, 'bep_flow_m3hr') else None
+        bep_head = target_pump.bep_head_m if hasattr(target_pump, 'bep_head_m') else None
+        
+        if not bep_flow or not bep_head:
+            return {
+                'response': f"BEP data not available for {pump_name}. Please specify flow and head values.",
+                'is_html': False,
+                'processing_time': 0.1,
+                'confidence_score': 0.8
+            }
+        
+        # Generate report URL for BEP conditions
+        pump_url = url_for('reports.engineering_report', 
+                          pump_code=target_pump.pump_name,
+                          flow=bep_flow, 
+                          head=bep_head,
+                          force='true',
+                          _external=False)
+        
+        html_response = f"""
+        <div class="pump-specific-result">
+            <h3 style="color: #10b981; margin-bottom: 0.5rem;">🎯 {target_pump.pump_name} at BEP</h3>
+            <p style="color: #64748b; margin-bottom: 1rem;">Best Efficiency Point: {bep_flow:.1f} m³/hr @ {bep_head:.1f}m</p>
+            <div class="pump-result-card" style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 0.75rem;">
+                <div class="pump-specs" style="margin-bottom: 0.75rem;">
+                    <div style="font-size: 0.875rem; color: #4b5563;">
+                        <strong>Type:</strong> {target_pump.pump_type}<br>
+                        <strong>Speed:</strong> {target_pump.speed_rpm} RPM<br>
+                        <strong>Impeller:</strong> {target_pump.impeller_dia_mm}mm<br>
+                        <strong>Max Efficiency:</strong> {target_pump.max_efficiency:.1f}% (at BEP)
+                    </div>
+                </div>
+                <a href="{pump_url}" target="_blank" class="view-details-btn" style="
+                    display: inline-block;
+                    width: 100%;
+                    padding: 0.5rem;
+                    background: #3b82f6;
+                    color: white;
+                    text-align: center;
+                    border-radius: 4px;
+                    text-decoration: none;
+                    font-size: 0.875rem;
+                ">
+                    <i class="material-icons" style="vertical-align: middle; font-size: 18px;">visibility</i>
+                    View Full Engineering Report at BEP
+                </a>
+            </div>
+        </div>
+        """
+        
+        return {
+            'response': html_response,
+            'is_html': True,
+            'processing_time': 0.3,
+            'confidence_score': 0.95
+        }
+    except Exception as e:
+        logger.error(f"Error handling BEP pump query: {str(e)}")
+        return {
+            'response': "I encountered an error while looking up that pump's BEP. Please try again.",
+            'is_html': False,
+            'processing_time': 0.1,
+            'confidence_score': 0.5
+        }
 
 def format_pump_selection_response(pumps, flow, head, application_type):
     """Format pump selection results as HTML cards"""
@@ -218,7 +398,16 @@ def chat_query():
         # Check if this is a pump selection query
         flow, head, application_type = extract_pump_parameters(query)
         
-        if flow and head:
+        # Handle pump name queries
+        if isinstance(application_type, str) and application_type.startswith('PUMP:'):
+            pump_name = application_type.replace('PUMP:', '')
+            if flow and head:
+                # Specific pump at specific conditions
+                response = handle_specific_pump_query(pump_name, flow, head)
+            else:
+                # Pump at BEP conditions
+                response = handle_pump_bep_query(pump_name)
+        elif flow and head:
             # This is a pump selection query
             logger.info(f"Pump selection query detected: Flow={flow}, Head={head}, Type={application_type}")
             
