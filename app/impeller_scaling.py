@@ -165,13 +165,9 @@ class ImpellerScalingEngine:
             actual_efficiency = base_efficiency - efficiency_penalty
             
             # Power: P₂ = P₁ × (D₂/D₁)³
-            # Calculate power using standard formula with actual conditions
-            if actual_efficiency > 0:
-                efficiency_decimal = actual_efficiency / 100.0
-                sg = 1.0  # Specific gravity for water
-                actual_power = (actual_flow * actual_head * sg * 9.81) / (efficiency_decimal * 3600)
-            else:
-                actual_power = 0.0
+            # Calculate power using hydraulic formula at actual operating conditions
+            # This accounts for the trimmed impeller performance
+            actual_power = self._calculate_hydraulic_power(actual_flow, actual_head, actual_efficiency)
                 
             # Calculate NPSH if available
             actual_npshr = None
@@ -501,13 +497,21 @@ class ImpellerScalingEngine:
             actual_head = target_head  # Always use the required head
             actual_efficiency = base_efficiency  # Assume constant for small changes
             
-            # Calculate power at new conditions
-            if actual_efficiency > 0:
-                efficiency_decimal = actual_efficiency / 100.0
-                sg = 1.0  # Specific gravity for water
-                actual_power = (actual_flow * actual_head * sg * 9.81) / (efficiency_decimal * 3600)
+            # Calculate power at new conditions using affinity laws
+            # For speed variation, power scales with cube of speed ratio: P₂ = P₁ × (N₂/N₁)³
+            # Calculate hydraulic power at test speed conditions first
+            if best_point.get('efficiency_pct') and best_point['efficiency_pct'] > 0:
+                # Calculate power at test speed from best point conditions
+                test_power = self._calculate_hydraulic_power(
+                    best_point['flow_m3hr'], 
+                    best_point['head_m'], 
+                    best_point['efficiency_pct']
+                )
+                # Apply speed affinity law: P₂ = P₁ × (N₂/N₁)³
+                actual_power = test_power * (speed_ratio ** 3)
             else:
-                actual_power = 0.0
+                # Direct calculation at new conditions
+                actual_power = self._calculate_hydraulic_power(actual_flow, actual_head, actual_efficiency)
                 
             # Calculate NPSH scaling
             actual_npshr = None
@@ -539,6 +543,14 @@ class ImpellerScalingEngine:
         except Exception as e:
             logger.error(f"Error calculating speed variation: {e}")
             return None
+    
+    def _calculate_hydraulic_power(self, flow_m3hr: float, head_m: float, efficiency_pct: float) -> float:
+        """Calculate hydraulic power using standard formula as fallback"""
+        if efficiency_pct > 0:
+            efficiency_decimal = efficiency_pct / 100.0
+            sg = 1.0  # Specific gravity for water
+            return (flow_m3hr * head_m * sg * 9.81) / (efficiency_decimal * 3600)
+        return 0.0
 
 
 def get_impeller_scaling_engine() -> ImpellerScalingEngine:
