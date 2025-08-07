@@ -443,11 +443,11 @@ def _test_pump_performance_envelope(pump, base_flow, base_head, pump_repo, catal
         return None
 
 def _generate_envelope_test_points(pump, bep_flow, bep_head, base_head):
-    """Generate 10-20 test points across pump operating envelope"""
+    """Generate BEP-centered test points: 4 points decreasing, BEP, 4 points increasing"""
     test_points = []
     
-    # Operating envelope flow percentages (60% to 130% of BEP)
-    flow_percentages = [60, 70, 80, 85, 90, 95, 100, 105, 110, 115, 120, 125, 130]
+    # BEP-centered approach: 4 points less (10% decrements), BEP, 4 points more (10% increments)
+    flow_percentages = [60, 70, 80, 90, 100, 110, 120, 130, 140]
     
     for flow_pct in flow_percentages:
         flow = bep_flow * (flow_pct / 100.0)

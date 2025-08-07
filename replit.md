@@ -30,11 +30,12 @@ The application employs a modular Flask architecture with a clear separation of 
 ### Recent Major Update - Enhanced Performance Testing with Table Format (August 7, 2025)
 
 **Enhanced Test Coverage Implementation**:
-- **Phase 1 Complete**: Multi-point envelope testing across 60-130% BEP flow range (10-20 test points)
+- **Phase 1 Complete**: BEP-centered envelope testing with systematic flow percentages (9 test points)
+- **BEP-Centered Approach**: 4 points decreasing (60%, 70%, 80%, 90%), BEP (100%), 4 points increasing (110%, 120%, 130%, 140%)
 - **Statistical Analysis**: Comprehensive accuracy metrics, error distribution, and confidence intervals
-- **Improved Table Display**: Professional comparison format with clear status explanations
+- **Improved Table Display**: Professional comparison format with clear status explanations and testing insights
 - **Status Legend Integration**: Clear definitions for Match (≤2% efficiency, ≤0.5kW power), Minor (2-5%, 0.5-2kW), Major (>5%, >2kW)
-- **Enhanced Summary Statistics**: Percentage breakdowns and acceptable accuracy metrics
+- **Enhanced Summary Statistics**: Percentage breakdowns and acceptable accuracy metrics with validation explanations
 
 ### Recent Major Update - Navigation System Unification (August 7, 2025)
 **CRITICAL Navigation Architecture Overhaul**:
