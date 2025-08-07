@@ -424,6 +424,9 @@ def _test_pump_performance_envelope(pump, base_flow, base_head, pump_repo, catal
         # Calculate envelope statistics
         envelope_stats = _calculate_envelope_statistics(envelope_results)
         
+        # Get total pump count for statistics display
+        total_pumps = pump_repo.get_pump_count()
+        
         return {
             'pump_code': pump.pump_code,
             'pump_type': pump.pump_type,
@@ -431,7 +434,8 @@ def _test_pump_performance_envelope(pump, base_flow, base_head, pump_repo, catal
             'bep_analysis': bep_data,
             'test_points_count': len(envelope_results),
             'envelope_results': envelope_results,
-            'envelope_statistics': envelope_stats
+            'envelope_statistics': envelope_stats,
+            'total_pumps_available': total_pumps
         }
         
     except Exception as e:

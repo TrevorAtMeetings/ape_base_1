@@ -103,8 +103,8 @@
                                         </div>
                                         <div class="col s12 m3">
                                             <div class="card-panel teal lighten-4 center-align">
-                                                <h5>{{ "%.0f"|format(result.bep_analysis.bep_flow_m3hr) if result.bep_analysis and result.bep_analysis.bep_flow_m3hr else "N/A" }}</h5>
-                                                <p>QBEP (m³/hr)</p>
+                                                <h5>{{ result.total_pumps_available if result.total_pumps_available else "N/A" }}</h5>
+                                                <p>Pumps Available</p>
                                             </div>
                                         </div>
                                     </div>
