@@ -901,15 +901,23 @@
             const minCurve = curves[0]; // Assuming first curve is minimum diameter
             const maxCurve = curves[curves.length - 1]; // Assuming last curve is maximum diameter
             
-            // Calculate x-axis range to fit all data
+            // Calculate CONSISTENT x-axis range for BOTH charts
             const allFlows = curves.flatMap(c => c.flow_data);
-            const minFlow = 0;
-            const maxFlow = Math.max(...allFlows) * 1.2;
+            // Include operating flow in range calculation
+            allFlows.push(operatingFlow);
+            
+            const dataMin = Math.min(...allFlows);
+            const dataMax = Math.max(...allFlows);
+            const range = dataMax - dataMin;
+            
+            // Ensure range includes operating point with padding
+            const minFlow = Math.max(0, Math.min(dataMin, operatingFlow) - range * 0.1);
+            const maxFlow = Math.max(dataMax, operatingFlow) + range * 0.2;
             
             // CHART 1: Head and NPSH (Hydraulic Performance)
             renderHydraulicChart(curves, selectedCurve, opPoint, operatingFlow, operatingHead, minFlow, maxFlow);
             
-            // CHART 2: Power and Efficiency
+            // CHART 2: Power and Efficiency - SAME X-AXIS RANGE
             renderPowerEfficiencyChart(curves, selectedCurve, opPoint, operatingFlow, minFlow, maxFlow);
         }
         
@@ -982,19 +990,29 @@
                 yaxis: 'y'
             });
             
-            // Add operating point marker (intersection of duty lines)
+            // Add operating point marker with transparent red triangle
             traces.push({
                 x: [operatingFlow],
                 y: [operatingHead],
                 name: 'Operating Point',
                 type: 'scatter',
                 mode: 'markers',
-                marker: { size: 12, color: '#ff0000', symbol: 'star' },
+                marker: { 
+                    size: 18, 
+                    color: 'rgba(255, 0, 0, 0.3)',  // Transparent red fill
+                    symbol: 'triangle-down',  // Point facing down to indicate exact operating point
+                    line: { color: 'rgba(255, 0, 0, 0.8)', width: 2 }  // Solid red border
+                },
                 yaxis: 'y',
                 hovertemplate: 
-                    '<b>Operating Point</b><br>' +
-                    'Flow: %{x:.1f} m³/hr<br>' +
+                    '<b>🎯 OPERATING POINT ANALYSIS</b><br>' +
+                    'Flow Rate: %{x:.1f} m³/hr<br>' +
                     'Head: %{y:.1f} m<br>' +
+                    'Efficiency: {{ selected_pump.get("efficiency_pct", 0)|round(1) }}%<br>' +
+                    'Power: {{ selected_pump.get("power_kw", 0)|round(1) }} kW<br>' +
+                    'NPSH Required: {{ selected_pump.get("npshr_m", 0)|round(1) }} m<br>' +
+                    'Impeller: {{ selected_pump.get("impeller_diameter_mm", 0)|round(0)|int }}mm ({{ selected_pump.get("trim_percent", 100)|round(1) }}% trim)<br>' +
+                    'BEP Position: {{ selected_pump.get("qbep_percentage", 0)|round(0) }}% of optimal flow<br>' +
                     '<extra></extra>'
             });
             
@@ -1003,7 +1021,8 @@
                     title: 'Flow (m³/hr)',
                     gridcolor: '#e0e0e0',
                     range: [minFlow, maxFlow],
-                    dtick: 200
+                    showgrid: true,
+                    zeroline: true
                 },
                 yaxis: {
                     title: 'Head (m) / NPSHr (m)',
@@ -1085,7 +1104,7 @@
                 hoverinfo: 'skip'
             });
             
-            // Add operating point marker if we have power data
+            // Add operating point marker with transparent red triangle
             if (opPoint.power_kw) {
                 traces.push({
                     x: [operatingFlow],
@@ -1093,11 +1112,21 @@
                     name: 'Operating Power',
                     type: 'scatter',
                     mode: 'markers',
-                    marker: { size: 10, color: '#ff0000', symbol: 'circle' },
+                    marker: { 
+                        size: 18, 
+                        color: 'rgba(255, 0, 0, 0.3)',  // Transparent red fill
+                        symbol: 'triangle-down',  // Point facing down to indicate exact operating point
+                        line: { color: 'rgba(255, 0, 0, 0.8)', width: 2 }  // Solid red border
+                    },
                     hovertemplate: 
-                        '<b>Operating Power</b><br>' +
-                        'Flow: %{x:.1f} m³/hr<br>' +
+                        '<b>🎯 OPERATING POINT ANALYSIS</b><br>' +
+                        'Flow Rate: %{x:.1f} m³/hr<br>' +
                         'Power: %{y:.1f} kW<br>' +
+                        'Efficiency: {{ selected_pump.get("efficiency_pct", 0)|round(1) }}%<br>' +
+                        'Head: {{ selected_pump.get("head_m", 0)|round(1) }} m<br>' +
+                        'NPSH Required: {{ selected_pump.get("npshr_m", 0)|round(1) }} m<br>' +
+                        'Impeller: {{ selected_pump.get("impeller_diameter_mm", 0)|round(0)|int }}mm ({{ selected_pump.get("trim_percent", 100)|round(1) }}% trim)<br>' +
+                        'BEP Position: {{ selected_pump.get("qbep_percentage", 0)|round(0) }}% of optimal flow<br>' +
                         '<extra></extra>'
                 });
             }
@@ -1107,7 +1136,8 @@
                     title: 'Flow (m³/hr)',
                     gridcolor: '#e0e0e0',
                     range: [minFlow, maxFlow],
-                    dtick: 200
+                    showgrid: true,
+                    zeroline: true
                 },
                 yaxis: {
                     title: 'Power (kW)',
