@@ -94,6 +94,9 @@ def run_performance_test():
         for pump in test_pumps:
             result = _compare_pump_performance(pump, flow_rate, head, pump_repo, catalog_engine)
             if result:
+                # Add BEP analysis to each pump result
+                bep_data = _get_bep_analysis(pump, pump_repo, catalog_engine)
+                result['bep_analysis'] = bep_data
                 test_results.append(result)
         
         logger.info(f"Performance test completed: {len(test_results)} pumps tested")
@@ -234,6 +237,70 @@ def _get_ui_performance(pump, flow_rate, head, catalog_engine):
             'trim_percent': None,
             'method': 'error'
         }
+
+def _get_bep_analysis(pump, pump_repo, catalog_engine):
+    """Get BEP analysis for the pump including BEP coordinates and performance"""
+    try:
+        # Get BEP from pump specifications
+        bep_flow = pump.specifications.get('q_bep', 0)
+        bep_head = pump.specifications.get('h_bep', 0)
+        bep_efficiency = pump.specifications.get('eff_bep', 0)
+        
+        logger.info(f"BEP specifications for {pump.pump_code}: Flow={bep_flow}, Head={bep_head}, Efficiency={bep_efficiency}")
+        
+        # If no BEP specs, try to estimate from curve data
+        if not bep_flow or not bep_head:
+            bep_estimate = _estimate_bep_from_curves(pump)
+            if bep_estimate:
+                bep_flow = bep_estimate.get('flow_m3hr', 0)
+                bep_head = bep_estimate.get('head_m', 0)
+                bep_efficiency = bep_estimate.get('efficiency_pct', 0)
+                logger.info(f"Estimated BEP for {pump.pump_code}: Flow={bep_flow}, Head={bep_head}, Efficiency={bep_efficiency}")
+        
+        if bep_flow and bep_head:
+            # Calculate performance at BEP using both methods
+            bep_db_performance = _get_database_performance(pump, bep_flow, bep_head)
+            bep_ui_performance = _get_ui_performance(pump, bep_flow, bep_head, catalog_engine)
+            
+            return {
+                'bep_flow_m3hr': bep_flow,
+                'bep_head_m': bep_head,
+                'bep_efficiency_pct': bep_efficiency,
+                'db_performance': bep_db_performance,
+                'ui_performance': bep_ui_performance,
+                'has_bep_data': True
+            }
+        else:
+            logger.warning(f"No BEP data available for {pump.pump_code}")
+            return {'has_bep_data': False}
+            
+    except Exception as e:
+        logger.error(f"Error getting BEP analysis for {pump.pump_code}: {str(e)}")
+        return {'has_bep_data': False}
+
+def _estimate_bep_from_curves(pump):
+    """Estimate BEP from curve data by finding peak efficiency point"""
+    try:
+        best_efficiency = 0
+        bep_point = None
+        
+        for curve in pump.curves:
+            points = curve.get('performance_points', [])
+            for point in points:
+                efficiency = point.get('efficiency_pct', 0)
+                if efficiency > best_efficiency:
+                    best_efficiency = efficiency
+                    bep_point = {
+                        'flow_m3hr': point.get('flow_m3hr'),
+                        'head_m': point.get('head_m'),
+                        'efficiency_pct': efficiency
+                    }
+        
+        return bep_point
+        
+    except Exception as e:
+        logger.warning(f"Error estimating BEP from curves for {pump.pump_code}: {str(e)}")
+        return None
 
 def _determine_status(efficiency_delta, power_delta, npsh_delta):
     """Determine test status based on deltas between database and UI values"""

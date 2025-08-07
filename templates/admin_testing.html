@@ -85,24 +85,24 @@
                         <table class="striped highlight">
                             <thead>
                                 <tr>
-                                    <th rowspan="2">Pump Code</th>
-                                    <th rowspan="2">Type</th>
-                                    <th colspan="3" class="center-align" style="border-bottom: 1px solid #ddd;">Efficiency (%)</th>
-                                    <th colspan="3" class="center-align" style="border-bottom: 1px solid #ddd;">Power (kW)</th>
-                                    <th colspan="3" class="center-align" style="border-bottom: 1px solid #ddd;">NPSH (m)</th>
-                                    <th rowspan="2">UI Score</th>
-                                    <th rowspan="2">Status</th>
+                                    <th rowspan="3">Pump Code</th>
+                                    <th rowspan="3">Type</th>
+                                    <th colspan="3" class="center-align" style="border-bottom: 1px solid #ddd;">Duty Point Performance</th>
+                                    <th colspan="3" class="center-align" style="border-bottom: 1px solid #ddd;">BEP Information</th>
+                                    <th rowspan="3">UI Score</th>
+                                    <th rowspan="3">Status</th>
+                                </tr>
+                                <tr>
+                                    <th colspan="3" class="center-align" style="border-bottom: 1px solid #ddd;">Efficiency (%) | Power (kW) | NPSH (m)</th>
+                                    <th colspan="3" class="center-align" style="border-bottom: 1px solid #ddd;">BEP Coordinates | BEP Performance</th>
                                 </tr>
                                 <tr>
                                     <th class="center-align">Database</th>
                                     <th class="center-align">UI Calc</th>
                                     <th class="center-align">Delta</th>
-                                    <th class="center-align">Database</th>
-                                    <th class="center-align">UI Calc</th>
-                                    <th class="center-align">Delta</th>
-                                    <th class="center-align">Database</th>
-                                    <th class="center-align">UI Calc</th>
-                                    <th class="center-align">Delta</th>
+                                    <th class="center-align">Flow/Head</th>
+                                    <th class="center-align">BEP DB</th>
+                                    <th class="center-align">BEP UI</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -111,87 +111,95 @@
                                     <td><strong>{{ result.pump_code }}</strong></td>
                                     <td>{{ result.pump_type }}</td>
                                     
-                                    <!-- Efficiency -->
-                                    <td class="center-align">
-                                        {% if result.db_efficiency is not none %}
-                                            {{ "%.1f"|format(result.db_efficiency) }}
-                                        {% else %}
-                                            <em>N/A</em>
-                                        {% endif %}
+                                    <!-- Duty Point Performance (Database) -->
+                                    <td class="center-align" style="font-size: 11px;">
+                                        <div style="margin-bottom: 2px;">
+                                            <strong>Eff:</strong> 
+                                            {% if result.db_efficiency is not none %}{{ "%.1f"|format(result.db_efficiency) }}%{% else %}N/A{% endif %}
+                                        </div>
+                                        <div style="margin-bottom: 2px;">
+                                            <strong>Pwr:</strong> 
+                                            {% if result.db_power is not none %}{{ "%.1f"|format(result.db_power) }}kW{% else %}N/A{% endif %}
+                                        </div>
+                                        <div>
+                                            <strong>NPSH:</strong> 
+                                            {% if result.db_npsh is not none %}{{ "%.2f"|format(result.db_npsh) }}m{% else %}N/A{% endif %}
+                                        </div>
                                     </td>
-                                    <td class="center-align">
-                                        {% if result.ui_efficiency is not none %}
-                                            {{ "%.1f"|format(result.ui_efficiency) }}
-                                        {% else %}
-                                            <em>N/A</em>
-                                        {% endif %}
+                                    
+                                    <!-- Duty Point Performance (UI) -->
+                                    <td class="center-align" style="font-size: 11px;">
+                                        <div style="margin-bottom: 2px;">
+                                            <strong>Eff:</strong> 
+                                            {% if result.ui_efficiency is not none %}{{ "%.1f"|format(result.ui_efficiency) }}%{% else %}N/A{% endif %}
+                                        </div>
+                                        <div style="margin-bottom: 2px;">
+                                            <strong>Pwr:</strong> 
+                                            {% if result.ui_power is not none %}{{ "%.1f"|format(result.ui_power) }}kW{% else %}N/A{% endif %}
+                                        </div>
+                                        <div>
+                                            <strong>NPSH:</strong> 
+                                            {% if result.ui_npsh is not none %}{{ "%.2f"|format(result.ui_npsh) }}m{% else %}N/A{% endif %}
+                                        </div>
                                     </td>
-                                    <td class="center-align 
-                                        {% if result.efficiency_delta is not none %}
-                                            {% if result.efficiency_delta|abs > 5 %}red-text
-                                            {% elif result.efficiency_delta|abs > 2 %}orange-text
-                                            {% else %}green-text{% endif %}
-                                        {% endif %}">
-                                        {% if result.efficiency_delta is not none %}
-                                            {{ "%+.1f"|format(result.efficiency_delta) }}
+                                    
+                                    <!-- Delta Summary -->
+                                    <td class="center-align" style="font-size: 11px;">
+                                        <div style="margin-bottom: 2px;">
+                                            {% if result.efficiency_delta is not none %}
+                                                <span class="{% if result.efficiency_delta|abs > 5 %}red-text{% elif result.efficiency_delta|abs > 2 %}orange-text{% else %}green-text{% endif %}">
+                                                    {{ "%+.1f"|format(result.efficiency_delta) }}%
+                                                </span>
+                                            {% else %}N/A{% endif %}
+                                        </div>
+                                        <div style="margin-bottom: 2px;">
+                                            {% if result.power_delta is not none %}
+                                                <span class="{% if result.power_delta|abs > 2 %}red-text{% elif result.power_delta|abs > 0.5 %}orange-text{% else %}green-text{% endif %}">
+                                                    {{ "%+.1f"|format(result.power_delta) }}kW
+                                                </span>
+                                            {% else %}N/A{% endif %}
+                                        </div>
+                                        <div>
+                                            {% if result.npsh_delta is not none %}
+                                                <span class="{% if result.npsh_delta|abs > 1 %}red-text{% elif result.npsh_delta|abs > 0.3 %}orange-text{% else %}green-text{% endif %}">
+                                                    {{ "%+.2f"|format(result.npsh_delta) }}m
+                                                </span>
+                                            {% else %}N/A{% endif %}
+                                        </div>
+                                    </td>
+                                    
+                                    <!-- BEP Coordinates -->
+                                    <td class="center-align" style="font-size: 11px;">
+                                        {% if result.bep_analysis and result.bep_analysis.has_bep_data %}
+                                            <div><strong>Flow:</strong> {{ "%.0f"|format(result.bep_analysis.bep_flow_m3hr) }} m³/hr</div>
+                                            <div><strong>Head:</strong> {{ "%.1f"|format(result.bep_analysis.bep_head_m) }} m</div>
+                                            <div><strong>BEP Eff:</strong> {{ "%.1f"|format(result.bep_analysis.bep_efficiency_pct) }}%</div>
                                         {% else %}
-                                            <em>N/A</em>
+                                            <em style="color: #999;">No BEP Data</em>
                                         {% endif %}
                                     </td>
                                     
-                                    <!-- Power -->
-                                    <td class="center-align">
-                                        {% if result.db_power is not none %}
-                                            {{ "%.2f"|format(result.db_power) }}
+                                    <!-- BEP Performance (Database) -->
+                                    <td class="center-align" style="font-size: 11px;">
+                                        {% if result.bep_analysis and result.bep_analysis.has_bep_data and result.bep_analysis.db_performance %}
+                                            {% set bep_db = result.bep_analysis.db_performance %}
+                                            <div>{{ "%.1f"|format(bep_db.efficiency) if bep_db.efficiency else "N/A" }}%</div>
+                                            <div>{{ "%.1f"|format(bep_db.power_kw) if bep_db.power_kw else "N/A" }}kW</div>
+                                            <div>{{ "%.2f"|format(bep_db.npshr_m) if bep_db.npshr_m else "N/A" }}m</div>
                                         {% else %}
-                                            <em>N/A</em>
-                                        {% endif %}
-                                    </td>
-                                    <td class="center-align">
-                                        {% if result.ui_power is not none %}
-                                            {{ "%.2f"|format(result.ui_power) }}
-                                        {% else %}
-                                            <em>N/A</em>
-                                        {% endif %}
-                                    </td>
-                                    <td class="center-align 
-                                        {% if result.power_delta is not none %}
-                                            {% if result.power_delta|abs > 2 %}red-text
-                                            {% elif result.power_delta|abs > 0.5 %}orange-text
-                                            {% else %}green-text{% endif %}
-                                        {% endif %}">
-                                        {% if result.power_delta is not none %}
-                                            {{ "%+.2f"|format(result.power_delta) }}
-                                        {% else %}
-                                            <em>N/A</em>
+                                            <em style="color: #999;">N/A</em>
                                         {% endif %}
                                     </td>
                                     
-                                    <!-- NPSH -->
-                                    <td class="center-align">
-                                        {% if result.db_npsh is not none %}
-                                            {{ "%.2f"|format(result.db_npsh) }}
+                                    <!-- BEP Performance (UI) -->
+                                    <td class="center-align" style="font-size: 11px;">
+                                        {% if result.bep_analysis and result.bep_analysis.has_bep_data and result.bep_analysis.ui_performance %}
+                                            {% set bep_ui = result.bep_analysis.ui_performance %}
+                                            <div>{{ "%.1f"|format(bep_ui.efficiency_pct) if bep_ui.efficiency_pct else "N/A" }}%</div>
+                                            <div>{{ "%.1f"|format(bep_ui.power_kw) if bep_ui.power_kw else "N/A" }}kW</div>
+                                            <div>{{ "%.2f"|format(bep_ui.npshr_m) if bep_ui.npshr_m else "N/A" }}m</div>
                                         {% else %}
-                                            <em>N/A</em>
-                                        {% endif %}
-                                    </td>
-                                    <td class="center-align">
-                                        {% if result.ui_npsh is not none %}
-                                            {{ "%.2f"|format(result.ui_npsh) }}
-                                        {% else %}
-                                            <em>N/A</em>
-                                        {% endif %}
-                                    </td>
-                                    <td class="center-align 
-                                        {% if result.npsh_delta is not none %}
-                                            {% if result.npsh_delta|abs > 1 %}red-text
-                                            {% elif result.npsh_delta|abs > 0.3 %}orange-text
-                                            {% else %}green-text{% endif %}
-                                        {% endif %}">
-                                        {% if result.npsh_delta is not none %}
-                                            {{ "%+.2f"|format(result.npsh_delta) }}
-                                        {% else %}
-                                            <em>N/A</em>
+                                            <em style="color: #999;">N/A</em>
                                         {% endif %}
                                     </td>
                                     
@@ -263,7 +271,7 @@
 }
 
 .responsive-table table {
-    min-width: 1200px;
+    min-width: 1400px;
 }
 
 .responsive-table th, 
