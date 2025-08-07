@@ -1130,11 +1130,11 @@
                     '<b>🎯 OPERATING POINT ANALYSIS</b><br>' +
                     'Flow Rate: ' + operatingFlow.toFixed(1) + ' m³/hr<br>' +
                     'Head: ' + operatingHead.toFixed(1) + ' m<br>' +
-                    'Efficiency: {{ selected_pump.get("efficiency_pct", 0)|round(1) }}%<br>' +
-                    'Power: {{ selected_pump.get("power_kw", 0)|round(1) }} kW<br>' +
-                    'NPSH Required: {{ selected_pump.get("npshr_m", 0)|round(1) }} m<br>' +
-                    'Impeller: {{ selected_pump.get("impeller_diameter_mm", 0)|round(0)|int }}mm ({{ selected_pump.get("trim_percent", 100)|round(1) }}% trim)<br>' +
-                    'BEP Position: {{ selected_pump.get("qbep_percentage", 0)|round(0) }}% of optimal flow<br>' +
+                    'Efficiency: {{ (selected_pump.get("efficiency_pct") or 0)|round(1) }}%<br>' +
+                    'Power: {{ (selected_pump.get("power_kw") or 0)|round(1) }} kW<br>' +
+                    'NPSH Required: {{ (selected_pump.get("npshr_m") or 0)|round(1) }} m<br>' +
+                    'Impeller: {{ (selected_pump.get("impeller_diameter_mm") or 0)|round(0)|int }}mm ({{ (selected_pump.get("trim_percent") or 100)|round(1) }}% trim)<br>' +
+                    'BEP Position: {{ (selected_pump.get("qbep_percentage") or 0)|round(0) }}% of optimal flow<br>' +
                     '<extra></extra>'
             });
             
@@ -1257,11 +1257,11 @@
                         '<b>🎯 OPERATING POINT ANALYSIS</b><br>' +
                         'Flow Rate: ' + operatingFlow.toFixed(1) + ' m³/hr<br>' +
                         'Power: ' + opPoint.power_kw.toFixed(1) + ' kW<br>' +
-                        'Efficiency: {{ selected_pump.get("efficiency_pct", 0)|round(1) }}%<br>' +
-                        'Head: {{ selected_pump.get("head_m", 0)|round(1) }} m<br>' +
-                        'NPSH Required: {{ selected_pump.get("npshr_m", 0)|round(1) }} m<br>' +
-                        'Impeller: {{ selected_pump.get("impeller_diameter_mm", 0)|round(0)|int }}mm ({{ selected_pump.get("trim_percent", 100)|round(1) }}% trim)<br>' +
-                        'BEP Position: {{ selected_pump.get("qbep_percentage", 0)|round(0) }}% of optimal flow<br>' +
+                        'Efficiency: {{ (selected_pump.get("efficiency_pct") or 0)|round(1) }}%<br>' +
+                        'Head: {{ (selected_pump.get("head_m") or 0)|round(1) }} m<br>' +
+                        'NPSH Required: {{ (selected_pump.get("npshr_m") or 0)|round(1) }} m<br>' +
+                        'Impeller: {{ (selected_pump.get("impeller_diameter_mm") or 0)|round(0)|int }}mm ({{ (selected_pump.get("trim_percent") or 100)|round(1) }}% trim)<br>' +
+                        'BEP Position: {{ (selected_pump.get("qbep_percentage") or 0)|round(0) }}% of optimal flow<br>' +
                         '<extra></extra>'
                 });
             }
