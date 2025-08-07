@@ -227,11 +227,11 @@ class PumpChartsManager {
         });
     }
     
-    // Helper function to add operating point marker
+    // Helper function to add operating point marker - using transparent red triangle
     addOperatingPointMarker(traces, operatingPointFlow, operatingPointY, hovertemplate) {
         if (!operatingPointFlow || !operatingPointY) return;
         
-        // Add operating point marker
+        // Add operating point marker - transparent red triangle pointing to BEP
         traces.push({
             x: [operatingPointFlow],
             y: [operatingPointY],
@@ -239,18 +239,18 @@ class PumpChartsManager {
             mode: 'markers',
             name: 'Operating Point',
             marker: {
-                color: 'red',
-                size: 12,
-                symbol: 'circle',
+                color: 'rgba(255, 0, 0, 0.3)',  // Transparent red fill
+                size: 18,
+                symbol: 'triangle-up',
                 line: {
-                    color: 'white',
+                    color: 'rgba(255, 0, 0, 0.8)',  // Solid red border
                     width: 2
                 }
             },
             hovertemplate: hovertemplate,
             hoverlabel: {
-                bgcolor: 'red',
-                font: { color: 'white' }
+                bgcolor: '#d32f2f',
+                font: { color: 'white', size: 12 }
             }
         });
     }
@@ -443,10 +443,10 @@ class PumpChartsManager {
             mode: 'markers',
             name: opPoint.extrapolated ? 'Operating Point (Extrapolated)' : 'Operating Point',
             marker: {
-                color: 'rgba(255,255,255,0)',
-                size: 24,
+                color: 'rgba(255, 0, 0, 0.3)',  // Transparent red fill
+                size: 20,
                 symbol: 'triangle-up',
-                line: { color: '#d32f2f', width: 3 }
+                line: { color: 'rgba(255, 0, 0, 0.8)', width: 2 }  // Solid red border
             },
             hovertemplate: '<b>🎯 OPERATING POINT ANALYSIS</b><br>' +
                 '<b>Flow Rate:</b> ' + (operatingPointFlow || 0).toFixed(1) + ' m³/hr<br>' +
@@ -456,7 +456,11 @@ class PumpChartsManager {
                 '<b>NPSH Required:</b> ' + (opPoint.npshr_m ? opPoint.npshr_m.toFixed(1) + ' m' : 'N/A') + '<br>' +
                 '<b>Impeller:</b> ' + impellerInfo + '<br>' +
                 '<b>BEP Position:</b> ' + bepPercentage + '% of optimal flow<br>' +
-                '<b>Status:</b> ' + (opPoint.extrapolated ? 'Extrapolated' : 'Within Curve') + '<extra></extra>'
+                '<b>Status:</b> ' + (opPoint.extrapolated ? 'Extrapolated' : 'Within Curve') + '<extra></extra>',
+            hoverlabel: {
+                bgcolor: '#d32f2f',
+                font: { color: 'white', size: 12 }
+            }
         };
     }
 
@@ -788,9 +792,24 @@ class PumpChartsManager {
             // Add reference lines using helper
             this.addReferenceLines(traces, operatingPointFlow, operatingPointEfficiency, dataRanges, xAxisRange);
             
-            // Add operating point marker using helper
-            this.addOperatingPointMarker(traces, operatingPointFlow, operatingPointEfficiency, 
-                'Flow: %{x:.0f} m³/hr<br>Efficiency: %{y:.1f}%');
+            // Add operating point marker with rich hover data
+            const efficiencyRating = operatingPointEfficiency >= 85 ? 'Excellent' : 
+                                    operatingPointEfficiency >= 75 ? 'Good' : 
+                                    operatingPointEfficiency >= 65 ? 'Acceptable' : 'Poor';
+            const bepPercentage = opPoint.qbep_percentage ? opPoint.qbep_percentage.toFixed(0) : 'N/A';
+            const impellerInfo = opPoint.impeller_diameter_mm ? 
+                `${opPoint.impeller_diameter_mm.toFixed(0)}mm (${(opPoint.trim_percent || 100).toFixed(1)}% trim)` : 'N/A';
+            
+            const hoverTemplate = '<b>🎯 OPERATING POINT ANALYSIS</b><br>' +
+                '<b>Flow Rate:</b> ' + operatingPointFlow.toFixed(1) + ' m³/hr<br>' +
+                '<b>Efficiency:</b> ' + operatingPointEfficiency.toFixed(1) + '% (' + efficiencyRating + ')<br>' +
+                '<b>Power:</b> ' + (opPoint.power_kw ? opPoint.power_kw.toFixed(1) + ' kW' : 'N/A') + '<br>' +
+                '<b>NPSH Required:</b> ' + (opPoint.npshr_m ? opPoint.npshr_m.toFixed(1) + ' m' : 'N/A') + '<br>' +
+                '<b>Impeller:</b> ' + impellerInfo + '<br>' +
+                '<b>BEP Position:</b> ' + bepPercentage + '% of optimal flow<br>' +
+                '<b>Status:</b> Within Curve<extra></extra>';
+            
+            this.addOperatingPointMarker(traces, operatingPointFlow, operatingPointEfficiency, hoverTemplate);
         }
 
         // Calculate proper y-axis range based on actual efficiency data
@@ -935,9 +954,24 @@ class PumpChartsManager {
             // Add reference lines using helper
             this.addReferenceLines(traces, operatingPointFlow, operatingPointPower, dataRanges, xAxisRange);
             
-            // Add operating point marker using helper
-            this.addOperatingPointMarker(traces, operatingPointFlow, operatingPointPower, 
-                'Flow: %{x:.0f} m³/hr<br>Power: %{y:.1f} kW');
+            // Add operating point marker with rich hover data
+            const efficiencyRating = opPoint.efficiency_pct >= 85 ? 'Excellent' : 
+                                    opPoint.efficiency_pct >= 75 ? 'Good' : 
+                                    opPoint.efficiency_pct >= 65 ? 'Acceptable' : 'Poor';
+            const bepPercentage = opPoint.qbep_percentage ? opPoint.qbep_percentage.toFixed(0) : 'N/A';
+            const impellerInfo = opPoint.impeller_diameter_mm ? 
+                `${opPoint.impeller_diameter_mm.toFixed(0)}mm (${(opPoint.trim_percent || 100).toFixed(1)}% trim)` : 'N/A';
+            
+            const hoverTemplate = '<b>🎯 OPERATING POINT ANALYSIS</b><br>' +
+                '<b>Flow Rate:</b> ' + operatingPointFlow.toFixed(1) + ' m³/hr<br>' +
+                '<b>Power:</b> ' + operatingPointPower.toFixed(1) + ' kW<br>' +
+                '<b>Efficiency:</b> ' + (opPoint.efficiency_pct ? opPoint.efficiency_pct.toFixed(1) : 'N/A') + '% (' + efficiencyRating + ')<br>' +
+                '<b>NPSH Required:</b> ' + (opPoint.npshr_m ? opPoint.npshr_m.toFixed(1) + ' m' : 'N/A') + '<br>' +
+                '<b>Impeller:</b> ' + impellerInfo + '<br>' +
+                '<b>BEP Position:</b> ' + bepPercentage + '% of optimal flow<br>' +
+                '<b>Status:</b> Within Curve<extra></extra>';
+            
+            this.addOperatingPointMarker(traces, operatingPointFlow, operatingPointPower, hoverTemplate);
         }
 
         // Calculate proper y-axis range based on actual power data
@@ -1109,9 +1143,25 @@ class PumpChartsManager {
             // Add reference lines using helper
             this.addReferenceLines(traces, operatingPointFlow, operatingPointNpsh, dataRanges, xAxisRange);
             
-            // Add operating point marker using helper
-            this.addOperatingPointMarker(traces, operatingPointFlow, operatingPointNpsh, 
-                'Flow: %{x:.0f} m³/hr<br>NPSHr: %{y:.1f} m');
+            // Add operating point marker with rich hover data
+            const efficiencyRating = opPoint.efficiency_pct >= 85 ? 'Excellent' : 
+                                    opPoint.efficiency_pct >= 75 ? 'Good' : 
+                                    opPoint.efficiency_pct >= 65 ? 'Acceptable' : 'Poor';
+            const bepPercentage = opPoint.qbep_percentage ? opPoint.qbep_percentage.toFixed(0) : 'N/A';
+            const impellerInfo = opPoint.impeller_diameter_mm ? 
+                `${opPoint.impeller_diameter_mm.toFixed(0)}mm (${(opPoint.trim_percent || 100).toFixed(1)}% trim)` : 'N/A';
+            
+            const hoverTemplate = '<b>🎯 OPERATING POINT ANALYSIS</b><br>' +
+                '<b>Flow Rate:</b> ' + operatingPointFlow.toFixed(1) + ' m³/hr<br>' +
+                '<b>NPSHr:</b> ' + operatingPointNpsh.toFixed(1) + ' m<br>' +
+                '<b>Head:</b> ' + (opPoint.head_m ? opPoint.head_m.toFixed(1) : 'N/A') + ' m<br>' +
+                '<b>Efficiency:</b> ' + (opPoint.efficiency_pct ? opPoint.efficiency_pct.toFixed(1) : 'N/A') + '% (' + efficiencyRating + ')<br>' +
+                '<b>Power:</b> ' + (opPoint.power_kw ? opPoint.power_kw.toFixed(1) + ' kW' : 'N/A') + '<br>' +
+                '<b>Impeller:</b> ' + impellerInfo + '<br>' +
+                '<b>BEP Position:</b> ' + bepPercentage + '% of optimal flow<br>' +
+                '<b>Status:</b> Within Curve<extra></extra>';
+            
+            this.addOperatingPointMarker(traces, operatingPointFlow, operatingPointNpsh, hoverTemplate);
         }
         
         if (!hasNpshData) {
