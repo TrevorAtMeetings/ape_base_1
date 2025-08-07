@@ -227,11 +227,11 @@ class PumpChartsManager {
         });
     }
     
-    // Helper function to add operating point marker - using transparent red triangle
+    // Helper function to add operating point marker - using small red dot
     addOperatingPointMarker(traces, operatingPointFlow, operatingPointY, hovertemplate) {
         if (!operatingPointFlow || !operatingPointY) return;
         
-        // Add operating point marker at the actual operating point
+        // Add small red dot at the actual operating point
         traces.push({
             x: [operatingPointFlow],
             y: [operatingPointY],
@@ -239,13 +239,9 @@ class PumpChartsManager {
             mode: 'markers',
             name: 'Operating Point',
             marker: {
-                color: 'rgba(255, 0, 0, 0.3)',  // Transparent red fill
-                size: 18,
-                symbol: 'star',  // Use star symbol for clear visibility
-                line: {
-                    color: 'rgba(255, 0, 0, 0.8)',  // Solid red border
-                    width: 2
-                }
+                color: 'rgba(255, 0, 0, 0.8)',  // Solid red
+                size: 8,  // Small dot
+                symbol: 'circle'
             },
             hovertemplate: hovertemplate,
             hoverlabel: {

@@ -1002,7 +1002,7 @@
                 yaxis: 'y'
             });
             
-            // Add operating point marker with star symbol at actual operating point
+            // Add small red dot at actual operating point
             traces.push({
                 x: [operatingFlow],
                 y: [operatingHead],
@@ -1010,10 +1010,9 @@
                 type: 'scatter',
                 mode: 'markers',
                 marker: { 
-                    size: 18, 
-                    color: 'rgba(255, 0, 0, 0.3)',  // Transparent red fill
-                    symbol: 'star',  // Use star symbol for clear visibility
-                    line: { color: 'rgba(255, 0, 0, 0.8)', width: 2 }  // Solid red border
+                    size: 8,  // Small dot
+                    color: 'rgba(255, 0, 0, 0.8)',  // Solid red
+                    symbol: 'circle'
                 },
                 yaxis: 'y',
                 showlegend: false,
@@ -1130,7 +1129,7 @@
                 });
             }
             
-            // Add operating point marker with star symbol at actual operating power
+            // Add small red dot at actual operating power
             if (opPoint.power_kw) {
                 traces.push({
                     x: [operatingFlow],
@@ -1139,10 +1138,9 @@
                     type: 'scatter',
                     mode: 'markers',
                     marker: { 
-                        size: 18, 
-                        color: 'rgba(255, 0, 0, 0.3)',  // Transparent red fill
-                        symbol: 'star',  // Use star symbol for clear visibility
-                        line: { color: 'rgba(255, 0, 0, 0.8)', width: 2 }  // Solid red border
+                        size: 8,  // Small dot
+                        color: 'rgba(255, 0, 0, 0.8)',  // Solid red
+                        symbol: 'circle'
                     },
                     showlegend: false,
                     hovertemplate: 
