@@ -663,6 +663,58 @@
             </div>
         </div>
 
+        <!-- Pump Actions -->
+        <div class="row">
+            <div class="col s12">
+                <div class="section-header">Pump Actions</div>
+                <div class="section-content">
+                    <div class="action-buttons">
+                        <div class="action-btn" onclick="addToComparison()">
+                            <i class="material-icons">compare_arrows</i>
+                            <div class="action-btn-label">Add to Compare</div>
+                        </div>
+                        <div class="action-btn" onclick="viewAllAlternatives()">
+                            <i class="material-icons">view_list</i>
+                            <div class="action-btn-label">View All Options</div>
+                        </div>
+                        <div class="action-btn" id="showDataBtn" onclick="toggleChartData()">
+                            <i class="material-icons">table_chart</i>
+                            <div class="action-btn-label">Show Data</div>
+                        </div>
+                        <div class="action-btn" onclick="generatePDF()">
+                            <i class="material-icons">picture_as_pdf</i>
+                            <div class="action-btn-label">Download PDF</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Data Container (Hidden by Default) -->
+                    <div id="chartDataContainer" style="display: none; margin-top: 20px; padding: 16px; background: #f8f9fa; border-radius: 8px;">
+                        <h5 style="margin: 0 0 16px 0; color: #333;">Comprehensive Pump Data</h5>
+                        <div style="display: grid; gap: 16px;">
+                            <div style="background: white; padding: 12px; border-radius: 6px;">
+                                <strong>Pump Specifications</strong><br>
+                                Model: {{ selected_pump.get('pump_code', 'N/A') }}<br>
+                                Manufacturer: {{ selected_pump.get('manufacturer', 'APE PUMPS') }}<br>
+                                Type: {{ selected_pump.get('pump_type', 'CENTRIFUGAL') }}
+                            </div>
+                            <div style="background: white; padding: 12px; border-radius: 6px;">
+                                <strong>Operating Performance</strong><br>
+                                Flow: {{ site_requirements.get('flow_m3hr', 0)|round(1) }} m³/hr<br>
+                                Head: {{ site_requirements.get('head_m', 0)|round(1) }} m<br>
+                                Efficiency: {{ selected_pump.get('efficiency_pct', 0)|round(1) }}%<br>
+                                Power: {{ selected_pump.get('power_kw', 0)|round(2) }} kW
+                            </div>
+                            <div style="background: white; padding: 12px; border-radius: 6px;">
+                                <strong>Impeller Details</strong><br>
+                                Operating Diameter: {{ selected_pump.get('impeller_diameter_mm', 0)|round(0)|int }} mm<br>
+                                Trim: {{ (100 - selected_pump.get('trim_percent', 100))|round(1) }}%
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Interactive Performance Charts -->
         <div class="row">
             <div class="col s12">
@@ -961,6 +1013,67 @@
                 btnLabel.textContent = 'Show Data';
                 btnIcon.textContent = 'table_chart';
             }
+        }
+
+        // Comparison Functions
+        function addToComparison() {
+            const pumpCode = "{{ selected_pump.get('pump_code', '') }}";
+            const flow = {{ site_requirements.get('flow_m3hr', 0) }};
+            const head = {{ site_requirements.get('head_m', 0) }};
+            const pumpType = "{{ site_requirements.get('pump_type', 'GENERAL') }}";
+            
+            // Add to comparison via API
+            fetch('/api/add_to_comparison', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    pump_code: pumpCode,
+                    flow: flow,
+                    head: head,
+                    pump_type: pumpType
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Show success message and redirect to comparison
+                    if (typeof M !== 'undefined') {
+                        M.toast({html: `Added ${pumpCode} to comparison (${data.count} total)`, classes: 'green'});
+                    }
+                    if (data.count >= 2) {
+                        setTimeout(() => {
+                            window.location.href = '/compare';
+                        }, 1500);
+                    }
+                } else {
+                    if (typeof M !== 'undefined') {
+                        M.toast({html: data.message || 'Error adding to comparison', classes: 'red'});
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                if (typeof M !== 'undefined') {
+                    M.toast({html: 'Error adding to comparison', classes: 'red'});
+                }
+            });
+        }
+
+        function viewAllAlternatives() {
+            const flow = {{ site_requirements.get('flow_m3hr', 0) }};
+            const head = {{ site_requirements.get('head_m', 0) }};
+            const pumpType = "{{ site_requirements.get('pump_type', 'GENERAL') }}";
+            
+            window.location.href = `/pump_options?flow=${flow}&head=${head}&pump_type=${pumpType}`;
+        }
+
+        function generatePDF() {
+            const pumpCode = "{{ selected_pump.get('pump_code', '') }}";
+            const flow = {{ site_requirements.get('flow_m3hr', 0) }};
+            const head = {{ site_requirements.get('head_m', 0) }};
+            const pumpType = "{{ site_requirements.get('pump_type', 'GENERAL') }}";
+            
+            window.open(`/api/generate_pump_pdf/${encodeURIComponent(pumpCode)}?flow=${flow}&head=${head}&pump_type=${pumpType}`, '_blank');
         }
     </script>
     

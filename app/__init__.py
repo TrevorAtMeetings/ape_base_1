@@ -94,6 +94,10 @@ app.register_blueprint(main_flow_bp)
 from .route_modules.reports import reports_bp
 app.register_blueprint(reports_bp)
 
+# Register the Comparison API blueprint
+from .route_modules.comparison_api import comparison_api_bp
+app.register_blueprint(comparison_api_bp)
+
 # Register the Comparison blueprint
 from .route_modules.comparison import comparison_bp
 app.register_blueprint(comparison_bp)

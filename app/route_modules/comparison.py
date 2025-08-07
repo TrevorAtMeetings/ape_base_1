@@ -21,11 +21,13 @@ comparison_bp = Blueprint('comparison', __name__)
 def pump_comparison():
     """Pump comparison interface with fallback to URL parameters if session is empty."""
     try:
-        # Try to get pump selections from session
+        # Try to get pump selections from session (both old and new formats)
         pump_selections = safe_session_get('pump_selections', [])
+        comparison_list = safe_session_get('comparison_list', [])
         site_requirements = safe_session_get('site_requirements', {})
         
         logger.info(f"Comparison route - Session pump_selections: {len(pump_selections) if pump_selections else 0}")
+        logger.info(f"Comparison route - Session comparison_list: {len(comparison_list) if comparison_list else 0}")
         logger.info(f"Comparison route - Session site_requirements: {site_requirements}")
 
         # Add lifecycle costs to existing pump selections if missing
@@ -150,9 +152,56 @@ def pump_comparison():
                     'pump_type': pump_type
                 }
 
+        # If we have comparison_list from new API, convert it to pump_selections format
+        if comparison_list and not pump_selections:
+            pump_selections = []
+            for comp_pump in comparison_list:
+                pump_data = comp_pump.get('pump_data', {})
+                if pump_data:
+                    evaluation = {
+                        'pump_code': comp_pump['pump_code'],
+                        'suitability_score': 85,
+                        'selection_reason': 'Manually added for comparison',
+                        'operating_point': {
+                            'flow_m3hr': comp_pump['flow'],
+                            'head_m': comp_pump['head'],
+                            'efficiency_pct': 75,
+                            'power_kw': 100
+                        },
+                        'pump_info': {
+                            'manufacturer': pump_data.get('manufacturer', 'APE PUMPS'),
+                            'model_series': pump_data.get('model_series', ''),
+                            'pump_type': pump_data.get('pump_type', 'CENTRIFUGAL')
+                        },
+                        'suitable': True,
+                        'lifecycle_cost': 50000,
+                        'qbep_percentage': 100
+                    }
+                    pump_selections.append(evaluation)
+            
+            # Update site requirements from comparison data
+            if comparison_list:
+                first_pump = comparison_list[0]
+                site_requirements = {
+                    'flow_m3hr': first_pump['flow'],
+                    'head_m': first_pump['head'],
+                    'pump_type': first_pump['pump_type'],
+                    'application': 'water'
+                }
+
         if not pump_selections:
-            safe_flash('No pump selections available for comparison. Please run pump selection first.', 'info')
-            return redirect(url_for('main_flow.index'))
+            # Try to get parameters from URL for direct access
+            flow = request.args.get('flow', type=float)
+            head = request.args.get('head', type=float)
+            pump_type = request.args.get('pump_type', 'GENERAL')
+            
+            if flow and head:
+                # Redirect to pump options to get selections first
+                safe_flash('Please select pumps for comparison first.', 'info')
+                return redirect(url_for('main_flow.pump_options', flow=flow, head=head, pump_type=pump_type))
+            else:
+                safe_flash('No pump selections available for comparison. Please run pump selection first.', 'info')
+                return redirect(url_for('main_flow.index'))
 
         return render_template('pump_comparison.html',
                              pump_comparisons=pump_selections,
