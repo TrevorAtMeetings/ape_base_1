@@ -231,24 +231,18 @@ class PumpChartsManager {
     addOperatingPointMarker(traces, operatingPointFlow, operatingPointY, hovertemplate) {
         if (!operatingPointFlow || !operatingPointY) return;
         
-        // Calculate offset to position triangle below the point
-        // The offset should be proportional to the y-axis range
-        const yRange = traces.length > 0 ? 
-            Math.max(...traces.filter(t => t.y).flatMap(t => t.y)) - 
-            Math.min(...traces.filter(t => t.y).flatMap(t => t.y)) : 100;
-        const triangleOffset = yRange * 0.05; // Position triangle 5% below the point
-        
-        // Add operating point marker - transparent red triangle positioned below, pointing up to the point
+        // Position triangle at the base (Y=0) with its tip pointing to the operating point
+        // Triangle sits on the X-axis
         traces.push({
             x: [operatingPointFlow],
-            y: [operatingPointY - triangleOffset],  // Position below the actual point
+            y: [0],  // Position at the X-axis
             type: 'scatter',
             mode: 'markers',
             name: 'Operating Point',
             marker: {
                 color: 'rgba(255, 0, 0, 0.3)',  // Transparent red fill
                 size: 18,
-                symbol: 'triangle-up',  // Triangle points upward to the data point
+                symbol: 'triangle-up',  // Triangle points upward from X-axis to the data point
                 line: {
                     color: 'rgba(255, 0, 0, 0.8)',  // Solid red border
                     width: 2
@@ -262,16 +256,17 @@ class PumpChartsManager {
             showlegend: false
         });
         
-        // Add the actual operating point (invisible) for accurate hover
+        // Add a small dot at the actual operating point for visual clarity
         traces.push({
             x: [operatingPointFlow],
             y: [operatingPointY],
             type: 'scatter',
             mode: 'markers',
-            name: 'Operating Point Data',
+            name: 'Operating Point',
             marker: {
-                color: 'transparent',
-                size: 1
+                color: 'rgba(255, 0, 0, 0.8)',
+                size: 6,
+                symbol: 'circle'
             },
             hovertemplate: hovertemplate,
             hoverlabel: {

@@ -1002,21 +1002,17 @@
                 yaxis: 'y'
             });
             
-            // Calculate offset for triangle position
-            const headRange = Math.max(...curves.flatMap(c => c.head_data)) - Math.min(...curves.flatMap(c => c.head_data));
-            const triangleOffset = headRange * 0.05; // Position triangle 5% below the point
-            
-            // Add operating point marker with transparent red triangle positioned below
+            // Add operating point marker with transparent red triangle at X-axis
             traces.push({
                 x: [operatingFlow],
-                y: [operatingHead - triangleOffset],  // Position triangle below the actual point
-                name: 'Operating Point',
+                y: [0],  // Position triangle at X-axis
+                name: 'Operating Point Marker',
                 type: 'scatter',
                 mode: 'markers',
                 marker: { 
                     size: 18, 
                     color: 'rgba(255, 0, 0, 0.3)',  // Transparent red fill
-                    symbol: 'triangle-up',  // Triangle points upward to the data point
+                    symbol: 'triangle-up',  // Triangle points upward from X-axis
                     line: { color: 'rgba(255, 0, 0, 0.8)', width: 2 }  // Solid red border
                 },
                 yaxis: 'y',
@@ -1031,6 +1027,23 @@
                     'Impeller: {{ selected_pump.get("impeller_diameter_mm", 0)|round(0)|int }}mm ({{ selected_pump.get("trim_percent", 100)|round(1) }}% trim)<br>' +
                     'BEP Position: {{ selected_pump.get("qbep_percentage", 0)|round(0) }}% of optimal flow<br>' +
                     '<extra></extra>'
+            });
+            
+            // Add small dot at actual operating point
+            traces.push({
+                x: [operatingFlow],
+                y: [operatingHead],
+                name: 'Operating Point',
+                type: 'scatter',
+                mode: 'markers',
+                marker: { 
+                    size: 6, 
+                    color: 'rgba(255, 0, 0, 0.8)',
+                    symbol: 'circle'
+                },
+                yaxis: 'y',
+                showlegend: false,
+                hoverinfo: 'skip'
             });
             
             const layout = {
@@ -1134,23 +1147,18 @@
                 });
             }
             
-            // Add operating point marker with transparent red triangle positioned below
+            // Add operating point marker with transparent red triangle at X-axis
             if (opPoint.power_kw) {
-                // Calculate offset for triangle position
-                const powerRange = Math.max(...curves.flatMap(c => c.power_data || [])) - 
-                                   Math.min(...curves.flatMap(c => c.power_data || []));
-                const triangleOffset = powerRange * 0.05; // Position triangle 5% below the point
-                
                 traces.push({
                     x: [operatingFlow],
-                    y: [opPoint.power_kw - triangleOffset],  // Position triangle below the actual point
-                    name: 'Operating Power',
+                    y: [0],  // Position triangle at X-axis
+                    name: 'Operating Power Marker',
                     type: 'scatter',
                     mode: 'markers',
                     marker: { 
                         size: 18, 
                         color: 'rgba(255, 0, 0, 0.3)',  // Transparent red fill
-                        symbol: 'triangle-up',  // Triangle points upward to the data point
+                        symbol: 'triangle-up',  // Triangle points upward from X-axis
                         line: { color: 'rgba(255, 0, 0, 0.8)', width: 2 }  // Solid red border
                     },
                     showlegend: false,
@@ -1164,6 +1172,22 @@
                         'Impeller: {{ selected_pump.get("impeller_diameter_mm", 0)|round(0)|int }}mm ({{ selected_pump.get("trim_percent", 100)|round(1) }}% trim)<br>' +
                         'BEP Position: {{ selected_pump.get("qbep_percentage", 0)|round(0) }}% of optimal flow<br>' +
                         '<extra></extra>'
+                });
+                
+                // Add small dot at actual operating point
+                traces.push({
+                    x: [operatingFlow],
+                    y: [opPoint.power_kw],
+                    name: 'Operating Power',
+                    type: 'scatter',
+                    mode: 'markers',
+                    marker: { 
+                        size: 6, 
+                        color: 'rgba(255, 0, 0, 0.8)',
+                        symbol: 'circle'
+                    },
+                    showlegend: false,
+                    hoverinfo: 'skip'
                 });
             }
             

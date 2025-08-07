@@ -28,8 +28,10 @@ The application employs a modular Flask architecture with a clear separation of 
 
 ### Recent Major Update - Methodology v6.0 (August 2025)
 **Chart Improvements (August 7, 2025)**:
-- Fixed operating point markers to use transparent red triangles pointing upward to data points
-- Added both vertical and horizontal reference lines (red dotted) intersecting at operating points
+- Fixed operating point markers to use transparent red triangles positioned at X-axis (Y=0) pointing upward
+- Triangle now sits on the X-axis with tip pointing toward the operating point intersection
+- Added both vertical (flow) and horizontal (value) red dotted reference lines forming crosshairs
+- Small red dot added at actual operating point for visual clarity
 - Ensured consistent X-axis ranges across engineering view charts for proper comparison
 - Enhanced hover templates with comprehensive pump performance data including BEP position
 
