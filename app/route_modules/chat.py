@@ -109,12 +109,12 @@ def format_pump_selection_response(pumps, flow, head, application_type):
         # Determine badge color based on score
         badge_color = 'success' if score >= 80 else 'warning' if score >= 60 else 'info'
         
-        # Build pump details URL
+        # Build pump details URL - use engineering report with force=true to load pump directly
         pump_url = url_for('reports.engineering_report', 
                           pump_code=pump_code, 
                           flow=flow, 
                           head=head,
-                          pump_type=application_type.upper())
+                          force='true')
         
         html_response += f"""
         <div class="pump-result-card" data-pump-code="{pump_code}">
@@ -217,6 +217,8 @@ def chat_query():
                 
                 # Format response
                 if suitable_pumps:
+                    # Don't store complex pump objects in session - the engineering report
+                    # will load them directly using force=true parameter
                     html_response = format_pump_selection_response(
                         suitable_pumps, flow, head, application_type
                     )
