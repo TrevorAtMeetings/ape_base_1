@@ -351,9 +351,13 @@ function setupAIChatInput() {
             this.style.height = Math.min(this.scrollHeight, 100) + 'px';
         });
         
-        // Send message on Enter (but not Shift+Enter)
+        // Send message on Enter (but not Shift+Enter) - but only if autocomplete is not active
         aiChatInput.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter' && !e.shiftKey) {
+            // Check if autocomplete is visible
+            const autocompleteDiv = document.getElementById('pump-autocomplete');
+            const isAutocompleteActive = autocompleteDiv && autocompleteDiv.style.display !== 'none';
+            
+            if (e.key === 'Enter' && !e.shiftKey && !isAutocompleteActive) {
                 e.preventDefault();
                 sendAIMessage();
             }
@@ -398,7 +402,22 @@ function setupPumpAutocomplete() {
     fetch('/api/pump_list')
         .then(response => response.json())
         .then(data => {
-            pumpNames = data.pumps || [];
+            // Extract pump codes from the objects
+            if (data.pumps && Array.isArray(data.pumps)) {
+                pumpNames = data.pumps.map(pump => {
+                    // Handle different pump object structures
+                    if (typeof pump === 'string') {
+                        return pump;
+                    } else if (pump.pump_code) {
+                        return pump.pump_code;
+                    } else if (pump.pump_name) {
+                        return pump.pump_name;
+                    }
+                    return '';
+                }).filter(name => name); // Remove empty strings
+            } else {
+                pumpNames = [];
+            }
         })
         .catch(error => console.error('Error loading pump names:', error));
     
@@ -462,7 +481,7 @@ function setupPumpAutocomplete() {
     
     function showPumpSuggestions(searchTerm) {
         const matches = pumpNames.filter(name => 
-            name.toLowerCase().includes(searchTerm)
+            name && name.toLowerCase && name.toLowerCase().includes(searchTerm)
         ).slice(0, 10);
         
         if (matches.length === 0) {

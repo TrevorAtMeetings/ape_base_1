@@ -131,10 +131,10 @@ def handle_specific_pump_query(pump_name, flow, head):
         catalog_engine = get_catalog_engine()
         
         # Find the pump and evaluate at specified conditions
-        pumps = catalog_engine.repository.get_pumps()
+        pumps = catalog_engine.repository.get_pump_models()
         target_pump = None
         for pump in pumps:
-            if pump.pump_name.upper() == pump_name.upper():
+            if pump.get('pump_name', '').upper() == pump_name.upper():
                 target_pump = pump
                 break
         
@@ -148,7 +148,7 @@ def handle_specific_pump_query(pump_name, flow, head):
         
         # Generate report URL for this pump at these conditions
         pump_url = url_for('reports.engineering_report', 
-                          pump_code=target_pump.pump_name,
+                          pump_code=target_pump.get('pump_name'),
                           flow=flow, 
                           head=head,
                           force='true',
@@ -156,14 +156,14 @@ def handle_specific_pump_query(pump_name, flow, head):
         
         html_response = f"""
         <div class="pump-specific-result">
-            <h3 style="color: #10b981; margin-bottom: 0.5rem;">🎯 {target_pump.pump_name}</h3>
+            <h3 style="color: #10b981; margin-bottom: 0.5rem;">🎯 {target_pump.get('pump_name')}</h3>
             <p style="color: #64748b; margin-bottom: 1rem;">Performance at {flow} m³/hr @ {head}m</p>
             <div class="pump-result-card" style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 0.75rem;">
                 <div class="pump-specs" style="margin-bottom: 0.75rem;">
                     <div style="font-size: 0.875rem; color: #4b5563;">
-                        <strong>Type:</strong> {target_pump.pump_type}<br>
-                        <strong>Speed:</strong> {target_pump.speed_rpm} RPM<br>
-                        <strong>Impeller:</strong> {target_pump.impeller_dia_mm}mm
+                        <strong>Type:</strong> {target_pump.get('pump_type')}<br>
+                        <strong>Speed:</strong> {target_pump.get('speed_rpm')} RPM<br>
+                        <strong>Impeller:</strong> {target_pump.get('impeller_dia_mm')}mm
                     </div>
                 </div>
                 <a href="{pump_url}" target="_blank" class="view-details-btn" style="
@@ -206,10 +206,10 @@ def handle_pump_bep_query(pump_name):
         catalog_engine = get_catalog_engine()
         
         # Find the pump
-        pumps = catalog_engine.repository.get_pumps()
+        pumps = catalog_engine.repository.get_pump_models()
         target_pump = None
         for pump in pumps:
-            if pump.pump_name.upper() == pump_name.upper():
+            if pump.get('pump_name', '').upper() == pump_name.upper():
                 target_pump = pump
                 break
         
@@ -222,8 +222,8 @@ def handle_pump_bep_query(pump_name):
             }
         
         # Get BEP conditions
-        bep_flow = target_pump.bep_flow_m3hr if hasattr(target_pump, 'bep_flow_m3hr') else None
-        bep_head = target_pump.bep_head_m if hasattr(target_pump, 'bep_head_m') else None
+        bep_flow = target_pump.get('bep_flow_m3hr')
+        bep_head = target_pump.get('bep_head_m')
         
         if not bep_flow or not bep_head:
             return {
@@ -235,7 +235,7 @@ def handle_pump_bep_query(pump_name):
         
         # Generate report URL for BEP conditions
         pump_url = url_for('reports.engineering_report', 
-                          pump_code=target_pump.pump_name,
+                          pump_code=target_pump.get('pump_name'),
                           flow=bep_flow, 
                           head=bep_head,
                           force='true',
@@ -243,15 +243,15 @@ def handle_pump_bep_query(pump_name):
         
         html_response = f"""
         <div class="pump-specific-result">
-            <h3 style="color: #10b981; margin-bottom: 0.5rem;">🎯 {target_pump.pump_name} at BEP</h3>
+            <h3 style="color: #10b981; margin-bottom: 0.5rem;">🎯 {target_pump.get('pump_name')} at BEP</h3>
             <p style="color: #64748b; margin-bottom: 1rem;">Best Efficiency Point: {bep_flow:.1f} m³/hr @ {bep_head:.1f}m</p>
             <div class="pump-result-card" style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 0.75rem;">
                 <div class="pump-specs" style="margin-bottom: 0.75rem;">
                     <div style="font-size: 0.875rem; color: #4b5563;">
-                        <strong>Type:</strong> {target_pump.pump_type}<br>
-                        <strong>Speed:</strong> {target_pump.speed_rpm} RPM<br>
-                        <strong>Impeller:</strong> {target_pump.impeller_dia_mm}mm<br>
-                        <strong>Max Efficiency:</strong> {target_pump.max_efficiency:.1f}% (at BEP)
+                        <strong>Type:</strong> {target_pump.get('pump_type')}<br>
+                        <strong>Speed:</strong> {target_pump.get('speed_rpm')} RPM<br>
+                        <strong>Impeller:</strong> {target_pump.get('impeller_dia_mm')}mm<br>
+                        <strong>Max Efficiency:</strong> {target_pump.get('max_efficiency', 0):.1f}% (at BEP)
                     </div>
                 </div>
                 <a href="{pump_url}" target="_blank" class="view-details-btn" style="
