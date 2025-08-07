@@ -71,17 +71,18 @@ def run_performance_test():
             selection_results = catalog_engine.select_pumps(
                 flow_rate, head, pump_type='GENERAL', max_results=10
             )
-            if not selection_results or not selection_results.get('suitable_pumps'):
+            if not selection_results:
                 flash('No suitable pumps found for the given conditions', 'error')
                 return render_template('admin_testing.html')
             
             # Extract pump objects from selection results
             test_pumps = []
-            for result in selection_results['suitable_pumps'][:10]:
-                if hasattr(result, 'pump'):
+            for result in selection_results[:10]:
+                # selection_results is a list of dicts, each with a 'pump' key
+                if 'pump' in result:
                     test_pumps.append(result['pump'])
-                elif 'pump' in result:
-                    test_pumps.append(result['pump'])
+                elif hasattr(result, 'pump'):
+                    test_pumps.append(result.pump)
         
         # Run comparison tests
         test_results = []
@@ -155,85 +156,22 @@ def _compare_pump_performance(pump, flow_rate, head, pump_repo, catalog_engine):
         return None
 
 def _get_database_performance(pump, flow_rate, head):
-    """Get raw database performance using direct curve interpolation"""
+    """Get raw database performance using direct curve interpolation (no transformations)"""
     try:
-        # Use the pump's direct interpolation method for raw database values
-        raw_performance = pump.interpolate_performance_direct(flow_rate, head)
+        # Use the existing _get_performance_interpolated method which gives raw curve data
+        raw_performance = pump._get_performance_interpolated(flow_rate, head)
         
-        return {
-            'efficiency': raw_performance.get('efficiency_pct') if raw_performance else None,
-            'power_kw': raw_performance.get('power_kw') if raw_performance else None,
-            'npshr_m': raw_performance.get('npshr_m') if raw_performance else None
-        }
+        if raw_performance:
+            return {
+                'efficiency': raw_performance.get('efficiency_pct'),
+                'power_kw': raw_performance.get('power_kw'),
+                'npshr_m': raw_performance.get('npshr_m')
+            }
+        
+        return {'efficiency': None, 'power_kw': None, 'npshr_m': None}
         
     except Exception as e:
-        logger.warning(f"Could not get database performance for {pump.pump_code}: {str(e)}")
-        # Fallback to basic interpolation if direct method doesn't exist
-        try:
-            # Try alternative method - direct curve access
-            best_curve = None
-            best_score = float('inf')
-            
-            for curve in pump.curves:
-                # Find curve with best head match at the flow rate
-                flows = [p['flow_m3hr'] for p in curve['performance_points']]
-                heads = [p['head_m'] for p in curve['performance_points']]
-                
-                if len(flows) >= 2 and min(flows) <= flow_rate <= max(flows):
-                    # Interpolate head at this flow
-                    try:
-                        from scipy import interpolate
-                        f_head = interpolate.interp1d(flows, heads, kind='linear', bounds_error=False, fill_value='extrapolate')
-                        curve_head = float(f_head(flow_rate))
-                        head_diff = abs(curve_head - head)
-                        
-                        if head_diff < best_score:
-                            best_score = head_diff
-                            best_curve = curve
-                    except:
-                        continue
-            
-            if best_curve:
-                flows = [p['flow_m3hr'] for p in best_curve['performance_points']]
-                efficiencies = [p['efficiency_pct'] for p in best_curve['performance_points']]
-                
-                if len(flows) >= 2:
-                    f_eff = interpolate.interp1d(flows, efficiencies, kind='linear', bounds_error=False, fill_value='extrapolate')
-                    efficiency = float(f_eff(flow_rate))
-                    
-                    # Try to get power if available
-                    power = None
-                    if pump.power_curves:
-                        for power_curve in pump.power_curves:
-                            if power_curve.get('impeller_diameter_mm') == best_curve.get('impeller_diameter_mm'):
-                                power_flows = [p['flow_m3hr'] for p in power_curve['performance_points']]
-                                powers = [p['power_kw'] for p in power_curve['performance_points']]
-                                if len(power_flows) >= 2:
-                                    f_power = interpolate.interp1d(power_flows, powers, kind='linear', bounds_error=False, fill_value='extrapolate')
-                                    power = float(f_power(flow_rate))
-                                break
-                    
-                    # Try to get NPSH if available  
-                    npsh = None
-                    if pump.npsh_curves:
-                        for npsh_curve in pump.npsh_curves:
-                            if npsh_curve.get('impeller_diameter_mm') == best_curve.get('impeller_diameter_mm'):
-                                npsh_flows = [p['flow_m3hr'] for p in npsh_curve['performance_points']]
-                                npshs = [p['npshr_m'] for p in npsh_curve['performance_points']]
-                                if len(npsh_flows) >= 2:
-                                    f_npsh = interpolate.interp1d(npsh_flows, npshs, kind='linear', bounds_error=False, fill_value='extrapolate')
-                                    npsh = float(f_npsh(flow_rate))
-                                break
-                    
-                    return {
-                        'efficiency': efficiency,
-                        'power_kw': power,
-                        'npshr_m': npsh
-                    }
-            
-        except Exception as e2:
-            logger.warning(f"Fallback interpolation failed for {pump.pump_code}: {str(e2)}")
-        
+        logger.warning(f"Database performance calculation failed for {pump.pump_code}: {str(e)}")
         return {'efficiency': None, 'power_kw': None, 'npshr_m': None}
 
 def _get_ui_performance(pump, flow_rate, head, catalog_engine):
