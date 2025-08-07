@@ -812,7 +812,7 @@
                 <li>NPSHr values based on methodology: NPSHa ≥ 1.5 × NPSHr safety factor</li>
                 <li>Motor sizing includes 15% safety factor</li>
                 <li><strong>Operating impeller diameter: {{ selected_pump.get('impeller_diameter_mm', 0)|round(0)|int }} mm ({{ (100 - selected_pump.get('trim_percent', 100))|round(1) }}% trim)</strong></li>
-                <li>Impeller can be trimmed between 85% and 100% of maximum diameter</li>
+                <li>Impeller can be trimmed a maximum of 15% from the original diameter</li>
             </ul>
         </div>
 
@@ -1260,7 +1260,7 @@
                         'Efficiency: {{ (selected_pump.get("efficiency_pct") or 0)|round(1) }}%<br>' +
                         'Head: {{ (selected_pump.get("head_m") or 0)|round(1) }} m<br>' +
                         'NPSH Required: {{ (selected_pump.get("npshr_m") or 0)|round(1) }} m<br>' +
-                        'Impeller: {{ (selected_pump.get("impeller_diameter_mm") or 0)|round(0)|int }}mm ({{ (selected_pump.get("trim_percent") or 100)|round(1) }}% trim)<br>' +
+                        'Impeller: {{ (selected_pump.get("impeller_diameter_mm") or 0)|round(0)|int }}mm ({{ (100 - (selected_pump.get("trim_percent") or 100))|round(1) }}% trim)<br>' +
                         'BEP Position: {{ (selected_pump.get("qbep_percentage") or 0)|round(0) }}% of optimal flow<br>' +
                         '<extra></extra>'
                 });
