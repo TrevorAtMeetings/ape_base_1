@@ -26,7 +26,15 @@ The application employs a modular Flask architecture with a clear separation of 
   - Features: External features page (external link)
   - About: Application information - `/about`
 
-### Recent Major Update - Methodology v6.0 (August 2025)
+### Recent Major Update - Navigation System Unification (August 7, 2025)
+**CRITICAL Navigation Architecture Overhaul**:
+- **Resolved Blueprint Conflicts**: Removed duplicate `reports_bp` registration by eliminating dead code (`reports_old.py`)
+- **Unified Navigation System**: Converted all pages to use single navigation architecture instead of conflicting dual systems
+- **Template System Consolidation**: Fixed hybrid templates (input_form.html, pump_options.html) that were showing double navigation bars
+- **Route Reference Standardization**: All unified navigation now uses Flask `url_for()` instead of hardcoded paths for maintainability
+- **Template Block Cleanup**: Removed orphaned Jinja2 template blocks causing rendering errors
+- **Consistent Navigation Experience**: All pages now follow unified navigation design patterns with proper dropdown styling
+
 **Chart Improvements (August 7, 2025)**:
 - Fixed operating point markers to use transparent red triangles positioned at X-axis (Y=0) pointing upward
 - Triangle now sits on the X-axis with tip pointing toward the operating point intersection
