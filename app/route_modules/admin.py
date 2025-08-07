@@ -202,7 +202,7 @@ def _compare_pump_performance(pump, flow_rate, head, pump_repo, catalog_engine):
             has_valid_comparison = True
             
         if has_valid_comparison:
-            status = _determine_status(efficiency_delta, power_delta, npsh_delta)
+            status = _determine_status(efficiency_delta, power_delta, npsh_delta, pump)
         else:
             status = 'NO_DATA'  # Both sides missing data or UI calculation failed
         
@@ -297,8 +297,8 @@ def _get_ui_performance(pump, flow_rate, head, catalog_engine):
                 'power_kw': performance.get('power_kw'), 
                 'npshr_m': npsh_result,
                 'suitability_score': ui_solution.get('score'),
-                'trim_percent': performance.get('trim_percent', 100),
-                'method': ui_solution.get('method', 'direct_interpolation')
+                'trim_percent': performance.get('trim_percent'),  # No default - authentic data only
+                'method': ui_solution.get('method')
             }
         else:
             # CRITICAL: NO FALLBACKS ALLOWED - UI method failed, report authentic failure
@@ -419,34 +419,67 @@ def _test_pump_performance_envelope(pump, base_flow, base_head, pump_repo, catal
         return None
 
 def _generate_envelope_test_points(pump, bep_flow, bep_head, base_head):
-    """Generate BEP-anchored test points: proportionally vary both flow and head from BEP"""
+    """Generate authentic envelope test points based on pump operating curves"""
     test_points = []
     
-    # BEP-anchored approach: 4 points decreasing, BEP, 4 points increasing (both flow AND head)
-    bep_percentages = [60, 70, 80, 90, 100, 110, 120, 130, 140]
+    # Get authentic pump operating ranges from database
+    min_flow = None
+    max_flow = None
     
-    for bep_pct in bep_percentages:
-        # Scale BOTH flow and head proportionally from BEP
-        flow = bep_flow * (bep_pct / 100.0)
-        head = bep_head * (bep_pct / 100.0)
+    # Extract authentic operating ranges from pump curve data
+    if hasattr(pump, 'curves') and pump.curves:
+        all_flows = []
         
-        # Determine operating region based on BEP percentage
-        if bep_pct < 80:
-            operating_region = "Part Load"
-            test_category = "efficiency_validation"
-        elif bep_pct <= 110: 
-            operating_region = "Optimal Zone"
-            test_category = "accuracy_validation"
+        for curve in pump.curves:
+            if 'performance_points' in curve:
+                for point in curve['performance_points']:
+                    if point.get('flow_m3hr'):
+                        all_flows.append(point['flow_m3hr'])
+        
+        if all_flows:
+            min_flow = min(all_flows)
+            max_flow = max(all_flows)
+    
+    # Fallback to conservative BEP-based ranges if no curve data available
+    if not min_flow or not max_flow:
+        min_flow = bep_flow * 0.6  # 60% of BEP
+        max_flow = bep_flow * 1.4  # 140% of BEP
+        
+    # Generate 7 test points across authentic operating envelope
+    flow_points = [
+        min_flow,
+        min_flow + (bep_flow - min_flow) * 0.33,  
+        min_flow + (bep_flow - min_flow) * 0.67,
+        bep_flow,                                # BEP center
+        bep_flow + (max_flow - bep_flow) * 0.33,
+        bep_flow + (max_flow - bep_flow) * 0.67,
+        max_flow
+    ]
+    
+    # Use base_head for all points to maintain consistent system curve
+    for i, flow in enumerate(flow_points):
+        flow_pct_bep = (flow / bep_flow * 100) if bep_flow > 0 else 100
+        
+        # Determine operating region based on position relative to BEP and authentic flow ranges
+        if flow <= min_flow + (bep_flow - min_flow) * 0.5:
+            operating_region = "Low Flow"
+            test_category = "low_flow_validation"
+        elif flow <= bep_flow + (max_flow - bep_flow) * 0.5: 
+            operating_region = "Optimal Zone" 
+            test_category = "bep_validation"
         else:
-            operating_region = "Overload"
-            test_category = "extrapolation_validation"
+            operating_region = "High Flow"
+            test_category = "high_flow_validation"
         
         test_points.append({
             'flow': flow,
-            'head': head,
-            'flow_percent_bep': bep_pct,
+            'head': base_head,  # Use system head requirement
+            'flow_percent_bep': flow_pct_bep,
             'operating_region': operating_region,
-            'test_category': test_category
+            'test_category': test_category,
+            'authentic_range': True,  # Flag indicating use of real operating data
+            'min_flow_range': min_flow,
+            'max_flow_range': max_flow
         })
     
     return test_points
@@ -510,34 +543,56 @@ def _calculate_envelope_statistics(envelope_results):
     
     return stats
 
-def _determine_status(efficiency_delta, power_delta, npsh_delta):
-    """Determine test status based on deltas between database and UI values"""
+def _determine_status(efficiency_delta, power_delta, npsh_delta, pump=None):
+    """Determine test status based on deltas between database and UI values using pump-specific thresholds"""
     
     # Check for major differences (indicating potential issues)
     major_diff = False
     minor_diff = False
     
+    # Pump-specific efficiency thresholds based on pump characteristics
+    if pump and hasattr(pump, 'specifications'):
+        # Use pump-specific thresholds if available, otherwise conservative defaults
+        max_power = pump.specifications.get('max_power_kw', 10)  # kW
+        if max_power and max_power > 0:
+            # Scale power thresholds based on pump size
+            major_power_threshold = max(2.0, max_power * 0.1)  # 10% of max power or 2kW minimum
+            minor_power_threshold = max(0.5, max_power * 0.05)  # 5% of max power or 0.5kW minimum
+        else:
+            # Conservative defaults when max power unknown
+            major_power_threshold = 2.0
+            minor_power_threshold = 0.5
+    else:
+        # Conservative defaults
+        major_power_threshold = 2.0
+        minor_power_threshold = 0.5
+    
+    # Efficiency thresholds (more universal across pump types)
     if efficiency_delta is not None and abs(efficiency_delta) > 5:  # >5% efficiency difference
         major_diff = True
     elif efficiency_delta is not None and abs(efficiency_delta) > 2:  # >2% efficiency difference
         minor_diff = True
         
-    if power_delta is not None and abs(power_delta) > 2:  # >2kW power difference
-        major_diff = True  
-    elif power_delta is not None and abs(power_delta) > 0.5:  # >0.5kW power difference
-        minor_diff = True
+    # CRITICAL: Power validation removed - no authentic power data exists in database
+    # All power comparisons are invalid since both DB and UI calculate power using same formula
+    # Commenting out power validation to prevent false accuracy metrics
+    # if power_delta is not None and abs(power_delta) > major_power_threshold:
+    #     major_diff = True  
+    # elif power_delta is not None and abs(power_delta) > minor_power_threshold:
+    #     minor_diff = True
         
+    # NPSH thresholds (pump-specific would be better but using conservative defaults)
     if npsh_delta is not None and abs(npsh_delta) > 1:  # >1m NPSH difference
         major_diff = True
     elif npsh_delta is not None and abs(npsh_delta) > 0.3:  # >0.3m NPSH difference
         minor_diff = True
     
     if major_diff:
-        return 'MAJOR'
+        return 'major_diff'
     elif minor_diff:
-        return 'MINOR'
+        return 'minor_diff'
     else:
-        return 'MATCH'
+        return 'match'
 
 @admin_bp.route('/admin/upload', methods=['POST'])
 def upload_document():

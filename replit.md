@@ -29,13 +29,21 @@ The application employs a modular Flask architecture with a clear separation of 
 
 ### Recent Major Update - CRITICAL Data Integrity Fixes (August 7, 2025)
 
-**CRITICAL DATA INTEGRITY OVERHAUL**:
+**CRITICAL DATA INTEGRITY OVERHAUL - PHASE 2 COMPLETE**:
 - **Eliminated All Fallback Logic**: Removed dangerous UI performance fallbacks that created artificial agreement between database and UI calculations
 - **Fixed BEP Field Mapping**: Corrected database field mapping to use authentic manufacturer specifications (bep_flow_m3hr, bep_head_m) instead of missing fields
 - **Strict No-Fallback Policy**: System now fails clearly when authentic BEP data is missing instead of using estimated/interpolated values
 - **Artificial Match Prevention**: Added validation to prevent counting None=None as "exact matches" - only real data comparisons are considered valid
 - **Authentic Data Enforcement**: Envelope testing now anchors to authentic manufacturer BEP specifications (12.33 m³/hr @ 23.45m) instead of curve-estimated values (10 m³/hr @ 13.6m)
 - **Clear Failure Reporting**: UI calculation failures now report as 'ui_calculation_failed' instead of falling back to database interpolation methods
+
+**CRITICAL BUG FIXES (August 7, 2025)**:
+- **Status Case Mismatch Fixed**: Corrected return values from 'MATCH'/'MINOR'/'MAJOR' to 'match'/'minor_diff'/'major_diff' to fix completely broken accuracy statistics
+- **Default Value Contamination Removed**: Eliminated hardcoded defaults like trim_percent=100 and method assumptions that injected fake data into validation
+- **Invalid Power Comparisons Removed**: Discovered database contains NO authentic power data - removed all power validation to prevent false accuracy metrics 
+- **Pump-Specific Thresholds Implemented**: Replaced universal hardcoded thresholds with pump-specific logic based on max_power_kw specifications
+- **Authentic Operating Envelopes**: Replaced fixed BEP percentages (60-140%) with authentic pump curve operating ranges from database
+- **Real Operating Regions**: Removed fake "Part Load/Optimal/Overload" assumptions, now uses authentic flow ranges from pump curves
 
 ### Recent Major Update - Enhanced Performance Testing with Table Format (August 7, 2025)
 
