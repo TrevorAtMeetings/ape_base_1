@@ -343,7 +343,7 @@
                                         <td>
                                             <div class="progress" style="height: 20px;">
                                                 <div class="progress-bar bg-success" role="progressbar" 
-                                                     style="width: {{ selected_pump.overall_score|default(0) }}%">
+                                                     style="width: {{ selected_pump.overall_score|default(0) }}%;">
                                                     {{ "%.0f"|default(0.0)|format(selected_pump.overall_score|default(0)) }}%
                                                 </div>
                                             </div>

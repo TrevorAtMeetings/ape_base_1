@@ -44,15 +44,12 @@
     --shadow-medium: rgba(0, 0, 0, 0.12);
 }
 
-/* Base Typography */
+/* Base Typography - Font is now managed by professional-theme.css */
 body {
-    font-family: 'Roboto', sans-serif;
     line-height: 1.6;
     color: var(--text-primary);
     background-color: var(--background-light);
     -webkit-text-size-adjust: 100%;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
     /* Flex layout for footer positioning */
     display: flex;
     flex-direction: column;
