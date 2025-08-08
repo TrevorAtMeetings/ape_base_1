@@ -118,6 +118,14 @@ app.register_blueprint(pump_editor_bp)
 from .route_modules.admin_config import admin_config_bp
 app.register_blueprint(admin_config_bp)
 
+# Register the Brain Monitor blueprint (if available)
+try:
+    from .route_modules.brain_monitor import brain_monitor_bp
+    app.register_blueprint(brain_monitor_bp)
+    logger.info("Brain monitoring routes registered")
+except ImportError:
+    logger.info("Brain monitoring not available - continuing without it")
+
 # Import core functions from appropriate modules
 from .data_models import SiteRequirements
 from .pump_repository import get_pump_repository

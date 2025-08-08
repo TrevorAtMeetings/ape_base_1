@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brain System Metrics - APE Pumps</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .metric-card {
+            border-left: 4px solid #007bff;
+            margin-bottom: 1rem;
+        }
+        .status-operational { color: #28a745; }
+        .status-degraded { color: #ffc107; }
+        .status-error { color: #dc3545; }
+        .mode-shadow { background-color: #f8f9fa; }
+        .mode-active { background-color: #d4edda; }
+        .mode-disabled { background-color: #f8d7da; }
+        .metric-value {
+            font-size: 2rem;
+            font-weight: bold;
+        }
+        .chart-container {
+            height: 300px;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">APE Pumps</a>
+            <span class="navbar-text text-warning">Brain System Monitor</span>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-12">
+                <h2>Brain System Metrics Dashboard</h2>
+                <p class="text-muted">Real-time monitoring of the centralized intelligence system</p>
+            </div>
+        </div>
+
+        <!-- Status Overview -->
+        <div class="row mt-4">
+            <div class="col-md-3">
+                <div class="card metric-card">
+                    <div class="card-body">
+                        <h6 class="card-subtitle mb-2 text-muted">Status</h6>
+                        <p class="metric-value status-operational" id="status">Loading...</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card metric-card">
+                    <div class="card-body">
+                        <h6 class="card-subtitle mb-2 text-muted">Mode</h6>
+                        <p class="metric-value" id="mode">{{ brain_mode }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card metric-card">
+                    <div class="card-body">
+                        <h6 class="card-subtitle mb-2 text-muted">Uptime</h6>
+                        <p class="metric-value" id="uptime">0s</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card metric-card">
+                    <div class="card-body">
+                        <h6 class="card-subtitle mb-2 text-muted">Cache Hit Rate</h6>
+                        <p class="metric-value" id="hitrate">0%</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Performance Metrics -->
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Operation Performance</h5>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-sm" id="operations-table">
+                            <thead>
+                                <tr>
+                                    <th>Operation</th>
+                                    <th>Count</th>
+                                    <th>Avg (ms)</th>
+                                    <th>Max (ms)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Cache Statistics</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-6">
+                                <p><strong>Cache Size:</strong> <span id="cache-size">0/1000</span></p>
+                                <p><strong>Total Hits:</strong> <span id="cache-hits">0</span></p>
+                            </div>
+                            <div class="col-6">
+                                <p><strong>Total Misses:</strong> <span id="cache-misses">0</span></p>
+                                <p><strong>Evictions:</strong> <span id="cache-evictions">0</span></p>
+                            </div>
+                        </div>
+                        <div class="progress mt-3">
+                            <div class="progress-bar" role="progressbar" id="cache-usage" style="width: 0%">0%</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Discrepancy Monitoring -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Shadow Mode Discrepancies</h5>
+                    </div>
+                    <div class="card-body">
+                        <p><strong>Total Discrepancies:</strong> <span id="discrepancy-count" class="badge bg-warning">0</span></p>
+                        <div id="discrepancy-list">
+                            <!-- Populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Control Panel -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Control Panel</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="btn-group" role="group">
+                            <button class="btn btn-outline-secondary" onclick="setBrainMode('disabled')">Disable</button>
+                            <button class="btn btn-outline-primary" onclick="setBrainMode('shadow')">Shadow Mode</button>
+                            <button class="btn btn-outline-success" onclick="setBrainMode('active')">Active Mode</button>
+                        </div>
+                        <button class="btn btn-warning ms-3" onclick="clearCache()">Clear Cache</button>
+                        <button class="btn btn-info ms-2" onclick="refreshMetrics()">Refresh</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let autoRefresh = true;
+
+        function formatUptime(seconds) {
+            if (seconds < 60) return `${Math.floor(seconds)}s`;
+            if (seconds < 3600) return `${Math.floor(seconds/60)}m`;
+            return `${Math.floor(seconds/3600)}h ${Math.floor((seconds%3600)/60)}m`;
+        }
+
+        function refreshMetrics() {
+            fetch('/brain/status')
+                .then(response => response.json())
+                .then(data => {
+                    // Update status
+                    document.getElementById('status').textContent = data.status;
+                    document.getElementById('mode').textContent = data.mode;
+                    document.getElementById('uptime').textContent = formatUptime(data.uptime_seconds);
+                    document.getElementById('hitrate').textContent = data.cache.hit_rate + '%';
+
+                    // Update cache stats
+                    document.getElementById('cache-size').textContent = `${data.cache.size}/${data.cache.max_size}`;
+                    document.getElementById('cache-hits').textContent = data.cache.hits;
+                    document.getElementById('cache-misses').textContent = data.cache.misses;
+                    
+                    // Cache usage bar
+                    const cacheUsage = (data.cache.size / data.cache.max_size) * 100;
+                    const cacheBar = document.getElementById('cache-usage');
+                    cacheBar.style.width = cacheUsage + '%';
+                    cacheBar.textContent = Math.round(cacheUsage) + '%';
+
+                    // Update operations table
+                    const tbody = document.querySelector('#operations-table tbody');
+                    tbody.innerHTML = '';
+                    for (const [op, stats] of Object.entries(data.operations)) {
+                        const row = tbody.insertRow();
+                        row.insertCell(0).textContent = op;
+                        row.insertCell(1).textContent = stats.count;
+                        row.insertCell(2).textContent = stats.avg_ms.toFixed(2);
+                        row.insertCell(3).textContent = stats.max_ms.toFixed(2);
+                    }
+
+                    // Update discrepancies
+                    document.getElementById('discrepancy-count').textContent = data.discrepancies.total;
+                    
+                    // Mode styling
+                    document.getElementById('mode').className = 'metric-value mode-' + data.mode;
+                })
+                .catch(error => console.error('Error fetching metrics:', error));
+        }
+
+        function setBrainMode(mode) {
+            fetch(`/brain/toggle/${mode}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(`Brain mode changed to: ${mode}`);
+                        refreshMetrics();
+                    }
+                })
+                .catch(error => console.error('Error setting mode:', error));
+        }
+
+        function clearCache() {
+            fetch('/brain/clear_cache')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Cache cleared successfully');
+                        refreshMetrics();
+                    }
+                })
+                .catch(error => console.error('Error clearing cache:', error));
+        }
+
+        // Initial load and auto-refresh
+        refreshMetrics();
+        setInterval(() => {
+            if (autoRefresh) refreshMetrics();
+        }, 5000);  // Refresh every 5 seconds
+    </script>
+</body>
+</html>
