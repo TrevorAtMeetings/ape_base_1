@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+
+{% block title %}Brain System Administration{% endblock %}
+
+{% block content %}
+<div class="container" style="margin-top: 20px;">
+    <!-- Page Header -->
+    <div class="row">
+        <div class="col s12">
+            <div class="card-panel">
+                <h4 class="blue-text text-darken-2">
+                    <i class="material-icons left">psychology</i>
+                    Brain System Administration
+                </h4>
+                <p>System Status: <span class="badge green white-text">System operating normally</span></p>
+                <p class="grey-text">Production Configuration: {{ stats.production_config|default('production_default') }}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- System Status Overview -->
+    <div class="row">
+        <div class="col s12 m4">
+            <div class="card">
+                <div class="card-content">
+                    <span class="card-title">Data Quality Issues</span>
+                    <h3 class="blue-text">{{ stats.total_quality_issues|default(0) }}</h3>
+                    <p class="grey-text">Critical: {{ stats.critical_issues|default(0) }}</p>
+                    <p class="grey-text">Major: {{ stats.major_issues|default(0) }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col s12 m4">
+            <div class="card">
+                <div class="card-content">
+                    <span class="card-title">Critical Issues</span>
+                    <h3 class="red-text">{{ stats.critical_issues|default(0) }}</h3>
+                    <p class="grey-text">Require immediate attention</p>
+                </div>
+            </div>
+        </div>
+        <div class="col s12 m4">
+            <div class="card">
+                <div class="card-content">
+                    <span class="card-title">Active Corrections</span>
+                    <h3 class="green-text">{{ stats.active_corrections|default(0) }}</h3>
+                    <p class="grey-text">Corrections in overlay system</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Data Quality Management Section -->
+    <div class="row">
+        <div class="col s12">
+            <div class="card">
+                <div class="card-content">
+                    <span class="card-title">
+                        <i class="material-icons left">assessment</i>
+                        Data Quality Management
+                    </span>
+                    <p>Monitor and manage data quality issues across all pump specifications and performance curves. Identify inconsistencies, outliers, and missing data that could affect selection accuracy.</p>
+                </div>
+                <div class="card-action">
+                    <a href="{{ url_for('brain_admin.data_quality_dashboard') }}" class="btn">
+                        View Quality Issues
+                    </a>
+                    <a href="{{ url_for('brain_admin.run_quality_scan') }}" class="btn-flat blue-text">
+                        Run Quality Scan
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Data Corrections System Section -->
+    <div class="row">
+        <div class="col s12">
+            <div class="card">
+                <div class="card-content">
+                    <span class="card-title">
+                        <i class="material-icons left">edit</i>
+                        Data Corrections System
+                    </span>
+                    <p>Manage the overlay correction system. Propose, review, and approve corrections to pump data without modifying the golden source database. All changes are auditable and reversible.</p>
+                </div>
+                <div class="card-action">
+                    <a href="{{ url_for('brain_admin.corrections_dashboard') }}" class="btn">
+                        Manage Corrections
+                    </a>
+                    <a href="{{ url_for('brain_admin.propose_correction') }}" class="btn-flat blue-text">
+                        Propose Correction
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Brain Logic Workbench Section -->
+    <div class="row">
+        <div class="col s12">
+            <div class="card">
+                <div class="card-content">
+                    <span class="card-title">
+                        <i class="material-icons left">science</i>
+                        Brain Logic Workbench
+                    </span>
+                    <p>Test and validate Brain logic changes in a safe environment. Simulate different configurations, test corrections, and analyze the impact before deploying to production.</p>
+                </div>
+                <div class="card-action">
+                    <a href="{{ url_for('brain_admin.brain_workbench') }}" class="btn">
+                        Open Workbench
+                    </a>
+                    <a href="#" class="btn-flat blue-text">
+                        Test Scenario
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Configuration Management Section -->
+    <div class="row">
+        <div class="col s12 m6">
+            <div class="card">
+                <div class="card-content">
+                    <span class="card-title">
+                        <i class="material-icons left">settings</i>
+                        Configuration Management
+                    </span>
+                    <p>Manage Brain configuration profiles for different use cases. Create, test, and deploy configurations with different scoring weights and logic parameters.</p>
+                </div>
+                <div class="card-action">
+                    <a href="{{ url_for('brain_admin.configuration_profiles') }}" class="btn">
+                        Configuration Manager
+                    </a>
+                    <a href="{{ url_for('brain_admin.new_profile') }}" class="btn-flat blue-text">
+                        New Profile
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Manufacturer Comparison Section -->
+        <div class="col s12 m6">
+            <div class="card">
+                <div class="card-content">
+                    <span class="card-title">
+                        <i class="material-icons left">compare_arrows</i>
+                        Manufacturer Comparison
+                    </span>
+                    <p>Compare Brain selections against manufacturer recommendations. Upload datasheets, analyze differences, and identify opportunities for improvement.</p>
+                </div>
+                <div class="card-action">
+                    <a href="{{ url_for('brain_admin.manufacturer_comparison') }}" class="btn">
+                        Comparison Tool
+                    </a>
+                    <a href="{{ url_for('brain_admin.upload_datasheet') }}" class="btn-flat blue-text">
+                        Upload Datasheet
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Decision Analytics Section -->
+    <div class="row">
+        <div class="col s12">
+            <div class="card">
+                <div class="card-content">
+                    <span class="card-title">
+                        <i class="material-icons left">analytics</i>
+                        Decision Analytics
+                    </span>
+                    <p>Analyze Brain decision patterns, track accuracy improvements over time, and generate reports on system performance and feasibility.</p>
+                </div>
+                <div class="card-action">
+                    <a href="{{ url_for('brain_admin.analytics_dashboard') }}" class="btn">
+                        View Analytics
+                    </a>
+                    <a href="{{ url_for('brain_admin.generate_report') }}" class="btn-flat blue-text">
+                        Generate Report
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
