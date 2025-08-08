@@ -328,13 +328,21 @@ class PumpRepository:
 
                         total_curves += len(curves)
 
-                        # CRITICAL FIX: Derive min/max impeller from curves (single source of truth)
+                        # ENHANCED FIX: Try curve derivation first, fallback to specifications
                         min_mm, max_mm = compute_impeller_min_max_from_curves(curves)
                         
+                        # Fallback to specification data if curve derivation fails
                         if not (min_mm and max_mm):
-                            logger.error(f"Repository: Could not derive min/max impeller for {pump_code} from curves; specs may be incomplete.")
-                            # Ensure keys exist even for edge cases
-                            min_mm, max_mm = 0.0, 0.0
+                            spec_min = pump_row_dict.get('min_impeller_diameter_mm')
+                            spec_max = pump_row_dict.get('max_impeller_diameter_mm')
+                            
+                            if spec_min and spec_max:
+                                min_mm, max_mm = float(spec_min), float(spec_max)
+                                logger.debug(f"Repository: Using specification min/max impeller for {pump_code}: {min_mm}-{max_mm}mm")
+                            else:
+                                logger.error(f"Repository: Could not derive min/max impeller for {pump_code} from curves or specifications.")
+                                # Ensure keys exist even for edge cases
+                                min_mm, max_mm = 0.0, 0.0
 
                         # Build pump model object using aggregated statistics
                         pump_model = {

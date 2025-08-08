@@ -573,14 +573,22 @@ def get_chart_data_safe(safe_pump_code):
                 heads = base_heads
                 powers = base_powers
 
+            # Calculate actual impeller diameter for display
+            display_impeller_diameter = curve.get('impeller_diameter_mm', curve.get('impeller_size', f'Curve {i+1}'))
+            
+            # For selected curve with trimming, show the trimmed diameter
+            if is_selected_curve and sizing_info and sizing_info.get('trim_percent', 100) < 100:
+                required_diameter = sizing_info.get('required_diameter_mm')
+                if required_diameter:
+                    display_impeller_diameter = required_diameter
+            
             curve_data = {
                 'curve_index':
                 i,
                 'impeller_size':
                 curve.get('impeller_size', f'Curve {i+1}'),
                 'impeller_diameter_mm':
-                curve.get('impeller_diameter_mm',
-                          curve.get('impeller_size', f'Curve {i+1}')),
+                display_impeller_diameter,
                 'flow_data':
                 flows,
                 'head_data':
