@@ -1065,37 +1065,37 @@ function switchUnitSystem(newSystem) {
     const flowInput = document.getElementById('flow_rate');
     const headInput = document.getElementById('total_head');
     
-    // No need to store here - values are stored as user types them
-    
     // Convert existing values if they exist
     if (flowInput && flowInput.value) {
         const flowValue = parseFloat(flowInput.value);
         if (!isNaN(flowValue)) {
             if (newSystem === 'imperial' && currentUnitSystem === 'metric') {
+                // Converting FROM metric TO imperial
                 // Check if we have stored imperial value first, otherwise convert
                 if (storedValues.flow_rate_imperial !== null) {
                     flowInput.value = storedValues.flow_rate_imperial.toString();
                     showConversionMessage(`Flow rate restored to ${flowInput.value} GPM`);
                     console.log('Restored stored imperial flow rate:', storedValues.flow_rate_imperial);
                 } else {
-                    // Convert m³/hr to GPM: m³/hr ÷ 0.227124 
-                    const convertedValue = (flowValue / 0.227124);
+                    // Convert m³/hr to GPM: 1 m³/hr = 4.40287 GPM
+                    const convertedValue = (flowValue * 4.40287);
                     flowInput.value = convertedValue.toFixed(2);
                     storedValues.flow_rate_imperial = convertedValue;
-                    showConversionMessage(`Flow rate converted to ${flowInput.value} GPM`);
+                    showConversionMessage(`Flow rate converted: ${flowValue} m³/hr → ${flowInput.value} GPM`);
                 }
             } else if (newSystem === 'metric' && currentUnitSystem === 'imperial') {
+                // Converting FROM imperial TO metric
                 // Check if we have stored metric value first, otherwise convert
                 if (storedValues.flow_rate_metric !== null) {
                     flowInput.value = storedValues.flow_rate_metric.toString();
                     showConversionMessage(`Flow rate restored to ${flowInput.value} m³/hr`);
                     console.log('Restored stored metric flow rate:', storedValues.flow_rate_metric);
                 } else {
-                    // Convert GPM to m³/hr: 1 US gpm = 0.227124 m³/h
+                    // Convert GPM to m³/hr: 1 GPM = 0.227124 m³/hr
                     const convertedValue = (flowValue * 0.227124);
                     flowInput.value = convertedValue.toFixed(2);
                     storedValues.flow_rate_metric = convertedValue;
-                    showConversionMessage(`Flow rate converted to ${flowInput.value} m³/hr`);
+                    showConversionMessage(`Flow rate converted: ${flowValue} GPM → ${flowInput.value} m³/hr`);
                 }
             }
         }
@@ -1105,6 +1105,7 @@ function switchUnitSystem(newSystem) {
         const headValue = parseFloat(headInput.value);
         if (!isNaN(headValue)) {
             if (newSystem === 'imperial' && currentUnitSystem === 'metric') {
+                // Converting FROM metric TO imperial
                 // Check if we have stored imperial value first, otherwise convert
                 if (storedValues.total_head_imperial !== null) {
                     headInput.value = storedValues.total_head_imperial.toString();
@@ -1115,9 +1116,10 @@ function switchUnitSystem(newSystem) {
                     const convertedValue = (headValue * 3.28084);
                     headInput.value = convertedValue.toFixed(2);
                     storedValues.total_head_imperial = convertedValue;
-                    showConversionMessage(`Head converted to ${headInput.value} ft`);
+                    showConversionMessage(`Head converted: ${headValue} m → ${headInput.value} ft`);
                 }
             } else if (newSystem === 'metric' && currentUnitSystem === 'imperial') {
+                // Converting FROM imperial TO metric
                 // Check if we have stored metric value first, otherwise convert
                 if (storedValues.total_head_metric !== null) {
                     headInput.value = storedValues.total_head_metric.toString();
@@ -1128,7 +1130,7 @@ function switchUnitSystem(newSystem) {
                     const convertedValue = (headValue * 0.3048);
                     headInput.value = convertedValue.toFixed(2);
                     storedValues.total_head_metric = convertedValue;
-                    showConversionMessage(`Head converted to ${headInput.value} m`);
+                    showConversionMessage(`Head converted: ${headValue} ft → ${headInput.value} m`);
                 }
             }
         }
@@ -1256,55 +1258,12 @@ const storedValues = {
     total_head_imperial: null
 };
 
-// Simple unit conversion function - only converts when in imperial mode
+// Remove automatic conversion on blur - this was causing double conversion issues
+// Values entered in imperial mode should stay as imperial until user switches units
 function handleUnitConversionOnBlur(input) {
-    // Check if we're in imperial mode
-    const imperialRadio = document.querySelector('input[name="unit_system"][value="imperial"]');
-    const isImperialSelected = imperialRadio && imperialRadio.checked;
-    
-    if (!isImperialSelected) {
-        return; // No conversion needed if not in imperial mode
-    }
-    
-    // Check if this field has already been converted
-    if (convertedFields.has(input.id)) {
-        return; // Already converted
-    }
-    
-    const value = parseFloat(input.value);
-    if (isNaN(value) || value <= 0) {
-        return; // Invalid value
-    }
-    
-    let convertedValue;
-    let message;
-    
-    if (input.id === 'flow_rate') {
-        // Convert GPM to m³/hr: 1 US gpm = 0.227124 m³/h
-        convertedValue = (value * 0.227124).toFixed(2);
-        message = `Flow rate converted: ${value} GPM → ${convertedValue} m³/hr`;
-    } else if (input.id === 'total_head') {
-        // Convert feet to meters: 1 ft = 0.3048 m
-        convertedValue = (value * 0.3048).toFixed(2);
-        message = `Head converted: ${value} ft → ${convertedValue} m`;
-    } else {
-        return;
-    }
-    
-    input.value = convertedValue;
-    showConversionMessage(message);
-    
-    // Mark this field as converted
-    convertedFields.add(input.id);
-    
-    // Store the converted value
-    if (input.id === 'flow_rate') {
-        storedValues.flow_rate_metric = parseFloat(convertedValue);
-    } else if (input.id === 'total_head') {
-        storedValues.total_head_metric = parseFloat(convertedValue);
-    }
-    
-    checkEssentialRequirements();
+    // Disabled - conversion only happens when user explicitly switches unit systems
+    // This prevents the confusion where users enter imperial values and they get auto-converted
+    return;
 }
 
 // Set up essential requirements watcher
