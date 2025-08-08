@@ -83,6 +83,13 @@ The pump selection methodology separates fixed-speed (impeller trimming) from VF
 - **markdown2**: Markdown processing.
 
 ## Recent Changes
+### August 8, 2025 - Master Plan: Centralized Brain System Architecture
+- **STRATEGIC INITIATIVE PLANNED**: Comprehensive transformation to centralized "Brain" system for all application intelligence
+- **ARCHITECTURE VISION**: Single PumpBrain module consolidating selection logic, performance analysis, and chart intelligence
+- **IMPLEMENTATION ROADMAP**: 8-week phased migration from distributed to centralized architecture
+- **EXPECTED BENEFITS**: Elimination of calculation inconsistencies, real-time intelligence, foundation for ML integration
+- **DOCUMENTATION**: Created master_plan_brain_feature.md with complete technical specifications and migration strategy
+
 ### August 8, 2025 - Critical Data Integrity Issues Identified
 - **MAJOR DATABASE DISCREPANCY FOUND**: 65-200 1F pump missing manufacturer-rated 200.5mm impeller curve - database only contains 218mm maximum curve
 - **Manufacturer vs Database**: Pump rated at 60 m³/hr @ 40m head with 200.5mm impeller vs database showing ~48.84m head with 218mm impeller
