@@ -96,8 +96,9 @@ class SelectionIntelligence:
         # Sort by score (descending)
         feasible_pumps.sort(key=lambda x: x.get('total_score', 0), reverse=True)
         
-        # Return top 10
-        return feasible_pumps[:10]
+        # Return top results (match legacy which returns 5)
+        max_results = constraints.get('max_results', 5)
+        return feasible_pumps[:max_results]
     
     def evaluate_single_pump(self, pump_data: Dict[str, Any], 
                             flow: float, head: float) -> Dict[str, Any]:
@@ -152,6 +153,16 @@ class SelectionIntelligence:
             
             # Get performance at operating point
             performance = self.brain.performance.calculate_at_point(pump_data, flow, head)
+            
+            # Validate performance data contract
+            if performance:
+                required_keys = ['meets_requirements', 'efficiency_pct', 'head_m', 'power_kw']
+                missing_keys = [k for k in required_keys if k not in performance]
+                if missing_keys:
+                    logger.error(f"Performance data for pump {pump_data.get('pump_code')} is missing keys: {missing_keys}")
+                    evaluation['feasible'] = False
+                    evaluation['exclusion_reasons'].append('Invalid performance data')
+                    return evaluation
             
             if performance and performance.get('meets_requirements'):
                 # Efficiency score

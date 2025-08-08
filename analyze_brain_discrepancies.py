@@ -103,12 +103,13 @@ class DiscrepancyAnalyzer:
                     'legacy_pump': legacy_top['pump_code'],
                     'brain_pump': brain_top['pump_code'],
                     'legacy_score': legacy_top.get('overall_score', 0),
-                    'brain_score': brain_top.get('overall_score', 0)
+                    'brain_score': brain_top.get('total_score', brain_top.get('overall_score', 0))  # Brain uses 'total_score'
                 })
                 return False
                 
-            # Compare scores
-            score_diff = abs(legacy_top.get('overall_score', 0) - brain_top.get('overall_score', 0))
+            # Compare scores (Brain uses 'total_score')
+            brain_score = brain_top.get('total_score', brain_top.get('overall_score', 0))
+            score_diff = abs(legacy_top.get('overall_score', 0) - brain_score)
             if score_diff > 1.0:  # More than 1 point difference
                 self.discrepancies.append({
                     'type': 'score_discrepancy',
@@ -116,7 +117,7 @@ class DiscrepancyAnalyzer:
                     'head': head,
                     'pump': legacy_top['pump_code'],
                     'legacy_score': legacy_top.get('overall_score', 0),
-                    'brain_score': brain_top.get('overall_score', 0),
+                    'brain_score': brain_score,
                     'difference': score_diff
                 })
                 return False

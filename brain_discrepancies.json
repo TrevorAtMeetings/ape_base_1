@@ -26,8 +26,8 @@
     "head": 50,
     "pump": "Nitz 100-80-250",
     "legacy_score": 95.56118780219563,
-    "brain_score": 0,
-    "difference": 95.56118780219563
+    "brain_score": 79.672,
+    "difference": 15.889187802195636
   },
   {
     "type": "score_discrepancy",
@@ -35,8 +35,8 @@
     "head": 75,
     "pump": "PL 100 AS",
     "legacy_score": 94.2943672603343,
-    "brain_score": 0,
-    "difference": 94.2943672603343
+    "brain_score": 78.154,
+    "difference": 16.1403672603343
   },
   {
     "type": "top_pump_mismatch",
@@ -45,7 +45,7 @@
     "legacy_pump": "4/5 MEDI",
     "brain_pump": "100-400 2F",
     "legacy_score": 93.595,
-    "brain_score": 0
+    "brain_score": 78.28
   },
   {
     "type": "top_pump_mismatch",
@@ -54,7 +54,7 @@
     "legacy_pump": "200-150-460 4P",
     "brain_pump": "10/12 DME",
     "legacy_score": 89.72833333333331,
-    "brain_score": 0
+    "brain_score": 84.646
   },
   {
     "type": "top_pump_mismatch",
@@ -63,7 +63,7 @@
     "legacy_pump": "250-200-610 6P",
     "brain_pump": "150-400 2F",
     "legacy_score": 95.60194005257844,
-    "brain_score": 0
+    "brain_score": 82.798
   },
   {
     "type": "score_discrepancy",
@@ -71,8 +71,8 @@
     "head": 80,
     "pump": "6 WLN 21A",
     "legacy_score": 97.70947999983763,
-    "brain_score": 0,
-    "difference": 97.70947999983763
+    "brain_score": 82.252,
+    "difference": 15.45747999983763
   },
   {
     "type": "count_mismatch",
@@ -101,8 +101,8 @@
     "head": 40,
     "pump": "65-200 1F",
     "legacy_score": 93.17,
-    "brain_score": 0,
-    "difference": 93.17
+    "brain_score": 79.20400000000001,
+    "difference": 13.965999999999994
   },
   {
     "type": "score_discrepancy",
@@ -110,8 +110,8 @@
     "head": 35,
     "pump": "50-160 2F 2P",
     "legacy_score": 95.205,
-    "brain_score": 0,
-    "difference": 95.205
+    "brain_score": 79.246,
+    "difference": 15.959000000000003
   },
   {
     "type": "score_discrepancy",
@@ -119,8 +119,8 @@
     "head": 45,
     "pump": "65-200 2F 2P",
     "legacy_score": 90.555,
-    "brain_score": 0,
-    "difference": 90.555
+    "brain_score": 66.339304293715,
+    "difference": 24.215695706285004
   },
   {
     "type": "score_discrepancy",
@@ -128,8 +128,8 @@
     "head": 40,
     "pump": "65-200 1F",
     "legacy_score": 93.17,
-    "brain_score": 0,
-    "difference": 93.17
+    "brain_score": 79.20400000000001,
+    "difference": 13.965999999999994
   },
   {
     "type": "top_pump_mismatch",
@@ -138,6 +138,14 @@
     "legacy_pump": "250-200-610 6P",
     "brain_pump": "150-400 2F",
     "legacy_score": 95.60194005257844,
-    "brain_score": 0
+    "brain_score": 82.798
+  },
+  {
+    "type": "sizing_method",
+    "pump": "50-160 2F 2P",
+    "flow": 50,
+    "head": 30,
+    "legacy_method": "direct_interpolation",
+    "brain_method": null
   }
 ]

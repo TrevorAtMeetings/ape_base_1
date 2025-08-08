@@ -859,7 +859,7 @@ def generate_brain_chart_data(pump_code, flow_rate, head):
             return None
         
         # Use Brain to calculate performance (single source of truth)
-        performance = brain.performance.calculate_performance(
+        performance = brain.performance.calculate_at_point(
             pump, flow_rate, head
         )
         

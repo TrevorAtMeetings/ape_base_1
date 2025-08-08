@@ -1,0 +1,48 @@
+Recommendations and Path Forward
+The agent is already on the right path. Here are the precise, actionable steps to formalize the fix and proceed.
+1. Implement the Fix (The Agent's Current Task)
+Action: Modify the return statements in the key methods of app/brain/performance.py (_calculate_scaled_performance, calculate_required_diameter, etc.). Ensure that any successful performance calculation returns a dictionary that always includes a meets_requirements: True key-value pair.
+Example in _calculate_scaled_performance:
+code
+Python
+# Inside app/brain/performance.py
+
+# ... calculations for actual_head, actual_efficiency, etc.
+
+# The fix is to ensure this key is always present on success
+meets_req = actual_head >= target_head 
+
+return {
+    'flow_m3hr': target_flow,
+    'head_m': round(actual_head, 2),
+    'efficiency_pct': round(actual_efficiency, 2),
+    'power_kw': round(actual_power, 3),
+    # ... other performance data ...
+    'meets_requirements': meets_req  # CRITICAL: Add this flag
+}
+2. Make the Brain More Robust (Defensive Programming)
+Insight: This bug highlights that the Selection module silently fails if the Performance module gives it bad data. We can make this more robust.
+Action: In the SelectionIntelligence module, add a validation step. Before scoring a pump, check if the performance dictionary it received contains the required keys (meets_requirements, efficiency_pct, etc.). If a key is missing, log a clear, loud error. This creates a "data contract" between the modules and will make future debugging much easier.
+Example in the (future) SelectionIntelligence class:
+code
+Python
+# Inside app/brain/selection.py
+
+def _score_pump(self, pump, performance_data):
+    # Enforce the data contract
+    required_keys = ['meets_requirements', 'efficiency_pct', 'head_m']
+    if not all(key in performance_data for key in required_keys):
+        logger.error(f"Performance data for pump {pump['pump_code']} is missing required keys!")
+        return 0 # Fail gracefully
+
+    if not performance_data['meets_requirements']:
+        return 0
+    
+    # ... proceed with normal scoring logic ...
+3. Re-Run the Discrepancy Analysis
+Action: Once the fix is implemented, re-run the comprehensive discrepancy analysis tool.
+Expected Outcome: The match rate will jump from 0% to a much higher number (e.g., 80-95%). The scores will no longer be zero.
+Next Step: Now, the real fine-tuning can begin. The remaining discrepancies will be the subtle ones you want to find:
+Is the Brain more accurate? (e.g., due to better interpolation). If so, the discrepancy is an improvement.
+Is there a minor difference in the scoring algorithm? Tweak the scoring weights in selection.py to match the legacy logic if desired.
+Is it a floating-point/rounding issue? Decide on a tolerance level for "acceptable" variations.
