@@ -27,8 +27,8 @@ from .brain.cache import BrainCache
 # Configure logging
 logger = logging.getLogger(__name__)
 
-# Brain operation modes
-BRAIN_MODE = os.getenv('BRAIN_MODE', 'active')  # shadow/active/disabled - NOW ACTIVE!
+# Brain is now always active in production
+BRAIN_MODE = 'active'  # Fixed to active mode
 
 
 def measure_performance(func):
@@ -378,47 +378,8 @@ class PumpBrain:
     
     # ==================== SHADOW MODE OPERATIONS ====================
     
-    def shadow_compare(self, operation: str, legacy_result: Any, *args, **kwargs) -> Any:
-        """
-        Run Brain operation in shadow mode and compare with legacy result.
-        
-        Args:
-            operation: Brain operation name
-            legacy_result: Result from legacy calculation
-            *args, **kwargs: Arguments for Brain operation
-        
-        Returns:
-            Legacy result (in shadow mode) or Brain result (in active mode)
-        """
-        if BRAIN_MODE == 'disabled':
-            return legacy_result
-        
-        try:
-            # Get the Brain method
-            brain_method = getattr(self, operation)
-            if not brain_method:
-                logger.error(f"Brain operation '{operation}' not found")
-                return legacy_result
-            
-            # Calculate with Brain
-            brain_result = brain_method(*args, **kwargs)
-            
-            # Compare results
-            if self._results_differ(legacy_result, brain_result):
-                logger.warning(f"Discrepancy in {operation}: Legacy vs Brain differ")
-                BrainMetrics.record_discrepancy(operation, legacy_result, brain_result)
-            
-            # Return based on mode
-            if BRAIN_MODE == 'active':
-                logger.debug(f"Using Brain result for {operation}")
-                return brain_result
-            else:  # shadow mode
-                logger.debug(f"Shadow mode: returning legacy result for {operation}")
-                return legacy_result
-                
-        except Exception as e:
-            logger.error(f"Brain shadow operation failed: {str(e)}")
-            return legacy_result
+    # Shadow compare method removed - Brain is now always active
+    # Archived to archive/shadow_mode/shadow_compare_method.py
     
     def _results_differ(self, result1: Any, result2: Any, tolerance: float = 0.01) -> bool:
         """

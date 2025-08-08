@@ -64,9 +64,9 @@ def get_chart_data(pump_code):
         flow_rate = request.args.get('flow', type=float, default=100)
         head = request.args.get('head', type=float, default=50)
 
-        # Check if Brain is enabled for API
-        brain_mode = os.environ.get('BRAIN_MODE', 'shadow')
-        use_brain = BRAIN_AVAILABLE and brain_mode in ['shadow', 'active']
+        # Brain is now always active
+        brain_mode = 'active'
+        use_brain = BRAIN_AVAILABLE
         
         # Use catalog engine to get pump data
         from ..catalog_engine import get_catalog_engine
@@ -120,9 +120,7 @@ def get_chart_data(pump_code):
                     response.headers['Content-Type'] = 'application/json'
                     response.headers['Cache-Control'] = 'public, max-age=300'
                     return response
-                elif brain_chart_data and brain_mode == 'shadow':
-                    # Shadow mode - continue with legacy but log comparison
-                    logger.info(f"Brain Shadow: Generated chart data for comparison - {pump_code}")
+                # Brain is now always active - no shadow mode
             except Exception as e:
                 logger.error(f"Brain chart generation failed: {str(e)}")
                 # Fall back to legacy method
@@ -386,56 +384,7 @@ def get_chart_data(pump_code):
             }
             chart_data['curves'].append(curve_data)
 
-        # SHADOW MODE COMPARISON - Log discrepancies if Brain was used
-        if brain_chart_data and brain_mode == 'shadow':
-            try:
-                # Compare key metrics between legacy and Brain
-                legacy_op = chart_data.get('operating_point', {})
-                brain_op = brain_chart_data.get('operating_point', {})
-                
-                discrepancies = []
-                
-                # Compare operating point values
-                for key in ['flow_m3hr', 'head_m', 'efficiency_pct', 'power_kw']:
-                    legacy_val = legacy_op.get(key)
-                    brain_val = brain_op.get(key)
-                    if legacy_val and brain_val:
-                        diff_pct = abs(legacy_val - brain_val) / legacy_val * 100 if legacy_val else 0
-                        if diff_pct > 1:  # More than 1% difference
-                            discrepancies.append({
-                                'field': key,
-                                'legacy': legacy_val,
-                                'brain': brain_val,
-                                'diff_pct': diff_pct
-                            })
-                
-                # Check for transformation differences
-                legacy_curves = len(chart_data.get('curves', []))
-                brain_curves = len(brain_chart_data.get('curves', []))
-                if legacy_curves != brain_curves:
-                    discrepancies.append({
-                        'field': 'curve_count',
-                        'legacy': legacy_curves,
-                        'brain': brain_curves
-                    })
-                
-                if discrepancies:
-                    logger.warning(f"Brain Shadow Mode - Chart data discrepancies for {pump_code}:")
-                    for disc in discrepancies:
-                        logger.warning(f"  {disc['field']}: Legacy={disc.get('legacy')}, Brain={disc.get('brain')}, Diff={disc.get('diff_pct', 'N/A'):.1f}%")
-                    
-                    # Log to Brain metrics for analysis
-                    BrainMetrics.log_discrepancy('chart_data', {
-                        'pump_code': pump_code,
-                        'flow': flow_rate,
-                        'head': head,
-                        'discrepancies': discrepancies
-                    })
-                else:
-                    logger.info(f"Brain Shadow Mode - Chart data matches for {pump_code} ✓")
-                    
-            except Exception as e:
-                logger.error(f"Error comparing Brain vs Legacy chart data: {str(e)}")
+        # Brain is now active - no shadow mode comparison needed
         
         # Create response with short-term caching for chart data
         # Use json.dumps directly to ensure proper serialization

@@ -122,28 +122,8 @@ class TestPumpBrain(unittest.TestCase):
         self.assertFalse(validation['valid'])
         self.assertIn('Flow must be positive', validation['errors'])
     
-    def test_shadow_mode_comparison(self):
-        """Test shadow mode operation"""
-        # Set shadow mode
-        os.environ['BRAIN_MODE'] = 'shadow'
-        
-        legacy_result = {'score': 85, 'pump': 'LEGACY-1'}
-        
-        # Mock Brain calculation
-        with patch.object(self.brain, 'find_best_pump') as mock_find:
-            mock_find.return_value = [{'score': 87, 'pump': 'BRAIN-1'}]
-            
-            result = self.brain.shadow_compare(
-                'find_best_pump', 
-                legacy_result,
-                100, 50
-            )
-            
-            # In shadow mode, should return legacy result
-            self.assertEqual(result, legacy_result)
-            
-            # But Brain method should have been called
-            mock_find.assert_called_once_with(100, 50)
+    # Shadow mode test removed - Brain is now always active
+    # Test archived as Brain operates in production mode only
     
     def test_cache_functionality(self):
         """Test caching system"""

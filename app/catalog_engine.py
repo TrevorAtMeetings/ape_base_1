@@ -12,15 +12,9 @@ from scipy import interpolate
 from .pump_repository import get_pump_repository
 from .data_models import PumpEvaluation, ExclusionReason
 
-# Import Brain for shadow mode testing
-try:
-    from .pump_brain import get_pump_brain
-    BRAIN_AVAILABLE = True
-except ImportError:
-    BRAIN_AVAILABLE = False
-    logger.warning("PumpBrain not available - running in legacy mode only")
-
 logger = logging.getLogger(__name__)
+
+# Brain is now the primary system - no shadow mode needed
 
 
 class CatalogPump:
@@ -1140,16 +1134,7 @@ class CatalogEngine:
         """
         from .data_models import PumpEvaluation, ExclusionReason
         
-        # BRAIN SHADOW MODE INTEGRATION
-        brain_results = None
-        if BRAIN_AVAILABLE:
-            try:
-                brain = get_pump_brain(self.repository)
-                constraints = {'pump_type': pump_type} if pump_type else {}
-                brain_results = brain.find_best_pump(flow_m3hr, head_m, constraints)
-                logger.info(f"Brain shadow mode: Found {len(brain_results) if brain_results else 0} pumps")
-            except Exception as e:
-                logger.error(f"Brain shadow mode failed: {str(e)}")
+        # Brain is now the primary system - legacy selection used as fallback only
         
         suitable_pumps = []
         excluded_pumps = []
@@ -1405,30 +1390,7 @@ class CatalogEngine:
                     for guidance in near_miss['engineering_guidance'][:2]:  # Show top 2 suggestions
                         logger.info(f"    → {guidance}")
         
-        # BRAIN SHADOW MODE COMPARISON
-        if BRAIN_AVAILABLE and brain_results:
-            try:
-                # Compare top pumps between legacy and Brain
-                legacy_top = [r['pump_code'] for r in formatted_results[:5]]
-                brain_top = [r.get('pump_code', '') for r in brain_results[:5]]
-                
-                if legacy_top != brain_top:
-                    logger.warning(f"Brain shadow mode discrepancy:")
-                    logger.warning(f"  Legacy top 5: {legacy_top}")
-                    logger.warning(f"  Brain top 5: {brain_top}")
-                    
-                    # Log detailed comparison
-                    from .pump_brain import BrainMetrics
-                    BrainMetrics.record_discrepancy(
-                        'select_pumps',
-                        {'top_5': legacy_top, 'count': len(formatted_results)},
-                        {'top_5': brain_top, 'count': len(brain_results)}
-                    )
-                else:
-                    logger.info(f"Brain shadow mode: Results match! Top pumps consistent.")
-                    
-            except Exception as e:
-                logger.error(f"Brain shadow mode comparison failed: {str(e)}")
+        # Brain is now the primary system - shadow mode removed
         
         # Return exclusion data if requested
         if return_exclusions:
