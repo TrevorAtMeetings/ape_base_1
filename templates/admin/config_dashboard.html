@@ -1,586 +1,415 @@
 {% extends "base.html" %}
 
-{% block title %}Admin Configuration - APE Pumps{% endblock %}
+{% block title %}Configuration Management{% endblock %}
 
-{% block extra_head %}
+{% block head %}
 <style>
-    .config-card {
-        border: 1px solid #dee2e6;
-        border-radius: 8px;
-        padding: 20px;
-        margin-bottom: 20px;
-        background: white;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-    
-    .profile-card {
-        transition: transform 0.2s;
-        cursor: pointer;
-    }
-    
-    .profile-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-    }
-    
-    .locked-constant {
-        background-color: #f8f9fa;
-        border-left: 4px solid #dc3545;
-        padding: 10px;
-        margin-bottom: 10px;
-    }
-    
-    .weight-display {
-        font-size: 1.2em;
-        font-weight: bold;
-        color: #0066cc;
-    }
-    
-    .init-button {
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        z-index: 1000;
-    }
-    
-    /* Loading states */
-    .loading-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0,0,0,0.5);
-        display: none;
-        justify-content: center;
-        align-items: center;
-        z-index: 9999;
-    }
-    
-    .loading-spinner {
-        border: 4px solid #f3f3f3;
-        border-top: 4px solid #3498db;
-        border-radius: 50%;
-        width: 40px;
-        height: 40px;
-        animation: spin 2s linear infinite;
-    }
-    
-    @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-    }
-    
-    /* Accessibility improvements */
-    .profile-card:focus {
-        outline: 2px solid #2196F3;
-        outline-offset: 2px;
-    }
-    
-    .sr-only {
-        position: absolute;
-        width: 1px;
-        height: 1px;
-        padding: 0;
-        margin: -1px;
-        overflow: hidden;
-        clip: rect(0,0,0,0);
-        white-space: nowrap;
-        border: 0;
-    }
-    
-    /* Toast notifications */
-    .toast-container {
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        z-index: 9998;
-    }
-    
-    .toast {
-        background: white;
-        border-radius: 4px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        margin-bottom: 10px;
-        padding: 16px;
-        max-width: 300px;
-        border-left: 4px solid;
-        animation: slideIn 0.3s ease-in-out;
-        position: relative;
-    }
-    
-    .toast.success { border-left-color: #4CAF50; }
-    .toast.error { border-left-color: #f44336; }
-    .toast.warning { border-left-color: #ff9800; }
-    .toast.info { border-left-color: #2196F3; }
-    
-    @keyframes slideIn {
-        from { transform: translateX(100%); opacity: 0; }
-        to { transform: translateX(0); opacity: 1; }
-    }
-    
-    .toast-close {
-        position: absolute;
-        top: 8px;
-        right: 8px;
-        background: none;
-        border: none;
-        cursor: pointer;
-        font-size: 18px;
-        color: #666;
-    }
+/* Configuration Dashboard Styles */
+.config-dashboard {
+    background: var(--md-sys-color-background);
+    min-height: 100vh;
+    padding: 24px 0;
+}
+
+.config-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 24px;
+}
+
+.config-header {
+    background: var(--md-sys-color-primary-container);
+    border-radius: 24px;
+    padding: 32px;
+    margin-bottom: 32px;
+    text-align: center;
+}
+
+.config-title {
+    font-size: 32px;
+    font-weight: 400;
+    color: var(--md-sys-color-on-primary-container);
+    margin: 0 0 8px 0;
+}
+
+.config-subtitle {
+    font-size: 16px;
+    color: var(--md-sys-color-on-primary-container);
+    opacity: 0.8;
+    margin: 0;
+}
+
+.config-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 24px;
+    margin-bottom: 32px;
+}
+
+.config-section {
+    background: var(--md-sys-color-surface);
+    border: 1px solid var(--md-sys-color-outline-variant);
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.section-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.section-icon {
+    font-size: 24px;
+    background: var(--md-sys-color-primary-container);
+    color: var(--md-sys-color-on-primary-container);
+    padding: 12px;
+    border-radius: 12px;
+}
+
+.section-title {
+    font-size: 20px;
+    font-weight: 500;
+    color: var(--md-sys-color-on-surface);
+    margin: 0;
+}
+
+.config-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.config-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.config-item:last-child {
+    border-bottom: none;
+}
+
+.config-label {
+    font-size: 14px;
+    color: var(--md-sys-color-on-surface);
+}
+
+.config-value {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--md-sys-color-primary);
+}
+
+.btn-group {
+    display: flex;
+    gap: 12px;
+    margin-top: 20px;
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border-radius: 16px;
+    font-size: 14px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    border: none;
+    cursor: pointer;
+}
+
+.btn-primary {
+    background: var(--md-sys-color-primary);
+    color: var(--md-sys-color-on-primary);
+}
+
+.btn-primary:hover {
+    background: var(--md-sys-color-primary);
+    filter: brightness(1.1);
+    transform: translateY(-1px);
+    color: var(--md-sys-color-on-primary);
+}
+
+.btn-secondary {
+    background: transparent;
+    color: var(--md-sys-color-primary);
+    border: 1px solid var(--md-sys-color-outline);
+}
+
+.btn-secondary:hover {
+    background: var(--md-sys-color-primary);
+    color: var(--md-sys-color-on-primary);
+    border-color: var(--md-sys-color-primary);
+}
+
+.status-badge {
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.status-active {
+    background: var(--md-sys-color-tertiary-container);
+    color: var(--md-sys-color-on-tertiary-container);
+}
+
+.status-inactive {
+    background: var(--md-sys-color-error-container);
+    color: var(--md-sys-color-on-error-container);
+}
+
+.empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--md-sys-color-on-surface-variant);
+}
+
+.empty-icon {
+    font-size: 48px;
+    opacity: 0.5;
+    margin-bottom: 16px;
+}
 </style>
 {% endblock %}
 
-{% block content %}
-<div class="container" style="max-width: 1200px; margin: 0 auto; padding: 20px;">
-    <!-- Admin Navigation Tabs -->
-    <div class="row">
-        <div class="col s12">
-            <ul class="tabs" style="margin-bottom: 30px;">
-                <li class="tab col s6">
-                    <a href="{{ url_for('admin.ai_admin') }}" class="waves-effect waves-light">
-                        <i class="material-icons left">psychology</i>AI Knowledge Base
-                    </a>
-                </li>
-                <li class="tab col s6">
-                    <a href="#config-settings" class="active waves-effect waves-light">
-                        <i class="material-icons left">settings</i>Configuration Settings
-                    </a>
-                </li>
-            </ul>
-        </div>
-    </div>
+{% block body %}
+<div class="config-dashboard">
+    <div class="config-container">
+        <!-- Breadcrumb -->
+        <nav class="breadcrumb" style="margin-bottom: 24px; font-size: 14px; color: var(--md-sys-color-on-surface-variant);">
+            <a href="/admin" style="color: var(--md-sys-color-primary); text-decoration: none;">
+                <span class="material-icons-round">admin_panel_settings</span>
+                Admin
+            </a> 
+            <span class="material-icons-round">chevron_right</span> 
+            <span>Configuration Management</span>
+        </nav>
 
-    <!-- Configuration Settings Content -->
-    <div id="config-settings" class="tab-content">
-        <div class="row">
-            <div class="col s12">
-                <div class="center-align" style="margin-bottom: 40px;">
-                    <h1 style="margin-bottom: 10px;">
-                        <i class="material-icons medium" style="vertical-align: middle;">settings</i> 
-                        Admin Configuration Center
-                    </h1>
-                    <p class="flow-text grey-text text-darken-1">Manage pump selection parameters and application profiles</p>
+        <!-- Header -->
+        <header class="config-header">
+            <h1 class="config-title">Configuration Management</h1>
+            <p class="config-subtitle">
+                Manage Brain configuration profiles for different use cases. Create, test, and deploy configurations with different scoring weights and logic parameters.
+            </p>
+        </header>
+
+        <!-- Configuration Grid -->
+        <div class="config-grid">
+            <!-- Profiles Section -->
+            <div class="config-section">
+                <div class="section-header">
+                    <span class="section-icon">
+                        <span class="material-icons-round">view_list</span>
+                    </span>
+                    <h2 class="section-title">Configuration Profiles</h2>
                 </div>
-            </div>
-        </div>
-        
-        <!-- Configuration Profiles Section -->
-        <div class="section">
-            <div class="row">
-                <div class="col s12">
-                    <h2 style="margin-bottom: 30px;">
-                        <i class="material-icons medium" style="vertical-align: middle;">folder_special</i>
-                        Application Profiles
-                    </h2>
-                    <div class="row">
+                
+                {% if profiles %}
+                    <ul class="config-list">
                         {% for profile in profiles %}
-                        <div class="col s12 m6 l4" style="margin-bottom: 20px;">
-                            <div class="card hoverable profile-card waves-effect waves-block waves-light" 
-                                 style="cursor: pointer; min-height: 200px;" 
-                                 onclick="window.location.href='{{ url_for('admin_config.profile_details', profile_id=profile.id) }}'">
-                                <div class="card-content" style="padding: 24px;">
-                                    <span class="card-title" style="font-size: 1.4em; margin-bottom: 10px; display: block;">
-                                        {{ profile.name }}
-                                    </span>
-                                    <p class="grey-text text-darken-1" style="margin-bottom: 20px; min-height: 48px;">
-                                        {{ profile.description }}
-                                    </p>
-                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: auto;">
-                                        <span class="chip {% if profile.is_active %}green white-text{% else %}grey lighten-1{% endif %}" 
-                                              style="font-weight: 500;">
-                                            {% if profile.is_active %}
-                                                <i class="material-icons left tiny">check_circle</i>Active
-                                            {% else %}
-                                                <i class="material-icons left tiny">pause_circle_outline</i>Inactive
-                                            {% endif %}
-                                        </span>
-                                        <small class="grey-text">
-                                            Updated: {{ profile.updated_at.strftime('%m/%d/%Y') if profile.updated_at else 'Never' }}
-                                        </small>
-                                    </div>
-                                </div>
+                        <li class="config-item">
+                            <div>
+                                <div class="config-label">{{ profile.name }}</div>
+                                <small style="color: var(--md-sys-color-on-surface-variant);">{{ profile.description or 'No description' }}</small>
                             </div>
-                        </div>
-                        {% endfor %}
-                        
-                        <!-- Add New Profile Card -->
-                        <div class="col s12 m6 l4" style="margin-bottom: 20px;">
-                            <div class="card hoverable profile-card center-align waves-effect waves-block waves-light" 
-                                 style="border: 2px dashed #26a69a; cursor: pointer; min-height: 200px; display: flex; align-items: center;" 
-                                 onclick="createNewProfile()" 
-                                 tabindex="0"
-                                 role="button"
-                                 aria-label="Create new application profile"
-                                 onkeypress="if(event.key==='Enter'||event.key===' ') createNewProfile()">
-                                <div class="card-content" style="width: 100%; padding: 24px;">
-                                    <i class="material-icons large teal-text" style="margin-bottom: 15px; font-size: 4rem;">add_circle_outline</i>
-                                    <h5 class="teal-text" style="margin: 0;">Create New Profile</h5>
-                                    <p class="grey-text" style="margin-top: 10px;">Configure a new application profile</p>
-                                    <span class="sr-only">Press Enter or Space to create a new profile</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Engineering Constants Section -->
-        <div class="section" style="margin-top: 50px;">
-            <div class="row">
-                <div class="col s12">
-                    <h2 style="margin-bottom: 30px;">
-                        <i class="material-icons medium" style="vertical-align: middle;">lock</i>
-                        Locked Engineering Constants
-                    </h2>
-                    <div class="card-panel orange lighten-4" style="margin-bottom: 30px;">
-                        <p style="margin: 0;">
-                            <i class="material-icons left">info_outline</i>
-                            These values are based on physical laws and cannot be modified. They ensure pump selections follow engineering principles.
-                        </p>
-                    </div>
-                    
-                    <ul class="collapsible popout">
-                        {% set categories = constants|groupby('category') %}
-                        {% for category, items in categories %}
-                        <li {% if loop.index == 1 %}class="active"{% endif %}>
-                            <div class="collapsible-header">
-                                <i class="material-icons">lock</i>
-                                <strong>{{ category }}</strong>
-                                <span class="badge">{{ items|list|length }} constants</span>
-                            </div>
-                            <div class="collapsible-body" style="padding: 20px;">
-                                {% for constant in items %}
-                                <div class="locked-constant" style="margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
-                                    <div class="row" style="margin-bottom: 0;">
-                                        <div class="col s12 m4">
-                                            <strong style="color: #2e7d32;">{{ constant.name }}</strong>
-                                        </div>
-                                        <div class="col s12 m3">
-                                            <code style="background: #e8f5e8; padding: 4px 8px; border-radius: 4px; color: #1b5e20;">
-                                                {{ constant.value }} {% if constant.unit %}{{ constant.unit }}{% endif %}
-                                            </code>
-                                        </div>
-                                        <div class="col s12 m5">
-                                            <small class="grey-text text-darken-1">{{ constant.description }}</small>
-                                            {% if constant.formula %}
-                                            <br><small><code style="background: #fff3e0; padding: 2px 6px; border-radius: 3px;">{{ constant.formula }}</code></small>
-                                            {% endif %}
-                                        </div>
-                                    </div>
-                                </div>
-                                {% endfor %}
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <span class="status-badge {% if profile.is_active %}status-active{% else %}status-inactive{% endif %}">
+                                    {% if profile.is_active %}Active{% else %}Inactive{% endif %}
+                                </span>
+                                <a href="/admin/config/profile/{{ profile.id }}" class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;">
+                                    <span class="material-icons-round" style="font-size: 16px;">edit</span>
+                                    Edit
+                                </a>
                             </div>
                         </li>
                         {% endfor %}
                     </ul>
+                {% else %}
+                    <div class="empty-state">
+                        <div class="empty-icon">
+                            <span class="material-icons-round">folder_open</span>
+                        </div>
+                        <p>No configuration profiles found</p>
+                        <p style="font-size: 12px; margin-top: 8px;">Create your first profile to get started</p>
+                    </div>
+                {% endif %}
+                
+                <div class="btn-group">
+                    <a href="/admin/config/profile/new" class="btn btn-primary">
+                        <span class="material-icons-round">add</span>
+                        Create Profile
+                    </a>
+                    <a href="/admin/config/import" class="btn btn-secondary">
+                        <span class="material-icons-round">upload</span>
+                        Import Config
+                    </a>
+                </div>
+            </div>
+
+            <!-- Engineering Constants Section -->
+            <div class="config-section">
+                <div class="section-header">
+                    <span class="section-icon">
+                        <span class="material-icons-round">tune</span>
+                    </span>
+                    <h2 class="section-title">Engineering Constants</h2>
+                </div>
+                
+                {% if constants %}
+                    <ul class="config-list">
+                        {% for constant in constants %}
+                        <li class="config-item">
+                            <span class="config-label">{{ constant.name }}</span>
+                            <span class="config-value">{{ constant.value }} {{ constant.unit or '' }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <div class="empty-state">
+                        <div class="empty-icon">
+                            <span class="material-icons-round">settings</span>
+                        </div>
+                        <p>No engineering constants defined</p>
+                    </div>
+                {% endif %}
+                
+                <div class="btn-group">
+                    <a href="/admin/config/constants" class="btn btn-primary">
+                        <span class="material-icons-round">edit</span>
+                        Edit Constants
+                    </a>
+                    <a href="/admin/config/reset" class="btn btn-secondary">
+                        <span class="material-icons-round">refresh</span>
+                        Reset to Defaults
+                    </a>
+                </div>
+            </div>
+
+            <!-- Scoring Weights Section -->
+            <div class="config-section">
+                <div class="section-header">
+                    <span class="section-icon">
+                        <span class="material-icons-round">scale</span>
+                    </span>
+                    <h2 class="section-title">Scoring Weights</h2>
+                </div>
+                
+                <ul class="config-list">
+                    <li class="config-item">
+                        <span class="config-label">BEP Proximity</span>
+                        <span class="config-value">45 points</span>
+                    </li>
+                    <li class="config-item">
+                        <span class="config-label">Efficiency</span>
+                        <span class="config-value">35 points</span>
+                    </li>
+                    <li class="config-item">
+                        <span class="config-label">Head Margin</span>
+                        <span class="config-value">20 points</span>
+                    </li>
+                    <li class="config-item">
+                        <span class="config-label">Total System</span>
+                        <span class="config-value">100 points</span>
+                    </li>
+                </ul>
+                
+                <div class="btn-group">
+                    <a href="/admin/config/scoring" class="btn btn-primary">
+                        <span class="material-icons-round">tune</span>
+                        Adjust Weights
+                    </a>
+                    <a href="/admin/brain/workbench" class="btn btn-secondary">
+                        <span class="material-icons-round">science</span>
+                        Test Impact
+                    </a>
+                </div>
+            </div>
+
+            <!-- System Status Section -->
+            <div class="config-section">
+                <div class="section-header">
+                    <span class="section-icon">
+                        <span class="material-icons-round">monitor_heart</span>
+                    </span>
+                    <h2 class="section-title">System Status</h2>
+                </div>
+                
+                <ul class="config-list">
+                    <li class="config-item">
+                        <span class="config-label">Active Profile</span>
+                        <span class="config-value">
+                            {% if profiles %}
+                                {% for profile in profiles %}
+                                    {% if profile.is_active %}{{ profile.name }}{% endif %}
+                                {% endfor %}
+                            {% else %}
+                                Default
+                            {% endif %}
+                        </span>
+                    </li>
+                    <li class="config-item">
+                        <span class="config-label">Configuration Version</span>
+                        <span class="config-value">v6.0</span>
+                    </li>
+                    <li class="config-item">
+                        <span class="config-label">Last Modified</span>
+                        <span class="config-value">{{ moment().format('MMM D, YYYY') if moment else 'Recent' }}</span>
+                    </li>
+                    <li class="config-item">
+                        <span class="config-label">Pump Coverage</span>
+                        <span class="config-value">386 models</span>
+                    </li>
+                </ul>
+                
+                <div class="btn-group">
+                    <a href="/admin/config/backup" class="btn btn-primary">
+                        <span class="material-icons-round">backup</span>
+                        Create Backup
+                    </a>
+                    <a href="/admin/config/validate" class="btn btn-secondary">
+                        <span class="material-icons-round">check_circle</span>
+                        Validate Config
+                    </a>
                 </div>
             </div>
         </div>
-        
-        <!-- Initialize Database Button (only show if no data) -->
-        {% if not profiles %}
-        <div class="fixed-action-btn" style="bottom: 30px; right: 30px;">
-            <a class="btn-floating btn-large red waves-effect waves-light" onclick="initializeDatabase()" 
-               title="Initialize Database">
-                <i class="material-icons">storage</i>
-            </a>
+
+        <!-- Quick Actions -->
+        <div class="config-section" style="grid-column: 1 / -1;">
+            <div class="section-header">
+                <span class="section-icon">
+                    <span class="material-icons-round">flash_on</span>
+                </span>
+                <h2 class="section-title">Quick Actions</h2>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px;">
+                <a href="/admin/brain/workbench" class="btn btn-primary" style="justify-content: center; padding: 16px;">
+                    <span class="material-icons-round">science</span>
+                    Open Logic Workbench
+                </a>
+                <a href="/admin/brain" class="btn btn-secondary" style="justify-content: center; padding: 16px;">
+                    <span class="material-icons-round">psychology</span>
+                    Brain System Dashboard
+                </a>
+                <a href="/admin/testing" class="btn btn-secondary" style="justify-content: center; padding: 16px;">
+                    <span class="material-icons-round">speed</span>
+                    Performance Testing
+                </a>
+                <a href="/admin" class="btn btn-secondary" style="justify-content: center; padding: 16px;">
+                    <span class="material-icons-round">admin_panel_settings</span>
+                    Admin Dashboard
+                </a>
+            </div>
         </div>
-        {% endif %}
     </div>
 </div>
-
-<!-- Loading Overlay -->
-<div class="loading-overlay" id="loadingOverlay" aria-hidden="true">
-    <div class="loading-spinner" role="status" aria-label="Loading..."></div>
-    <span class="sr-only">Loading...</span>
-</div>
-
-<!-- Toast Container -->
-<div class="toast-container" id="toastContainer" aria-live="polite" aria-atomic="true"></div>
-
-<!-- Create Profile Modal -->
-<div id="createProfileModal" class="modal">
-    <div class="modal-content">
-        <h4>Create New Profile</h4>
-        <form id="createProfileForm">
-            <div class="row">
-                <div class="input-field col s12">
-                    <input type="text" id="profileName" required>
-                    <label for="profileName">Profile Name</label>
-                </div>
-                <div class="input-field col s12">
-                    <textarea id="profileDescription" class="materialize-textarea"></textarea>
-                    <label for="profileDescription">Description</label>
-                </div>
-            </div>
-            
-            <h6>Initial Scoring Weights (must total 100)</h6>
-            <div class="row">
-                <div class="input-field col s12 m6">
-                    <input type="number" id="bepWeight" value="40" min="0" max="100">
-                    <label for="bepWeight">BEP Proximity</label>
-                </div>
-                <div class="input-field col s12 m6">
-                    <input type="number" id="efficiencyWeight" value="30" min="0" max="100">
-                    <label for="efficiencyWeight">Efficiency</label>
-                </div>
-                <div class="input-field col s12 m6">
-                    <input type="number" id="headMarginWeight" value="15" min="0" max="100">
-                    <label for="headMarginWeight">Head Margin</label>
-                </div>
-                <div class="input-field col s12 m6">
-                    <input type="number" id="npshWeight" value="15" min="0" max="100">
-                    <label for="npshWeight">NPSH</label>
-                </div>
-            </div>
-            <div class="card-panel blue lighten-5">
-                Total: <span id="totalWeight" class="weight-display">100</span>
-            </div>
-        </form>
-    </div>
-    <div class="modal-footer">
-        <a href="#!" class="modal-close waves-effect waves-green btn-flat">Cancel</a>
-        <a href="#!" class="waves-effect waves-green btn" onclick="submitNewProfile()">Create Profile</a>
-    </div>
-</div>
-
-<script>
-// Update total weight display
-document.querySelectorAll('#createProfileForm input[type="number"]').forEach(input => {
-    input.addEventListener('input', updateTotalWeight);
-});
-
-function updateTotalWeight() {
-    const total = parseFloat(document.getElementById('bepWeight').value || 0) +
-                  parseFloat(document.getElementById('efficiencyWeight').value || 0) +
-                  parseFloat(document.getElementById('headMarginWeight').value || 0) +
-                  parseFloat(document.getElementById('npshWeight').value || 0);
-    
-    document.getElementById('totalWeight').textContent = total.toFixed(1);
-    document.getElementById('totalWeight').style.color = Math.abs(total - 100) < 0.01 ? '#28a745' : '#dc3545';
-}
-
-// Enhanced UX System for Admin Configuration
-class AdminConfigUX {
-    constructor() {
-        this.loadingOverlay = document.getElementById('loadingOverlay');
-        this.toastContainer = document.getElementById('toastContainer');
-        this.init();
-    }
-
-    init() {
-        // Initialize Materialize components
-        this.initMaterializeComponents();
-        
-        // Add keyboard navigation support
-        this.addKeyboardNavigation();
-        
-        // Initialize form validation
-        this.initFormValidation();
-    }
-
-    initMaterializeComponents() {
-        var collapsibles = document.querySelectorAll('.collapsible');
-        M.Collapsible.init(collapsibles);
-        
-        var modals = document.querySelectorAll('.modal');
-        M.Modal.init(modals);
-        
-        var tabs = document.querySelectorAll('.tabs');
-        M.Tabs.init(tabs);
-        
-        // Update text fields
-        M.updateTextFields();
-    }
-
-    addKeyboardNavigation() {
-        // Add keyboard support for profile cards
-        const profileCards = document.querySelectorAll('.profile-card[tabindex]');
-        profileCards.forEach(card => {
-            card.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    card.click();
-                }
-            });
-        });
-    }
-
-    initFormValidation() {
-        // Real-time form validation will be added here
-        console.log('Form validation initialized');
-    }
-
-    showLoading(show = true) {
-        if (this.loadingOverlay) {
-            this.loadingOverlay.style.display = show ? 'flex' : 'none';
-            this.loadingOverlay.setAttribute('aria-hidden', !show);
-        }
-    }
-
-    showToast(message, type = 'info', duration = 5000) {
-        if (!this.toastContainer) return;
-
-        const toast = document.createElement('div');
-        toast.className = `toast ${type}`;
-        toast.setAttribute('role', 'alert');
-        toast.setAttribute('aria-live', 'assertive');
-        
-        toast.innerHTML = `
-            <div class="toast-content">
-                <strong>${this.getToastIcon(type)}</strong>
-                <span>${message}</span>
-            </div>
-            <button class="toast-close" onclick="this.parentElement.remove()" aria-label="Close notification">
-                &times;
-            </button>
-        `;
-
-        this.toastContainer.appendChild(toast);
-
-        // Auto-remove after duration
-        setTimeout(() => {
-            if (toast.parentElement) {
-                toast.style.animation = 'slideOut 0.3s ease-in-out';
-                setTimeout(() => toast.remove(), 300);
-            }
-        }, duration);
-
-        return toast;
-    }
-
-    getToastIcon(type) {
-        const icons = {
-            success: '✓',
-            error: '✕',
-            warning: '⚠',
-            info: 'ℹ'
-        };
-        return icons[type] || icons.info;
-    }
-
-    async makeApiRequest(url, options = {}) {
-        this.showLoading(true);
-        
-        try {
-            const response = await fetch(url, {
-                headers: {
-                    'Content-Type': 'application/json',
-                    ...options.headers
-                },
-                ...options
-            });
-
-            const data = await response.json();
-            
-            if (!response.ok) {
-                throw new Error(data.error || `HTTP ${response.status}`);
-            }
-
-            return data;
-        } catch (error) {
-            this.showToast(`Request failed: ${error.message}`, 'error');
-            throw error;
-        } finally {
-            this.showLoading(false);
-        }
-    }
-}
-
-// Initialize UX system
-let adminUX;
-document.addEventListener('DOMContentLoaded', function() {
-    adminUX = new AdminConfigUX();
-    
-    // Ensure loading state is cleared on admin page
-    setTimeout(() => {
-        if (adminUX && adminUX.loadingOverlay) {
-            adminUX.showLoading(false);
-            console.log('Admin config: Loading state cleared');
-        }
-    }, 1000);
-});
-
-function createNewProfile() {
-    try {
-        const modal = M.Modal.getInstance(document.getElementById('createProfileModal'));
-        if (modal) {
-            modal.open();
-            adminUX?.showToast('Ready to create new profile', 'info', 3000);
-        } else {
-            throw new Error('Modal not found');
-        }
-    } catch (error) {
-        adminUX?.showToast('Error opening profile creation dialog', 'error');
-        console.error('Create profile error:', error);
-    }
-}
-
-function submitNewProfile() {
-    const total = parseFloat(document.getElementById('bepWeight').value || 0) +
-                  parseFloat(document.getElementById('efficiencyWeight').value || 0) +
-                  parseFloat(document.getElementById('headMarginWeight').value || 0) +
-                  parseFloat(document.getElementById('npshWeight').value || 0);
-    
-    if (Math.abs(total - 100) > 0.01) {
-        alert('Weights must total exactly 100');
-        return;
-    }
-    
-    const profileData = {
-        name: document.getElementById('profileName').value,
-        description: document.getElementById('profileDescription').value,
-        bep_weight: parseFloat(document.getElementById('bepWeight').value),
-        efficiency_weight: parseFloat(document.getElementById('efficiencyWeight').value),
-        head_margin_weight: parseFloat(document.getElementById('headMarginWeight').value),
-        npsh_weight: parseFloat(document.getElementById('npshWeight').value)
-    };
-    
-    fetch('{{ url_for("admin_config.api_profiles") }}', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(profileData)
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            window.location.reload();
-        } else {
-            alert('Error creating profile: ' + (data.error || 'Unknown error'));
-        }
-    })
-    .catch(error => {
-        alert('Error: ' + error);
-    });
-}
-
-function initializeDatabase() {
-    if (confirm('This will create the admin configuration tables and seed default data. Continue?')) {
-        fetch('{{ url_for("admin_config.init_database") }}', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                alert('Database initialized successfully!');
-                window.location.reload();
-            } else {
-                alert('Error: ' + (data.error || 'Unknown error'));
-            }
-        })
-        .catch(error => {
-            alert('Error: ' + error);
-        });
-    }
-}
-</script>
-</div> <!-- End of config-settings div -->
 {% endblock %}
