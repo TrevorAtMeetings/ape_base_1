@@ -1,0 +1,143 @@
+[
+  {
+    "type": "count_mismatch",
+    "flow": 10,
+    "head": 10,
+    "legacy_count": 5,
+    "brain_count": 4
+  },
+  {
+    "type": "count_mismatch",
+    "flow": 25,
+    "head": 15,
+    "legacy_count": 5,
+    "brain_count": 4
+  },
+  {
+    "type": "count_mismatch",
+    "flow": 50,
+    "head": 30,
+    "legacy_count": 5,
+    "brain_count": 4
+  },
+  {
+    "type": "score_discrepancy",
+    "flow": 100,
+    "head": 50,
+    "pump": "Nitz 100-80-250",
+    "legacy_score": 95.56118780219563,
+    "brain_score": 0,
+    "difference": 95.56118780219563
+  },
+  {
+    "type": "score_discrepancy",
+    "flow": 150,
+    "head": 75,
+    "pump": "PL 100 AS",
+    "legacy_score": 94.2943672603343,
+    "brain_score": 0,
+    "difference": 94.2943672603343
+  },
+  {
+    "type": "top_pump_mismatch",
+    "flow": 200,
+    "head": 40,
+    "legacy_pump": "4/5 MEDI",
+    "brain_pump": "100-400 2F",
+    "legacy_score": 93.595,
+    "brain_score": 0
+  },
+  {
+    "type": "top_pump_mismatch",
+    "flow": 300,
+    "head": 60,
+    "legacy_pump": "200-150-460 4P",
+    "brain_pump": "10/12 DME",
+    "legacy_score": 89.72833333333331,
+    "brain_score": 0
+  },
+  {
+    "type": "top_pump_mismatch",
+    "flow": 400,
+    "head": 50,
+    "legacy_pump": "250-200-610 6P",
+    "brain_pump": "150-400 2F",
+    "legacy_score": 95.60194005257844,
+    "brain_score": 0
+  },
+  {
+    "type": "score_discrepancy",
+    "flow": 500,
+    "head": 80,
+    "pump": "6 WLN 21A",
+    "legacy_score": 97.70947999983763,
+    "brain_score": 0,
+    "difference": 97.70947999983763
+  },
+  {
+    "type": "count_mismatch",
+    "flow": 50,
+    "head": 100,
+    "legacy_count": 5,
+    "brain_count": 1
+  },
+  {
+    "type": "count_mismatch",
+    "flow": 100,
+    "head": 150,
+    "legacy_count": 5,
+    "brain_count": 0
+  },
+  {
+    "type": "count_mismatch",
+    "flow": 150,
+    "head": 200,
+    "legacy_count": 3,
+    "brain_count": 0
+  },
+  {
+    "type": "score_discrepancy",
+    "flow": 60,
+    "head": 40,
+    "pump": "65-200 1F",
+    "legacy_score": 93.17,
+    "brain_score": 0,
+    "difference": 93.17
+  },
+  {
+    "type": "score_discrepancy",
+    "flow": 80,
+    "head": 35,
+    "pump": "50-160 2F 2P",
+    "legacy_score": 95.205,
+    "brain_score": 0,
+    "difference": 95.205
+  },
+  {
+    "type": "score_discrepancy",
+    "flow": 120,
+    "head": 45,
+    "pump": "65-200 2F 2P",
+    "legacy_score": 90.555,
+    "brain_score": 0,
+    "difference": 90.555
+  },
+  {
+    "type": "score_discrepancy",
+    "flow": 60,
+    "head": 40,
+    "pump": "65-200 1F",
+    "legacy_score": 93.17,
+    "brain_score": 0,
+    "difference": 93.17
+  },
+  {
+    "type": "top_pump_mismatch",
+    "flow": 400,
+    "head": 50,
+    "legacy_pump": "250-200-610 6P",
+    "brain_pump": "150-400 2F",
+    "legacy_score": 95.60194005257844,
+    "brain_score": 0
+  }
+]
