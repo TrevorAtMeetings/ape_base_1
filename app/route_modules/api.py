@@ -201,6 +201,8 @@ def get_chart_data(pump_code):
                     break
 
         # Use the actual performance calculation results for consistent chart scaling
+        # Extract sizing_info for use in curve processing
+        sizing_info = operating_point_data.get('sizing_info', {}) if operating_point_data else {}
 
         for i, curve in enumerate(curves):
             # Extract data points from catalog curve format
@@ -253,6 +255,12 @@ def get_chart_data(pump_code):
                         power * (trim_ratio**3)
                         for power in base_powers
                     ]
+                    
+                    # Store trimming information in curve for second loop
+                    curve['trimmed_diameter'] = sizing_info.get('required_diameter_mm') 
+                    curve['trim_percent'] = sizing_info.get('trim_percent', 100)
+                    curve['original_diameter'] = curve.get('impeller_diameter_mm')
+                    
                     logger.info(
                         f"Chart API: Impeller trimming applied to selected curve - ratio={trim_ratio:.3f}"
                     )
@@ -288,11 +296,30 @@ def get_chart_data(pump_code):
                 if p.get('npshr_m') is not None
             ]
 
-            # Handle impeller diameter carefully
+            # Handle impeller diameter carefully and apply trimming info
             impeller_dia = curve.get('impeller_diameter_mm')
             if isinstance(impeller_dia, bool) or impeller_dia is None:
                 # If it's a boolean or None, try to get from impeller_size
                 impeller_dia = curve.get('impeller_size', f'Curve {i+1}')
+            
+            # Generate proper display label with trimming information
+            display_label = f"Head {impeller_dia}mm"
+            final_diameter = impeller_dia
+            transformation_info = None
+            
+            # Check if this curve has trimming data from the first loop
+            if curve.get('trimmed_diameter') and (i == best_curve_index):
+                final_diameter = curve.get('trimmed_diameter')
+                trim_percent_actual = curve.get('trim_percent', 100)
+                trim_amount = 100 - trim_percent_actual
+                display_label = f"Head {final_diameter:.1f}mm ({trim_amount:.1f}% trim)"
+                transformation_info = {
+                    'type': 'impeller_trim',
+                    'original_diameter': float(impeller_dia),
+                    'final_diameter': float(final_diameter),
+                    'trim_ratio': trim_percent_actual / 100.0
+                }
+                logger.info(f"Chart API: SUCCESS - Applied trimming label: {display_label}")
             
             curve_data = {
                 'curve_index':
@@ -300,7 +327,13 @@ def get_chart_data(pump_code):
                 'impeller_size':
                 curve.get('impeller_size', f'Curve {i+1}'),
                 'impeller_diameter_mm':
+                final_diameter,
+                'original_diameter_mm':
                 impeller_dia,
+                'display_label':
+                display_label,
+                'transformation_applied':
+                transformation_info,
                 'flow_data':
                 flows,
                 'head_data':
@@ -573,34 +606,107 @@ def get_chart_data_safe(safe_pump_code):
                 heads = base_heads
                 powers = base_powers
 
-            # Calculate actual impeller diameter for display
-            display_impeller_diameter = curve.get('impeller_diameter_mm', curve.get('impeller_size', f'Curve {i+1}'))
+            # SINGLE SOURCE OF TRUTH: Generate final display data with proper labels
+            original_diameter = curve.get('impeller_diameter_mm', curve.get('impeller_size', f'Curve {i+1}'))
+            final_diameter = original_diameter
+            display_label = f"Head {original_diameter}mm"
+            transformation_info = None
             
-            # For selected curve with trimming, show the trimmed diameter
-            if is_selected_curve and sizing_info and sizing_info.get('trim_percent', 100) < 100:
-                required_diameter = sizing_info.get('required_diameter_mm')
-                if required_diameter:
-                    display_impeller_diameter = required_diameter
+            # Check if this curve has trimming information from first loop
+            logger.info(f"Chart API: Second loop curve {i} - is_selected: {is_selected_curve}")
+            logger.info(f"Chart API: Second loop curve {i} - trimmed_diameter: {curve.get('trimmed_diameter')}")
+            logger.info(f"Chart API: Second loop curve {i} - trim_percent: {curve.get('trim_percent')}")
+            
+            if curve.get('trimmed_diameter') and is_selected_curve:
+                final_diameter = curve.get('trimmed_diameter')
+                trim_percent_actual = curve.get('trim_percent', 100)
+                trim_amount = 100 - trim_percent_actual
+                display_label = f"Head {final_diameter:.1f}mm ({trim_amount:.1f}% trim)"
+                transformation_info = {
+                    'type': 'impeller_trim',
+                    'original_diameter': float(original_diameter),
+                    'final_diameter': float(final_diameter),
+                    'trim_ratio': trim_percent_actual / 100.0
+                }
+                logger.info(f"Chart API: SUCCESS - Using stored trimming data - {display_label}")
+            else:
+                logger.info(f"Chart API: No trimming data found for curve {i} or not selected")
+            
+            # For selected curve, apply transformations and generate accurate labels
+            if is_selected_curve:
+                logger.info(f"Chart API: LABEL GEN - Processing selected curve {i}")
+                logger.info(f"Chart API: LABEL GEN - sizing_info available: {sizing_info is not None}")
+                logger.info(f"Chart API: LABEL GEN - sizing_info contents: {sizing_info}")
+                
+                if sizing_info:
+                    required_diameter = sizing_info.get('required_diameter_mm')
+                    trim_percent = sizing_info.get('trim_percent', 100)
+                    logger.info(f"Chart API: LABEL GEN - required_diameter: {required_diameter}, trim_percent: {trim_percent}")
+                    
+                    if trim_percent < 100 and required_diameter:
+                        # Impeller trimming applied - trim_percent is already the final percentage (90.4)
+                        final_diameter = required_diameter
+                        trim_amount = 100 - trim_percent  # Calculate trim amount (9.6%)
+                        display_label = f"Head {final_diameter:.1f}mm ({trim_amount:.1f}% trim)"
+                        transformation_info = {
+                            'type': 'impeller_trim',
+                            'original_diameter': float(original_diameter),
+                            'final_diameter': float(final_diameter),
+                            'trim_ratio': trim_percent / 100.0
+                        }
+                        logger.info(f"Chart API: Generated trimmed label: {display_label}")
+                    elif required_diameter and required_diameter != original_diameter:
+                        # Diameter change without explicit trim percentage
+                        final_diameter = required_diameter
+                        trim_ratio = required_diameter / original_diameter
+                        trim_amount = (1 - trim_ratio) * 100
+                        display_label = f"Head {final_diameter:.1f}mm ({trim_amount:.1f}% trim)"
+                        transformation_info = {
+                            'type': 'impeller_trim',
+                            'original_diameter': float(original_diameter),
+                            'final_diameter': float(final_diameter),
+                            'trim_ratio': trim_ratio
+                        }
+                        logger.info(f"Chart API: Generated calculated trim label: {display_label}")
+                
+                # Alternative: Check operating point data directly for trimming info
+                if not transformation_info and operating_point:
+                    op_diameter = operating_point.get('impeller_diameter_mm')
+                    if op_diameter and op_diameter != original_diameter:
+                        final_diameter = op_diameter
+                        trim_ratio = op_diameter / original_diameter
+                        trim_amount = (1 - trim_ratio) * 100
+                        display_label = f"Head {final_diameter:.1f}mm ({trim_amount:.1f}% trim)"
+                        transformation_info = {
+                            'type': 'impeller_trim',
+                            'original_diameter': float(original_diameter),
+                            'final_diameter': float(final_diameter),
+                            'trim_ratio': trim_ratio
+                        }
+                        logger.info(f"Chart API: Generated trim label from operating point: {display_label}")
+                elif speed_scaling_applied:
+                    # Speed variation applied
+                    display_label = f"Head {original_diameter}mm @ {sizing_info.get('required_speed_rpm', 'variable')} RPM"
+                    transformation_info = {
+                        'type': 'speed_variation',
+                        'original_speed': sizing_info.get('test_speed_rpm'),
+                        'final_speed': sizing_info.get('required_speed_rpm'),
+                        'speed_ratio': actual_speed_ratio
+                    }
             
             curve_data = {
-                'curve_index':
-                i,
-                'impeller_size':
-                curve.get('impeller_size', f'Curve {i+1}'),
-                'impeller_diameter_mm':
-                display_impeller_diameter,
-                'flow_data':
-                flows,
-                'head_data':
-                heads,
-                'efficiency_data':
-                efficiencies,
-                'power_data':
-                powers,
-                'npshr_data':
-                npshrs,
-                'is_selected':
-                is_selected_curve
+                'curve_index': i,
+                'curve_id': f"{target_pump.pump_code}_C{i+1}_{final_diameter:.1f}mm",
+                'display_label': display_label if display_label != "N/A" else f"Head {final_diameter:.1f}mm",
+                'impeller_diameter_mm': final_diameter,
+                'original_diameter_mm': original_diameter,
+                'flow_data': flows,
+                'head_data': heads,
+                'efficiency_data': efficiencies,
+                'power_data': powers,
+                'npshr_data': npshrs,
+                'is_selected': is_selected_curve,
+                'transformation_applied': transformation_info
             }
             chart_data['curves'].append(curve_data)
 

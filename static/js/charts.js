@@ -574,41 +574,19 @@ class PumpChartsManager {
             this.currentChartData.curves.forEach((curve, index) => {
                 if (curve && Array.isArray(curve.flow_data) && Array.isArray(curve.head_data) && curve.flow_data.length > 0) {
                     // Generate proper impeller size name using helper
-                    let impellerName = this.getImpellerName(curve, index);
-
-                    // Apply speed scaling to selected curve if applied (VFD pumps)
-                    let flowData = [...curve.flow_data];
-                    let headData = [...curve.head_data];
+                    // SINGLE SOURCE OF TRUTH: Use backend-generated labels directly
+                    const curveName = curve.display_label || this.getImpellerName(curve, index);
                     
-                    if (this.currentChartData.speed_scaling && this.currentChartData.speed_scaling.applied && curve.is_selected) {
-                        const speedRatio = this.currentChartData.speed_scaling.speed_ratio;
-                        const requiredSpeed = this.currentChartData.speed_scaling.required_speed_rpm;
-                        
-                        // Apply affinity laws: Flow ∝ speed, Head ∝ speed²
-                        flowData = flowData.map(flow => flow * speedRatio);
-                        headData = headData.map(head => head * (speedRatio * speedRatio));
-                        
-                        impellerName += ` (${Math.round(requiredSpeed)} RPM)`;
-                        console.log(`Charts.js: Applied speed scaling to selected curve - ratio: ${speedRatio.toFixed(3)}`);
-                    }
-                    
-                    // v6.1 FIX: Backend already applies affinity laws - frontend only renders received data
-                    // Add trim indication to name if trimmed
-                    if (curve.is_selected && this.currentChartData.operating_point && this.currentChartData.operating_point.sizing_info) {
-                        const sizingInfo = this.currentChartData.operating_point.sizing_info;
-                        const trimPercent = sizingInfo.trim_percent;
-                        
-                        if (trimPercent && trimPercent < 100) {
-                            impellerName += ` (${trimPercent.toFixed(1)}% trim)`;
-                        }
-                    }
+                    // Backend provides final, ready-to-plot data - no frontend transformations needed
+                    const flowData = curve.flow_data;
+                    const headData = curve.head_data;
 
                     traces.push({
                         x: flowData,
                         y: headData,
                         type: 'scatter',
                         mode: 'lines+markers',
-                        name: impellerName,
+                        name: curveName,
                         line: {
                             color: curve.is_selected ? config.color : this.getAlternateColor(index),
                             width: curve.is_selected ? 3 : 2
@@ -686,41 +664,19 @@ class PumpChartsManager {
             this.currentChartData.curves.forEach((curve, index) => {
                 if (curve && Array.isArray(curve.flow_data) && Array.isArray(curve.efficiency_data) && curve.efficiency_data.length > 0) {
                     // Generate proper impeller size name using helper
-                    let impellerName = this.getImpellerName(curve, index);
-
-                    // Apply speed scaling to selected curve if applied (VFD pumps)
-                    let flowData = [...curve.flow_data];
-                    let efficiencyData = [...curve.efficiency_data];
+                    // SINGLE SOURCE OF TRUTH: Use backend-generated labels directly
+                    const curveName = curve.display_label || this.getImpellerName(curve, index);
                     
-                    if (this.currentChartData.speed_scaling && this.currentChartData.speed_scaling.applied && curve.is_selected) {
-                        const speedRatio = this.currentChartData.speed_scaling.speed_ratio;
-                        const requiredSpeed = this.currentChartData.speed_scaling.required_speed_rpm;
-                        
-                        // Apply affinity laws: Flow ∝ speed, Efficiency stays constant
-                        flowData = flowData.map(flow => flow * speedRatio);
-                        // Efficiency data remains unchanged as efficiency is independent of speed
-                        
-                        impellerName += ` (${Math.round(requiredSpeed)} RPM)`;
-                        console.log(`Charts.js: Applied speed scaling to efficiency curve - ratio: ${speedRatio.toFixed(3)}`);
-                    }
-                    
-                    // v6.1 FIX: Backend already applies affinity laws - frontend only renders received data
-                    // Add trim indication to name if trimmed
-                    if (curve.is_selected && this.currentChartData.operating_point && this.currentChartData.operating_point.sizing_info) {
-                        const sizingInfo = this.currentChartData.operating_point.sizing_info;
-                        const trimPercent = sizingInfo.trim_percent;
-                        
-                        if (trimPercent && trimPercent < 100) {
-                            impellerName += ` (${trimPercent.toFixed(1)}% trim)`;
-                        }
-                    }
+                    // Backend provides final, ready-to-plot data - no frontend transformations needed
+                    const flowData = curve.flow_data;
+                    const efficiencyData = curve.efficiency_data;
 
                     traces.push({
                         x: flowData,
                         y: efficiencyData,
                         type: 'scatter',
                         mode: 'lines+markers',
-                        name: impellerName,
+                        name: curveName,
                         line: {
                             color: curve.is_selected ? config.color : this.getAlternateColor(index),
                             width: curve.is_selected ? 3 : 2
@@ -836,41 +792,19 @@ class PumpChartsManager {
             this.currentChartData.curves.forEach((curve, index) => {
                 if (curve && Array.isArray(curve.flow_data) && Array.isArray(curve.power_data) && curve.power_data.length > 0) {
                     // Generate proper impeller size name using helper
-                    let impellerName = this.getImpellerName(curve, index);
-
-                    // Apply speed scaling to selected curve if applied (VFD pumps)
-                    let flowData = [...curve.flow_data];
-                    let powerData = [...curve.power_data];
+                    // SINGLE SOURCE OF TRUTH: Use backend-generated labels directly
+                    const curveName = curve.display_label || this.getImpellerName(curve, index);
                     
-                    if (this.currentChartData.speed_scaling && this.currentChartData.speed_scaling.applied && curve.is_selected) {
-                        const speedRatio = this.currentChartData.speed_scaling.speed_ratio;
-                        const requiredSpeed = this.currentChartData.speed_scaling.required_speed_rpm;
-                        
-                        // Apply affinity laws: Flow ∝ speed, Power ∝ speed³
-                        flowData = flowData.map(flow => flow * speedRatio);
-                        powerData = powerData.map(power => power * (speedRatio * speedRatio * speedRatio));
-                        
-                        impellerName += ` (${Math.round(requiredSpeed)} RPM)`;
-                        console.log(`Charts.js: Applied speed scaling to power curve - ratio: ${speedRatio.toFixed(3)}`);
-                    }
-                    
-                    // v6.1 FIX: Backend already applies affinity laws - frontend only renders received data
-                    // Add trim indication to name if trimmed
-                    if (curve.is_selected && this.currentChartData.operating_point && this.currentChartData.operating_point.sizing_info) {
-                        const sizingInfo = this.currentChartData.operating_point.sizing_info;
-                        const trimPercent = sizingInfo.trim_percent;
-                        
-                        if (trimPercent && trimPercent < 100) {
-                            impellerName += ` (${trimPercent.toFixed(1)}% trim)`;
-                        }
-                    }
+                    // Backend provides final, ready-to-plot data - no frontend transformations needed
+                    const flowData = curve.flow_data;
+                    const powerData = curve.power_data;
 
                     traces.push({
                         x: flowData,
                         y: powerData,
                         type: 'scatter',
                         mode: 'lines+markers',
-                        name: impellerName,
+                        name: curveName,
                         line: {
                             color: curve.is_selected ? config.color : this.getAlternateColor(index),
                             width: curve.is_selected ? 3 : 2
@@ -985,34 +919,12 @@ class PumpChartsManager {
             this.currentChartData.curves.forEach((curve, index) => {
                 if (curve && Array.isArray(curve.flow_data) && Array.isArray(curve.npshr_data) && curve.npshr_data.length > 0) {
                     // Generate proper impeller size name using helper
-                    let impellerName = this.getImpellerName(curve, index);
-
-                    // Apply speed scaling to selected curve if applied (VFD pumps)
-                    let flowData = [...curve.flow_data];
-                    let npshData = [...curve.npshr_data];
+                    // SINGLE SOURCE OF TRUTH: Use backend-generated labels directly
+                    const curveName = curve.display_label || this.getImpellerName(curve, index);
                     
-                    if (this.currentChartData.speed_scaling && this.currentChartData.speed_scaling.applied && curve.is_selected) {
-                        const speedRatio = this.currentChartData.speed_scaling.speed_ratio;
-                        const requiredSpeed = this.currentChartData.speed_scaling.required_speed_rpm;
-                        
-                        // Apply affinity laws: Flow ∝ speed, NPSH ∝ speed²
-                        flowData = flowData.map(flow => flow * speedRatio);
-                        npshData = npshData.map(npsh => npsh * (speedRatio * speedRatio));
-                        
-                        impellerName += ` (${Math.round(requiredSpeed)} RPM)`;
-                        console.log(`Charts.js: Applied speed scaling to NPSH curve - ratio: ${speedRatio.toFixed(3)}`);
-                    }
-                    
-                    // v6.1 FIX: Backend already applies affinity laws - frontend only renders received data
-                    // Add trim indication to name if trimmed
-                    if (curve.is_selected && this.currentChartData.operating_point && this.currentChartData.operating_point.sizing_info) {
-                        const sizingInfo = this.currentChartData.operating_point.sizing_info;
-                        const trimPercent = sizingInfo.trim_percent;
-                        
-                        if (trimPercent && trimPercent < 100) {
-                            impellerName += ` (${trimPercent.toFixed(1)}% trim)`;
-                        }
-                    }
+                    // Backend provides final, ready-to-plot data - no frontend transformations needed
+                    const flowData = curve.flow_data;
+                    const npshData = curve.npshr_data;
                     
                     // Generate smooth mother curve using cubic spline interpolation
                     const minFlow = Math.min(...flowData);
@@ -1036,7 +948,7 @@ class PumpChartsManager {
                         y: smoothedNpshData,
                         type: 'scatter',
                         mode: 'lines',
-                        name: impellerName,
+                        name: curveName,
                         line: {
                             color: curve.is_selected ? config.color : this.getAlternateColor(index),
                             width: curve.is_selected ? 3 : 2,
