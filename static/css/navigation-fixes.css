@@ -17,14 +17,7 @@
     box-shadow: 0 4px 8px rgba(0,0,0,0.1);
 }
 
-/* Fix Material Icons in navigation */
-.nav-btn .material-icons {
-    font-size: 18px;
-    vertical-align: middle;
-    margin-right: 4px;
-}
-
-/* Ensure buttons are clickable */
+/* Clean navigation buttons without icons */
 .nav-dropdown > button {
     cursor: pointer;
     background: transparent;
@@ -33,8 +26,7 @@
     padding: 8px 16px;
     border-radius: 4px;
     font-size: 14px;
-    display: flex;
-    align-items: center;
+    font-weight: 500;
     transition: all 0.2s ease;
 }
 
