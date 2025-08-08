@@ -83,13 +83,13 @@ The pump selection methodology separates fixed-speed (impeller trimming) from VF
 - **markdown2**: Markdown processing.
 
 ## Recent Changes
-### August 8, 2025 - Critical BEP-Centric Selection Methodology Fix
-- **MAJOR FIX: Resolved Fundamental Selection Algorithm Flaw**: Fixed critical issue where system evaluated smallest impeller curves first instead of maximum impeller diameter
-- **Implemented BEP-Centric Methodology**: System now starts evaluation from maximum impeller diameter curve (design BEP) as per engineering best practices
-- **Fixed Curve Ordering in Repository**: Curves now loaded in descending impeller diameter order (largest first) ensuring true design capabilities are evaluated
-- **Enhanced BEP Calculation Logic**: Prioritizes authentic manufacturer BEP data and maximum impeller curve for accurate BEP determination
-- **Updated Physical Capability Validation**: Assessment now begins from maximum performance envelope, preventing exclusion of capable pumps
-- **Verified Selection Accuracy**: Testing confirms pumps now properly identified at their optimal operating points with correct BEP proximity scoring
+### August 8, 2025 - Critical Double Transformation Bug & Data Inconsistency Fix
+- **MAJOR FIX: Resolved Double Data Transformation Bug**: Fixed critical issue where both backend (api.py) and frontend (charts.js) were applying affinity laws for impeller trimming, causing severely incorrect performance curves (head scaling by diameter_ratio⁴ instead of diameter_ratio²)
+- **Backend Source of Truth Established**: Confirmed api.py correctly applies affinity laws; removed all duplicate transformations from frontend charts.js
+- **Fixed Data Inconsistency**: Implemented BEP validation that detects when stored specifications don't match actual curve data (>1m discrepancy) and switches to curve-derived BEP for accuracy
+- **8K Pump Selection Resolved**: Previously excluded due to false underperformance from double transformation; now correctly appears as top selection at its actual capability (48.7m head vs incorrect 50.01m specification)
+- **Enhanced Data Integrity**: System now validates BEP specifications against interpolated curve data, ensuring consistency between stored specs and actual performance
+- **Architectural Improvement**: Frontend charts.js now only renders data received from backend, eliminating transformation conflicts and maintaining single source of truth
 
 ### August 7, 2025 - Quality Issues Resolution & Comparison Enhancement
 - **Fixed JavaScript Errors**: Resolved `resetZoom()` function call errors by converting from object method to standalone function

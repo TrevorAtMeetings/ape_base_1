@@ -296,9 +296,7 @@ class CatalogPump:
         best_curve = None
         best_score = float('inf')
         
-        is_8k = self.pump_code == '8 K'
-        if is_8k:
-            logger.info(f"8K DEBUG: get_best_curve_for_duty evaluating {len(self.curves)} curves for {flow_m3hr} m³/hr, {head_m}m")
+
 
         for curve in self.curves:
             # Calculate how well this curve matches the duty point
@@ -355,14 +353,9 @@ class CatalogPump:
                         head_error = abs(float(predicted_head) - head_m)
                         score = head_error - efficiency * 0.1  # Favor higher efficiency
 
-                        if is_8k:
-                            logger.info(f"8K DEBUG: Curve {curve['impeller_diameter_mm']}mm - predicted_head: {predicted_head:.1f}m, efficiency: {efficiency:.1f}%, head_error: {head_error:.1f}, score: {score:.1f}")
-
                         if score < best_score:
                             best_score = score
                             best_curve = curve
-                            if is_8k:
-                                logger.info(f"8K DEBUG: New best curve: {curve['impeller_diameter_mm']}mm (score: {score:.1f})")
 
                 except Exception as e:
                     logger.debug(
@@ -406,24 +399,14 @@ class CatalogPump:
         
         # Step 4: Systematically evaluate ALL fixed-speed methods
         
-        is_8k = self.pump_code == '8 K'
-        if is_8k:
-            logger.info(f"8K DEBUG: Passed QBP gate, starting method evaluation")
-        
         # Method 1: Direct Interpolation (within existing curves, 100% trim)
         interpolated = self._get_performance_interpolated(flow_m3hr, head_m)
-        if is_8k:
-            logger.info(f"8K DEBUG: Direct interpolation result: {interpolated is not None}")
-            if interpolated:
-                logger.info(f"8K DEBUG: Interpolated head: {interpolated.get('head_m', 0):.1f}m vs required: {head_m}m")
                 
         if interpolated and interpolated.get('head_m', 0) >= head_m * 0.98:  # 2% tolerance
             performance = interpolated
             
             # Hard Gate 2: NPSH Safety (apply to this solution)
             npsh_gate_result = self._validate_npsh_safety_gate(performance, npsha_available)
-            if is_8k:
-                logger.info(f"8K DEBUG: Direct interpolation NPSH gate passed: {npsh_gate_result['passed']}")
                 
             if npsh_gate_result['passed']:
                 # Calculate score for this solution
@@ -443,16 +426,12 @@ class CatalogPump:
                     'score': score
                 }
                 possible_solutions.append(solution)
-                if is_8k:
-                    logger.info(f"8K DEBUG: Direct interpolation solution added - Score: {score:.1f}")
                 logger.debug(f"Pump {self.pump_code}: Direct interpolation solution - Score: {score:.1f}")
             else:
                 logger.debug(f"Pump {self.pump_code}: Direct solution failed NPSH gate - {npsh_gate_result['reason']}")
         
         # Method 2: Impeller Trimming (75-99% trim)  
         optimal_sizing = scaling_engine.find_optimal_sizing(self.curves, flow_m3hr, head_m)
-        if is_8k:
-            logger.info(f"8K DEBUG: Optimal sizing result: {optimal_sizing is not None}")
             
         if optimal_sizing:
             performance = optimal_sizing['performance']
@@ -601,20 +580,39 @@ class CatalogPump:
         return True
 
     def _validate_qbp_range(self, required_flow: float) -> Dict[str, Any]:
-        """v6.0 HARD GATE: Validate QBP operating range (60-130% of BEP, but allow manufacturer data beyond)"""
+        """v6.1 HARD GATE: Validate QBP operating range using curve-validated BEP data"""
         try:
             # Get pump's nominal BEP flow from specifications
-            bep_flow = self.specifications.get('bep_flow_m3hr', 0)
+            spec_bep_flow = self.specifications.get('bep_flow_m3hr', 0)
+            spec_bep_head = self.specifications.get('bep_head_m', 0)
             
             # If no BEP data in specs, try alternate field names
-            if bep_flow <= 0:
-                bep_flow = self.specifications.get('q_bep', 0)
+            if spec_bep_flow <= 0:
+                spec_bep_flow = self.specifications.get('q_bep', 0)
+                spec_bep_head = self.specifications.get('h_bep', 0)
             
-            # If still no BEP data, estimate from curves
-            if bep_flow <= 0:
+            # CRITICAL FIX: Validate BEP specifications against curve data
+            bep_flow = spec_bep_flow
+            use_curve_bep = False
+            
+            if spec_bep_flow > 0 and spec_bep_head > 0:
+                # Check if stored BEP specifications match actual curve data
+                interpolated_performance = self._get_performance_interpolated(spec_bep_flow, spec_bep_head)
+                if interpolated_performance:
+                    curve_head_at_bep = interpolated_performance['head_m']
+                    head_discrepancy = abs(curve_head_at_bep - spec_bep_head)
+                    
+                    # If discrepancy > 1m, use curve-derived BEP instead
+                    if head_discrepancy > 1.0:
+                        logger.debug(f"BEP specification inconsistency detected for {self.pump_code} - spec head: {spec_bep_head:.1f}m, curve head: {curve_head_at_bep:.1f}m (diff: {head_discrepancy:.1f}m)")
+                        use_curve_bep = True
+            
+            # If no valid BEP specs or inconsistency detected, use curve-derived BEP
+            if bep_flow <= 0 or use_curve_bep:
                 bep_point = self.get_bep_point()
                 if bep_point:
                     bep_flow = bep_point.get('flow_m3hr', 0)
+                    logger.debug(f"Using curve-derived BEP for {self.pump_code} - flow: {bep_flow:.1f} m³/hr")
             
             if bep_flow > 0:
                 qbp_percentage = (required_flow / bep_flow) * 100
@@ -1116,11 +1114,6 @@ class CatalogEngine:
             # Create evaluation object for this pump
             evaluation = PumpEvaluation(pump_code=pump.pump_code)
             
-            # Debug logging for 8K pump specifically
-            is_8k = pump.pump_code == '8 K'
-            if is_8k:
-                logger.info(f"8K DEBUG: Starting evaluation - pump type: {pump.pump_type}")
-            
             # Filter by pump type if specified
             if pump_type and pump_type.upper() not in ('GENERAL', 'GENERAL',
                                                        'ALL TYPES'):
@@ -1130,15 +1123,10 @@ class CatalogEngine:
 
                 # Direct comparison with database pump types
                 if selected_type != pump_db_type:
-                    if is_8k:
-                        logger.info(f"8K DEBUG: Excluded by type filter - pump type '{pump_db_type}' != requested '{selected_type}'")
                     logger.debug(
                         f"Skipping pump {pump.pump_code} - type '{pump_db_type}' doesn't match selected '{selected_type}'"
                     )
                     continue  # Skip pumps that don't match the selected type
-
-            if is_8k:
-                logger.info(f"8K DEBUG: Passed type filter, calling find_best_solution_for_duty({flow_m3hr}, {head_m})")
 
             # v6.0 UNIFIED EVALUATION: Single "Best Fit" function call eliminates "First Fit vs Best Fit" conflict
             best_solution = pump.find_best_solution_for_duty(flow_m3hr, head_m)
@@ -1148,8 +1136,6 @@ class CatalogEngine:
                 evaluation.add_exclusion(ExclusionReason.ENVELOPE_EXCEEDED)
                 excluded_pumps.append(evaluation)
                 excluded_count += 1
-                if is_8k:
-                    logger.info(f"8K DEBUG: EXCLUDED - find_best_solution_for_duty returned None")
                 logger.debug(f"Pump {pump.pump_code} excluded: Failed unified evaluation (hard gates or no viable solutions)")
                 continue
             
