@@ -84,9 +84,7 @@
         left: auto;
     }
     
-    .nav-dropdown:hover .nav-dropdown-content {
-        display: block;
-    }
+    /* Dropdown will be controlled by JavaScript for better reliability */
     
     .nav-dropdown-content a {
         color: #333;
@@ -298,6 +296,44 @@
         }
     }
 </style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle dropdown clicks
+    const dropdownButtons = document.querySelectorAll('.nav-dropdown > .nav-btn');
+    
+    dropdownButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            // Close other dropdowns
+            dropdownButtons.forEach(otherButton => {
+                if (otherButton !== button) {
+                    otherButton.parentElement.querySelector('.nav-dropdown-content').style.display = 'none';
+                }
+            });
+            
+            // Toggle this dropdown
+            const dropdownContent = this.parentElement.querySelector('.nav-dropdown-content');
+            if (dropdownContent.style.display === 'block') {
+                dropdownContent.style.display = 'none';
+            } else {
+                dropdownContent.style.display = 'block';
+            }
+        });
+    });
+    
+    // Close dropdowns when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.nav-dropdown')) {
+            document.querySelectorAll('.nav-dropdown-content').forEach(dropdown => {
+                dropdown.style.display = 'none';
+            });
+        }
+    });
+});
+</script>
 
 <!-- Navigation Bar -->
 <nav class="unified-nav">
