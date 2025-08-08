@@ -83,6 +83,13 @@ The pump selection methodology separates fixed-speed (impeller trimming) from VF
 - **markdown2**: Markdown processing.
 
 ## Recent Changes
+### August 8, 2025 - Critical Data Integrity Issues Identified
+- **MAJOR DATABASE DISCREPANCY FOUND**: 65-200 1F pump missing manufacturer-rated 200.5mm impeller curve - database only contains 218mm maximum curve
+- **Manufacturer vs Database**: Pump rated at 60 m³/hr @ 40m head with 200.5mm impeller vs database showing ~48.84m head with 218mm impeller
+- **Impeller Scaling Logic Fixed**: Updated adaptive interpolation in impeller_scaling.py to match catalog_engine.py methodology
+- **Root Cause of Selection Issues**: Missing authentic manufacturer curves causing incorrect head calculations and improper impeller trimming applications
+- **Data Integrity Priority**: System requires complete manufacturer curve sets (all impeller diameters) not just maximum impeller curves
+
 ### August 8, 2025 - Critical Fixes: Double Transformation Bug + Adaptive Interpolation Implementation
 - **MAJOR FIX: Resolved Double Data Transformation Bug**: Fixed critical issue where both backend (api.py) and frontend (charts.js) were applying affinity laws for impeller trimming, causing severely incorrect performance curves (head scaling by diameter_ratio⁴ instead of diameter_ratio²)
 - **Backend Source of Truth Established**: Confirmed api.py correctly applies affinity laws; removed all duplicate transformations from frontend charts.js
