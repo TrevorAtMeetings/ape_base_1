@@ -14,7 +14,7 @@ The application features a unified navigation system across all pages to ensure 
 - **Main Navigation:** Selection (homepage), Tools Menu (Pump Comparison, Shortlist Compare, Pump Editor, AI Data Extract), Admin Menu (Configuration, AI Admin, Performance Testing, Documents), Help Menu (User Guide, Features, About).
 
 ### Data Integrity & Validation
-The system prioritizes authentic manufacturer specifications for pump performance data, specifically for Best Efficiency Point (BEP) metrics, with a strict no-fallback policy for missing BEP data. Validation prevents artificial matches and uses pump-specific thresholds and operating envelopes based on database values. A two-schema architecture for AI Selection Analyst protects immutable manufacturer data while allowing for corrections and learning in a separate "brain_overlay" schema.
+The system prioritizes authentic manufacturer specifications for pump performance data, specifically for Best Efficiency Point (BEP) metrics, with a strict no-fallback policy for missing BEP data. Validation prevents artificial matches and uses pump-specific thresholds and operating envelopes based on database values. A revolutionary **Brain Overlay Schema** architecture protects immutable manufacturer data while enabling enterprise-grade data corrections and quality management through a separate "brain_overlay" schema with complete audit trails.
 
 ### Enhanced Performance Testing
 The system includes comprehensive BEP-centered envelope testing with statistical analysis and improved tabular display for comparison. It defines clear status legends (Match, Minor, Major) for accuracy metrics.
@@ -34,6 +34,7 @@ The pump selection methodology separates fixed-speed (impeller trimming) from VF
 ### Backend Architecture
 - **Flask Framework**: Handles routing and HTTP requests.
 - **Repository Pattern**: Centralized data access via `pump_repository.py`.
+- **Brain Overlay System**: Enterprise-grade data correction and quality management with golden source protection.
 - **Processing Engine**: Core pump analysis and selection logic.
 - **File Processing**: Support for SCG and TXT pump data files.
 - **Chart Generation**: Static (Matplotlib) and interactive (Plotly.js) charts.
