@@ -606,11 +606,11 @@
                     </tr>
                     <tr>
                         <td>Max Impeller Ø</td>
-                        <td>{{ (selected_pump.get('impeller_diameter_mm', 0) / (selected_pump.get('trim_percent', 100) / 100))|round(0)|int }} mm</td>
+                        <td>{{ selected_pump.get('max_impeller_mm', 0)|round(0)|int }} mm</td>
                     </tr>
                     <tr>
                         <td>Min Impeller Ø</td>
-                        <td>{{ ((selected_pump.get('impeller_diameter_mm', 0) / (selected_pump.get('trim_percent', 100) / 100)) * 0.85)|round(0)|int }} mm</td>
+                        <td>{{ selected_pump.get('min_impeller_mm', 0)|round(0)|int }} mm</td>
                     </tr>
                 </table>
             </div>

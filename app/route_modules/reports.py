@@ -233,8 +233,8 @@ def engineering_report(pump_code):
         if pump.get('pump_code') == pump_code:
             selected_pump = pump.copy()  # Make a copy to avoid modifying session data
             
-            # CRITICAL FIX: Ensure speed data is populated from database if missing
-            if not selected_pump.get('test_speed_rpm') or not selected_pump.get('min_speed_rpm'):
+            # CRITICAL FIX: Ensure speed data and impeller specs are populated from database if missing
+            if not selected_pump.get('test_speed_rpm') or not selected_pump.get('min_speed_rpm') or not selected_pump.get('min_impeller_mm'):
                 from ..catalog_engine import get_catalog_engine
                 catalog_engine = get_catalog_engine()
                 target_pump = catalog_engine.get_pump_by_code(pump_code)
@@ -245,6 +245,9 @@ def engineering_report(pump_code):
                     selected_pump['test_speed_rpm'] = target_pump.get_speed_rpm()
                     selected_pump['min_speed_rpm'] = target_pump.get_min_speed_rpm()
                     selected_pump['max_speed_rpm'] = target_pump.get_max_speed_rpm()
+                    # Add missing impeller specifications from authentic database values
+                    selected_pump['min_impeller_mm'] = target_pump.specifications.get('min_impeller_mm', 0)
+                    selected_pump['max_impeller_mm'] = target_pump.specifications.get('max_impeller_mm', 0)
             
             break
     
@@ -270,7 +273,10 @@ def engineering_report(pump_code):
                 'test_speed_rpm': target_pump.get_speed_rpm(),  # Explicit test speed field
                 'min_speed_rpm': target_pump.get_min_speed_rpm(),  # Authentic min speed
                 'max_speed_rpm': target_pump.get_max_speed_rpm(),  # Authentic max speed
-                'bep_flow_m3hr': target_pump.bep_flow_m3hr if hasattr(target_pump, 'bep_flow_m3hr') else new_flow
+                'bep_flow_m3hr': target_pump.bep_flow_m3hr if hasattr(target_pump, 'bep_flow_m3hr') else new_flow,
+                # CRITICAL FIX: Add authentic min/max impeller specifications
+                'min_impeller_mm': target_pump.specifications.get('min_impeller_mm', 0),
+                'max_impeller_mm': target_pump.specifications.get('max_impeller_mm', 0),
             }
             
             # Calculate performance if flow and head are provided
