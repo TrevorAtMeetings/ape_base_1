@@ -1,0 +1,176 @@
+Title: Make engineering specs (min/max impeller) match the chart data (curve-derived), and prevent drift.
+
+Problem Summary
+Charts show correct impeller diameters because they’re derived directly from curve data (e.g., 406.4 mm and 330.2 mm).
+
+Engineering Data Sheet shows wrong values (e.g., 330 / 281) because it reads specifications fields that are mis-populated or stale.
+
+Root cause: two data paths—charts use curve truth, engineering sheet uses spec summary. The spec summary is either wrong at repository load time or not refreshed.
+
+What to change (high level)
+Source of truth: The curves. Compute min_impeller_mm and max_impeller_mm from the curves and write them back to CatalogPump.specifications during catalog load.
+
+Reports: Use those corrected spec fields (or directly compute from curves) so engineering sheets match charts.
+
+Validation: Add a guard that rejects/flags any spec values that disagree with the computed curve values.
+
+Target files
+app/pump_repository.py ← compute + set spec min/max from curves at load time
+
+app/catalog_engine.py ← secondary correction/guard in CatalogPump.__init__ or a helper
+
+app/reports.py and/or app/catalog_engine.py::convert_catalog_pump_to_legacy_format ← ensure engineering sheet uses the correct min/max
+
+tests/test_spec_vs_curve_consistency.py ← new tests
+
+Step-by-step Plan
+1) Create robust helpers (parse + compute)
+Add to a shared location (e.g., app/utils_impeller.py or within pump_repository.py if you prefer fewer files):
+
+python
+Copy
+import re
+from typing import Iterable, Optional, Tuple
+
+def _to_mm(value) -> Optional[float]:
+    """Parse diameter to mm from various formats: number, '406.4', '406.4mm', '16"' (inches), 'DN', etc."""
+    if value is None:
+        return None
+    if isinstance(value, (int, float)):
+        return float(value)
+    s = str(value).strip().lower()
+    # Try plain float or '123.4mm'
+    m = re.match(r'^([0-9]+(?:\.[0-9]+)?)\s*(mm)?$', s)
+    if m:
+        return float(m.group(1))
+    # Try inches like 16" or 16 in
+    m = re.match(r'^([0-9]+(?:\.[0-9]+)?)\s*(\"|in|inch|inches)$', s)
+    if m:
+        return float(m.group(1)) * 25.4
+    # Try extracting leading float
+    m = re.search(r'([0-9]+(?:\.[0-9]+)?)', s)
+    if m:
+        return float(m.group(1))
+    return None
+
+def compute_impeller_min_max_from_curves(curves: Iterable[dict]) -> Tuple[Optional[float], Optional[float]]:
+    """Scan curves and return (min_mm, max_mm) using curve['impeller_diameter_mm'] or curve['impeller_size']."""
+    vals = []
+    for c in curves or []:
+        d = c.get('impeller_diameter_mm')
+        if isinstance(d, bool):  # sanitize booleans
+            d = None
+        if d is None:
+            d = c.get('impeller_size')
+        mm = _to_mm(d)
+        if mm and mm > 0:
+            vals.append(mm)
+    if not vals:
+        return None, None
+    return (min(vals), max(vals))
+Note: keep mm resolution as-is (do not round down to “330”). If you need formatting for display, round at render time, not in data.
+
+2) Fix at repository load time (canonical correction)
+In app/pump_repository.py, where pump models are constructed/aggregated, after curves are attached but before returning the model:
+
+Compute (min_mm, max_mm) = compute_impeller_min_max_from_curves(curves).
+
+If present, overwrite pump_data['specifications']['min_impeller_mm'] and ['max_impeller_mm'] with the computed values.
+
+If computed values are missing, log ERROR (this is critical data) so the page can fail loudly later.
+
+python
+Copy
+from .utils_impeller import compute_impeller_min_max_from_curves
+
+# inside the loop building each pump_data
+min_mm, max_mm = compute_impeller_min_max_from_curves(pump_data.get('curves', []))
+if min_mm and max_mm:
+    pump_data.setdefault('specifications', {})
+    pump_data['specifications']['min_impeller_mm'] = float(min_mm)
+    pump_data['specifications']['max_impeller_mm'] = float(max_mm)
+else:
+    logger.error(f"Repository: Could not derive impeller min/max for {pump_data.get('pump_code')}. Curves may be incomplete.")
+3) Add a secondary guard in CatalogPump
+In app/catalog_engine.py inside CatalogPump.__init__, after self.curves is assigned, recompute min/max and reconcile:
+
+python
+Copy
+min_mm_calc, max_mm_calc = compute_impeller_min_max_from_curves(self.curves)
+spec = self.specifications
+
+if min_mm_calc and max_mm_calc:
+    if (spec.get('min_impeller_mm') != min_mm_calc) or (spec.get('max_impeller_mm') != max_mm_calc):
+        logger.warning(
+            f"CatalogPump {self.pump_code}: specs min/max ({spec.get('min_impeller_mm')}, {spec.get('max_impeller_mm')}) "
+            f"do not match curve-derived ({min_mm_calc}, {max_mm_calc}). Overwriting specs to curve truth."
+        )
+        spec['min_impeller_mm'] = float(min_mm_calc)
+        spec['max_impeller_mm'] = float(max_mm_calc)
+else:
+    logger.error(f"CatalogPump {self.pump_code}: Missing curve-derived min/max. Engineering sheet may be incomplete.")
+This ensures even if repository logic misses something, the model self-heals.
+
+4) Make engineering sheet read the corrected values
+You have two safe options (pick one; option A recommended):
+
+A) Use the updated spec fields in the report:
+
+In convert_catalog_pump_to_legacy_format, set:
+
+python
+Copy
+self.pump_info['pMinImpD'] = str(catalog_pump.specifications.get('min_impeller_mm', 0))
+self.pump_info['pMaxImpD'] = str(catalog_pump.specifications.get('max_impeller_mm', 0))
+This ensures engineering data sheet shows the same numbers as the corrected spec (which now equals curve truth).
+
+B) Derive directly from curves inside the adapter (belt-and-suspenders):
+
+Compute min/max via the helper again and write them into pMinImpD / pMaxImpD.
+
+This avoids any chance of drift but duplicates logic.
+
+5) Add a consistency check test
+Create tests/test_spec_vs_curve_consistency.py:
+
+Build a fake pump with curves having impeller_diameter_mm values: 330.2 and 406.4.
+
+Assert that:
+
+After repo load + CatalogPump init, specifications['min_impeller_mm'] == 330.2 and max_impeller_mm == 406.4.
+
+convert_catalog_pump_to_legacy_format(...).pump_info['pMinImpD'] == '330.2' and 'pMaxImpD' == '406.4'.
+
+Include a case where curves only have impeller_size: "406.4mm" (string) to verify parsing.
+
+Include a case where impeller_size: '16"' to verify inch parsing to 406.4 mm.
+
+6) Fail loudly if missing
+If curves exist but min/max cannot be computed:
+
+Log ERROR in repo and in CatalogPump.__init__.
+
+Optionally, surface a warning banner in the UI (separate task), but at minimum don’t silently render wrong values.
+
+Acceptance Criteria
+✅ Engineering Data Sheet shows min/max impeller diameters identical to the chart’s curve-derived values (e.g., 330.2 mm and 406.4 mm, not “330/281”).
+
+✅ specifications['min_impeller_mm'] and ['max_impeller_mm'] are computed from curves and overwrite any stale DB values during load.
+
+✅ CatalogPump guard ensures spec/curve mismatch cannot leak into reports.
+
+✅ Tests cover: numeric mm, string with “mm”, and inch inputs; exact boundary values (330.2 / 406.4).
+
+✅ ERROR is logged if min/max cannot be computed so this can’t fail silently.
+
+Non-goals
+Do not change chart logic (already correct).
+
+Do not enable/modify speed variation paths.
+
+Runbook
+pytest -q
+
+Start the app and open a pump where the chart shows 406.4 & 330.2.
+
+Generate the engineering report → verify it now shows 406.4 and 330.2 exactly.
