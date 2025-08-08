@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Brain System Administration{% endblock %}
+{% block title %}Brain System Administration - MD3{% endblock %}
 
 {% block head %}
 <!-- Google Fonts - Material Design 3 -->
@@ -67,12 +67,13 @@
     --md-sys-typescale-label-large-weight: 500;
 }
 
-/* Material Design 3 Brain Dashboard */
+/* Material Design 3 Brain Dashboard - Override Materialize */
 .brain-dashboard {
-    background: var(--md-sys-color-background);
-    min-height: 100vh;
-    padding: 24px 0;
-    font-family: 'Google Sans', 'Roboto', sans-serif;
+    background: var(--md-sys-color-background) !important;
+    min-height: 100vh !important;
+    padding: 24px 0 !important;
+    font-family: 'Google Sans', 'Roboto', sans-serif !important;
+    margin: 0 !important;
 }
 
 .brain-container {
@@ -81,16 +82,17 @@
     padding: 0 24px;
 }
 
-/* Material Design 3 Header Card */
-.brain-header {
-    background: var(--md-sys-color-primary-container);
-    border-radius: 28px;
-    padding: 40px;
-    margin-bottom: 32px;
-    color: var(--md-sys-color-on-primary-container);
-    box-shadow: var(--md-sys-elevation-level2);
-    position: relative;
-    overflow: hidden;
+/* Material Design 3 Header Card - Override Materialize */
+.brain-dashboard .brain-header {
+    background: var(--md-sys-color-primary-container) !important;
+    border-radius: 28px !important;
+    padding: 40px !important;
+    margin-bottom: 32px !important;
+    color: var(--md-sys-color-on-primary-container) !important;
+    box-shadow: var(--md-sys-elevation-level2) !important;
+    position: relative !important;
+    overflow: hidden !important;
+    border: none !important;
 }
 
 .brain-header::before {
@@ -117,12 +119,12 @@
     margin-bottom: 16px;
 }
 
-.brain-title h1 {
-    font-size: var(--md-sys-typescale-headline-large-size);
-    font-weight: var(--md-sys-typescale-headline-large-weight);
-    margin: 0;
-    line-height: 1.2;
-    color: var(--md-sys-color-on-primary-container);
+.brain-dashboard .brain-title h1 {
+    font-size: var(--md-sys-typescale-headline-large-size) !important;
+    font-weight: var(--md-sys-typescale-headline-large-weight) !important;
+    margin: 0 !important;
+    line-height: 1.2 !important;
+    color: var(--md-sys-color-on-primary-container) !important;
 }
 
 .brain-icon {
@@ -139,23 +141,24 @@
     line-height: 1.5;
 }
 
-/* Material Design 3 Status Cards */
-.status-overview {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 24px;
-    margin-bottom: 40px;
+/* Material Design 3 Status Cards - Override Materialize */
+.brain-dashboard .status-overview {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)) !important;
+    gap: 24px !important;
+    margin-bottom: 40px !important;
 }
 
-.status-card {
-    background: var(--md-sys-color-surface);
-    border-radius: 20px;
-    padding: 24px;
-    box-shadow: var(--md-sys-elevation-level1);
-    border: 1px solid var(--md-sys-color-outline-variant);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    position: relative;
-    overflow: hidden;
+.brain-dashboard .status-card {
+    background: var(--md-sys-color-surface) !important;
+    border-radius: 20px !important;
+    padding: 24px !important;
+    box-shadow: var(--md-sys-elevation-level1) !important;
+    border: 1px solid var(--md-sys-color-outline-variant) !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    position: relative !important;
+    overflow: hidden !important;
+    margin: 0 !important;
 }
 
 .status-card:hover {
@@ -219,22 +222,23 @@
 .status-success .status-value { color: #137333; }
 .status-success::before { background: #137333; }
 
-/* Material Design 3 Feature Cards */
-.features-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-    gap: 32px;
+/* Material Design 3 Feature Cards - Override Materialize */
+.brain-dashboard .features-grid {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)) !important;
+    gap: 32px !important;
 }
 
-.feature-card {
-    background: var(--md-sys-color-surface);
-    border-radius: 24px;
-    padding: 32px;
-    box-shadow: var(--md-sys-elevation-level1);
-    border: 1px solid var(--md-sys-color-outline-variant);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    position: relative;
-    overflow: hidden;
+.brain-dashboard .feature-card {
+    background: var(--md-sys-color-surface) !important;
+    border-radius: 24px !important;
+    padding: 32px !important;
+    box-shadow: var(--md-sys-elevation-level1) !important;
+    border: 1px solid var(--md-sys-color-outline-variant) !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    position: relative !important;
+    overflow: hidden !important;
+    margin: 0 !important;
 }
 
 .feature-card:hover {
@@ -294,29 +298,34 @@
     flex-wrap: wrap;
 }
 
-/* Material Design 3 Buttons */
-.btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 24px;
-    border-radius: 20px;
-    font-size: var(--md-sys-typescale-label-large-size);
-    font-weight: var(--md-sys-typescale-label-large-weight);
-    text-decoration: none;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    border: none;
-    cursor: pointer;
-    min-height: 40px;
-    box-sizing: border-box;
-    position: relative;
-    overflow: hidden;
+/* Material Design 3 Buttons - Override Materialize */
+.brain-dashboard .btn,
+.brain-dashboard .btn-primary,
+.brain-dashboard .btn-secondary {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    padding: 10px 24px !important;
+    border-radius: 20px !important;
+    font-size: var(--md-sys-typescale-label-large-size) !important;
+    font-weight: var(--md-sys-typescale-label-large-weight) !important;
+    text-decoration: none !important;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    border: none !important;
+    cursor: pointer !important;
+    min-height: 40px !important;
+    box-sizing: border-box !important;
+    position: relative !important;
+    overflow: hidden !important;
+    text-transform: none !important;
+    line-height: normal !important;
+    margin: 0 !important;
 }
 
-.btn-primary {
-    background: var(--md-sys-color-primary);
-    color: var(--md-sys-color-on-primary);
-    box-shadow: var(--md-sys-elevation-level1);
+.brain-dashboard .btn-primary {
+    background: var(--md-sys-color-primary) !important;
+    color: var(--md-sys-color-on-primary) !important;
+    box-shadow: var(--md-sys-elevation-level1) !important;
 }
 
 .btn-primary:hover {
@@ -331,10 +340,10 @@
     box-shadow: var(--md-sys-elevation-level1);
 }
 
-.btn-secondary {
-    background: transparent;
-    color: var(--md-sys-color-primary);
-    border: 1px solid var(--md-sys-color-outline);
+.brain-dashboard .btn-secondary {
+    background: transparent !important;
+    color: var(--md-sys-color-primary) !important;
+    border: 1px solid var(--md-sys-color-outline) !important;
 }
 
 .btn-secondary:hover {
