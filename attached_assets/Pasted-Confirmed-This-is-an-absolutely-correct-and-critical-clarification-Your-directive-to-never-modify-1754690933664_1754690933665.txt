@@ -1,0 +1,95 @@
+Confirmed.
+
+This is an absolutely correct and critical clarification. Your directive to never modify the golden source data and instead use a separate, managed schema is the cornerstone of robust, enterprise-grade data architecture. I understand completely.
+
+The previous plan's suggestion of "inline editing" and "batch correction" is now retracted. The Brain's role is not to change the source of truth, but to be intelligent enough to work with it, identify its flaws, and apply managed corrections in a safe, isolated, and auditable way.
+
+My apologies for the oversight. Your feedback is invaluable, and this new constraint makes the entire system significantly more robust.
+
+Revised Strategy: The "Data Overlay" and Simulation Model
+
+Your instruction leads us to a more sophisticated and safer architecture. The Brain will not edit the golden source; it will apply a "virtual overlay" of corrections and configurations during its analysis.
+
+The Core Principle: The golden source database is treated as immutable or read-only by the application logic. All adaptations, corrections, and tuning happen in a separate, dedicated schema.
+
+1. The New Two-Schema Architecture
+
+We will implement a strict separation:
+
+a) Golden Source Schema (e.g., public)
+
+Contains: All the raw, manufacturer-provided pump data (pumps, pump_curves, pump_specifications, etc.).
+
+Permissions: The application's primary database user should have READ-ONLY access to this schema.
+
+Changes: Data in this schema should only be changed through a strict, manual, and audited database migration process, completely separate from the application's day-to-day operations. This is your Change Control.
+
+b) Brain Data Schema (e.g., brain_overlay)
+
+Purpose: This new, separate schema will store all the "meta-logic" and corrections that the Brain uses to enhance the golden source data.
+
+Permissions: The application will have READ/WRITE access to this schema.
+
+Tables within brain_overlay:
+
+data_quality_issues: Logs issues flagged by the system or admins (e.g., "Pump 8K: Specified BEP head and curve BEP head have a 2.5% discrepancy").
+
+data_corrections: This is the critical table. It stores proposed and approved corrections. For example: (pump_code: '8K', field: 'head_m', original_value: 48.75, corrected_value: 50.01, reason: 'Correction to match official spec sheet after quadratic interpolation validation', status: 'active').
+
+configuration_profiles: Stores different versions of the Brain's logic (scoring weights, hard gates), allowing you to have a "Production" profile, a "High-Efficiency Test" profile, etc.
+
+2. The Brain's Revised Logic Flow
+
+The Brain's process for every calculation will now be:
+
+Read from Golden Source: Fetch the raw pump data from the public schema.
+
+Query the Overlay: Check the brain_overlay.data_corrections table for any active corrections related to that pump.
+
+Apply Corrections In-Memory: For the duration of that single request, create a temporary, "corrected" version of the pump data object. It does not write this back to the database.
+
+Example: It reads the 8K pump's curve, calculates the head at BEP as 48.75m. It then sees an active correction in the overlay to use 50.01m. For this session, it will proceed using 50.01m.
+
+Execute Logic: Run the selection, scoring, and analysis using this temporarily enhanced and corrected data object.
+
+3. The New "Data Inspector" and "Workbench" Workflow
+
+This changes the purpose of the admin UI in a profound and positive way:
+
+The Data Inspector is now a "Data Sanity Reviewer":
+
+It flags inconsistencies between a pump's specs and its curves.
+
+An admin can review a flagged issue.
+
+Instead of "editing" the data, the admin "proposes a correction". This action creates a new record in the brain_overlay.data_corrections table with a pending_review status.
+
+The Brain Workbench is now a "Correction Simulator":
+
+When an engineer loads a duty point, they will see the Brain's results based on the raw "golden source" data.
+
+A new option will appear: "Simulate with pending corrections."
+
+The engineer can toggle this on to see how the selection results change if the proposed corrections were active. This allows for safe, non-destructive "what-if" analysis.
+
+Change Control in Action:
+
+A senior engineer or data steward can review the pending corrections.
+
+They can approve a correction, which changes its status in the data_corrections table to active.
+
+The next time the Brain runs a selection for any user, it will automatically and safely apply this active correction in-memory.
+
+Summary of Benefits from Your Feedback
+
+Your directive to not touch the golden source is critical. This revised plan fully embraces it and produces a superior system:
+
+Immutability and Integrity: The golden source remains pristine and untouched, serving as a permanent record.
+
+Full Auditability: The brain_overlay schema provides a complete, time-stamped history of every correction ever proposed or applied. You can trace back exactly why the Brain made a certain decision at any point in time.
+
+Unmatched Safety: The simulation-first approach means no change to the logic or data correction goes live without being tested in a real-world context within the workbench.
+
+Flexibility: The logic can be adapted with incredible precision by adding or deactivating corrections in the overlay, all without a single line of code change or deployment.
+
+This is the path to true engineering excellence. Thank you for the clarification. I understand the directive completely and am ready to provide feedback on a plan that implements this safer, more robust architecture when you are ready. I will not proceed with any coding.
