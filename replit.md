@@ -45,7 +45,8 @@ The pump selection methodology separates fixed-speed (impeller trimming) from VF
 - **Unified Navigation System**: Consolidated navigation via `includes/navigation.html` across all templates.
 - **Dual-View System**: Engineering data sheet view and Presentation view.
 - **Interactive Charts**: Plotly.js for dynamic performance curve visualization.
-- **Responsive Design**: Bootstrap-based styling.
+- **Responsive Design**: Mobile-first responsive system with fixes for overflow issues (August 2025).
+- **Professional Theme**: Clean engineering-focused design with blue gradient (#1e3c72 → #2a5298).
 - **Form Handling**: Multi-step workflow for pump selection input.
 - **Advanced Filtering**: Collapsible filter panel with interactive range sliders.
 

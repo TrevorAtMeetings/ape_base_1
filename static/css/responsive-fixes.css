@@ -1,0 +1,442 @@
+/**
+ * APE Pumps Responsive Design Fixes
+ * Comprehensive mobile-first responsive design system
+ * Fixes overflow issues, text clipping, and mobile layouts
+ */
+
+/* ============================================
+   1. MOBILE-FIRST BASE STYLES (0-599px)
+   ============================================ */
+
+/* Container width constraints */
+.container {
+    max-width: 100% !important;
+    padding: 0 12px !important;
+    overflow-x: hidden !important;
+}
+
+/* Prevent horizontal scroll on body */
+body {
+    overflow-x: hidden !important;
+    width: 100% !important;
+    position: relative !important;
+}
+
+/* Main content wrapper */
+main {
+    overflow-x: hidden !important;
+    width: 100% !important;
+}
+
+/* Fix navigation overflow */
+.unified-nav {
+    width: 100% !important;
+    overflow-x: hidden !important;
+}
+
+.nav-container {
+    padding: 0 12px !important;
+    overflow-x: hidden !important;
+}
+
+.nav-brand {
+    font-size: 1rem !important;
+    flex-shrink: 1 !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+
+.nav-brand span {
+    display: none !important; /* Hide text on mobile, show icon only */
+}
+
+.nav-actions {
+    flex-wrap: wrap !important;
+    gap: 4px !important;
+}
+
+.nav-btn {
+    padding: 6px 10px !important;
+    font-size: 0.75rem !important;
+    white-space: normal !important;
+    min-width: auto !important;
+}
+
+/* Fix dropdown positioning */
+.nav-dropdown-content {
+    position: fixed !important;
+    width: 90% !important;
+    left: 5% !important;
+    right: 5% !important;
+    max-height: 70vh !important;
+    overflow-y: auto !important;
+}
+
+/* Cards responsive */
+.card {
+    margin: 8px 0 !important;
+    width: 100% !important;
+}
+
+.card-content {
+    padding: 12px !important;
+}
+
+.card-title {
+    font-size: 1.1rem !important;
+    line-height: 1.2 !important;
+}
+
+/* Tables responsive wrapper */
+.table-responsive {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    margin-bottom: 16px !important;
+}
+
+table {
+    min-width: 100% !important;
+}
+
+/* Fix table cells */
+td, th {
+    padding: 8px !important;
+    font-size: 0.85rem !important;
+    white-space: normal !important;
+    word-wrap: break-word !important;
+}
+
+/* Forms responsive */
+input[type=text],
+input[type=number],
+input[type=email],
+input[type=password],
+textarea,
+select {
+    width: 100% !important;
+    font-size: 16px !important; /* Prevents zoom on iOS */
+    padding: 10px !important;
+    box-sizing: border-box !important;
+}
+
+/* Buttons responsive */
+.btn, .btn-large {
+    width: 100% !important;
+    margin: 4px 0 !important;
+    padding: 10px !important;
+    font-size: 0.9rem !important;
+    white-space: normal !important;
+    height: auto !important;
+    min-height: 40px !important;
+}
+
+.btn-small {
+    padding: 6px 12px !important;
+    font-size: 0.85rem !important;
+}
+
+/* Floating AI Chat positioning */
+.floating-ai-chat {
+    bottom: 10px !important;
+    right: 10px !important;
+}
+
+.ai-chat-toggle {
+    width: 48px !important;
+    height: 48px !important;
+}
+
+.ai-chat-window {
+    width: calc(100vw - 20px) !important;
+    max-width: 360px !important;
+    right: 10px !important;
+    bottom: 70px !important;
+    max-height: 60vh !important;
+}
+
+/* Grid system mobile */
+.row {
+    margin-left: -8px !important;
+    margin-right: -8px !important;
+}
+
+.col {
+    padding: 0 8px !important;
+}
+
+[class*="col s"],
+[class*="col m"],
+[class*="col l"] {
+    width: 100% !important;
+    margin-bottom: 12px !important;
+}
+
+/* Pump options specific */
+.pump-row {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    padding: 12px !important;
+}
+
+.pump-rank {
+    width: 100% !important;
+    margin-bottom: 8px !important;
+}
+
+/* ============================================
+   2. SMALL TABLETS (600-767px)
+   ============================================ */
+@media only screen and (min-width: 600px) {
+    .container {
+        padding: 0 16px !important;
+    }
+    
+    .nav-brand span {
+        display: inline !important;
+    }
+    
+    .nav-btn {
+        padding: 8px 12px !important;
+        font-size: 0.85rem !important;
+    }
+    
+    .card-content {
+        padding: 16px !important;
+    }
+    
+    .btn, .btn-large {
+        width: auto !important;
+        min-width: 120px !important;
+    }
+    
+    /* Grid system small tablets */
+    .col.s6 {
+        width: 50% !important;
+    }
+    
+    .col.s4 {
+        width: 33.333% !important;
+    }
+    
+    .col.s3 {
+        width: 25% !important;
+    }
+}
+
+/* ============================================
+   3. TABLETS (768-991px)
+   ============================================ */
+@media only screen and (min-width: 768px) {
+    .container {
+        padding: 0 24px !important;
+        max-width: 768px !important;
+        margin: 0 auto !important;
+    }
+    
+    .nav-container {
+        padding: 0 24px !important;
+    }
+    
+    .nav-brand {
+        font-size: 1.25rem !important;
+    }
+    
+    .nav-dropdown-content {
+        position: absolute !important;
+        width: auto !important;
+        min-width: 180px !important;
+        left: 0 !important;
+        right: auto !important;
+    }
+    
+    .card {
+        margin: 12px 0 !important;
+    }
+    
+    .card-content {
+        padding: 20px !important;
+    }
+    
+    /* Grid system tablets */
+    .col.m6 {
+        width: 50% !important;
+    }
+    
+    .col.m4 {
+        width: 33.333% !important;
+    }
+    
+    .col.m3 {
+        width: 25% !important;
+    }
+    
+    .pump-row {
+        flex-direction: row !important;
+        align-items: center !important;
+    }
+    
+    .pump-rank {
+        width: auto !important;
+        margin-bottom: 0 !important;
+    }
+}
+
+/* ============================================
+   4. DESKTOPS (992-1199px)
+   ============================================ */
+@media only screen and (min-width: 992px) {
+    .container {
+        max-width: 992px !important;
+    }
+    
+    .nav-btn {
+        padding: 8px 16px !important;
+        font-size: 0.875rem !important;
+    }
+    
+    /* Grid system desktop */
+    .col.l6 {
+        width: 50% !important;
+    }
+    
+    .col.l4 {
+        width: 33.333% !important;
+    }
+    
+    .col.l3 {
+        width: 25% !important;
+    }
+    
+    .col.l2 {
+        width: 16.666% !important;
+    }
+}
+
+/* ============================================
+   5. LARGE DESKTOPS (1200px+)
+   ============================================ */
+@media only screen and (min-width: 1200px) {
+    .container {
+        max-width: 1200px !important;
+    }
+}
+
+/* ============================================
+   6. UTILITY CLASSES
+   ============================================ */
+
+/* Text overflow prevention */
+.text-ellipsis {
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+}
+
+.text-wrap {
+    white-space: normal !important;
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
+}
+
+/* Hide/Show responsive */
+@media only screen and (max-width: 599px) {
+    .hide-on-mobile { display: none !important; }
+    .show-on-mobile { display: block !important; }
+}
+
+@media only screen and (min-width: 600px) and (max-width: 991px) {
+    .hide-on-tablet { display: none !important; }
+    .show-on-tablet { display: block !important; }
+}
+
+@media only screen and (min-width: 992px) {
+    .hide-on-desktop { display: none !important; }
+    .show-on-desktop { display: block !important; }
+}
+
+/* ============================================
+   7. Z-INDEX HIERARCHY FIX
+   ============================================ */
+.unified-nav {
+    z-index: 1000 !important;
+}
+
+.nav-dropdown-content {
+    z-index: 1001 !important;
+}
+
+.floating-ai-chat {
+    z-index: 900 !important;
+}
+
+.ai-chat-window {
+    z-index: 901 !important;
+}
+
+.autocomplete-dropdown {
+    z-index: 800 !important;
+}
+
+.modal {
+    z-index: 1100 !important;
+}
+
+.modal-overlay {
+    z-index: 1099 !important;
+}
+
+/* ============================================
+   8. SPECIFIC PAGE FIXES
+   ============================================ */
+
+/* Input form page */
+.input-form-container {
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+}
+
+/* Results page */
+.results-header {
+    padding: 12px !important;
+}
+
+.results-title {
+    font-size: 1.2rem !important;
+}
+
+/* Pump report page */
+.pump-card {
+    width: 100% !important;
+    margin: 8px 0 !important;
+}
+
+/* Brain dashboard */
+.brain-container {
+    padding: 0 12px !important;
+}
+
+.brain-header {
+    padding: 16px !important;
+}
+
+/* ============================================
+   9. PRINT STYLES
+   ============================================ */
+@media print {
+    .no-print,
+    .unified-nav,
+    .floating-ai-chat,
+    .nav-dropdown {
+        display: none !important;
+    }
+    
+    .container {
+        max-width: 100% !important;
+        padding: 0 !important;
+    }
+    
+    body {
+        font-size: 12pt !important;
+    }
+}
