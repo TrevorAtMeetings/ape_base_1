@@ -7,70 +7,25 @@
     "brain_count": 4
   },
   {
-    "type": "score_discrepancy",
-    "flow": 50,
-    "head": 30,
-    "pump": "WXH-65-185 2P",
-    "legacy_score": 78.46916666666668,
-    "brain_score": 85.5025,
-    "difference": 7.033333333333317
-  },
-  {
-    "type": "top_pump_mismatch",
-    "flow": 200,
-    "head": 40,
-    "legacy_pump": "4/5 MEDI",
-    "brain_pump": "100-400 2F",
-    "legacy_score": 93.595,
-    "brain_score": 94.4
-  },
-  {
-    "type": "top_pump_mismatch",
-    "flow": 300,
-    "head": 60,
-    "legacy_pump": "200-150-460 4P",
-    "brain_pump": "10/12 DME",
-    "legacy_score": 89.72833333333331,
-    "brain_score": 97.705
-  },
-  {
-    "type": "top_pump_mismatch",
-    "flow": 400,
-    "head": 50,
-    "legacy_pump": "250-200-610 6P",
-    "brain_pump": "150-400 2F",
-    "legacy_score": 95.60194005257844,
-    "brain_score": 98.16499999999999
-  },
-  {
     "type": "count_mismatch",
     "flow": 50,
     "head": 100,
-    "legacy_count": 5,
+    "legacy_count": 2,
     "brain_count": 1
   },
   {
     "type": "count_mismatch",
     "flow": 100,
     "head": 150,
-    "legacy_count": 5,
+    "legacy_count": 3,
     "brain_count": 2
   },
   {
     "type": "count_mismatch",
     "flow": 150,
     "head": 200,
-    "legacy_count": 3,
+    "legacy_count": 1,
     "brain_count": 0
-  },
-  {
-    "type": "top_pump_mismatch",
-    "flow": 400,
-    "head": 50,
-    "legacy_pump": "250-200-610 6P",
-    "brain_pump": "150-400 2F",
-    "legacy_score": 95.60194005257844,
-    "brain_score": 98.16499999999999
   },
   {
     "type": "sizing_method",

@@ -171,7 +171,8 @@ class SelectionIntelligence:
                     evaluation['exclusion_reasons'].append('Invalid performance data')
                     return evaluation
             
-            if performance and performance.get('meets_requirements'):
+            # Be more lenient like Legacy - accept if performance exists even if marginal
+            if performance:
                 # Efficiency score (Legacy v6.0 - 35 points max)
                 efficiency = performance.get('efficiency_pct', 0)
                 if efficiency >= 85:

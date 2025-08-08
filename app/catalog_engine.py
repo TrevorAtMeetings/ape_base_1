@@ -443,13 +443,15 @@ class CatalogPump:
                     'head_margin_m': performance['head_m'] - head_m,
                     'sizing_method': 'direct_interpolation'
                 }
-                score = self._calculate_solution_score(performance, sizing_info, flow_m3hr, head_m)
+                score_result = self._calculate_solution_score(performance, sizing_info, flow_m3hr, head_m)
+                score = score_result['score']
                 
                 solution = {
                     'method': 'direct_interpolation',
                     'performance': performance,
                     'sizing_info': sizing_info,
-                    'score': score
+                    'score': score,
+                    'score_breakdown': score_result['score_breakdown']
                 }
                 possible_solutions.append(solution)
                 logger.debug(f"Pump {self.pump_code}: Direct interpolation solution - Score: {score:.1f}")
@@ -467,15 +469,20 @@ class CatalogPump:
             required_d = sizing.get('required_diameter_mm')
             base_d = sizing.get('base_diameter_mm')
 
-            # ✅ Enforce limit relative to *max* impeller, not just base
-            max_imp = float(self.specifications.get('max_impeller_mm') or 0)
-            if max_imp and required_d:
-                if required_d < max_imp * 0.85:  # more than 15% trim
-                    logger.debug(f"Pump {self.pump_code}: required Ø {required_d:.1f}mm is >15% below max Ø {max_imp:.1f}mm → reject")
+            # ✅ Enforce limit relative to available curves, not just max specification
+            # Check if required diameter is achievable with available curves
+            available_diameters = [c.get('impeller_diameter_mm', 0) for c in self.curves if c.get('impeller_diameter_mm', 0) > 0]
+            if available_diameters and required_d:
+                min_available = min(available_diameters)
+                max_available = max(available_diameters)
+                
+                # Check if required diameter is below the smallest available curve
+                if required_d < min_available * 0.85:  # more than 15% below smallest available
+                    logger.debug(f"Pump {self.pump_code}: required Ø {required_d:.1f}mm is >15% below min available Ø {min_available:.1f}mm → reject")
                     optimal_sizing = None
                 else:
-                    # Add trim vs max percentage for clarity
-                    sizing['trim_vs_max_percent'] = (required_d / max_imp * 100.0) if max_imp else None
+                    # Add trim vs available percentage for clarity
+                    sizing['trim_vs_min_available'] = (required_d / min_available * 100.0) if min_available else None
 
         if optimal_sizing:
             performance = optimal_sizing['performance']
@@ -489,13 +496,15 @@ class CatalogPump:
                 npsh_gate_result = self._validate_npsh_safety_gate(performance, npsha_available)
                 if npsh_gate_result['passed']:
                     # Calculate score for this solution
-                    score = self._calculate_solution_score(performance, sizing, flow_m3hr, head_m)
+                    score_result = self._calculate_solution_score(performance, sizing, flow_m3hr, head_m)
+                    score = score_result['score']
                     
                     solution = {
                         'method': 'impeller_trimming',
                         'performance': performance,
                         'sizing_info': sizing,
-                        'score': score
+                        'score': score,
+                        'score_breakdown': score_result['score_breakdown']
                     }
                     possible_solutions.append(solution)
                     logger.debug(f"Pump {self.pump_code}: Impeller trimming solution - {sizing['base_diameter_mm']}mm → {sizing['required_diameter_mm']}mm ({trim_percent:.1f}% trim), Score: {score:.1f}")
@@ -528,6 +537,7 @@ class CatalogPump:
             'test_speed_rpm': best_solution['performance']['test_speed_rpm'],
             'sizing_info': best_solution['sizing_info'],
             'score': best_solution['score'],
+            'score_breakdown': best_solution.get('score_breakdown', {}),
             'curve': best_solution['performance'].get('curve', {}),
             # v6.0: Fixed-speed values
             'speed_variation_pct': 0.0,
@@ -667,13 +677,8 @@ class CatalogPump:
                     min(p['flow_m3hr'] for p in curve['performance_points'])
                     for curve in self.curves) if self.curves else 0
                 
-                # CRITICAL: Trust manufacturer data - if they provide it, it's operational
-                if min_flow <= required_flow <= max_flow:
-                    # Flow is within manufacturer's documented range - ALLOW IT
-                    logger.debug(f"Flow at {qbp_percentage:.1f}% BEP is within manufacturer range ({min_flow:.1f}-{max_flow:.1f} m³/hr)")
-                    return {'passed': True, 'reason': 'Within manufacturer documented range'}
-                
-                # Only apply 60-130% gate if outside manufacturer's range
+                # Apply 60-130% gate strictly (matching Brain behavior)
+                # Remove the manufacturer range override to ensure consistent QBP enforcement
                 if qbp_percentage < 60 or qbp_percentage > 130:
                     return {
                         'passed': False,
@@ -711,10 +716,10 @@ class CatalogPump:
     def _calculate_solution_score(self, performance: Dict[str, Any], 
                                  sizing_info: Dict[str, Any],
                                  target_flow: float,
-                                 target_head: float) -> float:
-        """Calculate comprehensive score for a pump solution (v6.0: 85-point system)
+                                 target_head: float) -> Dict[str, Any]:
+        """Calculate comprehensive score for a pump solution (v6.0: 100-point system)
         
-        Returns total score (0-85) based on:
+        Returns dict with total score and breakdown based on:
         - BEP proximity (45 points) - THE RELIABILITY FACTOR  
         - Efficiency (35 points) - THE OPERATING COST FACTOR
         - Head margin (20 points) - THE RIGHT-SIZING FACTOR
@@ -723,6 +728,7 @@ class CatalogPump:
         v6.0 Changes: NPSH removed from scoring, VFD penalties removed, rebalanced weights
         """
         score = 0.0
+        score_breakdown = {}
         
         # 1. BEP Proximity Score (45 points max) - v6.0: Increased from 35 to 45
         bep_analysis = self.calculate_bep_distance(target_flow, target_head)
@@ -742,6 +748,11 @@ class CatalogPump:
             bep_score = 22.5  # Default if no BEP data (50% of max)
         
         score += bep_score
+        score_breakdown['bep_proximity'] = {
+            'score': bep_score,
+            'qbp_percent': bep_analysis.get('flow_ratio', 1.0) * 100 if bep_analysis.get('bep_available') else 0,
+            'flow_ratio': bep_analysis.get('flow_ratio', 1.0)
+        }
         
         # 2. Efficiency Score (35 points max) - v6.0: Increased from 30 to 35
         efficiency = performance.get('efficiency_pct', 0)
@@ -757,6 +768,10 @@ class CatalogPump:
             eff_score = max(0, (efficiency - 40) * 2)
         
         score += eff_score
+        score_breakdown['efficiency'] = {
+            'score': eff_score,
+            'efficiency_pct': efficiency
+        }
         
         # 3. Head Margin Score (20 points max) - v6.0: Increased from 15 to 20
         head_margin = performance.get('head_m', 0) - target_head
@@ -773,6 +788,11 @@ class CatalogPump:
             margin_score = max(0, margin_score)  # Floor at 0
         
         score += margin_score
+        score_breakdown['head_margin'] = {
+            'score': margin_score,
+            'margin_pct': head_margin_pct,
+            'margin_m': head_margin
+        }
         
         # v6.0: NPSH Score REMOVED - inconsistent data makes fair comparison impossible
         # NPSH safety is now handled by hard gate only
@@ -791,11 +811,20 @@ class CatalogPump:
             trim_penalty = -12
             
         score += trim_penalty  # Add negative penalty
+        score_breakdown['trim_penalty'] = {
+            'score': trim_penalty,
+            'trim_percent': trim_percent
+        }
         
         # v6.0: VFD/Speed variation penalties REMOVED - fixed-speed only
         
         # Ensure score doesn't go negative
-        return max(0, score)
+        total_score = max(0, score)
+        
+        return {
+            'score': total_score,
+            'score_breakdown': score_breakdown
+        }
 
     # v6.0: get_performance_at_duty() REMOVED - replaced by find_best_solution_for_duty()
     # The old method is part of the "First Fit vs Best Fit" conflict that has been resolved
@@ -1247,7 +1276,8 @@ class CatalogEngine:
                 'meets_requirements': True,  # All pumps in results meet requirements via hard gates
                 'sizing_validated': sizing_validated,
                 'bep_analysis': bep_analysis,
-                'evaluation': evaluation
+                'evaluation': evaluation,
+                'score_breakdown': best_solution.get('score_breakdown', {})
             }
             suitable_pumps.append(result)
 

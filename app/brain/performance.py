@@ -119,8 +119,11 @@ class PerformanceAnalyzer:
             if base_diameter <= 0:
                 return None
             
-            # Check if target flow is within curve range
-            if target_flow < min(flows) or target_flow > max(flows):
+            # Check if target flow is within curve range (with tolerance for edge cases)
+            # Allow 10% extrapolation like Legacy system
+            flow_min = min(flows)
+            flow_max = max(flows)
+            if target_flow < flow_min * 0.9 or target_flow > flow_max * 1.1:
                 return None
             
             # Adaptive interpolation based on data density
@@ -251,7 +254,8 @@ class PerformanceAnalyzer:
                 pass
             
             # Apply 2% tolerance for head requirements (matching Legacy system)
-            meets_requirements = actual_head >= target_head * 0.98
+            # Also accept pumps that deliver excessive head (up to 2x) like Legacy does
+            meets_requirements = (actual_head >= target_head * 0.98) and (actual_head <= target_head * 2.0)
             
             return {
                 'flow_m3hr': target_flow,
