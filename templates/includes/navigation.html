@@ -320,8 +320,17 @@
                 e.preventDefault();
                 e.stopPropagation();
                 
+                console.log('Dropdown button clicked!', this);
                 const dropdownContent = this.parentElement.querySelector('.nav-dropdown-content');
+                console.log('Dropdown content found:', dropdownContent);
+                
+                if (!dropdownContent) {
+                    console.error('No dropdown content found for button:', this);
+                    return;
+                }
+                
                 const isOpen = dropdownContent.style.display === 'block';
+                console.log('Is currently open:', isOpen);
                 
                 // Close all dropdowns
                 document.querySelectorAll('.nav-dropdown-content').forEach(dropdown => {
@@ -331,6 +340,9 @@
                 // Toggle this dropdown
                 if (!isOpen) {
                     dropdownContent.style.display = 'block';
+                    console.log('Setting dropdown to display: block');
+                } else {
+                    console.log('Closing dropdown');
                 }
             });
         });
