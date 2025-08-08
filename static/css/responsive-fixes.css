@@ -47,8 +47,8 @@ main {
     text-overflow: ellipsis !important;
 }
 
-.nav-brand span {
-    display: none !important; /* Hide text on mobile, show icon only */
+.nav-brand .brand-text {
+    display: none !important; /* Hide brand text on mobile, show icon only */
 }
 
 .nav-actions {
@@ -59,8 +59,16 @@ main {
 .nav-btn {
     padding: 6px 10px !important;
     font-size: 0.75rem !important;
-    white-space: normal !important;
+    white-space: nowrap !important;
     min-width: auto !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+/* Ensure button text is visible on mobile */
+.nav-btn span {
+    display: inline !important;
 }
 
 /* Fix dropdown positioning - removed mobile override to allow hover to work */

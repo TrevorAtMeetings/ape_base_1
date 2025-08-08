@@ -113,10 +113,15 @@
         transition: all 0.2s ease;
         display: inline-flex;
         align-items: center;
-        gap: 6px;
+        gap: 4px;
         cursor: pointer;
         white-space: nowrap;
         height: 36px;
+    }
+    
+    .nav-btn i {
+        font-size: 18px;
+        line-height: 1;
     }
 
     .nav-btn:hover {
@@ -260,12 +265,15 @@
             height: 32px;
         }
 
+        /* Keep button text visible on mobile with icons */
         .nav-btn span {
-            display: none;
+            display: inline;
+            font-size: 0.8rem;
         }
 
         .nav-btn i {
-            font-size: 20px;
+            font-size: 18px;
+            margin-right: 4px;
         }
 
         .nav-actions {
@@ -355,6 +363,7 @@
             <!-- Tools Dropdown -->
             <div class="nav-dropdown">
                 <button class="nav-btn">
+                    <i class="material-icons">build</i>
                     <span>Tools</span>
                     <span style="margin-left: 4px;">▾</span>
                 </button>
@@ -370,6 +379,7 @@
             <!-- Admin Dropdown -->
             <div class="nav-dropdown">
                 <button class="nav-btn">
+                    <i class="material-icons">settings</i>
                     <span>Admin</span>
                     <span style="margin-left: 4px;">▾</span>
                 </button>
@@ -385,6 +395,7 @@
             <!-- Help Dropdown -->
             <div class="nav-dropdown">
                 <button class="nav-btn">
+                    <i class="material-icons">help_outline</i>
                     <span>Help</span>
                     <span style="margin-left: 4px;">▾</span>
                 </button>
