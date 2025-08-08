@@ -35,12 +35,7 @@
             background: white;
         }
         
-        /* Preserve navigation styling */
-        .unified-nav, .unified-nav * {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
-            margin: initial;
-            padding: initial;
-        }
+
 
         .engineering-container {
             max-width: 1200px;
@@ -366,7 +361,7 @@
         {'label': 'Pump Selection', 'url': '/pump_options?flow=' ~ site_requirements.get('flow_m3hr', 0) ~ '&head=' ~ site_requirements.get('head_m', 0)},
         {'label': selected_pump.get('pump_code', 'N/A') ~ ' - Engineering'}
     ] %}
-    {% include 'includes/navigation.html' %}
+
 
     <div class="engineering-container" style="padding-top: 20px;">
 
