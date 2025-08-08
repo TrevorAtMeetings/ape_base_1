@@ -51,9 +51,17 @@ class ImpellerScalingEngine:
             if target_flow < min(flows) or target_flow > max(flows):
                 return None
                 
+            # Adaptive interpolation based on available data points for consistency
+            if len(flows) >= 4:
+                interpolation_kind = 'cubic'  # Best for dense data, captures curve shape
+            elif len(flows) == 3:
+                interpolation_kind = 'quadratic'  # Perfect for parabolic curves
+            else:  # 2 points
+                interpolation_kind = 'linear'  # Fallback for minimal data
+            
             # Interpolate base curve performance at target flow
-            head_interp = interpolate.interp1d(flows, heads, kind='linear', bounds_error=False)
-            eff_interp = interpolate.interp1d(flows, effs, kind='linear', bounds_error=False)
+            head_interp = interpolate.interp1d(flows, heads, kind=interpolation_kind, bounds_error=False)
+            eff_interp = interpolate.interp1d(flows, effs, kind=interpolation_kind, bounds_error=False)
             
             base_head_at_flow = float(head_interp(target_flow))
             base_efficiency = float(eff_interp(target_flow))
