@@ -12,12 +12,14 @@ nav .nav-dropdown-content,
     top: 100% !important;
     left: 0 !important;
     z-index: 999999 !important;
-    background: white !important;
-    border: 2px solid #ff0000 !important;
+    background: red !important;
+    border: 5px solid yellow !important;
     border-radius: 4px !important;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5) !important;
-    min-width: 180px !important;
-    min-height: 100px !important;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.8) !important;
+    min-width: 200px !important;
+    min-height: 150px !important;
+    width: 200px !important;
+    height: 150px !important;
     visibility: visible !important;
     opacity: 1 !important;
     pointer-events: auto !important;
@@ -26,7 +28,6 @@ nav .nav-dropdown-content,
     clip: none !important;
     overflow: visible !important;
     max-height: none !important;
-    height: auto !important;
 }
 
 /* When JavaScript sets display: block */

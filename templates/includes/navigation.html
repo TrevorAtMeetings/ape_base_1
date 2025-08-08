@@ -342,6 +342,37 @@
                 if (!isOpen) {
                     dropdownContent.style.display = 'block';
                     console.log('Setting dropdown to display: block');
+                    
+                    // DEBUG: Check computed styles
+                    const computedStyle = window.getComputedStyle(dropdownContent);
+                    console.log('Computed styles after setting display block:');
+                    console.log('- display:', computedStyle.display);
+                    console.log('- position:', computedStyle.position);
+                    console.log('- top:', computedStyle.top);
+                    console.log('- left:', computedStyle.left);
+                    console.log('- width:', computedStyle.width);
+                    console.log('- height:', computedStyle.height);
+                    console.log('- visibility:', computedStyle.visibility);
+                    console.log('- opacity:', computedStyle.opacity);
+                    console.log('- z-index:', computedStyle.zIndex);
+                    console.log('- overflow:', computedStyle.overflow);
+                    console.log('- transform:', computedStyle.transform);
+                    console.log('- clip:', computedStyle.clip);
+                    
+                    // Check bounding rect
+                    const rect = dropdownContent.getBoundingClientRect();
+                    console.log('Bounding rect:', rect);
+                    
+                    // Force extreme positioning for testing
+                    dropdownContent.style.position = 'fixed';
+                    dropdownContent.style.top = '100px';
+                    dropdownContent.style.left = '100px';
+                    dropdownContent.style.zIndex = '999999';
+                    dropdownContent.style.background = 'red';
+                    dropdownContent.style.border = '5px solid yellow';
+                    dropdownContent.style.width = '200px';
+                    dropdownContent.style.height = '150px';
+                    console.log('Applied emergency positioning and styling');
                 } else {
                     console.log('Closing dropdown');
                 }
