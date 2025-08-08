@@ -1240,12 +1240,7 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('Initialized', sidenavs.length, 'sidenavs');
         M.Sidenav.init(sidenavs);
 
-        // Initialize dropdowns
-        var dropdowns = document.querySelectorAll('.dropdown-trigger');
-        console.log('Initialized', dropdowns.length, 'dropdown triggers');
-        dropdowns.forEach(dropdown => {
-            console.log('Dropdown:', dropdown.textContent.trim(), 'Target:', dropdown.getAttribute('data-target'));
-        });
+        // Dropdown initialization removed - handled by navigation.html
         M.Dropdown.init(dropdowns);
 
         // Initialize form components

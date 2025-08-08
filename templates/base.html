@@ -185,20 +185,7 @@
             M.Sidenav.init(sidenavs);
             console.log('Initialized', sidenavs.length, 'sidenavs');
             
-            // Initialize dropdown menus with options
-            var dropdowns = document.querySelectorAll('.dropdown-trigger');
-            M.Dropdown.init(dropdowns, {
-                coverTrigger: false,
-                constrainWidth: false,
-                hover: false,
-                closeOnClick: true
-            });
-            console.log('Initialized', dropdowns.length, 'dropdown triggers');
-            
-            // Debug dropdown initialization
-            dropdowns.forEach(function(dropdown) {
-                console.log('Dropdown:', dropdown.textContent.trim(), 'Target:', dropdown.getAttribute('data-target'));
-            });
+            // Dropdowns are handled by navigation.html now - removed to prevent conflicts
         });
 
         function showAboutModal() {

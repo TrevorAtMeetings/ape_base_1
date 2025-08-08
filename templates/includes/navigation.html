@@ -298,41 +298,50 @@
 </style>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Handle dropdown clicks
-    const dropdownButtons = document.querySelectorAll('.nav-dropdown > .nav-btn');
-    
-    dropdownButtons.forEach(button => {
-        button.addEventListener('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            
-            // Close other dropdowns
-            dropdownButtons.forEach(otherButton => {
-                if (otherButton !== button) {
-                    otherButton.parentElement.querySelector('.nav-dropdown-content').style.display = 'none';
+// Navigation dropdown handler - immediate execution
+(function() {
+    function initializeNavDropdowns() {
+        console.log('Initializing navigation dropdowns...');
+        const dropdownButtons = document.querySelectorAll('.nav-dropdown > .nav-btn');
+        console.log('Found', dropdownButtons.length, 'dropdown buttons');
+        
+        dropdownButtons.forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const dropdownContent = this.parentElement.querySelector('.nav-dropdown-content');
+                const isOpen = dropdownContent.style.display === 'block';
+                
+                // Close all dropdowns
+                document.querySelectorAll('.nav-dropdown-content').forEach(dropdown => {
+                    dropdown.style.display = 'none';
+                });
+                
+                // Toggle this dropdown
+                if (!isOpen) {
+                    dropdownContent.style.display = 'block';
                 }
             });
-            
-            // Toggle this dropdown
-            const dropdownContent = this.parentElement.querySelector('.nav-dropdown-content');
-            if (dropdownContent.style.display === 'block') {
-                dropdownContent.style.display = 'none';
-            } else {
-                dropdownContent.style.display = 'block';
+        });
+        
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.nav-dropdown')) {
+                document.querySelectorAll('.nav-dropdown-content').forEach(dropdown => {
+                    dropdown.style.display = 'none';
+                });
             }
         });
-    });
+    }
     
-    // Close dropdowns when clicking outside
-    document.addEventListener('click', function(e) {
-        if (!e.target.closest('.nav-dropdown')) {
-            document.querySelectorAll('.nav-dropdown-content').forEach(dropdown => {
-                dropdown.style.display = 'none';
-            });
-        }
-    });
-});
+    // Initialize immediately if DOM is ready, otherwise wait
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initializeNavDropdowns);
+    } else {
+        initializeNavDropdowns();
+    }
+})();
 </script>
 
 <!-- Navigation Bar -->
