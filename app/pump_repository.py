@@ -36,7 +36,7 @@ class PumpRepositoryConfig:
     data_source: DataSource = DataSource.POSTGRESQL
 
     # PostgreSQL configuration using DATABASE_URL format
-    database_url: str = None  # Will be set dynamically
+    database_url: Optional[str] = None  # Will be set dynamically
 
     # Connection pooling configuration
     pool_min_size: int = 1
@@ -53,7 +53,7 @@ class PumpRepository:
     Supports PostgreSQL database source.
     """
 
-    def __init__(self, config: PumpRepositoryConfig = None):
+    def __init__(self, config: Optional[PumpRepositoryConfig] = None):
         self.config = config or PumpRepositoryConfig()
         self._catalog_data = None
         self._pump_models = None

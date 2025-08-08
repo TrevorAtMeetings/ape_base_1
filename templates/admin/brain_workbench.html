@@ -1,0 +1,452 @@
+{% extends "base.html" %}
+
+{% block title %}Brain Logic Workbench{% endblock %}
+
+{% block head %}
+<style>
+.workbench-dashboard {
+    padding: 20px;
+    max-width: 1600px;
+    margin: 0 auto;
+}
+
+.workbench-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.workbench-section {
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.section-title {
+    color: #2c5aa0;
+    margin-bottom: 15px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #e9ecef;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: #333;
+}
+
+.form-control {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 0.9em;
+}
+
+.form-control:focus {
+    border-color: #2c5aa0;
+    outline: none;
+    box-shadow: 0 0 5px rgba(44, 90, 160, 0.3);
+}
+
+.btn {
+    display: inline-block;
+    padding: 10px 20px;
+    background: #2c5aa0;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9em;
+    text-decoration: none;
+    transition: background 0.3s;
+    margin-right: 10px;
+}
+
+.btn:hover {
+    background: #1e4080;
+}
+
+.btn-secondary {
+    background: #6c757d;
+}
+
+.btn-secondary:hover {
+    background: #545b62;
+}
+
+.btn-success {
+    background: #28a745;
+}
+
+.btn-success:hover {
+    background: #218838;
+}
+
+.config-slider {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.config-slider label {
+    width: 150px;
+    margin-bottom: 0;
+    margin-right: 10px;
+}
+
+.config-slider input[type="range"] {
+    flex: 1;
+    margin: 0 10px;
+}
+
+.config-value {
+    width: 60px;
+    text-align: center;
+    background: #f8f9fa;
+    border: 1px solid #ddd;
+    padding: 4px;
+    border-radius: 3px;
+}
+
+.results-area {
+    grid-column: 1 / -1;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.comparison-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+
+.comparison-table th,
+.comparison-table td {
+    border: 1px solid #ddd;
+    padding: 8px 12px;
+    text-align: left;
+}
+
+.comparison-table th {
+    background: #f8f9fa;
+    font-weight: bold;
+}
+
+.pump-result {
+    background: #f8f9fa;
+    border-left: 4px solid #2c5aa0;
+    padding: 15px;
+    margin-bottom: 10px;
+    border-radius: 4px;
+}
+
+.pump-result.top-pick {
+    border-left-color: #28a745;
+    background: #f0fff4;
+}
+
+.pump-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.pump-code {
+    font-weight: bold;
+    font-size: 1.1em;
+    color: #2c5aa0;
+}
+
+.pump-score {
+    background: #2c5aa0;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.9em;
+}
+
+.pump-details {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 10px;
+    font-size: 0.9em;
+}
+
+.detail-item {
+    text-align: center;
+}
+
+.detail-value {
+    font-weight: bold;
+    display: block;
+    color: #2c5aa0;
+}
+
+.detail-label {
+    color: #666;
+    font-size: 0.8em;
+}
+
+.breadcrumb {
+    background: transparent;
+    padding: 0;
+    margin-bottom: 20px;
+}
+
+.breadcrumb-item + .breadcrumb-item::before {
+    content: "→";
+}
+
+.loading {
+    text-align: center;
+    padding: 40px;
+    color: #666;
+}
+
+.error {
+    background: #f8d7da;
+    color: #721c24;
+    padding: 15px;
+    border-radius: 4px;
+    border: 1px solid #f5c6cb;
+    margin: 10px 0;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="workbench-dashboard">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/admin">Admin</a></li>
+            <li class="breadcrumb-item"><a href="/admin/brain">Brain System</a></li>
+            <li class="breadcrumb-item active">Workbench</li>
+        </ol>
+    </nav>
+
+    <h1>Brain Logic Workbench</h1>
+    <p>Test Brain configurations and corrections in a safe environment before deploying to production.</p>
+
+    <div class="workbench-grid">
+        <!-- Test Scenario Configuration -->
+        <div class="workbench-section">
+            <h3 class="section-title">Test Scenario</h3>
+            
+            <div class="form-group">
+                <label for="flow_rate">Flow Rate (m³/hr)</label>
+                <input type="number" id="flow_rate" class="form-control" step="0.1" min="0" value="350">
+            </div>
+            
+            <div class="form-group">
+                <label for="head">Head (m)</label>
+                <input type="number" id="head" class="form-control" step="0.1" min="0" value="50">
+            </div>
+            
+            <div class="form-group">
+                <label for="specific_pump">Test Specific Pump (optional)</label>
+                <select id="specific_pump" class="form-control">
+                    <option value="">All suitable pumps</option>
+                    {% for pump_code in pump_codes %}
+                    <option value="{{ pump_code }}">{{ pump_code }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="use_corrections" checked> Use active corrections
+                </label>
+            </div>
+            
+            <button onclick="runTest()" class="btn">Run Test</button>
+            <button onclick="clearResults()" class="btn btn-secondary">Clear Results</button>
+        </div>
+
+        <!-- Brain Configuration Tuning -->
+        <div class="workbench-section">
+            <h3 class="section-title">Configuration Tuning</h3>
+            <p>Adjust Brain logic parameters to see their impact on pump selection.</p>
+            
+            <div class="config-slider">
+                <label for="bep_weight">BEP Proximity:</label>
+                <input type="range" id="bep_weight" min="0" max="60" value="45" oninput="updateConfig()">
+                <input type="number" class="config-value" id="bep_weight_value" value="45" min="0" max="60">
+            </div>
+            
+            <div class="config-slider">
+                <label for="efficiency_weight">Efficiency:</label>
+                <input type="range" id="efficiency_weight" min="0" max="60" value="35" oninput="updateConfig()">
+                <input type="number" class="config-value" id="efficiency_weight_value" value="35" min="0" max="60">
+            </div>
+            
+            <div class="config-slider">
+                <label for="head_weight">Head Margin:</label>
+                <input type="range" id="head_weight" min="0" max="40" value="20" oninput="updateConfig()">
+                <input type="number" class="config-value" id="head_weight_value" value="20" min="0" max="40">
+            </div>
+            
+            <div class="config-slider">
+                <label for="trim_penalty">Trim Penalty:</label>
+                <input type="range" id="trim_penalty" min="0" max="10" value="2" step="0.5" oninput="updateConfig()">
+                <input type="number" class="config-value" id="trim_penalty_value" value="2" min="0" max="10" step="0.5">
+            </div>
+            
+            <button onclick="resetToProduction()" class="btn btn-secondary">Reset to Production</button>
+            <button onclick="saveAsProfile()" class="btn btn-success">Save as Profile</button>
+        </div>
+    </div>
+
+    <!-- Results Area -->
+    <div class="results-area">
+        <h3 class="section-title">Test Results</h3>
+        <div id="results-content">
+            <p class="text-muted">Run a test scenario to see results here.</p>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentConfig = {{ production_config|tojson }};
+
+function updateConfig() {
+    // Sync sliders with number inputs
+    document.getElementById('bep_weight_value').value = document.getElementById('bep_weight').value;
+    document.getElementById('efficiency_weight_value').value = document.getElementById('efficiency_weight').value;
+    document.getElementById('head_weight_value').value = document.getElementById('head_weight').value;
+    document.getElementById('trim_penalty_value').value = document.getElementById('trim_penalty').value;
+}
+
+function resetToProduction() {
+    document.getElementById('bep_weight').value = 45;
+    document.getElementById('efficiency_weight').value = 35;
+    document.getElementById('head_weight').value = 20;
+    document.getElementById('trim_penalty').value = 2;
+    updateConfig();
+}
+
+function runTest() {
+    const flowRate = parseFloat(document.getElementById('flow_rate').value);
+    const head = parseFloat(document.getElementById('head').value);
+    const specificPump = document.getElementById('specific_pump').value;
+    const useCorrections = document.getElementById('use_corrections').checked;
+    
+    if (!flowRate || !head || flowRate <= 0 || head <= 0) {
+        alert('Please enter valid flow rate and head values');
+        return;
+    }
+    
+    const resultsArea = document.getElementById('results-content');
+    resultsArea.innerHTML = '<div class="loading">Running test scenario...</div>';
+    
+    fetch('/api/brain/simulate-selection', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            flow_rate: flowRate,
+            head: head,
+            specific_pump: specificPump,
+            use_corrections: useCorrections,
+            config_overrides: {
+                bep_weight: parseInt(document.getElementById('bep_weight').value),
+                efficiency_weight: parseInt(document.getElementById('efficiency_weight').value),
+                head_weight: parseInt(document.getElementById('head_weight').value),
+                trim_penalty: parseFloat(document.getElementById('trim_penalty').value)
+            }
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            resultsArea.innerHTML = `<div class="error">Error: ${data.error}</div>`;
+            return;
+        }
+        
+        displayResults(data);
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        resultsArea.innerHTML = '<div class="error">Failed to run test scenario</div>';
+    });
+}
+
+function displayResults(data) {
+    const resultsArea = document.getElementById('results-content');
+    
+    let html = `
+        <h4>Test Results for ${data.duty_point.flow_m3hr} m³/hr @ ${data.duty_point.head_m}m</h4>
+        <p>Found ${data.total_candidates} suitable pumps, showing top ${data.results.length} results:</p>
+    `;
+    
+    data.results.forEach((result, index) => {
+        const isTopPick = index === 0;
+        html += `
+            <div class="pump-result ${isTopPick ? 'top-pick' : ''}">
+                <div class="pump-header">
+                    <span class="pump-code">${result.pump_code}</span>
+                    <span class="pump-score">${result.score.toFixed(1)} points</span>
+                </div>
+                <div class="pump-details">
+                    <div class="detail-item">
+                        <span class="detail-value">${result.efficiency.toFixed(1)}%</span>
+                        <span class="detail-label">Efficiency</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-value">${result.power.toFixed(1)} kW</span>
+                        <span class="detail-label">Power</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-value">${result.impeller_trim.toFixed(1)}%</span>
+                        <span class="detail-label">Trim</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    
+    if (data.corrections_used) {
+        html += '<p><strong>Note:</strong> Results include active data corrections</p>';
+    }
+    
+    resultsArea.innerHTML = html;
+}
+
+function clearResults() {
+    document.getElementById('results-content').innerHTML = '<p class="text-muted">Run a test scenario to see results here.</p>';
+}
+
+function saveAsProfile() {
+    const profileName = prompt('Enter profile name:');
+    if (profileName) {
+        alert(`Saving profile "${profileName}" - Feature coming soon`);
+    }
+}
+
+// Initialize config sliders
+document.addEventListener('DOMContentLoaded', function() {
+    updateConfig();
+    
+    // Add event listeners to number inputs to sync with sliders
+    ['bep_weight', 'efficiency_weight', 'head_weight', 'trim_penalty'].forEach(id => {
+        document.getElementById(id + '_value').addEventListener('input', function() {
+            document.getElementById(id).value = this.value;
+        });
+    });
+});
+</script>
+{% endblock %}

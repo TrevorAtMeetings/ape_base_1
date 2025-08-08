@@ -1,0 +1,412 @@
+{% extends "base.html" %}
+
+{% block title %}Data Corrections Management{% endblock %}
+
+{% block head %}
+<style>
+.corrections-dashboard {
+    padding: 20px;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.stats-bar {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.stat-item {
+    text-align: center;
+}
+
+.stat-number {
+    font-size: 1.5em;
+    font-weight: bold;
+    display: block;
+    color: #2c5aa0;
+}
+
+.stat-label {
+    font-size: 0.8em;
+    color: #666;
+    text-transform: uppercase;
+}
+
+.corrections-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.corrections-section {
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #e9ecef;
+}
+
+.correction-item {
+    background: #f8f9fa;
+    border-left: 4px solid #2c5aa0;
+    padding: 15px;
+    margin-bottom: 10px;
+    border-radius: 4px;
+}
+
+.correction-item.pending {
+    border-left-color: #ffc107;
+    background: #fffbf0;
+}
+
+.correction-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    margin-bottom: 8px;
+}
+
+.pump-code {
+    font-weight: bold;
+    color: #2c5aa0;
+    font-size: 1.1em;
+}
+
+.field-path {
+    color: #666;
+    font-family: monospace;
+    background: #e9ecef;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 0.9em;
+}
+
+.correction-value {
+    margin: 8px 0;
+}
+
+.value-change {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: monospace;
+}
+
+.old-value {
+    color: #dc3545;
+    text-decoration: line-through;
+}
+
+.new-value {
+    color: #28a745;
+    font-weight: bold;
+}
+
+.arrow {
+    color: #666;
+}
+
+.justification {
+    background: #e3f2fd;
+    border-left: 3px solid #2196f3;
+    padding: 8px;
+    margin: 8px 0;
+    font-size: 0.9em;
+    font-style: italic;
+}
+
+.correction-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.btn {
+    display: inline-block;
+    padding: 6px 12px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9em;
+    text-decoration: none;
+    transition: background 0.3s;
+}
+
+.btn-success {
+    background: #28a745;
+    color: white;
+}
+
+.btn-success:hover {
+    background: #218838;
+}
+
+.btn-danger {
+    background: #dc3545;
+    color: white;
+}
+
+.btn-danger:hover {
+    background: #c82333;
+}
+
+.btn-info {
+    background: #17a2b8;
+    color: white;
+}
+
+.btn-info:hover {
+    background: #138496;
+}
+
+.correction-meta {
+    font-size: 0.8em;
+    color: #666;
+    margin-top: 8px;
+    display: flex;
+    justify-content: space-between;
+}
+
+.breadcrumb {
+    background: transparent;
+    padding: 0;
+    margin-bottom: 20px;
+}
+
+.breadcrumb-item + .breadcrumb-item::before {
+    content: "→";
+}
+
+.empty-state {
+    text-align: center;
+    color: #666;
+    padding: 40px;
+    border: 2px dashed #ddd;
+    border-radius: 8px;
+    margin: 20px 0;
+}
+
+.empty-state i {
+    font-size: 3em;
+    margin-bottom: 10px;
+    color: #ccc;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="corrections-dashboard">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/admin">Admin</a></li>
+            <li class="breadcrumb-item"><a href="/admin/brain">Brain System</a></li>
+            <li class="breadcrumb-item active">Corrections</li>
+        </ol>
+    </nav>
+
+    <h1>Data Corrections Management</h1>
+
+    <!-- Statistics Bar -->
+    <div class="stats-bar">
+        <div class="stat-item">
+            <span class="stat-number">{{ stats.active or 0 }}</span>
+            <span class="stat-label">Active Corrections</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-number">{{ stats.pending_approval or 0 }}</span>
+            <span class="stat-label">Pending Approval</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-number">{{ stats.total_pumps_corrected or 0 }}</span>
+            <span class="stat-label">Pumps Corrected</span>
+        </div>
+    </div>
+
+    <div class="corrections-grid">
+        <!-- Pending Corrections -->
+        <div class="corrections-section">
+            <div class="section-header">
+                <h3>Pending Approval</h3>
+                <span class="badge">{{ pending_corrections|length }}</span>
+            </div>
+            
+            {% if pending_corrections %}
+                {% for correction in pending_corrections %}
+                <div class="correction-item pending">
+                    <div class="correction-header">
+                        <span class="pump-code">{{ correction[0] }}</span>
+                        <span class="field-path">{{ correction[2] }}</span>
+                    </div>
+                    
+                    <div class="correction-value">
+                        <div class="value-change">
+                            <span class="old-value">original</span>
+                            <span class="arrow">→</span>
+                            <span class="new-value">{{ correction[3] }}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="justification">
+                        {{ correction[4] }}
+                    </div>
+                    
+                    <div class="correction-actions">
+                        <button onclick="approveCorrection({{ correction[7] }})" class="btn btn-success">
+                            ✓ Approve
+                        </button>
+                        <button onclick="rejectCorrection({{ correction[7] }})" class="btn btn-danger">
+                            ✗ Reject
+                        </button>
+                        <button onclick="testCorrection('{{ correction[0] }}')" class="btn btn-info">
+                            🧪 Test
+                        </button>
+                    </div>
+                    
+                    <div class="correction-meta">
+                        <span>Type: {{ correction[1] }}</span>
+                        <span>By: {{ correction[5] }}</span>
+                        <span>{{ correction[6] }}</span>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">
+                    <i class="material-icons">check_circle</i>
+                    <p>No corrections pending approval</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Active Corrections -->
+        <div class="corrections-section">
+            <div class="section-header">
+                <h3>Active Corrections</h3>
+                <span class="badge">{{ active_corrections|length }}</span>
+            </div>
+            
+            {% if active_corrections %}
+                {% for correction in active_corrections %}
+                <div class="correction-item">
+                    <div class="correction-header">
+                        <span class="pump-code">{{ correction.pump_code }}</span>
+                        <span class="field-path">{{ correction.field_path }}</span>
+                    </div>
+                    
+                    <div class="correction-value">
+                        <div class="value-change">
+                            <span class="old-value">{{ correction.original_value or 'original' }}</span>
+                            <span class="arrow">→</span>
+                            <span class="new-value">{{ correction.corrected_value }}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="justification">
+                        {{ correction.justification }}
+                    </div>
+                    
+                    <div class="correction-actions">
+                        <button onclick="testCorrection('{{ correction.pump_code }}')" class="btn btn-info">
+                            🧪 Test Impact
+                        </button>
+                        <button onclick="viewDetails({{ correction.id }})" class="btn btn-info">
+                            📊 Details
+                        </button>
+                    </div>
+                    
+                    <div class="correction-meta">
+                        <span>Confidence: {{ "%.0f"|format(correction.confidence_score * 100) }}%</span>
+                        <span>Type: {{ correction.correction_type }}</span>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">
+                    <i class="material-icons">psychology</i>
+                    <p>No active corrections<br>System using golden source data only</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+function approveCorrection(correctionId) {
+    if (!confirm('Are you sure you want to approve this correction?')) return;
+    
+    fetch(`/api/brain/approve-correction/${correctionId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            approved_by: 'admin'
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Correction approved successfully');
+            window.location.reload();
+        } else {
+            alert('Error: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Failed to approve correction');
+    });
+}
+
+function rejectCorrection(correctionId) {
+    const reason = prompt('Enter reason for rejection (optional):');
+    if (reason === null) return; // User cancelled
+    
+    fetch(`/api/brain/reject-correction/${correctionId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            approved_by: 'admin',
+            reason: reason
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Correction rejected successfully');
+            window.location.reload();
+        } else {
+            alert('Error: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Failed to reject correction');
+    });
+}
+
+function testCorrection(pumpCode) {
+    window.open(`/api/brain/test-pump/${pumpCode}`, '_blank');
+}
+
+function viewDetails(correctionId) {
+    alert(`Detailed analysis for correction ${correctionId} - Feature coming soon`);
+}
+</script>
+{% endblock %}

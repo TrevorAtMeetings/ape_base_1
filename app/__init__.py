@@ -70,6 +70,10 @@ logger.info("Routes imported.")
 from .route_modules.admin import admin_bp
 app.register_blueprint(admin_bp)
 
+# Register Brain Admin blueprint for advanced data management
+from .route_modules.brain_admin import brain_admin_bp
+app.register_blueprint(brain_admin_bp)
+
 # Register the AI Extract blueprint
 from .route_modules.ai_extract_routes import ai_extract_bp
 app.register_blueprint(ai_extract_bp)
