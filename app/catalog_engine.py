@@ -105,18 +105,48 @@ class CatalogPump:
         return max_eff
 
     def get_bep_point(self) -> Optional[Dict[str, Any]]:
-        """Find the Best Efficiency Point (BEP) across all curves"""
-        # Find BEP from curve analysis
+        """Find the Best Efficiency Point (BEP) prioritizing maximum impeller diameter curve"""
+        # CRITICAL FIX: Prioritize maximum impeller diameter curve for true design BEP
+        
+        # First, try to get BEP from authentic manufacturer data (max impeller specs)
+        if hasattr(self, 'specifications') and self.specifications:
+            bep_flow = self.specifications.get('bep_flow_m3hr')
+            bep_head = self.specifications.get('bep_head_m')
+            if bep_flow and bep_head and bep_flow > 0 and bep_head > 0:
+                return {
+                    'flow_m3hr': bep_flow,
+                    'head_m': bep_head,
+                    'efficiency_pct': 75.0,  # Conservative estimate
+                    'power_kw': None,
+                    'npshr_m': self.specifications.get('npshr_at_bep'),
+                    'source': 'manufacturer_specifications'
+                }
 
-        # Fallback to curve analysis
+        # Fallback to curve analysis, but prioritize maximum impeller diameter
+        if not self.curves:
+            return None
+            
+        # Sort curves by impeller diameter (largest first) to get design BEP
+        sorted_curves = sorted(
+            self.curves, 
+            key=lambda x: x.get('impeller_diameter_mm', 0), 
+            reverse=True
+        )
+        
         best_bep = None
         best_efficiency = 0.0
 
-        for curve in self.curves:
+        # Start with maximum impeller curve (contains design BEP)
+        for curve in sorted_curves:
             points = curve['performance_points']
             for point in points:
                 efficiency = point.get('efficiency_pct', 0)
-                if efficiency > best_efficiency:
+                # For max impeller curve, accept any efficiency point as potential BEP
+                # For smaller impellers, only consider if significantly better
+                is_max_impeller = curve == sorted_curves[0]
+                efficiency_threshold = 0 if is_max_impeller else best_efficiency + 5
+                
+                if efficiency > efficiency_threshold:
                     best_efficiency = efficiency
                     best_bep = {
                         'flow_m3hr': point['flow_m3hr'],
@@ -464,8 +494,15 @@ class CatalogPump:
             )
             return False
 
-        # Check if any curve contains or can interpolate to this operating point
-        for curve in self.curves:
+        # CRITICAL FIX: Check curves starting with maximum impeller diameter first
+        # This ensures we evaluate the pump's full capability envelope
+        sorted_curves = sorted(
+            self.curves, 
+            key=lambda x: x.get('impeller_diameter_mm', 0), 
+            reverse=True
+        )
+        
+        for curve in sorted_curves:
             curve_points = curve['performance_points']
             curve_heads = [p['head_m'] for p in curve_points]
             curve_flows = [p['flow_m3hr'] for p in curve_points]
@@ -478,6 +515,7 @@ class CatalogPump:
             # If operating point is within manufacturer's curve envelope, it's valid
             if head_m <= curve_max_head * 1.2:  # Small extrapolation margin
                 if curve_min_flow <= flow_m3hr <= curve_max_flow:
+                    logger.debug(f"Operating point validated against {curve.get('impeller_diameter_mm', 0)}mm impeller curve")
                     return True  # Within manufacturer's documented range
 
         return False

@@ -285,7 +285,15 @@ class PumpRepository:
                         pump_curves = curves_by_pump.get(pump_code, {})
                         curves = []
 
-                        for curve_id, curve_data in pump_curves.items():
+                        # CRITICAL FIX: Sort curves by impeller diameter (largest first)
+                        # This ensures the maximum impeller curve (containing design BEP) is processed first
+                        sorted_curves = sorted(
+                            pump_curves.items(), 
+                            key=lambda x: float(x[1]['impeller_diameter_mm']), 
+                            reverse=True
+                        )
+
+                        for curve_id, curve_data in sorted_curves:
                             performance_points = curve_data['performance_points']
                             total_points += len(performance_points)
 

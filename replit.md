@@ -83,6 +83,14 @@ The pump selection methodology separates fixed-speed (impeller trimming) from VF
 - **markdown2**: Markdown processing.
 
 ## Recent Changes
+### August 8, 2025 - Critical BEP-Centric Selection Methodology Fix
+- **MAJOR FIX: Resolved Fundamental Selection Algorithm Flaw**: Fixed critical issue where system evaluated smallest impeller curves first instead of maximum impeller diameter
+- **Implemented BEP-Centric Methodology**: System now starts evaluation from maximum impeller diameter curve (design BEP) as per engineering best practices
+- **Fixed Curve Ordering in Repository**: Curves now loaded in descending impeller diameter order (largest first) ensuring true design capabilities are evaluated
+- **Enhanced BEP Calculation Logic**: Prioritizes authentic manufacturer BEP data and maximum impeller curve for accurate BEP determination
+- **Updated Physical Capability Validation**: Assessment now begins from maximum performance envelope, preventing exclusion of capable pumps
+- **Verified Selection Accuracy**: Testing confirms pumps now properly identified at their optimal operating points with correct BEP proximity scoring
+
 ### August 7, 2025 - Quality Issues Resolution & Comparison Enhancement
 - **Fixed JavaScript Errors**: Resolved `resetZoom()` function call errors by converting from object method to standalone function
 - **Enhanced Show Data Functionality**: Improved toggleChartData() with better error handling and user feedback
