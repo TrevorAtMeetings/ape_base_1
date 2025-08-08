@@ -295,6 +295,10 @@ class CatalogPump:
         """Find the best curve for the given duty point - allows safe extrapolation up to 20%"""
         best_curve = None
         best_score = float('inf')
+        
+        is_8k = self.pump_code == '8 K'
+        if is_8k:
+            logger.info(f"8K DEBUG: get_best_curve_for_duty evaluating {len(self.curves)} curves for {flow_m3hr} m³/hr, {head_m}m")
 
         for curve in self.curves:
             # Calculate how well this curve matches the duty point
@@ -351,9 +355,14 @@ class CatalogPump:
                         head_error = abs(float(predicted_head) - head_m)
                         score = head_error - efficiency * 0.1  # Favor higher efficiency
 
+                        if is_8k:
+                            logger.info(f"8K DEBUG: Curve {curve['impeller_diameter_mm']}mm - predicted_head: {predicted_head:.1f}m, efficiency: {efficiency:.1f}%, head_error: {head_error:.1f}, score: {score:.1f}")
+
                         if score < best_score:
                             best_score = score
                             best_curve = curve
+                            if is_8k:
+                                logger.info(f"8K DEBUG: New best curve: {curve['impeller_diameter_mm']}mm (score: {score:.1f})")
 
                 except Exception as e:
                     logger.debug(
@@ -387,6 +396,8 @@ class CatalogPump:
         # Hard Gate 1: QBP Range (60-130% of BEP)
         qbp_gate_result = self._validate_qbp_range(flow_m3hr)
         if not qbp_gate_result['passed']:
+            if self.pump_code == '8 K':
+                logger.info(f"8K DEBUG: Failed QBP gate - {qbp_gate_result['reason']}")
             logger.debug(f"Pump {self.pump_code}: Failed QBP gate - {qbp_gate_result['reason']}")
             return None
         
@@ -395,13 +406,25 @@ class CatalogPump:
         
         # Step 4: Systematically evaluate ALL fixed-speed methods
         
+        is_8k = self.pump_code == '8 K'
+        if is_8k:
+            logger.info(f"8K DEBUG: Passed QBP gate, starting method evaluation")
+        
         # Method 1: Direct Interpolation (within existing curves, 100% trim)
         interpolated = self._get_performance_interpolated(flow_m3hr, head_m)
+        if is_8k:
+            logger.info(f"8K DEBUG: Direct interpolation result: {interpolated is not None}")
+            if interpolated:
+                logger.info(f"8K DEBUG: Interpolated head: {interpolated.get('head_m', 0):.1f}m vs required: {head_m}m")
+                
         if interpolated and interpolated.get('head_m', 0) >= head_m * 0.98:  # 2% tolerance
             performance = interpolated
             
             # Hard Gate 2: NPSH Safety (apply to this solution)
             npsh_gate_result = self._validate_npsh_safety_gate(performance, npsha_available)
+            if is_8k:
+                logger.info(f"8K DEBUG: Direct interpolation NPSH gate passed: {npsh_gate_result['passed']}")
+                
             if npsh_gate_result['passed']:
                 # Calculate score for this solution
                 sizing_info = {
@@ -420,12 +443,17 @@ class CatalogPump:
                     'score': score
                 }
                 possible_solutions.append(solution)
+                if is_8k:
+                    logger.info(f"8K DEBUG: Direct interpolation solution added - Score: {score:.1f}")
                 logger.debug(f"Pump {self.pump_code}: Direct interpolation solution - Score: {score:.1f}")
             else:
                 logger.debug(f"Pump {self.pump_code}: Direct solution failed NPSH gate - {npsh_gate_result['reason']}")
         
         # Method 2: Impeller Trimming (75-99% trim)  
         optimal_sizing = scaling_engine.find_optimal_sizing(self.curves, flow_m3hr, head_m)
+        if is_8k:
+            logger.info(f"8K DEBUG: Optimal sizing result: {optimal_sizing is not None}")
+            
         if optimal_sizing:
             performance = optimal_sizing['performance']
             sizing = optimal_sizing['sizing']
@@ -1088,6 +1116,11 @@ class CatalogEngine:
             # Create evaluation object for this pump
             evaluation = PumpEvaluation(pump_code=pump.pump_code)
             
+            # Debug logging for 8K pump specifically
+            is_8k = pump.pump_code == '8 K'
+            if is_8k:
+                logger.info(f"8K DEBUG: Starting evaluation - pump type: {pump.pump_type}")
+            
             # Filter by pump type if specified
             if pump_type and pump_type.upper() not in ('GENERAL', 'GENERAL',
                                                        'ALL TYPES'):
@@ -1097,10 +1130,15 @@ class CatalogEngine:
 
                 # Direct comparison with database pump types
                 if selected_type != pump_db_type:
+                    if is_8k:
+                        logger.info(f"8K DEBUG: Excluded by type filter - pump type '{pump_db_type}' != requested '{selected_type}'")
                     logger.debug(
                         f"Skipping pump {pump.pump_code} - type '{pump_db_type}' doesn't match selected '{selected_type}'"
                     )
                     continue  # Skip pumps that don't match the selected type
+
+            if is_8k:
+                logger.info(f"8K DEBUG: Passed type filter, calling find_best_solution_for_duty({flow_m3hr}, {head_m})")
 
             # v6.0 UNIFIED EVALUATION: Single "Best Fit" function call eliminates "First Fit vs Best Fit" conflict
             best_solution = pump.find_best_solution_for_duty(flow_m3hr, head_m)
@@ -1110,6 +1148,8 @@ class CatalogEngine:
                 evaluation.add_exclusion(ExclusionReason.ENVELOPE_EXCEEDED)
                 excluded_pumps.append(evaluation)
                 excluded_count += 1
+                if is_8k:
+                    logger.info(f"8K DEBUG: EXCLUDED - find_best_solution_for_duty returned None")
                 logger.debug(f"Pump {pump.pump_code} excluded: Failed unified evaluation (hard gates or no viable solutions)")
                 continue
             
