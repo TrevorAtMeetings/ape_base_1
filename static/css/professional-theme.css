@@ -75,7 +75,13 @@ nav ul a:hover {
 }
 
 /* Dropdown menus - Materialize and custom navigation */
-.dropdown-content,
+.dropdown-content:not(.nav-dropdown-content) {
+    box-shadow: var(--ape-shadow-lg) !important;
+    border-radius: 4px !important;
+    border: 1px solid var(--ape-border) !important;
+    background-color: white !important;
+}
+
 .nav-dropdown-content {
     box-shadow: var(--ape-shadow-lg) !important;
     border-radius: 4px !important;

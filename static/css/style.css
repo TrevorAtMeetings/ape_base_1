@@ -67,8 +67,8 @@ main {
 }
 
 /* Legacy Materialize Navigation Support */
-/* Keep styling for pages still using base.html */
-.dropdown-content {
+/* Keep styling for pages still using base.html - EXCLUDING nav-dropdown-content */
+.dropdown-content:not(.nav-dropdown-content) {
     display: none;
     position: absolute !important;
     background-color: white !important;
