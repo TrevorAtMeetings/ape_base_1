@@ -56,7 +56,9 @@ class CatalogPump:
         # Optional guard: Ensure spec/curve consistency (self-healing)
         try:
             from .utils_impeller import compute_impeller_min_max_from_curves
-            min_calc, max_calc = compute_impeller_min_max_from_curves(self.curves)
+            # ✅ Only consider curves that actually have performance data
+            valid_curves = [c for c in (self.curves or []) if c.get('performance_points')]
+            min_calc, max_calc = compute_impeller_min_max_from_curves(valid_curves)
             spec = self.specifications
             
             if min_calc and max_calc:
@@ -76,6 +78,14 @@ class CatalogPump:
             # Ensure keys exist even on exception
             self.specifications['min_impeller_mm'] = 0.0
             self.specifications['max_impeller_mm'] = 0.0
+        
+        # Debug prints for 8K
+        if self.pump_code.replace(' ', '').upper() in ('8K','8K-2F','8K150-400'):
+            logger.info("8K SPECS post-guard → min=%.1f max=%.1f; curves=%s",
+                self.specifications.get('min_impeller_mm', 0),
+                self.specifications.get('max_impeller_mm', 0),
+                sorted({c.get('impeller_diameter_mm') or c.get('impeller_size') for c in self.curves if c.get('performance_points')})
+            )
 
     def _calculate_max_flow(self) -> float:
         """Calculate maximum flow from all curves"""
@@ -433,6 +443,24 @@ class CatalogPump:
         # Method 2: Impeller Trimming (75-99% trim)  
         optimal_sizing = scaling_engine.find_optimal_sizing(self.curves, flow_m3hr, head_m)
             
+        if optimal_sizing:
+            performance = optimal_sizing['performance']
+            sizing = optimal_sizing['sizing']
+
+            trim_percent = sizing.get('trim_percent', 100)
+            required_d = sizing.get('required_diameter_mm')
+            base_d = sizing.get('base_diameter_mm')
+
+            # ✅ Enforce limit relative to *max* impeller, not just base
+            max_imp = float(self.specifications.get('max_impeller_mm') or 0)
+            if max_imp and required_d:
+                if required_d < max_imp * 0.85:  # more than 15% trim
+                    logger.debug(f"Pump {self.pump_code}: required Ø {required_d:.1f}mm is >15% below max Ø {max_imp:.1f}mm → reject")
+                    optimal_sizing = None
+                else:
+                    # Add trim vs max percentage for clarity
+                    sizing['trim_vs_max_percent'] = (required_d / max_imp * 100.0) if max_imp else None
+
         if optimal_sizing:
             performance = optimal_sizing['performance']
             sizing = optimal_sizing['sizing']
@@ -1115,8 +1143,7 @@ class CatalogEngine:
             evaluation = PumpEvaluation(pump_code=pump.pump_code)
             
             # Filter by pump type if specified
-            if pump_type and pump_type.upper() not in ('GENERAL', 'GENERAL',
-                                                       'ALL TYPES'):
+            if pump_type and pump_type.upper() not in ('GENERAL', 'ALL TYPES'):
                 # Normalize both pump types for comparison
                 selected_type = pump_type.upper().strip()
                 pump_db_type = pump.pump_type.upper().strip()

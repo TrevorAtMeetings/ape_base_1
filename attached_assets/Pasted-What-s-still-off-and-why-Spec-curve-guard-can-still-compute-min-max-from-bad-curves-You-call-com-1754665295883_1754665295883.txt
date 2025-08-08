@@ -1,0 +1,114 @@
+What’s still off (and why)
+Spec/curve guard can still compute min/max from “bad” curves
+You call compute_impeller_min_max_from_curves(self.curves) on all curves. If one of the smaller (e.g., 281) curves slipped through (or a legacy row exists without points), your min/max can be polluted. Filter to curves that actually have performance_points.
+
+Trim limit must be relative to the max impeller
+You validate trim_percent (85–99) relative to whatever base curve the scaling engine used, but the requirement you gave is “not more than 15% off the max impeller diameter”. If the engine starts from a 330.2 base curve, trim_percent=100% is still ~18.8% trimmed relative to 406.4. That’s how you end up with “Operating Ø 330, Trim 0%” and “Max Ø 330” in the report.
+
+get_pump_by_code is strict
+The chart and the report can be asking for 8 K vs 8K. If the repo uses a different normalization, you’ll render specs from a different object than charts.
+
+BEP-minor nit
+Your new BEP prioritization is good; just note that you’re returning an arbitrary 75% efficiency if BEP comes from specs. That’s fine, just calling out it’s synthetic.
+
+Surgical patches
+A) Make the guard use only valid curves (and avoid 281 “ghosts”)
+Right after you import the helper in CatalogPump.__init__:
+
+python
+Copy
+# Optional guard: Ensure spec/curve consistency (self-healing)
+try:
+    from .utils_impeller import compute_impeller_min_max_from_curves
+    # ✅ Only consider curves that actually have performance data
+    valid_curves = [c for c in (self.curves or []) if c.get('performance_points')]
+    min_calc, max_calc = compute_impeller_min_max_from_curves(valid_curves)
+    spec = self.specifications
+    ...
+B) Enforce “trim ≤15% of max impeller” (independent of base curve)
+In find_best_solution_for_duty after you get optimal_sizing:
+
+python
+Copy
+# Method 2: Impeller Trimming (75-99% trim)  
+optimal_sizing = scaling_engine.find_optimal_sizing(self.curves, flow_m3hr, head_m)
+if optimal_sizing:
+    performance = optimal_sizing['performance']
+    sizing = optimal_sizing['sizing']
+
+    trim_percent = sizing.get('trim_percent', 100)
+    required_d = sizing.get('required_diameter_mm')
+    base_d = sizing.get('base_diameter_mm')
+
+    # ✅ Enforce limit relative to *max* impeller, not just base
+    max_imp = float(self.specifications.get('max_impeller_mm') or 0)
+    if max_imp and required_d:
+        if required_d < max_imp * 0.85:  # more than 15% trim
+            logger.debug(f"Pump {self.pump_code}: required Ø {required_d:.1f}mm is >15% below max Ø {max_imp:.1f}mm → reject")
+            optimal_sizing = None
+
+if optimal_sizing:
+    # keep your existing NPSH + scoring logic
+    ...
+Also, for clarity in the UI/report, compute and pass a “trim_vs_max_percent”:
+
+python
+Copy
+if optimal_sizing:
+    sizing['trim_vs_max_percent'] = (required_d / max_imp * 100.0) if max_imp else None
+…and surface it in the returned solution (so the report can show “Trim vs Max: 81.3% (18.7% trim)”).
+
+C) Normalize pump codes in get_pump_by_code
+python
+Copy
+def get_pump_by_code(self, pump_code: str) -> Optional[CatalogPump]:
+    """Get specific pump by code (normalize whitespace/case)"""
+    if not pump_code:
+        return None
+    key = ''.join(pump_code.split()).upper()  # strip spaces, uppercase
+    for pump in self.pumps:
+        if ''.join((pump.pump_code or '').split()).upper() == key:
+            return pump
+    return None
+Do the same normalization wherever you store/retrieve pump_code in the session and routes (chart/report), so the same model instance is used across chart + report.
+
+D) Make sure reporting always uses specs, not math
+You already fixed the template to stop doing “current_impeller ÷ trim”. Good. Also make sure the route passes:
+
+python
+Copy
+specs = pump.specifications or {}
+context['min_imp_mm'] = float(specs.get('min_impeller_mm', 0.0))
+context['max_imp_mm'] = float(specs.get('max_impeller_mm', 0.0))
+context['oper_imp_mm'] = float(performance.get('impeller_diameter_mm') or 0.0)
+
+# Optional: add trim vs max for clarity
+if context['max_imp_mm'] > 0 and context['oper_imp_mm'] > 0:
+    context['trim_vs_max_percent'] = context['oper_imp_mm'] / context['max_imp_mm'] * 100.0
+…and the Jinja renders exactly those numbers (formatted to 1 decimal).
+
+Quick debug prints you should add while testing 8K
+After the guard runs (in CatalogPump.__init__), once, when pump code matches 8K:
+
+python
+Copy
+if self.pump_code.replace(' ', '').upper() in ('8K','8K-2F','8K150-400'):
+    logger.info("8K SPECS post-guard → min=%.1f max=%.1f; curves=%s",
+        self.specifications.get('min_impeller_mm', 0),
+        self.specifications.get('max_impeller_mm', 0),
+        sorted({c.get('impeller_diameter_mm') or c.get('impeller_size') for c in self.curves if c.get('performance_points')})
+    )
+Right before returning the report template:
+
+python
+Copy
+logger.info("REPORT 8K → min=%.1f max=%.1f oper=%.1f",
+    specs.get('min_impeller_mm', 0), specs.get('max_impeller_mm', 0),
+    performance.get('impeller_diameter_mm', 0)
+)
+You should see: min=330.2, max=406.4, oper=330.2 for the case you’re describing.
+
+Minor tidy while you’re here
+You still have the duplicate 'GENERAL', 'GENERAL' in the type filter list. Make it ('GENERAL', 'ALL TYPES').
+
+Consider making _load_from_repository a loud failure (raise a custom CatalogLoadError) if the catalog is empty. You already asked for this behavior globally.

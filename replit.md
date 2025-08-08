@@ -83,13 +83,16 @@ The pump selection methodology separates fixed-speed (impeller trimming) from VF
 - **markdown2**: Markdown processing.
 
 ## Recent Changes
-### August 8, 2025 - Critical Double Transformation Bug & Data Inconsistency Fix
+### August 8, 2025 - Critical Double Transformation Bug & Data Integrity Surgical Fixes
 - **MAJOR FIX: Resolved Double Data Transformation Bug**: Fixed critical issue where both backend (api.py) and frontend (charts.js) were applying affinity laws for impeller trimming, causing severely incorrect performance curves (head scaling by diameter_ratio⁴ instead of diameter_ratio²)
 - **Backend Source of Truth Established**: Confirmed api.py correctly applies affinity laws; removed all duplicate transformations from frontend charts.js
+- **Surgical Patch A - Spec/Curve Guard**: Only considers curves with actual performance_points data when computing min/max impeller specifications, preventing pollution from invalid curves
+- **Surgical Patch B - Max Impeller Trim Enforcement**: Enforces ≤15% trim limit relative to actual maximum impeller diameter, independent of base curve selection
+- **Surgical Patch C - Pump Code Normalization**: Implemented consistent whitespace/case normalization in get_pump_by_code for reliable lookup between charts and reports
 - **Fixed Data Inconsistency**: Implemented BEP validation that detects when stored specifications don't match actual curve data (>1m discrepancy) and switches to curve-derived BEP for accuracy
-- **8K Pump Selection Resolved**: Previously excluded due to false underperformance from double transformation; now correctly appears as top selection at its actual capability (48.7m head vs incorrect 50.01m specification)
-- **Enhanced Data Integrity**: System now validates BEP specifications against interpolated curve data, ensuring consistency between stored specs and actual performance
-- **Architectural Improvement**: Frontend charts.js now only renders data received from backend, eliminating transformation conflicts and maintaining single source of truth
+- **8K Pump Selection Resolved**: Now correctly appears as top selection at its actual capability (48.7m head vs incorrect 50.01m specification), confirming engineering reality over faulty stored specs
+- **Enhanced Data Integrity**: System validates BEP specifications against interpolated curve data, with comprehensive debug logging for troubleshooting
+- **Architectural Improvement**: Frontend charts.js only renders data from backend, eliminating transformation conflicts and maintaining single source of truth
 
 ### August 7, 2025 - Quality Issues Resolution & Comparison Enhancement
 - **Fixed JavaScript Errors**: Resolved `resetZoom()` function call errors by converting from object method to standalone function

@@ -248,6 +248,14 @@ def engineering_report(pump_code):
                     # Add missing impeller specifications from authentic database values
                     selected_pump['min_impeller_mm'] = target_pump.specifications.get('min_impeller_mm', 0)
                     selected_pump['max_impeller_mm'] = target_pump.specifications.get('max_impeller_mm', 0)
+                    
+                    # Debug print for 8K
+                    if target_pump.pump_code.replace(' ', '').upper() in ('8K','8K-2F','8K150-400'):
+                        logger.info("REPORT 8K → min=%.1f max=%.1f oper=%.1f",
+                            target_pump.specifications.get('min_impeller_mm', 0), 
+                            target_pump.specifications.get('max_impeller_mm', 0),
+                            selected_pump.get('impeller_diameter_mm', 0)
+                        )
             
             break
     

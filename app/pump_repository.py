@@ -441,10 +441,14 @@ class PumpRepository:
         return self._metadata or {}
 
     def get_pump_by_code(self, pump_code: str) -> Optional[Dict[str, Any]]:
-        """Get specific pump model by code"""
+        """Get specific pump model by code (normalize whitespace/case)"""
+        if not pump_code:
+            return None
+        key = ''.join(pump_code.split()).upper()  # strip spaces, uppercase
         pump_models = self.get_pump_models()
         for pump in pump_models:
-            if pump.get('pump_code') == pump_code:
+            pump_code_normalized = ''.join((pump.get('pump_code') or '').split()).upper()
+            if pump_code_normalized == key:
                 return pump
         return None
 
