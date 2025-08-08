@@ -1,32 +1,8 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pump Selection - APE Pumps</title>
-    
-    <!-- Favicon -->
-    <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚙️</text></svg>">
-    
-    <!-- Materialize CSS -->
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet">
-    
-    <!-- MathJax for LaTeX rendering -->
-    <script>
-    MathJax = {
-        tex: {
-            inlineMath: [['$', '$'], ['\\(', '\\)']],
-            displayMath: [['$$', '$$'], ['\\[', '\\]']]
-        }
-    };
-    </script>
-    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-    
-    <!-- Custom CSS with cache busting -->
-    <link href="{{ url_for('static', filename='css/style.css') }}?v={{ range(1000, 9999) | random }}" rel="stylesheet">
-    <link href="{{ url_for('static', filename='css/floating-ai-chat.css') }}?v={{ range(1000, 9999) | random }}" rel="stylesheet">
-    <link href="{{ url_for('static', filename='css/icon-fixes.css') }}?v={{ range(1000, 9999) | random }}" rel="stylesheet">
+{% extends "base.html" %}
+
+{% block title %}Pump Selection - APE Pumps{% endblock %}
+
+{% block head %}
 
 <style>
 /* Enhanced Autocomplete Styling */
@@ -160,8 +136,9 @@
     }
 }
 </style>
-</head>
-<body>
+{% endblock %}
+
+{% block body %}
 
 <!-- Navigation -->
 
@@ -1526,5 +1503,4 @@ document.addEventListener('DOMContentLoaded', function() {
 <script src="{{ url_for('static', filename='js/icon-loader.js') }}"></script>
 <script src="{{ url_for('static', filename='js/force-icon-refresh.js') }}"></script>
 <script src="{{ url_for('static', filename='js/micro-interactions.js') }}"></script>
-</body>
-</html>
+{% endblock %}
