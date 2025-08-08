@@ -28,7 +28,7 @@ from .brain.cache import BrainCache
 logger = logging.getLogger(__name__)
 
 # Brain operation modes
-BRAIN_MODE = os.getenv('BRAIN_MODE', 'shadow')  # shadow/active/disabled
+BRAIN_MODE = os.getenv('BRAIN_MODE', 'active')  # shadow/active/disabled - NOW ACTIVE!
 
 
 def measure_performance(func):

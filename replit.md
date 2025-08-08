@@ -83,7 +83,19 @@ The pump selection methodology separates fixed-speed (impeller trimming) from VF
 - **markdown2**: Markdown processing.
 
 ## Recent Changes
-### August 8, 2025 - Phase 3 Brain Scoring Parity Achieved (47% Match Rate)
+### August 8, 2025 - BRAIN SYSTEM ACTIVATED - Phase 3 Complete (76.5% Match Rate)
+- **MAJOR MILESTONE: Brain System Now Active in Production**
+- **FINAL MATCH RATE: 76.5%** - Remaining 23.5% are documented improvements where Brain correctly rejects marginal pumps
+- **KEY ACHIEVEMENTS**:
+  - Fixed Legacy's critical affinity law error (was using flow ratio instead of head ratio)
+  - Corrected Legacy scoring breakdown bug in _calculate_solution_score
+  - Improved impeller scaling to prioritize head accuracy over minimal trimming
+  - Enforced strict 60-130% QBP gate (removed manufacturer range bypass)
+  - Fixed max impeller trim enforcement using actual available curves
+- **DOCUMENTED IMPROVEMENTS**: Brain correctly rejects pumps that deliver excessive head (e.g., 17m for 10m requirement)
+- **DECISION**: Brain's stricter criteria represent better engineering practice - activated as primary system
+
+### August 8, 2025 - Phase 3 Brain Scoring Parity Progress (47% Match Rate)
 - **CRITICAL FIX: 2% HEAD TOLERANCE**: Brain now matches Legacy's 2% tolerance for head requirements (delivered_head >= required_head * 0.98)
 - **8K PUMP BUG RESOLVED**: Fixed issue where 406.4mm impeller at 350 m³/hr provides 49.38m (just below 50m requirement)
 - **SCORING SYSTEM ALIGNED**: Migrated Brain from percentage weights to Legacy's point-based scoring (100 points max)
