@@ -884,8 +884,8 @@
         document.addEventListener('DOMContentLoaded', function() {
             const chartData = {
                 pumpCode: "{{ selected_pump.get('pump_code', '') }}",
-                flowRate: {{ site_requirements.get('flow_m3hr', 0)|round(1)|float }},
-                head: {{ site_requirements.get('head_m', 0)|round(1)|float }}
+                flowRate: {{ site_requirements.get('flow_m3hr', 0)|float }},
+                head: {{ site_requirements.get('head_m', 0)|float }}
             };
 
             // Initialize Materialize components if available
@@ -1017,7 +1017,6 @@
                 icon.textContent = 'table_chart';
                 M.toast({html: 'Data hidden'});
             }
-        }
         }
 
         // Comparison Functions
