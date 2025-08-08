@@ -281,6 +281,90 @@ class TestBrainIntegration(unittest.TestCase):
         self.assertAlmostEqual(point['flow_m3hr'], 90, places=1)
         self.assertAlmostEqual(point['head_m'], 40.5, places=1)
         self.assertAlmostEqual(point['power_kw'], 7.29, places=1)
+    
+    def test_8K_pump_selection(self):
+        """
+        Test a known-good selection for the 8K pump that the Brain was failing.
+        Duty point: 350 m³/hr @ 50m head.
+        """
+        # Get the 8K pump data directly from the repository
+        from app.pump_repository import get_pump_repository
+        repository = get_pump_repository()
+        pump_data = repository.get_pump_by_code('8 K')
+        self.assertIsNotNone(pump_data, "Could not find 8K pump in repository")
+        
+        # Log pump specifications for debugging
+        specs = pump_data.get('specifications', {})
+        print(f"\n=== 8K Pump Debug ===")
+        print(f"Specs: min_impeller={specs.get('min_impeller_mm')}, max_impeller={specs.get('max_impeller_mm')}")
+        
+        # Get available curves
+        curves = pump_data.get('curves', [])
+        available_diameters = sorted([c.get('impeller_diameter_mm') for c in curves if c.get('impeller_diameter_mm')])
+        print(f"Available impeller diameters: {available_diameters}")
+        
+        # Debug each curve's performance points
+        for curve in curves:
+            diam = curve.get('impeller_diameter_mm')
+            points = curve.get('performance_points', [])
+            if points:
+                flows = [p['flow_m3hr'] for p in points[:3]]  # First 3 points
+                heads = [p['head_m'] for p in points[:3]]
+                print(f"  Curve {diam}mm: flows={flows}, heads={heads}")
+        
+        # Manually test the logic that Brain uses
+        print(f"\n--- Testing Brain logic for 350 m³/hr @ 50m ---")
+        
+        # Step 1: Find suitable curves (Brain's _find_suitable_curves logic)
+        suitable_curves = []
+        for curve in curves:
+            points = curve.get('performance_points', [])
+            if points:
+                flows = [p['flow_m3hr'] for p in points]
+                if min(flows) <= 350 <= max(flows):
+                    suitable_curves.append(curve)
+                    print(f"  Curve {curve.get('impeller_diameter_mm')}mm is suitable (flow range: {min(flows)}-{max(flows)})")
+        
+        # Step 2: Test calculate_required_diameter for 406.4mm curve
+        largest_curve = next((c for c in curves if c.get('impeller_diameter_mm') == 406.4), None)
+        if largest_curve:
+            points = largest_curve.get('performance_points', [])
+            flows = [p['flow_m3hr'] for p in points]
+            heads = [p['head_m'] for p in points]
+            
+            # Find head at 350 m³/hr using interpolation
+            import numpy as np
+            from scipy import interpolate
+            interp_func = interpolate.interp1d(flows, heads, kind='linear', bounds_error=False)
+            head_at_350 = float(interp_func(350))
+            print(f"  406.4mm curve: head at 350 m³/hr = {head_at_350:.2f}m")
+            
+            # Calculate required diameter
+            if head_at_350 > 50:
+                diameter_ratio = np.sqrt(50 / head_at_350)
+                required_diameter = 406.4 * diameter_ratio
+                trim_percent = diameter_ratio * 100
+                print(f"  Required trim: {trim_percent:.1f}% (diameter: {required_diameter:.1f}mm)")
+                print(f"  Is trim >= 85%? {trim_percent >= 85}")
+        
+        # Use the Brain's performance module directly to debug
+        performance_solution = self.brain.performance.calculate_at_point(
+            pump_data, 
+            flow=350.0, 
+            head=50.0
+        )
+        
+        # This is where the failure is. This should NOT be None.
+        self.assertIsNotNone(performance_solution, "Brain's performance module failed to find a solution for 8K pump.")
+        
+        # Further assertions
+        self.assertTrue(performance_solution.get('meets_requirements'), 
+                       f"Solution doesn't meet requirements: {performance_solution}")
+        self.assertAlmostEqual(performance_solution.get('head_m'), 50.0, delta=2.0,
+                              msg=f"Head mismatch: expected ~50m, got {performance_solution.get('head_m')}m")
+        
+        # Log the solution for debugging
+        print(f"\n8K pump solution: {performance_solution}")
 
 
 if __name__ == '__main__':

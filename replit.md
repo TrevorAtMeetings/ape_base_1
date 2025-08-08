@@ -83,6 +83,19 @@ The pump selection methodology separates fixed-speed (impeller trimming) from VF
 - **markdown2**: Markdown processing.
 
 ## Recent Changes
+### August 8, 2025 - Phase 3 Brain Scoring Parity Achieved (47% Match Rate)
+- **CRITICAL FIX: 2% HEAD TOLERANCE**: Brain now matches Legacy's 2% tolerance for head requirements (delivered_head >= required_head * 0.98)
+- **8K PUMP BUG RESOLVED**: Fixed issue where 406.4mm impeller at 350 m³/hr provides 49.38m (just below 50m requirement)
+- **SCORING SYSTEM ALIGNED**: Migrated Brain from percentage weights to Legacy's point-based scoring (100 points max)
+- **LEGACY V6.0 SCORING IMPLEMENTED**: 
+  - BEP Proximity: 45 points max with tiered flow ratio scoring
+  - Efficiency: 35 points max with graduated brackets
+  - Head Margin: 20 points max with percentage-based penalties
+  - NPSH: Removed from scoring (hard gate only)
+  - Trim Penalty: -2 to -10 points based on trim percentage
+- **MATCH RATE IMPROVEMENT**: From 0% to 47.1% in discrepancy analysis
+- **REMAINING WORK**: Further refinement needed for complete parity
+
 ### August 8, 2025 - Phase 2 Brain API Integration Complete
 - **PHASE 2 DELIVERED**: Chart data API endpoint now integrated with Brain system
 - **DOUBLE TRANSFORMATION BUG FIXED**: Brain ensures single source of truth for affinity law calculations

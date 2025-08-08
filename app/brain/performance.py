@@ -141,9 +141,10 @@ class PerformanceAnalyzer:
             if np.isnan(base_head_at_flow) or base_head_at_flow <= 0:
                 return None
             
-            # Check if trimming can achieve target
-            if target_head > base_head_at_flow:
-                # Cannot increase head by trimming
+            # Check if trimming can achieve target (with 2% tolerance like Legacy)
+            # Legacy allows 2% tolerance: delivered_head >= required_head * 0.98
+            if target_head > base_head_at_flow * 1.02:  # Inverse check: required > available * 1.02
+                # Cannot increase head by trimming (even with tolerance)
                 return None
             
             # Calculate required diameter using affinity laws
@@ -249,13 +250,16 @@ class PerformanceAnalyzer:
             except:
                 pass
             
+            # Apply 2% tolerance for head requirements (matching Legacy system)
+            meets_requirements = actual_head >= target_head * 0.98
+            
             return {
                 'flow_m3hr': target_flow,
                 'head_m': round(actual_head, 2),
                 'efficiency_pct': round(actual_efficiency, 2),
                 'power_kw': round(actual_power, 3),
                 'npshr_m': round(actual_npshr, 2) if actual_npshr else None,
-                'meets_requirements': actual_head >= target_head,
+                'meets_requirements': meets_requirements,
                 'head_margin_m': round(actual_head - target_head, 2),
                 'impeller_diameter_mm': round(new_diameter, 1)
             }

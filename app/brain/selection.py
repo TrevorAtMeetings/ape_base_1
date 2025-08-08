@@ -24,12 +24,13 @@ class SelectionIntelligence:
         """
         self.brain = brain
         
-        # Selection parameters (from catalog_engine)
+        # Selection parameters (from catalog_engine v6.0)
+        # Legacy uses point-based scoring, not percentage weights
         self.scoring_weights = {
-            'bep_proximity': 40,
-            'efficiency': 30,
-            'head_margin': 15,
-            'npsh_margin': 15
+            'bep_proximity': 45,  # Max points (was 40% weight)
+            'efficiency': 35,     # Max points (was 30% weight)
+            'head_margin': 20,    # Max points (was 15% weight)
+            'npsh_margin': 0      # Removed in v6.0 (now hard gate only)
         }
         
         # Operating constraints
@@ -140,15 +141,21 @@ class SelectionIntelligence:
                     evaluation['exclusion_reasons'].append(f'QBP {qbp:.0f}% outside range')
                     return evaluation
                 
-                # BEP proximity score
-                if 95 <= qbp <= 105:
-                    bep_score = 100
-                elif 85 <= qbp <= 115:
-                    bep_score = 80 - abs(qbp - 100) * 2
-                else:
-                    bep_score = max(0, 60 - abs(qbp - 100))
+                # BEP proximity score (Legacy v6.0 tiered scoring - 45 points max)
+                flow_ratio = flow / bep_flow
                 
-                evaluation['score_components']['bep_proximity'] = bep_score * (self.scoring_weights['bep_proximity'] / 100)
+                if 0.95 <= flow_ratio <= 1.05:  # Sweet spot
+                    bep_score = 45
+                elif 0.90 <= flow_ratio < 0.95 or 1.05 < flow_ratio <= 1.10:
+                    bep_score = 40
+                elif 0.80 <= flow_ratio < 0.90 or 1.10 < flow_ratio <= 1.20:
+                    bep_score = 30
+                elif 0.70 <= flow_ratio < 0.80 or 1.20 < flow_ratio <= 1.30:
+                    bep_score = 20
+                else:  # 0.60-0.70 or 1.30-1.40
+                    bep_score = 10
+                
+                evaluation['score_components']['bep_proximity'] = bep_score
                 evaluation['qbp_percent'] = qbp
             
             # Get performance at operating point
@@ -165,45 +172,66 @@ class SelectionIntelligence:
                     return evaluation
             
             if performance and performance.get('meets_requirements'):
-                # Efficiency score
+                # Efficiency score (Legacy v6.0 - 35 points max)
                 efficiency = performance.get('efficiency_pct', 0)
                 if efficiency >= 85:
-                    eff_score = 100
+                    eff_score = 35
                 elif efficiency >= 75:
-                    eff_score = 80 + (efficiency - 75) * 2
+                    eff_score = 30 + (efficiency - 75) * 0.5
                 elif efficiency >= 65:
-                    eff_score = 60 + (efficiency - 65) * 2
-                else:
-                    eff_score = max(0, efficiency - 20)
+                    eff_score = 25 + (efficiency - 65) * 0.5
+                elif efficiency >= 45:
+                    eff_score = 10 + (efficiency - 45) * 0.75
+                else:  # 40-45%
+                    eff_score = max(0, (efficiency - 40) * 2)
                 
-                evaluation['score_components']['efficiency'] = eff_score * (self.scoring_weights['efficiency'] / 100)
+                evaluation['score_components']['efficiency'] = eff_score
                 evaluation['efficiency_pct'] = efficiency
                 
-                # Head margin score
-                head_margin = performance.get('head_margin_m', 0)
-                if head_margin <= 2:
-                    margin_score = 100
-                elif head_margin <= 5:
-                    margin_score = 90 - (head_margin - 2) * 10
-                else:
-                    margin_score = max(0, 60 - head_margin * 5)
+                # Head margin score (Legacy v6.0 - 20 points max)
+                head_margin_m = performance.get('head_margin_m', 0)
+                head_margin_pct = (head_margin_m / head) * 100 if head > 0 else 0
                 
-                evaluation['score_components']['head_margin'] = margin_score * (self.scoring_weights['head_margin'] / 100)
-                evaluation['head_margin_m'] = head_margin
+                if head_margin_pct <= 5:  # Perfect sizing
+                    margin_score = 20
+                elif 5 < head_margin_pct <= 10:  # Good sizing
+                    margin_score = 20 - (head_margin_pct - 5) * 2
+                elif 10 < head_margin_pct <= 15:  # Acceptable sizing
+                    margin_score = 10 - (head_margin_pct - 10) * 1
+                else:  # 15-20%
+                    margin_score = 5 - (head_margin_pct - 15) * 2
+                    margin_score = max(0, margin_score)
                 
-                # NPSH score (if available)
+                evaluation['score_components']['head_margin'] = margin_score
+                evaluation['head_margin_m'] = head_margin_m
+                evaluation['head_margin_pct'] = head_margin_pct
+                
+                # NPSH handled as hard gate only in Legacy v6.0 (no scoring)
                 npshr = performance.get('npshr_m')
                 if npshr:
                     evaluation['npshr_m'] = npshr
-                    # Basic NPSH score (will be refined with constraints)
-                    evaluation['score_components']['npsh_margin'] = 15  # Default good score
                 
-                # Power consumption
+                # Power consumption (for tie-breaking)
                 evaluation['power_kw'] = performance.get('power_kw', 0)
                 
-                # Impeller information
-                evaluation['impeller_diameter_mm'] = performance.get('impeller_diameter_mm')
-                evaluation['trim_percent'] = performance.get('trim_percent', 100)
+                # Impeller trim penalty (Legacy v6.0)
+                impeller_diameter = performance.get('impeller_diameter_mm')
+                if impeller_diameter:
+                    evaluation['impeller_diameter_mm'] = impeller_diameter
+                    # Calculate trim percent from performance data
+                    base_diameter = performance.get('base_diameter_mm', impeller_diameter)
+                    trim_percent = (impeller_diameter / base_diameter * 100) if base_diameter else 100
+                    evaluation['trim_percent'] = trim_percent
+                    
+                    # Apply trim penalty
+                    if trim_percent < 95:
+                        if trim_percent >= 90:
+                            trim_penalty = -2  # Small penalty
+                        elif trim_percent >= 85:
+                            trim_penalty = -5  # Moderate penalty
+                        else:
+                            trim_penalty = -10  # Large penalty
+                        evaluation['score_components']['trim_penalty'] = trim_penalty
                 
             else:
                 evaluation['feasible'] = False
