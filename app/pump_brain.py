@@ -108,6 +108,24 @@ class BrainMetrics:
     def get_metrics(cls) -> Dict[str, Any]:
         """Get current metrics snapshot"""
         return cls._metrics.copy()
+    
+    @classmethod
+    def get_summary(cls) -> Dict[str, Any]:
+        """Get metrics summary for dashboard"""
+        return cls._metrics.copy()
+    
+    @classmethod
+    def record_feedback(cls, feedback: Dict[str, Any]):
+        """Record user feedback about Brain selections"""
+        if 'feedback' not in cls._metrics:
+            cls._metrics['feedback'] = []
+        cls._metrics['feedback'].append({
+            'timestamp': datetime.now().isoformat(),
+            'details': feedback
+        })
+        # Keep only last 100 feedback entries
+        if len(cls._metrics['feedback']) > 100:
+            cls._metrics['feedback'] = cls._metrics['feedback'][-100:]
 
 
 class PumpBrain:

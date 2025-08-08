@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brain System Monitoring Dashboard - APE Pumps</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .metric-card {
+            background: #fff;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .metric-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #0066cc;
+        }
+        .metric-label {
+            color: #666;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 1px;
+        }
+        .status-good { color: #28a745; }
+        .status-warning { color: #ffc107; }
+        .status-error { color: #dc3545; }
+        .operation-row {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .operation-row:hover {
+            background: #f8f9fa;
+        }
+        .time-chart {
+            height: 200px;
+            margin-top: 20px;
+        }
+        .brain-active {
+            background: #28a745;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            display: inline-block;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">APE Pumps - Brain Monitoring</a>
+            <span class="brain-active">BRAIN ACTIVE</span>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-4">
+        <h1>Brain System Monitoring Dashboard</h1>
+        <p class="text-muted">Hypercare Phase - Real-time Performance Monitoring</p>
+
+        <!-- Health Status Row -->
+        <div class="row mt-4">
+            <div class="col-md-3">
+                <div class="metric-card">
+                    <div class="metric-label">Response Time Status</div>
+                    <div class="metric-value" id="response-status">
+                        <span class="status-good">✓ GOOD</span>
+                    </div>
+                    <small class="text-muted">Target: <200ms</small>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="metric-card">
+                    <div class="metric-label">Error Rate</div>
+                    <div class="metric-value" id="error-rate">0</div>
+                    <small class="text-muted">Errors in last hour</small>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="metric-card">
+                    <div class="metric-label">Cache Hit Rate</div>
+                    <div class="metric-value" id="cache-hit-rate">0%</div>
+                    <small class="text-muted">Target: >50%</small>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="metric-card">
+                    <div class="metric-label">Discrepancies</div>
+                    <div class="metric-value" id="discrepancy-count">0</div>
+                    <small class="text-muted">vs Legacy (last hour)</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Operation Performance -->
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <div class="metric-card">
+                    <h3>Operation Performance</h3>
+                    <div id="operations-list">
+                        <div class="text-muted">Loading...</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="metric-card">
+                    <h3>Response Time Trend</h3>
+                    <canvas id="responseTimeChart" class="time-chart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Errors -->
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <div class="metric-card">
+                    <h3>Recent Errors</h3>
+                    <div id="errors-list">
+                        <div class="text-success">No recent errors</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="metric-card">
+                    <h3>Recent Discrepancies</h3>
+                    <div id="discrepancies-list">
+                        <div class="text-success">No recent discrepancies</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- User Feedback Section -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="metric-card">
+                    <h3>User Feedback Collection</h3>
+                    <p>Report any issues with pump selections to validate Brain's improved logic:</p>
+                    <form id="feedback-form">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <input type="text" class="form-control" id="pump-code" placeholder="Pump Code">
+                            </div>
+                            <div class="col-md-4">
+                                <select class="form-control" id="feedback-type">
+                                    <option value="">Select Issue Type</option>
+                                    <option value="selection">Selection Issue</option>
+                                    <option value="performance">Performance Calculation</option>
+                                    <option value="chart">Chart Display</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <button type="submit" class="btn btn-primary">Submit Feedback</button>
+                            </div>
+                        </div>
+                        <div class="row mt-2">
+                            <div class="col-12">
+                                <textarea class="form-control" id="feedback-notes" rows="2" placeholder="Describe the issue..."></textarea>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.js"></script>
+    <script>
+        // Initialize chart
+        const ctx = document.getElementById('responseTimeChart').getContext('2d');
+        const responseTimeChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Response Time (ms)',
+                    data: [],
+                    borderColor: '#0066cc',
+                    backgroundColor: 'rgba(0, 102, 204, 0.1)',
+                    tension: 0.4
+                }, {
+                    label: 'Target (200ms)',
+                    data: [],
+                    borderColor: '#dc3545',
+                    borderDash: [5, 5],
+                    pointRadius: 0,
+                    fill: false
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        // Fetch and update metrics
+        async function updateMetrics() {
+            try {
+                const response = await fetch('/brain/api/metrics');
+                const data = await response.json();
+                
+                // Update health status
+                if (data.health_checks.response_time_ok) {
+                    document.getElementById('response-status').innerHTML = '<span class="status-good">✓ GOOD</span>';
+                } else {
+                    document.getElementById('response-status').innerHTML = '<span class="status-warning">⚠ SLOW</span>';
+                }
+                
+                // Update error rate
+                document.getElementById('error-rate').textContent = data.error_rate.last_hour;
+                
+                // Update cache hit rate
+                const hitRate = data.cache_performance.hit_rate || 0;
+                document.getElementById('cache-hit-rate').textContent = Math.round(hitRate * 100) + '%';
+                
+                // Update discrepancy count
+                document.getElementById('discrepancy-count').textContent = data.discrepancies.last_hour;
+                
+                // Update operations list
+                const opsList = document.getElementById('operations-list');
+                opsList.innerHTML = '';
+                for (const [op, stats] of Object.entries(data.operation_stats)) {
+                    const statusClass = stats.avg_ms < 200 ? 'status-good' : 
+                                       stats.avg_ms < 500 ? 'status-warning' : 'status-error';
+                    opsList.innerHTML += `
+                        <div class="operation-row">
+                            <div class="d-flex justify-content-between">
+                                <strong>${op}</strong>
+                                <span class="${statusClass}">${stats.avg_ms}ms avg</span>
+                            </div>
+                            <small class="text-muted">
+                                Count: ${stats.count} | P95: ${stats.p95_ms}ms | Max: ${stats.max_ms}ms
+                            </small>
+                        </div>
+                    `;
+                }
+                
+                // Update errors list
+                const errorsList = document.getElementById('errors-list');
+                if (data.error_rate.recent_errors && data.error_rate.recent_errors.length > 0) {
+                    errorsList.innerHTML = '';
+                    data.error_rate.recent_errors.forEach(error => {
+                        errorsList.innerHTML += `
+                            <div class="alert alert-danger py-2">
+                                <small>${error.operation}: ${error.error}</small>
+                            </div>
+                        `;
+                    });
+                } else {
+                    errorsList.innerHTML = '<div class="text-success">No recent errors</div>';
+                }
+                
+                // Update discrepancies list
+                const discList = document.getElementById('discrepancies-list');
+                if (data.discrepancies.recent && data.discrepancies.recent.length > 0) {
+                    discList.innerHTML = '';
+                    data.discrepancies.recent.forEach(disc => {
+                        discList.innerHTML += `
+                            <div class="alert alert-warning py-2">
+                                <small>${disc.type}: ${disc.details}</small>
+                            </div>
+                        `;
+                    });
+                } else {
+                    discList.innerHTML = '<div class="text-success">No recent discrepancies</div>';
+                }
+                
+                // Update chart
+                const now = new Date().toLocaleTimeString();
+                responseTimeChart.data.labels.push(now);
+                if (responseTimeChart.data.labels.length > 20) {
+                    responseTimeChart.data.labels.shift();
+                }
+                
+                // Add average response time to chart
+                const avgResponseTime = Object.values(data.operation_stats)
+                    .reduce((sum, stats) => sum + stats.avg_ms, 0) / Object.keys(data.operation_stats).length || 0;
+                responseTimeChart.data.datasets[0].data.push(avgResponseTime);
+                responseTimeChart.data.datasets[1].data.push(200); // Target line
+                
+                if (responseTimeChart.data.datasets[0].data.length > 20) {
+                    responseTimeChart.data.datasets[0].data.shift();
+                    responseTimeChart.data.datasets[1].data.shift();
+                }
+                
+                responseTimeChart.update();
+                
+            } catch (error) {
+                console.error('Error fetching metrics:', error);
+            }
+        }
+
+        // Handle feedback form
+        document.getElementById('feedback-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const feedback = {
+                pump_code: document.getElementById('pump-code').value,
+                type: document.getElementById('feedback-type').value,
+                notes: document.getElementById('feedback-notes').value,
+                timestamp: new Date().toISOString()
+            };
+            
+            try {
+                const response = await fetch('/brain/api/feedback', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(feedback)
+                });
+                
+                if (response.ok) {
+                    alert('Feedback submitted successfully!');
+                    document.getElementById('feedback-form').reset();
+                }
+            } catch (error) {
+                console.error('Error submitting feedback:', error);
+                alert('Error submitting feedback');
+            }
+        });
+
+        // Update metrics every 5 seconds
+        updateMetrics();
+        setInterval(updateMetrics, 5000);
+    </script>
+</body>
+</html>
