@@ -18,6 +18,7 @@ from dotenv import load_dotenv
 from datetime import datetime
 from contextlib import contextmanager
 import threading
+from .utils_impeller import compute_impeller_min_max_from_curves
 
 # Load environment variables
 load_dotenv()
@@ -327,6 +328,14 @@ class PumpRepository:
 
                         total_curves += len(curves)
 
+                        # CRITICAL FIX: Derive min/max impeller from curves (single source of truth)
+                        min_mm, max_mm = compute_impeller_min_max_from_curves(curves)
+                        
+                        if not (min_mm and max_mm):
+                            logger.error(f"Repository: Could not derive min/max impeller for {pump_code} from curves; specs may be incomplete.")
+                            # Ensure keys exist even for edge cases
+                            min_mm, max_mm = 0.0, 0.0
+
                         # Build pump model object using aggregated statistics
                         pump_model = {
                             'pump_code': pump_code,
@@ -337,8 +346,9 @@ class PumpRepository:
                             'specifications': {
                                 'max_flow_m3hr': float(pump_row_dict.get('max_flow_m3hr', 0)) if pump_row_dict.get('max_flow_m3hr') is not None else 0,
                                 'max_head_m': float(pump_row_dict.get('max_head_m', 0)) if pump_row_dict.get('max_head_m') is not None else 0,
-                                'min_impeller_mm': float(pump_row_dict.get('min_impeller_diameter_mm', 0)) if pump_row_dict.get('min_impeller_diameter_mm') is not None else 0,
-                                'max_impeller_mm': float(pump_row_dict.get('max_impeller_diameter_mm', 0)) if pump_row_dict.get('max_impeller_diameter_mm') is not None else 0,
+                                # CRITICAL FIX: Use curve-derived min/max instead of potentially stale database values
+                                'min_impeller_mm': float(min_mm) if min_mm is not None else 0,
+                                'max_impeller_mm': float(max_mm) if max_mm is not None else 0,
                                 'test_speed_rpm': int(pump_row_dict.get('test_speed_rpm', 0)) if pump_row_dict.get('test_speed_rpm') is not None else 0,
                                 'min_speed_rpm': int(pump_row_dict.get('min_speed_rpm', 0)) if pump_row_dict.get('min_speed_rpm') is not None else 0,
                                 'max_speed_rpm': int(pump_row_dict.get('max_speed_rpm', 0)) if pump_row_dict.get('max_speed_rpm') is not None else 0,

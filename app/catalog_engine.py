@@ -52,6 +52,30 @@ class CatalogPump:
         self.test_speed_rpm = self.specifications.get('test_speed_rpm', 0)
         self.min_speed_rpm = self.specifications.get('min_speed_rpm', 0) 
         self.max_speed_rpm = self.specifications.get('max_speed_rpm', 0)
+        
+        # Optional guard: Ensure spec/curve consistency (self-healing)
+        try:
+            from .utils_impeller import compute_impeller_min_max_from_curves
+            min_calc, max_calc = compute_impeller_min_max_from_curves(self.curves)
+            spec = self.specifications
+            
+            if min_calc and max_calc:
+                if (spec.get('min_impeller_mm') != min_calc) or (spec.get('max_impeller_mm') != max_calc):
+                    logger.warning(
+                        f"CatalogPump {self.pump_code}: specs min/max ({spec.get('min_impeller_mm')}, {spec.get('max_impeller_mm')}) "
+                        f"≠ curve-derived ({min_calc}, {max_calc}); overwriting to curve truth.")
+                    spec['min_impeller_mm'] = float(min_calc)
+                    spec['max_impeller_mm'] = float(max_calc)
+            else:
+                # Ensure keys exist even when no valid impeller data
+                logger.error(f"CatalogPump {self.pump_code}: Missing curve-derived impeller min/max.")
+                spec['min_impeller_mm'] = 0.0
+                spec['max_impeller_mm'] = 0.0
+        except Exception as e:
+            logger.error(f"CatalogPump {self.pump_code}: impeller guard failed: {e}")
+            # Ensure keys exist even on exception
+            self.specifications['min_impeller_mm'] = 0.0
+            self.specifications['max_impeller_mm'] = 0.0
 
     def _calculate_max_flow(self) -> float:
         """Calculate maximum flow from all curves"""

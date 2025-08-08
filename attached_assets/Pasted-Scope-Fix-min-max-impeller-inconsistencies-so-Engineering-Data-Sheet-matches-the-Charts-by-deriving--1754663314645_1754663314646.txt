@@ -1,0 +1,144 @@
+Scope
+Fix min/max impeller inconsistencies so Engineering Data Sheet matches the Charts by deriving values from curves only. Keep it lean: mm-only parsing for now, repo-first correction, optional guard.
+
+Constraints
+We’re not using speed variation in this phase (VFD paths untouched).
+
+Charts are already correct—don’t change them.
+
+Tasks (in order)
+1) Helper (minimal, mm-only)
+Create app/utils_impeller.py (or inline in repository if you prefer fewer files):
+
+python
+Copy
+from typing import Iterable, Optional, Tuple
+
+def compute_impeller_min_max_from_curves(curves: Iterable[dict]) -> Tuple[Optional[float], Optional[float]]:
+    """Return (min_mm, max_mm) using curve['impeller_diameter_mm'] or curve['impeller_size'] when it holds a numeric mm string."""
+    vals = []
+    for c in curves or []:
+        raw = c.get('impeller_diameter_mm')
+        if raw is None:
+            raw = c.get('impeller_size')
+        # minimal parsing: accept int/float or numeric strings in mm
+        try:
+            if raw is None: 
+                continue
+            mm = float(raw) if isinstance(raw, (int, float)) else float(str(raw).strip())
+            if mm > 0:
+                vals.append(mm)
+        except (ValueError, TypeError):
+            continue
+    if not vals:
+        return None, None
+    return min(vals), max(vals)
+We’ll add inch parsing later only if data demands it.
+
+2) Repository fix (single source of truth)
+File: app/pump_repository.py
+When: after curves are attached to each pump but before returning/assembling the catalog.
+
+python
+Copy
+from .utils_impeller import compute_impeller_min_max_from_curves
+
+# inside the loop that builds each pump_data
+min_mm, max_mm = compute_impeller_min_max_from_curves(pump_data.get('curves', []))
+pump_data.setdefault('specifications', {})
+
+if min_mm and max_mm:
+    pump_data['specifications']['min_impeller_mm'] = float(min_mm)
+    pump_data['specifications']['max_impeller_mm'] = float(max_mm)
+else:
+    logger.error(f"Repo: Could not derive min/max impeller for {pump_data.get('pump_code')} from curves; specs may be incomplete.")
+Why here? This eliminates drift. Reports and any consumers now inherit curve truth.
+
+3) Optional guard (can be toggled later)
+File: app/catalog_engine.py inside CatalogPump.__init__ (after self.curves is set).
+If you want to keep logs quiet initially, wrap behind a feature flag CATALOG_IMPELLER_GUARD=True.
+
+python
+Copy
+try:
+    from .utils_impeller import compute_impeller_min_max_from_curves
+    min_calc, max_calc = compute_impeller_min_max_from_curves(self.curves)
+    if min_calc and max_calc:
+        spec = self.specifications
+        if (spec.get('min_impeller_mm') != min_calc) or (spec.get('max_impeller_mm') != max_calc):
+            logger.warning(
+                f"CatalogPump {self.pump_code}: specs min/max ({spec.get('min_impeller_mm')}, {spec.get('max_impeller_mm')}) "
+                f"≠ curve-derived ({min_calc}, {max_calc}); overwriting to curve truth.")
+            spec['min_impeller_mm'] = float(min_calc)
+            spec['max_impeller_mm'] = float(max_calc)
+    else:
+        logger.error(f"CatalogPump {self.pump_code}: Missing curve-derived impeller min/max.")
+except Exception as e:
+    logger.error(f"CatalogPump {self.pump_code}: impeller guard failed: {e}")
+4) Engineering sheet uses corrected specs
+Preferred (simple & consistent).
+
+File: app/catalog_engine.py::convert_catalog_pump_to_legacy_format
+Update the pump_info mapping:
+
+python
+Copy
+self.pump_info.update({
+    'pMinImpD': str(catalog_pump.specifications.get('min_impeller_mm', 0)),
+    'pMaxImpD': str(catalog_pump.specifications.get('max_impeller_mm', 0)),
+})
+Don’t round here—let display code decide formatting. This keeps 406.4 and 330.2 intact.
+
+5) Tests (sanity + regression)
+File: tests/test_spec_vs_curve_consistency.py
+
+python
+Copy
+from app.catalog_engine import CatalogPump
+
+def _pump(curves):
+    return CatalogPump({
+        'pump_code':'X',
+        'manufacturer':'APE',
+        'pump_type':'Centrifugal',
+        'model_series':'Series X',
+        'specifications':{}, 
+        'curves':curves,
+        'curve_count':len(curves),
+        'total_points':0,
+        'npsh_curves':[],
+        'power_curves':[]
+    })
+
+def test_min_max_from_curves_numbers():
+    p = _pump([
+        {'impeller_diameter_mm': 330.2, 'performance_points': []},
+        {'impeller_diameter_mm': 406.4, 'performance_points': []},
+    ])
+    assert float(p.specifications['min_impeller_mm']) == 330.2
+    assert float(p.specifications['max_impeller_mm']) == 406.4
+
+def test_min_max_from_curves_strings_mm():
+    p = _pump([
+        {'impeller_size': '330.2', 'performance_points': []},
+        {'impeller_size': '406.4', 'performance_points': []},
+    ])
+    assert float(p.specifications['min_impeller_mm']) == 330.2
+    assert float(p.specifications['max_impeller_mm']) == 406.4
+(If you keep the guard optional, import it and assert spec gets corrected there too, or keep tests repo-level if you inject via repo in fixtures.)
+
+Acceptance Criteria
+Engineering sheet shows exact min/max (e.g., 330.2 mm and 406.4 mm) matching chart data.
+
+specifications.min_impeller_mm/max_impeller_mm are always derived from curves at load.
+
+Optional guard keeps specs in sync if repo ever regresses.
+
+Tests pass and catch regressions on min/max derivation.
+
+Rollout & Verification
+Run tests: pytest -q
+
+Start app → open a pump where chart shows 406.4/330.2 → generate the Engineering Data Sheet → verify it matches.
+
+Check logs: no errors for pumps that do have curve diameters; clear ERRORs for ones that don’t (if any).
