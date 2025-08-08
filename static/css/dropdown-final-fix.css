@@ -3,7 +3,7 @@
  * This overrides ALL other CSS with maximum specificity
  */
 
-/* Force navigation dropdowns to work */
+/* Professional navigation dropdowns - final working solution */
 .unified-nav .nav-dropdown-content,
 nav .nav-dropdown-content,
 .nav-actions .nav-dropdown-content {
@@ -12,14 +12,11 @@ nav .nav-dropdown-content,
     top: 100% !important;
     left: 0 !important;
     z-index: 999999 !important;
-    background: red !important;
-    border: 5px solid yellow !important;
-    border-radius: 4px !important;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.8) !important;
-    min-width: 200px !important;
-    min-height: 150px !important;
-    width: 200px !important;
-    height: 150px !important;
+    background: white !important;
+    border: 1px solid #e0e0e0 !important;
+    border-radius: 8px !important;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12) !important;
+    min-width: 180px !important;
     visibility: visible !important;
     opacity: 1 !important;
     pointer-events: auto !important;
@@ -28,6 +25,7 @@ nav .nav-dropdown-content,
     clip: none !important;
     overflow: visible !important;
     max-height: none !important;
+    height: auto !important;
 }
 
 /* When JavaScript sets display: block */
@@ -45,7 +43,7 @@ nav .nav-dropdown:last-child .nav-dropdown-content,
     right: 0 !important;
 }
 
-/* Force dropdown links to be visible */
+/* Professional dropdown links */
 .unified-nav .nav-dropdown-content a,
 nav .nav-dropdown-content a,
 .nav-actions .nav-dropdown-content a {
@@ -54,17 +52,27 @@ nav .nav-dropdown-content a,
     color: #333 !important;
     text-decoration: none !important;
     font-size: 14px !important;
+    font-weight: 400 !important;
     border: none !important;
     background: white !important;
     visibility: visible !important;
     opacity: 1 !important;
+    transition: all 0.2s ease !important;
+    border-bottom: 1px solid #f5f5f5 !important;
+}
+
+.unified-nav .nav-dropdown-content a:last-child,
+nav .nav-dropdown-content a:last-child,
+.nav-actions .nav-dropdown-content a:last-child {
+    border-bottom: none !important;
 }
 
 .unified-nav .nav-dropdown-content a:hover,
 nav .nav-dropdown-content a:hover,
 .nav-actions .nav-dropdown-content a:hover {
-    background: #f0f0f0 !important;
+    background: #f8f9fa !important;
     color: #1976d2 !important;
+    transform: translateX(2px) !important;
 }
 
 /* Force container to allow overflow */

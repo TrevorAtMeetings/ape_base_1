@@ -10,8 +10,9 @@ Preferred communication style: Simple, everyday language.
 The application employs a modular Flask architecture with a clear separation of concerns, supporting both backend and frontend components.
 
 ### Navigation Structure
-The application features a unified navigation system across all pages to ensure a consistent user experience. **Updated August 2025**: Consolidated duplicate navigation systems into single unified system via `templates/includes/navigation.html`.
+The application features a unified navigation system across all pages to ensure a consistent user experience. **Updated August 2025**: Consolidated duplicate navigation systems into single unified system via `templates/includes/navigation.html`. **Critical Fix August 2025**: Resolved complex CSS conflicts preventing dropdown visibility through systematic CSS exclusion patterns and final override with maximum specificity.
 - **Main Navigation:** Selection (homepage), Tools Menu (Pump Comparison, Shortlist Compare, Pump Editor, AI Data Extract, Database Manager), Admin Menu (Configuration, AI Admin, Brain System, Performance Testing, Documents), Help Menu (User Guide, Features, About).
+- **Navigation Dropdowns:** Fully functional with professional styling, proper z-index layering, and responsive positioning.
 
 ### Data Integrity & Validation
 The system prioritizes authentic manufacturer specifications for pump performance data, specifically for Best Efficiency Point (BEP) metrics, with a strict no-fallback policy for missing BEP data. Validation prevents artificial matches and uses pump-specific thresholds and operating envelopes based on database values. A revolutionary **Brain Overlay Schema** architecture protects immutable manufacturer data while enabling enterprise-grade data corrections and quality management through a separate "brain_overlay" schema with complete audit trails.
