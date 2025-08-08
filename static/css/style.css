@@ -506,25 +506,7 @@ nav.teal {
 }
 
 /* Select Styling - Professional Theme */
-/* Active state for navigation dropdowns */
-#tools-dropdown.active,
-#admin-dropdown.active,
-#help-dropdown.active,
-.dropdown-content.active {
-    display: block !important;
-    opacity: 1 !important;
-}
-
-.dropdown-content {
-    z-index: 9999 !important;
-    position: absolute !important;
-    background-color: white;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.15);
-    border-radius: 8px;
-    overflow: hidden;
-    max-height: 300px;
-    overflow-y: auto;
-}
+/* Dropdown styling consolidated - navigation handled by navigation.html */
 
 /* Fix z-index layering for form dropdowns over contact cards */
 .select-wrapper {

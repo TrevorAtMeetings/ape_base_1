@@ -36,12 +36,12 @@ def brain_dashboard():
             'production_config': brain_service.get_production_config()['profile_name']
         }
         
-        return render_template('admin/brain_dashboard.html', stats=stats)
+        return render_template('admin/brain_dashboard_clean.html', stats=stats)
         
     except Exception as e:
         logger.error(f"Error loading brain dashboard: {e}")
         flash(f'Error loading dashboard: {str(e)}', 'error')
-        return render_template('admin/brain_dashboard.html', stats={})
+        return render_template('admin/brain_dashboard_clean.html', stats={})
 
 @brain_admin_bp.route('/admin/brain/data-quality')
 def data_quality_dashboard():
