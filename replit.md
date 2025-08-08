@@ -10,8 +10,8 @@ Preferred communication style: Simple, everyday language.
 The application employs a modular Flask architecture with a clear separation of concerns, supporting both backend and frontend components.
 
 ### Navigation Structure
-The application features a unified navigation system across all pages to ensure a consistent user experience.
-- **Main Navigation:** Selection (homepage), Tools Menu (Pump Comparison, Shortlist Compare, Pump Editor, AI Data Extract), Admin Menu (Configuration, AI Admin, Performance Testing, Documents), Help Menu (User Guide, Features, About).
+The application features a unified navigation system across all pages to ensure a consistent user experience. **Updated August 2025**: Consolidated duplicate navigation systems into single unified system via `templates/includes/navigation.html`.
+- **Main Navigation:** Selection (homepage), Tools Menu (Pump Comparison, Shortlist Compare, Pump Editor, AI Data Extract, Database Manager), Admin Menu (Configuration, AI Admin, Brain System, Performance Testing, Documents), Help Menu (User Guide, Features, About).
 
 ### Data Integrity & Validation
 The system prioritizes authentic manufacturer specifications for pump performance data, specifically for Best Efficiency Point (BEP) metrics, with a strict no-fallback policy for missing BEP data. Validation prevents artificial matches and uses pump-specific thresholds and operating envelopes based on database values. A revolutionary **Brain Overlay Schema** architecture protects immutable manufacturer data while enabling enterprise-grade data corrections and quality management through a separate "brain_overlay" schema with complete audit trails.
@@ -42,6 +42,7 @@ The pump selection methodology separates fixed-speed (impeller trimming) from VF
 
 ### Frontend Architecture
 - **Template-Based UI**: Jinja2 templates for server-side rendering.
+- **Unified Navigation System**: Consolidated navigation via `includes/navigation.html` across all templates.
 - **Dual-View System**: Engineering data sheet view and Presentation view.
 - **Interactive Charts**: Plotly.js for dynamic performance curve visualization.
 - **Responsive Design**: Bootstrap-based styling.
