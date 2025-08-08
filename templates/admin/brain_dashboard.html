@@ -407,6 +407,170 @@ body .brain-dashboard .brain-header {
     }
 }
 
+/* Scoring Algorithm Section */
+.brain-section {
+    margin-bottom: 48px;
+}
+
+.section-header {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.section-title {
+    font-size: var(--md-sys-typescale-headline-medium-size) !important;
+    font-weight: var(--md-sys-typescale-headline-medium-weight) !important;
+    color: var(--brain-md-on-surface) !important;
+    margin: 0 0 8px 0 !important;
+}
+
+.section-subtitle {
+    font-size: var(--md-sys-typescale-body-large-size);
+    color: var(--brain-md-on-surface-variant);
+    margin: 0;
+}
+
+.scoring-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 24px;
+    margin-bottom: 40px;
+}
+
+.algorithm-card {
+    background: var(--brain-md-surface);
+    border: 1px solid var(--brain-md-outline-variant);
+    border-radius: 16px;
+    padding: 24px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+}
+
+.algorithm-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--brain-elevation-3);
+}
+
+.algorithm-card .card-icon {
+    font-size: 32px;
+    margin-bottom: 16px;
+    opacity: 0.8;
+}
+
+.algorithm-card h4 {
+    font-size: var(--md-sys-typescale-title-medium-size) !important;
+    font-weight: var(--md-sys-typescale-title-medium-weight) !important;
+    color: var(--brain-md-on-surface) !important;
+    margin: 0 0 8px 0 !important;
+}
+
+.points-badge {
+    display: inline-block;
+    background: var(--brain-md-primary-container);
+    color: var(--brain-md-on-primary-container);
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: var(--md-sys-typescale-label-large-size);
+    font-weight: var(--md-sys-typescale-label-large-weight);
+    margin-bottom: 16px;
+}
+
+.algorithm-details .formula {
+    background: var(--brain-md-surface-variant);
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+}
+
+.algorithm-details .formula code {
+    font-family: 'JetBrains Mono', 'Consolas', monospace;
+    font-size: 13px;
+    color: var(--brain-md-on-surface-variant);
+}
+
+.algorithm-ranges {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.range-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background: var(--brain-md-background);
+    border-radius: 6px;
+    border: 1px solid var(--brain-md-outline-variant);
+}
+
+.range-label {
+    font-size: var(--md-sys-typescale-body-medium-size);
+    color: var(--brain-md-on-surface);
+}
+
+.range-score {
+    font-size: var(--md-sys-typescale-label-large-size);
+    font-weight: var(--md-sys-typescale-label-large-weight);
+    color: var(--brain-md-primary);
+}
+
+.range-score.color-error {
+    color: var(--brain-md-error) !important;
+}
+
+/* Methodology Flow */
+.methodology-flow {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.method-step {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+}
+
+.step-number {
+    background: var(--brain-md-primary);
+    color: var(--brain-md-on-primary);
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--md-sys-typescale-title-medium-size);
+    font-weight: var(--md-sys-typescale-title-medium-weight);
+    flex-shrink: 0;
+}
+
+.step-content h4 {
+    font-size: var(--md-sys-typescale-title-medium-size) !important;
+    font-weight: var(--md-sys-typescale-title-medium-weight) !important;
+    color: var(--brain-md-on-surface) !important;
+    margin: 0 0 8px 0 !important;
+}
+
+.step-content p {
+    color: var(--brain-md-on-surface-variant);
+    margin: 0 0 12px 0;
+    line-height: 1.5;
+}
+
+.step-criteria {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.criteria-item {
+    font-size: var(--md-sys-typescale-body-medium-size);
+    color: var(--brain-md-on-surface-variant);
+    padding-left: 8px;
+}
+
 @media (max-width: 600px) {
     .brain-dashboard {
         padding: 16px 0;
@@ -698,6 +862,272 @@ body .brain-dashboard .brain-header {
                 </div>
             </div>
         </div>
+
+        <!-- Scoring Algorithm Overview Section -->
+        <div class="brain-section scoring-overview">
+            <div class="section-header">
+                <h3 class="section-title">Scoring & Selection Algorithms</h3>
+                <p class="section-subtitle">100-Point Intelligence System</p>
+            </div>
+            
+            <div class="scoring-grid">
+                <!-- BEP Proximity Algorithm -->
+                <div class="algorithm-card bep-algorithm">
+                    <div class="card-icon">🎯</div>
+                    <h4>BEP Proximity Scoring</h4>
+                    <div class="points-badge">45 Points Max</div>
+                    <div class="algorithm-details">
+                        <div class="formula">
+                            <code>Score = 45 × tiered(Flow_Ratio)</code>
+                        </div>
+                        <div class="algorithm-ranges">
+                            <div class="range-item">
+                                <span class="range-label">95-105% BEP:</span>
+                                <span class="range-score">45 pts</span>
+                            </div>
+                            <div class="range-item">
+                                <span class="range-label">90-95% | 105-110%:</span>
+                                <span class="range-score">40 pts</span>
+                            </div>
+                            <div class="range-item">
+                                <span class="range-label">80-90% | 110-120%:</span>
+                                <span class="range-score">30 pts</span>
+                            </div>
+                            <div class="range-item">
+                                <span class="range-label">70-80% | 120-130%:</span>
+                                <span class="range-score">20 pts</span>
+                            </div>
+                            <div class="range-item">
+                                <span class="range-label">60-70% | 130-140%:</span>
+                                <span class="range-score">10 pts</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Efficiency Algorithm -->
+                <div class="algorithm-card efficiency-algorithm">
+                    <div class="card-icon">⚡</div>
+                    <h4>Efficiency Scoring</h4>
+                    <div class="points-badge">35 Points Max</div>
+                    <div class="algorithm-details">
+                        <div class="formula">
+                            <code>Tiered efficiency scoring system</code>
+                        </div>
+                        <div class="algorithm-ranges">
+                            <div class="range-item">
+                                <span class="range-label">≥85% Efficiency:</span>
+                                <span class="range-score">35 pts</span>
+                            </div>
+                            <div class="range-item">
+                                <span class="range-label">75-85%:</span>
+                                <span class="range-score">30+ pts</span>
+                            </div>
+                            <div class="range-item">
+                                <span class="range-label">65-75%:</span>
+                                <span class="range-score">25+ pts</span>
+                            </div>
+                            <div class="range-item">
+                                <span class="range-label">45-65%:</span>
+                                <span class="range-score">10+ pts</span>
+                            </div>
+                            <div class="range-item">
+                                <span class="range-label">&lt;40%:</span>
+                                <span class="range-score color-error">Disqualified</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Head Margin Algorithm -->
+                <div class="algorithm-card margin-algorithm">
+                    <div class="card-icon">📏</div>
+                    <h4>Head Margin Scoring</h4>
+                    <div class="points-badge">20 Points Max</div>
+                    <div class="algorithm-details">
+                        <div class="formula">
+                            <code>Piecewise function based on head margin %</code>
+                        </div>
+                        <div class="algorithm-ranges">
+                            <div class="range-item">
+                                <span class="range-label">≤5% Margin:</span>
+                                <span class="range-score">20 pts (Perfect)</span>
+                            </div>
+                            <div class="range-item">
+                                <span class="range-label">5-10% Margin:</span>
+                                <span class="range-score">10-20 pts</span>
+                            </div>
+                            <div class="range-item">
+                                <span class="range-label">10-15% Margin:</span>
+                                <span class="range-score">5-10 pts</span>
+                            </div>
+                            <div class="range-item">
+                                <span class="range-label">15-20% Margin:</span>
+                                <span class="range-score">0-5 pts</span>
+                            </div>
+                            <div class="range-item">
+                                <span class="range-label">&lt;-2% Margin:</span>
+                                <span class="range-score color-error">Disqualified</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- NPSH Algorithm -->
+                <div class="algorithm-card npsh-algorithm">
+                    <div class="card-icon">💧</div>
+                    <h4>NPSH Validation</h4>
+                    <div class="points-badge">Hard Gate</div>
+                    <div class="algorithm-details">
+                        <div class="formula">
+                            <code>NPSHa ≥ NPSHr × 1.5 (Safety Factor)</code>
+                        </div>
+                        <div class="algorithm-ranges">
+                            <div class="range-item">
+                                <span class="range-label">NPSH Gate:</span>
+                                <span class="range-score">Pass/Fail Only</span>
+                            </div>
+                            <div class="range-item">
+                                <span class="range-label">Safety Factor:</span>
+                                <span class="range-score">1.5× minimum</span>
+                            </div>
+                            <div class="range-item">
+                                <span class="range-label">Missing NPSHa:</span>
+                                <span class="range-score">No penalty applied</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Penalties Section -->
+                <div class="algorithm-card penalties-algorithm">
+                    <div class="card-icon">⚠️</div>
+                    <h4>Modification Penalties</h4>
+                    <div class="points-badge">Deductions</div>
+                    <div class="algorithm-details">
+                        <div class="algorithm-ranges">
+                            <div class="range-item">
+                                <span class="range-label">≥95% Trim:</span>
+                                <span class="range-score">0 pts penalty</span>
+                            </div>
+                            <div class="range-item">
+                                <span class="range-label">90-95% Trim:</span>
+                                <span class="range-score">-2 pts</span>
+                            </div>
+                            <div class="range-item">
+                                <span class="range-label">85-90% Trim:</span>
+                                <span class="range-score">-5 pts</span>
+                            </div>
+                            <div class="range-item">
+                                <span class="range-label">80-85% Trim:</span>
+                                <span class="range-score">-8 pts</span>
+                            </div>
+                            <div class="range-item">
+                                <span class="range-label">75-80% Trim:</span>
+                                <span class="range-score">-12 pts</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- QBP Gates -->
+                <div class="algorithm-card qbp-algorithm">
+                    <div class="card-icon">🚪</div>
+                    <h4>QBP Operating Gates</h4>
+                    <div class="points-badge">Hard Gates</div>
+                    <div class="algorithm-details">
+                        <div class="algorithm-ranges">
+                            <div class="range-item">
+                                <span class="range-label">Minimum QBP:</span>
+                                <span class="range-score">60% of BEP flow</span>
+                            </div>
+                            <div class="range-item">
+                                <span class="range-label">Maximum QBP:</span>
+                                <span class="range-score">130% of BEP flow</span>
+                            </div>
+                            <div class="range-item">
+                                <span class="range-label">Outside Range:</span>
+                                <span class="range-score color-error">Immediate Disqualification</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Selection Methodology Section -->
+        <div class="brain-section methodology-overview">
+            <div class="section-header">
+                <h3 class="section-title">Selection Methodology</h3>
+                <p class="section-subtitle">Fixed-Speed Priority with Intelligent Fallbacks</p>
+            </div>
+            
+            <div class="methodology-flow">
+                <div class="method-step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h4>Physical Capability Gate</h4>
+                        <p>Verify pump can deliver required flow and head within manufacturer's envelope</p>
+                        <div class="step-criteria">
+                            <span class="criteria-item">✓ Operating point within curves</span>
+                            <span class="criteria-item">✓ Manufacturer data validation</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="method-step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h4>Standard Operation (No Modifications)</h4>
+                        <p>Evaluate pump at design speed with full impeller diameter</p>
+                        <div class="step-criteria">
+                            <span class="criteria-item">✓ 100% impeller diameter</span>
+                            <span class="criteria-item">✓ Standard RPM operation</span>
+                            <span class="criteria-item">✓ Maximum scoring potential</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="method-step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h4>Impeller Trimming (If Required)</h4>
+                        <p>Apply affinity laws for diameter reduction when needed</p>
+                        <div class="step-criteria">
+                            <span class="criteria-item">✓ 85-100% diameter range</span>
+                            <span class="criteria-item">✓ Trim penalties applied</span>
+                            <span class="criteria-item">✓ NPSH safety validation</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="method-step">
+                    <div class="step-number">4</div>
+                    <div class="step-content">
+                        <h4>Safety Gates Validation</h4>
+                        <p>Hard gates for operational safety and reliability</p>
+                        <div class="step-criteria">
+                            <span class="criteria-item">✓ QBP: 60-130% of BEP flow</span>
+                            <span class="criteria-item">✓ NPSH: 1.5× safety factor</span>
+                            <span class="criteria-item">✓ Head margin: >-2%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="method-step">
+                    <div class="step-number">5</div>
+                    <div class="step-content">
+                        <h4>Intelligent Scoring & Ranking</h4>
+                        <p>100-point system prioritizing reliability and efficiency</p>
+                        <div class="step-criteria">
+                            <span class="criteria-item">✓ BEP proximity (45 pts max)</span>
+                            <span class="criteria-item">✓ Efficiency (35 pts max)</span>
+                            <span class="criteria-item">✓ Head margin (20 pts max)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -724,5 +1154,16 @@ function createProfile() {
 function generateReport() {
     alert('Report generation feature coming soon');
 }
+
+// Initialize algorithm cards with interactive functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const algorithmCards = document.querySelectorAll('.algorithm-card');
+    
+    algorithmCards.forEach(card => {
+        card.addEventListener('click', function() {
+            this.classList.toggle('expanded');
+        });
+    });
+});
 </script>
 {% endblock %}
