@@ -132,7 +132,7 @@ body .brain-dashboard .brain-header {
     font-weight: var(--md-sys-typescale-headline-large-weight) !important;
     margin: 0 !important;
     line-height: 1.2 !important;
-    color: var(--md-sys-color-on-primary-container) !important;
+    color: var(--brain-md-on-primary-container) !important;
 }
 
 .brain-icon {
@@ -158,11 +158,11 @@ body .brain-dashboard .brain-header {
 }
 
 .brain-dashboard .status-card {
-    background: var(--md-sys-color-surface) !important;
+    background: var(--brain-md-surface) !important;
     border-radius: 20px !important;
     padding: 24px !important;
-    box-shadow: var(--md-sys-elevation-level1) !important;
-    border: 1px solid var(--md-sys-color-outline-variant) !important;
+    box-shadow: var(--brain-elevation-1) !important;
+    border: 1px solid var(--brain-md-outline-variant) !important;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
     position: relative !important;
     overflow: hidden !important;
@@ -238,11 +238,11 @@ body .brain-dashboard .brain-header {
 }
 
 .brain-dashboard .feature-card {
-    background: var(--md-sys-color-surface) !important;
+    background: var(--brain-md-surface) !important;
     border-radius: 24px !important;
     padding: 32px !important;
-    box-shadow: var(--md-sys-elevation-level1) !important;
-    border: 1px solid var(--md-sys-color-outline-variant) !important;
+    box-shadow: var(--brain-elevation-1) !important;
+    border: 1px solid var(--brain-md-outline-variant) !important;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
     position: relative !important;
     overflow: hidden !important;
@@ -331,59 +331,59 @@ body .brain-dashboard .brain-header {
 }
 
 .brain-dashboard .btn-primary {
-    background: var(--md-sys-color-primary) !important;
-    color: var(--md-sys-color-on-primary) !important;
-    box-shadow: var(--md-sys-elevation-level1) !important;
+    background: var(--brain-md-primary) !important;
+    color: var(--brain-md-on-primary) !important;
+    box-shadow: var(--brain-elevation-1) !important;
 }
 
-.btn-primary:hover {
-    box-shadow: var(--md-sys-elevation-level2);
-    transform: translateY(-1px);
-    color: var(--md-sys-color-on-primary);
-    filter: brightness(1.05);
+.brain-dashboard .btn-primary:hover {
+    box-shadow: var(--brain-elevation-2) !important;
+    transform: translateY(-1px) !important;
+    color: var(--brain-md-on-primary) !important;
+    filter: brightness(1.05) !important;
 }
 
-.btn-primary:active {
-    transform: translateY(0);
-    box-shadow: var(--md-sys-elevation-level1);
+.brain-dashboard .btn-primary:active {
+    transform: translateY(0) !important;
+    box-shadow: var(--brain-elevation-1) !important;
 }
 
 .brain-dashboard .btn-secondary {
     background: transparent !important;
-    color: var(--md-sys-color-primary) !important;
-    border: 1px solid var(--md-sys-color-outline) !important;
+    color: var(--brain-md-primary) !important;
+    border: 1px solid var(--brain-md-outline) !important;
 }
 
-.btn-secondary:hover {
-    background: var(--md-sys-color-primary);
-    color: var(--md-sys-color-on-primary);
-    border-color: var(--md-sys-color-primary);
-    transform: translateY(-1px);
+.brain-dashboard .btn-secondary:hover {
+    background: var(--brain-md-primary) !important;
+    color: var(--brain-md-on-primary) !important;
+    border-color: var(--brain-md-primary) !important;
+    transform: translateY(-1px) !important;
 }
 
-.btn-secondary:active {
-    transform: translateY(0);
+.brain-dashboard .btn-secondary:active {
+    transform: translateY(0) !important;
 }
 
-/* Material Design 3 Breadcrumb */
-.brain-breadcrumb {
-    margin-bottom: 24px;
-    font-size: var(--md-sys-typescale-body-medium-size);
-    color: var(--md-sys-color-on-surface-variant);
-    display: flex;
-    align-items: center;
-    gap: 8px;
+/* Brain Breadcrumb */
+.brain-dashboard .brain-breadcrumb {
+    margin-bottom: 24px !important;
+    font-size: var(--md-sys-typescale-body-medium-size) !important;
+    color: var(--brain-md-on-surface-variant) !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
 }
 
-.brain-breadcrumb a {
-    color: var(--md-sys-color-primary);
-    text-decoration: none;
-    transition: color 0.2s ease;
+.brain-dashboard .brain-breadcrumb a {
+    color: var(--brain-md-primary) !important;
+    text-decoration: none !important;
+    transition: color 0.2s ease !important;
 }
 
-.brain-breadcrumb a:hover {
-    color: var(--md-sys-color-on-surface);
-    text-decoration: underline;
+.brain-dashboard .brain-breadcrumb a:hover {
+    color: var(--brain-md-on-surface) !important;
+    text-decoration: underline !important;
 }
 
 /* Material Design 3 Responsive Design */
