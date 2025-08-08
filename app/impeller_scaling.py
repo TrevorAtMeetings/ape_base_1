@@ -149,9 +149,17 @@ class ImpellerScalingEngine:
                 
             diameter_ratio = new_diameter / base_diameter
             
+            # Adaptive interpolation for consistency with catalog_engine
+            if len(flows) >= 4:
+                interpolation_kind = 'cubic'
+            elif len(flows) == 3:
+                interpolation_kind = 'quadratic'
+            else:
+                interpolation_kind = 'linear'
+            
             # Interpolate base performance at target flow
-            head_interp = interpolate.interp1d(flows, heads, kind='linear', bounds_error=False)
-            eff_interp = interpolate.interp1d(flows, effs, kind='linear', bounds_error=False)
+            head_interp = interpolate.interp1d(flows, heads, kind=interpolation_kind, bounds_error=False)
+            eff_interp = interpolate.interp1d(flows, effs, kind=interpolation_kind, bounds_error=False)
             
             base_head_at_flow = float(head_interp(target_flow))
             base_efficiency = float(eff_interp(target_flow))
@@ -177,15 +185,19 @@ class ImpellerScalingEngine:
             # This accounts for the trimmed impeller performance
             actual_power = self._calculate_hydraulic_power(actual_flow, actual_head, actual_efficiency)
                 
-            # Calculate NPSH if available
+            # Calculate NPSH if available (optional - don't crash if missing)
             actual_npshr = None
-            npshs = [p['npshr_m'] for p in points if p['npshr_m'] and p['npshr_m'] > 0]
-            if npshs and len(npshs) == len(flows):
-                npsh_interp = interpolate.interp1d(flows, npshs, kind='linear', bounds_error=False)
-                base_npshr = float(npsh_interp(target_flow))
-                if not np.isnan(base_npshr):
-                    # NPSH scales with head: NPSH₂ = NPSH₁ × (D₂/D₁)²
-                    actual_npshr = base_npshr * (diameter_ratio ** 2)
+            try:
+                npshs = [p.get('npshr', 0) for p in points if p.get('npshr', 0) and p.get('npshr', 0) > 0]
+                if npshs and len(npshs) == len(flows):
+                    npsh_interp = interpolate.interp1d(flows, npshs, kind=interpolation_kind, bounds_error=False)
+                    base_npshr = float(npsh_interp(target_flow))
+                    if not np.isnan(base_npshr):
+                        # NPSH scales with head: NPSH₂ = NPSH₁ × (D₂/D₁)²
+                        actual_npshr = base_npshr * (diameter_ratio ** 2)
+            except:
+                # NPSH calculation is optional - don't fail entire process
+                actual_npshr = None
                     
             return {
                 'flow_m3hr': target_flow,  # CRITICAL: Always return target flow rate
@@ -196,7 +208,7 @@ class ImpellerScalingEngine:
                 'meets_requirements': actual_head >= target_head,
                 'head_margin_m': round(actual_head - target_head, 2),
                 'impeller_diameter_mm': round(new_diameter, 1),
-                'test_speed_rpm': base_curve['test_speed_rpm']
+                'test_speed_rpm': base_curve.get('test_speed_rpm', 1480)
             }
             
         except Exception as e:
