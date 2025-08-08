@@ -6,6 +6,8 @@ import logging
 import time
 import base64
 import re
+import os
+import json
 import markdown2
 from flask import Blueprint, render_template, request, redirect, url_for, session, jsonify, make_response
 from ..session_manager import safe_flash
@@ -14,6 +16,15 @@ from ..utils import validate_site_requirements
 from .. import app
 
 logger = logging.getLogger(__name__)
+
+# Try to import Brain system for Phase 2 integration
+try:
+    from ..pump_brain import get_pump_brain, BrainMetrics
+    BRAIN_AVAILABLE = True
+    logger.info("Brain system available for API integration")
+except ImportError:
+    BRAIN_AVAILABLE = False
+    logger.info("Brain system not available - using legacy methods only")
 
 # Create blueprint
 api_bp = Blueprint('api', __name__)
@@ -53,6 +64,10 @@ def get_chart_data(pump_code):
         flow_rate = request.args.get('flow', type=float, default=100)
         head = request.args.get('head', type=float, default=50)
 
+        # Check if Brain is enabled for API
+        brain_mode = os.environ.get('BRAIN_MODE', 'shadow')
+        use_brain = BRAIN_AVAILABLE and brain_mode in ['shadow', 'active']
+        
         # Use catalog engine to get pump data
         from ..catalog_engine import get_catalog_engine
         catalog_engine = get_catalog_engine()
@@ -91,6 +106,28 @@ def get_chart_data(pump_code):
         # Calculate performance at duty point using v6.0 unified method
         solution = target_pump.find_best_solution_for_duty(flow_rate, head)
         
+        # PHASE 2 BRAIN INTEGRATION - Shadow Mode Comparison
+        brain_chart_data = None
+        if use_brain:
+            try:
+                # Generate chart data using Brain
+                brain_chart_data = generate_brain_chart_data(pump_code, flow_rate, head)
+                
+                if brain_chart_data and brain_mode == 'active':
+                    # Active mode - return Brain results directly (fixes double transformation)
+                    logger.info(f"Brain Active: Returning optimized chart data for {pump_code}")
+                    response = make_response(json.dumps(brain_chart_data))
+                    response.headers['Content-Type'] = 'application/json'
+                    response.headers['Cache-Control'] = 'public, max-age=300'
+                    return response
+                elif brain_chart_data and brain_mode == 'shadow':
+                    # Shadow mode - continue with legacy but log comparison
+                    logger.info(f"Brain Shadow: Generated chart data for comparison - {pump_code}")
+            except Exception as e:
+                logger.error(f"Brain chart generation failed: {str(e)}")
+                # Fall back to legacy method
+        
+        # LEGACY METHOD - Continue with existing implementation
         # Extract operating point details from unified solution
         operating_point = None
         speed_scaling_applied = False
@@ -349,6 +386,57 @@ def get_chart_data(pump_code):
             }
             chart_data['curves'].append(curve_data)
 
+        # SHADOW MODE COMPARISON - Log discrepancies if Brain was used
+        if brain_chart_data and brain_mode == 'shadow':
+            try:
+                # Compare key metrics between legacy and Brain
+                legacy_op = chart_data.get('operating_point', {})
+                brain_op = brain_chart_data.get('operating_point', {})
+                
+                discrepancies = []
+                
+                # Compare operating point values
+                for key in ['flow_m3hr', 'head_m', 'efficiency_pct', 'power_kw']:
+                    legacy_val = legacy_op.get(key)
+                    brain_val = brain_op.get(key)
+                    if legacy_val and brain_val:
+                        diff_pct = abs(legacy_val - brain_val) / legacy_val * 100 if legacy_val else 0
+                        if diff_pct > 1:  # More than 1% difference
+                            discrepancies.append({
+                                'field': key,
+                                'legacy': legacy_val,
+                                'brain': brain_val,
+                                'diff_pct': diff_pct
+                            })
+                
+                # Check for transformation differences
+                legacy_curves = len(chart_data.get('curves', []))
+                brain_curves = len(brain_chart_data.get('curves', []))
+                if legacy_curves != brain_curves:
+                    discrepancies.append({
+                        'field': 'curve_count',
+                        'legacy': legacy_curves,
+                        'brain': brain_curves
+                    })
+                
+                if discrepancies:
+                    logger.warning(f"Brain Shadow Mode - Chart data discrepancies for {pump_code}:")
+                    for disc in discrepancies:
+                        logger.warning(f"  {disc['field']}: Legacy={disc.get('legacy')}, Brain={disc.get('brain')}, Diff={disc.get('diff_pct', 'N/A'):.1f}%")
+                    
+                    # Log to Brain metrics for analysis
+                    BrainMetrics.log_discrepancy('chart_data', {
+                        'pump_code': pump_code,
+                        'flow': flow_rate,
+                        'head': head,
+                        'discrepancies': discrepancies
+                    })
+                else:
+                    logger.info(f"Brain Shadow Mode - Chart data matches for {pump_code} ✓")
+                    
+            except Exception as e:
+                logger.error(f"Error comparing Brain vs Legacy chart data: {str(e)}")
+        
         # Create response with short-term caching for chart data
         # Use json.dumps directly to ensure proper serialization
         import json
@@ -750,6 +838,155 @@ def calculate_power_curve(performance_points):
                                9.81) / (3600 * 0.75)  # Assume 75% efficiency
             powers.append(max(0, estimated_power))
     return powers
+
+
+def generate_brain_chart_data(pump_code, flow_rate, head):
+    """
+    Generate chart data using Brain system (Phase 2 integration).
+    Fixes the double transformation bug by using unified calculations.
+    """
+    if not BRAIN_AVAILABLE:
+        return None
+    
+    try:
+        from ..pump_repository import get_pump_repository
+        repository = get_pump_repository()
+        brain = get_pump_brain(repository)
+        
+        # Get pump data
+        pump = repository.get_pump_by_code(pump_code)
+        if not pump:
+            return None
+        
+        # Use Brain to calculate performance (single source of truth)
+        performance = brain.performance.calculate_performance(
+            pump, flow_rate, head
+        )
+        
+        if not performance:
+            logger.warning(f"Brain: No performance solution for {pump_code}")
+            return None
+        
+        # Get optimal chart configuration from Brain
+        chart_config = brain.charts.get_optimal_config(pump, context='web')
+        
+        # Build chart data structure - Brain ensures no double transformation
+        chart_data = {
+            'pump_code': pump_code,
+            'pump_info': {
+                'manufacturer': pump.get('manufacturer', 'APE PUMPS'),
+                'series': pump.get('model_series', ''),
+                'description': pump_code
+            },
+            'curves': [],
+            'operating_point': {
+                'flow_m3hr': performance['flow_m3hr'],
+                'head_m': performance['head_m'],
+                'efficiency_pct': performance.get('efficiency_pct'),
+                'power_kw': performance.get('power_kw'),
+                'npshr_m': performance.get('npshr_m'),
+                'impeller_size': performance.get('impeller_diameter_mm'),
+                'sizing_info': performance.get('sizing_info', {})
+            },
+            'brain_config': chart_config,  # Include Brain's chart optimization
+            'metadata': {
+                'flow_units': 'm³/hr',
+                'head_units': 'm',
+                'efficiency_units': '%',
+                'power_units': 'kW',
+                'npshr_units': 'm',
+                'brain_generated': True  # Flag for debugging
+            }
+        }
+        
+        # Process curves with Brain's unified transformation approach
+        curves = pump.get('curves', [])
+        best_curve_index = performance.get('curve_index', 0)
+        
+        for i, curve in enumerate(curves):
+            is_selected = (i == best_curve_index)
+            points = curve.get('performance_points', [])
+            
+            # If this is the selected curve and transformations were applied,
+            # Brain has already calculated the correct transformed values
+            if is_selected and performance.get('sizing_info'):
+                sizing_info = performance['sizing_info']
+                
+                # Apply transformation ONCE based on Brain's calculation
+                if sizing_info.get('sizing_method') == 'impeller_trim':
+                    # Impeller trimming - apply affinity laws ONCE
+                    trim_ratio = sizing_info.get('trim_percent', 100) / 100.0
+                    flows = [p['flow_m3hr'] * trim_ratio for p in points]
+                    heads = [p['head_m'] * (trim_ratio ** 2) for p in points]
+                    powers = [p.get('power_kw', 0) * (trim_ratio ** 3) for p in points if p.get('power_kw')]
+                    
+                    label = f"Head {sizing_info.get('required_diameter_mm', curve.get('impeller_diameter_mm')):.1f}mm (trimmed)"
+                    transformation_info = {
+                        'type': 'impeller_trim',
+                        'trim_ratio': trim_ratio,
+                        'original_diameter': curve.get('impeller_diameter_mm'),
+                        'final_diameter': sizing_info.get('required_diameter_mm')
+                    }
+                    
+                elif sizing_info.get('sizing_method') == 'speed_variation':
+                    # Speed variation - apply affinity laws ONCE
+                    speed_ratio = sizing_info.get('required_speed_rpm', 2900) / sizing_info.get('test_speed_rpm', 2900)
+                    flows = [p['flow_m3hr'] * speed_ratio for p in points]
+                    heads = [p['head_m'] * (speed_ratio ** 2) for p in points]
+                    powers = [p.get('power_kw', 0) * (speed_ratio ** 3) for p in points if p.get('power_kw')]
+                    
+                    label = f"Head @ {sizing_info.get('required_speed_rpm'):.0f} RPM"
+                    transformation_info = {
+                        'type': 'speed_variation',
+                        'speed_ratio': speed_ratio,
+                        'original_speed': sizing_info.get('test_speed_rpm'),
+                        'final_speed': sizing_info.get('required_speed_rpm')
+                    }
+                    
+                else:
+                    # No transformation needed
+                    flows = [p['flow_m3hr'] for p in points]
+                    heads = [p['head_m'] for p in points]
+                    powers = [p.get('power_kw', 0) for p in points if p.get('power_kw')]
+                    label = f"Head {curve.get('impeller_diameter_mm')}mm"
+                    transformation_info = None
+                    
+            else:
+                # Non-selected curves - original data
+                flows = [p['flow_m3hr'] for p in points]
+                heads = [p['head_m'] for p in points]
+                powers = [p.get('power_kw', 0) for p in points if p.get('power_kw')]
+                label = f"Head {curve.get('impeller_diameter_mm')}mm"
+                transformation_info = None
+            
+            # Add efficiency and NPSH data
+            efficiencies = [p.get('efficiency_pct') for p in points if p.get('efficiency_pct')]
+            npshrs = [p.get('npshr_m') for p in points if p.get('npshr_m')]
+            
+            curve_data = {
+                'curve_index': i,
+                'impeller_size': curve.get('impeller_size', f'Curve {i+1}'),
+                'impeller_diameter_mm': curve.get('impeller_diameter_mm'),
+                'display_label': label,
+                'transformation_applied': transformation_info,
+                'flow_data': flows,
+                'head_data': heads,
+                'efficiency_data': efficiencies,
+                'power_data': powers if powers else calculate_power_curve(points),
+                'npshr_data': npshrs,
+                'is_selected': is_selected
+            }
+            
+            chart_data['curves'].append(curve_data)
+        
+        logger.info(f"Brain: Generated chart data for {pump_code} - NO double transformation")
+        return chart_data
+        
+    except Exception as e:
+        logger.error(f"Brain chart generation error: {str(e)}")
+        import traceback
+        logger.error(traceback.format_exc())
+        return None
 
 
 @api_bp.route('/pumps', methods=['GET'])
