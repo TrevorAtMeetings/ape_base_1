@@ -207,8 +207,7 @@
     <script src="{{ url_for('static', filename='js/micro-interactions.js') }}"></script>
     <script src="{{ url_for('static', filename='js/force-icon-refresh.js') }}"></script>
     
-    <!-- Floating AI Chat (available on all pages) -->
-    <link href="{{ url_for('static', filename='css/floating-ai-chat.css') }}?v={{ range(1000, 9999) | random }}" rel="stylesheet">
+    <!-- Floating AI Chat JavaScript (CSS already loaded in head) -->
     <script src="{{ url_for('static', filename='js/floating-ai-chat.js') }}"></script>
 
     <!-- Page-specific scripts -->
