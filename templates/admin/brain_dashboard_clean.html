@@ -65,7 +65,7 @@
                     <a href="{{ url_for('brain_admin.data_quality_dashboard') }}" class="btn">
                         View Quality Issues
                     </a>
-                    <a href="{{ url_for('brain_admin.run_quality_scan') }}" class="btn-flat blue-text">
+                    <a href="#" class="btn-flat blue-text disabled">
                         Run Quality Scan
                     </a>
                 </div>
@@ -88,7 +88,7 @@
                     <a href="{{ url_for('brain_admin.corrections_dashboard') }}" class="btn">
                         Manage Corrections
                     </a>
-                    <a href="{{ url_for('brain_admin.propose_correction') }}" class="btn-flat blue-text">
+                    <a href="{{ url_for('brain_admin.corrections_dashboard') }}" class="btn-flat blue-text">
                         Propose Correction
                     </a>
                 </div>
@@ -131,10 +131,10 @@
                     <p>Manage Brain configuration profiles for different use cases. Create, test, and deploy configurations with different scoring weights and logic parameters.</p>
                 </div>
                 <div class="card-action">
-                    <a href="{{ url_for('brain_admin.configuration_profiles') }}" class="btn">
+                    <a href="#" class="btn disabled">
                         Configuration Manager
                     </a>
-                    <a href="{{ url_for('brain_admin.new_profile') }}" class="btn-flat blue-text">
+                    <a href="#" class="btn-flat blue-text disabled">
                         New Profile
                     </a>
                 </div>
@@ -152,10 +152,10 @@
                     <p>Compare Brain selections against manufacturer recommendations. Upload datasheets, analyze differences, and identify opportunities for improvement.</p>
                 </div>
                 <div class="card-action">
-                    <a href="{{ url_for('brain_admin.manufacturer_comparison') }}" class="btn">
+                    <a href="#" class="btn disabled">
                         Comparison Tool
                     </a>
-                    <a href="{{ url_for('brain_admin.upload_datasheet') }}" class="btn-flat blue-text">
+                    <a href="#" class="btn-flat blue-text disabled">
                         Upload Datasheet
                     </a>
                 </div>
@@ -175,10 +175,10 @@
                     <p>Analyze Brain decision patterns, track accuracy improvements over time, and generate reports on system performance and feasibility.</p>
                 </div>
                 <div class="card-action">
-                    <a href="{{ url_for('brain_admin.analytics_dashboard') }}" class="btn">
+                    <a href="#" class="btn disabled">
                         View Analytics
                     </a>
-                    <a href="{{ url_for('brain_admin.generate_report') }}" class="btn-flat blue-text">
+                    <a href="#" class="btn-flat blue-text disabled">
                         Generate Report
                     </a>
                 </div>
