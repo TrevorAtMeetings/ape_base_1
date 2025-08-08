@@ -68,10 +68,79 @@ def pump_report(pump_code):
     else:
         logger.warning("Session 'suitable_pumps' is empty or not found.")
 
+    # Check if this is a direct search request
+    direct_search = request.args.get('direct_search', type=str) == 'true'
+    
     if not selected_pump:
-        logger.warning(f"Could not find pump '{pump_code}' in session. Redirecting to start.")
-        safe_flash("Your session has expired or the pump was not found. Please run a new pump selection.", "warning")
-        return redirect(url_for('main_flow.index', flow=flow, head=head))
+        if direct_search:
+            logger.info(f"Direct search requested for pump '{pump_code}', bypassing session lookup.")
+            # Try to find pump directly in catalog engine
+            try:
+                from ..catalog_engine import get_catalog_engine
+                catalog_engine = get_catalog_engine()
+                
+                # Find the pump in the catalog
+                found_pump = None
+                for pump in catalog_engine.pumps:
+                    if pump.pump_code == pump_code:
+                        found_pump = pump
+                        break
+                
+                if found_pump:
+                    logger.info(f"Found pump '{pump_code}' in catalog for direct search.")
+                    # Create a basic pump selection result for the found pump
+                    selected_pump = {
+                        'pump_code': found_pump.pump_code,
+                        'pump_type': found_pump.pump_type,
+                        'manufacturer': found_pump.manufacturer,
+                        'model_series': found_pump.model_series,
+                        'flow_m3hr': float(flow) if flow else 25.0,
+                        'head_m': float(head) if head else 45.0,
+                        'efficiency_pct': 75.0,  # Default, will be calculated
+                        'power_kw': 50.0,  # Default, will be calculated
+                        'npshr_m': 5.0,  # Default
+                        'suitability_score': 85.0,  # Default for direct search
+                        'qbep_percentage': 100.0,  # Default
+                        'trim_percent': 100.0,  # Default, full impeller
+                        'impeller_diameter_mm': 450.0,  # Default
+                        'extrapolated': False
+                    }
+                    
+                    # Try to get actual performance data for the operating point
+                    try:
+                        performance_result = found_pump.find_best_solution_for_duty(
+                            float(flow) if flow else 25.0, 
+                            float(head) if head else 45.0
+                        )
+                        
+                        if performance_result:
+                            selected_pump.update({
+                                'efficiency_pct': performance_result.get('efficiency_pct', 75.0),
+                                'power_kw': performance_result.get('power_kw', 50.0),
+                                'npshr_m': performance_result.get('npshr_m', 5.0),
+                                'qbep_percentage': performance_result.get('qbep_percentage', 100.0),
+                                'trim_percent': performance_result.get('trim_percent', 100.0),
+                                'impeller_diameter_mm': performance_result.get('impeller_diameter_mm', 450.0),
+                                'extrapolated': performance_result.get('extrapolated', False)
+                            })
+                            logger.info(f"Updated pump performance data from analysis.")
+                    except Exception as perf_error:
+                        logger.warning(f"Could not analyze performance for direct search: {perf_error}")
+                        # Keep default values
+                        
+                else:
+                    logger.warning(f"Pump '{pump_code}' not found in catalog for direct search.")
+                    safe_flash(f"Pump '{pump_code}' was not found in the database.", "error")
+                    return redirect(url_for('main_flow.index', flow=flow, head=head))
+                    
+            except Exception as e:
+                logger.error(f"Error during direct search: {e}")
+                safe_flash("An error occurred while searching for the pump.", "error")
+                return redirect(url_for('main_flow.index', flow=flow, head=head))
+        else:
+            logger.warning(f"Could not find pump '{pump_code}' in session. Redirecting to start.")
+            safe_flash("Your session has expired or the pump was not found. Please run a new pump selection.", "warning")
+            return redirect(url_for('main_flow.index', flow=flow, head=head))
 
     # If we get here, the pump was found successfully.
     logger.info(f"Proceeding to render report for '{selected_pump.get('pump_code')}'")
