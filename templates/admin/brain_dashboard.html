@@ -13,40 +13,41 @@
 
 <!-- Material Design 3 Tokens -->
 <style>
+/* Brain-specific CSS variables to avoid conflicts with style.css */
 :root {
-    /* Material Design 3 Color Tokens */
-    --md-sys-color-primary: #6750A4;
-    --md-sys-color-on-primary: #FFFFFF;
-    --md-sys-color-primary-container: #EADDFF;
-    --md-sys-color-on-primary-container: #21005D;
-    --md-sys-color-secondary: #625B71;
-    --md-sys-color-on-secondary: #FFFFFF;
-    --md-sys-color-secondary-container: #E8DEF8;
-    --md-sys-color-on-secondary-container: #1D192B;
-    --md-sys-color-tertiary: #7D5260;
-    --md-sys-color-on-tertiary: #FFFFFF;
-    --md-sys-color-tertiary-container: #FFD8E4;
-    --md-sys-color-on-tertiary-container: #31111D;
-    --md-sys-color-error: #BA1A1A;
-    --md-sys-color-on-error: #FFFFFF;
-    --md-sys-color-error-container: #FFDAD6;
-    --md-sys-color-on-error-container: #410002;
-    --md-sys-color-background: #FFFBFE;
-    --md-sys-color-on-background: #1C1B1F;
-    --md-sys-color-surface: #FFFBFE;
-    --md-sys-color-on-surface: #1C1B1F;
-    --md-sys-color-surface-variant: #E7E0EC;
-    --md-sys-color-on-surface-variant: #49454F;
-    --md-sys-color-outline: #79747E;
-    --md-sys-color-outline-variant: #CAC4D0;
+    /* Brain Material Design 3 Color Tokens - Unique namespace */
+    --brain-md-primary: #6750A4;
+    --brain-md-on-primary: #FFFFFF;
+    --brain-md-primary-container: #EADDFF;
+    --brain-md-on-primary-container: #21005D;
+    --brain-md-secondary: #625B71;
+    --brain-md-on-secondary: #FFFFFF;
+    --brain-md-secondary-container: #E8DEF8;
+    --brain-md-on-secondary-container: #1D192B;
+    --brain-md-tertiary: #7D5260;
+    --brain-md-on-tertiary: #FFFFFF;
+    --brain-md-tertiary-container: #FFD8E4;
+    --brain-md-on-tertiary-container: #31111D;
+    --brain-md-error: #BA1A1A;
+    --brain-md-on-error: #FFFFFF;
+    --brain-md-error-container: #FFDAD6;
+    --brain-md-on-error-container: #410002;
+    --brain-md-background: #FFFBFE;
+    --brain-md-on-background: #1C1B1F;
+    --brain-md-surface: #FFFBFE;
+    --brain-md-on-surface: #1C1B1F;
+    --brain-md-surface-variant: #E7E0EC;
+    --brain-md-on-surface-variant: #49454F;
+    --brain-md-outline: #79747E;
+    --brain-md-outline-variant: #CAC4D0;
     
-    /* Material Design 3 Elevation */
-    --md-sys-elevation-level0: 0px 0px 0px 0px rgba(0, 0, 0, 0.00), 0px 0px 0px 0px rgba(0, 0, 0, 0.00);
-    --md-sys-elevation-level1: 0px 1px 2px 0px rgba(0, 0, 0, 0.30), 0px 1px 3px 1px rgba(0, 0, 0, 0.15);
-    --md-sys-elevation-level2: 0px 1px 2px 0px rgba(0, 0, 0, 0.30), 0px 2px 6px 2px rgba(0, 0, 0, 0.15);
-    --md-sys-elevation-level3: 0px 1px 3px 0px rgba(0, 0, 0, 0.30), 0px 4px 8px 3px rgba(0, 0, 0, 0.15);
-    --md-sys-elevation-level4: 0px 2px 3px 0px rgba(0, 0, 0, 0.30), 0px 6px 10px 4px rgba(0, 0, 0, 0.15);
-    --md-sys-elevation-level5: 0px 4px 4px 0px rgba(0, 0, 0, 0.30), 0px 8px 12px 6px rgba(0, 0, 0, 0.15);
+    /* Brain Material Design 3 Elevation */
+    --brain-elevation-0: 0px 0px 0px 0px rgba(0, 0, 0, 0.00);
+    --brain-elevation-1: 0px 1px 2px 0px rgba(0, 0, 0, 0.30), 0px 1px 3px 1px rgba(0, 0, 0, 0.15);
+    --brain-elevation-2: 0px 1px 2px 0px rgba(0, 0, 0, 0.30), 0px 2px 6px 2px rgba(0, 0, 0, 0.15);
+    --brain-elevation-3: 0px 1px 3px 0px rgba(0, 0, 0, 0.30), 0px 4px 8px 3px rgba(0, 0, 0, 0.15);
+    --brain-elevation-4: 0px 2px 3px 0px rgba(0, 0, 0, 0.30), 0px 6px 10px 4px rgba(0, 0, 0, 0.15);
+    --brain-elevation-5: 0px 4px 4px 0px rgba(0, 0, 0, 0.30), 0px 8px 12px 6px rgba(0, 0, 0, 0.15);
     
     /* Material Design 3 Typography Scale */
     --md-sys-typescale-display-large-size: 57px;
@@ -67,13 +68,17 @@
     --md-sys-typescale-label-large-weight: 500;
 }
 
-/* Material Design 3 Brain Dashboard - Override Materialize */
-.brain-dashboard {
-    background: var(--md-sys-color-background) !important;
+/* Brain Dashboard - Aggressive Materialize Override */
+body .brain-dashboard,
+html .brain-dashboard,
+.brain-dashboard.brain-dashboard.brain-dashboard {
+    background: var(--brain-md-background) !important;
     min-height: 100vh !important;
     padding: 24px 0 !important;
-    font-family: 'Google Sans', 'Roboto', sans-serif !important;
+    font-family: 'Google Sans', 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif !important;
     margin: 0 !important;
+    color: var(--brain-md-on-background) !important;
+    box-sizing: border-box !important;
 }
 
 .brain-container {
@@ -82,17 +87,20 @@
     padding: 0 24px;
 }
 
-/* Material Design 3 Header Card - Override Materialize */
-.brain-dashboard .brain-header {
-    background: var(--md-sys-color-primary-container) !important;
+/* Brain Header - Maximum Specificity Override */
+.brain-dashboard .brain-header.brain-header.brain-header,
+body .brain-dashboard .brain-header {
+    background: var(--brain-md-primary-container) !important;
     border-radius: 28px !important;
     padding: 40px !important;
     margin-bottom: 32px !important;
-    color: var(--md-sys-color-on-primary-container) !important;
-    box-shadow: var(--md-sys-elevation-level2) !important;
+    color: var(--brain-md-on-primary-container) !important;
+    box-shadow: var(--brain-elevation-2) !important;
     position: relative !important;
     overflow: hidden !important;
     border: none !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
 }
 
 .brain-header::before {

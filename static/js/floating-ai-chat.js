@@ -3,9 +3,10 @@
  * Global AI assistance accessible from any page
  */
 
-let aiChatOpen = false;
-let aiMessageHistory = [];
-let aiIsProcessing = false;
+// Prevent variable redeclaration errors
+window.aiChatOpen = window.aiChatOpen || false;
+window.aiMessageHistory = window.aiMessageHistory || [];
+window.aiIsProcessing = window.aiIsProcessing || false;
 
 function initializeFloatingAIChat() {
     // Remove any existing chat elements first
@@ -100,7 +101,7 @@ function toggleAIChat() {
     const chatWindow = document.getElementById('ai-chat-window');
     const toggleIcon = document.getElementById('chat-toggle-icon');
     
-    if (aiChatOpen) {
+    if (window.aiChatOpen) {
         closeAIChat();
     } else {
         openAIChat();
@@ -113,7 +114,7 @@ function openAIChat() {
     
     chatWindow.classList.add('open');
     toggleIcon.textContent = 'close';
-    aiChatOpen = true;
+    window.aiChatOpen = true;
     
     // Focus on input
     setTimeout(() => {
@@ -128,7 +129,7 @@ function closeAIChat() {
     
     chatWindow.classList.remove('open');
     toggleIcon.textContent = 'auto_awesome';
-    aiChatOpen = false;
+    window.aiChatOpen = false;
 }
 
 function sendQuickQuery(query) {
