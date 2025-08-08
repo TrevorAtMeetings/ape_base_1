@@ -342,16 +342,24 @@ class CatalogPump:
             head_in_range = head_min * 0.8 <= head_m <= head_max * 1.2
 
             if flow_in_range and head_in_range:
-                # Calculate efficiency at duty point
+                # Calculate efficiency at duty point using adaptive interpolation
                 try:
+                    # Adaptive interpolation based on available data points
+                    if len(flows) >= 4:
+                        interpolation_kind = 'cubic'  # Best for dense data
+                    elif len(flows) == 3:
+                        interpolation_kind = 'quadratic'  # Perfect for parabolic curves
+                    else:  # 2 points
+                        interpolation_kind = 'linear'  # Fallback for minimal data
+                        
                     head_interp = interpolate.interp1d(flows,
                                                        heads,
-                                                       kind='linear',
+                                                       kind=interpolation_kind,
                                                        bounds_error=False,
                                                        fill_value=0)
                     eff_interp = interpolate.interp1d(
                         flows, [p['efficiency_pct'] for p in points],
-                        kind='linear',
+                        kind=interpolation_kind,
                         bounds_error=False,
                                                       fill_value=0)
 
@@ -798,16 +806,23 @@ class CatalogPump:
         effs = [p['efficiency_pct'] for p in points]
 
         try:
+            # Adaptive interpolation based on available data points for better curve representation
+            if len(flows) >= 4:
+                interpolation_kind = 'cubic'  # Best for dense data, captures curve shape
+            elif len(flows) == 3:
+                interpolation_kind = 'quadratic'  # Perfect for parabolic curves
+            else:  # 2 points
+                interpolation_kind = 'linear'  # Fallback for minimal data
+            
             # Allow extrapolation for manufacturer data ranges
-            # Use numpy for bounds_error=False to handle extrapolation
             head_interp = interpolate.interp1d(flows,
                                                heads,
-                                               kind='linear',
+                                               kind=interpolation_kind,
                                                bounds_error=False,
                                                fill_value='extrapolate')  # Allow extrapolation
             eff_interp = interpolate.interp1d(flows,
                                               effs,
-                                              kind='linear',
+                                              kind=interpolation_kind,
                                               bounds_error=False,
                                               fill_value='extrapolate')  # Allow extrapolation
 
