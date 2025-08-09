@@ -194,10 +194,19 @@ class SelectionIntelligence:
                 # Calculate QBP (% of BEP flow)
                 qbp = (flow / bep_flow) * 100
                 
-                # Check QBP gates
-                if qbp < self.qbp_min_percent or qbp > self.qbp_max_percent:
+                # NEW: Add operating zone classification
+                operating_zone = 'disqualified'
+                if 70 <= qbp <= 120:
+                    operating_zone = 'preferred'  # Best reliability and efficiency zone
+                elif 60 <= qbp < 70 or 120 < qbp <= 130:
+                    operating_zone = 'allowable'  # Acceptable but not optimal zone
+                
+                evaluation['operating_zone'] = operating_zone
+                
+                # Check QBP gates - disqualify anything outside 60-130%
+                if operating_zone == 'disqualified':
                     evaluation['feasible'] = False
-                    evaluation['exclusion_reasons'].append(f'QBP {qbp:.0f}% outside range')
+                    evaluation['exclusion_reasons'].append(f'QBP {qbp:.0f}% outside allowable range')
                     return evaluation
                 
                 # BEP proximity score (Legacy v6.0 tiered scoring - 45 points max)

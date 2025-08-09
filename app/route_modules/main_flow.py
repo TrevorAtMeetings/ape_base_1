@@ -259,9 +259,19 @@ def pump_options():
                 else:
                     return str(obj)  # Convert everything else to string
             
+            # NEW: Group results into operating zones for tiered presentation
+            preferred_pumps = [p for p in pump_selections if p.get('operating_zone') == 'preferred']
+            allowable_pumps = [p for p in pump_selections if p.get('operating_zone') == 'allowable']
+            
+            logger.info(f"Tiered results: {len(preferred_pumps)} preferred, {len(allowable_pumps)} allowable pumps")
+            
             # CRITICAL FIX: Use optimized session storage from session_manager
             from ..session_manager import store_pumps_optimized
             store_pumps_optimized(pump_selections)
+            
+            # Store tiered results for enhanced UI
+            safe_session_set('preferred_pumps', preferred_pumps)
+            safe_session_set('allowable_pumps', allowable_pumps)
             
             # Store minimal exclusion data for transparency
             if exclusion_data:
@@ -269,7 +279,9 @@ def pump_options():
                     'total_evaluated': exclusion_data.get('total_evaluated', 0),
                     'feasible_count': exclusion_data.get('feasible_count', len(pump_selections)),
                     'excluded_count': exclusion_data.get('excluded_count', 0),
-                    'suitable_pumps_count': len(pump_selections)
+                    'suitable_pumps_count': len(pump_selections),
+                    'preferred_count': len(preferred_pumps),
+                    'allowable_count': len(allowable_pumps)
                 })
             
             # Data flow fixed: Use pump_selections directly instead of creating pump_evaluations
@@ -294,7 +306,9 @@ def pump_options():
             'fluid_type': request.args.get('liquid_type', 'Water')
         })
         
-        # Get pump selections from session (already stored by store_pumps_optimized above)
+        # Get tiered results from session
+        preferred_pumps = safe_session_get('preferred_pumps', [])
+        allowable_pumps = safe_session_get('allowable_pumps', [])
         stored_pumps = safe_session_get('suitable_pumps', pump_selections)
 
         # Clean breadcrumbs for pump options page
@@ -303,12 +317,14 @@ def pump_options():
             {'label': 'Results', 'url': '#', 'icon': 'view_list'}
         ]
         
-        # Render pump options page showing all suitable pumps
-        logger.info(f"Successfully found {len(stored_pumps)} suitable pumps, rendering pump_options.html")
+        # Render pump options page with tiered results
+        logger.info(f"Successfully found {len(preferred_pumps)} preferred + {len(allowable_pumps)} allowable pumps, rendering tiered results")
         return render_template(
             'pump_options.html',
             breadcrumbs=breadcrumbs,
-            pump_selections=stored_pumps,  # Use optimized session data
+            pump_selections=stored_pumps,  # Legacy compatibility
+            preferred_pumps=preferred_pumps,  # NEW: Tier 1 - Best Bets
+            allowable_pumps=allowable_pumps,  # NEW: Tier 2 - Viable Alternatives
             site_requirements={
                 'flow_m3hr': flow,
                 'head_m': head,
