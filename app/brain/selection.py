@@ -207,6 +207,9 @@ class SelectionIntelligence:
                 evaluation['score_components']['efficiency'] = eff_score
                 evaluation['efficiency_pct'] = efficiency
                 
+                # CRITICAL FIX: Store actual head delivered by pump
+                evaluation['head_m'] = performance.get('head_m', head)
+                
                 # Head margin score (Legacy v6.0 - 20 points max)
                 head_margin_m = performance.get('head_margin_m', 0)
                 head_margin_pct = (head_margin_m / head) * 100 if head > 0 else 0
@@ -232,6 +235,9 @@ class SelectionIntelligence:
                 
                 # Power consumption (for tie-breaking)
                 evaluation['power_kw'] = performance.get('power_kw', 0)
+                
+                # Store complete performance data for UI display
+                evaluation['npshr_m'] = performance.get('npshr_m', 0)
                 
                 # Impeller trim penalty (Legacy v6.0)
                 impeller_diameter = performance.get('impeller_diameter_mm')
