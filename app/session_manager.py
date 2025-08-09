@@ -182,10 +182,14 @@ def flatten_pump_data(pump_dict: Dict[str, Any]) -> Dict[str, Any]:
     flattened['qbep_percentage'] = bep_analysis.get('qbep_percentage', 100)
     flattened['operating_zone'] = bep_analysis.get('operating_zone', 'Unknown')
     
-    # Sizing already handled in performance section
-    # Just get trim percent if available
-    sizing = performance.get('sizing_info', {}) if performance else {}
-    flattened['trim_percent'] = sizing.get('trim_percent', 100)
+    # CRITICAL FIX: Brain system puts trim_percent at top level, not in nested sizing_info
+    # Check direct field first (Brain system), then nested structure (legacy)
+    if 'trim_percent' in pump_dict:
+        flattened['trim_percent'] = pump_dict.get('trim_percent', 100)
+    else:
+        # Legacy: look in performance.sizing_info
+        sizing = performance.get('sizing_info', {}) if performance else {}
+        flattened['trim_percent'] = sizing.get('trim_percent', 100)
     
     # Flatten pump info to top level - handle CatalogPump object or dict
     pump_info = pump_dict.get('pump')
