@@ -88,17 +88,22 @@ def pump_report(pump_code):
             logger.warning(f"Could not generate alternatives via Brain: {e}")
             alternatives = []
     
+    # Get comparison list from session for comparison features
+    comparison_list = safe_session_get('comparison_list', [])
+    
     # Template data structure
     template_data = {
         'selected_pump': selected_pump,
-        'site_requirements': {'flow_m3hr': flow, 'head_m': head},
+        'site_requirements': {'flow_m3hr': flow, 'head_m': head, 'pump_type': request.args.get('pump_type', 'GENERAL')},
         'alternatives': alternatives,
+        'alternative_pumps': alternatives,  # Both names for template compatibility
+        'comparison_list': comparison_list,
         'current_date': datetime.now().strftime("%d %B %Y"),
         'current_view': 'presentation',
         'show_view_toggle': True
     }
     
-    return render_template('pump_report.html', breadcrumbs=breadcrumbs, **template_data)
+    return render_template('professional_pump_report.html', breadcrumbs=breadcrumbs, **template_data)
 
 # REMOVED: Redundant route - professional_pump_report was identical to pump_report
 # Users should use /pump_report directly for consistency
@@ -219,13 +224,15 @@ def pdf_report(pump_code):
         return redirect(url_for('main_flow.index'))
     
     try:
-        from ..pdf_generator import generate_pump_pdf
+        # TODO: Implement PDF generation - currently disabled
+        # from ..pdf_generator import generate_pump_pdf
         
-        # Generate PDF with Brain data
-        pdf_buffer = generate_pump_pdf(
-            pump_data=evaluation_result,
-            site_requirements={'flow_m3hr': flow, 'head_m': head}
-        )
+        # Generate PDF with Brain data - currently disabled
+        # pdf_buffer = generate_pump_pdf(
+        #     pump_data=evaluation_result,
+        #     site_requirements={'flow_m3hr': flow, 'head_m': head}
+        # )
+        raise NotImplementedError("PDF generation temporarily disabled")
         
         # Create response
         response = make_response(pdf_buffer.getvalue())
