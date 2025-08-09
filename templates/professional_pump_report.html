@@ -586,7 +586,7 @@
                         <div class="col s6 m2">
                             <div class="metric-label">NPSHr</div>
                             <div class="metric-value" style="font-size: 1.2rem;">
-                                {% if selected_pump.get('npshr_m') %}
+                                {% if selected_pump.get('npshr_m') is not none %}
                                     {{ selected_pump.get('npshr_m', 0)|round(1) }}
                                     <span class="metric-unit">m</span>
                                 {% else %}
@@ -608,7 +608,9 @@
                         <div class="col s6 m2">
                             <div class="metric-label">QBEP</div>
                             <div class="metric-value" style="font-size: 1.2rem;">
-                                {% if selected_pump.get('qbep_percentage') %}
+                                {% if selected_pump.get('qbp_percent') %}
+                                    {{ selected_pump.get('qbp_percent', 0)|round(0)|int }}%
+                                {% elif selected_pump.get('qbep_percentage') %}
                                     {{ selected_pump.get('qbep_percentage', 0)|round(0)|int }}%
                                 {% else %}
                                     --
@@ -649,7 +651,7 @@
                         <tr>
                             <td>Operating Zone</td>
                             <td>
-                                {% set qbep = selected_pump.get('qbep_percentage', 100) %}
+                                {% set qbep = selected_pump.get('qbp_percent', selected_pump.get('qbep_percentage', 100)) %}
                                 {% if 70 <= qbep <= 120 %}
                                     Preferred (70-120% QBEP)
                                 {% elif 60 <= qbep <= 130 %}
@@ -667,7 +669,7 @@
                     
                     <!-- BEP Range Indicator -->
                     <div class="bep-indicator">
-                        {% set qbep = selected_pump.get('qbep_percentage', 100) %}
+                        {% set qbep = selected_pump.get('qbp_percent', selected_pump.get('qbep_percentage', 100)) %}
                         {% set left_pos = ((qbep - 60) / 70 * 100)|round(1) %}
                         {% if left_pos < 0 %}{% set left_pos = 0 %}{% endif %}
                         {% if left_pos > 90 %}{% set left_pos = 90 %}{% endif %}
