@@ -1,22 +1,8 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI PDF Extraction - APE Pumps</title>
-    
-    <!-- Favicon -->
-    <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚙️</text></svg>">
-    
-    <!-- Materialize CSS -->
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet">
+{% extends "base.html" %}
 
-    <!-- Custom CSS -->
-    <link href="{{ url_for('static', filename='css/style.css') }}?v={{ range(1000, 9999) | random }}" rel="stylesheet">
-    <link href="{{ url_for('static', filename='css/floating-ai-chat.css') }}?v={{ range(1000, 9999) | random }}" rel="stylesheet">
-    <link href="{{ url_for('static', filename='css/icon-fixes.css') }}?v={{ range(1000, 9999) | random }}" rel="stylesheet">
+{% block title %}AI PDF Extraction - APE Pumps{% endblock %}
 
+{% block head %}
     <!-- MathJax for LaTeX rendering -->
     <script>
         window.MathJax = {
@@ -39,8 +25,7 @@
     </script>
     <script src="https://cdn.jsdelivr.net/npm/polyfill@3.0.0/dist/polyfill.min.js"></script>
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-</head>
-<body>
+
 <style>
     .compact-card {
         margin: 10px 0;
@@ -144,8 +129,9 @@
         }
     }
 </style>
+{% endblock %}
 
-<!-- Navigation -->
+{% block content %}
 {% set breadcrumbs = [
     {'label': 'Home', 'url': '/', 'icon': 'home'},
     {'label': 'AI Data Extract'}
@@ -1249,5 +1235,4 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 </script>
 
-</body>
-</html>
+{% endblock %}
