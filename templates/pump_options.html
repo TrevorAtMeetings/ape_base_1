@@ -342,11 +342,10 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const sortButtons = document.querySelectorAll('.sort-option');
-    const pumpList = document.getElementById('pump-list');
-    const sortStatus = document.getElementById('sort-status');
+    const preferredList = document.getElementById('preferred-pump-list');
+    const allowableList = document.getElementById('allowable-pump-list');
     
-    // Store original pump data
-    const originalPumps = Array.from(pumpList.children);
+    console.log('Pump sorting initialized');
     
     // Sort descriptions for display
     const sortDescriptions = {
@@ -369,48 +368,15 @@ document.addEventListener('DOMContentLoaded', function() {
             const sortBy = this.dataset.sort;
             const sortOrder = this.dataset.order;
             
-            // Update sort status
-            const sortDesc = sortDescriptions[sortBy] || sortBy;
-            const orderDesc = sortOrder === 'desc' ? '(High to Low)' : '(Low to High)';
-            sortStatus.textContent = `Recommended Pumps (Sorted by ${sortDesc} ${orderDesc})`;
+            console.log(`Sorting by ${sortBy} in ${sortOrder} order`);
             
-            // Sort the pumps
-            const pumps = Array.from(pumpList.children);
-            
-            pumps.sort((a, b) => {
-                let aVal = getCompareValue(a, sortBy);
-                let bVal = getCompareValue(b, sortBy);
-                
-                // Handle different data types
-                if (typeof aVal === 'string') {
-                    aVal = aVal.toLowerCase();
-                    bVal = bVal.toLowerCase();
-                }
-                
-                let comparison = 0;
-                if (aVal < bVal) comparison = -1;
-                else if (aVal > bVal) comparison = 1;
-                
-                // Apply sort order
-                return sortOrder === 'desc' ? -comparison : comparison;
-            });
-            
-            // Clear and repopulate the list
-            pumpList.innerHTML = '';
-            pumps.forEach((pump, index) => {
-                // Update rank numbers
-                const rankElement = pump.querySelector('.pump-rank');
-                if (rankElement) {
-                    rankElement.textContent = index + 1;
-                    // Update rank styling for top 3
-                    if (index < 3) {
-                        rankElement.classList.add('top');
-                    } else {
-                        rankElement.classList.remove('top');
-                    }
-                }
-                pumpList.appendChild(pump);
-            });
+            // Sort both lists if they exist
+            if (preferredList) {
+                sortPumpList(preferredList, sortBy, sortOrder);
+            }
+            if (allowableList) {
+                sortPumpList(allowableList, sortBy, sortOrder);
+            }
             
             // Update button sort direction indicator
             const direction = sortOrder === 'desc' ? '↓' : '↑';
@@ -418,8 +384,60 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
+    function sortPumpList(listElement, sortBy, sortOrder) {
+        const pumps = Array.from(listElement.children);
+        
+        if (pumps.length === 0) {
+            console.log('No pumps found to sort');
+            return;
+        }
+        
+        pumps.sort((a, b) => {
+            let aVal = getCompareValue(a, sortBy);
+            let bVal = getCompareValue(b, sortBy);
+            
+            // Handle different data types
+            if (typeof aVal === 'string') {
+                aVal = aVal.toLowerCase();
+                bVal = bVal.toLowerCase();
+            }
+            
+            let comparison = 0;
+            if (aVal < bVal) comparison = -1;
+            else if (aVal > bVal) comparison = 1;
+            
+            // Apply sort order
+            return sortOrder === 'desc' ? -comparison : comparison;
+        });
+        
+        // Clear and repopulate the list
+        listElement.innerHTML = '';
+        pumps.forEach((pump, index) => {
+            // Update rank numbers - using correct selector
+            const rankElement = pump.querySelector('.pump-rank-circle');
+            if (rankElement) {
+                rankElement.textContent = index + 1;
+            }
+            listElement.appendChild(pump);
+        });
+        
+        console.log(`Sorted ${pumps.length} pumps by ${sortBy}`);
+    }
+    
     function getCompareValue(element, sortBy) {
-        const dataKey = 'data-' + sortBy.replace('_', '-');
+        // Map sort keys to actual data attributes 
+        const dataAttributeMap = {
+            'suitability_score': 'data-total-score',
+            'efficiency_pct': 'data-efficiency-pct',
+            'power_kw': 'data-power-kw',
+            'pump_type': 'data-pump-type',
+            'qbep_percentage': 'data-qbp-percent',
+            'manufacturer': 'data-manufacturer',
+            'npshr_m': 'data-npshr-m',
+            'pump_code': 'data-pump-code'
+        };
+        
+        const dataKey = dataAttributeMap[sortBy] || 'data-' + sortBy;
         let value = element.getAttribute(dataKey);
         
         // Convert to appropriate type

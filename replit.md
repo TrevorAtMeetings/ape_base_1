@@ -23,6 +23,8 @@ The system prioritizes authentic manufacturer specifications for pump performanc
 - **QBEP calculation restored** - pump selection scoring now works correctly with authentic BEP data from specifications table
 - Power data handling improved with proper hydraulic calculations from authentic manufacturer data
 - NPSH interpolation corrected to use sorted data for accurate results
+- **Chart API JSON serialization fixed** - robust handling of NumPy booleans from Brain calculations prevents 500 errors
+- **Pump sorting functionality restored** - fixed JavaScript selectors and data attribute mapping for proper result sorting
 - All Brain system components now fully operational with complete performance calculations and accurate scoring
 
 ### Enhanced Performance Testing
