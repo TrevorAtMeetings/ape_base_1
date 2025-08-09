@@ -28,8 +28,8 @@ def pump_comparison():
         ]
         
         # Get pump identifiers from session (simplified - only one source)
-        comparison_list = safe_session_get('comparison_list', [])
-        site_requirements = safe_session_get('site_requirements', {})
+        comparison_list = session.get('comparison_list', [])
+        site_requirements = session.get('site_requirements', {})
         
         logger.info(f"Comparison route - Session comparison_list: {len(comparison_list) if comparison_list else 0}")
         logger.info(f"Comparison route - Session site_requirements: {site_requirements}")

@@ -6,7 +6,6 @@ API endpoints for pump comparison functionality using Brain system as single sou
 
 import logging
 from flask import Blueprint, request, jsonify, session
-from app.session_manager import safe_session_get, safe_session_set
 from app.pump_brain import get_pump_brain
 
 logger = logging.getLogger(__name__)
@@ -26,7 +25,7 @@ def add_to_comparison():
             return jsonify({'success': False, 'message': 'Missing required parameters'})
         
         # Get current comparison list from session
-        comparison_list = safe_session_get('comparison_list', [])
+        comparison_list = session.get('comparison_list', [])
         
         # Check if pump already in list
         existing_pump = next((p for p in comparison_list if p['pump_code'] == pump_code), None)
@@ -49,7 +48,8 @@ def add_to_comparison():
             comparison_list = comparison_list[-10:]
         
         # Save minimal data to session - Brain intelligence on demand
-        safe_session_set('comparison_list', comparison_list)
+        session['comparison_list'] = comparison_list
+        session.permanent = True  # Make session persistent
         
         # Also update site requirements for comparison page
         site_requirements = {
@@ -58,14 +58,17 @@ def add_to_comparison():
             'pump_type': pump_type,
             'application': 'water'
         }
-        safe_session_set('site_requirements', site_requirements)
+        session['site_requirements'] = site_requirements
         
-        logger.info(f"Added {pump_code} to comparison list. Total: {len(comparison_list)}")
+        # Debug: Verify session save immediately
+        saved_list = session.get('comparison_list', [])
+        logger.info(f"Added {pump_code} to comparison list. Total: {len(comparison_list)}, Verified in session: {len(saved_list)}")
         
         return jsonify({
             'success': True, 
             'message': f'Added {pump_code} to comparison',
-            'count': len(comparison_list)
+            'count': len(comparison_list),
+            'debug_session_count': len(saved_list)
         })
         
     except Exception as e:
@@ -77,13 +80,17 @@ def get_comparison_list():
     """Get current comparison list with fresh Brain evaluations."""
     try:
         # Get minimal identifiers from session
-        comparison_identifiers = safe_session_get('comparison_list', [])
+        comparison_identifiers = session.get('comparison_list', [])
+        
+        # Debug: Log session access
+        logger.info(f"GET comparison_list - Found {len(comparison_identifiers)} items in session")
         
         if not comparison_identifiers:
             return jsonify({
                 'success': True,
                 'pumps': [],
-                'count': 0
+                'count': 0,
+                'debug_message': 'No items found in session'
             })
         
         # Get fresh Brain evaluations for each pump
@@ -122,7 +129,7 @@ def get_comparison_list():
                 {'pump_code': p['pump_code'], 'flow': p['flow'], 'head': p['head'], 'pump_type': p.get('pump_type', 'GENERAL')}
                 for p in fresh_pump_data
             ]
-            safe_session_set('comparison_list', cleaned_identifiers)
+            session['comparison_list'] = cleaned_identifiers
         
         return jsonify({
             'success': True,
@@ -138,7 +145,7 @@ def get_comparison_list():
 def clear_comparison():
     """Clear comparison list."""
     try:
-        safe_session_set('comparison_list', [])
+        session['comparison_list'] = []
         return jsonify({'success': True, 'message': 'Comparison list cleared'})
     except Exception as e:
         logger.error(f"Error in clear_comparison: {str(e)}")
@@ -154,10 +161,10 @@ def remove_from_comparison():
         if not pump_code:
             return jsonify({'success': False, 'message': 'Missing pump_code'})
         
-        comparison_list = safe_session_get('comparison_list', [])
+        comparison_list = session.get('comparison_list', [])
         comparison_list = [p for p in comparison_list if p['pump_code'] != pump_code]
         
-        safe_session_set('comparison_list', comparison_list)
+        session['comparison_list'] = comparison_list
         
         return jsonify({
             'success': True,
