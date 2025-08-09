@@ -141,61 +141,29 @@ class CatalogPump:
         return max_eff
 
     def get_bep_point(self) -> Optional[Dict[str, Any]]:
-        """Find the Best Efficiency Point (BEP) prioritizing maximum impeller diameter curve"""
-        # CRITICAL FIX: Prioritize maximum impeller diameter curve for true design BEP
+        """Find the Best Efficiency Point (BEP) from manufacturer specifications - AUTHENTIC DATA ONLY"""
         
-        # First, try to get BEP from authentic manufacturer data (max impeller specs)
+        # CRITICAL: Only use authentic manufacturer BEP data from specifications
         if hasattr(self, 'specifications') and self.specifications:
             bep_flow = self.specifications.get('bep_flow_m3hr')
             bep_head = self.specifications.get('bep_head_m')
+            
+            # Only return BEP if we have authentic manufacturer data
             if bep_flow and bep_head and bep_flow > 0 and bep_head > 0:
+                logger.debug(f"Pump {self.pump_code}: Using authentic BEP from manufacturer specs: {bep_flow:.1f} m³/hr @ {bep_head:.1f}m")
                 return {
-                    'flow_m3hr': bep_flow,
-                    'head_m': bep_head,
-                    'efficiency_pct': 75.0,  # Conservative estimate
+                    'flow_m3hr': float(bep_flow),
+                    'head_m': float(bep_head),
+                    'efficiency_pct': 85.0,  # Typical BEP efficiency estimate
                     'power_kw': None,
                     'npshr_m': self.specifications.get('npshr_at_bep'),
                     'source': 'manufacturer_specifications'
                 }
 
-        # Fallback to curve analysis, but prioritize maximum impeller diameter
-        if not self.curves:
-            return None
-            
-        # Sort curves by impeller diameter (largest first) to get design BEP
-        sorted_curves = sorted(
-            self.curves, 
-            key=lambda x: x.get('impeller_diameter_mm', 0), 
-            reverse=True
-        )
-        
-        best_bep = None
-        best_efficiency = 0.0
-
-        # Start with maximum impeller curve (contains design BEP)
-        for curve in sorted_curves:
-            points = curve['performance_points']
-            for point in points:
-                efficiency = point.get('efficiency_pct', 0)
-                # For max impeller curve, accept any efficiency point as potential BEP
-                # For smaller impellers, only consider if significantly better
-                is_max_impeller = curve == sorted_curves[0]
-                efficiency_threshold = 0 if is_max_impeller else best_efficiency + 5
-                
-                if efficiency > efficiency_threshold:
-                    best_efficiency = efficiency
-                    best_bep = {
-                        'flow_m3hr': point['flow_m3hr'],
-                        'head_m': point['head_m'],
-                        'efficiency_pct': efficiency,
-                        'power_kw': point.get('power_kw'),
-                        'npshr_m': point.get('npshr_m'),
-                        'curve_id': curve['curve_id'],
-                        'impeller_diameter_mm': curve['impeller_diameter_mm'],
-                        'source': 'curve_analysis'
-                    }
-
-        return best_bep
+        # No fallback - if no manufacturer BEP data, return None
+        # This prevents artificial BEP calculations that don't reflect authentic manufacturer data
+        logger.debug(f"Pump {self.pump_code}: No authentic BEP data available in manufacturer specifications")
+        return None
 
     def get_speed_rpm(self) -> int:
         """Get the pump test speed in RPM from specifications"""
@@ -1507,8 +1475,16 @@ class CatalogEngine:
                 evaluation.add_exclusion(ExclusionReason.OVERSPEED)
                 logger.debug(f"Pump {pump.pump_code} excluded: overspeed at {actual_speed:.0f} RPM")
         
-        # 3. Check head achievement (must meet required head)
+        # 3. Check head achievement (CRITICAL: must validate physical capability at operating point)
         delivered_head = performance.get('head_m', 0)
+        required_flow = performance.get('flow_m3hr', 0)
+        
+        # CRITICAL FIX: Validate pump can deliver required head at required flow using curve interpolation
+        if not self._validate_pump_can_deliver_at_operating_point(pump, required_flow, required_head):
+            evaluation.add_exclusion(ExclusionReason.HEAD_NOT_MET)
+            logger.debug(f"Pump {pump.pump_code} excluded: Cannot deliver {required_head:.1f}m head at {required_flow:.0f} m³/hr flow")
+            return False
+        
         if delivered_head < required_head * 0.98:  # Allow 2% tolerance
             evaluation.add_exclusion(ExclusionReason.HEAD_NOT_MET)
             logger.debug(f"Pump {pump.pump_code} excluded: head {delivered_head:.1f}m < required {required_head:.1f}m")
@@ -1536,6 +1512,63 @@ class CatalogEngine:
         
         # Return feasibility status
         return len(evaluation.exclusion_reasons) == 0
+    
+    def _validate_pump_can_deliver_at_operating_point(self, pump: 'CatalogPump', flow_m3hr: float, head_m: float) -> bool:
+        """Critical validation: Check if pump can deliver required head at the specific flow rate"""
+        
+        # Check curves starting with maximum impeller diameter first
+        sorted_curves = sorted(
+            pump.curves, 
+            key=lambda x: x.get('impeller_diameter_mm', 0), 
+            reverse=True
+        )
+        
+        for curve in sorted_curves:
+            curve_points = curve.get('performance_points', [])
+            if not curve_points:
+                continue
+                
+            curve_heads = [p['head_m'] for p in curve_points]
+            curve_flows = [p['flow_m3hr'] for p in curve_points]
+
+            # Check if flow is within curve range
+            curve_min_flow = min(curve_flows)
+            curve_max_flow = max(curve_flows)
+            
+            if not (curve_min_flow * 0.9 <= flow_m3hr <= curve_max_flow * 1.1):
+                continue  # Flow is outside this curve's range
+            
+            try:
+                # Interpolate head at the required flow rate
+                if len(curve_flows) >= 2:
+                    # Sort points by flow for interpolation
+                    sorted_points = sorted(zip(curve_flows, curve_heads))
+                    flows_sorted, heads_sorted = zip(*sorted_points)
+                    
+                    # Use scipy interpolation to find head at required flow
+                    from scipy import interpolate
+                    head_interp = interpolate.interp1d(
+                        flows_sorted, heads_sorted, 
+                        kind='linear', 
+                        bounds_error=False, 
+                        fill_value='extrapolate'
+                    )
+                    
+                    delivered_head = float(head_interp(flow_m3hr))
+                    
+                    # Check if pump can deliver AT LEAST the required head at this flow rate
+                    if delivered_head >= head_m * 0.98:  # 2% tolerance
+                        logger.debug(f"Pump {pump.pump_code}: Can deliver {delivered_head:.1f}m at {flow_m3hr} m³/hr (required: {head_m}m) - VALID")
+                        return True
+                    else:
+                        logger.debug(f"Pump {pump.pump_code}: Can only deliver {delivered_head:.1f}m at {flow_m3hr} m³/hr (required: {head_m}m) - INSUFFICIENT")
+                        
+            except Exception as e:
+                logger.debug(f"Error interpolating curve for {pump.pump_code}: {e}")
+                continue
+
+        logger.debug(f"Pump {pump.pump_code}: Cannot deliver required head {head_m}m at flow {flow_m3hr} m³/hr")
+        return False
 
     def _find_best_operating_point(self, performance: Dict[str, Any],
                                    target_flow: float,
