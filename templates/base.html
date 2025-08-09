@@ -51,9 +51,8 @@
     <!-- This prevents duplicate navigation conflicts -->
     {% include 'includes/navigation.html' %}
 
-    <!-- Mobile Navigation now handled by includes/navigation.html -->
-
-
+    <!-- Breadcrumb Navigation -->
+    {% include 'includes/breadcrumbs.html' %}
 
     <!-- Flash Messages -->
     {% with messages = get_flashed_messages(with_categories=true) %}

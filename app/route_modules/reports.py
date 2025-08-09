@@ -34,6 +34,12 @@ def pump_report(pump_code):
     """Render pump report with presentation view."""
     pump_code = unquote(pump_code)
     
+    # Add breadcrumbs for navigation
+    breadcrumbs = [
+        {'text': 'Home', 'url': url_for('main_flow.index'), 'icon': 'home'},
+        {'text': 'Pump Report', 'url': '', 'icon': 'description'}
+    ]
+    
     # Get definitive duty point
     site_reqs = safe_session_get('site_requirements', {})
     flow = request.args.get('flow', type=float) or site_reqs.get('flow_m3hr')
@@ -91,7 +97,7 @@ def pump_report(pump_code):
         'show_view_toggle': True
     }
     
-    return render_template('pump_report.html', **template_data)
+    return render_template('pump_report.html', breadcrumbs=breadcrumbs, **template_data)
 
 # REMOVED: Redundant route - professional_pump_report was identical to pump_report
 # Users should use /pump_report directly for consistency
@@ -101,6 +107,12 @@ def engineering_report(pump_code):
     """BRAIN-ONLY Engineering Report - Single Source of Truth"""
     pump_code = unquote(pump_code)
     logger.info(f"Rendering engineering report for pump: {pump_code}")
+    
+    # Add breadcrumbs for engineering report
+    breadcrumbs = [
+        {'text': 'Home', 'url': url_for('main_flow.index'), 'icon': 'home'},
+        {'text': 'Engineering Report', 'url': '', 'icon': 'engineering'}
+    ]
     
     # Get definitive duty point from URL parameters or session
     site_reqs = safe_session_get('site_requirements', {})

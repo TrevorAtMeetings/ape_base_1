@@ -21,6 +21,11 @@ comparison_bp = Blueprint('comparison', __name__)
 def pump_comparison():
     """Pump comparison interface with fallback to URL parameters if session is empty."""
     try:
+        # Add breadcrumbs for navigation
+        breadcrumbs = [
+            {'text': 'Home', 'url': url_for('main_flow.index'), 'icon': 'home'},
+            {'text': 'Pump Comparison', 'url': '', 'icon': 'compare_arrows'}
+        ]
         # Try to get pump selections from session (both old and new formats)
         # CRITICAL FIX: Check both session keys for pump data
         pump_selections = safe_session_get('suitable_pumps', [])  # New optimized storage key
@@ -90,7 +95,7 @@ def pump_comparison():
                 brain = get_pump_brain()
                 if brain:
                     # Get fresh Brain evaluations - NO FALLBACKS
-                    top_selections = brain.find_best_pump(flow, head, constraints={'max_results': 10, 'pump_type': pump_type})
+                    top_selections = brain.find_best_pumps(flow, head, constraints={'max_results': 10, 'pump_type': pump_type})
                     pump_selections = []
                     for selection in top_selections:
                         # Brain returns dict format, not objects
@@ -270,14 +275,16 @@ def pump_comparison():
                 safe_flash('Please add pumps to comparison first by clicking "Add to Compare" on pump report pages.', 'info')
                 return render_template('pump_comparison.html', 
                                      pump_comparisons=[], 
-                                     site_requirements={'flow_m3hr': flow, 'head_m': head, 'pump_type': pump_type})
+                                     site_requirements={'flow_m3hr': flow, 'head_m': head, 'pump_type': pump_type},
+                                     breadcrumbs=breadcrumbs)
             else:
                 safe_flash('No pump selections available for comparison. Please run pump selection first.', 'info')
                 return redirect(url_for('main_flow.index'))
 
         return render_template('pump_comparison.html',
                              pump_comparisons=pump_selections,
-                             site_requirements=site_requirements)
+                             site_requirements=site_requirements,
+                             breadcrumbs=breadcrumbs)
     except Exception as e:
         logger.error(f"Error in pump_comparison: {str(e)}")
         safe_flash('Error loading comparison data.', 'error')

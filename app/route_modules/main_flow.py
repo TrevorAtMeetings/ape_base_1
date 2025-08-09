@@ -18,13 +18,12 @@ main_flow_bp = Blueprint('main_flow', __name__)
 
 @main_flow_bp.route('/')
 def index():
-    # Add breadcrumbs for navigation
-    breadcrumbs = [
-        {'label': 'Home', 'url': '/'}
-    ]
     """Main selection page."""
     try:
         logger.info("Index route accessed.")
+        breadcrumbs = [
+            {'text': 'Pump Selection', 'url': '', 'icon': 'settings'}
+        ]
         return render_template('input_form.html', breadcrumbs=breadcrumbs)
     except Exception as e:
         logger.error(f"Error in index route: {str(e)}")
@@ -33,23 +32,39 @@ def index():
 @main_flow_bp.route('/about')
 def about():
     """About page."""
-    return render_template('about.html')
+    breadcrumbs = [
+        {'text': 'Home', 'url': url_for('main_flow.index'), 'icon': 'home'},
+        {'text': 'About', 'url': '', 'icon': 'info'}
+    ]
+    return render_template('about.html', breadcrumbs=breadcrumbs)
 
 @main_flow_bp.route('/guide')
 def guide():
     """Guide page."""
     logger.info("Guide page accessed.")
-    return render_template('guide.html')
+    breadcrumbs = [
+        {'text': 'Home', 'url': url_for('main_flow.index'), 'icon': 'home'},
+        {'text': 'User Guide', 'url': '', 'icon': 'help'}
+    ]
+    return render_template('guide.html', breadcrumbs=breadcrumbs)
 
 @main_flow_bp.route('/help')
 def help():
     """Help page."""
-    return render_template('help.html')
+    breadcrumbs = [
+        {'text': 'Home', 'url': url_for('main_flow.index'), 'icon': 'home'},
+        {'text': 'Help', 'url': '', 'icon': 'help_outline'}
+    ]
+    return render_template('help.html', breadcrumbs=breadcrumbs)
 
 @main_flow_bp.route('/help-features')
 def help_features_page():
     """Help features page."""
-    return render_template('help_brochure.html')
+    breadcrumbs = [
+        {'text': 'Home', 'url': url_for('main_flow.index'), 'icon': 'home'},
+        {'text': 'Features', 'url': '', 'icon': 'featured_play_list'}
+    ]
+    return render_template('help_brochure.html', breadcrumbs=breadcrumbs)
 
 
 
@@ -286,8 +301,8 @@ def pump_options():
 
         # Add breadcrumbs for pump options page
         breadcrumbs = [
-            {'label': 'Home', 'url': url_for('main_flow.index')},
-            {'label': f'Results - {len(stored_pumps)} Pumps Found', 'url': '#'}
+            {'text': 'Home', 'url': url_for('main_flow.index'), 'icon': 'home'},
+            {'text': f'Results - {len(stored_pumps)} Pumps Found', 'url': '', 'icon': 'view_list'}
         ]
         
         # Render pump options page showing all suitable pumps

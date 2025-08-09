@@ -1,0 +1,28 @@
+<!-- Breadcrumb Navigation Component -->
+{% if breadcrumbs %}
+<div class="breadcrumb-container" style="background-color: #f5f5f5; padding: 10px 0; border-bottom: 1px solid #e0e0e0;">
+    <div class="container">
+        <nav class="breadcrumb-nav">
+            <div class="nav-wrapper" style="background: transparent; box-shadow: none;">
+                {% for crumb in breadcrumbs %}
+                    {% if not loop.last %}
+                        <a href="{{ crumb.url }}" class="breadcrumb" style="color: var(--md-primary);">
+                            {% if crumb.icon %}
+                                <i class="material-icons left">{{ crumb.icon }}</i>
+                            {% endif %}
+                            {{ crumb.text }}
+                        </a>
+                    {% else %}
+                        <span class="breadcrumb" style="color: #666;">
+                            {% if crumb.icon %}
+                                <i class="material-icons left">{{ crumb.icon }}</i>
+                            {% endif %}
+                            {{ crumb.text }}
+                        </span>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </nav>
+    </div>
+</div>
+{% endif %}
