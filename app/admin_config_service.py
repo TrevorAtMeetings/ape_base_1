@@ -390,7 +390,7 @@ class AdminConfigService:
             with conn.cursor(cursor_factory=RealDictCursor) as cursor:
                 cursor.execute("""
                     SELECT * FROM admin_config.engineering_constants
-                    ORDER BY category, name
+                    ORDER BY name
                 """)
                 
                 return cursor.fetchall()
