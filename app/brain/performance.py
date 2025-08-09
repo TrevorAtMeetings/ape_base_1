@@ -30,10 +30,9 @@ class PerformanceAnalyzer:
         self.max_trim_percent = 100.0
     
     def calculate_at_point(self, pump_data: Dict[str, Any], flow: float, 
-                          head: float, impeller_trim: Optional[float] = None) -> Dict[str, Any]:
+                          head: float, impeller_trim: Optional[float] = None) -> Optional[Dict[str, Any]]:
         """
-        Calculate pump performance at operating point.
-        Consolidates logic from impeller_scaling.py
+        Calculate pump performance at operating point using working catalog engine logic.
         
         Args:
             pump_data: Pump data with curves
@@ -47,50 +46,130 @@ class PerformanceAnalyzer:
         try:
             curves = pump_data.get('curves', [])
             if not curves:
-                logger.warning(f"No curves for pump {pump_data.get('pump_code')}")
                 return None
             
-            # Find best curve for operating point
-            best_curve = None
-            best_score = float('inf')
+            pump_code = pump_data.get('pump_code')
+            
+            # Find best curve that can deliver required head at flow
+            best_performance = None
+            best_trim = 200  # Start with impossible trim to find best
             
             for curve in curves:
-                if not curve.get('performance_points'):
+                curve_points = curve.get('performance_points', [])
+                if not curve_points or len(curve_points) < 2:
                     continue
                 
-                # Get curve impeller diameter
-                curve_diameter = curve.get('impeller_diameter_mm', 0)
-                if curve_diameter <= 0:
+                # Extract curve data, handling None values
+                flows = [p.get('flow_m3hr', 0) for p in curve_points if p.get('flow_m3hr') is not None]
+                heads = [p.get('head_m', 0) for p in curve_points if p.get('head_m') is not None]
+                effs = [p.get('efficiency_pct', 0) for p in curve_points if p.get('efficiency_pct') is not None]
+                
+                # Handle None power values - estimate if needed
+                powers = []
+                for p in curve_points:
+                    power = p.get('power_kw')
+                    if power is not None:
+                        powers.append(power)
+                    else:
+                        # Estimate power from head, flow, efficiency if efficiency exists
+                        flow_val = p.get('flow_m3hr', 0)
+                        head_val = p.get('head_m', 0) 
+                        eff_val = p.get('efficiency_pct', 60) or 60  # Default 60% if None
+                        if flow_val > 0 and head_val > 0 and eff_val > 0:
+                            # P = (Q * H * ρ * g) / (3600 * η) where ρ=1000 kg/m³, g=9.81 m/s²
+                            power_estimate = (flow_val * head_val * 1000 * 9.81) / (3600 * (eff_val/100))
+                            powers.append(power_estimate / 1000)  # Convert W to kW
+                        else:
+                            powers.append(10)  # Fallback estimate
+                
+                # Debug: Check if we have valid data
+                if pump_code == "150-400 2F":  # Debug specific pump
+                    logger.debug(f"Debug {pump_code}: flows={flows[:3]}...")
+                    logger.debug(f"Debug {pump_code}: heads={heads[:3]}...")
+                    logger.debug(f"Debug {pump_code}: effs={effs[:3]}...")
+                    logger.debug(f"Debug {pump_code}: powers={powers[:3]}...")
+                
+                # Check if flow is within curve range
+                if not flows or not heads:
+                    continue
+                    
+                min_flow, max_flow = min(flows), max(flows)
+                if not (min_flow * 0.9 <= flow <= max_flow * 1.1):
+                    if pump_code == "150-400 2F":  # Debug specific pump
+                        logger.debug(f"Debug {pump_code}: Flow {flow} outside range {min_flow}-{max_flow}")
                     continue
                 
-                # Calculate required diameter for this curve
-                result = self._calculate_required_diameter(curve, flow, head)
-                if result and result['achievable']:
-                    # Score based on how close to full impeller
-                    score = abs(100 - result['trim_percent'])
-                    if score < best_score:
-                        best_score = score
-                        best_curve = result
+                try:
+                    # Interpolate values at operating flow
+                    sorted_data = sorted(zip(flows, heads, effs, powers))
+                    flows_sorted, heads_sorted, effs_sorted, powers_sorted = zip(*sorted_data)
+                    
+                    head_interp = interpolate.interp1d(flows_sorted, heads_sorted, 
+                                                     kind='linear', bounds_error=False)
+                    eff_interp = interpolate.interp1d(flows_sorted, effs_sorted, 
+                                                    kind='linear', bounds_error=False)
+                    power_interp = interpolate.interp1d(flows_sorted, powers_sorted, 
+                                                      kind='linear', bounds_error=False)
+                    
+                    delivered_head = float(head_interp(flow))
+                    efficiency = float(eff_interp(flow))
+                    power = float(power_interp(flow))
+                    
+                    # Check if this curve can deliver required head
+                    if delivered_head < head * 0.98:  # 2% tolerance
+                        continue
+                    
+                    # Calculate impeller trim needed
+                    curve_diameter = curve.get('impeller_diameter_mm', 0)
+                    if curve_diameter <= 0:
+                        continue
+                    
+                    # Calculate trim percentage based on affinity laws
+                    head_ratio = head / delivered_head if delivered_head > 0 else 1.0
+                    trim_ratio = np.sqrt(head_ratio) if head_ratio <= 1.0 else 1.0
+                    required_diameter = curve_diameter * trim_ratio
+                    trim_percent = (required_diameter / curve_diameter) * 100
+                    
+                    # Skip if trim is too aggressive
+                    if trim_percent < 85.0:
+                        continue
+                    
+                    # Prefer curves with minimal trim
+                    trim_penalty = abs(100 - trim_percent)
+                    if trim_penalty < best_trim:
+                        best_trim = trim_penalty
+                        
+                        # Apply affinity laws for trimmed performance
+                        trim_factor = trim_percent / 100.0
+                        final_head = delivered_head * (trim_factor ** 2)
+                        final_efficiency = efficiency * (0.8 + 0.2 * trim_factor)  # Efficiency penalty
+                        final_power = power * (trim_factor ** 3)
+                        
+                        best_performance = {
+                            'flow_m3hr': flow,
+                            'head_m': final_head,
+                            'efficiency_pct': final_efficiency,
+                            'power_kw': final_power,
+                            'npshr_m': curve_points[0].get('npshr_m'),  # Use first point's NPSH
+                            'impeller_diameter_mm': required_diameter,
+                            'base_diameter_mm': curve_diameter,
+                            'trim_percent': trim_percent,
+                            'meets_requirements': final_head >= head * 0.98,
+                            'head_margin_m': final_head - head
+                        }
+                        
+                except Exception as curve_error:
+                    logger.debug(f"Error interpolating curve for {pump_code}: {curve_error}")
+                    continue
             
-            if not best_curve:
-                return None
+            if best_performance:
+                logger.debug(f"Brain performance for {pump_code}: {best_performance['efficiency_pct']:.1f}% eff, {best_performance['power_kw']:.1f} kW, {best_performance['trim_percent']:.1f}% trim")
+                return best_performance
             
-            # Return performance data
-            return {
-                'flow_m3hr': flow,
-                'head_m': best_curve['performance']['head_m'],
-                'efficiency_pct': best_curve['performance']['efficiency_pct'],
-                'power_kw': best_curve['performance']['power_kw'],
-                'npshr_m': best_curve['performance'].get('npshr_m'),
-                'impeller_diameter_mm': best_curve['required_diameter_mm'],
-                'base_diameter_mm': best_curve['base_diameter_mm'],
-                'trim_percent': best_curve['trim_percent'],
-                'meets_requirements': best_curve['performance']['meets_requirements'],
-                'head_margin_m': best_curve['performance']['head_margin_m']
-            }
+            return None
             
         except Exception as e:
-            logger.error(f"Error calculating performance: {str(e)}")
+            logger.error(f"Error calculating performance for {pump_data.get('pump_code')}: {str(e)}")
             return None
     
     def _calculate_required_diameter(self, base_curve: Dict[str, Any], 
