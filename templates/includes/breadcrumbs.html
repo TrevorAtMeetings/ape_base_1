@@ -1,27 +1,28 @@
-<!-- Professional Breadcrumb Navigation Component -->
-{% if breadcrumbs and breadcrumbs|length > 1 %}
-<nav aria-label="breadcrumb" class="container breadcrumb-container">
-  <ol class="breadcrumb">
-    {% for crumb in breadcrumbs %}
-      {% if not loop.last %}
-        <li class="breadcrumb-item">
-          <a href="{{ crumb.url }}">
+<!-- Minimal Breadcrumb Component - Only show on non-results pages -->
+{% if breadcrumbs and breadcrumbs|length > 1 and request.endpoint != 'main_flow.pump_options' %}
+<nav aria-label="breadcrumb" class="breadcrumb-container">
+  <div class="container">
+    <ol class="breadcrumb">
+      {% for crumb in breadcrumbs %}
+        {% if not loop.last %}
+          <li class="breadcrumb-item">
+            <a href="{{ crumb.url }}">
+              {% if crumb.icon %}
+                <i class="material-icons-round" style="font-size: 14px; vertical-align: middle; margin-right: 4px;">{{ crumb.icon }}</i>
+              {% endif %}
+              {{ crumb.label }}
+            </a>
+          </li>
+        {% else %}
+          <li class="breadcrumb-item active" aria-current="page">
             {% if crumb.icon %}
-              <i class="material-icons left">{{ crumb.icon }}</i>
+              <i class="material-icons-round" style="font-size: 14px; vertical-align: middle; margin-right: 4px;">{{ crumb.icon }}</i>
             {% endif %}
             {{ crumb.label }}
-          </a>
-        </li>
-      {% else %}
-        <!-- The last item is the current page and is not a link -->
-        <li class="breadcrumb-item active" aria-current="page">
-          {% if crumb.icon %}
-            <i class="material-icons left">{{ crumb.icon }}</i>
-          {% endif %}
-          {{ crumb.label }}
-        </li>
-      {% endif %}
-    {% endfor %}
-  </ol>
+          </li>
+        {% endif %}
+      {% endfor %}
+    </ol>
+  </div>
 </nav>
 {% endif %}

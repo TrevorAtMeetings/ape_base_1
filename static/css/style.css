@@ -2939,20 +2939,21 @@ nav.unified-nav .nav-btn:hover {
     background-color: #f5f5f5;
 }
 
-/* Professional Breadcrumb System */
+/* Modern Minimal Breadcrumb System */
 .breadcrumb-container {
-  padding-top: 1.5rem;
-  padding-bottom: 0.5rem;
-  border-bottom: 1px solid #e0e0e0;
-  margin-bottom: 2rem;
-  margin-top: 80px; /* Account for fixed navigation */
+  padding: 12px 0 8px;
+  border-bottom: 1px solid #F3F4F6;
+  margin-bottom: 0;
+  margin-top: 0;
+  background: #FAFBFC;
+  font-size: 13px;
 }
 
 .breadcrumb {
-  background-color: transparent; /* Remove any background color */
+  background-color: transparent;
   padding: 0;
   margin: 0;
-  font-size: 0.9rem;
+  font-size: 13px;
   display: flex;
   align-items: center;
   list-style: none;
@@ -2964,36 +2965,39 @@ nav.unified-nav .nav-btn:hover {
 }
 
 .breadcrumb-item a {
-  color: #1976d2; /* Primary link color */
+  color: #6B7280;
   text-decoration: none;
   display: flex;
   align-items: center;
   transition: color 0.2s ease;
+  font-weight: 500;
 }
 
 .breadcrumb-item a:hover {
-  text-decoration: underline;
-  color: #1565c0;
+  color: #1565C0;
+  text-decoration: none;
 }
 
 .breadcrumb-item.active {
-  color: #6c757d; /* A muted color for the current page */
-  font-weight: bold;
+  color: #1A202C;
+  font-weight: 600;
   display: flex;
   align-items: center;
 }
 
-/* This is the separator, e.g., ">" */
+/* Modern separator */
 .breadcrumb-item + .breadcrumb-item::before {
-  content: ">";
-  padding: 0 0.5rem;
-  color: #6c757d;
-  font-size: 0.8rem;
+  content: "/";
+  padding: 0 8px;
+  color: #D1D5DB;
+  font-size: 12px;
 }
 
-.breadcrumb-item i.material-icons {
-  font-size: 16px;
+.breadcrumb-item i.material-icons,
+.breadcrumb-item i.material-icons-round {
+  font-size: 14px;
   margin-right: 4px;
+  vertical-align: middle;
 }
 
 .breadcrumb-link {
@@ -3021,32 +3025,52 @@ nav.unified-nav .nav-btn:hover {
     height: 64px;
 }
 
-/* Results Header Section */
+/* Modern Results Header Section */
 .results-header {
-    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-    color: white;
-    padding: 40px 0;
+    background: white;
+    border-bottom: 1px solid #E5E7EB;
+    padding: 32px 0 24px;
     margin-top: 0;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
 }
 
 .results-title {
-    font-size: 2rem;
-    font-weight: 300;
+    font-size: 28px;
+    font-weight: 700;
     margin: 0;
     display: flex;
     align-items: center;
-    gap: 15px;
+    gap: 12px;
+    color: #1A202C;
+    line-height: 1.2;
 }
 
 .results-title i {
-    font-size: 2.2rem;
+    font-size: 32px;
+    color: #4CAF50;
+    background: linear-gradient(135deg, #4CAF50, #66BB6A);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
 }
 
 .results-subtitle {
-    font-size: 1.1rem;
-    opacity: 0.9;
-    margin-top: 8px;
-    font-weight: 300;
+    font-size: 16px;
+    color: #6B7280;
+    margin-top: 12px;
+    font-weight: 400;
+    line-height: 1.5;
+}
+
+.tier-summary {
+    display: inline-block;
+    margin-left: 16px;
+    padding: 4px 12px;
+    background: linear-gradient(135deg, #E3F2FD, #F3E5F5);
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #1565C0;
+    border: 1px solid #BBDEFB;
 }
 
 /* Enhanced Summary Cards with Visual Hierarchy */

@@ -9,18 +9,25 @@
 
 {% block content %}
 
-<!-- Results Header -->
+<!-- Modern Results Header -->
 <div class="results-header">
     <div class="container">
-        <h1 class="results-title">
-            <i class="material-icons">check_circle</i>
-            Pump Selection Results
-        </h1>
-        <div class="results-subtitle">
-            Found {{ (preferred_pumps|length + allowable_pumps|length) }} suitable pumps for {{ "%.1f"|format(site_requirements['flow_m3hr']) }} m³/hr at {{ "%.1f"|format(site_requirements['head_m']) }} m head
-            {% if preferred_pumps %}
-                <span class="tier-summary">{{ preferred_pumps|length }} preferred, {{ allowable_pumps|length }} allowable</span>
-            {% endif %}
+        <div style="max-width: 1200px; margin: 0 auto;">
+            <h1 class="results-title">
+                <i class="material-icons-round">verified</i>
+                Pump Selection Results
+            </h1>
+            <div class="results-subtitle">
+                <strong>{{ (preferred_pumps|length + allowable_pumps|length) }}</strong> suitable pumps found for 
+                <span style="color: #1565C0; font-weight: 600;">{{ "%.1f"|format(site_requirements['flow_m3hr']) }} m³/hr</span> at 
+                <span style="color: #1565C0; font-weight: 600;">{{ "%.1f"|format(site_requirements['head_m']) }} m</span> head
+                {% if preferred_pumps %}
+                    <span class="tier-summary">
+                        <i class="material-icons-round" style="font-size: 14px; vertical-align: middle; margin-right: 4px;">star</i>
+                        {{ preferred_pumps|length }} preferred, {{ allowable_pumps|length }} allowable
+                    </span>
+                {% endif %}
+            </div>
         </div>
     </div>
 </div>
