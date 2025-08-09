@@ -3073,13 +3073,13 @@ nav.unified-nav .nav-btn:hover {
     border: 1px solid #BBDEFB;
 }
 
-/* Enhanced Summary Cards with Visual Hierarchy */
+/* Compact Summary Cards with Visual Hierarchy */
 .summary-cards {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    grid-template-rows: repeat(2, 1fr);
-    gap: 24px;
-    margin: 32px 0;
+    grid-template-rows: repeat(2, auto);
+    gap: 12px;
+    margin: 20px 0;
     padding: 0 20px;
     max-width: 1200px;
     margin-left: auto;
@@ -3088,19 +3088,19 @@ nav.unified-nav .nav-btn:hover {
 
 .summary-card {
     background: white;
-    border-radius: 16px;
-    padding: 24px 20px;
+    border-radius: 10px;
+    padding: 16px 14px;
     text-align: center;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
     border: 1px solid #E5E7EB;
-    transition: all 0.3s ease;
+    transition: all 0.2s ease;
     position: relative;
     overflow: hidden;
 }
 
 .summary-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
 }
 
 .summary-card::before {
@@ -3109,57 +3109,60 @@ nav.unified-nav .nav-btn:hover {
     top: 0;
     left: 0;
     right: 0;
-    height: 4px;
+    height: 3px;
     background: #E5E7EB;
-    transition: all 0.3s ease;
+    transition: all 0.2s ease;
 }
 
 /* Primary Cards - Most Important Metrics */
 .summary-card:nth-child(1),
 .summary-card:nth-child(4) {
-    border: 2px solid #1565C0;
-    box-shadow: 0 6px 24px rgba(21, 101, 192, 0.15);
+    border: 1.5px solid #1565C0;
+    box-shadow: 0 3px 12px rgba(21, 101, 192, 0.12);
 }
 
 .summary-card:nth-child(1)::before,
 .summary-card:nth-child(4)::before {
     background: linear-gradient(90deg, #1565C0, #1976D2);
+    height: 3px;
 }
 
 /* Requirements Cards - Input Data */
 .summary-card:nth-child(2),
 .summary-card:nth-child(3) {
-    border-left: 4px solid #1565C0;
+    border-left: 3px solid #1565C0;
 }
 
 .summary-card:nth-child(2)::before,
 .summary-card:nth-child(3)::before {
     background: #1565C0;
+    height: 2px;
 }
 
 /* Performance Cards - Output Results */
 .summary-card:nth-child(5),
 .summary-card:nth-child(6) {
-    border-left: 4px solid #4CAF50;
+    border-left: 3px solid #4CAF50;
 }
 
 .summary-card:nth-child(5)::before,
 .summary-card:nth-child(6)::before {
     background: #4CAF50;
+    height: 2px;
 }
 
 .summary-value {
-    font-size: 2.2rem;
+    font-size: 1.5rem;
     font-weight: 700;
     color: #1A202C;
-    margin-bottom: 8px;
-    line-height: 1.1;
+    margin-bottom: 4px;
+    line-height: 1;
 }
 
-/* Primary metrics get larger values */
+/* Primary metrics get slightly larger values */
 .summary-card:nth-child(1) .summary-value,
 .summary-card:nth-child(4) .summary-value {
-    font-size: 2.8rem;
+    font-size: 1.75rem;
     color: #1565C0;
 }
 
@@ -3175,10 +3178,10 @@ nav.unified-nav .nav-btn:hover {
 }
 
 .summary-label {
-    font-size: 12px;
+    font-size: 11px;
     color: #6B7280;
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 0.5px;
     font-weight: 600;
     line-height: 1.2;
 }
@@ -3187,30 +3190,30 @@ nav.unified-nav .nav-btn:hover {
 @media (max-width: 1024px) {
     .summary-cards {
         grid-template-columns: repeat(2, 1fr);
-        grid-template-rows: repeat(3, 1fr);
-        gap: 20px;
+        grid-template-rows: repeat(3, auto);
+        gap: 10px;
     }
 }
 
 @media (max-width: 768px) {
     .summary-cards {
         grid-template-columns: 1fr;
-        grid-template-rows: repeat(6, 1fr);
-        gap: 16px;
+        grid-template-rows: repeat(6, auto);
+        gap: 8px;
         padding: 0 16px;
     }
     
     .summary-card {
-        padding: 20px 16px;
+        padding: 12px 14px;
     }
     
     .summary-value {
-        font-size: 1.8rem;
+        font-size: 1.3rem;
     }
     
     .summary-card:nth-child(1) .summary-value,
     .summary-card:nth-child(4) .summary-value {
-        font-size: 2.2rem;
+        font-size: 1.5rem;
     }
 }
 
