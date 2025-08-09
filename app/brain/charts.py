@@ -323,6 +323,103 @@ class ChartIntelligence:
         else:
             return 10 * magnitude
     
+    def generate_chart_data_payload(self, pump: Dict[str, Any], evaluation_result: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Generate complete chart data payload ready for frontend plotting.
+        Brain Intelligence handles ALL chart logic - API just passes this through.
+        
+        Args:
+            pump: Complete pump data from repository
+            evaluation_result: Brain evaluation result for duty point
+            
+        Returns:
+            Complete chart data payload ready for JSON serialization
+        """
+        try:
+            pump_code = pump.get('pump_code', '')
+            curves = pump.get('curves', [])
+            
+            if not curves:
+                logger.warning(f"No curves available for pump {pump_code}")
+                return {}
+            
+            # Build complete chart data structure - BRAIN INTELLIGENCE
+            chart_data = {
+                'pump_code': pump_code,
+                'pump_info': {
+                    'manufacturer': pump.get('manufacturer', 'APE PUMPS'),
+                    'series': pump.get('model_series', ''),
+                    'description': pump.get('pump_code', pump_code)
+                },
+                'curves': [],
+                'operating_point': {
+                    'flow_m3hr': evaluation_result.get('flow_m3hr', 0),
+                    'head_m': evaluation_result.get('head_m', 0),
+                    'efficiency_pct': evaluation_result.get('efficiency_pct', 0),
+                    'power_kw': evaluation_result.get('power_kw', 0),
+                    'npshr_m': evaluation_result.get('npshr_m', 0),
+                    'impeller_diameter_mm': evaluation_result.get('impeller_diameter_mm', 0),
+                    'trim_percent': evaluation_result.get('trim_percent', 100),
+                    'qbep_percentage': evaluation_result.get('qbep_percentage', 100),
+                    'extrapolated': evaluation_result.get('extrapolated', False),
+                    'sizing_info': evaluation_result.get('sizing_info', {})
+                },
+                'brain_config': {
+                    'context': 'web',
+                    'annotations': [],
+                    'axis_ranges': {'flow': {'min': 0, 'max': 600}, 'head': {'min': 0, 'max': 100}},
+                    'display_options': {'interactive': True, 'show_hover': True}
+                },
+                'metadata': {
+                    'flow_units': 'm³/hr', 'head_units': 'm', 'efficiency_units': '%',
+                    'power_units': 'kW', 'npshr_units': 'm', 'brain_generated': True,
+                    'generation_timestamp': evaluation_result.get('timestamp', '')
+                }
+            }
+            
+            # Add BEP annotation if available - BRAIN INTELLIGENCE
+            bep_flow = evaluation_result.get('bep_flow_m3hr')
+            bep_head = evaluation_result.get('bep_head_m')
+            if bep_flow and bep_head:
+                chart_data['brain_config']['annotations'].append({
+                    'type': 'point', 'x': bep_flow, 'y': bep_head, 
+                    'text': 'BEP', 'style': 'star', 'color': 'gold'
+                })
+            
+            # Process curves - BRAIN HANDLES ALL TRANSFORMATIONS
+            for i, curve in enumerate(curves):
+                # Brain generates intelligent display labels
+                impeller_mm = curve.get('impeller_diameter_mm', 0)
+                display_label = f"{impeller_mm}mm Impeller" if impeller_mm > 0 else f"Curve {i+1}"
+                
+                # Determine if this curve is selected (matches evaluation result)
+                is_selected = False
+                eval_impeller = evaluation_result.get('impeller_diameter_mm', 0)
+                if eval_impeller > 0 and impeller_mm > 0:
+                    is_selected = abs(eval_impeller - impeller_mm) < 1.0  # 1mm tolerance
+                elif i == 0:  # Default to first curve if no match
+                    is_selected = True
+                
+                chart_data['curves'].append({
+                    'curve_index': i,
+                    'impeller_size': curve.get('impeller_size', display_label),
+                    'impeller_diameter_mm': impeller_mm,
+                    'display_label': display_label,  # Brain-generated label
+                    'flow_data': curve.get('flow_data', []),
+                    'head_data': curve.get('head_data', []),
+                    'efficiency_data': curve.get('efficiency_data', []),
+                    'power_data': curve.get('power_data', []),
+                    'npshr_data': curve.get('npshr_data', []),
+                    'is_selected': is_selected
+                })
+            
+            logger.info(f"Brain generated chart payload for {pump_code} with {len(chart_data['curves'])} curves")
+            return chart_data
+            
+        except Exception as e:
+            logger.error(f"Error in Brain chart payload generation: {str(e)}")
+            return {}
+    
     def _get_efficiency_zone(self, efficiency: float) -> str:
         """Get efficiency zone description."""
         if efficiency >= 85:
