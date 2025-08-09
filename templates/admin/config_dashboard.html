@@ -387,232 +387,235 @@
 {% endblock %}
 
 {% block content %}
-<div class="config-dashboard">
-    <div class="config-container">
-        <!-- Enhanced Breadcrumb -->
-        <nav class="breadcrumb">
+<div class="admin-dashboard">
+    <div class="admin-container">
+        <!-- Executive Breadcrumb -->
+        <nav class="admin-breadcrumb">
             <a href="/admin">
                 <span class="material-icons-round">admin_panel_settings</span>
-                Admin
+                Admin Dashboard
             </a> 
             <span class="material-icons-round">chevron_right</span> 
-            <span style="color: var(--config-secondary); font-weight: 600;">Configuration Management</span>
+            <span style="color: var(--admin-secondary); font-weight: 600;">Configuration Management</span>
         </nav>
 
-        <!-- Header -->
-        <header class="config-header">
-            <h1 class="config-title">Configuration Management</h1>
-            <p class="config-subtitle">
-                Manage Brain configuration profiles for different use cases. Create, test, and deploy configurations with different scoring weights and logic parameters.
+        <!-- Executive Header -->
+        <header class="admin-header">
+            <h1 class="admin-title">Configuration Management</h1>
+            <p class="admin-subtitle">
+                Enterprise-grade Brain configuration system with intelligent profile management, advanced scoring algorithms, and comprehensive testing capabilities for mission-critical pump selection operations.
             </p>
         </header>
 
-        <!-- Configuration Grid -->
-        <div class="config-grid">
-            <!-- Profiles Section -->
-            <div class="config-section">
-                <div class="section-header">
-                    <span class="section-icon">
-                        <span class="material-icons-round">view_list</span>
+        <!-- Executive Configuration Grid -->
+        <div class="admin-grid">
+            <!-- Executive Profiles Section -->
+            <div class="admin-card">
+                <div class="admin-card-header">
+                    <span class="admin-card-icon">
+                        <span class="material-icons-round">settings</span>
                     </span>
-                    <h2 class="section-title">Configuration Profiles</h2>
+                    <h2 class="admin-card-title">Configuration Profiles</h2>
                 </div>
                 
                 {% if profiles %}
-                    <ul class="config-list">
+                    <ul class="admin-card-content">
                         {% for profile in profiles %}
-                        <li class="config-item">
+                        <li class="admin-card-item">
                             <div>
-                                <div class="config-label">{{ profile.name }}</div>
-                                <small style="color: var(--md-sys-color-on-surface-variant);">{{ profile.description or 'No description' }}</small>
+                                <div class="admin-card-label">{{ profile.name }}</div>
+                                <small style="color: #757575; font-size: 14px; margin-top: 4px; display: block;">{{ profile.description or 'No description' }}</small>
                             </div>
-                            <div style="display: flex; align-items: center; gap: 12px;">
-                                <span class="status-badge {% if profile.is_active %}status-active{% else %}status-inactive{% endif %}">
+                            <div style="display: flex; align-items: center; gap: 16px;">
+                                <span class="admin-status-badge {% if profile.is_active %}admin-status-active{% else %}admin-status-inactive{% endif %}">
                                     {% if profile.is_active %}Active{% else %}Inactive{% endif %}
                                 </span>
-                                <a href="/admin/config/profile/{{ profile.id }}" class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;">
-                                    <span class="material-icons-round" style="font-size: 16px;">edit</span>
-                                    Edit
+                                <a href="/admin/config/profile/{{ profile.id }}" class="admin-btn admin-btn-secondary" style="padding: 8px 16px; font-size: 13px;">
+                                    <span class="material-icons-round" style="font-size: 18px;">edit</span>
+                                    Configure
                                 </a>
                             </div>
                         </li>
                         {% endfor %}
                     </ul>
                 {% else %}
-                    <div class="empty-state">
-                        <div class="empty-icon">
-                            <span class="material-icons-round">folder_open</span>
+                    <div class="admin-empty-state">
+                        <div class="admin-empty-icon">
+                            <span class="material-icons-round">settings</span>
                         </div>
                         <p>No configuration profiles found</p>
-                        <p style="font-size: 12px; margin-top: 8px;">Create your first profile to get started</p>
+                        <p style="font-size: 14px; margin-top: 8px; opacity: 0.7;">Create your first profile to get started</p>
                     </div>
                 {% endif %}
                 
-                <div class="btn-group">
-                    <a href="{{ url_for('admin_config.create_profile') }}" class="btn btn-primary">
+                <div class="admin-btn-group">
+                    <a href="{{ url_for('admin_config.create_profile') }}" class="admin-btn admin-btn-primary">
                         <span class="material-icons-round">add</span>
-                        Create Profile
+                        Create New Profile
                     </a>
-                    <button onclick="testAllProfiles()" class="btn btn-secondary">
+                    <button onclick="testAllProfiles()" class="admin-btn admin-btn-secondary">
                         <span class="material-icons-round">science</span>
-                        Test All
+                        Run Tests
                     </button>
                 </div>
             </div>
 
-            <!-- Engineering Constants Section -->
-            <div class="config-section">
-                <div class="section-header">
-                    <span class="section-icon">
-                        <span class="material-icons-round">tune</span>
+            <!-- Executive Engineering Constants Section -->
+            <div class="admin-card">
+                <div class="admin-card-header">
+                    <span class="admin-card-icon">
+                        <span class="material-icons-round">precision_manufacturing</span>
                     </span>
-                    <h2 class="section-title">Engineering Constants</h2>
+                    <h2 class="admin-card-title">Engineering Constants</h2>
                 </div>
                 
                 {% if constants %}
-                    <ul class="config-list">
+                    <ul class="admin-card-content">
                         {% for constant in constants %}
-                        <li class="config-item">
-                            <span class="config-label">{{ constant.name }}</span>
-                            <span class="config-value">{{ constant.value }} {{ constant.unit or '' }}</span>
+                        <li class="admin-card-item">
+                            <span class="admin-card-label">{{ constant.name }}</span>
+                            <span class="admin-card-value">{{ constant.value }} {{ constant.unit or '' }}</span>
                         </li>
                         {% endfor %}
                     </ul>
                 {% else %}
-                    <div class="empty-state">
-                        <div class="empty-icon">
-                            <span class="material-icons-round">settings</span>
+                    <div class="admin-empty-state">
+                        <div class="admin-empty-icon">
+                            <span class="material-icons-round">precision_manufacturing</span>
                         </div>
                         <p>No engineering constants defined</p>
                     </div>
                 {% endif %}
                 
-                <div class="btn-group">
-                    <a href="/admin/config/constants" class="btn btn-primary">
-                        <span class="material-icons-round">edit</span>
-                        Edit Constants
+                <div class="admin-btn-group">
+                    <a href="/admin/config/constants" class="admin-btn admin-btn-primary">
+                        <span class="material-icons-round">tune</span>
+                        Manage Constants
                     </a>
-                    <a href="/admin/config/reset" class="btn btn-secondary">
-                        <span class="material-icons-round">refresh</span>
-                        Reset to Defaults
+                    <a href="/admin/config/reset" class="admin-btn admin-btn-secondary">
+                        <span class="material-icons-round">restore</span>
+                        Reset Defaults
                     </a>
                 </div>
             </div>
 
-            <!-- Scoring Weights Section -->
-            <div class="config-section">
-                <div class="section-header">
-                    <span class="section-icon">
-                        <span class="material-icons-round">scale</span>
+            <!-- Executive Scoring Intelligence Section -->
+            <div class="admin-card">
+                <div class="admin-card-header">
+                    <span class="admin-card-icon">
+                        <span class="material-icons-round">psychology</span>
                     </span>
-                    <h2 class="section-title">Scoring Weights</h2>
+                    <h2 class="admin-card-title">AI Scoring Intelligence</h2>
                 </div>
                 
-                <ul class="config-list">
-                    <li class="config-item">
-                        <span class="config-label">BEP Proximity</span>
-                        <span class="config-value">45 points</span>
+                <ul class="admin-card-content">
+                    <li class="admin-card-item">
+                        <span class="admin-card-label">BEP Proximity Algorithm</span>
+                        <span class="admin-card-value" style="background: linear-gradient(90deg, #1565C0, #FF6F00); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 800;">45 pts</span>
                     </li>
-                    <li class="config-item">
-                        <span class="config-label">Efficiency</span>
-                        <span class="config-value">35 points</span>
+                    <li class="admin-card-item">
+                        <span class="admin-card-label">Efficiency Optimization</span>
+                        <span class="admin-card-value" style="background: linear-gradient(90deg, #1565C0, #FF6F00); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 800;">35 pts</span>
                     </li>
-                    <li class="config-item">
-                        <span class="config-label">Head Margin</span>
-                        <span class="config-value">20 points</span>
+                    <li class="admin-card-item">
+                        <span class="admin-card-label">Head Margin Safety</span>
+                        <span class="admin-card-value" style="background: linear-gradient(90deg, #1565C0, #FF6F00); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 800;">20 pts</span>
                     </li>
-                    <li class="config-item">
-                        <span class="config-label">Total System</span>
-                        <span class="config-value">100 points</span>
+                    <li class="admin-card-item" style="border-top: 2px solid var(--admin-primary); padding-top: 20px; margin-top: 16px;">
+                        <span class="admin-card-label" style="font-weight: 700; font-size: 18px;">Total Intelligence Score</span>
+                        <span class="admin-card-value" style="font-size: 24px; font-weight: 900; color: var(--admin-success);">100 pts</span>
                     </li>
                 </ul>
                 
-                <div class="btn-group">
-                    <a href="/admin/config/scoring" class="btn btn-primary">
+                <div class="admin-btn-group">
+                    <a href="/admin/config/scoring" class="admin-btn admin-btn-primary">
                         <span class="material-icons-round">tune</span>
-                        Adjust Weights
+                        Optimize Algorithms
                     </a>
-                    <a href="/admin/brain/workbench" class="btn btn-secondary">
-                        <span class="material-icons-round">science</span>
-                        Test Impact
+                    <a href="/admin/brain/workbench" class="admin-btn admin-btn-secondary">
+                        <span class="material-icons-round">rocket_launch</span>
+                        AI Workbench
                     </a>
                 </div>
             </div>
 
-            <!-- System Status Section -->
-            <div class="config-section">
-                <div class="section-header">
-                    <span class="section-icon">
-                        <span class="material-icons-round">monitor_heart</span>
+            <!-- Executive System Intelligence Section -->
+            <div class="admin-card">
+                <div class="admin-card-header">
+                    <span class="admin-card-icon">
+                        <span class="material-icons-round">dashboard</span>
                     </span>
-                    <h2 class="section-title">System Status</h2>
+                    <h2 class="admin-card-title">System Intelligence</h2>
                 </div>
                 
-                <ul class="config-list">
-                    <li class="config-item">
-                        <span class="config-label">Active Profile</span>
-                        <span class="config-value">
+                <ul class="admin-card-content">
+                    <li class="admin-card-item">
+                        <span class="admin-card-label">Active Intelligence Profile</span>
+                        <span class="admin-card-value" style="color: var(--admin-success); font-weight: 700;">
                             {% if profiles %}
                                 {% for profile in profiles %}
                                     {% if profile.is_active %}{{ profile.name }}{% endif %}
                                 {% endfor %}
                             {% else %}
-                                Default
+                                Default Configuration
                             {% endif %}
                         </span>
                     </li>
-                    <li class="config-item">
-                        <span class="config-label">Configuration Version</span>
-                        <span class="config-value">v6.0</span>
+                    <li class="admin-card-item">
+                        <span class="admin-card-label">Brain System Version</span>
+                        <span class="admin-card-value" style="color: var(--admin-primary); font-weight: 700;">v6.0 Enterprise</span>
                     </li>
-                    <li class="config-item">
-                        <span class="config-label">Last Modified</span>
-                        <span class="config-value">{{ moment().format('MMM D, YYYY') if moment else 'Recent' }}</span>
+                    <li class="admin-card-item">
+                        <span class="admin-card-label">Last System Update</span>
+                        <span class="admin-card-value">Aug 2025</span>
                     </li>
-                    <li class="config-item">
-                        <span class="config-label">Pump Coverage</span>
-                        <span class="config-value">386 models</span>
+                    <li class="admin-card-item">
+                        <span class="admin-card-label">Pump Intelligence Coverage</span>
+                        <span class="admin-card-value" style="color: var(--admin-success); font-weight: 700; font-size: 18px;">386 Models</span>
                     </li>
                 </ul>
                 
-                <div class="btn-group">
-                    <a href="/admin/config/backup" class="btn btn-primary">
-                        <span class="material-icons-round">backup</span>
-                        Create Backup
+                <div class="admin-btn-group">
+                    <a href="/admin/config/backup" class="admin-btn admin-btn-primary">
+                        <span class="material-icons-round">cloud_upload</span>
+                        Export Configuration
                     </a>
-                    <a href="/admin/config/validate" class="btn btn-secondary">
-                        <span class="material-icons-round">check_circle</span>
-                        Validate Config
+                    <a href="/admin/config/validate" class="admin-btn admin-btn-secondary">
+                        <span class="material-icons-round">verified</span>
+                        System Diagnostics
                     </a>
                 </div>
             </div>
         </div>
 
-        <!-- Quick Actions -->
-        <div class="config-section" style="grid-column: 1 / -1;">
-            <div class="section-header">
-                <span class="section-icon">
-                    <span class="material-icons-round">flash_on</span>
-                </span>
-                <h2 class="section-title">Quick Actions</h2>
+        <!-- Executive Quick Actions Hub -->
+        <div style="grid-column: 1 / -1; background: linear-gradient(135deg, rgba(255, 111, 0, 0.05) 0%, rgba(21, 101, 192, 0.05) 100%); border-radius: 20px; padding: 32px; border: 2px solid rgba(255, 111, 0, 0.1);">
+            <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 32px;">
+                <div style="background: linear-gradient(135deg, var(--admin-accent) 0%, var(--admin-primary) 100%); padding: 16px; border-radius: 16px; color: white;">
+                    <span class="material-icons-round" style="font-size: 32px;">bolt</span>
+                </div>
+                <div>
+                    <h3 style="font-size: 24px; font-weight: 700; color: var(--admin-secondary); margin: 0;">Executive Action Center</h3>
+                    <p style="color: #757575; margin: 4px 0 0 0; font-size: 16px;">Advanced AI tools and system management for mission-critical operations</p>
+                </div>
             </div>
             
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px;">
-                <a href="/admin/brain/workbench" class="btn btn-primary" style="justify-content: center; padding: 16px;">
-                    <span class="material-icons-round">science</span>
-                    Open Logic Workbench
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
+                <a href="/admin/brain/workbench" class="admin-btn admin-btn-primary" style="justify-content: center; padding: 20px 24px; background: linear-gradient(135deg, var(--admin-primary) 0%, #1976D2 100%); box-shadow: 0 8px 24px rgba(21, 101, 192, 0.3);">
+                    <span class="material-icons-round" style="font-size: 24px;">rocket_launch</span>
+                    AI Logic Workbench
                 </a>
-                <a href="/admin/brain" class="btn btn-secondary" style="justify-content: center; padding: 16px;">
-                    <span class="material-icons-round">psychology</span>
-                    Brain System Dashboard
+                <a href="/admin/brain" class="admin-btn admin-btn-secondary" style="justify-content: center; padding: 20px 24px;">
+                    <span class="material-icons-round" style="font-size: 24px;">psychology</span>
+                    Brain Intelligence Hub
                 </a>
-                <a href="/admin/testing" class="btn btn-secondary" style="justify-content: center; padding: 16px;">
-                    <span class="material-icons-round">speed</span>
-                    Performance Testing
+                <a href="/admin/testing" class="admin-btn admin-btn-secondary" style="justify-content: center; padding: 20px 24px;">
+                    <span class="material-icons-round" style="font-size: 24px;">speed</span>
+                    Performance Analytics
                 </a>
-                <a href="/admin" class="btn btn-secondary" style="justify-content: center; padding: 16px;">
-                    <span class="material-icons-round">admin_panel_settings</span>
-                    Admin Dashboard
+                <a href="/admin" class="admin-btn admin-btn-secondary" style="justify-content: center; padding: 20px 24px;">
+                    <span class="material-icons-round" style="font-size: 24px;">settings</span>
+                    Master Control Panel
                 </a>
             </div>
         </div>
