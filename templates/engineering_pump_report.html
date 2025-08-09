@@ -324,6 +324,8 @@
                 <div class="eng-subtitle">APE PUMPS | Generated: {{ current_date }}</div>
             </div>
             <div class="view-toggle">
+                {% set presentation_url = url_for('reports.pump_report', pump_code=selected_pump.get('pump_code'), flow=site_requirements.get('flow_m3hr', 0), head=site_requirements.get('head_m', 0), pump_type=site_requirements.get('pump_type', 'GENERAL')) %}
+                {% set engineering_url = url_for('reports.engineering_report', pump_code=selected_pump.get('pump_code'), flow=site_requirements.get('flow_m3hr', 0), head=site_requirements.get('head_m', 0), pump_type=site_requirements.get('pump_type', 'GENERAL')) %}
                 {% if current_view == 'presentation' %}
                     <span class="view-btn active">Presentation View</span>
                     <a href="{{ engineering_url }}" class="view-btn">Engineering View</a>
@@ -787,8 +789,8 @@
 
     <script>
         // Store original values
-        let currentFlow = {{ site_requirements.get('flow_m3hr', 0)|round(1) }};
-        let currentHead = {{ site_requirements.get('head_m', 0)|round(1) }};
+        let currentFlow = {{ site_requirements.get('flow_m3hr', 0)|round(1) if site_requirements.get('flow_m3hr') else 0 }};
+        let currentHead = {{ site_requirements.get('head_m', 0)|round(1) if site_requirements.get('head_m') else 0 }};
         const pumpCode = "{{ selected_pump.get('pump_code', '') }}";
 
         // Initialize engineering charts
