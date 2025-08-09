@@ -274,7 +274,7 @@ class PumpBrain:
     
     @measure_performance
     def find_best_pumps(self, site_requirements: Dict[str, Any], 
-                       constraints: Dict[str, Any] = None,
+                       constraints: Optional[Dict[str, Any]] = None,
                        include_exclusions: bool = False) -> Dict[str, Any]:
         """
         Find best pumps with optional detailed exclusion analysis.

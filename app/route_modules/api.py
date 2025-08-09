@@ -132,7 +132,9 @@ def get_pump_list():
         
         response = make_response(json.dumps({'pumps': pump_list, 'total': len(pump_list)}))
         response.headers['Content-Type'] = 'application/json'
-        response.headers['Cache-Control'] = 'public, max-age=300'  # 5 minute browser cache
+        response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'  # Force fresh data
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = '0'
         return response
 
     except Exception as e:
