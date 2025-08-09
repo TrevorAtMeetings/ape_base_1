@@ -358,9 +358,7 @@ td, th {
     z-index: 1000 !important;
 }
 
-.nav-dropdown-content {
-    z-index: 1001 !important;
-}
+/* Nav dropdown z-index moved to navigation.html inline CSS */
 
 .floating-ai-chat {
     z-index: 900 !important;

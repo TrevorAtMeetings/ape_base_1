@@ -90,26 +90,7 @@
     border-color: rgba(255, 255, 255, 0.5);
 }
 
-/* Professional dropdown content - fixed */
-.nav-dropdown-content {
-    display: none;
-    position: absolute;
-    top: 100%;
-    left: 0;
-    z-index: 10000;
-    background: white;
-    border: 1px solid #e0e0e0;
-    border-radius: 8px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
-    min-width: 180px;
-    margin-top: 2px;
-    padding: 4px 0;
-}
-
-/* When dropdown is shown */
-.nav-dropdown-content.show {
-    display: block !important;
-}
+/* Dropdown styles moved to navigation.html inline CSS to avoid conflicts */
 
 /* Right-align last dropdown */
 .nav-dropdown:last-child .nav-dropdown-content {
