@@ -1,8 +1,8 @@
-{% extends "base.html" %}
+{% extends "admin/base.html" %}
 
-{% block title %}Data Corrections Management{% endblock %}
+{% block admin_title %}Data Corrections Management{% endblock %}
 
-{% block content %}
+{% block admin_content %}
 <div class="container">
         <h1 class="blue-text text-darken-2" style="margin-bottom: 30px;">
             <i class="material-icons left">edit</i>
@@ -178,4 +178,4 @@ function rejectCorrection(correctionId) {
     }
 }
 </script>
-{% endblock %}
+{% endblock admin_content %}

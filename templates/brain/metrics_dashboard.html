@@ -1,62 +1,25 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Brain System Monitoring Dashboard - APE Pumps</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        .metric-card {
-            background: #fff;
-            border-radius: 8px;
-            padding: 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
-        }
-        .metric-value {
-            font-size: 2rem;
-            font-weight: bold;
-            color: #0066cc;
-        }
-        .metric-label {
-            color: #666;
-            text-transform: uppercase;
-            font-size: 0.85rem;
-            letter-spacing: 1px;
-        }
-        .status-good { color: #28a745; }
-        .status-warning { color: #ffc107; }
-        .status-error { color: #dc3545; }
-        .operation-row {
-            padding: 10px;
-            border-bottom: 1px solid #eee;
-        }
-        .operation-row:hover {
-            background: #f8f9fa;
-        }
-        .time-chart {
-            height: 200px;
-            margin-top: 20px;
-        }
-        .brain-active {
-            background: #28a745;
-            color: white;
-            padding: 5px 15px;
-            border-radius: 20px;
-            display: inline-block;
-            font-weight: bold;
-        }
-    </style>
-</head>
-<body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="/">APE Pumps - Brain Monitoring</a>
-            <span class="brain-active">BRAIN ACTIVE</span>
-        </div>
-    </nav>
+{% extends "admin/base.html" %}
 
-    <div class="container-fluid mt-4">
+{% block admin_title %}Brain System Monitoring{% endblock %}
+
+{% block admin_content %}
+<div class="container">
+    <!-- Brain System Monitoring Dashboard - Converted to Materialize -->
+    <div class="admin-section">
+        <div class="row">
+            <div class="col s12">
+                <div class="card-panel blue darken-2 white-text">
+                    <h4 style="margin: 0;">
+                        <i class="material-icons left">monitor_heart</i>
+                        Brain System Monitoring Dashboard
+                    </h4>
+                    <p style="margin: 10px 0 0 0;">Hypercare Phase - Real-time Performance Monitoring</p>
+                    <div class="right-align" style="margin-top: -40px;">
+                        <span class="badge green white-text">BRAIN ACTIVE</span>
+                    </div>
+                </div>
+            </div>
+        </div>
         <h1>Brain System Monitoring Dashboard</h1>
         <p class="text-muted">Hypercare Phase - Real-time Performance Monitoring</p>
 

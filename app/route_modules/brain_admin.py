@@ -18,6 +18,12 @@ brain_admin_bp = Blueprint('brain_admin', __name__)
 def brain_dashboard():
     """Brain administration dashboard - main landing page"""
     try:
+        # Add breadcrumbs for navigation
+        breadcrumbs = [
+            {'text': 'Home', 'url': url_for('main_flow.index'), 'icon': 'home'},
+            {'text': 'Admin', 'url': url_for('admin.admin_dashboard'), 'icon': 'admin_panel_settings'},
+            {'text': 'Brain Dashboard', 'url': '', 'icon': 'psychology'}
+        ]
         brain_service = BrainDataService()
         
         # Get summary statistics
@@ -36,17 +42,23 @@ def brain_dashboard():
             'production_config': brain_service.get_production_config()['profile_name']
         }
         
-        return render_template('admin/brain_dashboard_clean.html', stats=stats)
+        return render_template('admin/brain_dashboard_clean.html', stats=stats, breadcrumbs=breadcrumbs)
         
     except Exception as e:
         logger.error(f"Error loading brain dashboard: {e}")
         flash(f'Error loading dashboard: {str(e)}', 'error')
-        return render_template('admin/brain_dashboard_clean.html', stats={})
+        return render_template('admin/brain_dashboard_clean.html', stats={}, breadcrumbs=breadcrumbs)
 
 @brain_admin_bp.route('/admin/brain/data-quality')
 def data_quality_dashboard():
     """Data Quality Management Dashboard"""
     try:
+        # Add breadcrumbs for navigation
+        breadcrumbs = [
+            {'text': 'Home', 'url': url_for('main_flow.index'), 'icon': 'home'},
+            {'text': 'Brain Dashboard', 'url': url_for('brain_admin.brain_dashboard'), 'icon': 'psychology'},
+            {'text': 'Data Quality', 'url': '', 'icon': 'assessment'}
+        ]
         brain_service = BrainDataService()
         
         # Get quality issues grouped by severity
@@ -71,18 +83,26 @@ def data_quality_dashboard():
         return render_template('admin/data_quality.html', 
                              issues_by_severity=issues_by_severity,
                              pump_issues=dict(sorted_pumps[:20]),  # Top 20 problematic pumps
-                             total_issues=len(all_issues))
+                             total_issues=len(all_issues),
+                             breadcrumbs=breadcrumbs)
                              
     except Exception as e:
         logger.error(f"Error loading data quality dashboard: {e}")
         flash(f'Error loading data quality dashboard: {str(e)}', 'error')
         return render_template('admin/data_quality.html', 
-                             issues_by_severity={}, pump_issues={}, total_issues=0)
+                             issues_by_severity={}, pump_issues={}, total_issues=0,
+                             breadcrumbs=breadcrumbs)
 
 @brain_admin_bp.route('/admin/brain/corrections')
 def corrections_dashboard():
     """Data Corrections Management Dashboard"""
     try:
+        # Add breadcrumbs for navigation  
+        breadcrumbs = [
+            {'text': 'Home', 'url': url_for('main_flow.index'), 'icon': 'home'},
+            {'text': 'Brain Dashboard', 'url': url_for('brain_admin.brain_dashboard'), 'icon': 'psychology'},
+            {'text': 'Corrections', 'url': '', 'icon': 'edit'}
+        ]
         brain_service = BrainDataService()
         
         # Get all corrections grouped by status
@@ -109,18 +129,26 @@ def corrections_dashboard():
         return render_template('admin/corrections.html',
                              active_corrections=active_corrections,
                              pending_corrections=pending_corrections,
-                             stats=correction_stats)
+                             stats=correction_stats,
+                             breadcrumbs=breadcrumbs)
                              
     except Exception as e:
         logger.error(f"Error loading corrections dashboard: {e}")
         flash(f'Error loading corrections dashboard: {str(e)}', 'error')
         return render_template('admin/corrections.html', 
-                             active_corrections=[], pending_corrections=[], stats={})
+                             active_corrections=[], pending_corrections=[], stats={},
+                             breadcrumbs=breadcrumbs)
 
 @brain_admin_bp.route('/admin/brain/workbench')
 def brain_workbench():
     """Brain Logic Workbench - Test configurations and corrections"""
     try:
+        # Add breadcrumbs for navigation
+        breadcrumbs = [
+            {'text': 'Home', 'url': url_for('main_flow.index'), 'icon': 'home'},
+            {'text': 'Brain Dashboard', 'url': url_for('brain_admin.brain_dashboard'), 'icon': 'psychology'},
+            {'text': 'Workbench', 'url': '', 'icon': 'science'}
+        ]
         brain_service = BrainDataService()
         
         # Get current production configuration
@@ -134,13 +162,15 @@ def brain_workbench():
         
         return render_template('admin/brain_workbench.html',
                              production_config=prod_config,
-                             pump_codes=pump_codes)
+                             pump_codes=pump_codes,
+                             breadcrumbs=breadcrumbs)
                              
     except Exception as e:
         logger.error(f"Error loading brain workbench: {e}")
         flash(f'Error loading brain workbench: {str(e)}', 'error')
         return render_template('admin/brain_workbench.html',
-                             production_config={}, pump_codes=[])
+                             production_config={}, pump_codes=[],
+                             breadcrumbs=breadcrumbs)
 
 # ============================================================================
 # API ENDPOINTS FOR AJAX OPERATIONS

@@ -1,0 +1,279 @@
+/* ============================================================================
+   Brain Admin Theme - Professional Admin Interface
+   ============================================================================ */
+
+/* Admin Layout Structure */
+.admin-layout {
+    background: #f5f5f5;
+    min-height: calc(100vh - 64px);
+}
+
+.admin-nav-wrapper {
+    margin-bottom: 0;
+}
+
+.admin-tabs-wrapper {
+    margin-bottom: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.admin-content {
+    padding-bottom: 40px;
+}
+
+/* Admin Navigation Styling */
+.tabs .tab a {
+    color: #666 !important;
+    font-weight: 500;
+}
+
+.tabs .tab a:hover {
+    color: #1976d2 !important;
+    background: rgba(25, 118, 210, 0.1);
+}
+
+.tabs .tab a.active {
+    color: #1976d2 !important;
+    background: white;
+    font-weight: 600;
+}
+
+.tabs .indicator {
+    background-color: #1976d2;
+}
+
+/* Admin Cards Enhancement */
+.admin-layout .card {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    border-radius: 8px;
+}
+
+.admin-layout .card-panel {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    border-radius: 8px;
+}
+
+/* Metric Cards */
+.metric-card {
+    text-align: center;
+    padding: 20px;
+}
+
+.metric-card h3 {
+    margin: 10px 0;
+    font-weight: 300;
+}
+
+.metric-card .card-title {
+    font-size: 1.1rem;
+    color: #666;
+}
+
+/* Data Tables */
+.admin-table {
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.admin-table table {
+    margin: 0;
+}
+
+.admin-table th {
+    background: #f8f9fa;
+    color: #333;
+    font-weight: 600;
+    padding: 15px 10px;
+}
+
+.admin-table td {
+    padding: 12px 10px;
+    border-bottom: 1px solid #eee;
+}
+
+.admin-table tr:hover {
+    background: #f8f9fa;
+}
+
+/* Quality Issue Severity Badges */
+.severity-critical {
+    background: #f44336 !important;
+    color: white !important;
+}
+
+.severity-major {
+    background: #ff9800 !important;
+    color: white !important;
+}
+
+.severity-minor {
+    background: #4caf50 !important;
+    color: white !important;
+}
+
+/* Status Indicators */
+.status-good {
+    color: #4caf50;
+    font-weight: 600;
+}
+
+.status-warning {
+    color: #ff9800;
+    font-weight: 600;
+}
+
+.status-error {
+    color: #f44336;
+    font-weight: 600;
+}
+
+/* Form Enhancements */
+.admin-layout .input-field input:focus + label,
+.admin-layout .input-field textarea:focus + label {
+    color: #1976d2 !important;
+}
+
+.admin-layout .input-field input:focus,
+.admin-layout .input-field textarea:focus {
+    border-bottom: 1px solid #1976d2 !important;
+    box-shadow: 0 1px 0 0 #1976d2 !important;
+}
+
+/* Button Enhancements */
+.admin-layout .btn {
+    border-radius: 4px;
+    text-transform: none;
+    font-weight: 500;
+}
+
+.admin-layout .btn:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+/* Code and Data Display */
+.admin-code {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 4px;
+    padding: 10px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+    overflow-x: auto;
+}
+
+.admin-json {
+    background: #1e1e1e;
+    color: #d4d4d4;
+    border-radius: 4px;
+    padding: 15px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.85rem;
+    overflow-x: auto;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+/* Loading States */
+.admin-loading {
+    text-align: center;
+    padding: 40px;
+    color: #666;
+}
+
+.admin-loading .preloader-wrapper {
+    margin: 20px auto;
+}
+
+/* Responsive Adjustments */
+@media only screen and (max-width: 600px) {
+    .admin-tabs-wrapper .tabs .tab {
+        padding: 0 5px;
+    }
+    
+    .admin-tabs-wrapper .tabs .tab a {
+        font-size: 0.8rem;
+        padding: 14px 5px;
+    }
+    
+    .admin-tabs-wrapper .tabs .tab a i {
+        font-size: 1rem;
+    }
+}
+
+/* Workbench Specific Styling */
+.workbench-tool {
+    margin-bottom: 30px;
+}
+
+.workbench-result {
+    background: #f8f9fa;
+    border-left: 4px solid #1976d2;
+    padding: 15px;
+    margin-top: 15px;
+    border-radius: 0 4px 4px 0;
+}
+
+.workbench-error {
+    background: #ffebee;
+    border-left: 4px solid #f44336;
+    padding: 15px;
+    margin-top: 15px;
+    border-radius: 0 4px 4px 0;
+    color: #c62828;
+}
+
+/* Data Quality Specific */
+.quality-overview {
+    margin-bottom: 30px;
+}
+
+.quality-issue-item {
+    padding: 15px;
+    border-bottom: 1px solid #eee;
+    transition: background 0.2s;
+}
+
+.quality-issue-item:hover {
+    background: #f8f9fa;
+}
+
+.quality-issue-item:last-child {
+    border-bottom: none;
+}
+
+/* Corrections Specific */
+.correction-item {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 15px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    border-left: 4px solid #2196f3;
+}
+
+.correction-pending {
+    border-left-color: #ff9800;
+}
+
+.correction-approved {
+    border-left-color: #4caf50;
+}
+
+.correction-rejected {
+    border-left-color: #f44336;
+}
+
+/* Enhanced Admin Layout */
+.admin-section {
+    margin-bottom: 40px;
+}
+
+.admin-section-title {
+    color: #333;
+    font-weight: 500;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #1976d2;
+}
