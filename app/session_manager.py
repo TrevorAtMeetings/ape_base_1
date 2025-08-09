@@ -242,3 +242,6 @@ def store_pumps_optimized(suitable_pumps: list) -> None:
     
     # Store only essential data - limit to top 10 for shortlist functionality
     session['suitable_pumps'] = flattened_pumps[:10]  # Allow more pumps for shortlist
+    
+    # CRITICAL FIX: Also store under legacy key for comparison compatibility
+    session['pump_selections'] = flattened_pumps[:10]

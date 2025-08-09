@@ -22,7 +22,10 @@ def pump_comparison():
     """Pump comparison interface with fallback to URL parameters if session is empty."""
     try:
         # Try to get pump selections from session (both old and new formats)
-        pump_selections = safe_session_get('pump_selections', [])
+        # CRITICAL FIX: Check both session keys for pump data
+        pump_selections = safe_session_get('suitable_pumps', [])  # New optimized storage key
+        if not pump_selections:
+            pump_selections = safe_session_get('pump_selections', [])  # Fallback to old key
         comparison_list = safe_session_get('comparison_list', [])
         site_requirements = safe_session_get('site_requirements', {})
         
