@@ -330,19 +330,17 @@
                     return;
                 }
                 
-                const isOpen = window.getComputedStyle(dropdownContent).display === 'block';
+                const isOpen = dropdownContent.classList.contains('show');
                 console.log('Is currently open:', isOpen);
                 
                 // Close all dropdowns
                 document.querySelectorAll('.nav-dropdown-content').forEach(dropdown => {
-                    dropdown.style.display = 'none';
+                    dropdown.classList.remove('show');
                 });
                 
                 // Toggle this dropdown
                 if (!isOpen) {
-                    dropdownContent.style.display = 'block';
-                } else {
-                    // Dropdown is already open, close it
+                    dropdownContent.classList.add('show');
                 }
             });
         });
@@ -351,7 +349,7 @@
         document.addEventListener('click', function(e) {
             if (!e.target.closest('.nav-dropdown')) {
                 document.querySelectorAll('.nav-dropdown-content').forEach(dropdown => {
-                    dropdown.style.display = 'none';
+                    dropdown.classList.remove('show');
                 });
             }
         });

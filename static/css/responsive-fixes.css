@@ -107,33 +107,35 @@ td, th {
     word-wrap: break-word !important;
 }
 
-/* Forms responsive */
-input[type=text],
-input[type=number],
-input[type=email],
-input[type=password],
-textarea,
-select {
-    width: 100% !important;
-    font-size: 16px !important; /* Prevents zoom on iOS */
-    padding: 10px !important;
-    box-sizing: border-box !important;
-}
+/* Forms responsive - mobile only */
+@media only screen and (max-width: 600px) {
+    input[type=text],
+    input[type=number],
+    input[type=email],
+    input[type=password],
+    textarea,
+    select {
+        width: 100% !important;
+        font-size: 16px !important; /* Prevents zoom on iOS */
+        padding: 10px !important;
+        box-sizing: border-box !important;
+    }
 
-/* Buttons responsive */
-.btn, .btn-large {
-    width: 100% !important;
-    margin: 4px 0 !important;
-    padding: 10px !important;
-    font-size: 0.9rem !important;
-    white-space: normal !important;
-    height: auto !important;
-    min-height: 40px !important;
-}
+    /* Buttons responsive */
+    .btn, .btn-large {
+        width: 100% !important;
+        margin: 4px 0 !important;
+        padding: 10px !important;
+        font-size: 0.9rem !important;
+        white-space: normal !important;
+        height: auto !important;
+        min-height: 40px !important;
+    }
 
-.btn-small {
-    padding: 6px 12px !important;
-    font-size: 0.85rem !important;
+    .btn-small {
+        padding: 6px 12px !important;
+        font-size: 0.85rem !important;
+    }
 }
 
 /* Floating AI Chat positioning */
@@ -155,21 +157,23 @@ select {
     max-height: 60vh !important;
 }
 
-/* Grid system mobile */
-.row {
-    margin-left: -8px !important;
-    margin-right: -8px !important;
-}
+/* Grid system mobile - mobile only */
+@media only screen and (max-width: 600px) {
+    .row {
+        margin-left: -8px !important;
+        margin-right: -8px !important;
+    }
 
-.col {
-    padding: 0 8px !important;
-}
+    .col {
+        padding: 0 8px !important;
+    }
 
-[class*="col s"],
-[class*="col m"],
-[class*="col l"] {
-    width: 100% !important;
-    margin-bottom: 12px !important;
+    [class*="col s"],
+    [class*="col m"],
+    [class*="col l"] {
+        width: 100% !important;
+        margin-bottom: 12px !important;
+    }
 }
 
 /* Pump options specific */
