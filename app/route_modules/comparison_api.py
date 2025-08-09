@@ -33,57 +33,40 @@ def add_to_comparison():
         if existing_pump:
             return jsonify({'success': False, 'message': f'{pump_code} already in comparison list'})
         
-        # CRITICAL FIX: Use Brain system as single source of truth
-        try:
-            brain = get_pump_brain()
-            if not brain:
-                return jsonify({'success': False, 'message': 'Brain system unavailable'})
-            
-            # Validate pump exists using Brain (authentic data only)
-            evaluation = brain.evaluate_pump(pump_code, float(flow), float(head))
-            
-            if not evaluation or evaluation.get('excluded'):
-                reason = evaluation.get('exclusion_reasons', ['Pump not suitable'])[0] if evaluation else 'Pump not found'
-                return jsonify({'success': False, 'message': f'Pump not suitable: {reason}'})
-            
-            # Store ONLY identifiers - Brain provides fresh data on demand
-            comparison_pump = {
-                'pump_code': pump_code,
-                'flow': float(flow),
-                'head': float(head),
-                'pump_type': pump_type,
-                'added_timestamp': evaluation.get('timestamp', '')
-            }
-            
-            comparison_list.append(comparison_pump)
-            
-            # Limit to 10 pumps max
-            if len(comparison_list) > 10:
-                comparison_list = comparison_list[-10:]
-            
-            # Save minimal data to session - Brain intelligence on demand
-            safe_session_set('comparison_list', comparison_list)
-            
-            # Also update site requirements for comparison page
-            site_requirements = {
-                'flow_m3hr': flow,
-                'head_m': head,
-                'pump_type': pump_type,
-                'application': 'water'
-            }
-            safe_session_set('site_requirements', site_requirements)
-            
-            logger.info(f"Added {pump_code} to comparison list. Total: {len(comparison_list)}")
-            
-            return jsonify({
-                'success': True, 
-                'message': f'Added {pump_code} to comparison',
-                'count': len(comparison_list)
-            })
-            
-        except Exception as e:
-            logger.error(f"Brain evaluation error for {pump_code}: {str(e)}")
-            return jsonify({'success': False, 'message': 'Error evaluating pump with Brain system'})
+        # Store ONLY identifiers - Brain provides fresh data on demand when needed
+        comparison_pump = {
+            'pump_code': pump_code,
+            'flow': float(flow),
+            'head': float(head),
+            'pump_type': pump_type,
+            'added_timestamp': str(int(float(request.args.get('ts', '0'))))
+        }
+        
+        comparison_list.append(comparison_pump)
+        
+        # Limit to 10 pumps max
+        if len(comparison_list) > 10:
+            comparison_list = comparison_list[-10:]
+        
+        # Save minimal data to session - Brain intelligence on demand
+        safe_session_set('comparison_list', comparison_list)
+        
+        # Also update site requirements for comparison page
+        site_requirements = {
+            'flow_m3hr': flow,
+            'head_m': head,
+            'pump_type': pump_type,
+            'application': 'water'
+        }
+        safe_session_set('site_requirements', site_requirements)
+        
+        logger.info(f"Added {pump_code} to comparison list. Total: {len(comparison_list)}")
+        
+        return jsonify({
+            'success': True, 
+            'message': f'Added {pump_code} to comparison',
+            'count': len(comparison_list)
+        })
         
     except Exception as e:
         logger.error(f"Error in add_to_comparison: {str(e)}")

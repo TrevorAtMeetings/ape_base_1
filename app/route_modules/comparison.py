@@ -19,270 +19,91 @@ comparison_bp = Blueprint('comparison', __name__)
 
 @comparison_bp.route('/compare')
 def pump_comparison():
-    """Pump comparison interface with fallback to URL parameters if session is empty."""
+    """Brain-only pump comparison interface - NO FALLBACKS EVER."""
     try:
         # Clean breadcrumbs for navigation
         breadcrumbs = [
             {'label': 'Home', 'url': url_for('main_flow.index'), 'icon': 'home'},
             {'label': 'Pump Comparison', 'url': '#', 'icon': 'compare_arrows'}
         ]
-        # Try to get pump selections from session (both old and new formats)
-        # CRITICAL FIX: Check both session keys for pump data
-        pump_selections = safe_session_get('suitable_pumps', [])  # New optimized storage key
-        if not pump_selections:
-            pump_selections = safe_session_get('pump_selections', [])  # Fallback to old key
+        
+        # Get pump identifiers from session (simplified - only one source)
         comparison_list = safe_session_get('comparison_list', [])
         site_requirements = safe_session_get('site_requirements', {})
         
-        logger.info(f"Comparison route - Session pump_selections: {len(pump_selections) if pump_selections else 0}")
         logger.info(f"Comparison route - Session comparison_list: {len(comparison_list) if comparison_list else 0}")
         logger.info(f"Comparison route - Session site_requirements: {site_requirements}")
 
-        # Add lifecycle costs to existing pump selections if missing
-        if pump_selections and not pump_selections[0].get('lifecycle_cost'):
-            flow = site_requirements.get('flow_m3hr', 100)
-            for selection in pump_selections:
-                performance = selection.get('performance', {})
-                power_kw = performance.get('power_kw', 0)
-                efficiency_pct = performance.get('efficiency_pct', 0)
-                
-                # Map performance data to template expectations
-                mapped_performance = {
-                    'achieved_efficiency_pct': efficiency_pct,
-                    'achieved_head_m': performance.get('head_m', 0),
-                    'achieved_power_kw': power_kw,
-                    'achieved_flow_m3hr': performance.get('flow_m3hr', 0),
-                    'efficiency_pct': efficiency_pct,
-                    'head_m': performance.get('head_m', 0),
-                    'power_kw': power_kw,
-                    'flow_m3hr': performance.get('flow_m3hr', 0),
-                    'impeller_diameter_mm': performance.get('impeller_diameter_mm', 0),
-                    'test_speed_rpm': performance.get('test_speed_rpm', 0)
-                }
-                
-                # Basic lifecycle cost calculation
-                annual_hours = 8760  # 24/7 operation
-                electricity_rate = 2.50  # R/kWh (typical industrial rate)
-                annual_energy_cost = (power_kw * annual_hours * electricity_rate) / 1000  # Convert to thousands
-                initial_cost = 50000  # Estimated initial cost in R
-                total_10_year_cost = initial_cost + (annual_energy_cost * 10)
-                cost_per_m3 = (annual_energy_cost * 1000) / (flow * 8760) if flow > 0 else 0
-                
-                lifecycle_cost = {
-                    'initial_cost': initial_cost,
-                    'annual_energy_cost': annual_energy_cost * 1000,  # Convert back to R
-                    'total_10_year_cost': total_10_year_cost,
-                    'cost_per_m3': cost_per_m3
-                }
-                
-                # Add BEP analysis for QBEP sorting (for session-based data)
-                bep_analysis = selection.get('bep_analysis', {})
-                flow_ratio = bep_analysis.get('flow_ratio', 1.0)
-                qbep_percentage = flow_ratio * 100  # Convert to percentage
-                
-                selection['performance'] = mapped_performance
-                selection['lifecycle_cost'] = lifecycle_cost
-                selection['bep_analysis'] = bep_analysis
-                selection['qbep_percentage'] = qbep_percentage
-
-        # If session is empty, reconstruct from URL parameters using Brain
-        if not pump_selections:
-            flow = request.args.get('flow', type=float)
-            head = request.args.get('head', type=float)
-            pump_type = request.args.get('pump_type', 'General')
-            if flow and head:
-                # Use Brain system as single source of truth
-                brain = get_pump_brain()
-                if brain:
-                    # Get fresh Brain evaluations - NO FALLBACKS
-                    top_selections = brain.find_best_pumps(flow, head, constraints={'max_results': 10, 'pump_type': pump_type})
-                    pump_selections = []
-                    for selection in top_selections:
-                        # Brain returns dict format, not objects
-                        pump_code = selection.get('pump_code', '')
-                        performance = selection
-                    
-                    # Calculate lifecycle costs
-                    power_kw = performance.get('power_kw', 0)
-                    efficiency_pct = performance.get('efficiency_pct', 0)
-                    
-                    # Map performance data to template expectations
-                    mapped_performance = {
-                        'achieved_efficiency_pct': efficiency_pct,
-                        'achieved_head_m': performance.get('head_m', 0),
-                        'achieved_power_kw': power_kw,
-                        'achieved_flow_m3hr': performance.get('flow_m3hr', 0),
-                        'efficiency_pct': efficiency_pct,
-                        'head_m': performance.get('head_m', 0),
-                        'power_kw': power_kw,
-                        'flow_m3hr': performance.get('flow_m3hr', 0),
-                        'impeller_diameter_mm': performance.get('impeller_diameter_mm', 0),
-                        'test_speed_rpm': performance.get('test_speed_rpm', 0)
-                    }
-                    
-                    # Basic lifecycle cost calculation
-                    annual_hours = 8760  # 24/7 operation
-                    electricity_rate = 2.50  # R/kWh (typical industrial rate)
-                    annual_energy_cost = (power_kw * annual_hours * electricity_rate) / 1000  # Convert to thousands
-                    initial_cost = 50000  # Estimated initial cost in R
-                    total_10_year_cost = initial_cost + (annual_energy_cost * 10)
-                    cost_per_m3 = (annual_energy_cost * 1000) / (flow * 8760) if flow > 0 else 0
-                    
-                    lifecycle_cost = {
-                        'initial_cost': initial_cost,
-                        'annual_energy_cost': annual_energy_cost * 1000,  # Convert back to R
-                        'total_10_year_cost': total_10_year_cost,
-                        'cost_per_m3': cost_per_m3
-                    }
-                    
-                    # Calculate BEP analysis for QBEP sorting
-                    bep_analysis = selection.get('bep_analysis', {})
-                    flow_ratio = bep_analysis.get('flow_ratio', 1.0)
-                    qbep_percentage = flow_ratio * 100  # Convert to percentage
-                    
-                    evaluation = {
-                        'pump_code': pump.pump_code,
-                        'suitability_score': selection.get('suitability_score', 0),
-                        'selection_reason': f"Efficiency: {efficiency_pct:.1f}%, Head error: {selection.get('head_error_pct', 0):.1f}%",
-                        'operating_point': mapped_performance,
-                        'pump_info': {
-                            'manufacturer': pump.manufacturer,
-                            'model_series': pump.model_series,
-                            'pump_type': pump.pump_type
-                        },
-                        'curve_index': 0,
-                        'suitable': selection.get('suitability_score', 0) > 50,
-                        'lifecycle_cost': lifecycle_cost,
-                        'bep_analysis': bep_analysis,
-                        'qbep_percentage': qbep_percentage
-                    }
-                    pump_selections.append(evaluation)
-                site_requirements = {
-                    'flow_m3hr': flow,
-                    'head_m': head,
-                    'pump_type': pump_type
-                }
-
-        # If we have comparison_list from new API, convert it to pump_selections format
-        if comparison_list and not pump_selections:
-            pump_selections = []
-            # CATALOG ENGINE RETIRED - USING BRAIN SYSTEM
-            # from ..catalog_engine import get_catalog_engine
-            from ..pump_brain import get_pump_brain
+        # BRAIN-ONLY LOGIC: Convert pump identifiers to full evaluations
+        pump_comparisons = []
+        if comparison_list:
             brain = get_pump_brain()
+            if not brain:
+                safe_flash('Brain system unavailable for comparison.', 'error')
+                return redirect(url_for('main_flow.index'))
             
-            for comp_pump in comparison_list:
-                pump_data = comp_pump.get('pump_data', {})
-                if pump_data:
-                    # Get actual pump performance from catalog
-                    try:
-                        pump = brain.repository.get_pump_by_code(comp_pump['pump_code'])
-                        if pump:
-                            performance_result = pump.get_performance_at_duty(comp_pump['flow'], comp_pump['head'])
-                            if performance_result:
-                                performance = performance_result['performance']
-                            else:
-                                # Fallback values
-                                performance = {
-                                    'flow_m3hr': comp_pump['flow'],
-                                    'head_m': comp_pump['head'],
-                                    'efficiency_pct': 75,
-                                    'power_kw': 100,
-                                    'impeller_diameter_mm': 350
-                                }
-                        else:
-                            # Fallback values
-                            performance = {
-                                'flow_m3hr': comp_pump['flow'],
-                                'head_m': comp_pump['head'],
-                                'efficiency_pct': 75,
-                                'power_kw': 100,
-                                'impeller_diameter_mm': 350
-                            }
-                    except:
-                        # Fallback values
-                        performance = {
-                            'flow_m3hr': comp_pump['flow'],
-                            'head_m': comp_pump['head'],
-                            'efficiency_pct': 75,
-                            'power_kw': 100,
-                            'impeller_diameter_mm': 350
+            for identifier in comparison_list:
+                try:
+                    pump_code = identifier['pump_code']
+                    flow = identifier['flow']
+                    head = identifier['head']
+                    
+                    # Get fresh Brain evaluation - single source of truth
+                    evaluation = brain.evaluate_pump(pump_code, flow, head)
+                    
+                    if evaluation and not evaluation.get('excluded'):
+                        # Calculate lifecycle costs from Brain data
+                        power_kw = evaluation.get('power_kw', 0)
+                        annual_hours = 8760  
+                        electricity_rate = 2.50  # R/kWh
+                        annual_energy_cost = (power_kw * annual_hours * electricity_rate) / 1000
+                        initial_cost = 50000  
+                        total_10_year_cost = initial_cost + (annual_energy_cost * 10)
+                        cost_per_m3 = (annual_energy_cost * 1000) / (flow * 8760) if flow > 0 else 0
+                        
+                        lifecycle_cost = {
+                            'initial_cost': initial_cost,
+                            'annual_energy_cost': annual_energy_cost * 1000,
+                            'total_10_year_cost': total_10_year_cost,
+                            'cost_per_m3': cost_per_m3
                         }
-                    
-                    # Calculate lifecycle costs
-                    power_kw = performance.get('power_kw', 100)
-                    annual_hours = 8760
-                    electricity_rate = 2.50  # R/kWh
-                    annual_energy_cost = (power_kw * annual_hours * electricity_rate) / 1000
-                    initial_cost = 50000
-                    total_10_year_cost = initial_cost + (annual_energy_cost * 10)
-                    cost_per_m3 = (annual_energy_cost * 1000) / (comp_pump['flow'] * 8760) if comp_pump['flow'] > 0 else 0
-                    
-                    lifecycle_cost = {
-                        'initial_cost': initial_cost,
-                        'annual_energy_cost': annual_energy_cost * 1000,
-                        'total_10_year_cost': total_10_year_cost,
-                        'cost_per_m3': cost_per_m3
-                    }
-                    
-                    evaluation = {
-                        'pump_code': comp_pump['pump_code'],
-                        'suitability_score': 85,
-                        'overall_score': 85,  # Add this for template compatibility
-                        'selection_reason': 'Manually added for comparison',
-                        'pump_type': pump_data.get('pump_type', 'CENTRIFUGAL'),
-                        'operating_point': {
-                            'flow_m3hr': performance.get('flow_m3hr', comp_pump['flow']),
-                            'head_m': performance.get('head_m', comp_pump['head']),
-                            'efficiency_pct': performance.get('efficiency_pct', 75),
-                            'power_kw': performance.get('power_kw', 100),
-                            'achieved_efficiency_pct': performance.get('efficiency_pct', 75),
-                            'achieved_head_m': performance.get('head_m', comp_pump['head']),
-                            'achieved_power_kw': performance.get('power_kw', 100),
-                            'achieved_flow_m3hr': performance.get('flow_m3hr', comp_pump['flow']),
-                            'impeller_size': f"{performance.get('impeller_diameter_mm', 350)}mm",
-                            'achieved_npshr_m': performance.get('npshr_m', 3.0) if performance.get('npshr_m') else None
-                        },
-                        'pump_info': {
-                            'manufacturer': pump_data.get('manufacturer', 'APE PUMPS'),
-                            'model_series': pump_data.get('model_series', ''),
-                            'pump_type': pump_data.get('pump_type', 'CENTRIFUGAL')
-                        },
-                        'suitable': True,
-                        'lifecycle_cost': lifecycle_cost,
-                        'qbep_percentage': 100
-                    }
-                    pump_selections.append(evaluation)
-            
-            # Update site requirements from comparison data
-            if comparison_list:
-                first_pump = comparison_list[0]
-                site_requirements = {
-                    'flow_m3hr': first_pump['flow'],
-                    'head_m': first_pump['head'],
-                    'pump_type': first_pump['pump_type'],
-                    'application': 'water'
-                }
+                        
+                        # Format for template compatibility
+                        pump_comparison = {
+                            'pump_code': pump_code,
+                            'suitability_score': evaluation.get('suitability_score', 0),
+                            'overall_score': evaluation.get('overall_score', 0),
+                            'selection_reason': evaluation.get('selection_reason', 'Brain evaluation'),
+                            'pump_type': evaluation.get('pump_type', 'GENERAL'),
+                            'operating_point': evaluation,  # Brain provides complete performance data
+                            'pump_info': evaluation.get('pump_info', {}),
+                            'suitable': not evaluation.get('excluded', False),
+                            'lifecycle_cost': lifecycle_cost,
+                            'qbep_percentage': evaluation.get('flow_ratio', 1.0) * 100
+                        }
+                        pump_comparisons.append(pump_comparison)
+                    else:
+                        logger.warning(f"Pump {pump_code} excluded from comparison: {evaluation.get('exclusion_reasons', ['Unknown'])}")
+                        
+                except Exception as e:
+                    logger.error(f"Error evaluating {identifier.get('pump_code', 'unknown')}: {str(e)}")
+                    continue
 
-        if not pump_selections:
-            # Try to get parameters from URL for direct access
+        if not pump_comparisons:
+            # Get parameters from URL if no session data
             flow = request.args.get('flow', type=float)
             head = request.args.get('head', type=float)
             pump_type = request.args.get('pump_type', 'GENERAL')
             
             if flow and head:
-                # If we have flow and head but no selections, create a simple comparison message
+                site_requirements = {'flow_m3hr': flow, 'head_m': head, 'pump_type': pump_type}
                 safe_flash('Please add pumps to comparison first by clicking "Add to Compare" on pump report pages.', 'info')
-                return render_template('pump_comparison.html', 
-                                     pump_comparisons=[], 
-                                     site_requirements={'flow_m3hr': flow, 'head_m': head, 'pump_type': pump_type},
-                                     breadcrumbs=breadcrumbs)
             else:
                 safe_flash('No pump selections available for comparison. Please run pump selection first.', 'info')
                 return redirect(url_for('main_flow.index'))
 
         return render_template('pump_comparison.html',
-                             pump_comparisons=pump_selections,
+                             pump_comparisons=pump_comparisons,
                              site_requirements=site_requirements,
                              breadcrumbs=breadcrumbs)
     except Exception as e:
