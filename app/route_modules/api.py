@@ -155,21 +155,20 @@ def search_pumps():
         brain = get_pump_brain()
         all_pumps = brain.get_all_pump_codes()
         
-        # Extract pump codes and filter that contain the query (case-insensitive)
+        # Get all pump models with full data for proper autocomplete
+        all_pump_models = brain.repository.get_pump_models()
+        
+        # Filter pumps that match the query and format for autocomplete
         filtered_pumps = []
-        for pump in all_pumps:
-            # Handle both string pump codes and pump objects
-            if isinstance(pump, str):
-                pump_code = pump
-            elif isinstance(pump, dict):
-                # Extract pump_code from dictionary
-                pump_code = pump.get('pump_code', 'Unknown')
-            else:
-                # Fallback for other types
-                pump_code = str(pump)
+        for pump_model in all_pump_models:
+            pump_code = pump_model.get('pump_code', '')
+            pump_type = pump_model.get('pump_type', 'General')
             
             if query.lower() in pump_code.lower():
-                filtered_pumps.append(pump_code)
+                filtered_pumps.append({
+                    'pump_code': pump_code,
+                    'pump_type': pump_type
+                })
         
         # Limit results for performance
         max_results = 20
