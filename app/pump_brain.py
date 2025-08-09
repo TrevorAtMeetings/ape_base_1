@@ -141,6 +141,12 @@ class PumpBrain:
         Args:
             repository: PumpRepository instance for data access
         """
+        # CRITICAL FIX: Always ensure repository is available
+        if repository is None:
+            from .pump_repository import get_pump_repository
+            repository = get_pump_repository()
+            logger.info("PumpBrain: Auto-loaded repository during initialization")
+        
         # Store repository reference
         self.repository = repository
         
@@ -464,10 +470,20 @@ def get_pump_brain(repository=None) -> PumpBrain:
     global _brain_instance
     
     if _brain_instance is None:
+        # CRITICAL FIX: Always ensure repository is available
+        if repository is None:
+            from .pump_repository import get_pump_repository
+            repository = get_pump_repository()
+            logger.info("Brain system: Auto-loaded repository for initialization")
         _brain_instance = PumpBrain(repository)
     elif repository and _brain_instance.repository is None:
         # Update repository if provided and not set
         _brain_instance.repository = repository
+    elif _brain_instance.repository is None:
+        # CRITICAL FIX: If Brain exists but has no repository, fix it
+        from .pump_repository import get_pump_repository
+        _brain_instance.repository = get_pump_repository()
+        logger.info("Brain system: Repository connection restored")
     
     return _brain_instance
 
