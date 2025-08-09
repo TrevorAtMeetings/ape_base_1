@@ -400,16 +400,34 @@ class ChartIntelligence:
                 elif i == 0:  # Default to first curve if no match
                     is_selected = True
                 
+                # CRITICAL FIX: Extract performance points into separate arrays
+                performance_points = curve.get('performance_points', [])
+                
+                # Initialize arrays for chart data
+                flow_data = []
+                head_data = []
+                efficiency_data = []
+                power_data = []
+                npshr_data = []
+                
+                # Extract data from performance points
+                for point in performance_points:
+                    flow_data.append(point.get('flow_m3hr', 0))
+                    head_data.append(point.get('head_m', 0))
+                    efficiency_data.append(point.get('efficiency_pct', 0))
+                    power_data.append(point.get('power_kw', 0))
+                    npshr_data.append(point.get('npshr_m', 0))
+                
                 chart_data['curves'].append({
                     'curve_index': i,
                     'impeller_size': curve.get('impeller_size', display_label),
                     'impeller_diameter_mm': impeller_mm,
                     'display_label': display_label,  # Brain-generated label
-                    'flow_data': curve.get('flow_data', []),
-                    'head_data': curve.get('head_data', []),
-                    'efficiency_data': curve.get('efficiency_data', []),
-                    'power_data': curve.get('power_data', []),
-                    'npshr_data': curve.get('npshr_data', []),
+                    'flow_data': flow_data,
+                    'head_data': head_data,
+                    'efficiency_data': efficiency_data,
+                    'power_data': power_data,
+                    'npshr_data': npshr_data,
                     'is_selected': is_selected
                 })
             
