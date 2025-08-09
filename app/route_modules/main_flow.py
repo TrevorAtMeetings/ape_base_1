@@ -304,6 +304,7 @@ def pump_options():
         ]
         
         # Render pump options page showing all suitable pumps
+        logger.info(f"Successfully found {len(stored_pumps)} suitable pumps, rendering pump_options.html")
         return render_template(
             'pump_options.html',
             breadcrumbs=breadcrumbs,
