@@ -9,6 +9,7 @@ import base64
 import re
 import os
 import json
+import math
 import markdown2
 from flask import Blueprint, render_template, request, redirect, url_for, session, jsonify, make_response
 from ..session_manager import safe_flash
@@ -69,25 +70,42 @@ def get_pump_list():
         return jsonify({'error': 'Failed to load pump list'}), 500
 
 
+def sanitize_json_data(data):
+    """Recursively sanitize data to replace NaN, Infinity, and None with valid JSON values"""
+    if isinstance(data, dict):
+        return {k: sanitize_json_data(v) for k, v in data.items()}
+    elif isinstance(data, list):
+        return [sanitize_json_data(item) for item in data]
+    elif isinstance(data, float):
+        if math.isnan(data) or math.isinf(data):
+            return 0.0  # Replace NaN/Infinity with 0 for engineering safety
+        return data
+    elif data is None:
+        return 0.0  # Replace None with 0 for numeric fields
+    else:
+        return data
+
+
 def generate_brain_chart_data(pump_code, flow_rate, head):
-    """Generate chart data using Brain system with full curve processing"""
+    """Generate chart data using Brain system - simplified, lean implementation"""
     try:
         brain = get_pump_brain()
         
-        # Get pump data from Brain system
+        # Get pump data and evaluate performance - Brain handles all logic
         target_pump = brain.repository.get_pump_by_code(pump_code)
         if not target_pump:
             return None
             
-        # Get curves
         curves = target_pump.get('curves', [])
         if not curves:
             return None
             
-        # Evaluate pump performance using Brain system
+        # Brain evaluation provides complete analysis
         evaluation_result = brain.evaluate_pump(pump_code, flow_rate, head)
+        if not evaluation_result:
+            return None
         
-        # Build chart data structure compatible with existing frontend
+        # Build lean chart data structure - Brain provides all intelligence
         chart_data = {
             'pump_code': pump_code,
             'pump_info': {
@@ -96,90 +114,49 @@ def generate_brain_chart_data(pump_code, flow_rate, head):
                 'description': target_pump.get('pump_code', pump_code)
             },
             'curves': [],
-            'operating_point': None,
-            'brain_config': {
-                'context': 'web',
-                'margin': 0.1,
-                'annotations': [],
-                'axis_ranges': {
-                    'flow': {'min': 0, 'max': 600},
-                    'head': {'min': 0, 'max': 100},
-                    'efficiency': {'min': 0, 'max': 100}
-                },
-                'display_options': {
-                    'interactive': True,
-                    'show_hover': True,
-                    'show_toolbar': True,
-                    'responsive': True
-                }
-            },
-            'metadata': {
-                'flow_units': 'm³/hr',
-                'head_units': 'm',
-                'efficiency_units': '%',
-                'power_units': 'kW',
-                'npshr_units': 'm',
-                'brain_generated': True
-            }
-        }
-        
-        # Add BEP annotations if available
-        if evaluation_result and evaluation_result.get('bep_flow_m3hr') and evaluation_result.get('bep_head_m'):
-            chart_data['brain_config']['annotations'].append({
-                'type': 'point',
-                'x': evaluation_result['bep_flow_m3hr'],
-                'y': evaluation_result['bep_head_m'],
-                'text': 'BEP',
-                'style': 'star',
-                'color': 'gold'
-            })
-        
-        # Process curves for chart display
-        for i, curve in enumerate(curves):
-            # Get original curve data
-            original_diameter = curve.get('impeller_diameter_mm', 0)
-            final_diameter = original_diameter
-            display_label = f"Head {original_diameter}mm"
-            
-            # Check for impeller trimming from evaluation result
-            if evaluation_result and evaluation_result.get('impeller_diameter_mm'):
-                eval_diameter = evaluation_result['impeller_diameter_mm']
-                if eval_diameter != original_diameter:
-                    final_diameter = eval_diameter
-                    trim_ratio = eval_diameter / original_diameter
-                    trim_amount = (1 - trim_ratio) * 100
-                    display_label = f"Head {final_diameter:.1f}mm ({trim_amount:.1f}% trim)"
-            
-            curve_data = {
-                'curve_index': i,
-                'impeller_size': curve.get('impeller_size', f'Curve {i+1}'),
-                'impeller_diameter_mm': final_diameter,
-                'original_diameter_mm': original_diameter,
-                'display_label': display_label,
-                'transformation_applied': None,
-                'flow_data': curve.get('flow_data', []),
-                'head_data': curve.get('head_data', []),
-                'efficiency_data': curve.get('efficiency_data', []),
-                'power_data': curve.get('power_data', []),
-                'npshr_data': curve.get('npshr_data', []),
-                'is_selected': i == 0  # First curve selected by default
-            }
-            chart_data['curves'].append(curve_data)
-            
-        # Add operating point from Brain evaluation
-        if evaluation_result:
-            chart_data['operating_point'] = {
+            'operating_point': {
                 'flow_m3hr': evaluation_result.get('flow_m3hr', flow_rate),
                 'head_m': evaluation_result.get('head_m', head),
                 'efficiency_pct': evaluation_result.get('efficiency_pct', 0),
                 'power_kw': evaluation_result.get('power_kw', 0),
                 'npshr_m': evaluation_result.get('npshr_m', 0),
                 'impeller_size': evaluation_result.get('impeller_diameter_mm', 0),
-                'curve_index': 0,
                 'extrapolated': evaluation_result.get('extrapolated', False),
-                'within_range': not evaluation_result.get('extrapolated', False),
                 'sizing_info': evaluation_result.get('sizing_info', {})
+            },
+            'brain_config': {
+                'context': 'web',
+                'annotations': [],
+                'axis_ranges': {'flow': {'min': 0, 'max': 600}, 'head': {'min': 0, 'max': 100}},
+                'display_options': {'interactive': True, 'show_hover': True}
+            },
+            'metadata': {
+                'flow_units': 'm³/hr', 'head_units': 'm', 'efficiency_units': '%',
+                'power_units': 'kW', 'npshr_units': 'm', 'brain_generated': True
             }
+        }
+        
+        # Add BEP annotation if available
+        if evaluation_result.get('bep_flow_m3hr') and evaluation_result.get('bep_head_m'):
+            chart_data['brain_config']['annotations'].append({
+                'type': 'point', 'x': evaluation_result['bep_flow_m3hr'],
+                'y': evaluation_result['bep_head_m'], 'text': 'BEP', 'style': 'star', 'color': 'gold'
+            })
+        
+        # Add curves - Brain handles all transformations internally
+        for i, curve in enumerate(curves):
+            chart_data['curves'].append({
+                'curve_index': i,
+                'impeller_size': curve.get('impeller_size', f'Curve {i+1}'),
+                'impeller_diameter_mm': curve.get('impeller_diameter_mm', 0),
+                'display_label': f"Head {curve.get('impeller_diameter_mm', 0)}mm",
+                'flow_data': curve.get('flow_data', []),
+                'head_data': curve.get('head_data', []),
+                'efficiency_data': curve.get('efficiency_data', []),
+                'power_data': curve.get('power_data', []),
+                'npshr_data': curve.get('npshr_data', []),
+                'is_selected': i == 0
+            })
             
         return chart_data
         
@@ -190,131 +167,37 @@ def generate_brain_chart_data(pump_code, flow_rate, head):
 
 @api_bp.route('/chart_data/<path:pump_code>')
 def get_chart_data(pump_code):
-    """API endpoint to get chart data for interactive Plotly.js charts."""
+    """
+    API endpoint to get chart data for interactive Plotly.js charts.
+    Powered exclusively by the Brain system.
+    """
     try:
-        start_time = time.time()
-        
-        # Get site requirements from URL parameters
         flow_rate = request.args.get('flow', type=float, default=100)
         head = request.args.get('head', type=float, default=50)
 
-        # Brain is now always active - no legacy mode
-        brain_mode = 'active'
-        use_brain = BRAIN_AVAILABLE
-        
-        # Use Brain system to get pump data
-        from ..pump_brain import get_pump_brain
-        brain = get_pump_brain()
-        target_pump = brain.repository.get_pump_by_code(pump_code)
+        if not BRAIN_AVAILABLE:
+            logger.error("Chart API call failed: Brain system is not available.")
+            return jsonify({'error': 'The intelligence engine is currently offline.'}), 503
 
-        if not target_pump:
-            logger.error(f"Chart API: Pump {pump_code} not found in catalog")
-            response = jsonify({
-                'error': f'Pump {pump_code} not found',
-                'available_pumps': len(brain.repository.get_pump_models()),
-                'suggestion': 'Please verify the pump code and try again'
-            })
-            response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
-            return response, 404
+        # Directly call the Brain's chart generation function. This is now the ONLY path.
+        chart_data = generate_brain_chart_data(pump_code, flow_rate, head)
 
-        # Use Brain system pump curves directly (dictionary format)
-        curves = target_pump.get('curves', [])
+        if not chart_data:
+            logger.warning(f"Brain could not generate chart data for pump {pump_code} at the given duty point.")
+            return jsonify({'error': f'No valid performance data could be generated for pump {pump_code}.'}), 404
 
-        if not curves:
-            response = jsonify({
-                'error': f'No curve data available for pump {pump_code}'
-            })
-            response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
-            return response, 404
-
-        # BRAIN SYSTEM ACTIVE MODE - Return Brain results directly
-        if use_brain:
-            try:
-                # Generate chart data using Brain system
-                brain_chart_data = generate_brain_chart_data(pump_code, flow_rate, head)
-                
-                if brain_chart_data and brain_mode == 'active':
-                    # Active mode - return Brain results directly
-                    logger.info(f"Brain Active: Returning optimized chart data for {pump_code}")
-                    response = make_response(json.dumps(brain_chart_data))
-                    response.headers['Content-Type'] = 'application/json'
-                    response.headers['Cache-Control'] = 'public, max-age=300'
-                    
-                    total_time = time.time() - start_time
-                    logger.info(f"Chart API: Total request time {total_time:.3f}s for pump {pump_code}")
-                    
-                    return response
-            except Exception as e:
-                logger.error(f"Brain chart generation failed: {str(e)}")
-                # Return error response instead of falling back
-                
-        # If Brain system fails, return error (NO FALLBACKS)
-        response = jsonify({
-            'error': 'Chart data generation failed - Brain system error',
-            'pump_code': pump_code
-        })
-        response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
-        return response, 500
-
-    except Exception as e:
-        logger.error(f"Error in chart data API: {str(e)}")
-        return jsonify({'error': 'Internal server error'}), 500
-
-
-@api_bp.route('/safe_chart_data/<path:pump_code>')  
-def get_safe_chart_data(pump_code):
-    """SAFE API endpoint for chart data - Brain system only, no legacy fallback"""
-    try:
-        start_time = time.time()
-        
-        # Get site requirements from URL parameters
-        flow_rate = request.args.get('flow', type=float, default=100)
-        head = request.args.get('head', type=float, default=50)
-        
-        # Use catalog engine for consistent pump lookup
-        logger.info(f"Chart API: Loading data for pump {pump_code}")
-        data_load_start = time.time()
-
-        # CATALOG ENGINE RETIRED - USING BRAIN SYSTEM
-        from ..pump_brain import get_pump_brain
-        brain = get_pump_brain()
-        target_pump = brain.repository.get_pump_by_code(pump_code)
-
-        logger.info(f"Chart API: Catalog lookup took {time.time() - data_load_start:.3f}s")
-
-        if not target_pump:
-            return jsonify({'error': f'Pump {pump_code} not found'}), 404
-
-        # Use Brain system pump curves directly (dictionary format)
-        curves = target_pump.get('curves', [])
-
-        if not curves:
-            return jsonify({
-                'error': f'Pump {pump_code} not found or no curve data available'
-            }), 404
-
-        # Calculate operating point using Brain system unified method
-        evaluation_result = brain.evaluate_pump(pump_code, flow_rate, head)
-        best_curve = curves[0] if curves else None
-        solution = evaluation_result
-        
-        # Build response using Brain system data
-        response_data = generate_brain_chart_data(pump_code, flow_rate, head)
-        
-        if not response_data:
-            return jsonify({'error': 'Failed to generate chart data'}), 500
-            
-        # Create response with cache-control headers
-        response = jsonify(response_data)
-        response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
-        response.headers['Pragma'] = 'no-cache'
-        response.headers['Expires'] = '0'
-
-        total_time = time.time() - start_time
-        logger.info(f"Chart API: Total request time {total_time:.3f}s for pump {pump_code}")
-
+        # The Brain has provided the complete, correct data. Send it to the user.
+        # Sanitize data to prevent JSON serialization errors with NaN values
+        sanitized_data = sanitize_json_data(chart_data)
+        response = make_response(json.dumps(sanitized_data))
+        response.headers['Content-Type'] = 'application/json'
+        response.headers['Cache-Control'] = 'public, max-age=300'  # 5 minute cache
         return response
 
     except Exception as e:
-        logger.error(f"Error in safe chart data API: {str(e)}")
-        return jsonify({'error': 'Internal server error'}), 500
+        logger.error(f"An unhandled error occurred in get_chart_data: {str(e)}")
+        import traceback
+        logger.error(traceback.format_exc())
+        return jsonify({'error': 'An internal server error occurred.'}), 500
+
+
