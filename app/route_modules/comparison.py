@@ -68,18 +68,40 @@ def pump_comparison():
                             'cost_per_m3': cost_per_m3
                         }
                         
-                        # Format for template compatibility
+                        # Map Brain evaluation to template-expected format
+                        operating_point = {
+                            'flow_m3hr': evaluation.get('flow_m3hr', flow),
+                            'head_m': evaluation.get('head_m', head),
+                            'efficiency_pct': evaluation.get('efficiency_pct', 0),
+                            'power_kw': evaluation.get('power_kw', 0),
+                            'achieved_efficiency_pct': evaluation.get('efficiency_pct', 0),
+                            'achieved_head_m': evaluation.get('head_m', head),
+                            'achieved_power_kw': evaluation.get('power_kw', 0),
+                            'achieved_flow_m3hr': evaluation.get('flow_m3hr', flow),
+                            'impeller_diameter_mm': evaluation.get('impeller_diameter_mm', 0),
+                            'test_speed_rpm': evaluation.get('test_speed_rpm', 0),
+                            'npshr_m': evaluation.get('npshr_m', 0),
+                            'trim_percent': evaluation.get('trim_percent', 100)
+                        }
+                        
+                        pump_info = {
+                            'manufacturer': evaluation.get('manufacturer', 'APE PUMPS'),
+                            'model_series': evaluation.get('model_series', ''),
+                            'pump_type': evaluation.get('pump_type', 'GENERAL'),
+                            'description': evaluation.get('description', '')
+                        }
+                        
                         pump_comparison = {
                             'pump_code': pump_code,
-                            'suitability_score': evaluation.get('suitability_score', 0),
-                            'overall_score': evaluation.get('overall_score', 0),
-                            'selection_reason': evaluation.get('selection_reason', 'Brain evaluation'),
+                            'suitability_score': evaluation.get('total_score', 0),
+                            'overall_score': evaluation.get('total_score', 0),
+                            'selection_reason': f"Brain Score: {evaluation.get('total_score', 0):.1f}%",
                             'pump_type': evaluation.get('pump_type', 'GENERAL'),
-                            'operating_point': evaluation,  # Brain provides complete performance data
-                            'pump_info': evaluation.get('pump_info', {}),
-                            'suitable': not evaluation.get('excluded', False),
+                            'operating_point': operating_point,
+                            'pump_info': pump_info,
+                            'suitable': evaluation.get('feasible', True),
                             'lifecycle_cost': lifecycle_cost,
-                            'qbep_percentage': evaluation.get('flow_ratio', 1.0) * 100
+                            'qbep_percentage': evaluation.get('qbp_percent', 100)
                         }
                         pump_comparisons.append(pump_comparison)
                     else:
