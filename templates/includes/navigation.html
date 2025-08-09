@@ -148,22 +148,22 @@
 <!-- Breadcrumb Bar -->
 {% if breadcrumbs %}
 <div class="breadcrumb-bar">
-    <ul class="breadcrumb-list">
-        {% for crumb in breadcrumbs %}
-        <li class="breadcrumb-item">
-            {% if not loop.last %}
-            <a href="{{ crumb.url }}" class="breadcrumb-link">
-                {{ crumb.label }}
-            </a>
-            {% if not loop.last %}
-            <span class="breadcrumb-separator">›</span>
-            {% endif %}
-            {% else %}
-            <span class="breadcrumb-current">{{ crumb.label }}</span>
-            {% endif %}
-        </li>
-        {% endfor %}
-    </ul>
+    <div class="container">
+        <ul class="breadcrumb-list">
+            {% for crumb in breadcrumbs %}
+            <li class="breadcrumb-item">
+                {% if not loop.last %}
+                    <a href="{{ crumb.url }}" class="breadcrumb-link">
+                        {{ crumb.label }}
+                    </a>
+                    <span class="breadcrumb-separator"></span>
+                {% else %}
+                    <span class="breadcrumb-current">{{ crumb.label }}</span>
+                {% endif %}
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
 </div>
 {% endif %}
 

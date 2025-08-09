@@ -2844,7 +2844,7 @@ nav.unified-nav .nav-btn:hover {
     background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
     color: white;
     padding: 40px 0;
-    margin-top: 64px;
+    margin-top: 0;
 }
 
 .results-title {
@@ -3045,7 +3045,55 @@ nav.unified-nav .nav-btn:hover {
     }
 }
 
-/* Make breadcrumb work with fixed nav */
+/* Breadcrumb positioning - fixed below main nav */
 .breadcrumb-bar {
-    margin-top: 64px;
+    background: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+    padding: 12px 0;
+    margin: 0;
+    position: relative;
+    z-index: 100;
+}
+
+.breadcrumb-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.breadcrumb-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.breadcrumb-link {
+    color: #6c757d;
+    text-decoration: none;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+.breadcrumb-link:hover {
+    background-color: #e9ecef;
+    color: #495057;
+}
+
+.breadcrumb-current {
+    color: #495057;
+    font-weight: 500;
+    padding: 4px 8px;
+}
+
+.breadcrumb-separator {
+    color: #adb5bd;
+    font-size: 0.9rem;
+}
+
+.breadcrumb-separator::before {
+    content: "›";
 }
