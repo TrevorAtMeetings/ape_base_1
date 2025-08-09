@@ -25,6 +25,8 @@ The system prioritizes authentic manufacturer specifications for pump performanc
 - NPSH interpolation corrected to use sorted data for accurate results
 - **Chart API JSON serialization fixed** - robust handling of NumPy booleans from Brain calculations prevents 500 errors
 - **Pump sorting functionality restored** - fixed JavaScript selectors and data attribute mapping for proper result sorting
+- **PUMP LIST API FULLY RESTORED** - Fixed critical API issue returning 386 pumps instead of 0 pumps
+- **PUMP COMPARISON SYSTEM REFACTORED** - Completely Brain-only architecture with NO FALLBACKS EVER implemented
 - All Brain system components now fully operational with complete performance calculations and accurate scoring
 
 ### Enhanced Performance Testing

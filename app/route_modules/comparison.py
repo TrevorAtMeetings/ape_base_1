@@ -118,7 +118,7 @@ def pump_comparison_alias():
 
 @comparison_bp.route('/pump_details/<path:pump_code>')
 def pump_details(pump_code):
-    """Get detailed pump information for modal display - returns JSON"""
+    """Get detailed pump information for modal display using Brain system - returns JSON"""
     try:
         # URL decode the pump code
         from urllib.parse import unquote
@@ -126,19 +126,6 @@ def pump_details(pump_code):
         pump_code = unquote(pump_code)
         
         logger.info(f"Pump details request - Original: '{original_pump_code}', Decoded: '{pump_code}'")
-        
-        # Get pump data from catalog engine
-        # CATALOG ENGINE RETIRED - USING BRAIN SYSTEM
-        # from ..catalog_engine import get_catalog_engine
-        from ..pump_brain import get_pump_brain
-        brain = get_pump_brain()
-        pump = brain.repository.get_pump_by_code(pump_code)
-        
-        if not pump:
-            logger.error(f"Pump not found: '{pump_code}'")
-            return jsonify({'error': 'Pump not found'}), 404
-        
-        logger.info(f"Pump found: {pump.pump_code}")
         
         # Get duty point from parameters - require authentic values
         flow = request.args.get('flow', type=float)
@@ -153,41 +140,24 @@ def pump_details(pump_code):
                 'message': 'Please provide valid flow and head values'
             }), 400
         
-        performance = pump.find_best_solution_for_duty(flow, head)
+        # Use Brain system for evaluation - NO FALLBACKS
+        brain = get_pump_brain()
+        if not brain:
+            return jsonify({'error': 'Brain system unavailable'}), 500
+            
+        evaluation = brain.evaluate_pump(pump_code, flow, head)
         
-        if not performance:
+        if not evaluation or evaluation.get('excluded'):
             logger.error(f"No performance data for pump {pump_code} at flow={flow}, head={head}")
             return jsonify({
                 'error': 'No performance data available for this duty point',
                 'message': f'Pump {pump_code} cannot operate at flow={flow} m³/hr, head={head} m'
             }), 400
         
-        logger.info(f"Performance calculated successfully for {pump_code}")
+        logger.info(f"Brain evaluation completed successfully for {pump_code}")
         
-        # Format pump details for display
-        pump_details_data = {
-            'pump_code': pump.pump_code,
-            'manufacturer': pump.manufacturer,
-            'model_series': pump.model_series,
-            'description': pump.description,
-            'specifications': {
-                'max_flow': pump.max_flow_m3hr,
-                'max_head': pump.max_head_m,
-                'max_power': pump.max_power_kw,
-                'connection_size': getattr(pump, 'connection_size', 'Standard'),
-                'materials': getattr(pump, 'materials', 'Cast Iron')
-            },
-            'performance': performance,
-            'curves_count': len(pump.curves),
-            'operating_ranges': {
-                'flow_range': f"0 - {pump.max_flow_m3hr} m³/hr",
-                'head_range': f"0 - {pump.max_head_m} m",
-                'efficiency_range': f"{pump.min_efficiency} - {pump.max_efficiency}%"
-            }
-        }
-        
-        logger.info(f"Returning pump details for {pump_code}")
-        return jsonify(pump_details_data)
+        # Return Brain evaluation directly - contains all required data
+        return jsonify(evaluation)
         
     except Exception as e:
         logger.error(f"Error fetching pump details for {pump_code}: {str(e)}")
@@ -195,7 +165,7 @@ def pump_details(pump_code):
 
 @comparison_bp.route('/shortlist_comparison')
 def shortlist_comparison():
-    """Display side-by-side comparison of selected pumps"""
+    """Brain-only side-by-side comparison of selected pumps"""
     try:
         pump_codes = request.args.getlist('pumps')
         if len(pump_codes) < 2 or len(pump_codes) > 10:
@@ -209,20 +179,20 @@ def shortlist_comparison():
             safe_flash('Flow and head parameters are required for shortlist comparison', 'error')
             return redirect(url_for('comparison.pump_comparison'))
         
-        # CATALOG ENGINE RETIRED - USING BRAIN SYSTEM
-        # from ..catalog_engine import get_catalog_engine
-        from ..pump_brain import get_pump_brain
+        # Brain-only evaluation - NO FALLBACKS
         brain = get_pump_brain()
+        if not brain:
+            safe_flash('Brain system unavailable for shortlist comparison', 'error')
+            return redirect(url_for('comparison.pump_comparison'))
         
         shortlist_pumps = []
         for pump_code in pump_codes:
-            pump = brain.repository.get_pump_by_code(pump_code)
-            if pump:
-                performance = pump.find_best_solution_for_duty(flow, head)
+            evaluation = brain.evaluate_pump(pump_code, flow, head)
+            if evaluation and not evaluation.get('excluded'):
                 shortlist_pumps.append({
-                    'pump': pump,
-                    'performance': performance,
-                    'pump_code': pump_code
+                    'pump_code': pump_code,
+                    'evaluation': evaluation,
+                    'performance': evaluation  # Alias for template compatibility
                 })
         
         site_requirements = validate_site_requirements({
@@ -256,31 +226,28 @@ def generate_comparison_pdf():
         
         logger.info(f"Comparison PDF generation - Pumps: {pump_codes}, Flow: {flow}, Head: {head}")
         
-        # Get detailed information for pumps
-        # CATALOG ENGINE RETIRED - USING BRAIN SYSTEM
-        # from ..catalog_engine import get_catalog_engine
-        from ..pump_brain import get_pump_brain
+        # Brain-only evaluation for PDF generation
         brain = get_pump_brain()
+        if not brain:
+            safe_flash('Brain system unavailable for PDF generation.', 'error')
+            return redirect(url_for('comparison.pump_comparison'))
         
         comparison_data = []
         for pump_code in pump_codes[:10]:  # Top 10 pumps
             if not pump_code.strip():
                 continue
                 
-            catalog_pump = brain.repository.get_pump_by_code(pump_code.strip())
+            evaluation = brain.evaluate_pump(pump_code.strip(), flow, head)
             
-            if catalog_pump:
-                performance = catalog_pump.get_performance_at_duty(flow, head)
-                
-                if performance:
-                    comparison_data.append({
-                        'pump_code': pump_code.strip(),
-                        'manufacturer': catalog_pump.manufacturer,
-                        'model_series': catalog_pump.model_series,
-                        'suitability_score': performance.get('efficiency_pct', 0),
-                        'performance': performance,
-                        'selection_reason': f"Efficiency: {performance.get('efficiency_pct', 0):.1f}%"
-                    })
+            if evaluation and not evaluation.get('excluded'):
+                comparison_data.append({
+                    'pump_code': pump_code.strip(),
+                    'manufacturer': evaluation.get('manufacturer', 'APE PUMPS'),
+                    'model_series': evaluation.get('model_series', ''),
+                    'suitability_score': evaluation.get('suitability_score', 0),
+                    'performance': evaluation,
+                    'selection_reason': evaluation.get('selection_reason', 'Brain evaluation')
+                })
         
         if not comparison_data:
             safe_flash('No valid pump data found for PDF generation.', 'error')
@@ -298,22 +265,18 @@ def generate_comparison_pdf():
         # Generate PDF using pdf_generator
         from ..pdf_generator import generate_pdf_report as generate_pdf
 
-        # Use the first pump as the main selection for PDF template compatibility
+        # Use the first pump evaluation for PDF template compatibility
         main_evaluation = comparison_data[0] if comparison_data else None
-        main_pump = brain.repository.get_pump_by_code(pump_codes[0]) if pump_codes else None
 
-        if main_evaluation and main_pump:
-            # Convert catalog pump to legacy format for PDF compatibility
-            # CATALOG ENGINE RETIRED - Brain system uses dictionary format directly
-            # from ..catalog_engine import convert_catalog_pump_to_legacy_format
-            # Brain system uses dictionary format - create legacy object for PDF compatibility
+        if main_evaluation:
+            # Create legacy object for PDF compatibility from Brain evaluation
             legacy_pump = type('LegacyPumpData', (), {
-                'pPumpCode': main_pump.get('pump_code', ''),
-                'pSuppName': main_pump.get('manufacturer', 'APE PUMPS'),
+                'pPumpCode': main_evaluation.get('pump_code', ''),
+                'pSuppName': main_evaluation.get('manufacturer', 'APE PUMPS'),
                 'pBEPFlo': flow,
                 'pBEPHed': head,
-                'pBEPEff': main_evaluation.get('efficiency_pct', 80.0),
-                'pKWMax': main_evaluation.get('power_kw', 50.0)
+                'pBEPEff': main_evaluation['performance'].get('efficiency_pct', 80.0),
+                'pKWMax': main_evaluation['performance'].get('power_kw', 50.0)
             })()
             
             pdf_content = generate_pdf(
