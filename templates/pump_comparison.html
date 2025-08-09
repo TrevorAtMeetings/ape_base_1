@@ -1,17 +1,9 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pump Comparison - APE Pumps Selection</title>
-    
-    <!-- Material Design CSS -->
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
-    
+{% extends "base.html" %}
+
+{% block title %}Pump Comparison - APE Pumps Selection{% endblock %}
+
+{% block head %}
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     
     <style>
         .comparison-container {
@@ -737,20 +729,10 @@
             }
         }
     </style>
-</head>
-<body>
-    <!-- Navigation -->
-    <nav class="nav-wrapper blue darken-2">
-        <div class="container">
-            <a href="{{ url_for('main_flow.index') }}" class="brand-logo">
-                <i class="material-icons left">water_damage</i>APE Pumps
-            </a>
-            <ul id="nav-mobile" class="right hide-on-med-and-down">
-                <li><a href="{{ url_for('main_flow.index') }}">Home</a></li>
-                <li class="active"><a href="#">Compare</a></li>
-            </ul>
-        </div>
-    </nav>
+{% endblock %}
+
+{% block content %}
+
 
     <div class="container comparison-container">
         <!-- Hero Banner -->
@@ -1755,8 +1737,4 @@
         }
     </script>
     
-    <!-- Floating AI Chat -->
-    <link href="{{ url_for('static', filename='css/floating-ai-chat.css') }}?v={{ range(1000, 9999) | random }}" rel="stylesheet">
-    <script src="{{ url_for('static', filename='js/floating-ai-chat.js') }}"></script>
-</body>
-</html>
+{% endblock %}

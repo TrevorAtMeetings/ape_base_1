@@ -1,11 +1,10 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pump Selection Report - {{ selected_pump_code }} | APE Pumps</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+{% extends "base.html" %}
+
+{% block title %}Pump Selection Report - {{ selected_pump_code }} | APE Pumps{% endblock %}
+
+{% block head %}
+    <!-- Replace Bootstrap with Material Icons for consistency -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 
     <style>
         .ape-header {
@@ -174,19 +173,20 @@
         .acceptable { background-color: #ffc107; }
         .poor { background-color: #dc3545; }
     </style>
-</head>
-<body>
+{% endblock %}
+
+{% block content %}
     <!-- Header -->
     <div class="ape-header">
         <div class="container">
-            <div class="row align-items-center">
-                <div class="col-md-8">
-                    <h1 class="display-5 mb-0">
-                        <i class="fas fa-cogs"></i> Pump Selection Report
+            <div class="row valign-wrapper">
+                <div class="col s8">
+                    <h1 class="flow-text" style="margin: 0;">
+                        <i class="material-icons left">settings</i> Pump Selection Report
                     </h1>
-                    <p class="lead mb-0">{{ selected_pump_code }} - Comprehensive Analysis</p>
+                    <p class="flow-text" style="margin: 0; opacity: 0.9;">{{ selected_pump_code }} - Comprehensive Analysis</p>
                 </div>
-                <div class="col-md-4 text-end">
+                <div class="col s4 right-align">
                     <img src="{{ url_for('static', filename='images/ape-logo-white.png') }}" 
                          alt="APE Pumps" style="height: 60px;" 
                          onerror="this.style.display='none'">
@@ -195,7 +195,7 @@
         </div>
     </div>
 
-    <div class="container mt-4">
+    <div class="container" style="margin-top: 20px;">
         <!-- Hidden data attributes for charts initialization -->
         <div id="chart-data" 
              data-pump-code="{{ selected_pump_code }}" 
@@ -204,15 +204,13 @@
              style="display: none;"></div>
         
         <!-- Site Requirements Summary -->
-        <div class="row mb-4">
-            <div class="col-12">
+        <div class="row" style="margin-bottom: 20px;">
+            <div class="col s12">
                 <div class="card">
-                    <div class="card-header">
-                        <h5 class="mb-0"><i class="fas fa-clipboard-list"></i> Site Requirements</h5>
-                    </div>
-                    <div class="card-body">
+                    <div class="card-content">
+                        <span class="card-title"><i class="material-icons left">assignment</i> Site Requirements</span>
                         <div class="row">
-                            <div class="col-md-3">
+                            <div class="col s6 m3">
                                 <strong>Flow Rate:</strong><br>
                                 <span class="h5 text-primary">{{ site_requirements.flow_m3hr }} m³/hr</span>
                             </div>
@@ -327,9 +325,9 @@
                             </div>
                             
                             <!-- Technical Specifications -->
-                            <div class="col-md-6">
+                            <div class="col s6 m6">
                                 <h6>Technical Specifications</h6>
-                                <table class="table table-sm">
+                                <table class="responsive-table">
                                     <tr>
                                         <td><strong>Impeller Size:</strong></td>
                                         <td>{{ selected_pump.get('selected_curve', {}).get('impeller_size', 'N/A') }}mm</td>
@@ -341,19 +339,19 @@
                                     <tr>
                                         <td><strong>Suitability Score:</strong></td>
                                         <td>
-                                            <div class="progress" style="height: 20px;">
-                                                <div class="progress-bar bg-success" role="progressbar" 
+                                            <div class="progress">
+                                                <div class="determinate green" 
                                                      style="width: {{ selected_pump.overall_score|default(0) }}%;">
-                                                    {{ "%.0f"|default(0.0)|format(selected_pump.overall_score|default(0)) }}%
                                                 </div>
                                             </div>
+                                            <span style="font-weight: 500;">{{ "%.0f"|default(0.0)|format(selected_pump.overall_score|default(0)) }}%</span>
                                         </td>
                                     </tr>
                                     {% if selected_pump.ai_reasoning %}
                                     <tr>
                                         <td colspan="2">
-                                            <small class="text-muted">
-                                                <i class="fas fa-robot"></i> {{ selected_pump.ai_reasoning[:100] }}...
+                                            <small style="color: #666;">
+                                                <i class="material-icons tiny">smart_toy</i> {{ selected_pump.ai_reasoning[:100] }}...
                                             </small>
                                         </td>
                                     </tr>
@@ -365,8 +363,8 @@
                         <!-- AI Reasoning Section -->
                         {% if selected_pump.ai_reasoning %}
                         <div class="reasoning-section">
-                            <h6><i class="fas fa-brain"></i> AI Selection Reasoning</h6>
-                            <p class="mb-0">{{ selected_pump.ai_reasoning }}</p>
+                            <h6><i class="material-icons left">psychology</i> AI Selection Reasoning</h6>
+                            <p style="margin: 0;">{{ selected_pump.ai_reasoning }}</p>
                         </div>
                         {% endif %}
                     </div>
@@ -496,8 +494,4 @@
         });
     </script>
     
-    <!-- Floating AI Chat -->
-    <link href="{{ url_for('static', filename='css/floating-ai-chat.css') }}?v={{ range(1000, 9999) | random }}" rel="stylesheet">
-    <script src="{{ url_for('static', filename='js/floating-ai-chat.js') }}"></script>
-</body>
-</html>
+{% endblock %}
