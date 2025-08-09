@@ -111,9 +111,27 @@
             </div>
             
             <div class="pump-specs">
-                <div><strong>Efficiency:</strong> {{ "%.1f"|format(pump.get('efficiency_pct', 0)) }}%</div>
-                <div><strong>Power:</strong> {{ "%.1f"|format(pump.get('power_kw', 0)) }} kW</div>
-                <div><strong>NPSHr:</strong> {{ "%.1f"|format(pump.get('npshr_m', 0)) }} m</div>
+                <div><strong>Efficiency:</strong> 
+                    {% if pump.get('efficiency_pct') is not none %}
+                        {{ "%.1f"|format(pump.get('efficiency_pct')) }}%
+                    {% else %}
+                        --%
+                    {% endif %}
+                </div>
+                <div><strong>Power:</strong> 
+                    {% if pump.get('power_kw') is not none %}
+                        {{ "%.1f"|format(pump.get('power_kw')) }} kW
+                    {% else %}
+                        -- kW
+                    {% endif %}
+                </div>
+                <div><strong>NPSHr:</strong> 
+                    {% if pump.get('npshr_m') is not none %}
+                        {{ "%.1f"|format(pump.get('npshr_m')) }} m
+                    {% else %}
+                        -- m
+                    {% endif %}
+                </div>
                 {% if pump.get('trim_percent') %}
                 <div><strong>Trim:</strong> {{ (100 - pump['trim_percent'])|round|int }}%</div>
                 {% endif %}
@@ -124,7 +142,11 @@
             </div>
             
             <div class="pump-efficiency">
-                {{ "%.1f"|format(pump.get('efficiency_pct', 0)) }}%
+                {% if pump.get('efficiency_pct') is not none %}
+                    {{ "%.1f"|format(pump.get('efficiency_pct')) }}%
+                {% else %}
+                    --%
+                {% endif %}
             </div>
             
             <div class="pump-actions">
