@@ -157,9 +157,10 @@ def flatten_pump_data(pump_dict: Dict[str, Any]) -> Dict[str, Any]:
     flattened['pump_code'] = pump_dict.get('pump_code', 'N/A')
     flattened['suitability_score'] = pump_dict.get('suitability_score', pump_dict.get('selection_score', 0))
     
-    # Flatten performance data to top level
+    # CRITICAL FIX: Handle Brain system data structure (flat keys) and legacy performance dict
     performance = pump_dict.get('performance', {})
     if performance:
+        # Legacy nested performance structure
         flattened['efficiency_pct'] = performance.get('efficiency_pct', pump_dict.get('efficiency_at_duty', 0))
         flattened['power_kw'] = performance.get('power_kw', 0)
         flattened['npshr_m'] = performance.get('npshr_m', 0)
@@ -167,13 +168,13 @@ def flatten_pump_data(pump_dict: Dict[str, Any]) -> Dict[str, Any]:
         flattened['head_m'] = performance.get('head_m', 0)
         flattened['impeller_diameter_mm'] = performance.get('impeller_diameter_mm', 187)
     else:
-        # Use direct fields if no performance dict
-        flattened['efficiency_pct'] = pump_dict.get('efficiency_at_duty', 0)
-        flattened['power_kw'] = 0
-        flattened['npshr_m'] = 0
-        flattened['flow_m3hr'] = 0
-        flattened['head_m'] = 0
-        flattened['impeller_diameter_mm'] = 187
+        # BRAIN SYSTEM: Direct flat keys - handle correctly
+        flattened['efficiency_pct'] = pump_dict.get('efficiency_pct', pump_dict.get('efficiency_at_duty', 0))
+        flattened['power_kw'] = pump_dict.get('power_kw', 0)
+        flattened['npshr_m'] = pump_dict.get('npshr_m', 0)
+        flattened['flow_m3hr'] = pump_dict.get('flow_m3hr', 0)
+        flattened['head_m'] = pump_dict.get('head_m', 0)
+        flattened['impeller_diameter_mm'] = pump_dict.get('impeller_diameter_mm', 187)
     
     # Flatten BEP analysis to top level
     bep_analysis = pump_dict.get('bep_analysis', {})
