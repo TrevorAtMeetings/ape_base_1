@@ -1655,16 +1655,25 @@ class CatalogEngine:
         }
 
 
-# Global catalog engine instance
-catalog_engine = None
+# Global catalog engine instance with performance optimization
+_catalog_engine_instance = None
 
 
 def get_catalog_engine() -> CatalogEngine:
-    """Get global catalog engine instance"""
-    global catalog_engine
-    if catalog_engine is None:
-        catalog_engine = CatalogEngine()
-    return catalog_engine
+    """Get global catalog engine instance with performance caching"""
+    global _catalog_engine_instance
+    if _catalog_engine_instance is None:
+        logger.info("Catalog Engine: First-time initialization...")
+        _catalog_engine_instance = CatalogEngine()
+        logger.info("Catalog Engine: Ready for high-performance requests")
+    return _catalog_engine_instance
+
+
+def clear_catalog_engine():
+    """Clear catalog engine cache (for admin/testing only)"""
+    global _catalog_engine_instance
+    _catalog_engine_instance = None
+    logger.info("Catalog Engine: Performance cache cleared")
 
 
 def convert_catalog_pump_to_legacy_format(

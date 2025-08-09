@@ -56,10 +56,9 @@ from .session_manager import init_session_manager
 session_manager = init_session_manager(app)
 logger.info("Session manager initialized.")
 
-# Clear repository cache to ensure correct DATABASE_URL is used
-from .pump_repository import clear_pump_repository
-clear_pump_repository()
-logger.info("Repository cache cleared to ensure correct DATABASE_URL.")
+# PERFORMANCE FIX: Don't clear repository cache - let singleton handle caching
+# Repository will use the correct DATABASE_URL when initialized
+logger.info("Repository cache retained for performance - will auto-initialize with correct DATABASE_URL.")
 
 # 3. IMPORT YOUR APPLICATION MODULES
 # Import routes *after* the app is created and configured
