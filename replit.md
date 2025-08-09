@@ -37,6 +37,9 @@ Comprehensive Best Efficiency Point (BEP)-centered envelope testing is included 
 ### AI Chatbot Enhancement
 The chatbot supports natural language pump selection queries, metric-first design, template card results, and seamless integration for detailed analysis and comparison. It includes shorthand query support, `@pump` lookup with autocomplete, and flexible unit recognition.
 
+### Administrative Feature Toggle System
+Comprehensive admin control system with database-backed feature toggles for managing AI chatbot, performance testing, data quality tools, and other administrative features. Features are organized by category (AI, Admin, Features, System) with real-time status management, professional admin interface, and API endpoints for programmatic control.
+
 ### User Experience Improvements
 Default views are set to "engineering view" for all pump selections, and the shortlist capacity has been increased to 10 pumps. Operating point markers are enhanced on charts with transparent red triangles, crosshairs, and a small red dot. Consistent X-axis ranges are maintained, and hover templates provide comprehensive data.
 

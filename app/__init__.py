@@ -121,6 +121,10 @@ app.register_blueprint(api_bp, url_prefix='/api')
 from .route_modules.admin_config import admin_config_bp
 app.register_blueprint(admin_config_bp)
 
+# Register the Feature Admin blueprint
+from .route_modules.feature_admin import feature_admin_bp
+app.register_blueprint(feature_admin_bp)
+
 # Register the Pump Editor blueprint
 from .route_modules.pump_editor_routes import pump_editor_bp
 app.register_blueprint(pump_editor_bp)

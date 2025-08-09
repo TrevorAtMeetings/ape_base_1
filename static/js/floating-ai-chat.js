@@ -8,12 +8,30 @@ window.aiChatOpen = window.aiChatOpen || false;
 window.aiMessageHistory = window.aiMessageHistory || [];
 window.aiIsProcessing = window.aiIsProcessing || false;
 
-function initializeFloatingAIChat() {
-    // Remove any existing chat elements first
-    const existingChat = document.getElementById('floating-ai-chat');
-    if (existingChat) {
-        existingChat.remove();
+async function checkAIChatFeatureEnabled() {
+    try {
+        const response = await fetch('/api/features/status');
+        const data = await response.json();
+        return data.success && data.features && data.features.ai_chatbot;
+    } catch (error) {
+        console.log('Feature status check failed, defaulting to enabled:', error);
+        return true; // Default to enabled if check fails
     }
+}
+
+function initializeFloatingAIChat() {
+    // Check if AI chatbot feature is enabled
+    checkAIChatFeatureEnabled().then(enabled => {
+        if (!enabled) {
+            console.log('AI Chatbot feature is disabled');
+            return;
+        }
+        
+        // Remove any existing chat elements first
+        const existingChat = document.getElementById('floating-ai-chat');
+        if (existingChat) {
+            existingChat.remove();
+        }
     
     // Add floating chat HTML to body
     const floatingChatHTML = `
