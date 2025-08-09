@@ -5,6 +5,7 @@ This Flask-based web application provides an intelligent pump recommendation sys
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
+**CRITICAL ENGINEERING PRINCIPLE**: NO FALLBACKS EVER - We fix issues at the root cause, never use fallback systems or workarounds.
 
 ## System Architecture
 The application employs a modular Flask architecture with a clear separation of concerns, supporting both backend and frontend components.
@@ -30,7 +31,7 @@ Default views are set to "engineering view" for all pump selections, and the sho
 Operating point markers are enhanced with transparent red triangles on the X-axis, crosshairs, and a small red dot at the actual operating point. Consistent X-axis ranges are maintained across engineering view charts, and hover templates provide comprehensive data.
 
 ### Methodology
-The pump selection methodology separates fixed-speed (impeller trimming) from VFD (speed variation) logic. It incorporates hard safety gates for NPSH (1.5x margin) and QBP operating range (60-130%). Impeller trim is limited to 85-100% of maximum diameter. The system trusts manufacturer data if performance data exists in the database. Scoring is rebalanced, and trimmed curves are supported in the API. Envelope testing uses a curve-following methodology. The "Brain System" centralizes intelligence for selection logic, performance analysis, and chart intelligence, aiming to eliminate calculation inconsistencies and provide real-time intelligence.
+The pump selection methodology separates fixed-speed (impeller trimming) from VFD (speed variation) logic. It incorporates hard safety gates for NPSH (1.5x margin) and QBP operating range (60-130%). Impeller trim is limited to 85-100% of maximum diameter. The system trusts manufacturer data if performance data exists in the database. Scoring is rebalanced, and trimmed curves are supported in the API. Envelope testing uses a curve-following methodology. The "Brain System" centralizes intelligence for selection logic, performance analysis, and chart intelligence, aiming to eliminate calculation inconsistencies and provide real-time intelligence. **August 2025 Critical Fix**: Fixed Brain system data mapping bug where head values were calculated correctly but not stored in evaluation results, causing 0.0m head display while efficiency/power remained authentic. Brain system is now the single, reliable selection engine with no fallback mechanisms.
 
 ### Backend Architecture
 - **Flask Framework**: Handles routing and HTTP requests.
