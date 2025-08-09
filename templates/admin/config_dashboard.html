@@ -4,76 +4,148 @@
 
 {% block head %}
 <style>
-/* Configuration Dashboard Styles */
+/* Executive-Grade Configuration Dashboard */
+:root {
+    --config-primary: #1565C0;
+    --config-primary-light: #1976D2;
+    --config-primary-dark: #0D47A1;
+    --config-secondary: #37474F;
+    --config-accent: #FF6F00;
+    --config-success: #2E7D32;
+    --config-warning: #F57C00;
+    --config-error: #C62828;
+    --config-surface: #FFFFFF;
+    --config-surface-variant: #F8F9FA;
+    --config-outline: #E0E0E0;
+    --config-shadow: 0 8px 32px rgba(21, 101, 192, 0.08);
+    --config-shadow-hover: 0 12px 48px rgba(21, 101, 192, 0.15);
+    --config-border-radius: 16px;
+    --config-transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 .config-dashboard {
-    background: var(--md-sys-color-background);
+    background: linear-gradient(135deg, #F8F9FA 0%, #E3F2FD 100%);
     min-height: 100vh;
-    padding: 24px 0;
+    padding: 0;
+    font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
 }
 
 .config-container {
-    max-width: 1400px;
+    max-width: 1440px;
     margin: 0 auto;
-    padding: 0 24px;
+    padding: 40px 32px;
 }
 
 .config-header {
-    background: var(--md-sys-color-primary-container);
-    border-radius: 24px;
-    padding: 32px;
-    margin-bottom: 32px;
+    background: linear-gradient(135deg, var(--config-primary) 0%, var(--config-primary-light) 100%);
+    border-radius: var(--config-border-radius);
+    padding: 48px 40px;
+    margin-bottom: 48px;
     text-align: center;
+    position: relative;
+    box-shadow: var(--config-shadow);
+    overflow: hidden;
+}
+
+.config-header::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+    animation: shimmer 3s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+    0%, 100% { transform: rotate(0deg); }
+    50% { transform: rotate(180deg); }
 }
 
 .config-title {
-    font-size: 32px;
-    font-weight: 400;
-    color: var(--md-sys-color-on-primary-container);
-    margin: 0 0 8px 0;
+    font-size: 42px;
+    font-weight: 700;
+    color: white;
+    margin: 0 0 12px 0;
+    letter-spacing: -0.02em;
+    position: relative;
+    z-index: 1;
 }
 
 .config-subtitle {
-    font-size: 16px;
-    color: var(--md-sys-color-on-primary-container);
-    opacity: 0.8;
+    font-size: 18px;
+    color: rgba(255,255,255,0.9);
     margin: 0;
+    font-weight: 400;
+    line-height: 1.6;
+    position: relative;
+    z-index: 1;
+    max-width: 600px;
+    margin: 0 auto;
 }
 
 .config-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-    gap: 24px;
-    margin-bottom: 32px;
+    grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+    gap: 32px;
+    margin-bottom: 48px;
 }
 
 .config-section {
-    background: var(--md-sys-color-surface);
-    border: 1px solid var(--md-sys-color-outline-variant);
-    border-radius: 16px;
-    padding: 24px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    background: var(--config-surface);
+    border: 2px solid var(--config-outline);
+    border-radius: var(--config-border-radius);
+    padding: 32px;
+    box-shadow: var(--config-shadow);
+    transition: var(--config-transition);
+    position: relative;
+    overflow: hidden;
+}
+
+.config-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--config-primary) 0%, var(--config-accent) 100%);
+}
+
+.config-section:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--config-shadow-hover);
+    border-color: var(--config-primary);
 }
 
 .section-header {
     display: flex;
     align-items: center;
-    gap: 16px;
-    margin-bottom: 20px;
+    gap: 20px;
+    margin-bottom: 28px;
 }
 
 .section-icon {
-    font-size: 24px;
-    background: var(--md-sys-color-primary-container);
-    color: var(--md-sys-color-on-primary-container);
-    padding: 12px;
-    border-radius: 12px;
+    font-size: 28px;
+    background: linear-gradient(135deg, var(--config-primary) 0%, var(--config-primary-light) 100%);
+    color: white;
+    padding: 16px;
+    border-radius: 14px;
+    box-shadow: 0 4px 16px rgba(21, 101, 192, 0.3);
+    transition: var(--config-transition);
+}
+
+.section-icon:hover {
+    transform: scale(1.05);
 }
 
 .section-title {
-    font-size: 20px;
-    font-weight: 500;
-    color: var(--md-sys-color-on-surface);
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--config-secondary);
     margin: 0;
+    letter-spacing: -0.01em;
 }
 
 .config-list {
@@ -86,96 +158,230 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 12px 0;
-    border-bottom: 1px solid var(--md-sys-color-outline-variant);
+    padding: 20px 0;
+    border-bottom: 1px solid var(--config-outline);
+    transition: var(--config-transition);
 }
 
 .config-item:last-child {
     border-bottom: none;
 }
 
+.config-item:hover {
+    background: var(--config-surface-variant);
+    margin: 0 -20px;
+    padding: 20px;
+    border-radius: 12px;
+}
+
 .config-label {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--config-secondary);
+    line-height: 1.4;
+}
+
+.config-item small {
     font-size: 14px;
-    color: var(--md-sys-color-on-surface);
+    color: #757575;
+    font-weight: 400;
+    margin-top: 4px;
+    display: block;
 }
 
 .config-value {
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--md-sys-color-primary);
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--config-primary);
+    text-align: right;
 }
 
 .btn-group {
     display: flex;
-    gap: 12px;
-    margin-top: 20px;
+    gap: 16px;
+    margin-top: 32px;
+    flex-wrap: wrap;
 }
 
 .btn {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
-    padding: 10px 20px;
-    border-radius: 16px;
-    font-size: 14px;
-    font-weight: 500;
+    gap: 12px;
+    padding: 16px 28px;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 600;
     text-decoration: none;
-    transition: all 0.2s ease;
-    border: none;
+    transition: var(--config-transition);
+    border: 2px solid transparent;
     cursor: pointer;
+    letter-spacing: 0.02em;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.5s;
+}
+
+.btn:hover::before {
+    left: 100%;
 }
 
 .btn-primary {
-    background: var(--md-sys-color-primary);
-    color: var(--md-sys-color-on-primary);
+    background: linear-gradient(135deg, var(--config-primary) 0%, var(--config-primary-light) 100%);
+    color: white;
+    box-shadow: 0 4px 16px rgba(21, 101, 192, 0.3);
 }
 
 .btn-primary:hover {
-    background: var(--md-sys-color-primary);
-    filter: brightness(1.1);
-    transform: translateY(-1px);
-    color: var(--md-sys-color-on-primary);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px rgba(21, 101, 192, 0.4);
 }
 
 .btn-secondary {
-    background: transparent;
-    color: var(--md-sys-color-primary);
-    border: 1px solid var(--md-sys-color-outline);
+    background: white;
+    color: var(--config-primary);
+    border-color: var(--config-primary);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
 .btn-secondary:hover {
-    background: var(--md-sys-color-primary);
-    color: var(--md-sys-color-on-primary);
-    border-color: var(--md-sys-color-primary);
+    background: var(--config-primary);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 24px rgba(21, 101, 192, 0.3);
 }
 
 .status-badge {
-    padding: 4px 12px;
-    border-radius: 12px;
+    padding: 8px 16px;
+    border-radius: 20px;
     font-size: 12px;
-    font-weight: 500;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
 .status-active {
-    background: var(--md-sys-color-tertiary-container);
-    color: var(--md-sys-color-on-tertiary-container);
+    background: linear-gradient(135deg, var(--config-success) 0%, #4CAF50 100%);
+    color: white;
 }
 
 .status-inactive {
-    background: var(--md-sys-color-error-container);
-    color: var(--md-sys-color-on-error-container);
+    background: linear-gradient(135deg, var(--config-error) 0%, #F44336 100%);
+    color: white;
 }
 
 .empty-state {
     text-align: center;
-    padding: 40px 20px;
-    color: var(--md-sys-color-on-surface-variant);
+    padding: 60px 40px;
+    color: #757575;
+    background: var(--config-surface-variant);
+    border-radius: 16px;
+    margin: 20px 0;
 }
 
 .empty-icon {
-    font-size: 48px;
-    opacity: 0.5;
-    margin-bottom: 16px;
+    font-size: 64px;
+    opacity: 0.3;
+    margin-bottom: 24px;
+    color: var(--config-primary);
+}
+
+.empty-state p {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+/* Enhanced Breadcrumb */
+.breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 24px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    margin-bottom: 32px;
+    font-size: 15px;
+    font-weight: 500;
+}
+
+.breadcrumb a {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--config-primary);
+    text-decoration: none;
+    padding: 8px 12px;
+    border-radius: 8px;
+    transition: var(--config-transition);
+}
+
+.breadcrumb a:hover {
+    background: var(--config-surface-variant);
+    transform: translateY(-1px);
+}
+
+.breadcrumb .material-icons-round {
+    font-size: 20px;
+    color: var(--config-secondary);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .config-container {
+        padding: 24px 16px;
+    }
+    
+    .config-header {
+        padding: 32px 24px;
+    }
+    
+    .config-title {
+        font-size: 32px;
+    }
+    
+    .config-grid {
+        grid-template-columns: 1fr;
+        gap: 24px;
+    }
+    
+    .config-section {
+        padding: 24px 20px;
+    }
+    
+    .btn-group {
+        flex-direction: column;
+    }
+    
+    .btn {
+        justify-content: center;
+    }
+}
+
+/* Performance Optimizations */
+.config-dashboard * {
+    box-sizing: border-box;
+}
+
+/* Accessibility Enhancements */
+.btn:focus {
+    outline: 3px solid var(--config-primary);
+    outline-offset: 2px;
+}
+
+.config-section:focus-within {
+    border-color: var(--config-primary);
 }
 </style>
 {% endblock %}
@@ -183,14 +389,14 @@
 {% block content %}
 <div class="config-dashboard">
     <div class="config-container">
-        <!-- Breadcrumb -->
-        <nav class="breadcrumb" style="margin-bottom: 24px; font-size: 14px; color: var(--md-sys-color-on-surface-variant);">
-            <a href="/admin" style="color: var(--md-sys-color-primary); text-decoration: none;">
+        <!-- Enhanced Breadcrumb -->
+        <nav class="breadcrumb">
+            <a href="/admin">
                 <span class="material-icons-round">admin_panel_settings</span>
                 Admin
             </a> 
             <span class="material-icons-round">chevron_right</span> 
-            <span>Configuration Management</span>
+            <span style="color: var(--config-secondary); font-weight: 600;">Configuration Management</span>
         </nav>
 
         <!-- Header -->
