@@ -359,8 +359,8 @@ class PumpRepository:
                                 'max_flow_m3hr': float(pump_row_dict.get('max_flow_m3hr', 0)) if pump_row_dict.get('max_flow_m3hr') is not None else 0,
                                 'max_head_m': float(pump_row_dict.get('max_head_m', 0)) if pump_row_dict.get('max_head_m') is not None else 0,
                                 # CRITICAL FIX: Use curve-derived min/max instead of potentially stale database values
-                                'min_impeller_mm': float(min_mm) if min_mm is not None else 0,
-                                'max_impeller_mm': float(max_mm) if max_mm is not None else 0,
+                                'min_impeller_diameter_mm': float(min_mm) if min_mm is not None else 0,
+                                'max_impeller_diameter_mm': float(max_mm) if max_mm is not None else 0,
                                 'test_speed_rpm': int(pump_row_dict.get('test_speed_rpm', 0)) if pump_row_dict.get('test_speed_rpm') is not None else 0,
                                 'min_speed_rpm': int(pump_row_dict.get('min_speed_rpm', 0)) if pump_row_dict.get('min_speed_rpm') is not None else 0,
                                 'max_speed_rpm': int(pump_row_dict.get('max_speed_rpm', 0)) if pump_row_dict.get('max_speed_rpm') is not None else 0,

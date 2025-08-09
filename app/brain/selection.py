@@ -206,22 +206,11 @@ class SelectionIntelligence:
             # Get pump specifications
             specs = pump_data.get('specifications', {})
             
-            # CRITICAL FIX: Smart BEP calculation when missing from specifications
+            # Get BEP data from specifications (authentic manufacturer data)
             bep_flow = specs.get('bep_flow_m3hr', 0)
             bep_head = specs.get('bep_head_m', 0)
             
-            # If BEP data missing from specs, calculate from performance curves
-            if bep_flow <= 0 or bep_head <= 0:
-                logger.debug(f"[SCORE] {pump_data.get('pump_code')}: BEP data missing from specs (flow={bep_flow}, head={bep_head}), calculating from curves...")
-                calculated_bep = self._calculate_bep_from_curves(pump_data)
-                if calculated_bep:
-                    bep_flow = calculated_bep['flow_m3hr']
-                    bep_head = calculated_bep['head_m']
-                    logger.debug(f"[SCORE] {pump_data.get('pump_code')}: Calculated BEP from curves - flow: {bep_flow:.1f} m³/hr, head: {bep_head:.1f}m")
-                else:
-                    logger.debug(f"[SCORE] {pump_data.get('pump_code')}: Could not calculate BEP from curves - skipping BEP scoring")
-            else:
-                logger.debug(f"[SCORE] {pump_data.get('pump_code')}: Using BEP from specs - flow: {bep_flow:.1f} m³/hr, head: {bep_head:.1f}m")
+            logger.debug(f"[SCORE] {pump_data.get('pump_code')}: BEP from specs - flow: {bep_flow:.1f} m³/hr, head: {bep_head:.1f}m")
             
             if bep_flow > 0 and bep_head > 0:
                 # Calculate QBP (% of BEP flow)

@@ -19,9 +19,11 @@ The system prioritizes authentic manufacturer specifications for pump performanc
 **CRITICAL BUG FIXES COMPLETED (Aug 2025)**:
 - Repository data loading bug fixed - all 369 pumps with performance curves now properly connected to Brain system
 - **Interpolation sorting bug fixed** - resolved scipy interpolation failures caused by unsorted flow data that was returning NaN values and causing silent pump rejections
+- **Database field mapping corrected** - fixed min_impeller_mm/max_impeller_mm to use correct database column names min_impeller_diameter_mm/max_impeller_diameter_mm
+- **QBEP calculation restored** - pump selection scoring now works correctly with authentic BEP data from specifications table
 - Power data handling improved with proper hydraulic calculations from authentic manufacturer data
 - NPSH interpolation corrected to use sorted data for accurate results
-- All Brain system components now fully operational with complete performance calculations
+- All Brain system components now fully operational with complete performance calculations and accurate scoring
 
 ### Enhanced Performance Testing
 Comprehensive Best Efficiency Point (BEP)-centered envelope testing is included with statistical analysis and improved tabular display. It defines clear status legends (Match, Minor, Major) for accuracy metrics. A critical head oversizing penalty system prevents selection of pumps with BEP heads significantly above requirements.

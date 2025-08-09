@@ -161,24 +161,7 @@ class PerformanceAnalyzer:
                     # Get impeller diameter with smart defaults for missing specification data
                     curve_diameter = curve.get('impeller_diameter_mm', 0)
                     
-                    # SMART DEFAULT: Get max impeller from specifications with fallback to largest curve
-                    specs = pump_data.get('specifications', {})
-                    max_impeller = specs.get('max_impeller_mm', 0)
-                    min_impeller = specs.get('min_impeller_mm', 0)
-                    
-                    if max_impeller <= 0:
-                        # Calculate from largest curve diameter available
-                        all_curve_diameters = [c.get('impeller_diameter_mm', 0) for c in curves if c.get('impeller_diameter_mm', 0) > 0]
-                        if all_curve_diameters:
-                            max_impeller = max(all_curve_diameters)
-                            logger.debug(f"[PERF] {pump_code}: Smart default max_impeller: {max_impeller}mm (from curves)")
-                    
-                    if min_impeller <= 0 and max_impeller > 0:
-                        # Standard engineering practice: min = 85% of max diameter
-                        min_impeller = max_impeller * 0.85
-                        logger.debug(f"[PERF] {pump_code}: Smart default min_impeller: {min_impeller:.0f}mm (85% of max)")
-                    
-                    logger.debug(f"[PERF] {pump_code}: Curve {i+1} impeller diameter: {curve_diameter}mm (max: {max_impeller}mm, min: {min_impeller:.0f}mm)")
+                    logger.debug(f"[PERF] {pump_code}: Curve {i+1} impeller diameter: {curve_diameter}mm")
                     
                     if curve_diameter <= 0:
                         logger.debug(f"[PERF] {pump_code}: Curve {i+1} skipped - invalid impeller diameter")
