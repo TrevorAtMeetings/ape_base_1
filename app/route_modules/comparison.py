@@ -19,115 +19,120 @@ comparison_bp = Blueprint('comparison', __name__)
 
 @comparison_bp.route('/compare')
 def pump_comparison():
-    """Brain-only pump comparison interface - NO FALLBACKS EVER."""
+    """Brain-only pump comparison - evaluates fresh on every page load."""
     try:
-        # Clean breadcrumbs for navigation
-        breadcrumbs = [
-            {'label': 'Home', 'url': url_for('main_flow.index'), 'icon': 'home'},
-            {'label': 'Pump Comparison', 'url': '#', 'icon': 'compare_arrows'}
-        ]
+        # Get pump identifiers from session - minimal data only
+        comparison_identifiers = session.get('comparison_list', [])
         
-        # Get pump identifiers from session (simplified - only one source)
-        comparison_list = session.get('comparison_list', [])
-        site_requirements = session.get('site_requirements', {})
+        logger.info(f"Comparison page - Found {len(comparison_identifiers)} pumps in session")
         
-        logger.info(f"Comparison route - Session comparison_list: {len(comparison_list) if comparison_list else 0}")
-        logger.info(f"Comparison route - Session site_requirements: {site_requirements}")
-
-        # BRAIN-ONLY LOGIC: Convert pump identifiers to full evaluations
+        # If no pumps to compare, redirect to home with message
+        if not comparison_identifiers:
+            safe_flash('Please add pumps to compare from the selection results page.', 'info')
+            return redirect(url_for('main_flow.index'))
+        
+        # Get Brain for fresh evaluations
+        brain = get_pump_brain()
+        if not brain:
+            safe_flash('Brain system unavailable for comparison.', 'error')
+            return redirect(url_for('main_flow.index'))
+        
+        # Evaluate each pump fresh with Brain
+        evaluated_pumps = []
+        for identifier in comparison_identifiers:
+            try:
+                pump_code = identifier['pump_code']
+                flow = identifier['flow']
+                head = identifier['head']
+                
+                logger.info(f"Evaluating {pump_code} at {flow} m³/hr, {head} m")
+                
+                # Get fresh Brain evaluation
+                evaluation = brain.evaluate_pump(pump_code, flow, head)
+                
+                if evaluation and not evaluation.get('excluded'):
+                    # Direct Brain data - no mapping needed
+                    evaluated_pumps.append(evaluation)
+                else:
+                    logger.warning(f"Pump {pump_code} excluded by Brain evaluation")
+                    
+            except Exception as e:
+                logger.error(f"Error evaluating {identifier.get('pump_code', 'unknown')}: {str(e)}")
+                continue
+        
+        # Clean session if some pumps failed
+        if len(evaluated_pumps) < len(comparison_identifiers):
+            valid_identifiers = [
+                {'pump_code': p['pump_code'], 'flow': p['flow_m3hr'], 'head': p['head_m']}
+                for p in evaluated_pumps
+            ]
+            session['comparison_list'] = valid_identifiers
+            session.modified = True
+        
+        logger.info(f"Successfully evaluated {len(evaluated_pumps)} pumps for comparison")
+        
+        # Calculate lifecycle costs for each pump
+        for pump in evaluated_pumps:
+            power_kw = pump.get('power_kw', 0)
+            flow = pump.get('flow_m3hr', 0)
+            annual_hours = 8760
+            electricity_rate = 2.50  # R/kWh
+            annual_energy_cost = power_kw * annual_hours * electricity_rate
+            
+            pump['lifecycle_cost'] = {
+                'initial_cost': 50000,
+                'annual_energy_cost': annual_energy_cost,
+                'total_10_year_cost': 50000 + (annual_energy_cost * 10),
+                'cost_per_m3': annual_energy_cost / (flow * annual_hours) if flow > 0 else 0
+            }
+        
+        # Prepare site requirements from first pump's duty point
+        site_requirements = {}
+        if evaluated_pumps:
+            site_requirements = {
+                'flow_m3hr': evaluated_pumps[0].get('flow_m3hr', 0),
+                'head_m': evaluated_pumps[0].get('head_m', 0)
+            }
+        
+        # Use legacy template structure for compatibility
         pump_comparisons = []
-        if comparison_list:
-            brain = get_pump_brain()
-            if not brain:
-                safe_flash('Brain system unavailable for comparison.', 'error')
-                return redirect(url_for('main_flow.index'))
-            
-            for identifier in comparison_list:
-                try:
-                    pump_code = identifier['pump_code']
-                    flow = identifier['flow']
-                    head = identifier['head']
-                    
-                    # Get fresh Brain evaluation - single source of truth
-                    evaluation = brain.evaluate_pump(pump_code, flow, head)
-                    
-                    if evaluation and not evaluation.get('excluded'):
-                        # Calculate lifecycle costs from Brain data
-                        power_kw = evaluation.get('power_kw', 0)
-                        annual_hours = 8760  
-                        electricity_rate = 2.50  # R/kWh
-                        annual_energy_cost = (power_kw * annual_hours * electricity_rate) / 1000
-                        initial_cost = 50000  
-                        total_10_year_cost = initial_cost + (annual_energy_cost * 10)
-                        cost_per_m3 = (annual_energy_cost * 1000) / (flow * 8760) if flow > 0 else 0
-                        
-                        lifecycle_cost = {
-                            'initial_cost': initial_cost,
-                            'annual_energy_cost': annual_energy_cost * 1000,
-                            'total_10_year_cost': total_10_year_cost,
-                            'cost_per_m3': cost_per_m3
-                        }
-                        
-                        # Map Brain evaluation to template-expected format
-                        operating_point = {
-                            'flow_m3hr': evaluation.get('flow_m3hr', flow),
-                            'head_m': evaluation.get('head_m', head),
-                            'efficiency_pct': evaluation.get('efficiency_pct', 0),
-                            'power_kw': evaluation.get('power_kw', 0),
-                            'achieved_efficiency_pct': evaluation.get('efficiency_pct', 0),
-                            'achieved_head_m': evaluation.get('head_m', head),
-                            'achieved_power_kw': evaluation.get('power_kw', 0),
-                            'achieved_flow_m3hr': evaluation.get('flow_m3hr', flow),
-                            'impeller_diameter_mm': evaluation.get('impeller_diameter_mm', 0),
-                            'test_speed_rpm': evaluation.get('test_speed_rpm', 0),
-                            'npshr_m': evaluation.get('npshr_m', 0),
-                            'trim_percent': evaluation.get('trim_percent', 100)
-                        }
-                        
-                        pump_info = {
-                            'manufacturer': evaluation.get('manufacturer', 'APE PUMPS'),
-                            'model_series': evaluation.get('model_series', ''),
-                            'pump_type': evaluation.get('pump_type', 'GENERAL'),
-                            'description': evaluation.get('description', '')
-                        }
-                        
-                        pump_comparison = {
-                            'pump_code': pump_code,
-                            'suitability_score': evaluation.get('total_score', 0),
-                            'overall_score': evaluation.get('total_score', 0),
-                            'selection_reason': f"Brain Score: {evaluation.get('total_score', 0):.1f}%",
-                            'pump_type': evaluation.get('pump_type', 'GENERAL'),
-                            'operating_point': operating_point,
-                            'pump_info': pump_info,
-                            'suitable': evaluation.get('feasible', True),
-                            'lifecycle_cost': lifecycle_cost,
-                            'qbep_percentage': evaluation.get('qbp_percent', 100)
-                        }
-                        pump_comparisons.append(pump_comparison)
-                    else:
-                        logger.warning(f"Pump {pump_code} excluded from comparison: {evaluation.get('exclusion_reasons', ['Unknown'])}")
-                        
-                except Exception as e:
-                    logger.error(f"Error evaluating {identifier.get('pump_code', 'unknown')}: {str(e)}")
-                    continue
-
-        if not pump_comparisons:
-            # Get parameters from URL if no session data
-            flow = request.args.get('flow', type=float)
-            head = request.args.get('head', type=float)
-            pump_type = request.args.get('pump_type', 'GENERAL')
-            
-            if flow and head:
-                site_requirements = {'flow_m3hr': flow, 'head_m': head, 'pump_type': pump_type}
-                safe_flash('Please add pumps to comparison first by clicking "Add to Compare" on pump report pages.', 'info')
-            else:
-                safe_flash('No pump selections available for comparison. Please run pump selection first.', 'info')
-                return redirect(url_for('main_flow.index'))
-
+        for pump in evaluated_pumps:
+            pump_comparison = {
+                'pump_code': pump.get('pump_code'),
+                'suitability_score': pump.get('total_score', 0),
+                'overall_score': pump.get('total_score', 0),
+                'selection_reason': f"Brain Score: {pump.get('total_score', 0):.1f}%",
+                'pump_type': pump.get('pump_type', 'GENERAL'),
+                'operating_point': {
+                    'flow_m3hr': pump.get('flow_m3hr'),
+                    'head_m': pump.get('head_m'),
+                    'efficiency_pct': pump.get('efficiency_pct', 0),
+                    'power_kw': pump.get('power_kw', 0),
+                    'achieved_efficiency_pct': pump.get('efficiency_pct', 0),
+                    'achieved_head_m': pump.get('head_m'),
+                    'achieved_power_kw': pump.get('power_kw', 0),
+                    'achieved_flow_m3hr': pump.get('flow_m3hr'),
+                    'impeller_diameter_mm': pump.get('impeller_diameter_mm', 0),
+                    'test_speed_rpm': pump.get('test_speed_rpm', 1450),
+                    'npshr_m': pump.get('npshr_m', 0),
+                    'trim_percent': pump.get('trim_percent', 100)
+                },
+                'pump_info': {
+                    'manufacturer': 'APE PUMPS',
+                    'model_series': pump.get('pump_code', '').split()[0] if pump.get('pump_code') else '',
+                    'pump_type': pump.get('pump_type', 'GENERAL'),
+                    'description': pump.get('description', '')
+                },
+                'suitable': pump.get('feasible', True),
+                'lifecycle_cost': pump.get('lifecycle_cost'),
+                'qbep_percentage': pump.get('qbp_percent', 100)
+            }
+            pump_comparisons.append(pump_comparison)
+        
         return render_template('pump_comparison.html',
                              pump_comparisons=pump_comparisons,
                              site_requirements=site_requirements,
-                             breadcrumbs=breadcrumbs)
+                             breadcrumbs=[])
     except Exception as e:
         logger.error(f"Error in pump_comparison: {str(e)}")
         safe_flash('Error loading comparison data.', 'error')

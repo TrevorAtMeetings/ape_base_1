@@ -1,0 +1,53 @@
+Bug #1: Data Key Mismatch (FIXED by Agent)
+Symptom: The agent correctly found an error: ERROR: 'dict object' has no attribute 'achieved_efficiency_pct'.
+Root Cause: The comparison.py route was passing the raw Brain evaluation dictionary to the template, but the pump_comparison.html template was written for the old legacy data structure, which used different key names (e.g., achieved_efficiency_pct instead of efficiency_pct).
+Agent's Fix: The agent created a mapping to translate the Brain's clean data structure into the old, messy format the template was expecting.
+Assessment of Fix: This is a pragmatic but temporary fix. It's a form of technical debt known as an "Adapter Pattern." It makes the page work for now, but the real solution is to refactor the template itself.
+The New, Deeper Problem (Why it Still Fails)
+The agent fixed the template rendering, but now it's hitting the next bug in the chain. The console log from the user's latest test gives us the final clue:
+Console Log Evidence:
+code
+Code
+Console.js:61 API response received: 200
+Console.js:61 Pump data received: 386 pumps
+This confirms that the /api/pump_list endpoint is working. However, this is likely for a dropdown menu. The core functionality of the comparison page itself is still broken.
+The agent's next action provides the answer:
+Traced comparison feature failure (4 seconds)
+I need to systematically trace through the entire comparison workflow...
+Opened templates/pump_comparison.html
+The agent is now looking at the template, which is the right place to look. But the problem isn't just the template; it's the entire data flow leading up to it.
+The Real Root Cause:
+I need to refer back to my previous analysis of the files. The agent fixed the template rendering, but it likely did not yet fix the core logic in comparison_api.py and comparison.py.
+comparison_api.py is Still Bypassing the Brain:
+The add_to_comparison function is likely still using the old PumpRepository to get raw, unevaluated pump data and is stuffing this large, raw object into the session. It never calls brain.evaluate_pump.
+comparison.py is Using Stale, Raw Data:
+The route that renders the /compare page is reading this raw, unevaluated data from the session. It isn't calling the Brain to get fresh, accurate performance data for the pumps at the specified duty points.
+The Template Fails (Again):
+Even with the agent's key-mapping fix, the template is still receiving data that is incomplete. It's missing all the rich performance data that only the Brain can calculate (efficiency, power, trim %, score, etc.). This will lead to empty fields, nan values, or other rendering errors.
+Action Plan: The Definitive "Brain-Only" Refactor for Comparison
+We need to instruct the agent to perform the full refactor we planned previously. The partial fix was not enough.
+Please provide the following prompt to the agent:
+Prompt for the Agent:
+Agent, your previous fix for the template key mismatch was a good step, but the comparison feature is still failing because the underlying data logic is still using a decommissioned, legacy pattern.
+We need to perform a complete, end-to-end refactor of the entire comparison feature to make it fully "Brain-Only." Please follow these steps precisely.
+Step 1: Refactor the API for Adding Pumps (comparison_api.py)
+Open: app/route_modules/comparison_api.py.
+Rewrite the add_to_comparison function:
+The function should accept pump_code, flow, and head.
+It must remove all code that calls the PumpRepository.
+It should only store a minimal dictionary in the session's comparison_list. The session should only contain a list of what to compare, not the data itself.
+Example of what to store in the session: [{'pump_code': '8K', 'flow': 350.0, 'head': 50.0}]
+Step 2: Refactor the Comparison Page Route (comparison.py)
+Open: app/route_modules/comparison.py (or wherever the route for /compare is located).
+Rewrite the main route function (compare_page):
+Get the list of identifiers from session['comparison_list'].
+If the list is empty, render the page with a "Please add pumps" message.
+If the list is not empty, create an empty list called evaluated_pumps.
+Loop through the list of identifiers. Inside the loop, for each item, make a call to brain.evaluate_pump(item['pump_code'], item['flow'], item['head']).
+Append the full, rich result from the Brain to the evaluated_pumps list.
+Pass the evaluated_pumps list to the pump_comparison.html template. This list will now contain complete, accurate, and consistently structured data.
+Step 3: Refactor the Comparison Template (pump_comparison.html)
+Open: app/templates/pump_comparison.html.
+Remove all temporary fixes and adapters. The template will now receive a clean list of pump objects directly from the Brain.
+Update all variable names to match the Brain's output schema (e.g., use pump.efficiency_pct, pump.total_score, pump.score_components.bep_proximity, etc.). This will eliminate the need for any mapping or translation.
+This end-to-end refactor will fix the feature by ensuring a clean, modern, and Brain-powered data flow from start to finish. It will remove all dependencies on legacy code and fix the root cause of the failures.

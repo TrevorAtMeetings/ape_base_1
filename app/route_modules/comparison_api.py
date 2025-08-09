@@ -13,13 +13,12 @@ comparison_api_bp = Blueprint('comparison_api', __name__)
 
 @comparison_api_bp.route('/api/add_to_comparison', methods=['POST'])
 def add_to_comparison():
-    """Add a pump to the comparison list in session."""
+    """Add a pump to the comparison list - stores ONLY identifiers, Brain evaluates on demand."""
     try:
         data = request.get_json()
         pump_code = data.get('pump_code')
         flow = data.get('flow')
         head = data.get('head')
-        pump_type = data.get('pump_type', 'GENERAL')
         
         if not pump_code or not flow or not head:
             return jsonify({'success': False, 'message': 'Missing required parameters'})
@@ -27,48 +26,35 @@ def add_to_comparison():
         # Get current comparison list from session
         comparison_list = session.get('comparison_list', [])
         
-        # Check if pump already in list
-        existing_pump = next((p for p in comparison_list if p['pump_code'] == pump_code), None)
+        # Check if pump already in list (allow different pumps at same duty point)
+        existing_pump = next((p for p in comparison_list 
+                            if p['pump_code'] == pump_code), None)
         if existing_pump:
-            return jsonify({'success': False, 'message': f'{pump_code} already in comparison list'})
+            return jsonify({'success': False, 'message': f'{pump_code} already in comparison list at this duty point'})
         
-        # Store ONLY identifiers - Brain provides fresh data on demand when needed
-        comparison_pump = {
+        # Store MINIMAL identifiers only - NO pump data, Brain evaluates fresh on demand
+        comparison_identifier = {
             'pump_code': pump_code,
             'flow': float(flow),
-            'head': float(head),
-            'pump_type': pump_type,
-            'added_timestamp': str(int(float(request.args.get('ts', '0'))))
+            'head': float(head)
         }
         
-        comparison_list.append(comparison_pump)
+        comparison_list.append(comparison_identifier)
         
         # Limit to 10 pumps max
         if len(comparison_list) > 10:
-            comparison_list = comparison_list[-10:]
+            comparison_list = comparison_list[:10]  # Keep first 10
         
-        # Save minimal data to session - Brain intelligence on demand
+        # Save minimal identifiers to session
         session['comparison_list'] = comparison_list
-        session.permanent = True  # Make session persistent
+        session.modified = True  # Ensure session is marked as modified
         
-        # Also update site requirements for comparison page
-        site_requirements = {
-            'flow_m3hr': flow,
-            'head_m': head,
-            'pump_type': pump_type,
-            'application': 'water'
-        }
-        session['site_requirements'] = site_requirements
-        
-        # Debug: Verify session save immediately
-        saved_list = session.get('comparison_list', [])
-        logger.info(f"Added {pump_code} to comparison list. Total: {len(comparison_list)}, Verified in session: {len(saved_list)}")
+        logger.info(f"Added {pump_code} to comparison (flow={flow}, head={head}). Total: {len(comparison_list)}")
         
         return jsonify({
             'success': True, 
             'message': f'Added {pump_code} to comparison',
-            'count': len(comparison_list),
-            'debug_session_count': len(saved_list)
+            'count': len(comparison_list)
         })
         
     except Exception as e:
@@ -77,64 +63,17 @@ def add_to_comparison():
 
 @comparison_api_bp.route('/api/get_comparison_list', methods=['GET'])
 def get_comparison_list():
-    """Get current comparison list with fresh Brain evaluations."""
+    """Get comparison list identifiers - evaluation happens on the comparison page."""
     try:
         # Get minimal identifiers from session
         comparison_identifiers = session.get('comparison_list', [])
         
-        # Debug: Log session access
         logger.info(f"GET comparison_list - Found {len(comparison_identifiers)} items in session")
-        
-        if not comparison_identifiers:
-            return jsonify({
-                'success': True,
-                'pumps': [],
-                'count': 0,
-                'debug_message': 'No items found in session'
-            })
-        
-        # Get fresh Brain evaluations for each pump
-        brain = get_pump_brain()
-        if not brain:
-            return jsonify({'success': False, 'message': 'Brain system unavailable'})
-        
-        fresh_pump_data = []
-        for identifier in comparison_identifiers:
-            try:
-                pump_code = identifier['pump_code']
-                flow = identifier['flow']
-                head = identifier['head']
-                
-                # Get fresh evaluation from Brain - NO FALLBACKS
-                evaluation = brain.evaluate_pump(pump_code, flow, head)
-                
-                if evaluation and not evaluation.get('excluded'):
-                    # Combine identifier with fresh Brain intelligence
-                    pump_data = {
-                        **identifier,  # Original identifiers
-                        'evaluation': evaluation,  # Fresh Brain data
-                        'performance': evaluation  # Alias for template compatibility
-                    }
-                    fresh_pump_data.append(pump_data)
-                else:
-                    logger.warning(f"Pump {pump_code} no longer suitable, removing from comparison")
-                    
-            except Exception as e:
-                logger.error(f"Error evaluating {identifier.get('pump_code', 'unknown')}: {str(e)}")
-                continue
-        
-        # Update session with cleaned list (remove unsuitable pumps)
-        if len(fresh_pump_data) != len(comparison_identifiers):
-            cleaned_identifiers = [
-                {'pump_code': p['pump_code'], 'flow': p['flow'], 'head': p['head'], 'pump_type': p.get('pump_type', 'GENERAL')}
-                for p in fresh_pump_data
-            ]
-            session['comparison_list'] = cleaned_identifiers
         
         return jsonify({
             'success': True,
-            'pumps': fresh_pump_data,
-            'count': len(fresh_pump_data)
+            'identifiers': comparison_identifiers,
+            'count': len(comparison_identifiers)
         })
         
     except Exception as e:
