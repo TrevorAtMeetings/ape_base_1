@@ -25,28 +25,36 @@
     </div>
 </div>
 
-<!-- Summary Cards -->
+<!-- Enhanced Summary Cards with Visual Hierarchy -->
 <div class="container">
     <div class="summary-cards">
-        <div class="summary-card">
+        <!-- PRIMARY: Most Important Metric -->
+        <div class="summary-card" data-category="primary">
             <div class="summary-value">{{ (preferred_pumps|length + allowable_pumps|length) }}</div>
             <div class="summary-label">Pumps Found</div>
         </div>
-        <div class="summary-card">
+        
+        <!-- REQUIREMENTS: Input Parameters -->
+        <div class="summary-card" data-category="requirements">
             <div class="summary-value">{{ "%.1f"|format(site_requirements['flow_m3hr']) }}</div>
             <div class="summary-label">Flow (M³/Hr)</div>
         </div>
-        <div class="summary-card">
+        
+        <div class="summary-card" data-category="requirements">
             <div class="summary-value">{{ "%.1f"|format(site_requirements['head_m']) }}</div>
             <div class="summary-label">Head (M)</div>
         </div>
+        
         {% set best_pump = preferred_pumps[0] if preferred_pumps else (allowable_pumps[0] if allowable_pumps else none) %}
         {% if best_pump %}
-        <div class="summary-card">
-            <div class="summary-value" style="color: #28a745;">{{ "%.1f"|format(best_pump.get('total_score', 0)) }}</div>
+        <!-- PRIMARY: Best Overall Result -->
+        <div class="summary-card" data-category="primary">
+            <div class="summary-value">{{ "%.1f"|format(best_pump.get('total_score', 0)) }}</div>
             <div class="summary-label">Best Score</div>
         </div>
-        <div class="summary-card">
+        
+        <!-- PERFORMANCE: Technical Results -->
+        <div class="summary-card" data-category="performance">
             <div class="summary-value">
                 {% if best_pump.get('efficiency_pct') is not none %}
                     {{ "%.1f"|format(best_pump.get('efficiency_pct')) }}%
@@ -56,7 +64,8 @@
             </div>
             <div class="summary-label">Best Efficiency</div>
         </div>
-        <div class="summary-card">
+        
+        <div class="summary-card" data-category="performance">
             <div class="summary-value">
                 {% if best_pump.get('power_kw') is not none %}
                     {{ "%.1f"|format(best_pump.get('power_kw')) }}
@@ -64,6 +73,22 @@
                     --
                 {% endif %}
             </div>
+            <div class="summary-label">Min Power (kW)</div>
+        </div>
+        {% else %}
+        <!-- Fallback cards when no pumps found -->
+        <div class="summary-card" data-category="primary">
+            <div class="summary-value">--</div>
+            <div class="summary-label">Best Score</div>
+        </div>
+        
+        <div class="summary-card" data-category="performance">
+            <div class="summary-value">--%</div>
+            <div class="summary-label">Best Efficiency</div>
+        </div>
+        
+        <div class="summary-card" data-category="performance">
+            <div class="summary-value">--</div>
             <div class="summary-label">Min Power (kW)</div>
         </div>
         {% endif %}
