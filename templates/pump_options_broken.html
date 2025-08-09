@@ -1,0 +1,574 @@
+{% extends "base.html" %}
+
+{% block title %}Pump Selection Results - APE Pumps{% endblock %}
+
+{% block head %}
+<!-- Pump Results Specific CSS - Load Last for Proper Override -->
+<link href="{{ url_for('static', filename='css/pump-results-fix.css') }}?v={{ range(1000, 9999) | random }}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+
+    body .pump-row {
+        display: flex !important;
+        align-items: center !important;
+        padding: 12px 16px !important;
+        border-bottom: 1px solid #e0e0e0 !important;
+        transition: all 0.2s ease !important;
+        cursor: pointer !important;
+        text-decoration: none !important;
+        color: inherit !important;
+    }
+
+    body .pump-row:hover {
+        background: #f8f9fa !important;
+        transform: translateX(4px) !important;
+    }
+
+    body .pump-row:last-child {
+        border-bottom: none !important;
+    }
+
+    .pump-rank {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        background: #e3f2fd;
+        color: #1976d2;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 0.9rem;
+        margin-right: 16px;
+    }
+
+    .pump-rank.top {
+        background: linear-gradient(135deg, #4caf50, #66bb6a);
+        color: white;
+    }
+
+    .pump-info {
+        flex: 1;
+        min-width: 200px;
+    }
+
+    .pump-name {
+        font-weight: 600;
+        color: #263238;
+        font-size: 1rem;
+        margin-bottom: 2px;
+    }
+
+    .pump-type {
+        color: #607d8b;
+        font-size: 0.85rem;
+    }
+
+    .pump-metrics {
+        display: flex;
+        gap: 32px;
+        flex: 2;
+        align-items: center;
+    }
+
+    .metric-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-width: 80px;
+    }
+
+    .metric-icon {
+        font-size: 20px;
+        margin-bottom: 4px;
+    }
+
+    .metric-value {
+        font-weight: 600;
+        font-size: 1rem;
+        color: #263238;
+    }
+
+    .metric-label {
+        font-size: 0.75rem;
+        color: #90a4ae;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .pump-score {
+        min-width: 100px;
+        text-align: right;
+    }
+
+    .score-badge {
+        display: inline-block;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+
+    .score-excellent {
+        background: #e8f5e9;
+        color: #2e7d32;
+    }
+
+    .score-good {
+        background: #e3f2fd;
+        color: #1565c0;
+    }
+
+    .score-fair {
+        background: #fff3e0;
+        color: #e65100;
+    }
+
+    .pump-action {
+        margin-left: 16px;
+        color: #1976d2;
+    }
+
+    body .summary-cards {
+        display: grid !important;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)) !important;
+        gap: 12px !important;
+        margin-bottom: 20px !important;
+    }
+
+    body .summary-card {
+        background: white !important;
+        border-radius: 8px !important;
+        padding: 12px !important;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.08) !important;
+        text-align: center !important;
+    }
+
+    body .summary-value {
+        font-size: 1.5rem !important;
+        font-weight: 700 !important;
+        color: #263238 !important;
+    }
+
+    body .summary-label {
+        font-size: 0.75rem !important;
+        color: #90a4ae !important;
+        text-transform: uppercase !important;
+        margin-top: 4px !important;
+    }
+
+    /* Mobile Responsive */
+    @media (max-width: 768px) {
+        .pump-metrics {
+            display: none;
+        }
+        
+        .pump-row {
+            flex-direction: column;
+            align-items: flex-start;
+            padding: 16px;
+        }
+        
+        .pump-rank {
+            position: absolute;
+            right: 16px;
+            top: 16px;
+        }
+        
+        .pump-info {
+            margin-bottom: 8px;
+        }
+        
+        .pump-score {
+            width: 100%;
+            text-align: left;
+        }
+    }
+
+    /* Compact action bar */
+    .action-bar {
+        margin-top: 16px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .view-hint {
+        color: #607d8b;
+        font-size: 0.85rem;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    /* Sorting Controls */
+    .sorting-controls {
+        background: white;
+        border-radius: 8px 8px 0 0;
+        padding: 12px 16px;
+        border-bottom: 1px solid #e0e0e0;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        font-size: 0.9rem;
+    }
+
+    .sorting-label {
+        color: #607d8b;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .sort-option {
+        padding: 6px 12px;
+        border-radius: 20px;
+        background: #f5f5f5;
+        color: #455a64;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border: none;
+        font-size: 0.85rem;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .sort-option:hover {
+        background: #e3f2fd;
+        color: #1976d2;
+    }
+
+    .sort-option.active {
+        background: #1976d2;
+        color: white;
+    }
+
+    .sort-direction {
+        font-size: 14px;
+        opacity: 0.7;
+    }
+
+    @media (max-width: 768px) {
+        .sorting-controls {
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        .sort-option {
+            font-size: 0.8rem;
+            padding: 4px 8px;
+        }
+
+
+
+
+
+<div class="results-header" style="margin-top: 20px;">
+    <div class="container">
+        <h1 class="results-title">
+            <i class="material-icons">check_circle</i>
+            Pump Selection Results
+        </h1>
+        <div class="results-subtitle">
+            Found <strong>{{ pump_selections|length }}</strong> suitable pump{{ 's' if pump_selections|length != 1 else '' }} 
+            for <strong>{{ "%.1f"|format(site_requirements['flow_m3hr']) }} m³/hr</strong> 
+            at <strong>{{ "%.1f"|format(site_requirements['head_m']) }} m</strong> head
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <!-- Quick Summary Cards -->
+    <div class="summary-cards">
+        <div class="summary-card">
+            <div class="summary-value">{{ pump_selections|length }}</div>
+            <div class="summary-label">Pumps Found</div>
+        </div>
+        <div class="summary-card">
+            <div class="summary-value">{{ "%.1f"|format(site_requirements['flow_m3hr']) }}</div>
+            <div class="summary-label">Flow (m³/hr)</div>
+        </div>
+        <div class="summary-card">
+            <div class="summary-value">{{ "%.1f"|format(site_requirements['head_m']) }}</div>
+            <div class="summary-label">Head (m)</div>
+        </div>
+        {% if pump_selections %}
+        <div class="summary-card">
+            <div class="summary-value" style="color: #4caf50;">{{ "%.1f"|format(pump_selections[0]['suitability_score']) }}</div>
+            <div class="summary-label">Best Score</div>
+        </div>
+        <div class="summary-card">
+            <div class="summary-value">{{ "%.1f"|format(pump_selections[0].get('efficiency_pct', 0)) }}%</div>
+            <div class="summary-label">Best Efficiency</div>
+        </div>
+        <div class="summary-card">
+            <div class="summary-value">{{ "%.1f"|format(pump_selections[0].get('power_kw', 0)) }}</div>
+            <div class="summary-label">Min Power (kW)</div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Pump Results Table -->
+    <div class="pump-table">
+        <!-- Sorting Controls -->
+        <div class="sorting-controls">
+            <div class="sorting-label">
+                <i class="material-icons" style="font-size: 18px;">sort</i>
+                Sort by:
+            </div>
+            <button class="sort-option active" data-sort="suitability_score" data-order="desc">
+                Suitability Score
+                <span class="sort-direction">↓</span>
+            </button>
+            <button class="sort-option" data-sort="efficiency_pct" data-order="desc">
+                Efficiency
+                <span class="sort-direction">↓</span>
+            </button>
+            <button class="sort-option" data-sort="power_kw" data-order="asc">
+                Power (Low to High)
+                <span class="sort-direction">↑</span>
+            </button>
+            <button class="sort-option" data-sort="pump_type" data-order="asc">
+                Pump Type
+                <span class="sort-direction">↑</span>
+            </button>
+            <button class="sort-option" data-sort="qbep_percentage" data-order="desc">
+                BEP Proximity
+                <span class="sort-direction">↓</span>
+            </button>
+        </div>
+        
+        <div class="pump-table-header">
+            <span id="sort-status">Recommended Pumps (Ranked by Suitability Score)</span>
+        </div>
+        
+        <div id="pump-list">
+        {% for pump in pump_selections[:10] %}
+        <a href="{{ url_for('reports.engineering_report', 
+                          pump_code=pump['pump_code'], 
+                          flow=site_requirements['flow_m3hr'], 
+                          head=site_requirements['head_m'], 
+                          pump_type=site_requirements['pump_type']) }}" 
+           class="pump-row"
+           data-suitability-score="{{ pump['suitability_score'] }}"
+           data-efficiency-pct="{{ pump.get('efficiency_pct', 0) }}"
+           data-power-kw="{{ pump.get('power_kw', 0) }}"
+           data-pump-type="{{ pump['pump_type'] }}"
+           data-manufacturer="{{ pump['manufacturer'] }}"
+           data-qbep-percentage="{{ pump.get('qbep_percentage', 0) }}"
+           data-npshr-m="{{ pump.get('npshr_m', 0) }}"
+           data-pump-code="{{ pump['pump_code'] }}">
+            
+            <div class="pump-rank {% if loop.index <= 3 %}top{% endif %}">
+                {{ loop.index }}
+            </div>
+            
+            <div class="pump-info">
+                <div class="pump-name">{{ pump['pump_code'] }}</div>
+                <div class="pump-type">{{ pump['manufacturer'] }} - {{ pump['pump_type'] }}</div>
+            </div>
+            
+            <div class="pump-metrics">
+                <div class="metric-item">
+                    <i class="material-icons metric-icon" style="color: #1976d2;">trending_up</i>
+                    <div class="metric-value">
+                        {% if pump.get('efficiency_pct') is not none %}
+                            {{ "%.1f"|format(pump.get('efficiency_pct')) }}%
+                        {% else %}
+                            --%
+                        {% endif %}
+                    </div>
+                    <div class="metric-label">Efficiency</div>
+                </div>
+                
+                <div class="metric-item">
+                    <i class="material-icons metric-icon" style="color: #ff9800;">flash_on</i>
+                    <div class="metric-value">
+                        {% if pump.get('power_kw') is not none %}
+                            {{ "%.1f"|format(pump.get('power_kw')) }}
+                        {% else %}
+                            --
+                        {% endif %}
+                    </div>
+                    <div class="metric-label">Power kW</div>
+                </div>
+                
+                <div class="metric-item">
+                    <i class="material-icons metric-icon" style="color: #2196f3;">opacity</i>
+                    <div class="metric-value">
+                        {% if pump.get('npshr_m') is not none %}
+                            {{ "%.1f"|format(pump.get('npshr_m')) }}
+                        {% else %}
+                            --
+                        {% endif %}
+                    </div>
+                    <div class="metric-label">NPSHr m</div>
+                </div>
+                
+                <div class="metric-item">
+                    <i class="material-icons metric-icon" style="color: #607d8b;">rotate_right</i>
+                    <div class="metric-value">
+                        {% if pump.get('trim_percent') %}
+                            {{ (100 - pump['trim_percent'])|round|int }}%
+                        {% else %}
+                            0%
+                        {% endif %}
+                    </div>
+                    <div class="metric-label">Trim</div>
+                </div>
+
+                <div class="metric-item">
+                    <i class="material-icons metric-icon" style="color: #9c27b0;">donut_large</i>
+                    <div class="metric-value">
+                        {% if pump.get('qbep_percentage') %}
+                            {{ pump['qbep_percentage']|round|int }}%
+                        {% else %}
+                            --
+                        {% endif %}
+                    </div>
+                    <div class="metric-label">QBEP</div>
+                </div>
+            </div>
+            
+            <div class="pump-score">
+                {% set score = pump['suitability_score'] %}
+                <span class="score-badge 
+                    {% if score >= 80 %}score-excellent
+                    {% elif score >= 60 %}score-good
+                    {% else %}score-fair{% endif %}">
+                    Score: {{ "%.1f"|format(score) }}
+                </span>
+            </div>
+            
+            <div class="pump-action">
+                <i class="material-icons">chevron_right</i>
+            </div>
+        </a>
+        {% endfor %}
+        </div>
+    </div>
+
+    <!-- Sorting JavaScript -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const sortButtons = document.querySelectorAll('.sort-option');
+        const pumpList = document.getElementById('pump-list');
+        const sortStatus = document.getElementById('sort-status');
+        
+        // Store original pump data
+        const originalPumps = Array.from(pumpList.children);
+        
+        // Sort descriptions for display
+        const sortDescriptions = {
+            'suitability_score': 'Suitability Score',
+            'efficiency_pct': 'Efficiency',
+            'power_kw': 'Power Consumption',
+            'pump_type': 'Pump Type',
+            'qbep_percentage': 'BEP Proximity',
+            'npshr_m': 'NPSH Required'
+        };
+        
+        sortButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                // Remove active class from all buttons
+                sortButtons.forEach(btn => btn.classList.remove('active'));
+                
+                // Add active class to clicked button
+                this.classList.add('active');
+                
+                const sortBy = this.dataset.sort;
+                const sortOrder = this.dataset.order;
+                
+                // Update sort status
+                const sortDesc = sortDescriptions[sortBy] || sortBy;
+                const orderDesc = sortOrder === 'desc' ? '(High to Low)' : '(Low to High)';
+                sortStatus.textContent = `Recommended Pumps (Sorted by ${sortDesc} ${orderDesc})`;
+                
+                // Sort the pumps
+                const pumps = Array.from(pumpList.children);
+                
+                pumps.sort((a, b) => {
+                    let aVal = getCompareValue(a, sortBy);
+                    let bVal = getCompareValue(b, sortBy);
+                    
+                    // Handle different data types
+                    if (typeof aVal === 'string') {
+                        aVal = aVal.toLowerCase();
+                        bVal = bVal.toLowerCase();
+                    }
+                    
+                    let comparison = 0;
+                    if (aVal < bVal) comparison = -1;
+                    else if (aVal > bVal) comparison = 1;
+                    
+                    // Apply sort order
+                    return sortOrder === 'desc' ? -comparison : comparison;
+                });
+                
+                // Clear and repopulate the list
+                pumpList.innerHTML = '';
+                pumps.forEach((pump, index) => {
+                    // Update rank numbers
+                    const rankElement = pump.querySelector('.pump-rank');
+                    if (rankElement) {
+                        rankElement.textContent = index + 1;
+                        // Update rank styling for top 3
+                        if (index < 3) {
+                            rankElement.classList.add('top');
+                        } else {
+                            rankElement.classList.remove('top');
+                        }
+                    }
+                    pumpList.appendChild(pump);
+                });
+                
+                // Update button sort direction indicator
+                const direction = sortOrder === 'desc' ? '↓' : '↑';
+                this.querySelector('.sort-direction').textContent = direction;
+            });
+        });
+        
+        function getCompareValue(element, sortBy) {
+            const dataKey = 'data-' + sortBy.replace('_', '-');
+            let value = element.getAttribute(dataKey);
+            
+            // Convert to appropriate type
+            if (sortBy === 'pump_type' || sortBy === 'manufacturer' || sortBy === 'pump_code') {
+                return value || '';
+            } else {
+                return parseFloat(value) || 0;
+            }
+        }
+    });
+    </script>
+
+    <!-- Action Bar -->
+    <div class="action-bar">
+        <div class="view-hint">
+            <i class="material-icons" style="font-size: 16px;">info_outline</i>
+            Click any pump for detailed analysis & PDF report
+        </div>
+        <a href="{{ url_for('main_flow.index') }}" class="btn-flat waves-effect">
+            <i class="material-icons left">refresh</i>
+            New Selection
+        </a>
+    </div>
+</div>
+
+<script>
+    // Add keyboard navigation
+    document.addEventListener('keydown', function(e) {
+        if (e.key >= '1' && e.key <= '9') {
+            const index = parseInt(e.key) - 1;
+            const pumps = document.querySelectorAll('.pump-row');
+            if (pumps[index]) {
+                pumps[index].click();
+            }
+        }
+    });
+</script>
+
+{% endblock %}
