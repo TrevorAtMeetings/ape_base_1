@@ -69,9 +69,38 @@
 <!-- Results List Section -->
 <div class="pump-results-section">
     <div class="container">
-        <div class="section-header">Recommended Pumps (Ranked by Suitability Score)</div>
         
-        <div class="pump-results-list">
+        <!-- Sorting Controls -->
+        <div class="sorting-controls">
+            <div class="sorting-label">
+                <i class="material-icons" style="font-size: 18px;">tune</i>
+                Sort by:
+            </div>
+            <button class="sort-option active" data-sort="suitability_score" data-order="desc">
+                Suitability Score
+                <span class="sort-direction">↓</span>
+            </button>
+            <button class="sort-option" data-sort="efficiency_pct" data-order="desc">
+                Efficiency
+                <span class="sort-direction">↓</span>
+            </button>
+            <button class="sort-option" data-sort="power_kw" data-order="asc">
+                Power (Low to High)
+                <span class="sort-direction">↑</span>
+            </button>
+            <button class="sort-option" data-sort="pump_type" data-order="asc">
+                Pump Type
+                <span class="sort-direction">↑</span>
+            </button>
+            <button class="sort-option" data-sort="qbep_percentage" data-order="desc">
+                BEP Proximity
+                <span class="sort-direction">↓</span>
+            </button>
+        </div>
+        
+        <div class="section-header" id="sort-status">Recommended Pumps (Ranked by Suitability Score)</div>
+        
+        <div class="pump-results-list" id="pump-list">
             {% for pump in pump_selections[:10] %}
             <a href="{{ url_for('reports.engineering_report', 
                               pump_code=pump['pump_code'], 
