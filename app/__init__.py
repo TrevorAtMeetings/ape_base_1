@@ -113,13 +113,13 @@ app.register_blueprint(chat_bp)
 from .route_modules.api import api_bp
 app.register_blueprint(api_bp, url_prefix='/api')
 
-# Register the Pump Editor blueprint
-from .route_modules.pump_editor_routes import pump_editor_bp
-app.register_blueprint(pump_editor_bp)
-
 # Register the Admin Config blueprint
 from .route_modules.admin_config import admin_config_bp
 app.register_blueprint(admin_config_bp)
+
+# Register the Pump Editor blueprint
+from .route_modules.pump_editor_routes import pump_editor_bp
+app.register_blueprint(pump_editor_bp)
 
 # Register the Brain Monitor blueprint (if available)
 try:
