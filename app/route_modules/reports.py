@@ -61,6 +61,26 @@ def pump_report(pump_code):
     pump_selections = safe_session_get('suitable_pumps', [])
     alternatives = [p for p in pump_selections if p.get('pump_code') != pump_code][:2]
     
+    # FIX: For direct searches, alternatives list is empty because main selection was skipped
+    # Generate alternatives using Brain system when none exist
+    if not alternatives and flow and head:
+        logger.info(f"No alternatives found in session - generating via Brain for direct search")
+        try:
+            best_pumps_result = brain.find_best_pumps({'flow_m3hr': flow, 'head_m': head})
+            if best_pumps_result and 'ranked_pumps' in best_pumps_result:
+                # Get top 3 alternatives (excluding the current pump)
+                brain_alternatives = []
+                for pump in best_pumps_result['ranked_pumps'][:5]:  # Check top 5
+                    if pump.get('pump_code') != pump_code:
+                        brain_alternatives.append(pump)
+                        if len(brain_alternatives) >= 2:  # Limit to 2 alternatives
+                            break
+                alternatives = brain_alternatives
+                logger.info(f"Generated {len(alternatives)} alternatives via Brain system")
+        except Exception as e:
+            logger.warning(f"Could not generate alternatives via Brain: {e}")
+            alternatives = []
+    
     # Template data structure
     template_data = {
         'selected_pump': selected_pump,
@@ -73,10 +93,8 @@ def pump_report(pump_code):
     
     return render_template('pump_report.html', **template_data)
 
-@reports_bp.route('/professional_pump_report/<path:pump_code>')
-def professional_pump_report(pump_code):
-    """Generate professional pump report."""
-    return pump_report(pump_code)
+# REMOVED: Redundant route - professional_pump_report was identical to pump_report
+# Users should use /pump_report directly for consistency
 
 @reports_bp.route('/engineering_report/<path:pump_code>')
 def engineering_report(pump_code):
@@ -111,6 +129,26 @@ def engineering_report(pump_code):
     # Get alternatives from the session if they exist
     pump_selections = safe_session_get('suitable_pumps', [])
     alternatives = [p for p in pump_selections if p.get('pump_code') != pump_code][:2]
+    
+    # FIX: For direct searches, alternatives list is empty because main selection was skipped
+    # Generate alternatives using Brain system when none exist
+    if not alternatives and flow and head:
+        logger.info(f"No alternatives found in session - generating via Brain for direct search")
+        try:
+            best_pumps_result = brain.find_best_pumps({'flow_m3hr': flow, 'head_m': head})
+            if best_pumps_result and 'ranked_pumps' in best_pumps_result:
+                # Get top 3 alternatives (excluding the current pump)
+                brain_alternatives = []
+                for pump in best_pumps_result['ranked_pumps'][:5]:  # Check top 5
+                    if pump.get('pump_code') != pump_code:
+                        brain_alternatives.append(pump)
+                        if len(brain_alternatives) >= 2:  # Limit to 2 alternatives
+                            break
+                alternatives = brain_alternatives
+                logger.info(f"Generated {len(alternatives)} alternatives via Brain system")
+        except Exception as e:
+            logger.warning(f"Could not generate alternatives via Brain: {e}")
+            alternatives = []
     
     # Create breadcrumbs for navigation
     try:

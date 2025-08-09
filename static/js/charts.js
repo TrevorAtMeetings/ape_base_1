@@ -109,31 +109,33 @@ class ChartManager {
                         },
                         marker: {
                             size: curve.is_selected ? 2 : 1.5
-                        }
+                        },
+                        hovertemplate: this.createEnhancedHoverTemplate(curve, config, chartType)
                     });
                 }
             });
         }
 
-        // Add operating point if available
+        // Add BEP zones for head-flow charts (enhanced feature restoration)
+        if (chartType === 'head_flow') {
+            this.addBEPZoneTraces(traces, this.currentChartData.curves || [], [], []);
+        }
+
+        // Add system curve if available (enhanced feature restoration)  
+        if (opPoint && opPoint.flow_m3hr && opPoint.head_m && chartType === 'head_flow') {
+            this.addSystemCurve(traces, opPoint, [], []);
+        }
+
+        // Add enhanced operating point with crosshairs
         if (opPoint && opPoint.flow_m3hr) {
             const yValue = this.getOperatingPointValue(opPoint, chartType);
             if (yValue != null) {
-                traces.push({
-                    x: [opPoint.flow_m3hr],
-                    y: [yValue],
-                    type: 'scatter',
-                    mode: 'markers',
-                    name: 'Operating Point',
-                    marker: {
-                        color: 'red',
-                        size: 10,
-                        symbol: 'diamond'
-                    },
-                    hovertemplate: this.createHoverTemplate(opPoint, chartType)
-                });
+                this.addEnhancedOperatingPoint(traces, opPoint, yValue, this.chartConfigs[chartType], chartType);
             }
         }
+
+        // Add BEP annotations from Brain intelligence
+        this.addBEPAnnotations(traces, this.currentChartData.brain_config?.annotations || [], [], [], this.chartConfigs[chartType]);
 
         // Create layout and render
         const layout = this.createLayout(config, traces);
@@ -261,6 +263,172 @@ class ChartManager {
                 spinner.remove();
             }
         }
+    }
+
+    // ENHANCED FEATURE: Detailed hover templates with operating point data
+    createEnhancedHoverTemplate(data, config, chartType) {
+        if (data && data.flow_m3hr) {
+            // Enhanced operating point hover
+            return `<b>Operating Point</b><br>` +
+                   `Flow: ${data.flow_m3hr} m³/hr<br>` +
+                   `Head: ${data.head_m || 'N/A'} m<br>` +
+                   `Efficiency: ${data.efficiency_pct || 'N/A'}%<br>` +
+                   `Power: ${data.power_kw || 'N/A'} kW<br>` +
+                   `NPSH: ${data.npshr_m || 'N/A'} m<br>` +
+                   `<extra></extra>`;
+        } else {
+            // Enhanced curve point hover  
+            return `<b>%{fullData.name}</b><br>` +
+                   `${config.xTitle}: %{x}<br>` +
+                   `${config.yTitle}: %{y}<br>` +
+                   `Diameter: ${data.impeller_diameter_mm || 'N/A'}mm<br>` +
+                   `<extra></extra>`;
+        }
+    }
+
+    // ENHANCED FEATURE: Add BEP zone visualizations for head-flow charts
+    addBEPZoneTraces(traces, curves, allX, allY) {
+        if (!curves || curves.length === 0) return;
+
+        // Create BEP efficiency zone (80-110% of BEP flow)
+        curves.forEach(curve => {
+            if (curve.bep_flow_m3hr && curve.is_selected) {
+                const bepFlow = curve.bep_flow_m3hr;
+                const flowData = curve.flow_data || [];
+                const headData = curve.head_data || [];
+                
+                // Find BEP zone boundaries (80-110% of BEP flow)
+                const minFlow = bepFlow * 0.8;
+                const maxFlow = bepFlow * 1.1;
+                
+                // Find corresponding head values
+                const zoneFlows = [];
+                const zoneHeads = [];
+                
+                for (let i = 0; i < flowData.length; i++) {
+                    if (flowData[i] >= minFlow && flowData[i] <= maxFlow) {
+                        zoneFlows.push(flowData[i]);
+                        zoneHeads.push(headData[i]);
+                    }
+                }
+                
+                if (zoneFlows.length > 1) {
+                    traces.push({
+                        x: zoneFlows,
+                        y: zoneHeads,
+                        type: 'scatter',
+                        mode: 'lines',
+                        name: 'BEP Zone',
+                        line: { color: 'rgba(40, 167, 69, 0.3)', width: 8 },
+                        showlegend: true,
+                        hovertemplate: '<b>BEP Efficiency Zone</b><br>Flow: %{x} m³/hr<br>Head: %{y} m<extra></extra>'
+                    });
+                }
+            }
+        });
+    }
+
+    // ENHANCED FEATURE: Add system curve visualization  
+    addSystemCurve(traces, operatingPoint, allX, allY) {
+        if (!operatingPoint.flow_m3hr || !operatingPoint.head_m) return;
+        
+        const opFlow = operatingPoint.flow_m3hr;
+        const opHead = operatingPoint.head_m;
+        
+        // Generate system curve (parabolic: H = H_static + K * Q^2)
+        const maxFlow = Math.max(...allX) * 1.2;
+        const systemFlows = [];
+        const systemHeads = [];
+        
+        // Assume 30% static head for typical systems
+        const staticHead = opHead * 0.3;
+        const frictionCoeff = (opHead - staticHead) / (opFlow * opFlow);
+        
+        for (let flow = 0; flow <= maxFlow; flow += maxFlow / 50) {
+            systemFlows.push(flow);
+            systemHeads.push(staticHead + frictionCoeff * flow * flow);
+        }
+        
+        traces.push({
+            x: systemFlows,
+            y: systemHeads,
+            type: 'scatter',
+            mode: 'lines',
+            name: 'System Curve',
+            line: { color: 'rgba(220, 53, 69, 0.6)', width: 2, dash: 'dash' },
+            showlegend: true,
+            hovertemplate: '<b>System Curve</b><br>Flow: %{x} m³/hr<br>Head: %{y} m<extra></extra>'
+        });
+    }
+
+    // ENHANCED FEATURE: Enhanced operating point with crosshairs
+    addEnhancedOperatingPoint(traces, operatingPoint, yValue, config, chartType) {
+        const flow = operatingPoint.flow_m3hr;
+        
+        // Main operating point marker
+        traces.push({
+            x: [flow],
+            y: [yValue],
+            type: 'scatter',
+            mode: 'markers',
+            name: 'Operating Point',
+            marker: { 
+                color: 'red', 
+                size: 12, 
+                symbol: 'diamond',
+                line: { color: 'darkred', width: 2 }
+            },
+            hovertemplate: this.createEnhancedHoverTemplate(operatingPoint, config, chartType)
+        });
+        
+        // Add crosshairs for better visibility
+        const maxX = Math.max(...traces.map(t => Math.max(...(t.x || []))));
+        const maxY = Math.max(...traces.map(t => Math.max(...(t.y || []))));
+        
+        // Vertical crosshair
+        traces.push({
+            x: [flow, flow],
+            y: [0, maxY],
+            type: 'scatter',
+            mode: 'lines',
+            name: 'Flow Reference',
+            line: { color: 'rgba(255, 0, 0, 0.3)', width: 1, dash: 'dot' },
+            showlegend: false,
+            hoverinfo: 'none'
+        });
+        
+        // Horizontal crosshair
+        traces.push({
+            x: [0, maxX],
+            y: [yValue, yValue],
+            type: 'scatter',
+            mode: 'lines',
+            name: 'Head Reference',
+            line: { color: 'rgba(255, 0, 0, 0.3)', width: 1, dash: 'dot' },
+            showlegend: false,
+            hoverinfo: 'none'
+        });
+    }
+
+    // ENHANCED FEATURE: Add BEP annotations from Brain intelligence
+    addBEPAnnotations(traces, annotations, allX, allY, config) {
+        annotations.forEach(annotation => {
+            if (annotation.type === 'bep_marker' && annotation.x && annotation.y) {
+                traces.push({
+                    x: [annotation.x],
+                    y: [annotation.y],
+                    type: 'scatter',
+                    mode: 'markers+text',
+                    name: 'BEP',
+                    marker: { color: 'green', size: 8, symbol: 'star' },
+                    text: ['BEP'],
+                    textposition: 'top center',
+                    textfont: { color: 'green', size: 10 },
+                    showlegend: false,
+                    hovertemplate: '<b>Best Efficiency Point</b><br>Flow: %{x} m³/hr<br>Head: %{y} m<extra></extra>'
+                });
+            }
+        });
     }
 
     // Initialize all charts
