@@ -38,7 +38,9 @@ def get_pump_list():
         response = make_response()
         
         # Check if catalog is already loaded to avoid redundant loading
-        from ..catalog_engine import get_catalog_engine
+        # CATALOG ENGINE RETIRED - USING BRAIN SYSTEM
+# from ..catalog_engine import get_catalog_engine
+from ..pump_brain import get_pump_brain
         catalog_engine = get_catalog_engine()
         
         # PERFORMANCE FIX: Create minimal pump list (reduce payload size)
@@ -78,7 +80,9 @@ def get_chart_data(pump_code):
         use_brain = BRAIN_AVAILABLE
         
         # Use catalog engine to get pump data
-        from ..catalog_engine import get_catalog_engine
+        # CATALOG ENGINE RETIRED - USING BRAIN SYSTEM
+# from ..catalog_engine import get_catalog_engine
+from ..pump_brain import get_pump_brain
         catalog_engine = get_catalog_engine()
         target_pump = catalog_engine.get_pump_by_code(pump_code)
 
@@ -437,7 +441,9 @@ def get_chart_data_safe(safe_pump_code):
         logger.info(f"Chart API: Loading data for pump {pump_code}")
         data_load_start = time.time()
 
-        from ..catalog_engine import get_catalog_engine
+        # CATALOG ENGINE RETIRED - USING BRAIN SYSTEM
+# from ..catalog_engine import get_catalog_engine
+from ..pump_brain import get_pump_brain
         catalog_engine = get_catalog_engine()
         target_pump = catalog_engine.get_pump_by_code(pump_code)
 
@@ -954,7 +960,9 @@ def get_pumps():
     """Get all pumps for autocomplete"""
     try:
         # Get all pumps from repository
-        from ..catalog_engine import get_catalog_engine
+        # CATALOG ENGINE RETIRED - USING BRAIN SYSTEM
+# from ..catalog_engine import get_catalog_engine
+from ..pump_brain import get_pump_brain
         catalog_engine = get_catalog_engine()
 
         # Format for autocomplete
@@ -983,7 +991,9 @@ def search_pumps():
             return jsonify({'pumps': [], 'count': 0})
 
         # Get all pumps from repository
-        from ..catalog_engine import get_catalog_engine
+        # CATALOG ENGINE RETIRED - USING BRAIN SYSTEM
+# from ..catalog_engine import get_catalog_engine
+from ..pump_brain import get_pump_brain
         catalog_engine = get_catalog_engine()
 
         # Filter pumps based on query
@@ -1037,7 +1047,9 @@ def select_pump():
         if not all([pump_code, flow, head]):
             return jsonify({'error': 'Missing required parameters'}), 400
 
-        from ..catalog_engine import get_catalog_engine
+        # CATALOG ENGINE RETIRED - USING BRAIN SYSTEM
+# from ..catalog_engine import get_catalog_engine
+from ..pump_brain import get_pump_brain
         catalog_engine = get_catalog_engine()
         pump = catalog_engine.get_pump_by_code(pump_code)
 

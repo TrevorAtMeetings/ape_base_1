@@ -86,7 +86,9 @@ def pump_comparison():
             head = request.args.get('head', type=float)
             pump_type = request.args.get('pump_type', 'General')
             if flow and head:
-                from ..catalog_engine import get_catalog_engine
+                # CATALOG ENGINE RETIRED - USING BRAIN SYSTEM
+# from ..catalog_engine import get_catalog_engine
+from ..pump_brain import get_pump_brain
                 catalog_engine = get_catalog_engine()
                 top_selections = catalog_engine.select_pumps(flow, head, max_results=10, pump_type=pump_type)
                 pump_selections = []
@@ -158,7 +160,9 @@ def pump_comparison():
         # If we have comparison_list from new API, convert it to pump_selections format
         if comparison_list and not pump_selections:
             pump_selections = []
-            from ..catalog_engine import get_catalog_engine
+            # CATALOG ENGINE RETIRED - USING BRAIN SYSTEM
+# from ..catalog_engine import get_catalog_engine
+from ..pump_brain import get_pump_brain
             catalog_engine = get_catalog_engine()
             
             for comp_pump in comparison_list:
@@ -295,7 +299,9 @@ def pump_details(pump_code):
         logger.info(f"Pump details request - Original: '{original_pump_code}', Decoded: '{pump_code}'")
         
         # Get pump data from catalog engine
-        from ..catalog_engine import get_catalog_engine
+        # CATALOG ENGINE RETIRED - USING BRAIN SYSTEM
+# from ..catalog_engine import get_catalog_engine
+from ..pump_brain import get_pump_brain
         catalog_engine = get_catalog_engine()
         pump = catalog_engine.get_pump_by_code(pump_code)
         
@@ -374,7 +380,9 @@ def shortlist_comparison():
             safe_flash('Flow and head parameters are required for shortlist comparison', 'error')
             return redirect(url_for('comparison.pump_comparison'))
         
-        from ..catalog_engine import get_catalog_engine
+        # CATALOG ENGINE RETIRED - USING BRAIN SYSTEM
+# from ..catalog_engine import get_catalog_engine
+from ..pump_brain import get_pump_brain
         catalog_engine = get_catalog_engine()
         
         shortlist_pumps = []
@@ -420,7 +428,9 @@ def generate_comparison_pdf():
         logger.info(f"Comparison PDF generation - Pumps: {pump_codes}, Flow: {flow}, Head: {head}")
         
         # Get detailed information for pumps
-        from ..catalog_engine import get_catalog_engine
+        # CATALOG ENGINE RETIRED - USING BRAIN SYSTEM
+# from ..catalog_engine import get_catalog_engine
+from ..pump_brain import get_pump_brain
         catalog_engine = get_catalog_engine()
         
         comparison_data = []

@@ -76,15 +76,13 @@ def pump_report(pump_code):
             logger.info(f"Direct search requested for pump '{pump_code}', bypassing session lookup.")
             # Try to find pump directly in catalog engine
             try:
-                from ..catalog_engine import get_catalog_engine
-                catalog_engine = get_catalog_engine()
+                # CATALOG ENGINE RETIRED - USING BRAIN SYSTEM
+                # from ..catalog_engine import get_catalog_engine
+                from ..pump_brain import get_pump_brain
+                brain = get_pump_brain()
                 
-                # Find the pump in the catalog
-                found_pump = None
-                for pump in catalog_engine.pumps:
-                    if pump.pump_code == pump_code:
-                        found_pump = pump
-                        break
+                # Find the pump using Brain repository
+                found_pump = brain.repository.get_pump_by_code(pump_code)
                 
                 if found_pump:
                     logger.info(f"Found pump '{pump_code}' in catalog for direct search.")
@@ -235,7 +233,9 @@ def engineering_report(pump_code):
             
             # CRITICAL FIX: Ensure speed data and impeller specs are populated from database if missing
             if not selected_pump.get('test_speed_rpm') or not selected_pump.get('min_speed_rpm') or not selected_pump.get('min_impeller_mm'):
-                from ..catalog_engine import get_catalog_engine
+                # CATALOG ENGINE RETIRED - USING BRAIN SYSTEM
+# from ..catalog_engine import get_catalog_engine
+from ..pump_brain import get_pump_brain
                 catalog_engine = get_catalog_engine()
                 target_pump = catalog_engine.get_pump_by_code(pump_code)
                 
@@ -263,7 +263,9 @@ def engineering_report(pump_code):
     if not selected_pump and force_selection:
         logger.info(f"Force selecting pump {pump_code} for engineering analysis")
         
-        from ..catalog_engine import get_catalog_engine
+        # CATALOG ENGINE RETIRED - USING BRAIN SYSTEM
+# from ..catalog_engine import get_catalog_engine
+from ..pump_brain import get_pump_brain
         catalog_engine = get_catalog_engine()
         
         # Get pump from catalog

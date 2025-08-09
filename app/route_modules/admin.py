@@ -7,7 +7,9 @@ import os
 import numpy as np
 from flask import render_template, Blueprint, request, jsonify, current_app, flash
 from werkzeug.utils import secure_filename
-from ..catalog_engine import get_catalog_engine
+# CATALOG ENGINE RETIRED - USING BRAIN SYSTEM
+# from ..catalog_engine import get_catalog_engine
+from ..pump_brain import get_pump_brain
 from ..pump_repository import PumpRepository
 from ..utils import SiteRequirements
 
@@ -60,7 +62,8 @@ def run_performance_test():
             return render_template('admin_testing.html')
         
         # Initialize engines
-        catalog_engine = get_catalog_engine()
+        # BRAIN SYSTEM MIGRATION: Use Brain instead of Catalog Engine
+        brain = get_pump_brain()
         pump_repo = PumpRepository()
         
         # Determine testing mode
@@ -69,13 +72,14 @@ def run_performance_test():
         if bep_testing_mode:
             logger.info(f"Running BEP testing mode for pump: {pump_code}")
             # BEP Testing Mode: Test pump at its optimal efficiency point
-            catalog_pump = catalog_engine.get_pump_by_code(pump_code)
-            if not catalog_pump:
+            # BRAIN SYSTEM: Use repository through Brain
+            pump_data = brain.repository.get_pump_by_code(pump_code)
+            if not pump_data:
                 flash(f'Pump code "{pump_code}" not found in database', 'error')
                 return render_template('admin_testing.html')
             
-            # Get BEP coordinates
-            bep_data = _get_bep_analysis(catalog_pump, pump_repo, catalog_engine)
+            # Get BEP coordinates using Brain system
+            bep_data = _get_bep_analysis_brain(pump_data, brain)
             if not bep_data.get('has_bep_data'):
                 flash(f'No BEP data available for pump "{pump_code}"', 'error')
                 return render_template('admin_testing.html')
@@ -83,7 +87,7 @@ def run_performance_test():
             # Use BEP coordinates as test conditions
             flow_rate = bep_data['bep_flow_m3hr']
             head = bep_data['bep_head_m']
-            test_pumps = [catalog_pump]
+            test_pumps = [pump_data]
             test_mode = 'BEP Testing'
             
         else:
@@ -91,19 +95,18 @@ def run_performance_test():
             # Duty Point Testing Mode: Test at specified operating conditions
             if pump_code:
                 # Test specific pump at specified conditions
-                catalog_pump = catalog_engine.get_pump_by_code(pump_code)
-                if not catalog_pump:
+                # BRAIN SYSTEM: Use repository through Brain
+                pump_data = brain.repository.get_pump_by_code(pump_code)
+                if not pump_data:
                     flash(f'Pump code "{pump_code}" not found in database', 'error')
                     return render_template('admin_testing.html')
-                test_pumps = [catalog_pump]
+                test_pumps = [pump_data]
             else:
-                # Get suitable pumps from catalog engine (limit to top 10 for testing)
+                # Get suitable pumps from Brain system (limit to top 10 for testing)
                 # Create site requirements - flow_rate and head are guaranteed to be floats here
                 assert flow_rate is not None and head is not None, "Flow rate and head must be provided for duty point testing"
-                site_requirements = SiteRequirements(flow_rate, head)
-                selection_results = catalog_engine.select_pumps(
-                    flow_rate, head, pump_type='GENERAL', max_results=10
-                )
+                constraints = {'pump_type': 'GENERAL', 'max_results': 10}
+                selection_results = brain.find_best_pump(flow_rate, head, constraints=constraints)
                 if not selection_results:
                     flash('No suitable pumps found for the given conditions', 'error')
                     return render_template('admin_testing.html')

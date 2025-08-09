@@ -7,7 +7,9 @@ import re
 import json
 from flask import Blueprint, render_template, request, jsonify, url_for
 from ..session_manager import safe_flash
-from ..catalog_engine import get_catalog_engine
+# CATALOG ENGINE RETIRED - USING BRAIN SYSTEM
+# from ..catalog_engine import get_catalog_engine
+from ..pump_brain import get_pump_brain
 from ..data_models import SiteRequirements
 import traceback
 
@@ -137,7 +139,9 @@ def extract_pump_parameters(query):
 def handle_specific_pump_query(pump_name, flow, head):
     """Handle query for specific pump at specific conditions"""
     try:
-        from ..catalog_engine import get_catalog_engine
+        # CATALOG ENGINE RETIRED - USING BRAIN SYSTEM
+# from ..catalog_engine import get_catalog_engine
+from ..pump_brain import get_pump_brain
         catalog_engine = get_catalog_engine()
         
         # Find the pump and evaluate at specified conditions
@@ -220,7 +224,9 @@ def handle_specific_pump_query(pump_name, flow, head):
 def handle_pump_bep_query(pump_name):
     """Handle query for pump at BEP conditions"""
     try:
-        from ..catalog_engine import get_catalog_engine
+        # CATALOG ENGINE RETIRED - USING BRAIN SYSTEM
+# from ..catalog_engine import get_catalog_engine
+from ..pump_brain import get_pump_brain
         catalog_engine = get_catalog_engine()
         
         # Find the pump
