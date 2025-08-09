@@ -181,8 +181,8 @@ class PumpBrain:
         Returns:
             List of pump recommendations with scores and details
         """
-        # Check cache first
-        cache_key = f"best_pump_{flow}_{head}_{hash(str(constraints))}"
+        # Check cache first - use robust cache key generation
+        cache_key = self._cache.make_key("best_pump", flow, head, constraints)
         cached = self._cache.get(cache_key)
         if cached:
             return cached

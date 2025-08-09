@@ -92,14 +92,15 @@ def pump_search():
         
         if not query:
             # Return recent/popular pumps when no query
-            all_pumps = brain.repository.get_all_pumps()
+            all_pumps = brain.repository.get_pump_models()
             pump_list = [{'pump_code': p.get('pump_code', ''), 'manufacturer': p.get('manufacturer', 'APE')} 
                         for p in all_pumps[:limit]]
         else:
-            # Brain-powered intelligent search
-            search_results = brain.repository.search_pumps(query, limit=limit)
+            # Brain-powered intelligent search - fallback to full list and filter
+            all_pumps = brain.repository.get_pump_models()
+            search_results = [p for p in all_pumps if query.upper() in p.get('pump_code', '').upper()]
             pump_list = [{'pump_code': p.get('pump_code', ''), 'manufacturer': p.get('manufacturer', 'APE')} 
-                        for p in search_results]
+                        for p in search_results[:limit]]
         
         return jsonify({
             'success': True,
@@ -126,7 +127,7 @@ def get_pump_list():
             return jsonify({'error': 'Pump list unavailable'}), 503
             
         brain = get_pump_brain()
-        all_pumps = brain.repository.get_all_pumps()
+        all_pumps = brain.repository.get_pump_models()  # Use the correct method
         
         # Limited to 100 for performance (legacy behavior)
         pump_models = [p.get('pump_code', '') for p in all_pumps[:100]]

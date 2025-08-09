@@ -274,12 +274,12 @@ class ChartIntelligence:
                 flow_max = max(all_flows)
                 # Round up to nice number
                 flow_max_rounded = self._round_up_nice(flow_max * 1.1)
-                ranges['flow'] = {'min': 0, 'max': flow_max_rounded}
+                ranges['flow'] = {'min': 0, 'max': int(flow_max_rounded)}
             
             if all_heads:
                 head_max = max(all_heads)
                 head_max_rounded = self._round_up_nice(head_max * 1.1)
-                ranges['head'] = {'min': 0, 'max': head_max_rounded}
+                ranges['head'] = {'min': 0, 'max': int(head_max_rounded)}
             
             if all_effs:
                 eff_max = min(100, max(all_effs) * 1.05)
@@ -288,7 +288,7 @@ class ChartIntelligence:
             if all_powers:
                 power_max = max(all_powers)
                 power_max_rounded = self._round_up_nice(power_max * 1.1)
-                ranges['power'] = {'min': 0, 'max': power_max_rounded}
+                ranges['power'] = {'min': 0, 'max': int(power_max_rounded)}
             
         except Exception as e:
             logger.error(f"Error calculating axis ranges: {str(e)}")

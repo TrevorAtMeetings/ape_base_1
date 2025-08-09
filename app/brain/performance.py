@@ -138,12 +138,29 @@ class PerformanceAnalyzer:
                         final_efficiency = efficiency * (0.8 + 0.2 * trim_factor)  # Efficiency penalty
                         final_power = power * (trim_factor ** 3)
                         
+                        # IMPROVED: Interpolate NPSH at target flow instead of using first point
+                        interpolated_npshr = None
+                        try:
+                            npsh_values = [p.get('npshr_m') for p in curve_points if p.get('npshr_m') is not None]
+                            if npsh_values and len(npsh_values) == len(flows):
+                                # Interpolate NPSH at target flow for more accurate prediction
+                                if len(flows) >= 2:
+                                    npsh_interp = interpolate.interp1d(flows, npsh_values, 
+                                                                      kind='linear', bounds_error=False)
+                                    base_npshr = float(npsh_interp(flow))
+                                    if not np.isnan(base_npshr):
+                                        # NPSH scales with diameter ratio squared (similar to head)
+                                        interpolated_npshr = base_npshr * (trim_factor ** 2)
+                        except Exception:
+                            # Fallback to first point only if interpolation fails
+                            interpolated_npshr = curve_points[0].get('npshr_m')
+                        
                         best_performance = {
                             'flow_m3hr': flow,
                             'head_m': final_head,
                             'efficiency_pct': final_efficiency,
                             'power_kw': final_power,
-                            'npshr_m': curve_points[0].get('npshr_m'),  # Use first point's NPSH
+                            'npshr_m': interpolated_npshr,  # Now uses interpolated NPSH
                             'impeller_diameter_mm': required_diameter,
                             'base_diameter_mm': curve_diameter,
                             'trim_percent': trim_percent,
