@@ -28,10 +28,70 @@
     --text-secondary: #666;
 }
 
+/* Form design improvements */
+.card-content {
+    padding: 24px !important;
+}
+
+.input-field {
+    margin-bottom: 24px;
+}
+
+.input-field .helper-text {
+    font-size: 12px;
+    line-height: 1.4;
+    margin-top: 4px;
+    display: block;
+    max-width: 100%;
+    word-wrap: break-word;
+}
+
+.radio-group p {
+    margin: 8px 0 !important;
+}
+
+.radio-group label {
+    font-size: 14px;
+    color: #333;
+}
+
+/* Improved spacing for form sections */
+.form-label {
+    display: block;
+    margin-bottom: 12px;
+    font-weight: 600;
+    color: var(--md-primary);
+}
+
+/* Better tooltip positioning */
+.material-icons.tooltipped {
+    font-size: 20px !important;
+}
+
+/* Card title improvements */
+.card-title {
+    font-size: 1.3rem !important;
+    line-height: 1.4 !important;
+}
+
+/* Badge styling */
+.badge {
+    font-size: 11px;
+    padding: 2px 8px;
+}
+
 /* Responsive improvements */
 @media (max-width: 768px) {
     .container {
         padding: 0 16px;
+    }
+    
+    .card-content {
+        padding: 16px !important;
+    }
+    
+    .input-field .helper-text {
+        font-size: 11px;
     }
 }
 
@@ -205,10 +265,10 @@
                                 Essential Requirements
                                 <span class="new badge red" data-badge-caption="Required" style="margin-left: 10px;"></span>
                             </span>
-                            <i class="material-icons tooltipped" data-position="left" data-tooltip="Flow Rate and Head are the fundamental parameters that define your pumping system. These values determine pump selection, sizing calculations, and performance verification." style="color: var(--md-primary); cursor: help;">help_outline</i>
+                            <i class="material-icons tooltipped" data-position="left" data-tooltip="Flow Rate and Head are the key parameters for pump selection and sizing calculations." style="color: var(--md-primary); cursor: help;">help_outline</i>
                         </div>
-                        <p style="color: var(--text-secondary); margin-bottom: 24px;">
-                            <strong>Quick pump selection</strong> - Enter these 4 essential parameters to find the best pump for your application.
+                        <p style="color: var(--text-secondary); margin-bottom: 24px; font-size: 14px; line-height: 1.5;">
+                            <strong>Quick pump selection</strong> - Enter these essential parameters to find the best pump for your application.
                         </p>
 
                         <!-- Unit System Selection -->
@@ -252,7 +312,7 @@
                                     <i class="material-icons prefix">height</i>
                                     <input id="total_head" name="head_m" type="number" step="0.01" min="0.1" max="1000" required class="validate" data-metric-min="0.1" data-metric-max="1000" data-imperial-min="0.32" data-imperial-max="3280">
                                     <label for="total_head">Total Head (m) *</label>
-                                    <span class="helper-text" data-error="Total head must be between 0.1 and 1000 m">Total dynamic head including friction and static losses</span>
+                                    <span class="helper-text" data-error="Total head must be between 0.1 and 1000 m">Total dynamic head (friction + static losses)</span>
                                 </div>
                             </div>
                         </div>
@@ -265,38 +325,38 @@
                                         <i class="material-icons" style="font-size: 16px; vertical-align: middle; margin-right: 8px;">category</i>
                                         Pump Type
                                     </label>
-                                    <div class="radio-group">
-                                        <p>
+                                    <div class="radio-group" style="margin-top: 8px;">
+                                        <p style="margin: 6px 0;">
                                             <label>
                                                 <input name="pump_type" type="radio" value="GENERAL" checked />
                                                 <span>All Types (Recommended)</span>
                                             </label>
                                         </p>
-                                        <p>
+                                        <p style="margin: 6px 0;">
                                             <label>
                                                 <input name="pump_type" type="radio" value="HSC" />
                                                 <span>HSC - Horizontal Split Case</span>
                                             </label>
                                         </p>
-                                        <p>
+                                        <p style="margin: 6px 0;">
                                             <label>
                                                 <input name="pump_type" type="radio" value="END SUCTION" />
                                                 <span>End Suction</span>
                                             </label>
                                         </p>
-                                        <p>
+                                        <p style="margin: 6px 0;">
                                             <label>
                                                 <input name="pump_type" type="radio" value="MULTI-STAGE" />
                                                 <span>Multi-Stage</span>
                                             </label>
                                         </p>
-                                        <p>
+                                        <p style="margin: 6px 0;">
                                             <label>
                                                 <input name="pump_type" type="radio" value="VERTICAL TURBINE" />
                                                 <span>Vertical Turbine</span>
                                             </label>
                                         </p>
-                                        <p>
+                                        <p style="margin: 6px 0;">
                                             <label>
                                                 <input name="pump_type" type="radio" value="AXIAL FLOW" />
                                                 <span>Axial Flow</span>
@@ -330,7 +390,7 @@
                                             </button>
                                         </div>
                                         <span class="helper-text" style="display: block; margin-top: 8px;">
-                                            <span id="pump-search-status">Skip selection algorithm and analyze a specific pump model</span>
+                                            <span id="pump-search-status">Analyze a specific pump model</span>
                                             <span id="pump-count-status" style="display: none; color: var(--md-primary); font-weight: 500;"></span>
                                         </span>
                                     </div>
