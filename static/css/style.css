@@ -2718,19 +2718,59 @@ table tbody tr:hover {
 /* Ensure parent containers allow overflow */
 nav.unified-nav {
     overflow: visible !important;
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%) !important;
+    width: 100%;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1000;
+    height: 64px;
 }
 
 nav.unified-nav .nav-container {
     overflow: visible !important;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 64px;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+nav.unified-nav .nav-brand {
+    color: white;
+    text-decoration: none;
+    font-size: 1.25rem;
+    font-weight: 600;
 }
 
 nav.unified-nav .nav-actions {
     overflow: visible !important;
+    display: flex;
+    gap: 10px;
+    align-items: center;
 }
 
 nav.unified-nav .nav-dropdown {
     position: relative;
     overflow: visible !important;
+}
+
+nav.unified-nav .nav-btn {
+    background: transparent;
+    border: none;
+    color: white;
+    padding: 8px 16px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: background-color 0.2s ease;
+    border-radius: 4px;
+}
+
+nav.unified-nav .nav-btn:hover {
+    background-color: rgba(255,255,255,0.1);
 }
 
 /* Dropdown link styles */
@@ -2744,4 +2784,57 @@ nav.unified-nav .nav-dropdown {
 
 .nav-dropdown-content a:hover {
     background-color: #f5f5f5;
+}
+
+/* Breadcrumb Styles */
+.breadcrumb-bar {
+    background: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+    padding: 8px 20px;
+    position: fixed;
+    top: 64px;
+    left: 0;
+    right: 0;
+    z-index: 999;
+}
+
+.breadcrumb-list {
+    display: flex;
+    align-items: center;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.breadcrumb-item {
+    display: flex;
+    align-items: center;
+    font-size: 14px;
+}
+
+.breadcrumb-link {
+    color: #2a5298;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.breadcrumb-link:hover {
+    color: #1e3c72;
+    text-decoration: underline;
+}
+
+.breadcrumb-separator {
+    margin: 0 8px;
+    color: #6c757d;
+}
+
+.breadcrumb-current {
+    color: #6c757d;
+}
+
+/* Nav spacer to prevent content overlap */
+.nav-spacer {
+    height: 64px;
 }
