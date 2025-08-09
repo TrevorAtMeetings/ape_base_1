@@ -5,66 +5,66 @@
 {% block head %}
 
 <style>
-    /* Compact Results Page Design */
-    .results-header {
-        background: linear-gradient(135deg, #1e3c72 0%, #0d2240 100%);
-        color: white;
-        padding: 16px 0;
-        margin-bottom: 20px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    /* Compact Results Page Design - High Specificity */
+    body .results-header {
+        background: linear-gradient(135deg, #1e3c72 0%, #0d2240 100%) !important;
+        color: white !important;
+        padding: 16px 0 !important;
+        margin-bottom: 20px !important;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
     }
 
-    .results-title {
-        margin: 0;
-        font-size: 1.5rem;
-        font-weight: 500;
-        display: flex;
-        align-items: center;
-        gap: 12px;
+    body .results-title {
+        margin: 0 !important;
+        font-size: 1.5rem !important;
+        font-weight: 500 !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 12px !important;
     }
 
-    .results-subtitle {
-        margin-top: 4px;
-        opacity: 0.9;
-        font-size: 0.95rem;
+    body .results-subtitle {
+        margin-top: 4px !important;
+        opacity: 0.9 !important;
+        font-size: 0.95rem !important;
     }
 
-    .pump-table {
-        background: white;
-        border-radius: 8px;
-        overflow: hidden;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    body .pump-table {
+        background: white !important;
+        border-radius: 8px !important;
+        overflow: hidden !important;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05) !important;
     }
 
-    .pump-table-header {
-        background: #f5f5f5;
-        border-bottom: 2px solid #e0e0e0;
-        padding: 12px 16px;
-        font-weight: 600;
-        color: #263238;
-        font-size: 0.9rem;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
+    body .pump-table-header {
+        background: #f5f5f5 !important;
+        border-bottom: 2px solid #e0e0e0 !important;
+        padding: 12px 16px !important;
+        font-weight: 600 !important;
+        color: #263238 !important;
+        font-size: 0.9rem !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.5px !important;
     }
 
-    .pump-row {
-        display: flex;
-        align-items: center;
-        padding: 12px 16px;
-        border-bottom: 1px solid #e0e0e0;
-        transition: all 0.2s ease;
-        cursor: pointer;
-        text-decoration: none;
-        color: inherit;
+    body .pump-row {
+        display: flex !important;
+        align-items: center !important;
+        padding: 12px 16px !important;
+        border-bottom: 1px solid #e0e0e0 !important;
+        transition: all 0.2s ease !important;
+        cursor: pointer !important;
+        text-decoration: none !important;
+        color: inherit !important;
     }
 
-    .pump-row:hover {
-        background: #f8f9fa;
-        transform: translateX(4px);
+    body .pump-row:hover {
+        background: #f8f9fa !important;
+        transform: translateX(4px) !important;
     }
 
-    .pump-row:last-child {
-        border-bottom: none;
+    body .pump-row:last-child {
+        border-bottom: none !important;
     }
 
     .pump-rank {
@@ -168,32 +168,32 @@
         color: #1976d2;
     }
 
-    .summary-cards {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-        gap: 12px;
-        margin-bottom: 20px;
+    body .summary-cards {
+        display: grid !important;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)) !important;
+        gap: 12px !important;
+        margin-bottom: 20px !important;
     }
 
-    .summary-card {
-        background: white;
-        border-radius: 8px;
-        padding: 12px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-        text-align: center;
+    body .summary-card {
+        background: white !important;
+        border-radius: 8px !important;
+        padding: 12px !important;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.08) !important;
+        text-align: center !important;
     }
 
-    .summary-value {
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: #263238;
+    body .summary-value {
+        font-size: 1.5rem !important;
+        font-weight: 700 !important;
+        color: #263238 !important;
     }
 
-    .summary-label {
-        font-size: 0.75rem;
-        color: #90a4ae;
-        text-transform: uppercase;
-        margin-top: 4px;
+    body .summary-label {
+        font-size: 0.75rem !important;
+        color: #90a4ae !important;
+        text-transform: uppercase !important;
+        margin-top: 4px !important;
     }
 
     /* Mobile Responsive */
