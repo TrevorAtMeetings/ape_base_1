@@ -66,11 +66,17 @@ def index():
         profiles = admin_config_service.get_all_profiles()
         constants = admin_config_service.get_engineering_constants()
         
+        logger.info(f"Loading config dashboard: {len(profiles)} profiles, {len(constants)} constants")
+        if profiles:
+            logger.info(f"First profile: {profiles[0]}")
+        
         return render_template('admin/config_dashboard.html',
                              profiles=profiles,
                              constants=constants)
     except Exception as e:
         logger.error(f"Error loading admin config dashboard: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
         flash('Error loading configuration dashboard', 'error')
         return redirect(url_for('main_flow.index'))
 
