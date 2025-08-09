@@ -221,7 +221,7 @@ class PumpRepository:
                     pump_stats_data = cursor.fetchall()
                     logger.info(f"Repository: Found {len(pump_stats_data)} pump records with aggregated statistics")
 
-                    # OPTIMIZED: Single query to get all curves with performance data
+                    # FIXED: Get all curves and their performance data (don't filter out curves without points)
                     cursor.execute("""
                         SELECT 
                             p.pump_code,
@@ -236,7 +236,6 @@ class PumpRepository:
                         FROM pumps p
                         JOIN pump_curves pc ON p.id = pc.pump_id
                         LEFT JOIN pump_performance_points ppp ON pc.id = ppp.curve_id
-                        WHERE ppp.flow_rate > 0
                         ORDER BY p.pump_code, pc.impeller_diameter_mm, ppp.operating_point
                     """)
 
@@ -263,10 +262,12 @@ class PumpRepository:
                                 'performance_points': []
                             }
 
-                        # Add performance point if it exists
-                        if row['operating_point'] is not None:
+                        # Add performance point if it exists and has valid flow data
+                        if (row['operating_point'] is not None and 
+                            row['flow_m3hr'] is not None and 
+                            float(row['flow_m3hr']) > 0):
                             curves_by_pump[pump_code][curve_id]['performance_points'].append({
-                                'flow_m3hr': float(row['flow_m3hr']) if row['flow_m3hr'] is not None else 0.0,
+                                'flow_m3hr': float(row['flow_m3hr']),
                                 'head_m': float(row['head_m']) if row['head_m'] is not None else 0.0,
                                 'efficiency_pct': float(row['efficiency_pct']) if row['efficiency_pct'] is not None else 0.0,
                                 'power_kw': None,  # Calculate using hydraulic formula
@@ -282,9 +283,12 @@ class PumpRepository:
                         pump_row_dict = dict(pump_row)
                         pump_code = pump_row_dict['pump_code']
 
-                        # Get curves for this pump
+                        # Get curves for this pump - ensure we process ALL pumps, not just those with performance data
                         pump_curves = curves_by_pump.get(pump_code, {})
                         curves = []
+                        
+                        # Log pump processing for debugging
+                        logger.debug(f"Repository: Processing pump {pump_code} with {len(pump_curves)} curves")
 
                         # CRITICAL FIX: Sort curves by impeller diameter (largest first)
                         # This ensures the maximum impeller curve (containing design BEP) is processed first

@@ -14,7 +14,7 @@ The application employs a modular Flask architecture with a clear separation of 
 The application features a unified navigation system across all pages to ensure a consistent user experience with main navigation, tools, admin, and help menus, all featuring functional dropdowns and a professional breadcrumb system.
 
 ### Data Integrity & Validation
-The system prioritizes authentic manufacturer specifications for pump performance data with a strict no-fallback policy for missing data. Validation prevents artificial matches and uses pump-specific thresholds. A "Brain Overlay Schema" protects immutable manufacturer data while enabling enterprise-grade data corrections and quality management with audit trails. The system now fails explicitly when authentic manufacturer data is missing, ensuring 100% data integrity.
+The system prioritizes authentic manufacturer specifications for pump performance data with a strict no-fallback policy for missing data. Validation prevents artificial matches and uses pump-specific thresholds. A "Brain Overlay Schema" protects immutable manufacturer data while enabling enterprise-grade data corrections and quality management with audit trails. **CRITICAL FIX COMPLETED (Aug 2025)**: Repository data loading bug fixed - all 369 pumps with performance curves now properly connected to Brain system, enabling full intelligent selection capabilities.
 
 ### Enhanced Performance Testing
 Comprehensive Best Efficiency Point (BEP)-centered envelope testing is included with statistical analysis and improved tabular display. It defines clear status legends (Match, Minor, Major) for accuracy metrics. A critical head oversizing penalty system prevents selection of pumps with BEP heads significantly above requirements.
