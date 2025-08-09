@@ -1,0 +1,381 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - APE Pumps{% endblock %}
+
+{% block head %}
+<style>
+/* Admin Landing Page Styles */
+.admin-dashboard {
+    background: var(--md-sys-color-background);
+    min-height: 100vh;
+    padding: 24px 0;
+}
+
+.admin-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 24px;
+}
+
+.admin-header {
+    background: linear-gradient(135deg, #1976d2 0%, #0d47a1 100%);
+    border-radius: 24px;
+    padding: 48px 32px;
+    margin-bottom: 32px;
+    text-align: center;
+    color: white;
+}
+
+.admin-title {
+    font-size: 36px;
+    font-weight: 300;
+    margin: 0 0 8px 0;
+}
+
+.admin-subtitle {
+    font-size: 18px;
+    opacity: 0.9;
+    margin: 0;
+}
+
+.admin-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 24px;
+    margin-bottom: 32px;
+}
+
+.admin-card {
+    background: var(--md-sys-color-surface);
+    border: 1px solid var(--md-sys-color-outline-variant);
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    cursor: pointer;
+    text-decoration: none;
+    color: inherit;
+    display: block;
+}
+
+.admin-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    border-color: var(--md-sys-color-primary);
+}
+
+.card-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.card-icon {
+    font-size: 32px;
+    background: var(--md-sys-color-primary-container);
+    color: var(--md-sys-color-on-primary-container);
+    padding: 12px;
+    border-radius: 12px;
+}
+
+.card-title {
+    font-size: 20px;
+    font-weight: 500;
+    color: var(--md-sys-color-on-surface);
+    margin: 0;
+}
+
+.card-description {
+    font-size: 14px;
+    color: var(--md-sys-color-on-surface-variant);
+    line-height: 1.5;
+    margin-bottom: 16px;
+}
+
+.card-stats {
+    display: flex;
+    gap: 24px;
+    padding-top: 16px;
+    border-top: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.stat-item {
+    flex: 1;
+}
+
+.stat-label {
+    font-size: 12px;
+    color: var(--md-sys-color-on-surface-variant);
+    margin-bottom: 4px;
+}
+
+.stat-value {
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--md-sys-color-primary);
+}
+
+.quick-actions {
+    background: var(--md-sys-color-surface);
+    border: 1px solid var(--md-sys-color-outline-variant);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 32px;
+}
+
+.actions-header {
+    font-size: 18px;
+    font-weight: 500;
+    margin-bottom: 16px;
+    color: var(--md-sys-color-on-surface);
+}
+
+.action-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border-radius: 16px;
+    font-size: 14px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    background: var(--md-sys-color-primary);
+    color: var(--md-sys-color-on-primary);
+    border: none;
+    cursor: pointer;
+}
+
+.action-btn:hover {
+    background: var(--md-sys-color-primary);
+    filter: brightness(1.1);
+    transform: translateY(-1px);
+}
+
+.action-btn-secondary {
+    background: transparent;
+    color: var(--md-sys-color-primary);
+    border: 1px solid var(--md-sys-color-outline);
+}
+
+.action-btn-secondary:hover {
+    background: var(--md-sys-color-primary);
+    color: var(--md-sys-color-on-primary);
+    border-color: var(--md-sys-color-primary);
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .admin-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .admin-header {
+        padding: 32px 24px;
+    }
+    
+    .admin-title {
+        font-size: 28px;
+    }
+    
+    .card-stats {
+        flex-direction: column;
+        gap: 12px;
+    }
+}
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="admin-dashboard">
+    <div class="admin-container">
+        <!-- Header -->
+        <header class="admin-header">
+            <h1 class="admin-title">Administration Dashboard</h1>
+            <p class="admin-subtitle">
+                Manage system configuration, monitor performance, and control application behavior
+            </p>
+        </header>
+
+        <!-- Quick Actions -->
+        <div class="quick-actions">
+            <h2 class="actions-header">Quick Actions</h2>
+            <div class="action-buttons">
+                <a href="{{ url_for('admin_config.index') }}" class="action-btn">
+                    <span class="material-icons-round">tune</span>
+                    Configuration Management
+                </a>
+                <a href="{{ url_for('brain_admin.brain_dashboard') }}" class="action-btn">
+                    <span class="material-icons-round">psychology</span>
+                    Brain System
+                </a>
+                <a href="{{ url_for('admin.ai_admin') }}" class="action-btn-secondary">
+                    <span class="material-icons-round">smart_toy</span>
+                    AI Settings
+                </a>
+                <a href="{{ url_for('admin.testing_interface') }}" class="action-btn-secondary">
+                    <span class="material-icons-round">speed</span>
+                    Performance Testing
+                </a>
+            </div>
+        </div>
+
+        <!-- Admin Cards Grid -->
+        <div class="admin-grid">
+            <!-- Configuration Management Card -->
+            <a href="{{ url_for('admin_config.index') }}" class="admin-card">
+                <div class="card-header">
+                    <span class="card-icon">
+                        <span class="material-icons-round">tune</span>
+                    </span>
+                    <h3 class="card-title">Configuration Management</h3>
+                </div>
+                <p class="card-description">
+                    Central control for all pump selection logic. Edit scoring weights, operating zones, and profile configurations that determine how pumps are selected and ranked.
+                </p>
+                <div class="card-stats">
+                    <div class="stat-item">
+                        <div class="stat-label">Profiles</div>
+                        <div class="stat-value">6</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Parameters</div>
+                        <div class="stat-value">24+</div>
+                    </div>
+                </div>
+            </a>
+
+            <!-- Brain System Card -->
+            <a href="{{ url_for('brain_admin.brain_dashboard') }}" class="admin-card">
+                <div class="card-header">
+                    <span class="card-icon">
+                        <span class="material-icons-round">psychology</span>
+                    </span>
+                    <h3 class="card-title">Brain System</h3>
+                </div>
+                <p class="card-description">
+                    Enterprise-grade data management with two-schema architecture. Monitor data quality, manage corrections, and ensure authentic manufacturer specifications.
+                </p>
+                <div class="card-stats">
+                    <div class="stat-item">
+                        <div class="stat-label">Pumps</div>
+                        <div class="stat-value">386</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Curves</div>
+                        <div class="stat-value">869</div>
+                    </div>
+                </div>
+            </a>
+
+            <!-- AI Admin Card -->
+            <a href="{{ url_for('admin.ai_admin') }}" class="admin-card">
+                <div class="card-header">
+                    <span class="card-icon">
+                        <span class="material-icons-round">smart_toy</span>
+                    </span>
+                    <h3 class="card-title">AI Administration</h3>
+                </div>
+                <p class="card-description">
+                    Manage AI models, API keys, and chatbot behavior. Configure OpenAI and Google Gemini integration for intelligent pump selection assistance.
+                </p>
+                <div class="card-stats">
+                    <div class="stat-item">
+                        <div class="stat-label">Models</div>
+                        <div class="stat-value">2</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Status</div>
+                        <div class="stat-value">Active</div>
+                    </div>
+                </div>
+            </a>
+
+            <!-- Performance Testing Card -->
+            <a href="{{ url_for('admin.testing_interface') }}" class="admin-card">
+                <div class="card-header">
+                    <span class="card-icon">
+                        <span class="material-icons-round">speed</span>
+                    </span>
+                    <h3 class="card-title">Performance Testing</h3>
+                </div>
+                <p class="card-description">
+                    Test pump selection algorithms, validate BEP calculations, and analyze system performance. Run comprehensive tests on selection logic and scoring.
+                </p>
+                <div class="card-stats">
+                    <div class="stat-item">
+                        <div class="stat-label">Tests</div>
+                        <div class="stat-value">12</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Coverage</div>
+                        <div class="stat-value">100%</div>
+                    </div>
+                </div>
+            </a>
+
+            <!-- Database Manager Card -->
+            <a href="{{ url_for('data_management.data_management') }}" class="admin-card">
+                <div class="card-header">
+                    <span class="card-icon">
+                        <span class="material-icons-round">storage</span>
+                    </span>
+                    <h3 class="card-title">Database Manager</h3>
+                </div>
+                <p class="card-description">
+                    Import pump data, manage SCG files, and handle batch processing. Monitor database health and manage pump specifications directly.
+                </p>
+                <div class="card-stats">
+                    <div class="stat-item">
+                        <div class="stat-label">Records</div>
+                        <div class="stat-value">7K+</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Tables</div>
+                        <div class="stat-value">10</div>
+                    </div>
+                </div>
+            </a>
+
+            <!-- Documents Card -->
+            <a href="{{ url_for('admin.admin_landing') }}" class="admin-card">
+                <div class="card-header">
+                    <span class="card-icon">
+                        <span class="material-icons-round">description</span>
+                    </span>
+                    <h3 class="card-title">Documentation</h3>
+                </div>
+                <p class="card-description">
+                    Access system documentation, technical guides, and operational procedures. Review architecture decisions and deployment configurations.
+                </p>
+                <div class="card-stats">
+                    <div class="stat-item">
+                        <div class="stat-label">Guides</div>
+                        <div class="stat-value">8</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Updated</div>
+                        <div class="stat-value">Recent</div>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Add any interactive functionality here
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Admin dashboard loaded');
+});
+</script>
+{% endblock %}

@@ -21,7 +21,7 @@ def brain_dashboard():
         # Clean breadcrumbs for navigation
         breadcrumbs = [
             {'label': 'Home', 'url': url_for('main_flow.index'), 'icon': 'home'},
-            {'label': 'Admin', 'url': url_for('admin.admin_dashboard'), 'icon': 'admin_panel_settings'},
+            {'label': 'Admin', 'url': '/admin', 'icon': 'admin_panel_settings'},
             {'label': 'Brain Dashboard', 'url': '#', 'icon': 'psychology'}
         ]
         brain_service = BrainDataService()
@@ -47,6 +47,12 @@ def brain_dashboard():
     except Exception as e:
         logger.error(f"Error loading brain dashboard: {e}")
         flash(f'Error loading dashboard: {str(e)}', 'error')
+        # Provide default breadcrumbs even in error case
+        breadcrumbs = [
+            {'label': 'Home', 'url': url_for('main_flow.index'), 'icon': 'home'},
+            {'label': 'Admin', 'url': '/admin', 'icon': 'admin_panel_settings'},
+            {'label': 'Brain Dashboard', 'url': '#', 'icon': 'psychology'}
+        ]
         return render_template('admin/brain_dashboard_clean.html', stats={}, breadcrumbs=breadcrumbs)
 
 @brain_admin_bp.route('/admin/brain/data-quality')

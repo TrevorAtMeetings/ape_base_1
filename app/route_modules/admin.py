@@ -32,7 +32,7 @@ def ai_admin():
 # Admin landing page with options
 @admin_bp.route('/admin')
 def admin_landing():
-    return render_template('admin_landing.html')
+    return render_template('admin/admin_landing.html')
 
 @admin_bp.route('/admin/testing')
 def testing_interface():
