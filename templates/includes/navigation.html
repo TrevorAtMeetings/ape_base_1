@@ -330,7 +330,7 @@
                     return;
                 }
                 
-                const isOpen = dropdownContent.style.display === 'block';
+                const isOpen = window.getComputedStyle(dropdownContent).display === 'block';
                 console.log('Is currently open:', isOpen);
                 
                 // Close all dropdowns

@@ -1,0 +1,131 @@
+5Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.Understand this error
+2b3cf6c9-194e-4f41-a916-261c173c707c-00-2xhbijbynxd3g.picard.replit.dev:5000/__replco/workspace_iframe.html?initialPath=%2F&id=%3Arsim%3A:32 Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.Understand this error
+framework-b1bb3a48eb23b322.js:1 Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+_ @ framework-b1bb3a48eb23b322.js:1
+(anonymous) @ framework-b1bb3a48eb23b322.js:1
+uD @ framework-b1bb3a48eb23b322.js:1
+uI @ framework-b1bb3a48eb23b322.js:1
+uM @ framework-b1bb3a48eb23b322.js:1
+uS @ framework-b1bb3a48eb23b322.js:1
+C @ framework-b1bb3a48eb23b322.js:1
+z @ framework-b1bb3a48eb23b322.js:1Understand this error
+2b3cf6c9-194e-4f41-a916-261c173c707c-00-2xhbijbynxd3g.picard.replit.dev:5000/__replco/workspace_iframe.html?initialPath=%2F&id=%3Arsug%3A:32 Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.Understand this error
+workspace_iframe.html:32 Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.Understand this error
+workspace_iframe.html:32 Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.Understand this error
+2b3cf6c9-194e-4f41-a916-261c173c707c-00-2xhbijbynxd3g.picard.replit.dev:5000/__replco/workspace_iframe.html?initialPath=%2F&id=%3Arsim%3A:32 Unrecognized feature: 'ambient-light-sensor'.Understand this warning
+2b3cf6c9-194e-4f41-a916-261c173c707c-00-2xhbijbynxd3g.picard.replit.dev:5000/__replco/workspace_iframe.html?initialPath=%2F&id=%3Arsim%3A:32 Unrecognized feature: 'battery'.Understand this warning
+2b3cf6c9-194e-4f41-a916-261c173c707c-00-2xhbijbynxd3g.picard.replit.dev:5000/__replco/workspace_iframe.html?initialPath=%2F&id=%3Arsim%3A:32 Unrecognized feature: 'execution-while-not-rendered'.Understand this warning
+2b3cf6c9-194e-4f41-a916-261c173c707c-00-2xhbijbynxd3g.picard.replit.dev:5000/__replco/workspace_iframe.html?initialPath=%2F&id=%3Arsim%3A:32 Unrecognized feature: 'execution-while-out-of-viewport'.Understand this warning
+2b3cf6c9-194e-4f41-a916-261c173c707c-00-2xhbijbynxd3g.picard.replit.dev:5000/__replco/workspace_iframe.html?initialPath=%2F&id=%3Arsim%3A:32 Unrecognized feature: 'layout-animations'.Understand this warning
+2b3cf6c9-194e-4f41-a916-261c173c707c-00-2xhbijbynxd3g.picard.replit.dev:5000/__replco/workspace_iframe.html?initialPath=%2F&id=%3Arsim%3A:32 Unrecognized feature: 'legacy-image-formats'.Understand this warning
+2b3cf6c9-194e-4f41-a916-261c173c707c-00-2xhbijbynxd3g.picard.replit.dev:5000/__replco/workspace_iframe.html?initialPath=%2F&id=%3Arsim%3A:32 Unrecognized feature: 'navigation-override'.Understand this warning
+2b3cf6c9-194e-4f41-a916-261c173c707c-00-2xhbijbynxd3g.picard.replit.dev:5000/__replco/workspace_iframe.html?initialPath=%2F&id=%3Arsim%3A:32 Unrecognized feature: 'oversized-images'.Understand this warning
+2b3cf6c9-194e-4f41-a916-261c173c707c-00-2xhbijbynxd3g.picard.replit.dev:5000/__replco/workspace_iframe.html?initialPath=%2F&id=%3Arsim%3A:32 Unrecognized feature: 'publickey-credentials'.Understand this warning
+2b3cf6c9-194e-4f41-a916-261c173c707c-00-2xhbijbynxd3g.picard.replit.dev:5000/__replco/workspace_iframe.html?initialPath=%2F&id=%3Arsim%3A:32 Unrecognized feature: 'speaker-selection'.Understand this warning
+2b3cf6c9-194e-4f41-a916-261c173c707c-00-2xhbijbynxd3g.picard.replit.dev:5000/__replco/workspace_iframe.html?initialPath=%2F&id=%3Arsim%3A:32 Unrecognized feature: 'unoptimized-images'.Understand this warning
+2b3cf6c9-194e-4f41-a916-261c173c707c-00-2xhbijbynxd3g.picard.replit.dev:5000/__replco/workspace_iframe.html?initialPath=%2F&id=%3Arsim%3A:32 Unrecognized feature: 'unsized-media'.Understand this warning
+2b3cf6c9-194e-4f41-a916-261c173c707c-00-2xhbijbynxd3g.picard.replit.dev:5000/__replco/workspace_iframe.html?initialPath=%2F&id=%3Arsim%3A:32 Allow attribute will take precedence over 'allowfullscreen'.Understand this warning
+2b3cf6c9-194e-4f41-a916-261c173c707c-00-2xhbijbynxd3g.picard.replit.dev:5000/__replco/workspace_iframe.html?initialPath=%2F&id=%3Arsim%3A:32 Allow attribute will take precedence over 'allowpaymentrequest'.Understand this warning
+eruda.js:2 MathJax is loaded and ready
+eruda.js:2 Initializing navigation dropdowns...
+eruda.js:2 Found 3 dropdown buttons
+eruda.js:2 Form components initialized - enhanced autocomplete ready
+eruda.js:2 Advanced options initialized
+eruda.js:2 Setting up event listeners for: flow_rate total_head
+eruda.js:2 Adding event listeners to: flow_rate
+eruda.js:2 Adding event listeners to: total_head
+eruda.js:2 Form components initialized - enhanced autocomplete ready
+eruda.js:2 Advanced options initialized
+eruda.js:2 Setting up event listeners for: flow_rate total_head
+eruda.js:2 Adding event listeners to: flow_rate
+eruda.js:2 Adding event listeners to: total_head
+eruda.js:2 Base template: Initializing Materialize components
+eruda.js:2 Initialized 2 modals
+eruda.js:2 Initialized 0 sidenavs
+eruda.js:2 Form components initialized - enhanced autocomplete ready
+eruda.js:2 Enhanced autocomplete initialized successfully
+eruda.js:2 Enhanced autocomplete already initialized, skipping...
+eruda.js:2 Dropdown button clicked! <button class=​"nav-btn">​…​</button>​flex
+eruda.js:2 Dropdown content found: <div class=​"nav-dropdown-content" style=​"display:​ block;​">​…​</div>​
+eruda.js:2 Is currently open: false
+eruda.js:2 Dropdown button clicked! <button class=​"nav-btn">​…​</button>​flex
+eruda.js:2 Dropdown content found: <div class=​"nav-dropdown-content" style=​"display:​ block;​">​…​</div>​
+eruda.js:2 Is currently open: false
+eruda.js:2 Dropdown button clicked! <button class=​"nav-btn">​flex<span>​Help ▾​</span>​</button>​
+eruda.js:2 Dropdown content found: <div class=​"nav-dropdown-content" style=​"display:​ block;​">​…​</div>​
+eruda.js:2 Is currently open: false
+2b3cf6c9-194e-4f41-a916-261c173c707c-00-2xhbijbynxd3g.picard.replit.dev:5000/__replco/workspace_iframe.html?initialPath=%2F&id=%3Arsug%3A:32 Unrecognized feature: 'ambient-light-sensor'.Understand this warning
+workspace_iframe.html:32 Unrecognized feature: 'ambient-light-sensor'.Understand this warning
+2b3cf6c9-194e-4f41-a916-261c173c707c-00-2xhbijbynxd3g.picard.replit.dev:5000/__replco/workspace_iframe.html?initialPath=%2F&id=%3Arsug%3A:32 Unrecognized feature: 'battery'.Understand this warning
+workspace_iframe.html:32 Unrecognized feature: 'battery'.Understand this warning
+2b3cf6c9-194e-4f41-a916-261c173c707c-00-2xhbijbynxd3g.picard.replit.dev:5000/__replco/workspace_iframe.html?initialPath=%2F&id=%3Arsug%3A:32 Unrecognized feature: 'execution-while-not-rendered'.Understand this warning
+workspace_iframe.html:32 Unrecognized feature: 'execution-while-not-rendered'.Understand this warning
+2b3cf6c9-194e-4f41-a916-261c173c707c-00-2xhbijbynxd3g.picard.replit.dev:5000/__replco/workspace_iframe.html?initialPath=%2F&id=%3Arsug%3A:32 Unrecognized feature: 'execution-while-out-of-viewport'.Understand this warning
+workspace_iframe.html:32 Unrecognized feature: 'execution-while-out-of-viewport'.Understand this warning
+2b3cf6c9-194e-4f41-a916-261c173c707c-00-2xhbijbynxd3g.picard.replit.dev:5000/__replco/workspace_iframe.html?initialPath=%2F&id=%3Arsug%3A:32 Unrecognized feature: 'layout-animations'.Understand this warning
+workspace_iframe.html:32 Unrecognized feature: 'layout-animations'.Understand this warning
+2b3cf6c9-194e-4f41-a916-261c173c707c-00-2xhbijbynxd3g.picard.replit.dev:5000/__replco/workspace_iframe.html?initialPath=%2F&id=%3Arsug%3A:32 Unrecognized feature: 'legacy-image-formats'.Understand this warning
+workspace_iframe.html:32 Unrecognized feature: 'legacy-image-formats'.Understand this warning
+2b3cf6c9-194e-4f41-a916-261c173c707c-00-2xhbijbynxd3g.picard.replit.dev:5000/__replco/workspace_iframe.html?initialPath=%2F&id=%3Arsug%3A:32 Unrecognized feature: 'navigation-override'.Understand this warning
+workspace_iframe.html:32 Unrecognized feature: 'navigation-override'.Understand this warning
+2b3cf6c9-194e-4f41-a916-261c173c707c-00-2xhbijbynxd3g.picard.replit.dev:5000/__replco/workspace_iframe.html?initialPath=%2F&id=%3Arsug%3A:32 Unrecognized feature: 'oversized-images'.Understand this warning
+workspace_iframe.html:32 Unrecognized feature: 'oversized-images'.Understand this warning
+2b3cf6c9-194e-4f41-a916-261c173c707c-00-2xhbijbynxd3g.picard.replit.dev:5000/__replco/workspace_iframe.html?initialPath=%2F&id=%3Arsug%3A:32 Unrecognized feature: 'publickey-credentials'.Understand this warning
+workspace_iframe.html:32 Unrecognized feature: 'publickey-credentials'.Understand this warning
+2b3cf6c9-194e-4f41-a916-261c173c707c-00-2xhbijbynxd3g.picard.replit.dev:5000/__replco/workspace_iframe.html?initialPath=%2F&id=%3Arsug%3A:32 Unrecognized feature: 'speaker-selection'.Understand this warning
+workspace_iframe.html:32 Unrecognized feature: 'speaker-selection'.Understand this warning
+2b3cf6c9-194e-4f41-a916-261c173c707c-00-2xhbijbynxd3g.picard.replit.dev:5000/__replco/workspace_iframe.html?initialPath=%2F&id=%3Arsug%3A:32 Unrecognized feature: 'unoptimized-images'.Understand this warning
+workspace_iframe.html:32 Unrecognized feature: 'unoptimized-images'.Understand this warning
+2b3cf6c9-194e-4f41-a916-261c173c707c-00-2xhbijbynxd3g.picard.replit.dev:5000/__replco/workspace_iframe.html?initialPath=%2F&id=%3Arsug%3A:32 Unrecognized feature: 'unsized-media'.Understand this warning
+workspace_iframe.html:32 Unrecognized feature: 'unsized-media'.Understand this warning
+2b3cf6c9-194e-4f41-a916-261c173c707c-00-2xhbijbynxd3g.picard.replit.dev:5000/__replco/workspace_iframe.html?initialPath=%2F&id=%3Arsug%3A:32 Allow attribute will take precedence over 'allowfullscreen'.Understand this warning
+workspace_iframe.html:32 Allow attribute will take precedence over 'allowfullscreen'.Understand this warning
+2b3cf6c9-194e-4f41-a916-261c173c707c-00-2xhbijbynxd3g.picard.replit.dev:5000/__replco/workspace_iframe.html?initialPath=%2F&id=%3Arsug%3A:32 Allow attribute will take precedence over 'allowpaymentrequest'.Understand this warning
+workspace_iframe.html:32 Allow attribute will take precedence over 'allowpaymentrequest'.Understand this warning
+DevTools.js:316 [Violation] Added non-passive event listener to a scroll-blocking 'wheel' event. Consider marking event handler as 'passive' to make the page more responsive. See https://www.chromestatus.com/feature/5745543795965952
+add @ delegate.js:81
+(anonymous) @ $event.js:17
+t @ each.js:8
+(anonymous) @ $event.js:16
+on @ $.js:42
+value @ index.js:144
+t @ index.js:17
+value @ DevTools.js:316
+t @ DevTools.js:58
+_initDevTools @ eruda.js:244
+init @ eruda.js:51
+(anonymous) @ injected.js:2
+(anonymous) @ injected.js:307
+Console.js:61 MathJax is loaded and ready
+Console.js:61 Initializing navigation dropdowns...
+Console.js:61 Found 3 dropdown buttons
+Console.js:61 Form components initialized - enhanced autocomplete ready
+Console.js:61 Advanced options initialized
+Console.js:61 Setting up event listeners for: flow_rate total_head
+Console.js:61 Adding event listeners to: flow_rate
+Console.js:61 Adding event listeners to: total_head
+Console.js:61 Form components initialized - enhanced autocomplete ready
+Console.js:61 Advanced options initialized
+Console.js:61 Setting up event listeners for: flow_rate total_head
+Console.js:61 Adding event listeners to: flow_rate
+Console.js:61 Adding event listeners to: total_head
+Console.js:61 Base template: Initializing Materialize components
+Console.js:61 Initialized 2 modals
+Console.js:61 Initialized 0 sidenavs
+Console.js:61 Form components initialized - enhanced autocomplete ready
+Console.js:61 Enhanced autocomplete initialized successfully
+Console.js:61 Enhanced autocomplete already initialized, skipping...
+Console.js:61 MathJax is loaded and ready
+Console.js:61 Initializing navigation dropdowns...
+Console.js:61 Found 3 dropdown buttons
+Console.js:61 Form components initialized - enhanced autocomplete ready
+Console.js:61 Advanced options initialized
+Console.js:61 Setting up event listeners for: flow_rate total_head
+Console.js:61 Adding event listeners to: flow_rate
+Console.js:61 Adding event listeners to: total_head
+Console.js:61 Form components initialized - enhanced autocomplete ready
+Console.js:61 Advanced options initialized
+Console.js:61 Setting up event listeners for: flow_rate total_head
+Console.js:61 Adding event listeners to: flow_rate
+Console.js:61 Adding event listeners to: total_head
+Console.js:61 Base template: Initializing Materialize components
