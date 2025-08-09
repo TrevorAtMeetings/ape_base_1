@@ -307,8 +307,9 @@ class SelectionIntelligence:
                 evaluation['score_components']['efficiency'] = eff_score
                 evaluation['efficiency_pct'] = efficiency
                 
-                # CRITICAL FIX: Store actual head delivered by pump
+                # CRITICAL FIX: Store actual head delivered by pump AND flow rate
                 evaluation['head_m'] = performance.get('head_m', head)
+                evaluation['flow_m3hr'] = flow  # Store the operating flow rate
                 
                 # Head margin score (Legacy v6.0 - 20 points max)
                 head_margin_m = performance.get('head_margin_m', 0)
