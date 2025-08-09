@@ -108,6 +108,11 @@ class PerformanceAnalyzer:
                     efficiency = float(eff_interp(flow))
                     power = float(power_interp(flow))
                     
+                    # CRITICAL FIX: Check for NaN values (NO FALLBACKS EVER)
+                    if np.isnan(delivered_head) or np.isnan(efficiency) or np.isnan(power):
+                        # Invalid interpolation result - skip this curve entirely
+                        continue
+                    
                     # Check if this curve can deliver required head
                     if delivered_head < head * 0.98:  # 2% tolerance
                         continue
@@ -137,6 +142,11 @@ class PerformanceAnalyzer:
                         final_head = delivered_head * (trim_factor ** 2)
                         final_efficiency = efficiency * (0.8 + 0.2 * trim_factor)  # Efficiency penalty
                         final_power = power * (trim_factor ** 3)
+                        
+                        # CRITICAL FIX: Final validation (NO FALLBACKS EVER)
+                        if np.isnan(final_power) or final_power <= 0:
+                            # Power calculation failed - skip this performance result
+                            continue
                         
                         # IMPROVED: Interpolate NPSH at target flow instead of using first point
                         interpolated_npshr = None
