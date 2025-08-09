@@ -341,7 +341,7 @@ class AdminConfigService:
                     ORDER BY name
                 """)
                 
-                return cursor.fetchall()
+                return [dict(row) for row in cursor.fetchall()]
     
     def get_profile_by_id(self, profile_id: int) -> Optional[Dict]:
         """Get specific profile by ID"""
@@ -393,7 +393,7 @@ class AdminConfigService:
                     ORDER BY name
                 """)
                 
-                return cursor.fetchall()
+                return [dict(row) for row in cursor.fetchall()]
     
 
     
