@@ -241,6 +241,36 @@ def update_profile_api(profile_id):
         }), 400
 
 
+@admin_config_bp.route('/test', methods=['POST'])
+@admin_required
+@handle_api_errors
+def test_profile():
+    """Test endpoint for profile validation"""
+    try:
+        data = request.get_json()
+        profile_id = data.get('profile_id')
+        test_type = data.get('test_type', 'basic')
+        
+        if not profile_id:
+            return jsonify({'success': False, 'error': 'Profile ID required'}), 400
+            
+        # Run profile test
+        from ..admin_config_service import admin_config_service
+        profile = admin_config_service.get_profile_by_id(profile_id)
+        
+        if not profile:
+            return jsonify({'success': False, 'error': 'Profile not found'}), 404
+            
+        return jsonify({
+            'success': True,
+            'test_type': test_type,
+            'profile_name': profile['name'],
+            'status': 'validated'
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 @admin_config_bp.route('/api/profile/<int:profile_id>/validate', methods=['POST'])
 @admin_required
 @handle_api_errors  

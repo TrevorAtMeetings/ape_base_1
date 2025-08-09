@@ -55,6 +55,58 @@ def brain_dashboard():
         ]
         return render_template('admin/brain_dashboard_clean.html', stats={}, breadcrumbs=breadcrumbs)
 
+@brain_admin_bp.route('/admin/brain/status')
+def brain_status():
+    """Brain system status endpoint"""
+    try:
+        from ..pump_brain import get_pump_brain
+        import time
+        
+        brain = get_pump_brain()
+        status = brain.get_status()
+        
+        response_data = {
+            'brain_available': True,
+            'status': status,
+            'timestamp': time.time(),
+            'uptime_seconds': time.time() - brain._initialized_at.timestamp() if hasattr(brain, '_initialized_at') else 0
+        }
+        
+        return jsonify(response_data)
+    except Exception as e:
+        return jsonify({
+            'brain_available': False,
+            'error': str(e),
+            'timestamp': time.time()
+        }), 503
+
+@brain_admin_bp.route('/admin/brain/health')
+def brain_health():
+    """Brain system health check endpoint"""
+    try:
+        from ..pump_brain import get_pump_brain
+        import time
+        
+        brain = get_pump_brain()
+        status = brain.get_status()
+        
+        response_data = {
+            'status': 'healthy',
+            'brain_available': True,
+            'pump_count': status.get('pump_count', 0),
+            'timestamp': time.time(),
+            'uptime_seconds': time.time() - brain._initialized_at.timestamp() if hasattr(brain, '_initialized_at') else 0
+        }
+        
+        return jsonify(response_data)
+    except Exception as e:
+        return jsonify({
+            'status': 'unhealthy',
+            'brain_available': False,
+            'error': str(e),
+            'timestamp': time.time()
+        }), 503
+
 @brain_admin_bp.route('/admin/brain/data-quality')
 def data_quality_dashboard():
     """Data Quality Management Dashboard"""
@@ -141,6 +193,12 @@ def corrections_dashboard():
     except Exception as e:
         logger.error(f"Error loading corrections dashboard: {e}")
         flash(f'Error loading corrections dashboard: {str(e)}', 'error')
+        # Provide default breadcrumbs in error case
+        breadcrumbs = [
+            {'label': 'Home', 'url': url_for('main_flow.index'), 'icon': 'home'},
+            {'label': 'Brain Dashboard', 'url': url_for('brain_admin.brain_dashboard'), 'icon': 'psychology'},
+            {'label': 'Corrections', 'url': '#', 'icon': 'build'}
+        ]
         return render_template('admin/corrections.html', 
                              active_corrections=[], pending_corrections=[], stats={},
                              breadcrumbs=breadcrumbs)
@@ -174,6 +232,12 @@ def brain_workbench():
     except Exception as e:
         logger.error(f"Error loading brain workbench: {e}")
         flash(f'Error loading brain workbench: {str(e)}', 'error')
+        # Provide default breadcrumbs in error case  
+        breadcrumbs = [
+            {'text': 'Home', 'url': url_for('main_flow.index'), 'icon': 'home'},
+            {'text': 'Brain Dashboard', 'url': url_for('brain_admin.brain_dashboard'), 'icon': 'psychology'},
+            {'text': 'Workbench', 'url': '', 'icon': 'science'}
+        ]
         return render_template('admin/brain_workbench.html',
                              production_config={}, pump_codes=[],
                              breadcrumbs=breadcrumbs)

@@ -136,6 +136,57 @@ def get_pump_list():
         response.headers['Pragma'] = 'no-cache'
         response.headers['Expires'] = '0'
         return response
+        
+    except Exception as e:
+        logger.error(f"Error in pump list: {str(e)}")
+        return jsonify({'error': 'Pump list failed'}), 500
+
+@api_bp.route('/pumps/search')
+def search_pumps():
+    """API endpoint for pump autocomplete search"""
+    try:
+        if not BRAIN_AVAILABLE:
+            return jsonify({'error': 'Pump search unavailable'}), 503
+            
+        query = request.args.get('q', '').strip()
+        if not query:
+            return jsonify({'pumps': [], 'total': 0})
+        
+        brain = get_pump_brain()
+        all_pumps = brain.get_all_pump_codes()
+        
+        # Extract pump codes and filter that contain the query (case-insensitive)
+        filtered_pumps = []
+        for pump in all_pumps:
+            # Handle both string pump codes and pump objects
+            if isinstance(pump, str):
+                pump_code = pump
+            elif isinstance(pump, dict):
+                # Extract pump_code from dictionary
+                pump_code = pump.get('pump_code', 'Unknown')
+            else:
+                # Fallback for other types
+                pump_code = str(pump)
+            
+            if query.lower() in pump_code.lower():
+                filtered_pumps.append(pump_code)
+        
+        # Limit results for performance
+        max_results = 20
+        limited_pumps = filtered_pumps[:max_results]
+        
+        response = make_response(json.dumps({
+            'pumps': limited_pumps, 
+            'total': len(limited_pumps),
+            'has_more': len(filtered_pumps) > max_results
+        }))
+        response.headers['Content-Type'] = 'application/json'
+        response.headers['Cache-Control'] = 'no-cache'
+        return response
+        
+    except Exception as e:
+        logger.error(f"Error in pump search: {str(e)}")
+        return jsonify({'error': 'Search failed'}), 500
 
     except Exception as e:
         logger.error(f"Error getting pump list: {str(e)}")
