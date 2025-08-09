@@ -188,31 +188,37 @@ def pump_options():
             'application_type': application_type
         }
 
-        # Evaluate pumps using Brain system with authentic manufacturer data validation
+        # Evaluate pumps using Brain system with authentic exclusion tracking
         pump_selections = []
-        exclusion_data = None  # Initialize here
+        exclusion_data = None
         try:
-            # CRITICAL: Brain system validates physical capability at operating point
-            selection_data = brain.find_best_pump(flow, head, constraints=constraints)
+            # CRITICAL: Brain system validates with authentic exclusion reasons
+            site_reqs = {'flow_m3hr': flow, 'head_m': head}
+            brain_result = brain.find_best_pumps(site_reqs, constraints, include_exclusions=True)
             
-            # Brain system returns list of validated pump recommendations
-            if isinstance(selection_data, list):
-                pump_selections = selection_data
-                # Brain system provides exclusion tracking through validation
-                total_pumps = len(brain.repository.get_pump_models()) if brain.repository else 0
-                excluded_count = total_pumps - len(pump_selections)
+            # Extract ranked pumps and authentic exclusion data
+            pump_selections = brain_result.get('ranked_pumps', [])
+            brain_exclusions = brain_result.get('exclusion_details')
+            
+            if brain_exclusions:
+                # Use AUTHENTIC exclusion data from Brain - NO GUESSING
                 exclusion_data = {
-                    'excluded_pumps': [],  # Brain system focuses on suitable pumps only
-                    'exclusion_summary': {'Physical incompatibility': excluded_count},
-                    'total_evaluated': total_pumps,
-                    'feasible_count': len(pump_selections),
-                    'excluded_count': excluded_count
+                    'excluded_pumps': brain_exclusions.get('excluded_pumps', []),
+                    'exclusion_summary': brain_exclusions.get('exclusion_summary', {}),
+                    'total_evaluated': brain_exclusions.get('total_evaluated', 0),
+                    'feasible_count': brain_exclusions.get('feasible_count', len(pump_selections)),
+                    'excluded_count': brain_exclusions.get('excluded_count', 0)
                 }
+                logger.info(f"Brain exclusions: {brain_exclusions.get('exclusion_summary', {})}")
             else:
-                # Handle unexpected format
-                pump_selections = []
-                exclusion_data = None
-                logger.warning("Brain system returned unexpected format")
+                # Fallback only for structure, not data
+                exclusion_data = {
+                    'excluded_pumps': [],
+                    'exclusion_summary': {},
+                    'total_evaluated': 0,
+                    'feasible_count': len(pump_selections),
+                    'excluded_count': 0
+                }
             
             # CRITICAL DATA FLOW FIX: Save the TRUE results from catalog engine to session
             # Convert ALL data to serializable formats

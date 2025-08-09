@@ -192,8 +192,11 @@ class PumpBrain:
         if not validation['valid']:
             raise ValueError(f"Invalid operating point: {validation['errors']}")
         
-        # Use selection intelligence to find best pumps
-        results = self.selection.find_best_pumps(flow, head, constraints)
+        # Use selection intelligence to find best pumps  
+        brain_result = self.selection.find_best_pumps(flow, head, constraints, include_exclusions=False)
+        
+        # Extract just the ranked pumps for legacy compatibility
+        results = brain_result.get('ranked_pumps', [])
         
         # Cache results
         self._cache.set(cache_key, results, ttl=300)  # 5 minute TTL
@@ -239,6 +242,32 @@ class PumpBrain:
             Ranked list with scores and analysis
         """
         return self.selection.rank_pumps(pump_list, criteria)
+    
+    @measure_performance
+    def find_best_pumps(self, site_requirements: Dict[str, Any], 
+                       constraints: Dict[str, Any] = None,
+                       include_exclusions: bool = False) -> Dict[str, Any]:
+        """
+        Find best pumps with optional detailed exclusion analysis.
+        
+        Args:
+            site_requirements: Dictionary with 'flow_m3hr' and 'head_m'
+            constraints: Optional constraints (pump_type, etc.)
+            include_exclusions: If True, return detailed exclusion data
+        
+        Returns:
+            Dictionary with 'ranked_pumps' and optionally 'exclusion_details'
+        """
+        flow = site_requirements.get('flow_m3hr', 0)
+        head = site_requirements.get('head_m', 0)
+        
+        # Validate inputs
+        validation = self.validator.validate_operating_point(flow, head)
+        if not validation['valid']:
+            raise ValueError(f"Invalid operating point: {validation['errors']}")
+        
+        # Use selection intelligence with exclusion tracking
+        return self.selection.find_best_pumps(flow, head, constraints, include_exclusions)
     
     # ==================== PERFORMANCE ANALYSIS ====================
     

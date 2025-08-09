@@ -45,21 +45,23 @@ class SelectionIntelligence:
         self.severe_oversizing_threshold = 70.0  # % above requirement for severe penalty
     
     def find_best_pumps(self, flow: float, head: float, 
-                       constraints: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
+                       constraints: Optional[Dict[str, Any]] = None, 
+                       include_exclusions: bool = False) -> Dict[str, Any]:
         """
-        Find best pumps for given conditions.
+        Find best pumps for given conditions with optional exclusion details.
         
         Args:
             flow: Required flow rate (m³/hr)
             head: Required head (m)
             constraints: Optional constraints
+            include_exclusions: If True, return detailed exclusion data
         
         Returns:
-            Ranked list of pump recommendations
+            Dictionary with 'ranked_pumps' and optionally 'exclusion_details'
         """
         if not self.brain.repository:
             logger.error("Repository not available for pump selection")
-            return []
+            return {'ranked_pumps': [], 'exclusion_details': None}
         
         constraints = constraints or {}
         
@@ -67,9 +69,11 @@ class SelectionIntelligence:
         pump_models = self.brain.repository.get_pump_models()
         if not pump_models:
             logger.warning("No pump models available in repository")
-            return []
+            return {'ranked_pumps': [], 'exclusion_details': None}
         
-        evaluations = []
+        feasible_pumps = []
+        excluded_pumps = []
+        exclusion_summary = {}
         
         for pump_data in pump_models:
             try:
@@ -77,14 +81,18 @@ class SelectionIntelligence:
                 if constraints.get('pump_type') and constraints['pump_type'] != 'GENERAL':
                     pump_type = pump_data.get('pump_type', '').upper()
                     if pump_type != constraints['pump_type'].upper():
+                        if include_exclusions:
+                            excluded_pumps.append({
+                                'pump_code': pump_data.get('pump_code'),
+                                'pump_name': pump_data.get('pump_name', ''),
+                                'exclusion_reasons': ['Wrong pump type'],
+                                'score_components': {}
+                            })
+                            exclusion_summary['Wrong pump type'] = exclusion_summary.get('Wrong pump type', 0) + 1
                         continue
                 
                 # CRITICAL: Evaluate physical capability at specific operating point
                 evaluation = self.evaluate_single_pump(pump_data, flow, head)
-                
-                # Only continue if pump passes physical validation
-                if not evaluation or evaluation.get('excluded'):
-                    continue
                 
                 # Apply additional constraints
                 if constraints.get('npsh_available'):
@@ -99,21 +107,58 @@ class SelectionIntelligence:
                         evaluation['feasible'] = False
                         evaluation['exclusion_reasons'].append('Power exceeds limit')
                 
-                evaluations.append(evaluation)
+                if evaluation.get('feasible', False):
+                    feasible_pumps.append(evaluation)
+                else:
+                    # Track exclusions with authentic Brain reasons
+                    if include_exclusions:
+                        exclusion_info = {
+                            'pump_code': pump_data.get('pump_code'),
+                            'pump_name': pump_data.get('pump_name', ''),
+                            'exclusion_reasons': evaluation.get('exclusion_reasons', []),
+                            'score_components': evaluation.get('score_components', {})
+                        }
+                        excluded_pumps.append(exclusion_info)
+                        
+                        # Build authentic exclusion summary
+                        for reason in evaluation.get('exclusion_reasons', []):
+                            exclusion_summary[reason] = exclusion_summary.get(reason, 0) + 1
                 
             except Exception as e:
                 logger.error(f"Error evaluating pump {pump_data.get('pump_code')}: {str(e)}")
+                if include_exclusions:
+                    excluded_pumps.append({
+                        'pump_code': pump_data.get('pump_code'),
+                        'pump_name': pump_data.get('pump_name', ''),
+                        'exclusion_reasons': [f'Evaluation error: {str(e)}'],
+                        'score_components': {}
+                    })
+                    exclusion_summary['Evaluation error'] = exclusion_summary.get('Evaluation error', 0) + 1
                 continue
-        
-        # Filter feasible pumps
-        feasible_pumps = [e for e in evaluations if e.get('feasible', False)]
         
         # Sort by score (descending)
         feasible_pumps.sort(key=lambda x: x.get('total_score', 0), reverse=True)
         
-        # Return top results (match legacy which returns 5)
+        # Prepare result structure
         max_results = constraints.get('max_results', 5)
-        return feasible_pumps[:max_results]
+        result = {
+            'ranked_pumps': feasible_pumps[:max_results]
+        }
+        
+        # Add authentic exclusion details if requested
+        if include_exclusions:
+            # Sort excluded pumps by best score components to show "almost suitable" pumps first
+            excluded_pumps.sort(key=lambda x: sum(x.get('score_components', {}).values()), reverse=True)
+            
+            result['exclusion_details'] = {
+                'excluded_pumps': excluded_pumps[:20],  # Top 20 excluded for analysis
+                'exclusion_summary': exclusion_summary,
+                'total_evaluated': len(pump_models),
+                'feasible_count': len(feasible_pumps),
+                'excluded_count': len(excluded_pumps)
+            }
+        
+        return result
     
     def evaluate_single_pump(self, pump_data: Dict[str, Any], 
                             flow: float, head: float) -> Dict[str, Any]:
