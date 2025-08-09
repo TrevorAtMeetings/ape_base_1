@@ -120,28 +120,21 @@ def pump_search():
 
 @api_bp.route('/pump_list')
 def get_pump_list():
-    """
-    DEPRECATED: Use /pump_search instead.
-    This endpoint exists for backward compatibility only.
-    """
-    logger.warning("Deprecated /pump_list endpoint called - use /pump_search instead")
-    
+    """API endpoint to get a list of all available pumps for UI controls."""
     try:
         if not BRAIN_AVAILABLE:
             return jsonify({'error': 'Pump list unavailable'}), 503
             
         brain = get_pump_brain()
-        all_pumps = brain.repository.get_pump_models()  # Use the correct method
         
-        # Limited to 100 for performance (legacy behavior)
-        pump_models = [p.get('pump_code', '') for p in all_pumps[:100]]
+        # ONE SIMPLE CALL TO THE BRAIN - proper architecture
+        pump_list = brain.get_all_pump_codes()
         
-        response = make_response(jsonify(pump_models))
-        response.headers['Cache-Control'] = 'public, max-age=3600'  # 1 hour cache
-        response.headers['Warning'] = '299 - "Deprecated endpoint - use /pump_search"'
-        
+        response = make_response(json.dumps({'pumps': pump_list, 'total': len(pump_list)}))
+        response.headers['Content-Type'] = 'application/json'
+        response.headers['Cache-Control'] = 'public, max-age=300'  # 5 minute browser cache
         return response
-        
+
     except Exception as e:
-        logger.error(f"Error in deprecated pump list: {str(e)}")
+        logger.error(f"Error getting pump list: {str(e)}")
         return jsonify({'error': 'Failed to load pump list'}), 500

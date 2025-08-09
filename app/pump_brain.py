@@ -204,6 +204,35 @@ class PumpBrain:
         return results
     
     @measure_performance
+    def get_all_pump_codes(self) -> List[Dict[str, str]]:
+        """
+        Returns a minimal list of all pumps for UI elements like autocomplete.
+        Single source of truth for pump list data.
+        """
+        cache_key = "all_pump_codes_list"
+        cached = self._cache.get(cache_key)
+        if cached:
+            return cached
+
+        pump_models = self.repository.get_pump_models()
+        pump_list = [
+            {
+                'pump_code': pump.get('pump_code', 'Unknown'),
+                'manufacturer': pump.get('manufacturer', 'APE PUMPS'),
+                'pump_type': pump.get('pump_type', 'Centrifugal'),
+                'description': f"{pump.get('pump_type', '')} - {pump.get('model_series', '')}"
+            }
+            for pump in pump_models
+        ]
+        
+        # Sort by pump code for consistency
+        pump_list.sort(key=lambda x: x['pump_code'])
+        
+        self._cache.set(cache_key, pump_list, ttl=3600)  # Cache for 1 hour
+        logger.info(f"Brain: Generated pump list with {len(pump_list)} pumps")
+        return pump_list
+    
+    @measure_performance
     def evaluate_pump(self, pump_id: str, flow: float, head: float) -> Dict[str, Any]:
         """
         Evaluate a specific pump at given operating conditions.
