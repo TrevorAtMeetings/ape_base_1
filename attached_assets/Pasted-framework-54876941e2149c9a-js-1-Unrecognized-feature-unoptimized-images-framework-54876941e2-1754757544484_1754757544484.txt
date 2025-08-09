@@ -1,0 +1,72 @@
+framework-54876941e2149c9a.js:1 Unrecognized feature: 'unoptimized-images'.
+_ @ framework-54876941e2149c9a.js:1
+(anonymous) @ framework-54876941e2149c9a.js:1
+uD @ framework-54876941e2149c9a.js:1
+uI @ framework-54876941e2149c9a.js:1
+uM @ framework-54876941e2149c9a.js:1
+uS @ framework-54876941e2149c9a.js:1
+C @ framework-54876941e2149c9a.js:1
+z @ framework-54876941e2149c9a.js:1Understand this warning
+framework-54876941e2149c9a.js:1 Unrecognized feature: 'unsized-media'.
+_ @ framework-54876941e2149c9a.js:1
+(anonymous) @ framework-54876941e2149c9a.js:1
+uD @ framework-54876941e2149c9a.js:1
+uI @ framework-54876941e2149c9a.js:1
+uM @ framework-54876941e2149c9a.js:1
+uS @ framework-54876941e2149c9a.js:1
+C @ framework-54876941e2149c9a.js:1
+z @ framework-54876941e2149c9a.js:1Understand this warning
+framework-54876941e2149c9a.js:1 Unrecognized feature: 'pointer-lock'.
+_ @ framework-54876941e2149c9a.js:1
+(anonymous) @ framework-54876941e2149c9a.js:1
+uD @ framework-54876941e2149c9a.js:1
+uI @ framework-54876941e2149c9a.js:1
+uM @ framework-54876941e2149c9a.js:1
+uS @ framework-54876941e2149c9a.js:1
+C @ framework-54876941e2149c9a.js:1
+z @ framework-54876941e2149c9a.js:1Understand this warning
+framework-54876941e2149c9a.js:1 Allow attribute will take precedence over 'allowfullscreen'.
+_ @ framework-54876941e2149c9a.js:1
+(anonymous) @ framework-54876941e2149c9a.js:1
+uD @ framework-54876941e2149c9a.js:1
+uI @ framework-54876941e2149c9a.js:1
+uM @ framework-54876941e2149c9a.js:1
+uS @ framework-54876941e2149c9a.js:1
+C @ framework-54876941e2149c9a.js:1
+z @ framework-54876941e2149c9a.js:1Understand this warning
+framework-54876941e2149c9a.js:1 Allow attribute will take precedence over 'allowpaymentrequest'.
+_ @ framework-54876941e2149c9a.js:1
+(anonymous) @ framework-54876941e2149c9a.js:1
+uD @ framework-54876941e2149c9a.js:1
+uI @ framework-54876941e2149c9a.js:1
+uM @ framework-54876941e2149c9a.js:1
+uS @ framework-54876941e2149c9a.js:1
+C @ framework-54876941e2149c9a.js:1
+z @ framework-54876941e2149c9a.js:1Understand this warning
+background.js:3 Extension background script loading...
+background.js:8 Initializing Replit API...
+patchConsole.ts:16 Replit API initialized successfully
+patchConsole.ts:16 Logger module loading...
+patchConsole.ts:16 Logger module imported successfully
+patchConsole.ts:16 Setting up extension commands and events...
+patchConsole.ts:26 Error initializing extension: TypeError: Cannot read properties of undefined (reading 'commands')
+    at initializeExtension (replit-logger.js:174:21)
+    at initializeExtension (background.js:17:11)
+console.error @ patchConsole.ts:26
+initializeExtension @ replit-logger.js:268
+initializeExtension @ background.js:17
+await in initializeExtension
+(anonymous) @ background.js:45Understand this error
+patchConsole.ts:16 Extension fully initialized with React!
+_app-c29f3c490dda2b49.js:13 Replit API initialized successfully {args: Array(0), logLevel: 'info'}
+_app-c29f3c490dda2b49.js:13 Logger module loading... {args: Array(0), logLevel: 'info'}
+_app-c29f3c490dda2b49.js:13 Logger module imported successfully {args: Array(0), logLevel: 'info'}
+_app-c29f3c490dda2b49.js:13 Setting up extension commands and events... {args: Array(0), logLevel: 'info'}
+_app-c29f3c490dda2b49.js:13 Error initializing extension: {args: Array(1), logLevel: 'error'}
+(anonymous) @ _app-c29f3c490dda2b49.js:13
+s @ 2676-9b60b47d380ece03.js:1
+error @ 2676-9b60b47d380ece03.js:1
+error @ replEnvironmentDesktop-ccdd5d3804f7b1ef.js:2
+r @ replEnvironmentDesktop-ccdd5d3804f7b1ef.js:2
+n @ _app-c29f3c490dda2b49.js:13Understand this error
+_app-c29f3c490dda2b49.js:13 Extension fully initialized with React! {args: Array(0), logLevel: 'info'}

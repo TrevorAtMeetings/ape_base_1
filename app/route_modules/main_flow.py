@@ -120,7 +120,7 @@ def select():
     """Select pump page."""
     return render_template('input_form.html')
 
-@main_flow_bp.route('/pump_options')
+@main_flow_bp.route('/pump_options', methods=['GET', 'POST'])
 def pump_options():
     """Show pump selection options page."""
     try:
