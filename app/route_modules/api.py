@@ -81,7 +81,7 @@ def sanitize_json_data(data):
             return 0.0  # Replace NaN/Infinity with 0 for engineering safety
         return data
     elif data is None:
-        return 0.0  # Replace None with 0 for numeric fields
+        return None  # Keep None as None for JSON compatibility
     else:
         return data
 
