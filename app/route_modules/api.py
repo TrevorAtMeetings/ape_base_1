@@ -116,6 +116,7 @@ def get_chart_data(pump_code):
                 if brain_chart_data and brain_mode == 'active':
                     # Active mode - return Brain results directly (fixes double transformation)
                     logger.info(f"Brain Active: Returning optimized chart data for {pump_code}")
+                    import json
                     response = make_response(json.dumps(brain_chart_data))
                     response.headers['Content-Type'] = 'application/json'
                     response.headers['Cache-Control'] = 'public, max-age=300'
@@ -672,12 +673,14 @@ def get_chart_data_safe(safe_pump_code):
             # For selected curve, apply transformations and generate accurate labels
             if is_selected_curve:
                 logger.info(f"Chart API: LABEL GEN - Processing selected curve {i}")
-                logger.info(f"Chart API: LABEL GEN - sizing_info available: {sizing_info is not None}")
-                logger.info(f"Chart API: LABEL GEN - sizing_info contents: {sizing_info}")
+                # Safely access sizing_info from operating_point_data if available
+                curve_sizing_info = operating_point_data.get('sizing_info', {}) if operating_point_data else {}
+                logger.info(f"Chart API: LABEL GEN - sizing_info available: {curve_sizing_info is not None}")
+                logger.info(f"Chart API: LABEL GEN - sizing_info contents: {curve_sizing_info}")
                 
-                if sizing_info:
-                    required_diameter = sizing_info.get('required_diameter_mm')
-                    trim_percent = sizing_info.get('trim_percent', 100)
+                if curve_sizing_info:
+                    required_diameter = curve_sizing_info.get('required_diameter_mm')
+                    trim_percent = curve_sizing_info.get('trim_percent', 100)
                     logger.info(f"Chart API: LABEL GEN - required_diameter: {required_diameter}, trim_percent: {trim_percent}")
                     
                     if trim_percent < 100 and required_diameter:
@@ -707,8 +710,8 @@ def get_chart_data_safe(safe_pump_code):
                         logger.info(f"Chart API: Generated calculated trim label: {display_label}")
                 
                 # Alternative: Check operating point data directly for trimming info
-                if not transformation_info and operating_point:
-                    op_diameter = operating_point.get('impeller_diameter_mm')
+                if not transformation_info and operating_point_data:
+                    op_diameter = operating_point_data.get('impeller_diameter_mm')
                     if op_diameter and op_diameter != original_diameter:
                         final_diameter = op_diameter
                         trim_ratio = op_diameter / original_diameter
@@ -723,11 +726,11 @@ def get_chart_data_safe(safe_pump_code):
                         logger.info(f"Chart API: Generated trim label from operating point: {display_label}")
                 elif speed_scaling_applied:
                     # Speed variation applied
-                    display_label = f"Head {original_diameter}mm @ {sizing_info.get('required_speed_rpm', 'variable')} RPM"
+                    display_label = f"Head {original_diameter}mm @ {curve_sizing_info.get('required_speed_rpm', 'variable')} RPM"
                     transformation_info = {
                         'type': 'speed_variation',
-                        'original_speed': sizing_info.get('test_speed_rpm'),
-                        'final_speed': sizing_info.get('required_speed_rpm'),
+                        'original_speed': curve_sizing_info.get('test_speed_rpm'),
+                        'final_speed': curve_sizing_info.get('required_speed_rpm'),
                         'speed_ratio': actual_speed_ratio
                     }
             
@@ -798,9 +801,8 @@ def generate_brain_chart_data(pump_code, flow_rate, head):
         return None
     
     try:
-        from ..pump_repository import get_pump_repository
-        repository = get_pump_repository()
-        brain = get_pump_brain(repository)
+        from ..pump_brain import get_pump_brain
+        brain = get_pump_brain()
         
         # Get pump data
         pump = repository.get_pump_by_code(pump_code)

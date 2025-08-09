@@ -155,7 +155,8 @@ def flatten_pump_data(pump_dict: Dict[str, Any]) -> Dict[str, Any]:
     
     # Core pump identification - handle both direct and nested pump_code
     flattened['pump_code'] = pump_dict.get('pump_code', 'N/A')
-    flattened['suitability_score'] = pump_dict.get('suitability_score', pump_dict.get('selection_score', 0))
+    # CRITICAL FIX: Brain system uses 'total_score', not 'suitability_score'
+    flattened['suitability_score'] = pump_dict.get('total_score', pump_dict.get('suitability_score', pump_dict.get('selection_score', 0)))
     
     # CRITICAL FIX: Handle Brain system data structure (flat keys) and legacy performance dict
     performance = pump_dict.get('performance', {})
