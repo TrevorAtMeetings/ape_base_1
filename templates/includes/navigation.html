@@ -110,9 +110,9 @@
     position: absolute;
     top: calc(100% + 8px);
     left: 0;
-    min-width: 220px;
+    min-width: 200px;
     background: white;
-    border-radius: 16px;
+    border-radius: 12px;
     box-shadow: var(--nav-dropdown-shadow);
     border: 1px solid var(--nav-border);
     opacity: 0;
@@ -121,6 +121,8 @@
     transition: var(--nav-transition);
     z-index: 1001;
     overflow: hidden;
+    max-height: 400px;
+    padding: 8px 0;
 }
 
 .nav-dropdown-content.show {
@@ -132,40 +134,31 @@
 .nav-dropdown-content a {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 16px 20px;
+    gap: 10px;
+    padding: 8px 16px;
     color: var(--nav-on-surface);
     text-decoration: none;
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 500;
     transition: var(--nav-transition);
-    border-bottom: 1px solid rgba(224, 224, 224, 0.5);
-}
-
-.nav-dropdown-content a:last-child {
-    border-bottom: none;
+    position: relative;
+    margin: 0 4px;
+    border-radius: 8px;
 }
 
 .nav-dropdown-content a:hover {
-    background: linear-gradient(90deg, rgba(21, 101, 192, 0.08), rgba(21, 101, 192, 0.12));
+    background: linear-gradient(90deg, rgba(21, 101, 192, 0.1), rgba(21, 101, 192, 0.15));
     color: var(--nav-primary);
-    transform: translateX(4px);
+    transform: translateX(2px);
 }
 
-.nav-dropdown-content a::before {
-    content: '';
-    width: 3px;
-    height: 100%;
-    background: var(--nav-primary);
-    position: absolute;
-    left: 0;
-    top: 0;
-    transform: scaleY(0);
-    transition: transform 0.2s ease;
+.nav-dropdown-content a .material-icons-round {
+    font-size: 18px;
+    opacity: 0.7;
 }
 
-.nav-dropdown-content a:hover::before {
-    transform: scaleY(1);
+.nav-dropdown-content a:hover .material-icons-round {
+    opacity: 1;
 }
 
 /* Responsive Design */
@@ -187,9 +180,15 @@
     }
     
     .nav-dropdown-content {
-        min-width: 200px;
+        min-width: 180px;
         right: 0;
         left: auto;
+    }
+    
+    .nav-dropdown-content a {
+        padding: 6px 12px;
+        font-size: 13px;
+        gap: 8px;
     }
 }
 </style>
