@@ -11,6 +11,26 @@ from .. import app
 
 logger = logging.getLogger(__name__)
 
+def _get_bep_analysis_brain(pump_data, brain):
+    """Get BEP analysis using Brain system - works with dictionary format"""
+    try:
+        # Extract BEP data from pump dictionary
+        specifications = pump_data.get('specifications', {})
+        bep_flow = specifications.get('bep_flow_m3hr', 0)
+        bep_head = specifications.get('bep_head_m', 0)
+        
+        if bep_flow > 0 and bep_head > 0:
+            return {
+                'has_bep_data': True,
+                'bep_flow_m3hr': bep_flow,
+                'bep_head_m': bep_head
+            }
+        else:
+            return {'has_bep_data': False}
+    except Exception as e:
+        logger.error(f"Error in BEP analysis for Brain system: {e}")
+        return {'has_bep_data': False}
+
 # Create blueprint
 reports_bp = Blueprint('reports', __name__)
 
@@ -240,20 +260,22 @@ def engineering_report(pump_code):
                 target_pump = brain.repository.get_pump_by_code(pump_code)
                 
                 if target_pump:
-                    # Add missing speed data from authentic database values
-                    selected_pump['speed_rpm'] = target_pump.get_speed_rpm()
-                    selected_pump['test_speed_rpm'] = target_pump.get_speed_rpm()
-                    selected_pump['min_speed_rpm'] = target_pump.get_min_speed_rpm()
-                    selected_pump['max_speed_rpm'] = target_pump.get_max_speed_rpm()
+                    # Add missing speed data from authentic database values - Brain repository returns dictionaries
+                    specifications = target_pump.get('specifications', {})
+                    selected_pump['speed_rpm'] = specifications.get('test_speed_rpm', 0)
+                    selected_pump['test_speed_rpm'] = specifications.get('test_speed_rpm', 0)
+                    selected_pump['min_speed_rpm'] = specifications.get('min_speed_rpm', 0)
+                    selected_pump['max_speed_rpm'] = specifications.get('max_speed_rpm', 0)
                     # Add missing impeller specifications from authentic database values
-                    selected_pump['min_impeller_mm'] = target_pump.specifications.get('min_impeller_mm', 0)
-                    selected_pump['max_impeller_mm'] = target_pump.specifications.get('max_impeller_mm', 0)
+                    selected_pump['min_impeller_mm'] = specifications.get('min_impeller_mm', 0)
+                    selected_pump['max_impeller_mm'] = specifications.get('max_impeller_mm', 0)
                     
                     # Debug print for 8K
-                    if target_pump.pump_code.replace(' ', '').upper() in ('8K','8K-2F','8K150-400'):
+                    pump_code = target_pump.get('pump_code', '')
+                    if pump_code.replace(' ', '').upper() in ('8K','8K-2F','8K150-400'):
                         logger.info("REPORT 8K → min=%.1f max=%.1f oper=%.1f",
-                            target_pump.specifications.get('min_impeller_mm', 0), 
-                            target_pump.specifications.get('max_impeller_mm', 0),
+                            specifications.get('min_impeller_mm', 0), 
+                            specifications.get('max_impeller_mm', 0),
                             selected_pump.get('impeller_diameter_mm', 0)
                         )
             
@@ -273,36 +295,42 @@ def engineering_report(pump_code):
         
         if target_pump:
             # Create minimal pump data for analysis - using AUTHENTIC database values
+            # Brain system returns dictionaries - access accordingly
+            specifications = target_pump.get('specifications', {})
             selected_pump = {
                 'pump_code': pump_code,
-                'manufacturer': target_pump.manufacturer or 'APE PUMPS',
-                'pump_type': target_pump.pump_type or 'Centrifugal',
-                'model_series': target_pump.model_series,
+                'manufacturer': target_pump.get('manufacturer', 'APE PUMPS'),
+                'pump_type': target_pump.get('pump_type', 'Centrifugal'),
+                'model_series': target_pump.get('model_series', ''),
                 'stages': 1,  # Default
-                'speed_rpm': target_pump.get_speed_rpm(),  # Authentic test speed from database
-                'test_speed_rpm': target_pump.get_speed_rpm(),  # Explicit test speed field
-                'min_speed_rpm': target_pump.get_min_speed_rpm(),  # Authentic min speed
-                'max_speed_rpm': target_pump.get_max_speed_rpm(),  # Authentic max speed
-                'bep_flow_m3hr': target_pump.bep_flow_m3hr if hasattr(target_pump, 'bep_flow_m3hr') else new_flow,
+                'speed_rpm': specifications.get('test_speed_rpm', 0),  # Authentic test speed from database
+                'test_speed_rpm': specifications.get('test_speed_rpm', 0),  # Explicit test speed field
+                'min_speed_rpm': specifications.get('min_speed_rpm', 0),  # Authentic min speed
+                'max_speed_rpm': specifications.get('max_speed_rpm', 0),  # Authentic max speed
+                'bep_flow_m3hr': target_pump.get('bep_flow_m3hr', new_flow or 0),
                 # CRITICAL FIX: Add authentic min/max impeller specifications
-                'min_impeller_mm': target_pump.specifications.get('min_impeller_mm', 0),
-                'max_impeller_mm': target_pump.specifications.get('max_impeller_mm', 0),
+                'min_impeller_mm': specifications.get('min_impeller_mm', 0),
+                'max_impeller_mm': specifications.get('max_impeller_mm', 0),
             }
             
-            # Calculate performance if flow and head are provided
+            # Calculate performance if flow and head are provided using Brain system
             if new_flow and new_head:
-                solution = target_pump.find_best_solution_for_duty(new_flow, new_head)
-                if solution:
+                # Use Brain system to evaluate pump performance at duty point
+                pump_code = target_pump.get('pump_code', '')
+                evaluation_result = brain.evaluate_pump(pump_code, new_flow, new_head)
+                if evaluation_result:
+                    # Extract performance data from Brain evaluation result
+                    performance = evaluation_result.get('performance', evaluation_result)
                     selected_pump.update({
                         'flow_m3hr': new_flow,
                         'head_m': new_head,
-                        'efficiency_pct': solution.get('efficiency_pct', 0),
-                        'power_kw': solution.get('power_kw', 0),
-                        'npshr_m': solution.get('npshr_m', 0),
-                        'trim_percent': solution.get('trim_percent', 100),
-                        'impeller_diameter_mm': solution.get('impeller_diameter_mm', 0),
-                        'qbep_percentage': solution.get('qbep_percentage', 100),
-                        'suitability_score': 0  # Force selected, no score
+                        'efficiency_pct': performance.get('efficiency_pct', 0),
+                        'power_kw': performance.get('power_kw', 0),
+                        'npshr_m': performance.get('npshr_m', 0),
+                        'trim_percent': performance.get('trim_percent', 100),
+                        'impeller_diameter_mm': performance.get('impeller_diameter_mm', 0),
+                        'qbep_percentage': evaluation_result.get('qbep_percentage', 100),
+                        'suitability_score': evaluation_result.get('score', 0)  # Use Brain evaluation score
                     })
         else:
             logger.warning(f"Pump {pump_code} not found in catalog")
