@@ -39,6 +39,10 @@ class SelectionIntelligence:
         self.npsh_safety_factor = 1.5
         self.qbp_min_percent = 60.0
         self.qbp_max_percent = 130.0
+        
+        # CRITICAL FIX: Head oversizing constraints
+        self.head_oversizing_threshold = 40.0  # % above requirement triggers penalty
+        self.severe_oversizing_threshold = 70.0  # % above requirement for severe penalty
     
     def find_best_pumps(self, flow: float, head: float, 
                        constraints: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
@@ -167,6 +171,22 @@ class SelectionIntelligence:
                 
                 evaluation['score_components']['bep_proximity'] = bep_score
                 evaluation['qbp_percent'] = qbp
+                
+                # CRITICAL FIX: Head oversizing penalty
+                head_ratio_pct = ((bep_head - head) / head) * 100 if head > 0 else 0
+                evaluation['bep_head_oversizing_pct'] = head_ratio_pct
+                
+                if head_ratio_pct > self.head_oversizing_threshold:
+                    if head_ratio_pct > self.severe_oversizing_threshold:
+                        # Severe oversizing (>70% above requirement) - massive penalty
+                        oversizing_penalty = -50  # Effectively eliminates these pumps
+                        logger.info(f"Pump {pump_data.get('pump_code')}: SEVERE head oversizing {head_ratio_pct:.1f}% - BEP {bep_head}m vs required {head}m")
+                    else:
+                        # Moderate oversizing (40-70% above requirement) - heavy penalty
+                        oversizing_penalty = -25 - (head_ratio_pct - self.head_oversizing_threshold) * 0.5
+                        logger.info(f"Pump {pump_data.get('pump_code')}: Head oversizing {head_ratio_pct:.1f}% - BEP {bep_head}m vs required {head}m")
+                    
+                    evaluation['score_components']['head_oversizing_penalty'] = oversizing_penalty
             
             # CRITICAL: Physical capability validation at operating point
             if not self._validate_physical_capability_at_point(pump_data, flow, head):
