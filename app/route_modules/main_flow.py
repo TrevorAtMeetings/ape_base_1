@@ -18,10 +18,14 @@ main_flow_bp = Blueprint('main_flow', __name__)
 
 @main_flow_bp.route('/')
 def index():
+    # Add breadcrumbs for navigation
+    breadcrumbs = [
+        {'label': 'Home', 'url': '/'}
+    ]
     """Main selection page."""
     try:
         logger.info("Index route accessed.")
-        return render_template('input_form.html')
+        return render_template('input_form.html', breadcrumbs=breadcrumbs)
     except Exception as e:
         logger.error(f"Error in index route: {str(e)}")
         return render_template('500.html'), 500

@@ -257,10 +257,7 @@
    12. OVERRIDE ANY CONFLICTING STYLES
    This section ensures our navigation works
    ============================================ */
-nav.unified-nav .nav-dropdown-content {
-    /* Force override any conflicting display rules */
-    display: none;
-}
+/* Removed conflicting rule that was always hiding dropdowns */
 
 nav.unified-nav .nav-dropdown-content.show {
     /* Force show when class is applied */
