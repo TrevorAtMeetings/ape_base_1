@@ -1,6 +1,7 @@
 import logging
 import json
 import math
+import numpy as np
 from flask import Blueprint, request, jsonify, make_response
 from ..pump_brain import get_pump_brain
 
@@ -24,12 +25,13 @@ def sanitize_json_data(data):
         return {k: sanitize_json_data(v) for k, v in data.items()}
     elif isinstance(data, list):
         return [sanitize_json_data(item) for item in data]
+    # NEW: Add explicit boolean handling for native and NumPy booleans
+    elif isinstance(data, (bool, np.bool_)):
+        return bool(data)  # Convert to native Python bool (True -> true, False -> false)
     elif isinstance(data, float):
         if math.isnan(data) or math.isinf(data):
-            return 0.0  # Replace NaN/Infinity with 0 for engineering safety
+            return None  # Return null for invalid numbers, which Plotly can handle
         return data
-    elif isinstance(data, bool):
-        return data  # Booleans are JSON serializable
     elif data is None:
         return None  # Keep None as None for JSON compatibility
     else:
