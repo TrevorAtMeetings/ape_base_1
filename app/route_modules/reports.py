@@ -379,6 +379,20 @@ def engineering_report(pump_code):
         logger.warning(f"Could not generate breadcrumbs: {e}")
         breadcrumbs = []
     
+    # Set up view switching functionality
+    current_view = request.args.get('view', 'engineering')  # Default to engineering view
+    show_view_toggle = True
+    
+    # Create URLs for view switching
+    base_params = {
+        'pump_code': pump_code,
+        'flow': flow_val,
+        'head': head_val
+    }
+    
+    engineering_url = url_for('reports.engineering_report', **base_params, view='engineering')
+    presentation_url = url_for('reports.pump_report', **base_params, view='presentation')
+    
     return render_template(
         'engineering_pump_report.html',
         selected_pump=selected_pump,
@@ -386,7 +400,12 @@ def engineering_report(pump_code):
         site_requirements=site_requirements_data,
         pump_code=pump_code,
         current_date=current_date,
-        breadcrumbs=breadcrumbs
+        breadcrumbs=breadcrumbs,
+        show_view_toggle=show_view_toggle,
+        current_view=current_view,
+        engineering_url=engineering_url,
+        presentation_url=presentation_url,
+        show_print=True
     )
 
 @reports_bp.route('/generate_pdf/<path:pump_code>')

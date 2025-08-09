@@ -88,14 +88,14 @@
             <span id="sort-status">Recommended Pumps (Ranked by Suitability Score)</span>
         </div>
         
-        <div id="pump-list">
+        <div id="pump-list" class="pump-results-grid">
         {% for pump in pump_selections[:10] %}
         <a href="{{ url_for('reports.engineering_report', 
                           pump_code=pump['pump_code'], 
                           flow=site_requirements['flow_m3hr'], 
                           head=site_requirements['head_m'], 
                           pump_type=site_requirements['pump_type']) }}" 
-           class="pump-row"
+           class="pump-card-compact"
            data-suitability-score="{{ pump['suitability_score'] }}"
            data-efficiency-pct="{{ pump.get('efficiency_pct', 0) }}"
            data-power-kw="{{ pump.get('power_kw', 0) }}"
@@ -105,89 +105,30 @@
            data-npshr-m="{{ pump.get('npshr_m', 0) }}"
            data-pump-code="{{ pump['pump_code'] }}">
             
-            <div class="pump-rank {% if loop.index <= 3 %}top{% endif %}">
-                {{ loop.index }}
-            </div>
-            
             <div class="pump-info">
-                <div class="pump-name">{{ pump['pump_code'] }}</div>
-                <div class="pump-type">{{ pump['manufacturer'] }} - {{ pump['pump_type'] }}</div>
+                <h3 class="pump-name">{{ pump['pump_code'] }}</h3>
+                <p class="pump-type">{{ pump['manufacturer'] }} - {{ pump['pump_type'] }}</p>
             </div>
             
-            <div class="pump-metrics">
-                <div class="metric-item">
-                    <i class="material-icons metric-icon" style="color: #1976d2;">trending_up</i>
-                    <div class="metric-value">
-                        {% if pump.get('efficiency_pct') is not none %}
-                            {{ "%.1f"|format(pump.get('efficiency_pct')) }}%
-                        {% else %}
-                            --%
-                        {% endif %}
-                    </div>
-                    <div class="metric-label">Efficiency</div>
-                </div>
-                
-                <div class="metric-item">
-                    <i class="material-icons metric-icon" style="color: #ff9800;">flash_on</i>
-                    <div class="metric-value">
-                        {% if pump.get('power_kw') is not none %}
-                            {{ "%.1f"|format(pump.get('power_kw')) }}
-                        {% else %}
-                            --
-                        {% endif %}
-                    </div>
-                    <div class="metric-label">Power kW</div>
-                </div>
-                
-                <div class="metric-item">
-                    <i class="material-icons metric-icon" style="color: #2196f3;">opacity</i>
-                    <div class="metric-value">
-                        {% if pump.get('npshr_m') is not none %}
-                            {{ "%.1f"|format(pump.get('npshr_m')) }}
-                        {% else %}
-                            --
-                        {% endif %}
-                    </div>
-                    <div class="metric-label">NPSHr m</div>
-                </div>
-                
-                <div class="metric-item">
-                    <i class="material-icons metric-icon" style="color: #607d8b;">rotate_right</i>
-                    <div class="metric-value">
-                        {% if pump.get('trim_percent') %}
-                            {{ (100 - pump['trim_percent'])|round|int }}%
-                        {% else %}
-                            0%
-                        {% endif %}
-                    </div>
-                    <div class="metric-label">Trim</div>
-                </div>
-
-                <div class="metric-item">
-                    <i class="material-icons metric-icon" style="color: #9c27b0;">donut_large</i>
-                    <div class="metric-value">
-                        {% if pump.get('qbep_percentage') %}
-                            {{ pump['qbep_percentage']|round|int }}%
-                        {% else %}
-                            --
-                        {% endif %}
-                    </div>
-                    <div class="metric-label">QBEP</div>
-                </div>
+            <div class="pump-specs">
+                <div><strong>Efficiency:</strong> {{ "%.1f"|format(pump.get('efficiency_pct', 0)) }}%</div>
+                <div><strong>Power:</strong> {{ "%.1f"|format(pump.get('power_kw', 0)) }} kW</div>
+                <div><strong>NPSHr:</strong> {{ "%.1f"|format(pump.get('npshr_m', 0)) }} m</div>
+                {% if pump.get('trim_percent') %}
+                <div><strong>Trim:</strong> {{ (100 - pump['trim_percent'])|round|int }}%</div>
+                {% endif %}
             </div>
             
             <div class="pump-score">
-                {% set score = pump['suitability_score'] %}
-                <span class="score-badge 
-                    {% if score >= 80 %}score-excellent
-                    {% elif score >= 60 %}score-good
-                    {% else %}score-fair{% endif %}">
-                    Score: {{ "%.1f"|format(score) }}
-                </span>
+                {{ "%.1f"|format(pump['suitability_score']) }}
             </div>
             
-            <div class="pump-action">
-                <i class="material-icons">chevron_right</i>
+            <div class="pump-efficiency">
+                {{ "%.1f"|format(pump.get('efficiency_pct', 0)) }}%
+            </div>
+            
+            <div class="pump-actions">
+                <button class="btn btn-sm blue">View Details</button>
             </div>
         </a>
         {% endfor %}
