@@ -176,32 +176,43 @@ def pump_options():
             application_type=application_type
         )
 
-        # Use catalog engine for pump selection
-        from ..catalog_engine import get_catalog_engine
-        catalog_engine = get_catalog_engine()
-        logger.info(f"Loaded {len(catalog_engine.pumps)} pumps from catalog")
+        # BRAIN SYSTEM: Use Brain as core selection intelligence
+        from ..pump_brain import get_pump_brain
+        brain = get_pump_brain()
+        logger.info("Using Brain system for pump selection - authentic validation only")
 
-        # Evaluate pumps using catalog engine with pump type filtering and exclusion tracking
+        # Prepare constraints for Brain system
+        constraints = {
+            'pump_type': pump_type,
+            'max_results': 10,
+            'application_type': application_type
+        }
+
+        # Evaluate pumps using Brain system with authentic manufacturer data validation
         pump_selections = []
         exclusion_data = None  # Initialize here
         try:
-            # Get pump selections with exclusion data for transparency
-            selection_data = catalog_engine.select_pumps(flow, head, max_results=10, pump_type=pump_type, return_exclusions=True)
+            # CRITICAL: Brain system validates physical capability at operating point
+            selection_data = brain.find_best_pump(flow, head, constraints=constraints)
             
-            # Handle both old and new return formats
-            if isinstance(selection_data, dict) and 'suitable_pumps' in selection_data:
-                pump_selections = selection_data.get('suitable_pumps', [])
+            # Brain system returns list of validated pump recommendations
+            if isinstance(selection_data, list):
+                pump_selections = selection_data
+                # Brain system provides exclusion tracking through validation
+                total_pumps = len(brain.repository.get_pump_models()) if brain.repository else 0
+                excluded_count = total_pumps - len(pump_selections)
                 exclusion_data = {
-                    'excluded_pumps': selection_data.get('excluded_pumps', []),
-                    'exclusion_summary': selection_data.get('exclusion_summary', {}),
-                    'total_evaluated': selection_data.get('total_evaluated', 0),
-                    'feasible_count': selection_data.get('feasible_count', 0),
-                    'excluded_count': selection_data.get('excluded_count', 0)
+                    'excluded_pumps': [],  # Brain system focuses on suitable pumps only
+                    'exclusion_summary': {'Physical incompatibility': excluded_count},
+                    'total_evaluated': total_pumps,
+                    'feasible_count': len(pump_selections),
+                    'excluded_count': excluded_count
                 }
             else:
-                # Fallback for old format
-                pump_selections = selection_data if isinstance(selection_data, list) else []
+                # Handle unexpected format
+                pump_selections = []
                 exclusion_data = None
+                logger.warning("Brain system returned unexpected format")
             
             # CRITICAL DATA FLOW FIX: Save the TRUE results from catalog engine to session
             # Convert ALL data to serializable formats
@@ -236,7 +247,7 @@ def pump_options():
             # Store minimal exclusion data for transparency
             if exclusion_data:
                 safe_session_set('exclusion_data', {
-                    'total_evaluated': exclusion_data.get('total_evaluated', len(catalog_engine.pumps)),
+                    'total_evaluated': exclusion_data.get('total_evaluated', 0),
                     'feasible_count': exclusion_data.get('feasible_count', len(pump_selections)),
                     'excluded_count': exclusion_data.get('excluded_count', 0),
                     'suitable_pumps_count': len(pump_selections)
@@ -245,7 +256,7 @@ def pump_options():
             # Data flow fixed: Use pump_selections directly instead of creating pump_evaluations
         except Exception as e:
             import traceback
-            logger.error(f"Error evaluating pumps with catalog engine: {e}")
+            logger.error(f"Error evaluating pumps with Brain system: {e}")
             logger.error(f"Traceback: {traceback.format_exc()}")
             pump_selections = []
 

@@ -69,10 +69,20 @@ class SelectionIntelligence:
         
         for pump_data in pump_models:
             try:
-                # Evaluate each pump
+                # Apply pump type constraint early
+                if constraints.get('pump_type') and constraints['pump_type'] != 'GENERAL':
+                    pump_type = pump_data.get('pump_type', '').upper()
+                    if pump_type != constraints['pump_type'].upper():
+                        continue
+                
+                # CRITICAL: Evaluate physical capability at specific operating point
                 evaluation = self.evaluate_single_pump(pump_data, flow, head)
                 
-                # Apply constraints
+                # Only continue if pump passes physical validation
+                if not evaluation or evaluation.get('excluded'):
+                    continue
+                
+                # Apply additional constraints
                 if constraints.get('npsh_available'):
                     npsh_available = constraints['npsh_available']
                     if evaluation.get('npshr_m', 0) > npsh_available / self.npsh_safety_factor:
@@ -158,6 +168,14 @@ class SelectionIntelligence:
                 evaluation['score_components']['bep_proximity'] = bep_score
                 evaluation['qbp_percent'] = qbp
             
+            # CRITICAL: Physical capability validation at operating point
+            if not self._validate_physical_capability_at_point(pump_data, flow, head):
+                evaluation['feasible'] = False
+                evaluation['excluded'] = True
+                evaluation['exclusion_reasons'].append('Cannot deliver required head at operating flow')
+                logger.debug(f"Pump {pump_data.get('pump_code')} excluded: Physical capability failed")
+                return evaluation
+
             # Get performance at operating point
             performance = self.brain.performance.calculate_at_point(pump_data, flow, head)
             
@@ -289,3 +307,64 @@ class SelectionIntelligence:
         evaluations.sort(key=lambda x: x.get('total_score', 0), reverse=True)
         
         return evaluations
+    
+    def _validate_physical_capability_at_point(self, pump_data: Dict[str, Any], 
+                                             flow_m3hr: float, head_m: float) -> bool:
+        """
+        CRITICAL: Validate pump can physically deliver required head at specific flow rate.
+        This is the core validation that was missing in the catalog engine.
+        """
+        curves = pump_data.get('curves', [])
+        if not curves:
+            logger.debug(f"Pump {pump_data.get('pump_code')}: No curves available")
+            return False
+        
+        # Check curves starting with maximum impeller diameter first (authentic manufacturer design)
+        sorted_curves = sorted(curves, key=lambda x: x.get('impeller_diameter_mm', 0), reverse=True)
+        
+        for curve in sorted_curves:
+            curve_points = curve.get('performance_points', [])
+            if not curve_points or len(curve_points) < 2:
+                continue
+                
+            # Extract curve data
+            curve_flows = [p['flow_m3hr'] for p in curve_points]
+            curve_heads = [p['head_m'] for p in curve_points]
+            
+            # Check if flow is within curve range (with 10% tolerance)
+            min_flow = min(curve_flows)
+            max_flow = max(curve_flows)
+            
+            if not (min_flow * 0.9 <= flow_m3hr <= max_flow * 1.1):
+                continue  # Flow outside this curve's range
+            
+            try:
+                # Interpolate head at required flow rate
+                from scipy import interpolate
+                
+                # Sort points by flow for interpolation
+                sorted_points = sorted(zip(curve_flows, curve_heads))
+                flows_sorted, heads_sorted = zip(*sorted_points)
+                
+                # Use linear interpolation to find head at required flow
+                head_interp = interpolate.interp1d(
+                    flows_sorted, heads_sorted, 
+                    kind='linear', 
+                    bounds_error=False
+                )
+                
+                delivered_head = float(head_interp(flow_m3hr))
+                
+                # Check if pump can deliver AT LEAST the required head (2% tolerance)
+                if delivered_head >= head_m * 0.98:
+                    logger.debug(f"Pump {pump_data.get('pump_code')}: Can deliver {delivered_head:.1f}m at {flow_m3hr} m³/hr (required: {head_m}m) - VALID")
+                    return True
+                else:
+                    logger.debug(f"Pump {pump_data.get('pump_code')}: Can only deliver {delivered_head:.1f}m at {flow_m3hr} m³/hr (required: {head_m}m) - INSUFFICIENT")
+                    
+            except Exception as e:
+                logger.debug(f"Error interpolating curve for {pump_data.get('pump_code')}: {e}")
+                continue
+        
+        logger.debug(f"Pump {pump_data.get('pump_code')}: Cannot deliver required head {head_m}m at flow {flow_m3hr} m³/hr")
+        return False
