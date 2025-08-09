@@ -151,14 +151,14 @@
             </h4>
             <p class="tier-subtitle">These pumps operate in the optimal zone for reliability and efficiency.</p>
             
-            <div class="pump-results-list" id="preferred-pump-list">
+            <div class="pump-results-list compact-view" id="preferred-pump-list">
                 {% for pump in preferred_pumps %}
             <a href="{{ url_for('reports.pump_report', 
                               pump_code=pump['pump_code'], 
                               flow=site_requirements['flow_m3hr'], 
                               head=site_requirements['head_m'], 
                               pump_type=site_requirements['pump_type']) }}" 
-               class="pump-result-row"
+               class="pump-card-compact"
                data-total-score="{{ pump.get('total_score', 0) }}"
                data-efficiency-pct="{{ pump.get('efficiency_pct', 0) }}"
                data-power-kw="{{ pump.get('power_kw', 0) }}"
@@ -168,93 +168,85 @@
                data-npshr-m="{{ pump.get('npshr_m', 0) }}"
                data-pump-code="{{ pump['pump_code'] }}">
                 
-                <div class="pump-rank-circle">{{ loop.index }}</div>
+                <div class="pump-rank-badge">{{ loop.index }}</div>
                 
-                <div class="pump-info-block">
-                    <h3 class="pump-name-text">{{ pump['pump_code'] }}</h3>
-                    <p class="pump-manufacturer">APE PUMPS - {{ pump['pump_type'] }}</p>
+                <div class="pump-identity">
+                    <div class="pump-code">{{ pump['pump_code'] }}</div>
+                    <div class="pump-type-tag">{{ pump['pump_type'] }}</div>
                 </div>
                 
-                <div class="pump-metrics-grid">
-                    <div class="metric-column">
-                        <i class="material-icons metric-icon" style="color: #1976d2;">trending_up</i>
-                        <div class="metric-value">
+                <div class="pump-metrics-inline">
+                    <div class="metric-item">
+                        <span class="metric-label-inline">EFF</span>
+                        <span class="metric-value-inline">
                             {% if pump.get('efficiency_pct') is not none %}
                                 {{ "%.1f"|format(pump.get('efficiency_pct')) }}%
                             {% else %}
                                 --%
                             {% endif %}
-                        </div>
-                        <div class="metric-label">Efficiency</div>
+                        </span>
                     </div>
                     
-                    <div class="metric-column">
-                        <i class="material-icons metric-icon" style="color: #ff9800;">flash_on</i>
-                        <div class="metric-value">
+                    <div class="metric-item">
+                        <span class="metric-label-inline">PWR</span>
+                        <span class="metric-value-inline">
                             {% if pump.get('power_kw') is not none %}
-                                {{ "%.1f"|format(pump.get('power_kw')) }}
+                                {{ "%.1f"|format(pump.get('power_kw')) }}kW
                             {% else %}
                                 --
                             {% endif %}
-                        </div>
-                        <div class="metric-label">Power kW</div>
+                        </span>
                     </div>
                     
-                    <div class="metric-column">
-                        <i class="material-icons metric-icon" style="color: #2196f3;">opacity</i>
-                        <div class="metric-value">
+                    <div class="metric-item">
+                        <span class="metric-label-inline">NPSH</span>
+                        <span class="metric-value-inline">
                             {% if pump.get('npshr_m') is not none %}
-                                {{ "%.1f"|format(pump.get('npshr_m')) }}
+                                {{ "%.1f"|format(pump.get('npshr_m')) }}m
                             {% else %}
                                 --
                             {% endif %}
-                        </div>
-                        <div class="metric-label">NPSHr M</div>
+                        </span>
                     </div>
                     
-                    <div class="metric-column">
-                        <i class="material-icons metric-icon" style="color: #607d8b;">rotate_right</i>
-                        <div class="metric-value">
+                    <div class="metric-item">
+                        <span class="metric-label-inline">TRIM</span>
+                        <span class="metric-value-inline">
                             {% if pump.get('trim_percent') %}
                                 {{ (100 - pump['trim_percent'])|round|int }}%
                             {% else %}
                                 0%
                             {% endif %}
-                        </div>
-                        <div class="metric-label">Trim</div>
+                        </span>
                     </div>
                     
-                    <div class="metric-column">
-                        <i class="material-icons metric-icon" style="color: #9c27b0;">donut_large</i>
-                        <div class="metric-value">
+                    <div class="metric-item">
+                        <span class="metric-label-inline">QBP</span>
+                        <span class="metric-value-inline">
                             {% if pump.get('qbp_percent') %}
                                 {{ pump['qbp_percent']|round|int }}%
                             {% else %}
                                 100%
                             {% endif %}
-                        </div>
-                        <div class="metric-label">QBP</div>
+                        </span>
                     </div>
                 </div>
                 
-                <div class="pump-score-display">
-                    <div class="score-value">Score: {{ "%.1f"|format(pump.get('total_score', 0)) }}</div>
+                <div class="pump-score-compact">
+                    <span class="score-label-compact">Score</span>
+                    <span class="score-value-compact">{{ "%.1f"|format(pump.get('total_score', 0)) }}</span>
                 </div>
                 
-                <div class="pump-action-buttons" style="display: flex; gap: 8px; margin-right: 10px;">
-                    <button class="btn-small blue add-to-comparison-btn" 
-                            data-pump-code="{{ pump['pump_code'] }}"
-                            data-flow="{{ site_requirements['flow_m3hr'] }}"
-                            data-head="{{ site_requirements['head_m'] }}"
-                            onclick="event.preventDefault(); event.stopPropagation(); addToComparison(this);"
-                            style="padding: 0 12px; height: 32px;">
-                        <i class="material-icons left" style="font-size: 18px;">add</i>Compare
-                    </button>
-                </div>
+                <button class="compare-btn-compact" 
+                        data-pump-code="{{ pump['pump_code'] }}"
+                        data-flow="{{ site_requirements['flow_m3hr'] }}"
+                        data-head="{{ site_requirements['head_m'] }}"
+                        onclick="event.preventDefault(); event.stopPropagation(); addToComparison(this);"
+                        title="Add to comparison">
+                    <i class="material-icons" style="font-size: 16px;">add_circle</i>
+                </button>
                 
-                <div class="pump-chevron">
-                    <i class="material-icons">chevron_right</i>
-                </div>
+                <i class="material-icons pump-arrow">chevron_right</i>
             </a>
                 {% endfor %}
             </div>
@@ -270,14 +262,14 @@
             </h4>
             <p class="tier-subtitle">These pumps can meet the duty point but operate further from their optimal design. Review carefully.</p>
             
-            <div class="pump-results-list" id="allowable-pump-list">
+            <div class="pump-results-list compact-view" id="allowable-pump-list">
                 {% for pump in allowable_pumps %}
                 <a href="{{ url_for('reports.pump_report', 
                                   pump_code=pump['pump_code'], 
                                   flow=site_requirements['flow_m3hr'], 
                                   head=site_requirements['head_m'], 
                                   pump_type=site_requirements['pump_type']) }}" 
-                   class="pump-result-row allowable-zone"
+                   class="pump-card-compact allowable-card"
                    data-total-score="{{ pump.get('total_score', 0) }}"
                    data-efficiency-pct="{{ pump.get('efficiency_pct', 0) }}"
                    data-power-kw="{{ pump.get('power_kw', 0) }}"
@@ -287,93 +279,85 @@
                    data-npshr-m="{{ pump.get('npshr_m', 0) }}"
                    data-pump-code="{{ pump['pump_code'] }}">
                     
-                    <div class="pump-rank-circle allowable">{{ loop.index }}</div>
+                    <div class="pump-rank-badge allowable">{{ loop.index }}</div>
                     
-                    <div class="pump-info-block">
-                        <h3 class="pump-name-text">{{ pump['pump_code'] }}</h3>
-                        <p class="pump-manufacturer">APE PUMPS - {{ pump['pump_type'] }}</p>
+                    <div class="pump-identity">
+                        <div class="pump-code">{{ pump['pump_code'] }}</div>
+                        <div class="pump-type-tag">{{ pump['pump_type'] }}</div>
                     </div>
                     
-                    <div class="pump-metrics-grid">
-                        <div class="metric-column">
-                            <i class="material-icons metric-icon" style="color: #1976d2;">trending_up</i>
-                            <div class="metric-value">
+                    <div class="pump-metrics-inline">
+                        <div class="metric-item">
+                            <span class="metric-label-inline">EFF</span>
+                            <span class="metric-value-inline">
                                 {% if pump.get('efficiency_pct') is not none %}
                                     {{ "%.1f"|format(pump.get('efficiency_pct')) }}%
                                 {% else %}
                                     --%
                                 {% endif %}
-                            </div>
-                            <div class="metric-label">Efficiency</div>
+                            </span>
                         </div>
                         
-                        <div class="metric-column">
-                            <i class="material-icons metric-icon" style="color: #ff9800;">flash_on</i>
-                            <div class="metric-value">
+                        <div class="metric-item">
+                            <span class="metric-label-inline">PWR</span>
+                            <span class="metric-value-inline">
                                 {% if pump.get('power_kw') is not none %}
-                                    {{ "%.1f"|format(pump.get('power_kw')) }}
+                                    {{ "%.1f"|format(pump.get('power_kw')) }}kW
                                 {% else %}
                                     --
                                 {% endif %}
-                            </div>
-                            <div class="metric-label">Power kW</div>
+                            </span>
                         </div>
                         
-                        <div class="metric-column">
-                            <i class="material-icons metric-icon" style="color: #2196f3;">opacity</i>
-                            <div class="metric-value">
+                        <div class="metric-item">
+                            <span class="metric-label-inline">NPSH</span>
+                            <span class="metric-value-inline">
                                 {% if pump.get('npshr_m') is not none %}
-                                    {{ "%.1f"|format(pump.get('npshr_m')) }}
+                                    {{ "%.1f"|format(pump.get('npshr_m')) }}m
                                 {% else %}
                                     --
                                 {% endif %}
-                            </div>
-                            <div class="metric-label">NPSHr M</div>
+                            </span>
                         </div>
                         
-                        <div class="metric-column">
-                            <i class="material-icons metric-icon" style="color: #607d8b;">rotate_right</i>
-                            <div class="metric-value">
+                        <div class="metric-item">
+                            <span class="metric-label-inline">TRIM</span>
+                            <span class="metric-value-inline">
                                 {% if pump.get('trim_percent') %}
                                     {{ (100 - pump['trim_percent'])|round|int }}%
                                 {% else %}
                                     0%
                                 {% endif %}
-                            </div>
-                            <div class="metric-label">Trim</div>
+                            </span>
                         </div>
                         
-                        <div class="metric-column">
-                            <i class="material-icons metric-icon" style="color: #9c27b0;">donut_large</i>
-                            <div class="metric-value">
+                        <div class="metric-item">
+                            <span class="metric-label-inline">QBP</span>
+                            <span class="metric-value-inline">
                                 {% if pump.get('qbp_percent') %}
                                     {{ pump['qbp_percent']|round|int }}%
                                 {% else %}
                                     100%
                                 {% endif %}
-                            </div>
-                            <div class="metric-label">QBP</div>
+                            </span>
                         </div>
                     </div>
                     
-                    <div class="pump-score-display">
-                        <div class="score-value">Score: {{ "%.1f"|format(pump.get('total_score', 0)) }}</div>
+                    <div class="pump-score-compact">
+                        <span class="score-label-compact">Score</span>
+                        <span class="score-value-compact">{{ "%.1f"|format(pump.get('total_score', 0)) }}</span>
                     </div>
                     
-                    <div class="pump-action-buttons" style="display: flex; gap: 8px; margin-right: 10px;">
-                        <button class="btn-small blue add-to-comparison-btn" 
-                                data-pump-code="{{ pump['pump_code'] }}"
-                                data-flow="{{ site_requirements['flow_m3hr'] }}"
-                                data-head="{{ site_requirements['head_m'] }}"
-                                onclick="event.preventDefault(); event.stopPropagation(); addToComparison(this);"
-                                style="padding: 0 12px; height: 32px;">
-                            <i class="material-icons left" style="font-size: 18px;">add</i>Compare
-                        </button>
-                    </div>
+                    <button class="compare-btn-compact" 
+                            data-pump-code="{{ pump['pump_code'] }}"
+                            data-flow="{{ site_requirements['flow_m3hr'] }}"
+                            data-head="{{ site_requirements['head_m'] }}"
+                            onclick="event.preventDefault(); event.stopPropagation(); addToComparison(this);"
+                            title="Add to comparison">
+                        <i class="material-icons" style="font-size: 16px;">add_circle</i>
+                    </button>
                     
-                    <div class="pump-chevron">
-                        <i class="material-icons">chevron_right</i>
-                    </div>
+                    <i class="material-icons pump-arrow">chevron_right</i>
                 </a>
                 {% endfor %}
             </div>
@@ -476,7 +460,7 @@ document.addEventListener('DOMContentLoaded', function() {
         listElement.innerHTML = '';
         pumps.forEach((pump, index) => {
             // Update rank numbers - using correct selector
-            const rankElement = pump.querySelector('.pump-rank-circle');
+            const rankElement = pump.querySelector('.pump-rank-badge');
             if (rankElement) {
                 rankElement.textContent = index + 1;
             }
