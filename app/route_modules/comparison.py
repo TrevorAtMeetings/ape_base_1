@@ -21,10 +21,10 @@ comparison_bp = Blueprint('comparison', __name__)
 def pump_comparison():
     """Pump comparison interface with fallback to URL parameters if session is empty."""
     try:
-        # Add breadcrumbs for navigation
+        # Clean breadcrumbs for navigation
         breadcrumbs = [
-            {'text': 'Home', 'url': url_for('main_flow.index'), 'icon': 'home'},
-            {'text': 'Pump Comparison', 'url': '', 'icon': 'compare_arrows'}
+            {'label': 'Home', 'url': url_for('main_flow.index'), 'icon': 'home'},
+            {'label': 'Pump Comparison', 'url': '#', 'icon': 'compare_arrows'}
         ]
         # Try to get pump selections from session (both old and new formats)
         # CRITICAL FIX: Check both session keys for pump data

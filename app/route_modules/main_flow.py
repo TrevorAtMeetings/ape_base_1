@@ -21,10 +21,8 @@ def index():
     """Main selection page."""
     try:
         logger.info("Index route accessed.")
-        breadcrumbs = [
-            {'text': 'Pump Selection', 'url': '', 'icon': 'settings'}
-        ]
-        return render_template('input_form.html', breadcrumbs=breadcrumbs)
+        # Home page doesn't need breadcrumbs - it's the starting point
+        return render_template('input_form.html')
     except Exception as e:
         logger.error(f"Error in index route: {str(e)}")
         return render_template('500.html'), 500
@@ -33,8 +31,8 @@ def index():
 def about():
     """About page."""
     breadcrumbs = [
-        {'text': 'Home', 'url': url_for('main_flow.index'), 'icon': 'home'},
-        {'text': 'About', 'url': '', 'icon': 'info'}
+        {'label': 'Home', 'url': url_for('main_flow.index'), 'icon': 'home'},
+        {'label': 'About', 'url': '#', 'icon': 'info'}
     ]
     return render_template('about.html', breadcrumbs=breadcrumbs)
 
@@ -43,8 +41,8 @@ def guide():
     """Guide page."""
     logger.info("Guide page accessed.")
     breadcrumbs = [
-        {'text': 'Home', 'url': url_for('main_flow.index'), 'icon': 'home'},
-        {'text': 'User Guide', 'url': '', 'icon': 'help'}
+        {'label': 'Home', 'url': url_for('main_flow.index'), 'icon': 'home'},
+        {'label': 'User Guide', 'url': '#', 'icon': 'help'}
     ]
     return render_template('guide.html', breadcrumbs=breadcrumbs)
 
@@ -52,8 +50,8 @@ def guide():
 def help():
     """Help page."""
     breadcrumbs = [
-        {'text': 'Home', 'url': url_for('main_flow.index'), 'icon': 'home'},
-        {'text': 'Help', 'url': '', 'icon': 'help_outline'}
+        {'label': 'Home', 'url': url_for('main_flow.index'), 'icon': 'home'},
+        {'label': 'Help', 'url': '#', 'icon': 'help_outline'}
     ]
     return render_template('help.html', breadcrumbs=breadcrumbs)
 
@@ -61,8 +59,8 @@ def help():
 def help_features_page():
     """Help features page."""
     breadcrumbs = [
-        {'text': 'Home', 'url': url_for('main_flow.index'), 'icon': 'home'},
-        {'text': 'Features', 'url': '', 'icon': 'featured_play_list'}
+        {'label': 'Home', 'url': url_for('main_flow.index'), 'icon': 'home'},
+        {'label': 'Features', 'url': '#', 'icon': 'featured_play_list'}
     ]
     return render_template('help_brochure.html', breadcrumbs=breadcrumbs)
 
@@ -299,10 +297,10 @@ def pump_options():
         # Get pump selections from session (already stored by store_pumps_optimized above)
         stored_pumps = safe_session_get('suitable_pumps', pump_selections)
 
-        # Add breadcrumbs for pump options page
+        # Clean breadcrumbs for pump options page
         breadcrumbs = [
-            {'text': 'Home', 'url': url_for('main_flow.index'), 'icon': 'home'},
-            {'text': f'Results - {len(stored_pumps)} Pumps Found', 'url': '', 'icon': 'view_list'}
+            {'label': 'Home', 'url': url_for('main_flow.index'), 'icon': 'home'},
+            {'label': 'Results', 'url': '#', 'icon': 'view_list'}
         ]
         
         # Render pump options page showing all suitable pumps

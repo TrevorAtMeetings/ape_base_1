@@ -18,11 +18,11 @@ brain_admin_bp = Blueprint('brain_admin', __name__)
 def brain_dashboard():
     """Brain administration dashboard - main landing page"""
     try:
-        # Add breadcrumbs for navigation
+        # Clean breadcrumbs for navigation
         breadcrumbs = [
-            {'text': 'Home', 'url': url_for('main_flow.index'), 'icon': 'home'},
-            {'text': 'Admin', 'url': url_for('admin.admin_dashboard'), 'icon': 'admin_panel_settings'},
-            {'text': 'Brain Dashboard', 'url': '', 'icon': 'psychology'}
+            {'label': 'Home', 'url': url_for('main_flow.index'), 'icon': 'home'},
+            {'label': 'Admin', 'url': url_for('admin.admin_dashboard'), 'icon': 'admin_panel_settings'},
+            {'label': 'Brain Dashboard', 'url': '#', 'icon': 'psychology'}
         ]
         brain_service = BrainDataService()
         
@@ -53,11 +53,11 @@ def brain_dashboard():
 def data_quality_dashboard():
     """Data Quality Management Dashboard"""
     try:
-        # Add breadcrumbs for navigation
+        # Clean breadcrumbs for navigation
         breadcrumbs = [
-            {'text': 'Home', 'url': url_for('main_flow.index'), 'icon': 'home'},
-            {'text': 'Brain Dashboard', 'url': url_for('brain_admin.brain_dashboard'), 'icon': 'psychology'},
-            {'text': 'Data Quality', 'url': '', 'icon': 'assessment'}
+            {'label': 'Home', 'url': url_for('main_flow.index'), 'icon': 'home'},
+            {'label': 'Brain Dashboard', 'url': url_for('brain_admin.brain_dashboard'), 'icon': 'psychology'},
+            {'label': 'Data Quality', 'url': '#', 'icon': 'assessment'}
         ]
         brain_service = BrainDataService()
         

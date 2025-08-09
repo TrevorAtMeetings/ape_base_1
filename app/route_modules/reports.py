@@ -34,16 +34,17 @@ def pump_report(pump_code):
     """Render pump report with presentation view."""
     pump_code = unquote(pump_code)
     
-    # Add breadcrumbs for navigation
-    breadcrumbs = [
-        {'text': 'Home', 'url': url_for('main_flow.index'), 'icon': 'home'},
-        {'text': 'Pump Report', 'url': '', 'icon': 'description'}
-    ]
-    
     # Get definitive duty point
     site_reqs = safe_session_get('site_requirements', {})
     flow = request.args.get('flow', type=float) or site_reqs.get('flow_m3hr')
     head = request.args.get('head', type=float) or site_reqs.get('head_m')
+    
+    # Clean breadcrumbs for navigation
+    breadcrumbs = [
+        {'label': 'Home', 'url': url_for('main_flow.index'), 'icon': 'home'},
+        {'label': 'Results', 'url': url_for('main_flow.pump_options', flow=flow, head=head) if flow and head else '#'},
+        {'label': pump_code, 'url': '#', 'icon': 'description'}
+    ]
 
     if not (flow and head):
         safe_flash("Flow and head are required to view a report.", "error")
@@ -108,16 +109,17 @@ def engineering_report(pump_code):
     pump_code = unquote(pump_code)
     logger.info(f"Rendering engineering report for pump: {pump_code}")
     
-    # Add breadcrumbs for engineering report
-    breadcrumbs = [
-        {'text': 'Home', 'url': url_for('main_flow.index'), 'icon': 'home'},
-        {'text': 'Engineering Report', 'url': '', 'icon': 'engineering'}
-    ]
-    
     # Get definitive duty point from URL parameters or session
     site_reqs = safe_session_get('site_requirements', {})
     flow = request.args.get('flow', type=float) or site_reqs.get('flow_m3hr')
     head = request.args.get('head', type=float) or site_reqs.get('head_m')
+    
+    # Clean breadcrumbs for engineering report
+    breadcrumbs = [
+        {'label': 'Home', 'url': url_for('main_flow.index'), 'icon': 'home'},
+        {'label': 'Results', 'url': url_for('main_flow.pump_options', flow=flow, head=head) if flow and head else '#'},
+        {'label': pump_code, 'url': '#', 'icon': 'engineering'}
+    ]
 
     if not (flow and head):
         safe_flash("Flow and head are required to view a report.", "error")
