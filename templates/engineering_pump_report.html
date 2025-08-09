@@ -726,11 +726,11 @@
                     </tr>
                     <tr>
                         <td>Min Speed</td>
-                        <td>{{ selected_pump.get('min_speed_rpm', 'N/A') }} rpm</td>
+                        <td>{{ selected_pump.get('specifications', {}).get('min_speed_rpm', 'N/A') }} rpm</td>
                     </tr>
                     <tr>
                         <td>Max Speed</td>
-                        <td>{{ selected_pump.get('max_speed_rpm', 'N/A') }} rpm</td>
+                        <td>{{ selected_pump.get('specifications', {}).get('max_speed_rpm', 'N/A') }} rpm</td>
                     </tr>
                 </table>
             </div>
