@@ -100,16 +100,16 @@
 /* Executive Card System */
 .admin-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
-    gap: 32px;
+    grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+    gap: 24px;
     margin-bottom: 48px;
 }
 
 .admin-card {
     background: var(--admin-surface);
-    border: 2px solid var(--admin-outline);
+    border: 1px solid var(--admin-outline);
     border-radius: var(--admin-border-radius);
-    padding: 32px;
+    padding: 28px;
     box-shadow: var(--admin-shadow-sm);
     transition: var(--admin-transition);
     position: relative;
@@ -188,17 +188,21 @@
 }
 
 .admin-card-label {
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 600;
-    color: var(--admin-secondary);
+    color: #1A202C;
     line-height: 1.4;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 .admin-card-value {
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 700;
-    color: var(--admin-primary);
+    color: #1565C0;
     text-align: right;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 /* Executive Button System */
@@ -368,11 +372,22 @@
     
     .admin-grid {
         grid-template-columns: 1fr;
-        gap: 24px;
+        gap: 20px;
     }
     
     .admin-card {
-        padding: 24px 20px;
+        padding: 20px 16px;
+    }
+    
+    .admin-card-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+        text-align: left;
+    }
+    
+    .admin-card-value {
+        text-align: left;
     }
     
     .admin-btn-group {
@@ -381,6 +396,8 @@
     
     .admin-btn {
         justify-content: center;
+        font-size: 14px;
+        padding: 14px 20px;
     }
 }
 
