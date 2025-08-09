@@ -570,11 +570,11 @@
                     </tr>
                     <tr>
                         <td>Max Impeller Ø</td>
-                        <td>{{ selected_pump.get('max_impeller_mm', 0)|round(0)|int }} mm</td>
+                        <td>{{ selected_pump.get('specifications', {}).get('max_impeller_diameter_mm', 0)|round(0)|int }} mm</td>
                     </tr>
                     <tr>
                         <td>Min Impeller Ø</td>
-                        <td>{{ selected_pump.get('min_impeller_mm', 0)|round(0)|int }} mm</td>
+                        <td>{{ selected_pump.get('specifications', {}).get('min_impeller_diameter_mm', 0)|round(0)|int }} mm</td>
                     </tr>
                 </table>
             </div>
@@ -684,24 +684,15 @@
                     </tr>
                     <tr>
                         <td>QBEP %</td>
-                        <td>{{ selected_pump.get('qbep_percentage', 0)|round(0)|int }} %</td>
+                        <td>{{ selected_pump.get('qbp_percent', 0)|round(0)|int }} %</td>
                     </tr>
                     <tr>
                         <td>Operating Zone</td>
-                        <td>
-                            {% set qbep = selected_pump.get('qbep_percentage', 100) %}
-                            {% if 80 <= qbep <= 110 %}
-                                Preferred
-                            {% elif 70 <= qbep <= 120 %}
-                                Acceptable
-                            {% else %}
-                                Marginal
-                            {% endif %}
-                        </td>
+                        <td>{{ selected_pump.get('operating_zone', 'N/A').title() }}</td>
                     </tr>
                     <tr>
                         <td>Pump Speed</td>
-                        <td>{{ selected_pump.get('test_speed_rpm', selected_pump.get('speed_rpm', 'N/A')) }} rpm</td>
+                        <td>{{ selected_pump.get('specifications', {}).get('test_speed_rpm', 'N/A') }} rpm</td>
                     </tr>
                     <tr>
                         <td>No of Stages</td>
@@ -749,15 +740,15 @@
                 <table class="data-table">
                     <tr>
                         <td>Overall Score</td>
-                        <td>{{ selected_pump.get('suitability_score', 0)|round(1) }}/100</td>
+                        <td>{{ selected_pump.get('total_score', 0)|round(1) }}/100</td>
                     </tr>
                     <tr>
                         <td>Efficiency Score</td>
-                        <td>{{ selected_pump.get('efficiency_score', 0)|round(1) }}/30</td>
+                        <td>{{ selected_pump.get('score_components', {}).get('efficiency', 0)|round(1) }}/35</td>
                     </tr>
                     <tr>
                         <td>BEP Score</td>
-                        <td>{{ selected_pump.get('bep_score', 0)|round(1) }}/40</td>
+                        <td>{{ selected_pump.get('score_components', {}).get('bep_proximity', 0)|round(1) }}/45</td>
                     </tr>
                     <tr>
                         <td>Selection Method</td>

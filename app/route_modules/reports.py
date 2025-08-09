@@ -140,6 +140,12 @@ def engineering_report(pump_code):
     # NO other recalculations are needed - Brain provides everything
     selected_pump = evaluation_result.copy()
     
+    # Add pump specifications for template fields that need min/max impeller, test speed, etc.
+    pump_models = brain.repository.get_pump_models()
+    pump_model = next((p for p in pump_models if p.get('pump_code') == pump_code), None)
+    if pump_model and 'specifications' in pump_model:
+        selected_pump['specifications'] = pump_model['specifications']
+    
     # Get alternatives from the session if they exist
     pump_selections = safe_session_get('suitable_pumps', [])
     alternatives = [p for p in pump_selections if p.get('pump_code') != pump_code][:2]
