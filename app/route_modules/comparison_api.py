@@ -1,11 +1,13 @@
 """
-API endpoints for pump comparison functionality.
+Brain-Only Comparison API - NO FALLBACKS EVER
+============================================
+API endpoints for pump comparison functionality using Brain system as single source of truth.
 """
 
 import logging
 from flask import Blueprint, request, jsonify, session
 from app.session_manager import safe_session_get, safe_session_set
-from app.pump_repository import PumpRepository
+from app.pump_brain import get_pump_brain
 
 logger = logging.getLogger(__name__)
 comparison_api_bp = Blueprint('comparison_api', __name__)
@@ -31,21 +33,26 @@ def add_to_comparison():
         if existing_pump:
             return jsonify({'success': False, 'message': f'{pump_code} already in comparison list'})
         
-        # Load pump data from repository
+        # CRITICAL FIX: Use Brain system as single source of truth
         try:
-            repo = PumpRepository()
-            pump_data = repo.get_pump_by_code(pump_code)
+            brain = get_pump_brain()
+            if not brain:
+                return jsonify({'success': False, 'message': 'Brain system unavailable'})
             
-            if not pump_data:
-                return jsonify({'success': False, 'message': 'Pump not found in database'})
+            # Validate pump exists using Brain (authentic data only)
+            evaluation = brain.evaluate_pump(pump_code, float(flow), float(head))
             
-            # Add pump to comparison list
+            if not evaluation or evaluation.get('excluded'):
+                reason = evaluation.get('exclusion_reasons', ['Pump not suitable'])[0] if evaluation else 'Pump not found'
+                return jsonify({'success': False, 'message': f'Pump not suitable: {reason}'})
+            
+            # Store ONLY identifiers - Brain provides fresh data on demand
             comparison_pump = {
                 'pump_code': pump_code,
-                'flow': flow,
-                'head': head,
+                'flow': float(flow),
+                'head': float(head),
                 'pump_type': pump_type,
-                'pump_data': pump_data
+                'added_timestamp': evaluation.get('timestamp', '')
             }
             
             comparison_list.append(comparison_pump)
@@ -54,7 +61,7 @@ def add_to_comparison():
             if len(comparison_list) > 10:
                 comparison_list = comparison_list[-10:]
             
-            # Save to session
+            # Save minimal data to session - Brain intelligence on demand
             safe_session_set('comparison_list', comparison_list)
             
             # Also update site requirements for comparison page
@@ -75,8 +82,8 @@ def add_to_comparison():
             })
             
         except Exception as e:
-            logger.error(f"Error loading pump data for {pump_code}: {str(e)}")
-            return jsonify({'success': False, 'message': 'Error loading pump data'})
+            logger.error(f"Brain evaluation error for {pump_code}: {str(e)}")
+            return jsonify({'success': False, 'message': 'Error evaluating pump with Brain system'})
         
     except Exception as e:
         logger.error(f"Error in add_to_comparison: {str(e)}")
@@ -84,14 +91,62 @@ def add_to_comparison():
 
 @comparison_api_bp.route('/api/get_comparison_list', methods=['GET'])
 def get_comparison_list():
-    """Get current comparison list from session."""
+    """Get current comparison list with fresh Brain evaluations."""
     try:
-        comparison_list = safe_session_get('comparison_list', [])
+        # Get minimal identifiers from session
+        comparison_identifiers = safe_session_get('comparison_list', [])
+        
+        if not comparison_identifiers:
+            return jsonify({
+                'success': True,
+                'pumps': [],
+                'count': 0
+            })
+        
+        # Get fresh Brain evaluations for each pump
+        brain = get_pump_brain()
+        if not brain:
+            return jsonify({'success': False, 'message': 'Brain system unavailable'})
+        
+        fresh_pump_data = []
+        for identifier in comparison_identifiers:
+            try:
+                pump_code = identifier['pump_code']
+                flow = identifier['flow']
+                head = identifier['head']
+                
+                # Get fresh evaluation from Brain - NO FALLBACKS
+                evaluation = brain.evaluate_pump(pump_code, flow, head)
+                
+                if evaluation and not evaluation.get('excluded'):
+                    # Combine identifier with fresh Brain intelligence
+                    pump_data = {
+                        **identifier,  # Original identifiers
+                        'evaluation': evaluation,  # Fresh Brain data
+                        'performance': evaluation  # Alias for template compatibility
+                    }
+                    fresh_pump_data.append(pump_data)
+                else:
+                    logger.warning(f"Pump {pump_code} no longer suitable, removing from comparison")
+                    
+            except Exception as e:
+                logger.error(f"Error evaluating {identifier.get('pump_code', 'unknown')}: {str(e)}")
+                continue
+        
+        # Update session with cleaned list (remove unsuitable pumps)
+        if len(fresh_pump_data) != len(comparison_identifiers):
+            cleaned_identifiers = [
+                {'pump_code': p['pump_code'], 'flow': p['flow'], 'head': p['head'], 'pump_type': p.get('pump_type', 'GENERAL')}
+                for p in fresh_pump_data
+            ]
+            safe_session_set('comparison_list', cleaned_identifiers)
+        
         return jsonify({
             'success': True,
-            'pumps': comparison_list,
-            'count': len(comparison_list)
+            'pumps': fresh_pump_data,
+            'count': len(fresh_pump_data)
         })
+        
     except Exception as e:
         logger.error(f"Error in get_comparison_list: {str(e)}")
         return jsonify({'success': False, 'message': 'Server error'})

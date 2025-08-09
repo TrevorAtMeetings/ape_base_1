@@ -7,7 +7,7 @@ from datetime import datetime
 from flask import Blueprint, render_template, request, redirect, url_for, session, jsonify
 from ..session_manager import safe_flash, safe_session_get, safe_session_set
 from ..data_models import SiteRequirements
-from ..pump_repository import get_pump_repository
+from ..pump_brain import get_pump_brain
 from ..utils import validate_site_requirements
 from .. import app
 from flask import Response
@@ -80,21 +80,22 @@ def pump_comparison():
                 selection['bep_analysis'] = bep_analysis
                 selection['qbep_percentage'] = qbep_percentage
 
-        # If session is empty, reconstruct from URL parameters
+        # If session is empty, reconstruct from URL parameters using Brain
         if not pump_selections:
             flow = request.args.get('flow', type=float)
             head = request.args.get('head', type=float)
             pump_type = request.args.get('pump_type', 'General')
             if flow and head:
-                # CATALOG ENGINE RETIRED - USING BRAIN SYSTEM
-                # from ..catalog_engine import get_catalog_engine
-                from ..pump_brain import get_pump_brain
+                # Use Brain system as single source of truth
                 brain = get_pump_brain()
-                top_selections = brain.find_best_pump(flow, head, constraints={'max_results': 10, 'pump_type': pump_type})
-                pump_selections = []
-                for selection in top_selections:
-                    pump = selection['pump']
-                    performance = selection['performance']
+                if brain:
+                    # Get fresh Brain evaluations - NO FALLBACKS
+                    top_selections = brain.find_best_pump(flow, head, constraints={'max_results': 10, 'pump_type': pump_type})
+                    pump_selections = []
+                    for selection in top_selections:
+                        # Brain returns dict format, not objects
+                        pump_code = selection.get('pump_code', '')
+                        performance = selection
                     
                     # Calculate lifecycle costs
                     power_kw = performance.get('power_kw', 0)
