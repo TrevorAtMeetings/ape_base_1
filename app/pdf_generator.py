@@ -15,14 +15,15 @@ import matplotlib
 matplotlib.use('Agg')  # Use non-interactive backend
 import matplotlib.pyplot as plt
 import numpy as np
-from .catalog_engine import CatalogPump
+# CATALOG ENGINE RETIRED - Using Brain system dictionary format
+# from .catalog_engine import CatalogPump
 
 logger = logging.getLogger(__name__)
 
 def generate_pdf_report(selected_pump_evaluation: Dict[str, Any],
                        parsed_pump: Any,
                        site_requirements: Any,
-                       alternatives: List[Dict[str, Any]] = None) -> bytes:
+                       alternatives: Optional[List[Dict[str, Any]]] = None) -> bytes:
     """
     Generate a comprehensive PDF report for pump selection.
 

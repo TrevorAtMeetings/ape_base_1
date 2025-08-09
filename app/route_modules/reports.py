@@ -375,7 +375,11 @@ def engineering_report(pump_code):
                 selected_pump['flow_m3hr'] = new_flow
                 selected_pump['head_m'] = new_head
                 selected_pump['efficiency_pct'] = result.get('efficiency_pct', selected_pump.get('efficiency_pct', 0))
-                selected_pump['power_kw'] = result.get('power_kw', selected_pump.get('power_kw', 0))
+                # Handle NaN power values from authentic data
+                power_kw = result.get('power_kw', selected_pump.get('power_kw', 0))
+                if power_kw != power_kw:  # Check for NaN (NaN != NaN is True)
+                    power_kw = 0  # Use 0 instead of NaN for display
+                selected_pump['power_kw'] = power_kw
                 selected_pump['npshr_m'] = result.get('npshr_m', selected_pump.get('npshr_m', 0))
                 selected_pump['trim_percent'] = result.get('trim_percent', selected_pump.get('trim_percent', 100))
                 selected_pump['impeller_diameter_mm'] = result.get('impeller_diameter_mm', selected_pump.get('impeller_diameter_mm', 0))

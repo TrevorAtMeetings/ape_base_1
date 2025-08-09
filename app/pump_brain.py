@@ -257,7 +257,8 @@ class PumpBrain:
         Returns:
             Performance data including efficiency, power, NPSH
         """
-        return self.performance.calculate_at_point(pump, flow, head, impeller_trim)
+        result = self.performance.calculate_at_point(pump, flow, head, impeller_trim)
+        return result if result is not None else {}
     
     @measure_performance
     def apply_affinity_laws(self, base_curve: Dict[str, Any], 

@@ -475,20 +475,17 @@ def generate_comparison_pdf():
 
         if main_evaluation and main_pump:
             # Convert catalog pump to legacy format for PDF compatibility
-            from ..catalog_engine import convert_catalog_pump_to_legacy_format
-            main_performance = main_pump.get_performance_at_duty(flow, head)
-            if main_performance is not None:
-                legacy_pump = convert_catalog_pump_to_legacy_format(main_pump, main_performance)
-            else:
-                # Create a minimal legacy pump object if performance is not available
-                legacy_pump = type('LegacyPumpData', (), {
-                    'pPumpCode': pump_codes[0],
-                    'pSuppName': 'APE PUMPS',
-                    'pBEPFlo': flow,
-                    'pBEPHed': head,
-                    'pBEPEff': 80.0,
-                    'pKWMax': 50.0
-                })()
+            # CATALOG ENGINE RETIRED - Brain system uses dictionary format directly
+            # from ..catalog_engine import convert_catalog_pump_to_legacy_format
+            # Brain system uses dictionary format - create legacy object for PDF compatibility
+            legacy_pump = type('LegacyPumpData', (), {
+                'pPumpCode': main_pump.get('pump_code', ''),
+                'pSuppName': main_pump.get('manufacturer', 'APE PUMPS'),
+                'pBEPFlo': flow,
+                'pBEPHed': head,
+                'pBEPEff': main_evaluation.get('efficiency_pct', 80.0),
+                'pKWMax': main_evaluation.get('power_kw', 50.0)
+            })()
             
             pdf_content = generate_pdf(
                 selected_pump_evaluation=main_evaluation,
