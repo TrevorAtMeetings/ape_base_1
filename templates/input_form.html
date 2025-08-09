@@ -367,16 +367,16 @@
                                 <div class="input-field">
                                     <i class="material-icons prefix">water_drop</i>
                                     <input id="flow_rate" name="flow_m3hr" type="number" step="0.01" min="0.1" max="10000" required class="validate" data-metric-min="0.1" data-metric-max="10000" data-imperial-min="0.44" data-imperial-max="44029">
-                                    <label for="flow_rate">Flow Rate (m³/hr) *</label>
-                                    <span class="helper-text" data-error="Flow rate must be between 0.1 and 10000 m³/hr">Required volumetric flow rate</span>
+                                    <label for="flow_rate">Flow Rate *</label>
+                                    <span class="helper-text" data-error="Flow rate must be between 0.1 and 10000 m³/hr">Enter flow rate in m³/hr (metric) or GPM (imperial)</span>
                                 </div>
                             </div>
                             <div class="col s12 m6">
                                 <div class="input-field">
                                     <i class="material-icons prefix">height</i>
                                     <input id="total_head" name="head_m" type="number" step="0.01" min="0.1" max="1000" required class="validate" data-metric-min="0.1" data-metric-max="1000" data-imperial-min="0.32" data-imperial-max="3280">
-                                    <label for="total_head">Total Head (m) *</label>
-                                    <span class="helper-text" data-error="Total head must be between 0.1 and 1000 m">Total dynamic head (friction + static losses)</span>
+                                    <label for="total_head">Total Head *</label>
+                                    <span class="helper-text" data-error="Total head must be between 0.1 and 1000 m">Enter total head in meters (metric) or feet (imperial)</span>
                                 </div>
                             </div>
                         </div>
@@ -1292,10 +1292,16 @@ function updateUnitLabels() {
     const headInput = document.getElementById('total_head');
 
     if (currentUnitSystem === 'metric') {
-        if (flowLabel) flowLabel.textContent = 'Flow Rate (m³/hr) *';
-        if (headLabel) headLabel.textContent = 'Total Head (m) *';
-        if (flowHelper) flowHelper.dataset.error = "Flow rate must be between 0.1 and 10000 m³/hr";
-        if (headHelper) headHelper.dataset.error = "Total head must be between 0.1 and 1000 m";
+        if (flowLabel) flowLabel.textContent = 'Flow Rate *';
+        if (headLabel) headLabel.textContent = 'Total Head *';
+        if (flowHelper) {
+            flowHelper.dataset.error = "Flow rate must be between 0.1 and 10000 m³/hr";
+            flowHelper.textContent = "Enter flow rate in m³/hr (metric units)";
+        }
+        if (headHelper) {
+            headHelper.dataset.error = "Total head must be between 0.1 and 1000 m";
+            headHelper.textContent = "Enter total head in meters (metric units)";
+        }
         
         // Update validation ranges
         if (flowInput) {
@@ -1307,10 +1313,16 @@ function updateUnitLabels() {
             headInput.max = headInput.dataset.metricMax || "1000";
         }
     } else {
-        if (flowLabel) flowLabel.textContent = 'Flow Rate (GPM) *';
-        if (headLabel) headLabel.textContent = 'Total Head (ft) *';
-        if (flowHelper) flowHelper.dataset.error = "Flow rate must be between 0.44 and 44029 GPM";
-        if (headHelper) headHelper.dataset.error = "Total head must be between 0.32 and 3280 ft";
+        if (flowLabel) flowLabel.textContent = 'Flow Rate *';
+        if (headLabel) headLabel.textContent = 'Total Head *';
+        if (flowHelper) {
+            flowHelper.dataset.error = "Flow rate must be between 0.44 and 44029 GPM";
+            flowHelper.textContent = "Enter flow rate in GPM (imperial units)";
+        }
+        if (headHelper) {
+            headHelper.dataset.error = "Total head must be between 0.32 and 3280 ft";
+            headHelper.textContent = "Enter total head in feet (imperial units)";
+        }
         
         // Update validation ranges
         if (flowInput) {
