@@ -201,6 +201,17 @@
                     <div class="score-value">Score: {{ "%.1f"|format(pump.get('total_score', 0)) }}</div>
                 </div>
                 
+                <div class="pump-action-buttons" style="display: flex; gap: 8px; margin-right: 10px;">
+                    <button class="btn-small blue add-to-comparison-btn" 
+                            data-pump-code="{{ pump['pump_code'] }}"
+                            data-flow="{{ site_requirements['flow_m3hr'] }}"
+                            data-head="{{ site_requirements['head_m'] }}"
+                            onclick="event.preventDefault(); event.stopPropagation(); addToComparison(this);"
+                            style="padding: 0 12px; height: 32px;">
+                        <i class="material-icons left" style="font-size: 18px;">add</i>Compare
+                    </button>
+                </div>
+                
                 <div class="pump-chevron">
                     <i class="material-icons">chevron_right</i>
                 </div>
@@ -307,6 +318,17 @@
                     
                     <div class="pump-score-display">
                         <div class="score-value">Score: {{ "%.1f"|format(pump.get('total_score', 0)) }}</div>
+                    </div>
+                    
+                    <div class="pump-action-buttons" style="display: flex; gap: 8px; margin-right: 10px;">
+                        <button class="btn-small blue add-to-comparison-btn" 
+                                data-pump-code="{{ pump['pump_code'] }}"
+                                data-flow="{{ site_requirements['flow_m3hr'] }}"
+                                data-head="{{ site_requirements['head_m'] }}"
+                                onclick="event.preventDefault(); event.stopPropagation(); addToComparison(this);"
+                                style="padding: 0 12px; height: 32px;">
+                            <i class="material-icons left" style="font-size: 18px;">add</i>Compare
+                        </button>
                     </div>
                     
                     <div class="pump-chevron">
@@ -459,6 +481,59 @@ document.addEventListener('keydown', function(e) {
         }
     }
 });
+
+// Add to Comparison functionality
+function addToComparison(button) {
+    const pumpCode = button.dataset.pumpCode;
+    const flow = parseFloat(button.dataset.flow);
+    const head = parseFloat(button.dataset.head);
+    
+    fetch('/api/add_to_comparison', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            pump_code: pumpCode,
+            flow: flow,
+            head: head
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            M.toast({html: `${pumpCode} added to comparison (${data.count} total)`, classes: 'green'});
+            button.classList.remove('blue');
+            button.classList.add('green');
+            button.innerHTML = '<i class="material-icons left" style="font-size: 18px;">check</i>Added';
+            
+            // Show comparison link if we have multiple pumps
+            if (data.count >= 2) {
+                showComparisonLink(data.count);
+            }
+        } else {
+            M.toast({html: data.message || 'Failed to add pump', classes: 'red'});
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        M.toast({html: 'Error adding pump to comparison', classes: 'red'});
+    });
+}
+
+function showComparisonLink(count) {
+    // Check if toast already exists
+    if (!document.getElementById('comparison-toast')) {
+        const toastHTML = `
+            <div id="comparison-toast" style="display: flex; align-items: center; gap: 10px;">
+                <span>${count} pumps ready for comparison</span>
+                <a href="/compare" class="btn-small white-text" style="background: #4caf50;">
+                    View Comparison
+                </a>
+            </div>`;
+        M.toast({html: toastHTML, displayLength: 5000});
+    }
+}
 </script>
 
 {% endblock %}
