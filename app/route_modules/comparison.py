@@ -73,17 +73,17 @@ def pump_comparison():
         
         # Calculate lifecycle costs for each pump
         for pump in evaluated_pumps:
-            power_kw = pump.get('power_kw', 0)
-            flow = pump.get('flow_m3hr', 0)
+            power_kw = pump.get('power_kw') or 0
+            flow = pump.get('flow_m3hr') or 0
             annual_hours = 8760
             electricity_rate = 2.50  # R/kWh
-            annual_energy_cost = power_kw * annual_hours * electricity_rate
+            annual_energy_cost = float(power_kw) * annual_hours * electricity_rate if power_kw else 0
             
             pump['lifecycle_cost'] = {
                 'initial_cost': 50000,
                 'annual_energy_cost': annual_energy_cost,
                 'total_10_year_cost': 50000 + (annual_energy_cost * 10),
-                'cost_per_m3': annual_energy_cost / (flow * annual_hours) if flow > 0 else 0
+                'cost_per_m3': annual_energy_cost / (float(flow) * annual_hours) if flow and flow > 0 else 0
             }
         
         # Prepare site requirements from first pump's duty point
@@ -97,25 +97,37 @@ def pump_comparison():
         # Use legacy template structure for compatibility
         pump_comparisons = []
         for pump in evaluated_pumps:
+            # Ensure all numeric values are not None
+            total_score = pump.get('total_score') or 0
+            flow_m3hr = pump.get('flow_m3hr') or 0
+            head_m = pump.get('head_m') or 0
+            efficiency_pct = pump.get('efficiency_pct') or 0
+            power_kw = pump.get('power_kw') or 0
+            impeller_diameter_mm = pump.get('impeller_diameter_mm') or 0
+            test_speed_rpm = pump.get('test_speed_rpm') or 1450
+            npshr_m = pump.get('npshr_m') or 0
+            trim_percent = pump.get('trim_percent') or 100
+            qbp_percent = pump.get('qbp_percent') or 100
+            
             pump_comparison = {
-                'pump_code': pump.get('pump_code'),
-                'suitability_score': pump.get('total_score', 0),
-                'overall_score': pump.get('total_score', 0),
-                'selection_reason': f"Brain Score: {pump.get('total_score', 0):.1f}%",
+                'pump_code': pump.get('pump_code', ''),
+                'suitability_score': float(total_score),
+                'overall_score': float(total_score),
+                'selection_reason': f"Brain Score: {float(total_score):.1f}%",
                 'pump_type': pump.get('pump_type', 'GENERAL'),
                 'operating_point': {
-                    'flow_m3hr': pump.get('flow_m3hr'),
-                    'head_m': pump.get('head_m'),
-                    'efficiency_pct': pump.get('efficiency_pct', 0),
-                    'power_kw': pump.get('power_kw', 0),
-                    'achieved_efficiency_pct': pump.get('efficiency_pct', 0),
-                    'achieved_head_m': pump.get('head_m'),
-                    'achieved_power_kw': pump.get('power_kw', 0),
-                    'achieved_flow_m3hr': pump.get('flow_m3hr'),
-                    'impeller_diameter_mm': pump.get('impeller_diameter_mm', 0),
-                    'test_speed_rpm': pump.get('test_speed_rpm', 1450),
-                    'npshr_m': pump.get('npshr_m', 0),
-                    'trim_percent': pump.get('trim_percent', 100)
+                    'flow_m3hr': float(flow_m3hr),
+                    'head_m': float(head_m),
+                    'efficiency_pct': float(efficiency_pct),
+                    'power_kw': float(power_kw),
+                    'achieved_efficiency_pct': float(efficiency_pct),
+                    'achieved_head_m': float(head_m),
+                    'achieved_power_kw': float(power_kw),
+                    'achieved_flow_m3hr': float(flow_m3hr),
+                    'impeller_diameter_mm': float(impeller_diameter_mm),
+                    'test_speed_rpm': float(test_speed_rpm),
+                    'npshr_m': float(npshr_m),
+                    'trim_percent': float(trim_percent)
                 },
                 'pump_info': {
                     'manufacturer': 'APE PUMPS',
@@ -124,8 +136,8 @@ def pump_comparison():
                     'description': pump.get('description', '')
                 },
                 'suitable': pump.get('feasible', True),
-                'lifecycle_cost': pump.get('lifecycle_cost'),
-                'qbep_percentage': pump.get('qbp_percent', 100)
+                'lifecycle_cost': pump.get('lifecycle_cost', {}),
+                'qbep_percentage': float(qbp_percent)
             }
             pump_comparisons.append(pump_comparison)
         
