@@ -219,12 +219,31 @@ class ChartManager {
     }
 
     createLayout(config, traces) {
-        // Calculate data ranges from traces
-        const allX = traces.flatMap(t => t.x || []);
-        const allY = traces.flatMap(t => t.y || []);
+        // Calculate data ranges from traces - only show actual pump curve data
+        const allX = traces.flatMap(t => t.x || []).filter(x => !isNaN(x));
+        const allY = traces.flatMap(t => t.y || []).filter(y => !isNaN(y));
         
-        const xRange = allX.length > 0 ? [Math.min(...allX) * 0.9, Math.max(...allX) * 1.1] : [0, 100];
-        const yRange = allY.length > 0 ? [Math.min(...allY) * 0.9, Math.max(...allY) * 1.1] : [0, 100];
+        // For pump curves, only show the actual data range with minimal padding
+        // Don't extend beyond the valid pump curve data
+        let xRange, yRange;
+        
+        if (allX.length > 0) {
+            const minX = Math.min(...allX);
+            const maxX = Math.max(...allX);
+            const xPadding = (maxX - minX) * 0.02; // Only 2% padding for visibility
+            xRange = [Math.max(0, minX - xPadding), maxX + xPadding];
+        } else {
+            xRange = [0, 100];
+        }
+        
+        if (allY.length > 0) {
+            const minY = Math.min(...allY);
+            const maxY = Math.max(...allY);
+            const yPadding = (maxY - minY) * 0.05; // 5% padding for y-axis
+            yRange = [Math.max(0, minY - yPadding), maxY + yPadding];
+        } else {
+            yRange = [0, 100];
+        }
 
         return {
             title: {
