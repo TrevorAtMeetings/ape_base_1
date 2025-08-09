@@ -1,0 +1,33 @@
+4891-7c34a9929c7c6ae5.js:1 Unrecognized feature: 'ambient-light-sensor'.
+
+4891-7c34a9929c7c6ae5.js:1 Unrecognized feature: 'battery'.
+4891-7c34a9929c7c6ae5.js:1 Unrecognized feature: 'execution-while-not-rendered'.
+4891-7c34a9929c7c6ae5.js:1 Unrecognized feature: 'execution-while-out-of-viewport'.
+4891-7c34a9929c7c6ae5.js:1 Unrecognized feature: 'layout-animations'.
+4891-7c34a9929c7c6ae5.js:1 Unrecognized feature: 'legacy-image-formats'.
+4891-7c34a9929c7c6ae5.js:1 Unrecognized feature: 'navigation-override'.
+4891-7c34a9929c7c6ae5.js:1 Unrecognized feature: 'oversized-images'.
+4891-7c34a9929c7c6ae5.js:1 Unrecognized feature: 'publickey-credentials'.
+4891-7c34a9929c7c6ae5.js:1 Unrecognized feature: 'speaker-selection'.
+4891-7c34a9929c7c6ae5.js:1 Unrecognized feature: 'unoptimized-images'.
+4891-7c34a9929c7c6ae5.js:1 Unrecognized feature: 'unsized-media'.
+4891-7c34a9929c7c6ae5.js:1 Unrecognized feature: 'pointer-lock'.
+4891-7c34a9929c7c6ae5.js:1 Allow attribute will take precedence over 'allowfullscreen'.
+4891-7c34a9929c7c6ae5.js:1 Allow attribute will take precedence over 'allowpaymentrequest'.
+2b3cf6c9-194e-4f41-a…L&id=%3Ar1514%3A:32 Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+2b3cf6c9-194e-4f41-a…L&id=%3Ar1514%3A:32 Unrecognized feature: 'ambient-light-sensor'.
+2b3cf6c9-194e-4f41-a…L&id=%3Ar1514%3A:32 Unrecognized feature: 'battery'.
+2b3cf6c9-194e-4f41-a…L&id=%3Ar1514%3A:32 Unrecognized feature: 'execution-while-not-rendered'.
+2b3cf6c9-194e-4f41-a…L&id=%3Ar1514%3A:32 Unrecognized feature: 'execution-while-out-of-viewport'.
+2b3cf6c9-194e-4f41-a…L&id=%3Ar1514%3A:32 Unrecognized feature: 'layout-animations'.
+2b3cf6c9-194e-4f41-a…L&id=%3Ar1514%3A:32 Unrecognized feature: 'legacy-image-formats'.
+2b3cf6c9-194e-4f41-a…L&id=%3Ar1514%3A:32 Unrecognized feature: 'navigation-override'.
+2b3cf6c9-194e-4f41-a…L&id=%3Ar1514%3A:32 Unrecognized feature: 'oversized-images'.
+2b3cf6c9-194e-4f41-a…L&id=%3Ar1514%3A:32 Unrecognized feature: 'publickey-credentials'.
+2b3cf6c9-194e-4f41-a…L&id=%3Ar1514%3A:32 Unrecognized feature: 'speaker-selection'.
+2b3cf6c9-194e-4f41-a…L&id=%3Ar1514%3A:32 Unrecognized feature: 'unoptimized-images'.
+2b3cf6c9-194e-4f41-a…L&id=%3Ar1514%3A:32 Unrecognized feature: 'unsized-media'.
+2b3cf6c9-194e-4f41-a…L&id=%3Ar1514%3A:32 Allow attribute will take precedence over 'allowfullscreen'.
+2b3cf6c9-194e-4f41-a…L&id=%3Ar1514%3A:32 Allow attribute will take precedence over 'allowpaymentrequest'.
+﻿
+

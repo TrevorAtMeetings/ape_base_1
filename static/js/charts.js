@@ -471,9 +471,16 @@ class ChartManager {
 // Global instance for compatibility
 let chartManager;
 
+// Create global instance that templates expect
+if (typeof window !== 'undefined') {
+    window.pumpChartsManager = new ChartManager();
+    console.log('Charts.js: Global pumpChartsManager instance created');
+}
+
 // Global functions for compatibility with existing code
 function initializeCharts(pumpCode, flowRate, head) {
     chartManager = new ChartManager();
+    window.pumpChartsManager = chartManager; // Ensure consistency
     return chartManager.initializeCharts(pumpCode, flowRate, head);
 }
 

@@ -921,7 +921,8 @@
                 if (typeof Plotly !== 'undefined' && window.pumpChartsManager) {
                     try {
                         console.log('Initializing charts with:', chartData);
-                        window.pumpChartsManager.renderAllCharts(
+                        // Use the correct method name
+                        window.pumpChartsManager.initializeCharts(
                             chartData.pumpCode, 
                             chartData.flowRate, 
                             chartData.head
