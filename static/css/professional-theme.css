@@ -137,7 +137,7 @@ nav ul a:hover {
 /* Disable wave effects - unprofessional for engineering */
 .waves-effect {
     position: relative !important;
-    overflow: hidden !important;
+    /* Removed overflow:hidden to prevent dropdown conflicts */
 }
 
 .waves-ripple {

@@ -2689,3 +2689,59 @@ table tbody tr:hover {
     color: #888;
     font-size: 16px;
 }
+
+/* ============================================
+   CRITICAL DROPDOWN FIX (Aug 9, 2025)
+   ============================================ */
+/* Default hidden state for dropdown content */
+.nav-dropdown-content {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    margin-top: 2px;
+    min-width: 180px;
+    background: white;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    border-radius: 8px;
+    padding: 8px 0;
+    z-index: 999999;
+}
+
+/* CRITICAL: Show dropdown when .show class is applied */
+.nav-dropdown-content.show {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+/* Ensure parent containers allow overflow */
+nav.unified-nav {
+    overflow: visible !important;
+}
+
+nav.unified-nav .nav-container {
+    overflow: visible !important;
+}
+
+nav.unified-nav .nav-actions {
+    overflow: visible !important;
+}
+
+nav.unified-nav .nav-dropdown {
+    position: relative;
+    overflow: visible !important;
+}
+
+/* Dropdown link styles */
+.nav-dropdown-content a {
+    display: block;
+    padding: 10px 16px;
+    color: #212529;
+    text-decoration: none;
+    transition: background-color 0.2s ease;
+}
+
+.nav-dropdown-content a:hover {
+    background-color: #f5f5f5;
+}

@@ -28,15 +28,15 @@ main {
     width: 100% !important;
 }
 
-/* Fix navigation overflow */
+/* Fix navigation overflow - but allow dropdowns */
 .unified-nav {
     width: 100% !important;
-    overflow-x: hidden !important;
+    overflow: visible !important;
 }
 
 .nav-container {
     padding: 0 12px !important;
-    overflow-x: hidden !important;
+    overflow: visible !important;
 }
 
 .nav-brand {
