@@ -1,0 +1,51 @@
+Agent, your previous work has established a robust selection logic. Based on a final engineering review, we need to make one critical enhancement to the Brain's intelligence to handle incomplete data and refine our documentation to clarify the selection philosophy.
+Please perform the following two tasks.
+Task 1: Implement "Smart Default" for Missing Minimum Impeller Data
+Context: Our golden source database has some pumps that specify a max_impeller_mm but are missing the min_impeller_mm. We have established the engineering principle that a standard impeller should not be trimmed by more than 15%. Therefore, we can safely derive the minimum diameter when it is not provided.
+Requirement:
+Modify the Brain's logic so that when it evaluates a pump, if the min_impeller_mm is missing or zero, it should calculate and use a temporary, in-memory value based on the maximum diameter.
+Implementation Steps:
+Locate the appropriate module: This logic belongs in the app/brain/performance.py module, as it relates to the physical performance constraints of the pump.
+Modify the calculate_at_point or a related validation method: Find the point in the logic where the impeller trim percentage is calculated or validated.
+Add the "Smart Default" logic:
+Before performing trim calculations, check if pump_data['specifications']['min_impeller_mm'] is valid (greater than zero).
+If it is not valid, calculate a temporary minimum diameter: derived_min_impeller = pump_data['specifications']['max_impeller_mm'] * 0.85.
+Use this derived_min_impeller for all subsequent calculations within that request.
+Crucially, do NOT write this value back to the database. This is an in-memory correction only.
+Add Logging: Add a logger.info message when this logic is triggered, for example: INFO: Pump 'XYZ': Missing min_impeller_mm. Applying smart default of 85% of max diameter. This will ensure the action is transparent in the logs.
+Task 2: Document and Clarify the Selection Funnel
+Context: Our selection process uses two distinct stages of filtering before the final scoring. We need to ensure our internal documentation and code comments clearly explain the purpose of each stage to avoid future confusion.
+Requirement:
+Add clear, concise comments to the code in app/brain/selection.py that explain the "Selection Funnel" philosophy.
+Implementation Steps:
+Modify the file: app/brain/selection.py.
+Find the find_best_pumps method.
+Add comments at the start of the Pre-filtering stage:
+code
+Python
+# === STAGE 1: SMART PRE-FILTERING ===
+# Purpose: Performance optimization. Radically reduce the number of pumps to evaluate
+# by eliminating pumps that are obviously the wrong size for the application.
+# This is a "ballpark" check that prevents wasting CPU cycles on detailed calculations
+# for absurdly mismatched pumps.
+# Logic: Only considers pumps where the pump's BEP flow is within a wide range
+# (e.g., 40% to 300%) of the user's required flow.
+Add comments right before the main evaluation loop:
+code
+Python
+# === STAGE 2: HARD GATES (PER-PUMP EVALUATION) ===
+# Purpose: Engineering safety and validity. Every pump that passed pre-filtering
+# is now checked against a series of absolute, non-negotiable rules.
+# If a pump fails any of these gates, it is immediately disqualified.
+for pump_data in pump_models:
+    # ...
+Add comments right before the final sorting:
+code
+Python
+# === STAGE 3: SCORING & RANKING ===
+# Purpose: Optimality. All pumps that survived the hard gates are now considered "feasible."
+# This stage ranks the feasible pumps using a 100-point scoring system to find the single
+# best engineering choice, prioritizing reliability (BEP Proximity) and
+# operating cost (Efficiency).
+feasible_pumps.sort(key=lambda x: x.get('total_score', 0), reverse=True)
+By completing these tasks, you will make our Brain system more resilient to incomplete data and ensure its core logic is impeccably documented for long-term maintainability.
