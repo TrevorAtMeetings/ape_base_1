@@ -1,285 +1,118 @@
 /**
- * APE Pumps Responsive Design Fixes
- * Comprehensive mobile-first responsive design system
- * Fixes overflow issues, text clipping, and mobile layouts
+ * APE Pumps Responsive Design System
+ * Mobile-first approach for optimal cross-device experience
  */
 
 /* ============================================
-   1. MOBILE-FIRST BASE STYLES (0-599px)
+   BASE VIEWPORT & RESET
    ============================================ */
 
-/* Container width constraints */
-.container {
-    max-width: 100% !important;
-    padding: 0 8px !important;
+html {
     overflow-x: hidden !important;
+    width: 100% !important;
 }
 
-/* Prevent horizontal scroll on body */
 body {
     overflow-x: hidden !important;
     width: 100% !important;
     position: relative !important;
+    min-width: 320px !important;
 }
 
-/* Main content wrapper */
 main {
     overflow-x: hidden !important;
     width: 100% !important;
+    padding: 0 !important;
 }
 
-/* Mobile hamburger menu button */
-@media only screen and (max-width: 768px) {
-    .mobile-menu-btn {
-        display: block !important;
-        position: fixed !important;
-        top: 10px !important;
-        right: 10px !important;
-        z-index: 9999 !important;
-        background: #1976d2 !important;
-        color: white !important;
-        border-radius: 50% !important;
-        width: 48px !important;
-        height: 48px !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.3) !important;
-    }
-}
-
-/* Fix navigation overflow - but allow dropdowns */
-.unified-nav {
+.container {
     width: 100% !important;
-    overflow: visible !important;
-}
-
-.nav-container {
-    padding: 0 12px !important;
-    overflow: visible !important;
-}
-
-.nav-brand {
-    font-size: 1rem !important;
-    flex-shrink: 1 !important;
-    min-width: 0 !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-}
-
-.nav-brand .brand-text {
-    display: none !important; /* Hide brand text on mobile, show icon only */
-}
-
-.nav-actions {
-    flex-wrap: wrap !important;
-    gap: 4px !important;
-}
-
-.nav-btn {
-    padding: 6px 10px !important;
-    font-size: 0.75rem !important;
-    white-space: nowrap !important;
-    min-width: auto !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-}
-
-/* Ensure button text is visible on mobile */
-.nav-btn span {
-    display: inline !important;
-}
-
-/* Fix dropdown positioning - removed mobile override to allow hover to work */
-
-/* Cards responsive */
-.card {
-    margin: 8px 0 !important;
-    width: 100% !important;
-}
-
-.card-content {
-    padding: 12px !important;
-}
-
-.card-title {
-    font-size: 1.1rem !important;
-    line-height: 1.2 !important;
-}
-
-/* Tables responsive wrapper */
-.table-responsive,
-.table-wrapper,
-.table-container {
-    overflow-x: auto !important;
-    -webkit-overflow-scrolling: touch !important;
-    margin-bottom: 16px !important;
     max-width: 100% !important;
+    padding: 0 12px !important;
+    box-sizing: border-box !important;
 }
 
-/* Comparison table mobile styles */
-@media only screen and (max-width: 768px) {
-    .comparison-table {
-        display: block !important;
-        width: 100% !important;
-        min-width: 600px !important; /* Allow horizontal scroll */
-    }
-    
-    .comparison-table thead {
-        display: none !important; /* Hide header on very small screens */
-    }
-    
-    .comparison-table tbody {
-        display: block !important;
-    }
-    
-    .comparison-table tr {
-        display: block !important;
-        margin-bottom: 10px !important;
-        border: 1px solid #ddd !important;
-        border-radius: 8px !important;
-        padding: 10px !important;
-        background: white !important;
-    }
-    
-    .comparison-table td {
-        display: block !important;
-        text-align: right !important;
-        padding: 5px 10px !important;
-        position: relative !important;
-        padding-left: 50% !important;
-    }
-    
-    .comparison-table td:before {
-        content: attr(data-label) !important;
-        position: absolute !important;
-        left: 10px !important;
-        width: 45% !important;
-        text-align: left !important;
-        font-weight: bold !important;
-    }
-}
-
-table {
-    min-width: 100% !important;
-}
-
-/* Fix table cells */
-td, th {
-    padding: 8px !important;
-    font-size: 0.85rem !important;
-    white-space: normal !important;
-    word-wrap: break-word !important;
-}
-
-/* Forms responsive - mobile only */
+/* ============================================
+   MOBILE STYLES (320px - 600px)
+   ============================================ */
 @media only screen and (max-width: 600px) {
-    input[type=text],
-    input[type=number],
-    input[type=email],
-    input[type=password],
-    textarea,
-    select {
-        width: 100% !important;
-        font-size: 16px !important; /* Prevents zoom on iOS */
-        padding: 10px !important;
-        box-sizing: border-box !important;
+    
+    /* Navigation Mobile */
+    .unified-nav {
+        height: auto !important;
+        min-height: 56px !important;
+        padding: 8px 0 !important;
     }
-
-    /* Pump selection cards mobile */
-    .pump-result-row {
+    
+    .nav-container {
         flex-direction: column !important;
-        padding: 12px !important;
+        padding: 8px 12px !important;
         gap: 12px !important;
     }
     
-    .pump-rank-circle {
-        position: absolute !important;
-        top: 10px !important;
-        right: 10px !important;
-        width: 30px !important;
-        height: 30px !important;
-        font-size: 0.9rem !important;
+    .nav-brand {
+        width: 100% !important;
+        justify-content: center !important;
+        margin-bottom: 8px !important;
     }
     
-    .pump-info-block {
-        width: 100% !important;
-        padding-right: 40px !important;
+    .nav-brand .brand-text {
+        display: inline !important;
+        font-size: 1.2rem !important;
     }
     
-    .pump-metrics-grid {
+    .nav-actions {
         width: 100% !important;
-        display: grid !important;
-        grid-template-columns: repeat(3, 1fr) !important;
+        justify-content: center !important;
+        flex-wrap: wrap !important;
         gap: 8px !important;
     }
     
-    .metric-column {
-        text-align: center !important;
-        padding: 8px 4px !important;
-        background: #f5f5f5 !important;
-        border-radius: 6px !important;
+    .nav-btn {
+        flex: 0 0 auto !important;
+        padding: 8px 12px !important;
+        font-size: 0.85rem !important;
+        min-width: 80px !important;
     }
     
-    .metric-value {
-        font-size: 0.9rem !important;
-    }
-    
-    .metric-label {
-        font-size: 0.65rem !important;
-    }
-    
-    .pump-score-display {
-        width: 100% !important;
-        text-align: center !important;
-        background: #e3f2fd !important;
-        padding: 8px !important;
-        border-radius: 8px !important;
-    }
-    
-    .pump-action-buttons {
-        width: 100% !important;
-        justify-content: center !important;
-    }
-    
-    .pump-chevron {
+    .nav-btn .material-icons-round {
         display: none !important;
     }
     
-    /* Sorting controls mobile */
-    .sorting-controls {
-        flex-direction: column !important;
-        gap: 8px !important;
-        padding: 12px !important;
-        background: #f5f5f5 !important;
-        border-radius: 8px !important;
-        margin-bottom: 16px !important;
+    /* Dropdown Menus Mobile */
+    .nav-dropdown-content {
+        position: fixed !important;
+        left: 10px !important;
+        right: 10px !important;
+        width: auto !important;
+        max-height: 70vh !important;
+        overflow-y: auto !important;
     }
     
-    .sorting-label {
-        width: 100% !important;
-        margin-bottom: 8px !important;
-        font-weight: 600 !important;
+    /* Results Header Mobile */
+    .results-header {
+        padding: 16px 0 !important;
     }
     
-    .sort-option {
-        width: 100% !important;
-        justify-content: space-between !important;
-        padding: 10px 12px !important;
-        margin: 4px 0 !important;
+    .results-title {
+        font-size: 1.5rem !important;
+        text-align: center !important;
     }
     
-    /* Summary cards mobile */
+    .results-subtitle {
+        font-size: 0.9rem !important;
+        text-align: center !important;
+    }
+    
+    /* Summary Cards Mobile Grid */
     .summary-cards {
-        display: grid !important;
         grid-template-columns: repeat(2, 1fr) !important;
         gap: 8px !important;
-        padding: 0 8px !important;
+        padding: 12px !important;
     }
     
     .summary-card {
-        padding: 12px 8px !important;
+        padding: 12px !important;
     }
     
     .summary-value {
@@ -287,56 +120,141 @@ td, th {
     }
     
     .summary-label {
-        font-size: 0.7rem !important;
+        font-size: 0.75rem !important;
     }
     
-    /* Buttons responsive */
-    .btn, .btn-large {
-        width: 100% !important;
-        margin: 4px 0 !important;
-        padding: 10px !important;
-        font-size: 0.9rem !important;
-        white-space: normal !important;
-        height: auto !important;
-        min-height: 40px !important;
+    /* Pump Cards Mobile */
+    .pump-card-compact {
+        min-height: auto !important;
+        padding: 12px !important;
     }
-
-    .btn-small {
-        padding: 6px 12px !important;
+    
+    .pump-header-section {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 8px !important;
+    }
+    
+    .pump-code {
+        font-size: 1rem !important;
+    }
+    
+    .tier-badge {
+        position: static !important;
+        margin-top: 4px !important;
+    }
+    
+    /* Metrics Row Mobile */
+    .metrics-row {
+        flex-wrap: wrap !important;
+        gap: 8px !important;
+    }
+    
+    .metric-item {
+        flex: 0 0 calc(50% - 4px) !important;
+        text-align: left !important;
+    }
+    
+    .metric-label {
+        font-size: 0.65rem !important;
+    }
+    
+    .metric-value {
+        font-size: 0.9rem !important;
+    }
+    
+    /* Action Buttons Mobile */
+    .action-buttons {
+        flex-direction: column !important;
+        width: 100% !important;
+        gap: 8px !important;
+    }
+    
+    .btn, .waves-effect {
+        width: 100% !important;
+        margin: 0 !important;
         font-size: 0.85rem !important;
     }
-}
-
-/* Floating AI Chat positioning */
-.floating-ai-chat {
-    bottom: 10px !important;
-    right: 10px !important;
-}
-
-.ai-chat-toggle {
-    width: 48px !important;
-    height: 48px !important;
-}
-
-.ai-chat-window {
-    width: calc(100vw - 20px) !important;
-    max-width: 360px !important;
-    right: 10px !important;
-    bottom: 70px !important;
-    max-height: 60vh !important;
-}
-
-/* Grid system mobile - mobile only */
-@media only screen and (max-width: 600px) {
+    
+    /* Tables Mobile */
+    table {
+        font-size: 0.85rem !important;
+    }
+    
+    .table-responsive,
+    .table-wrapper,
+    .table-container {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        margin-bottom: 16px !important;
+        max-width: 100% !important;
+    }
+    
+    /* Chart Containers Mobile */
+    .chart-container,
+    .plotly-chart {
+        height: 250px !important;
+        margin-bottom: 16px !important;
+    }
+    
+    /* Forms Mobile */
+    .input-field {
+        margin-bottom: 16px !important;
+    }
+    
+    .input-field input,
+    .input-field select,
+    .input-field textarea {
+        font-size: 16px !important;
+    }
+    
+    /* Modals Mobile */
+    .modal {
+        width: 95% !important;
+        max-height: 90% !important;
+        top: 5% !important;
+    }
+    
+    /* Breadcrumbs Mobile */
+    .breadcrumb-nav {
+        padding: 8px 12px !important;
+        overflow-x: auto !important;
+        white-space: nowrap !important;
+    }
+    
+    .breadcrumb {
+        font-size: 0.85rem !important;
+    }
+    
+    /* Floating AI Chat Mobile */
+    .floating-ai-chat {
+        bottom: 10px !important;
+        right: 10px !important;
+    }
+    
+    .ai-chat-toggle {
+        width: 48px !important;
+        height: 48px !important;
+    }
+    
+    .ai-chat-window {
+        width: calc(100vw - 20px) !important;
+        max-width: 360px !important;
+        right: 10px !important;
+        bottom: 70px !important;
+        max-height: 60vh !important;
+    }
+    
+    /* Grid System Mobile */
     .row {
         margin-left: -8px !important;
         margin-right: -8px !important;
     }
-
+    
     .col {
         padding: 0 8px !important;
     }
-
+    
     [class*="col s"],
     [class*="col m"],
     [class*="col l"] {
@@ -345,261 +263,182 @@ td, th {
     }
 }
 
-/* Pump options specific */
-.pump-row {
-    flex-direction: column !important;
-    align-items: flex-start !important;
-    padding: 12px !important;
-}
-
-.pump-rank {
-    width: 100% !important;
-    margin-bottom: 8px !important;
-}
-
 /* ============================================
-   2. SMALL TABLETS (600-767px)
+   TABLET STYLES (601px - 992px)
    ============================================ */
-@media only screen and (min-width: 600px) {
+@media only screen and (min-width: 601px) and (max-width: 992px) {
+    
     .container {
+        width: 90% !important;
         padding: 0 16px !important;
     }
     
-    .nav-brand span {
-        display: inline !important;
-    }
-    
+    /* Navigation Tablet */
     .nav-btn {
-        padding: 8px 12px !important;
-        font-size: 0.85rem !important;
+        padding: 8px 16px !important;
+        font-size: 0.9rem !important;
     }
     
-    .card-content {
+    /* Summary Cards Tablet */
+    .summary-cards {
+        grid-template-columns: repeat(3, 1fr) !important;
+        gap: 12px !important;
+    }
+    
+    /* Pump Cards Tablet */
+    .pump-card-compact {
         padding: 16px !important;
     }
     
-    .btn, .btn-large {
-        width: auto !important;
-        min-width: 120px !important;
+    /* Tables Tablet */
+    .comparison-table {
+        font-size: 0.9rem !important;
     }
     
-    /* Grid system small tablets */
-    .col.s6 {
-        width: 50% !important;
-    }
-    
-    .col.s4 {
-        width: 33.333% !important;
-    }
-    
-    .col.s3 {
-        width: 25% !important;
+    /* Charts Tablet */
+    .chart-container {
+        height: 300px !important;
     }
 }
 
 /* ============================================
-   3. TABLETS (768-991px)
+   DESKTOP STYLES (993px+)
    ============================================ */
-@media only screen and (min-width: 768px) {
+@media only screen and (min-width: 993px) {
+    
     .container {
-        padding: 0 24px !important;
-        max-width: 768px !important;
-        margin: 0 auto !important;
+        width: 85% !important;
+        max-width: 1280px !important;
     }
     
-    .nav-container {
-        padding: 0 24px !important;
+    /* Keep Desktop Navigation Styles */
+    .nav-brand .brand-text {
+        display: inline !important;
     }
     
-    .nav-brand {
-        font-size: 1.25rem !important;
-    }
-    
-    .card {
-        margin: 12px 0 !important;
-    }
-    
-    .card-content {
-        padding: 20px !important;
-    }
-    
-    /* Grid system tablets */
-    .col.m6 {
-        width: 50% !important;
-    }
-    
-    .col.m4 {
-        width: 33.333% !important;
-    }
-    
-    .col.m3 {
-        width: 25% !important;
-    }
-    
-    .pump-row {
-        flex-direction: row !important;
-        align-items: center !important;
-    }
-    
-    .pump-rank {
-        width: auto !important;
-        margin-bottom: 0 !important;
+    /* Summary Cards Desktop */
+    .summary-cards {
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)) !important;
+        gap: 16px !important;
     }
 }
 
 /* ============================================
-   4. DESKTOPS (992-1199px)
+   LARGE DESKTOP (1281px+)
    ============================================ */
-@media only screen and (min-width: 992px) {
+@media only screen and (min-width: 1281px) {
+    
     .container {
-        max-width: 992px !important;
-    }
-    
-    .nav-btn {
-        padding: 8px 16px !important;
-        font-size: 0.875rem !important;
-    }
-    
-    /* Grid system desktop */
-    .col.l6 {
-        width: 50% !important;
-    }
-    
-    .col.l4 {
-        width: 33.333% !important;
-    }
-    
-    .col.l3 {
-        width: 25% !important;
-    }
-    
-    .col.l2 {
-        width: 16.666% !important;
+        max-width: 1440px !important;
     }
 }
 
 /* ============================================
-   5. LARGE DESKTOPS (1200px+)
-   ============================================ */
-@media only screen and (min-width: 1200px) {
-    .container {
-        max-width: 1200px !important;
-    }
-}
-
-/* ============================================
-   6. UTILITY CLASSES
+   UTILITY CLASSES
    ============================================ */
 
-/* Text overflow prevention */
-.text-ellipsis {
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-    white-space: nowrap !important;
+/* Hide on Mobile */
+@media only screen and (max-width: 600px) {
+    .hide-on-small,
+    .hide-on-small-only {
+        display: none !important;
+    }
 }
 
-.text-wrap {
-    white-space: normal !important;
-    word-wrap: break-word !important;
-    overflow-wrap: break-word !important;
+/* Hide on Tablet */
+@media only screen and (min-width: 601px) and (max-width: 992px) {
+    .hide-on-med,
+    .hide-on-med-only {
+        display: none !important;
+    }
 }
 
-/* Hide/Show responsive */
-@media only screen and (max-width: 599px) {
-    .hide-on-mobile { display: none !important; }
-    .show-on-mobile { display: block !important; }
+/* Hide on Desktop */
+@media only screen and (min-width: 993px) {
+    .hide-on-large,
+    .hide-on-large-only {
+        display: none !important;
+    }
 }
 
-@media only screen and (min-width: 600px) and (max-width: 991px) {
-    .hide-on-tablet { display: none !important; }
-    .show-on-tablet { display: block !important; }
-}
-
-@media only screen and (min-width: 992px) {
-    .hide-on-desktop { display: none !important; }
-    .show-on-desktop { display: block !important; }
-}
-
-/* ============================================
-   7. Z-INDEX HIERARCHY FIX
-   ============================================ */
-.unified-nav {
-    z-index: 1000 !important;
-}
-
-/* Nav dropdown z-index moved to navigation.html inline CSS */
-
-.floating-ai-chat {
-    z-index: 900 !important;
-}
-
-.ai-chat-window {
-    z-index: 901 !important;
-}
-
-.autocomplete-dropdown {
-    z-index: 800 !important;
-}
-
-.modal {
-    z-index: 1100 !important;
-}
-
-.modal-overlay {
-    z-index: 1099 !important;
+/* Text Truncation Mobile */
+@media only screen and (max-width: 600px) {
+    .truncate-mobile {
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        max-width: 100% !important;
+    }
 }
 
 /* ============================================
-   8. SPECIFIC PAGE FIXES
-   ============================================ */
-
-/* Input form page */
-.input-form-container {
-    max-width: 100% !important;
-    overflow-x: hidden !important;
-}
-
-/* Results page */
-.results-header {
-    padding: 12px !important;
-}
-
-.results-title {
-    font-size: 1.2rem !important;
-}
-
-/* Pump report page */
-.pump-card {
-    width: 100% !important;
-    margin: 8px 0 !important;
-}
-
-/* Brain dashboard */
-.brain-container {
-    padding: 0 12px !important;
-}
-
-.brain-header {
-    padding: 16px !important;
-}
-
-/* ============================================
-   9. PRINT STYLES
+   PRINT STYLES
    ============================================ */
 @media print {
-    .no-print,
+    .nav-container,
     .unified-nav,
+    .breadcrumb-nav,
+    .mobile-menu-btn,
+    .floating-chat,
     .floating-ai-chat,
-    .nav-dropdown {
+    .action-buttons {
         display: none !important;
     }
     
     .container {
-        max-width: 100% !important;
+        width: 100% !important;
+        max-width: none !important;
         padding: 0 !important;
     }
     
-    body {
-        font-size: 12pt !important;
+    .pump-card-compact {
+        page-break-inside: avoid !important;
+    }
+}
+
+/* ============================================
+   ACCESSIBILITY
+   ============================================ */
+
+/* Focus Styles */
+*:focus {
+    outline: 2px solid #1976d2 !important;
+    outline-offset: 2px !important;
+}
+
+/* Skip Links */
+.skip-link {
+    position: absolute !important;
+    top: -40px !important;
+    left: 0 !important;
+    background: #1976d2 !important;
+    color: white !important;
+    padding: 8px !important;
+    text-decoration: none !important;
+    z-index: 100000 !important;
+}
+
+.skip-link:focus {
+    top: 0 !important;
+}
+
+/* High Contrast Mode Support */
+@media (prefers-contrast: high) {
+    .pump-card-compact {
+        border: 2px solid currentColor !important;
+    }
+    
+    .tier-badge {
+        border: 1px solid currentColor !important;
+    }
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
     }
 }
