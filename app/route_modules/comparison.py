@@ -87,10 +87,10 @@ def pump_comparison():
             pump_type = request.args.get('pump_type', 'General')
             if flow and head:
                 # CATALOG ENGINE RETIRED - USING BRAIN SYSTEM
-# from ..catalog_engine import get_catalog_engine
-from ..pump_brain import get_pump_brain
-                catalog_engine = get_catalog_engine()
-                top_selections = catalog_engine.select_pumps(flow, head, max_results=10, pump_type=pump_type)
+                # from ..catalog_engine import get_catalog_engine
+                from ..pump_brain import get_pump_brain
+                brain = get_pump_brain()
+                top_selections = brain.find_best_pump(flow, head, constraints={'max_results': 10, 'pump_type': pump_type})
                 pump_selections = []
                 for selection in top_selections:
                     pump = selection['pump']
@@ -161,16 +161,16 @@ from ..pump_brain import get_pump_brain
         if comparison_list and not pump_selections:
             pump_selections = []
             # CATALOG ENGINE RETIRED - USING BRAIN SYSTEM
-# from ..catalog_engine import get_catalog_engine
-from ..pump_brain import get_pump_brain
-            catalog_engine = get_catalog_engine()
+            # from ..catalog_engine import get_catalog_engine
+            from ..pump_brain import get_pump_brain
+            brain = get_pump_brain()
             
             for comp_pump in comparison_list:
                 pump_data = comp_pump.get('pump_data', {})
                 if pump_data:
                     # Get actual pump performance from catalog
                     try:
-                        pump = catalog_engine.get_pump_by_code(comp_pump['pump_code'])
+                        pump = brain.repository.get_pump_by_code(comp_pump['pump_code'])
                         if pump:
                             performance_result = pump.get_performance_at_duty(comp_pump['flow'], comp_pump['head'])
                             if performance_result:
@@ -300,10 +300,10 @@ def pump_details(pump_code):
         
         # Get pump data from catalog engine
         # CATALOG ENGINE RETIRED - USING BRAIN SYSTEM
-# from ..catalog_engine import get_catalog_engine
-from ..pump_brain import get_pump_brain
-        catalog_engine = get_catalog_engine()
-        pump = catalog_engine.get_pump_by_code(pump_code)
+        # from ..catalog_engine import get_catalog_engine
+        from ..pump_brain import get_pump_brain
+        brain = get_pump_brain()
+        pump = brain.repository.get_pump_by_code(pump_code)
         
         if not pump:
             logger.error(f"Pump not found: '{pump_code}'")
@@ -381,13 +381,13 @@ def shortlist_comparison():
             return redirect(url_for('comparison.pump_comparison'))
         
         # CATALOG ENGINE RETIRED - USING BRAIN SYSTEM
-# from ..catalog_engine import get_catalog_engine
-from ..pump_brain import get_pump_brain
-        catalog_engine = get_catalog_engine()
+        # from ..catalog_engine import get_catalog_engine
+        from ..pump_brain import get_pump_brain
+        brain = get_pump_brain()
         
         shortlist_pumps = []
         for pump_code in pump_codes:
-            pump = catalog_engine.get_pump_by_code(pump_code)
+            pump = brain.repository.get_pump_by_code(pump_code)
             if pump:
                 performance = pump.find_best_solution_for_duty(flow, head)
                 shortlist_pumps.append({
@@ -429,16 +429,16 @@ def generate_comparison_pdf():
         
         # Get detailed information for pumps
         # CATALOG ENGINE RETIRED - USING BRAIN SYSTEM
-# from ..catalog_engine import get_catalog_engine
-from ..pump_brain import get_pump_brain
-        catalog_engine = get_catalog_engine()
+        # from ..catalog_engine import get_catalog_engine
+        from ..pump_brain import get_pump_brain
+        brain = get_pump_brain()
         
         comparison_data = []
         for pump_code in pump_codes[:10]:  # Top 10 pumps
             if not pump_code.strip():
                 continue
                 
-            catalog_pump = catalog_engine.get_pump_by_code(pump_code.strip())
+            catalog_pump = brain.repository.get_pump_by_code(pump_code.strip())
             
             if catalog_pump:
                 performance = catalog_pump.get_performance_at_duty(flow, head)
@@ -471,7 +471,7 @@ from ..pump_brain import get_pump_brain
 
         # Use the first pump as the main selection for PDF template compatibility
         main_evaluation = comparison_data[0] if comparison_data else None
-        main_pump = catalog_engine.get_pump_by_code(pump_codes[0]) if pump_codes else None
+        main_pump = brain.repository.get_pump_by_code(pump_codes[0]) if pump_codes else None
 
         if main_evaluation and main_pump:
             # Convert catalog pump to legacy format for PDF compatibility

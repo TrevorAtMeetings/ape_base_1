@@ -234,10 +234,10 @@ def engineering_report(pump_code):
             # CRITICAL FIX: Ensure speed data and impeller specs are populated from database if missing
             if not selected_pump.get('test_speed_rpm') or not selected_pump.get('min_speed_rpm') or not selected_pump.get('min_impeller_mm'):
                 # CATALOG ENGINE RETIRED - USING BRAIN SYSTEM
-# from ..catalog_engine import get_catalog_engine
-from ..pump_brain import get_pump_brain
-                catalog_engine = get_catalog_engine()
-                target_pump = catalog_engine.get_pump_by_code(pump_code)
+                # from ..catalog_engine import get_catalog_engine
+                from ..pump_brain import get_pump_brain
+                brain = get_pump_brain()
+                target_pump = brain.repository.get_pump_by_code(pump_code)
                 
                 if target_pump:
                     # Add missing speed data from authentic database values
@@ -264,12 +264,12 @@ from ..pump_brain import get_pump_brain
         logger.info(f"Force selecting pump {pump_code} for engineering analysis")
         
         # CATALOG ENGINE RETIRED - USING BRAIN SYSTEM
-# from ..catalog_engine import get_catalog_engine
-from ..pump_brain import get_pump_brain
-        catalog_engine = get_catalog_engine()
+        # from ..catalog_engine import get_catalog_engine
+        from ..pump_brain import get_pump_brain
+        brain = get_pump_brain()
         
         # Get pump from catalog
-        target_pump = catalog_engine.get_pump_by_code(pump_code)
+        target_pump = brain.repository.get_pump_by_code(pump_code)
         
         if target_pump:
             # Create minimal pump data for analysis - using AUTHENTIC database values

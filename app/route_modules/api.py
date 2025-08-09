@@ -39,27 +39,28 @@ def get_pump_list():
         
         # Check if catalog is already loaded to avoid redundant loading
         # CATALOG ENGINE RETIRED - USING BRAIN SYSTEM
-# from ..catalog_engine import get_catalog_engine
-from ..pump_brain import get_pump_brain
-        catalog_engine = get_catalog_engine()
+        # from ..catalog_engine import get_catalog_engine
+        from ..pump_brain import get_pump_brain
+        brain = get_pump_brain()
         
         # PERFORMANCE FIX: Create minimal pump list (reduce payload size)
         pump_list = []
-        for pump in catalog_engine.pumps[:100]:  # Limit to 100 pumps for autocomplete
+        pump_models = brain.repository.get_pump_models()
+        for pump in pump_models[:100]:  # Limit to 100 pumps for autocomplete
             pump_list.append({
-                'pump_code': pump.pump_code,
-                'manufacturer': pump.manufacturer or 'APE PUMPS',
-                'pump_type': pump.pump_type or 'Centrifugal'
+                'pump_code': pump.get('pump_code', 'Unknown'),
+                'manufacturer': pump.get('manufacturer', 'APE PUMPS'),
+                'pump_type': pump.get('pump_type', 'Centrifugal')
             })
         
         # Sort by pump code
         pump_list.sort(key=lambda x: x['pump_code'])
         
-        response.data = json.dumps({'pumps': pump_list, 'total': len(catalog_engine.pumps)})
+        response.data = json.dumps({'pumps': pump_list, 'total': len(pump_models)})
         response.headers['Content-Type'] = 'application/json'
         # PERFORMANCE FIX: Add aggressive caching (5 minutes)
         response.headers['Cache-Control'] = 'public, max-age=300'
-        response.headers['ETag'] = f'pump-list-v1-{len(catalog_engine.pumps)}'
+        response.headers['ETag'] = f'pump-list-v1-{len(pump_models)}'
         
         return response
     except Exception as e:
@@ -81,10 +82,10 @@ def get_chart_data(pump_code):
         
         # Use catalog engine to get pump data
         # CATALOG ENGINE RETIRED - USING BRAIN SYSTEM
-# from ..catalog_engine import get_catalog_engine
-from ..pump_brain import get_pump_brain
-        catalog_engine = get_catalog_engine()
-        target_pump = catalog_engine.get_pump_by_code(pump_code)
+        # from ..catalog_engine import get_catalog_engine
+        from ..pump_brain import get_pump_brain
+        brain = get_pump_brain()
+        target_pump = brain.repository.get_pump_by_code(pump_code)
 
         if not target_pump:
             logger.error(f"Chart API: Pump {pump_code} not found in catalog")
@@ -92,7 +93,7 @@ from ..pump_brain import get_pump_brain
                 'error':
                 f'Pump {pump_code} not found',
                 'available_pumps':
-                len(catalog_engine.pumps),
+                len(brain.repository.get_pump_models()),
                 'suggestion':
                 'Please verify the pump code and try again'
             })
@@ -442,10 +443,10 @@ def get_chart_data_safe(safe_pump_code):
         data_load_start = time.time()
 
         # CATALOG ENGINE RETIRED - USING BRAIN SYSTEM
-# from ..catalog_engine import get_catalog_engine
-from ..pump_brain import get_pump_brain
-        catalog_engine = get_catalog_engine()
-        target_pump = catalog_engine.get_pump_by_code(pump_code)
+        # from ..catalog_engine import get_catalog_engine
+        from ..pump_brain import get_pump_brain
+        brain = get_pump_brain()
+        target_pump = brain.repository.get_pump_by_code(pump_code)
 
         logger.info(
             f"Chart API: Catalog lookup took {time.time() - data_load_start:.3f}s"
@@ -961,13 +962,13 @@ def get_pumps():
     try:
         # Get all pumps from repository
         # CATALOG ENGINE RETIRED - USING BRAIN SYSTEM
-# from ..catalog_engine import get_catalog_engine
-from ..pump_brain import get_pump_brain
-        catalog_engine = get_catalog_engine()
+        # from ..catalog_engine import get_catalog_engine
+        from ..pump_brain import get_pump_brain
+        brain = get_pump_brain()
 
         # Format for autocomplete
         pump_list = []
-        for pump in catalog_engine.pumps:
+        for pump in brain.repository.get_pump_models():
             pump_list.append({
                 'pump_code': pump.pump_code,
                 'pump_type': pump.pump_type,
@@ -992,15 +993,15 @@ def search_pumps():
 
         # Get all pumps from repository
         # CATALOG ENGINE RETIRED - USING BRAIN SYSTEM
-# from ..catalog_engine import get_catalog_engine
-from ..pump_brain import get_pump_brain
-        catalog_engine = get_catalog_engine()
+        # from ..catalog_engine import get_catalog_engine
+        from ..pump_brain import get_pump_brain
+        brain = get_pump_brain()
 
         # Filter pumps based on query
         matching_pumps = []
         query_lower = query.lower()
 
-        for pump in catalog_engine.pumps:
+        for pump in brain.repository.get_pump_models():
             # Search in pump code, type, and model series
             search_fields = [
                 pump.pump_code.lower(),
@@ -1048,10 +1049,10 @@ def select_pump():
             return jsonify({'error': 'Missing required parameters'}), 400
 
         # CATALOG ENGINE RETIRED - USING BRAIN SYSTEM
-# from ..catalog_engine import get_catalog_engine
-from ..pump_brain import get_pump_brain
-        catalog_engine = get_catalog_engine()
-        pump = catalog_engine.get_pump_by_code(pump_code)
+        # from ..catalog_engine import get_catalog_engine
+        from ..pump_brain import get_pump_brain
+        brain = get_pump_brain()
+        pump = brain.repository.get_pump_by_code(pump_code)
 
         if not pump:
             return jsonify({'error': 'Pump not found'}), 404

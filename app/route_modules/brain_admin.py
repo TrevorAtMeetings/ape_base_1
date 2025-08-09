@@ -341,13 +341,13 @@ def api_simulate_selection():
             return jsonify({'error': 'Invalid flow rate or head'}), 400
         
         # CATALOG ENGINE RETIRED - USING BRAIN SYSTEM
-# from ..catalog_engine import get_catalog_engine
-from ..pump_brain import get_pump_brain
+        # from ..catalog_engine import get_catalog_engine
+        from ..pump_brain import get_pump_brain
         
-        catalog_engine = get_catalog_engine()
+        brain = get_pump_brain()
         
-        # Run selection (this would need to be enhanced to use corrections)
-        results = catalog_engine.select_pumps(flow_rate, head, max_results=10)
+        # Run selection using Brain system
+        results = brain.find_best_pump(flow_rate, head, constraints={'max_results': 10})
         
         if not results:
             return jsonify({'error': 'No suitable pumps found'}), 404

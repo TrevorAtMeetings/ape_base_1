@@ -140,12 +140,12 @@ def handle_specific_pump_query(pump_name, flow, head):
     """Handle query for specific pump at specific conditions"""
     try:
         # CATALOG ENGINE RETIRED - USING BRAIN SYSTEM
-# from ..catalog_engine import get_catalog_engine
-from ..pump_brain import get_pump_brain
-        catalog_engine = get_catalog_engine()
+        # from ..catalog_engine import get_catalog_engine
+        from ..pump_brain import get_pump_brain
+        brain = get_pump_brain()
         
         # Find the pump and evaluate at specified conditions
-        pumps = catalog_engine.repository.get_pump_models()
+        pumps = brain.repository.get_pump_models()
         target_pump = None
         for pump in pumps:
             # Check both pump_name and pump_code fields
@@ -225,12 +225,12 @@ def handle_pump_bep_query(pump_name):
     """Handle query for pump at BEP conditions"""
     try:
         # CATALOG ENGINE RETIRED - USING BRAIN SYSTEM
-# from ..catalog_engine import get_catalog_engine
-from ..pump_brain import get_pump_brain
-        catalog_engine = get_catalog_engine()
+        # from ..catalog_engine import get_catalog_engine
+        from ..pump_brain import get_pump_brain
+        brain = get_pump_brain()
         
         # Find the pump
-        pumps = catalog_engine.repository.get_pump_models()
+        pumps = brain.repository.get_pump_models()
         target_pump = None
         for pump in pumps:
             # Check both pump_name and pump_code fields
@@ -471,12 +471,12 @@ def chat_query():
                 )
                 
                 # Get catalog engine and find suitable pumps
-                catalog_engine = get_catalog_engine()
+                brain = get_pump_brain()
                 # Don't pass pump_type filter - it's too restrictive for chat queries
                 # Let the selection engine find all suitable pumps regardless of type
                 pump_type_filter = None
                     
-                results = catalog_engine.select_pumps(
+                results = brain.find_best_pump(
                     flow_m3hr=flow,
                     head_m=head,
                     pump_type=pump_type_filter,
