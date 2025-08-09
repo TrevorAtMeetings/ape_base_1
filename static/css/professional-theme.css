@@ -84,14 +84,12 @@ nav ul a:hover {
 
 /* Nav dropdown styles moved to navigation.html inline CSS */
 
-.dropdown-content li > a,
-.nav-dropdown-content a {
+.dropdown-content li > a {
     color: var(--ape-text) !important;
     font-size: 14px !important;
 }
 
-.dropdown-content li > a:hover,
-.nav-dropdown-content a:hover {
+.dropdown-content li > a:hover {
     background-color: var(--ape-background) !important;
     color: var(--ape-primary) !important;
 }
