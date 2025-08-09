@@ -64,23 +64,16 @@ class PerformanceAnalyzer:
                 heads = [p.get('head_m', 0) for p in curve_points if p.get('head_m') is not None]
                 effs = [p.get('efficiency_pct', 0) for p in curve_points if p.get('efficiency_pct') is not None]
                 
-                # Handle None power values - estimate if needed
+                # Handle None power values - mark as missing (NO FALLBACKS EVER)
                 powers = []
                 for p in curve_points:
                     power = p.get('power_kw')
                     if power is not None:
                         powers.append(power)
                     else:
-                        # Estimate power from head, flow, efficiency if efficiency exists
-                        flow_val = p.get('flow_m3hr', 0)
-                        head_val = p.get('head_m', 0) 
-                        eff_val = p.get('efficiency_pct', 60) or 60  # Default 60% if None
-                        if flow_val > 0 and head_val > 0 and eff_val > 0:
-                            # P = (Q * H * ρ * g) / (3600 * η) where ρ=1000 kg/m³, g=9.81 m/s²
-                            power_estimate = (flow_val * head_val * 1000 * 9.81) / (3600 * (eff_val/100))
-                            powers.append(power_estimate / 1000)  # Convert W to kW
-                        else:
-                            powers.append(10)  # Fallback estimate
+                        # CRITICAL: NO FALLBACKS EVER - Only use authentic power data
+                        # If power is missing, mark this curve as invalid - never generate synthetic data
+                        powers.append(None)  # Mark missing data explicitly - curve will be rejected
                 
                 # Debug: Check if we have valid data
                 if pump_code == "150-400 2F":  # Debug specific pump

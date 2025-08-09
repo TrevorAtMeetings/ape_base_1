@@ -117,7 +117,8 @@ class CatalogPump:
             ]
             if powers:
                 max_power = max(max_power, max(powers))
-        return max_power if max_power > 0 else 50.0  # Default estimate
+        # CRITICAL: NO FALLBACKS EVER - Return None if no authentic power data exists
+        return max_power if max_power > 0 else None
 
     def _calculate_min_efficiency(self) -> float:
         """Calculate minimum efficiency from all curves"""
@@ -154,7 +155,7 @@ class CatalogPump:
                 return {
                     'flow_m3hr': float(bep_flow),
                     'head_m': float(bep_head),
-                    'efficiency_pct': 85.0,  # Typical BEP efficiency estimate
+                    'efficiency_pct': None,  # CRITICAL: NO FALLBACKS EVER - Never synthesize efficiency data
                     'power_kw': None,
                     'npshr_m': self.specifications.get('npshr_at_bep'),
                     'source': 'manufacturer_specifications'
@@ -930,8 +931,9 @@ class CatalogPump:
                 best_curve = curve
 
         if not best_curve:
-            # Return the first available curve as fallback
-            best_curve = self.curves[0]
+            # CRITICAL: NO FALLBACKS EVER - If no suitable curve found, fail explicitly
+            logger.error(f"No suitable curve found for {self.pump_code} - operating point outside design envelope")
+            return None
 
         points = best_curve['performance_points']
         flows = [p['flow_m3hr'] for p in points]
@@ -1129,7 +1131,7 @@ class CatalogEngine:
         """
         from .data_models import PumpEvaluation, ExclusionReason
         
-        # Brain is now the primary system - legacy selection used as fallback only
+        # Brain is now the primary system - NO FALLBACKS EVER, authentic data only
         
         suitable_pumps = []
         excluded_pumps = []
@@ -1154,16 +1156,9 @@ class CatalogEngine:
                 # Get nominal BEP flow from specifications
                 bep_flow = pump.specifications.get('q_bep', 0)
                 if bep_flow <= 0:
-                    # If no BEP data, estimate from curves
-                    if pump.curves:
-                        # Use middle of flow range as estimate
-                        all_flows = []
-                        for curve in pump.curves:
-                            flows = [p['flow_m3hr'] for p in curve.get('performance_points', [])]
-                            if flows:
-                                all_flows.extend(flows)
-                        if all_flows:
-                            bep_flow = (min(all_flows) + max(all_flows)) / 2
+                    # CRITICAL: NO FALLBACKS EVER - If no authentic BEP data, return worst proximity score
+                    # Never estimate/synthesize BEP data from curves
+                    return float('inf')  # Worst possible proximity score
                 
                 if bep_flow > 0:
                     # Return absolute difference between pump BEP and required flow
@@ -1590,8 +1585,12 @@ class CatalogEngine:
         if not points:
             return delivered_head, efficiency, current_flow
 
-        max_head_available = max(
-            [p.get('head_m', 0) for p in points if p.get('head_m')], default=0)
+        # CRITICAL: NO FALLBACKS EVER - Only use authentic head data
+        head_values = [p.get('head_m') for p in points if p.get('head_m') is not None and p.get('head_m') > 0]
+        if not head_values:
+            # If no authentic head data available, cannot proceed with analysis
+            return delivered_head, efficiency, current_flow
+        max_head_available = max(head_values)
 
         # If pump lacks physical capability, return current point
         if max_head_available < target_head:
