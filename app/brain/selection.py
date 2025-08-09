@@ -66,10 +66,30 @@ class SelectionIntelligence:
         constraints = constraints or {}
         
         # Get all pumps from repository
-        pump_models = self.brain.repository.get_pump_models()
-        if not pump_models:
+        all_pumps = self.brain.repository.get_pump_models()
+        if not all_pumps:
             logger.warning("No pump models available in repository")
             return {'ranked_pumps': [], 'exclusion_details': None}
+        
+        # INTELLIGENT PRE-FILTERING: Only evaluate pumps in reasonable range
+        # This prevents evaluating 0.1 m³/hr pumps for 350 m³/hr applications
+        min_flow_threshold = max(flow * 0.4, 5.0)  # At least 40% of required flow, minimum 5 m³/hr
+        max_flow_threshold = flow * 3.0  # Maximum 300% of required flow
+        
+        pump_models = []
+        pre_filtered_count = 0
+        
+        for pump in all_pumps:
+            specs = pump.get('specifications', {})
+            bep_flow = specs.get('bep_flow_m3hr', 0)
+            
+            # Pre-filter by flow range - intelligent range matching
+            if bep_flow > 0 and min_flow_threshold <= bep_flow <= max_flow_threshold:
+                pump_models.append(pump)
+            else:
+                pre_filtered_count += 1
+        
+        logger.info(f"Smart pre-filtering: {len(pump_models)} pumps selected from {len(all_pumps)} total (filtered out {pre_filtered_count} inappropriate pumps)")
         
         feasible_pumps = []
         excluded_pumps = []
