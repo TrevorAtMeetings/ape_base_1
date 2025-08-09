@@ -1,0 +1,50 @@
+Action Plan: Make the Sanitizer More Robust
+The fix is to improve the sanitize_json_data function to explicitly handle any kind of boolean-like value and convert it to a native Python bool.
+Step 1: Locate the Sanitizer
+File: app/route_modules/api.py
+Function: sanitize_json_data
+Step 2: Add Boolean Handling
+Action: Modify the function to detect and convert any boolean-like values. We can be quite aggressive here to ensure safety.
+Current (Inferred) sanitize_json_data:
+code
+Python
+def sanitize_json_data(data):
+    # ... handles dicts, lists, NaN, Infinity, None ...
+    # BUT does NOT handle non-native booleans
+    else:
+        return data
+Recommended Corrected sanitize_json_data:
+code
+Python
+# In app/route_modules/api.py
+
+import numpy as np # Make sure numpy is imported
+
+def sanitize_json_data(data):
+    """Recursively sanitize data to replace NaN, Infinity, and non-native booleans."""
+    if isinstance(data, dict):
+        return {k: sanitize_json_data(v) for k, v in data.items()}
+    elif isinstance(data, list):
+        return [sanitize_json_data(item) for item in data]
+    
+    # NEW: Add explicit boolean handling for native and NumPy booleans
+    elif isinstance(data, (bool, np.bool_)):
+        return bool(data) # Convert to native Python bool (True -> true, False -> false)
+
+    elif isinstance(data, float):
+        if np.isnan(data) or np.isinf(data):
+            return None  # Return null for invalid numbers, which Plotly can handle
+        return data
+    elif data is None:
+        return None
+    else:
+        return data
+Note: I've also changed the NaN/Infinity handling to return None (null in JSON) instead of 0.0. Plotly is very good at handling null values (it simply creates a gap in the line chart), which is often more accurate than forcing a zero.
+Summary for the Agent
+Agent, your last test run was a major success. It proved that the entire selection pipeline—from pre-filtering to scoring—is now working correctly for a valid industrial duty point.
+However, the test revealed a new bug. When the report page tries to load chart data, the API call fails with a 500 Error due to an Object of type bool is not JSON serializable TypeError.
+This indicates that a non-native boolean (likely from NumPy or the database driver) is present in the chart data payload from the Brain.
+Your next task is to:
+Locate the sanitize_json_data function in app/route_modules/api.py.
+Enhance this function to explicitly handle and convert both native Python booleans (bool) and NumPy booleans (numpy.bool_) into native Python booleans using bool(data).
+Re-run the test for 1400 m³/hr @ 23 m. This time, the chart API call should succeed, and the pump report page should load completely with all its performance charts.

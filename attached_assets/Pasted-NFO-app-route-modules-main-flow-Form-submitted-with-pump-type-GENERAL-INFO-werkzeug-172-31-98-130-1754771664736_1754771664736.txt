@@ -1,0 +1,66 @@
+NFO:app.route_modules.main_flow:Form submitted with pump type: 'GENERAL'
+INFO:werkzeug:172.31.98.130 - - [09/Aug/2025 20:33:15] "POST /pump_selection HTTP/1.1" 302 -
+INFO:app.route_modules.main_flow:Processing pump options for: flow=1400.0 m³/hr, head=23.0 m
+INFO:app.route_modules.main_flow:Pump type filter requested: 'GENERAL'
+INFO:app.route_modules.main_flow:Using Brain system for pump selection - authentic validation only
+INFO:app.pump_repository:Repository: Loading data from PostgreSQL database (optimized)
+INFO:app.pump_repository:Repository: Connecting to PostgreSQL at ep-polished-voice-adgviosf.c-2.us-east-1.aws.neon.tech:5432
+INFO:app.pump_repository:Repository: Created connection pool with 1-10 connections
+INFO:app.pump_repository:Repository: Found tables: ['extras', 'processed_files', 'pump_curves', 'pump_diameters', 'pump_eff_iso', 'pump_names', 'pump_performance_points', 'pump_specifications', 'pump_speeds', 'pumps']
+INFO:app.pump_repository:Repository: Found 386 pump records with aggregated statistics
+INFO:app.pump_repository:Repository: Retrieved 7043 performance points
+ERROR:app.pump_repository:Repository: Could not derive min/max impeller for 8312-30 A333T from curves or specifications.
+INFO:app.pump_repository:Repository: Successfully loaded 386 pump models from PostgreSQL
+INFO:app.pump_repository:Repository: Total curves: 869
+INFO:app.pump_repository:Repository: Total points: 6273
+INFO:app.pump_repository:Repository: NPSH curves: 612
+INFO:app.pump_repository:Repository: Tables used: ['extras', 'processed_files', 'pump_curves', 'pump_diameters', 'pump_eff_iso', 'pump_names', 'pump_performance_points', 'pump_specifications', 'pump_speeds', 'pumps']
+INFO:app.brain.selection:Smart pre-filtering: 142 pumps selected from 386 total (filtered out 244 inappropriate pumps)
+INFO:app.brain.selection:Pump 10 WLN 18A: Head oversizing 153.1% - BEP 58.22m vs required 23.0m
+INFO:app.brain.selection:Pump 10 WLN 22A: SEVERE head oversizing 365.7% - BEP 107.12m vs required 23.0m
+INFO:app.brain.selection:Pump 10 WLN 26A: SEVERE head oversizing 513.3% - BEP 141.05m vs required 23.0m
+INFO:app.brain.selection:Pump 10 WLN 32A: Head oversizing 252.9% - BEP 81.17m vs required 23.0m
+INFO:app.brain.selection:Pump 12 LNH 21A: Head oversizing 278.0% - BEP 86.93m vs required 23.0m
+INFO:app.brain.selection:Pump 12 LNH 21B: Head oversizing 299.8% - BEP 91.95m vs required 23.0m
+INFO:app.brain.selection:Pump 12/14 DESC: SEVERE head oversizing 333.6% - BEP 99.72m vs required 23.0m
+INFO:app.brain.selection:Pump 12/14 DM: SEVERE head oversizing 302.1% - BEP 92.49m vs required 23.0m
+INFO:app.brain.selection:Pump 12/14 DME: SEVERE head oversizing 302.1% - BEP 92.49m vs required 23.0m
+INFO:app.brain.selection:Pump 12X16X23H DSJH: SEVERE head oversizing 386.8% - BEP 111.96m vs required 23.0m
+INFO:app.brain.selection:Pump 14/18 EME: SEVERE head oversizing 652.3% - BEP 173.04m vs required 23.0m
+INFO:app.brain.selection:Pump 18/22 MEDIVANE: SEVERE head oversizing 551.4% - BEP 149.83m vs required 23.0m
+INFO:app.brain.selection:Pump 300-250-600: SEVERE head oversizing 411.7% - BEP 117.68m vs required 23.0m
+INFO:app.brain.selection:Pump 400-600: SEVERE head oversizing 607.7% - BEP 162.77m vs required 23.0m
+INFO:app.brain.selection:Pump 8/10 DESC: Head oversizing 290.8% - BEP 89.88m vs required 23.0m
+INFO:app.brain.selection:Pump PJ 200: SEVERE head oversizing 1329.8% - BEP 328.85m vs required 23.0m
+INFO:app.brain.selection:Pump PJ 250 BS: SEVERE head oversizing 342.8% - BEP 101.84m vs required 23.0m
+INFO:app.brain.selection:Pump Umgeni Verulam July 2022: SEVERE head oversizing 431.5% - BEP 122.24m vs required 23.0m
+INFO:app.brain.selection:Pump VBK 620/022-4S: SEVERE head oversizing 687.7% - BEP 181.17m vs required 23.0m
+INFO:app.brain.selection:Pump VBK 620/022-4S (Test Curve): SEVERE head oversizing 687.7% - BEP 181.17m vs required 23.0m
+WARNING:app.pump_brain:Brain.find_best_pumps took 771.99ms
+INFO:app.route_modules.main_flow:Brain exclusions: {'QBP 184% outside allowable range': 2, 'Cannot meet requirements': 25, 'QBP 140% outside allowable range': 5, 'QBP 195% outside allowable range': 2, 'QBP 44% outside allowable range': 3, 'Cannot deliver required head at operating flow': 18, 'QBP 239% outside allowable range': 2, 'QBP 47% outside allowable range': 2, 'QBP 58% outside allowable range': 1, 'QBP 35% outside allowable range': 1, 'QBP 191% outside allowable range': 1, 'QBP 197% outside allowable range': 1, 'QBP 159% outside allowable range': 2, 'QBP 174% outside allowable range': 1, 'QBP 172% outside allowable range': 2, 'QBP 173% outside allowable range': 1, 'QBP 41% outside allowable range': 3, 'QBP 36% outside allowable range': 4, 'QBP 46% outside allowable range': 2, 'QBP 53% outside allowable range': 2, 'QBP 37% outside allowable range': 2, 'QBP 34% outside allowable range': 2, 'QBP 228% outside allowable range': 1, 'QBP 218% outside allowable range': 1, 'QBP 151% outside allowable range': 1, 'QBP 225% outside allowable range': 1, 'QBP 190% outside allowable range': 1, 'QBP 150% outside allowable range': 1, 'QBP 229% outside allowable range': 2, 'QBP 166% outside allowable range': 1, 'QBP 236% outside allowable range': 1, 'QBP 133% outside allowable range': 1, 'QBP 57% outside allowable range': 2, 'QBP 244% outside allowable range': 1, 'QBP 222% outside allowable range': 1, 'QBP 196% outside allowable range': 2, 'QBP 193% outside allowable range': 3, 'QBP 211% outside allowable range': 1, 'QBP 144% outside allowable range': 2, 'QBP 194% outside allowable range': 1, 'QBP 188% outside allowable range': 2, 'QBP 182% outside allowable range': 1, 'QBP 176% outside allowable range': 2, 'QBP 238% outside allowable range': 1, 'QBP 186% outside allowable range': 1, 'QBP 164% outside allowable range': 2, 'QBP 161% outside allowable range': 1, 'QBP 221% outside allowable range': 1, 'QBP 183% outside allowable range': 1, 'QBP 52% outside allowable range': 2, 'QBP 38% outside allowable range': 1, 'QBP 42% outside allowable range': 1, 'QBP 249% outside allowable range': 1, 'QBP 246% outside allowable range': 1, 'QBP 233% outside allowable range': 1, 'QBP 177% outside allowable range': 1, 'QBP 155% outside allowable range': 1, 'QBP 248% outside allowable range': 1}
+INFO:app.route_modules.main_flow:Tiered results: 9 preferred, 1 allowable pumps
+INFO:app.route_modules.main_flow:Successfully found 9 preferred + 1 allowable pumps, rendering tiered results
+INFO:werkzeug:172.31.98.130 - - [09/Aug/2025 20:33:16] "GET /pump_options?flow=1400.0&head=23.0&application_type=water&pump_type=GENERAL HTTP/1.1" 200 -
+INFO:werkzeug:172.31.98.130 - - [09/Aug/2025 20:33:17] "GET /static/css/style.css?v=2942 HTTP/1.1" 200 -
+INFO:werkzeug:172.31.98.130 - - [09/Aug/2025 20:33:17] "GET /static/css/professional-theme.css?v=7376 HTTP/1.1" 200 -
+INFO:werkzeug:172.31.98.130 - - [09/Aug/2025 20:33:18] "GET /static/css/responsive-fixes.css?v=6961 HTTP/1.1" 200 -
+INFO:werkzeug:172.31.98.130 - - [09/Aug/2025 20:33:18] "GET /static/css/floating-ai-chat.css?v=7381 HTTP/1.1" 200 -
+INFO:werkzeug:172.31.98.130 - - [09/Aug/2025 20:33:18] "GET /static/js/floating-ai-chat.js HTTP/1.1" 304 -
+INFO:werkzeug:172.31.98.130 - - [09/Aug/2025 20:33:18] "GET /static/js/main.js HTTP/1.1" 304 -
+INFO:werkzeug:172.31.98.130 - - [09/Aug/2025 20:33:18] "GET /static/js/icon-loader.js HTTP/1.1" 304 -
+INFO:werkzeug:172.31.98.130 - - [09/Aug/2025 20:33:18] "GET /static/js/force-icon-refresh.js HTTP/1.1" 304 -
+INFO:werkzeug:172.31.98.130 - - [09/Aug/2025 20:33:18] "GET /static/js/micro-interactions.js HTTP/1.1" 304 -
+INFO:app.route_modules.reports:Rendering engineering report for pump: 28 HC 6P
+INFO:werkzeug:172.31.98.130 - - [09/Aug/2025 20:33:27] "GET /engineering_report/28%20HC%206P?flow=1400.0&head=23.0&pump_type=GENERAL HTTP/1.1" 200 -
+INFO:werkzeug:172.31.98.130 - - [09/Aug/2025 20:33:28] "GET /static/css/style.css?v=9053 HTTP/1.1" 200 -
+INFO:werkzeug:172.31.98.130 - - [09/Aug/2025 20:33:28] "GET /static/css/professional-theme.css?v=4531 HTTP/1.1" 200 -
+INFO:werkzeug:172.31.98.130 - - [09/Aug/2025 20:33:28] "GET /static/css/floating-ai-chat.css?v=7544 HTTP/1.1" 200 -
+INFO:werkzeug:172.31.98.130 - - [09/Aug/2025 20:33:28] "GET /static/css/responsive-fixes.css?v=6546 HTTP/1.1" 304 -
+INFO:werkzeug:172.31.98.130 - - [09/Aug/2025 20:33:29] "GET /static/js/micro-interactions.js HTTP/1.1" 304 -
+INFO:werkzeug:172.31.98.130 - - [09/Aug/2025 20:33:29] "GET /static/js/floating-ai-chat.js HTTP/1.1" 304 -
+INFO:werkzeug:172.31.98.130 - - [09/Aug/2025 20:33:29] "GET /static/js/main.js HTTP/1.1" 304 -
+INFO:werkzeug:172.31.98.130 - - [09/Aug/2025 20:33:29] "GET /static/js/force-icon-refresh.js HTTP/1.1" 304 -
+INFO:werkzeug:172.31.98.130 - - [09/Aug/2025 20:33:29] "GET /static/js/icon-loader.js HTTP/1.1" 304 -
+INFO:app.brain.charts:Brain generated chart payload for 28 HC 6P with 2 curves
+ERROR:app.route_modules.api:Error in Brain-only chart API: Object of type bool is not JSON serializable
+INFO:werkzeug:172.31.98.130 - - [09/Aug/2025 20:33:31] "GET /api/chart_data/28%20HC%206P?flow=1400&head=23 HTTP/1.1" 500 -

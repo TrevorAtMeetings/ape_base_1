@@ -28,6 +28,8 @@ def sanitize_json_data(data):
         if math.isnan(data) or math.isinf(data):
             return 0.0  # Replace NaN/Infinity with 0 for engineering safety
         return data
+    elif isinstance(data, bool):
+        return data  # Booleans are JSON serializable
     elif data is None:
         return None  # Keep None as None for JSON compatibility
     else:
