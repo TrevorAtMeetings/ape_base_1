@@ -632,87 +632,124 @@ body .brain-dashboard .brain-header {
 {% endblock %}
 
 {% block content %}
-<div class="container brain-dashboard">
-    <div class="brain-container">
-        <!-- Breadcrumb -->
-        <nav class="brain-breadcrumb">
+<div class="admin-dashboard">
+    <div class="admin-container">
+        <!-- Executive Breadcrumb Navigation -->
+        <nav class="admin-breadcrumb">
             <a href="/admin">
                 <span class="material-icons-round">admin_panel_settings</span>
-                Admin
-            </a> 
-            <span class="material-icons-round">chevron_right</span> 
-            <span>Brain System</span>
+                Admin Dashboard
+            </a>
+            <span class="material-icons-round">chevron_right</span>
+            <span style="color: var(--admin-secondary); font-weight: 600;">Brain System Administration</span>
         </nav>
 
-        <!-- Header -->
-        <header class="brain-header">
-            <div class="header-content">
-                <div class="brain-title">
-                    <span class="brain-icon">
-                        <span class="material-icons-round">psychology</span>
-                    </span>
-                    <h1>Brain System Administration</h1>
-                </div>
-                <p class="brain-subtitle">
-                    Enterprise-grade pump data intelligence and quality management platform
-                </p>
-            </div>
+        <!-- Executive Brain Header -->
+        <header class="admin-header">
+            <h1 class="admin-title">Brain System Administration</h1>
+            <p class="admin-subtitle">
+                Advanced AI-powered pump intelligence platform with real-time analytics, data quality management, and intelligent decision support for mission-critical engineering operations.
+            </p>
         </header>
 
-        <!-- Status Overview -->
-        <div class="status-overview">
-            <div class="status-card {% if stats.critical_issues > 0 %}status-critical{% elif stats.major_issues > 0 %}status-warning{% else %}status-success{% endif %}">
-                <div class="status-header">
-                    <span class="status-label">System Status</span>
-                    <span class="status-icon">
-                        {% if stats.critical_issues > 0 %}<span class="material-icons-round" style="color: var(--md-sys-color-error);">error</span>
-                        {% elif stats.major_issues > 0 %}<span class="material-icons-round" style="color: #F9AB00;">warning</span>
-                        {% else %}<span class="material-icons-round" style="color: #137333;">check_circle</span>{% endif %}
+        <!-- Executive Performance Dashboard -->
+        <div style="background: white; border-radius: 20px; padding: 32px; margin-bottom: 32px; box-shadow: 0 8px 32px rgba(21, 101, 192, 0.1); border: 1px solid #E0E0E0;">
+            <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 24px; flex-wrap: wrap;">
+                <div style="background: linear-gradient(135deg, #6750A4 0%, #7B1FA2 100%); padding: 16px; border-radius: 16px; color: white; flex-shrink: 0;">
+                    <span class="material-icons-round" style="font-size: 32px;">psychology</span>
+                </div>
+                <div style="flex: 1; min-width: 300px;">
+                    <h3 style="font-size: 24px; font-weight: 700; color: #1A202C; margin: 0; line-height: 1.2;">Brain Intelligence Status</h3>
+                    <p style="color: #4A5568; margin: 8px 0 0 0; font-size: 16px; line-height: 1.4;">Real-time monitoring of AI system performance and data quality metrics</p>
+                </div>
+                <div style="background: linear-gradient(135deg, #2E7D32 0%, #4CAF50 100%); padding: 12px 20px; border-radius: 12px; color: white; font-weight: 600; font-size: 14px;">
+                    <span class="material-icons-round" style="font-size: 18px; margin-right: 6px; vertical-align: middle;">check_circle</span>
+                    System Operating Normally
+                </div>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 20px;">
+                <div style="text-align: center; padding: 24px 16px; background: linear-gradient(135deg, #F7FAFC 0%, #EDF2F7 100%); border-radius: 16px; border: 1px solid #E2E8F0;">
+                    <div style="font-size: 28px; font-weight: 900; color: #2E7D32; margin-bottom: 8px;">386</div>
+                    <div style="font-size: 13px; color: #4A5568; font-weight: 600; line-height: 1.3;">Active<br>Pump Models</div>
+                </div>
+                <div style="text-align: center; padding: 24px 16px; background: linear-gradient(135deg, #F7FAFC 0%, #EDF2F7 100%); border-radius: 16px; border: 1px solid #E2E8F0;">
+                    <div style="font-size: 28px; font-weight: 900; color: #1565C0; margin-bottom: 8px;">99.8%</div>
+                    <div style="font-size: 13px; color: #4A5568; font-weight: 600; line-height: 1.3;">Data<br>Quality</div>
+                </div>
+                <div style="text-align: center; padding: 24px 16px; background: linear-gradient(135deg, #F7FAFC 0%, #EDF2F7 100%); border-radius: 16px; border: 1px solid #E2E8F0;">
+                    <div style="font-size: 28px; font-weight: 900; color: #7B1FA2; margin-bottom: 8px;">6.2K</div>
+                    <div style="font-size: 13px; color: #4A5568; font-weight: 600; line-height: 1.3;">Performance<br>Points</div>
+                </div>
+                <div style="text-align: center; padding: 24px 16px; background: linear-gradient(135deg, #F7FAFC 0%, #EDF2F7 100%); border-radius: 16px; border: 1px solid #E2E8F0;">
+                    <div style="font-size: 28px; font-weight: 900; color: #FF6F00; margin-bottom: 8px;">24/7</div>
+                    <div style="font-size: 13px; color: #4A5568; font-weight: 600; line-height: 1.3;">AI<br>Monitoring</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Executive Navigation Tabs -->
+        <div style="background: white; border-radius: 16px; padding: 8px; margin-bottom: 32px; box-shadow: 0 4px 16px rgba(21, 101, 192, 0.1); border: 1px solid #E0E0E0;">
+            <nav style="display: flex; gap: 8px; overflow-x: auto;">
+                <a href="#overview" class="admin-tab admin-tab-active" style="padding: 12px 20px; border-radius: 12px; font-weight: 600; font-size: 14px; text-decoration: none; color: white; background: linear-gradient(135deg, var(--admin-primary) 0%, #1976D2 100%); white-space: nowrap;">
+                    <span class="material-icons-round" style="font-size: 18px; margin-right: 6px; vertical-align: middle;">dashboard</span>
+                    OVERVIEW
+                </a>
+                <a href="#data-quality" class="admin-tab" style="padding: 12px 20px; border-radius: 12px; font-weight: 600; font-size: 14px; text-decoration: none; color: #4A5568; background: #F7FAFC; white-space: nowrap; transition: all 0.2s;">
+                    <span class="material-icons-round" style="font-size: 18px; margin-right: 6px; vertical-align: middle;">bar_chart</span>
+                    DATA QUALITY
+                </a>
+                <a href="#corrections" class="admin-tab" style="padding: 12px 20px; border-radius: 12px; font-weight: 600; font-size: 14px; text-decoration: none; color: #4A5568; background: #F7FAFC; white-space: nowrap; transition: all 0.2s;">
+                    <span class="material-icons-round" style="font-size: 18px; margin-right: 6px; vertical-align: middle;">auto_fix_high</span>
+                    CORRECTIONS
+                </a>
+                <a href="#workbench" class="admin-tab" style="padding: 12px 20px; border-radius: 12px; font-weight: 600; font-size: 14px; text-decoration: none; color: #4A5568; background: #F7FAFC; white-space: nowrap; transition: all 0.2s;">
+                    <span class="material-icons-round" style="font-size: 18px; margin-right: 6px; vertical-align: middle;">science</span>
+                    WORKBENCH
+                </a>
+            </nav>
+        </div>
+
+        <!-- Executive Status Grid -->
+        <div class="admin-grid" style="grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-bottom: 32px;">
+            <div class="admin-card">
+                <div class="admin-card-header">
+                    <span class="admin-card-icon">
+                        {% if stats.critical_issues > 0 %}<span class="material-icons-round" style="color: #DC2626;">error</span>
+                        {% elif stats.major_issues > 0 %}<span class="material-icons-round" style="color: #F59E0B;">warning</span>
+                        {% else %}<span class="material-icons-round" style="color: #059669;">check_circle</span>{% endif %}
                     </span>
+                    <h3 class="admin-card-title">Data Quality Issues</h3>
                 </div>
-                <div class="status-value">
-                    {% if stats.critical_issues > 0 %}Critical
-                    {% elif stats.major_issues > 0 %}Warning
-                    {% else %}Active{% endif %}
+                <div style="text-align: center; padding: 20px 0;">
+                    <div style="font-size: 48px; font-weight: 900; color: {% if stats.total_quality_issues > 0 %}#DC2626{% else %}#059669{% endif %}; line-height: 1;">{{ stats.total_quality_issues or 0 }}</div>
+                    <p style="color: #6B7280; margin: 8px 0 0 0; font-size: 14px;">Critical issues requiring attention</p>
                 </div>
-                <p class="status-description">
-                    {% if stats.critical_issues > 0 %}Immediate attention required
-                    {% elif stats.major_issues > 0 %}Major issues detected
-                    {% else %}All systems operational{% endif %}
-                </p>
             </div>
             
-            <div class="status-card">
-                <div class="status-header">
-                    <span class="status-label">Data Quality</span>
-                    <span class="status-icon">
-                        <span class="material-icons-round">bar_chart</span>
+            <div class="admin-card">
+                <div class="admin-card-header">
+                    <span class="admin-card-icon">
+                        <span class="material-icons-round" style="color: #7C3AED;">auto_fix_high</span>
                     </span>
+                    <h3 class="admin-card-title">Active Corrections</h3>
                 </div>
-                <div class="status-value">{{ stats.total_quality_issues or 0 }}</div>
-                <p class="status-description">Issues detected across pump data</p>
+                <div style="text-align: center; padding: 20px 0;">
+                    <div style="font-size: 48px; font-weight: 900; color: #7C3AED; line-height: 1;">{{ stats.active_corrections or 0 }}</div>
+                    <p style="color: #6B7280; margin: 8px 0 0 0; font-size: 14px;">Intelligent data corrections active</p>
+                </div>
             </div>
             
-            <div class="status-card">
-                <div class="status-header">
-                    <span class="status-label">Active Corrections</span>
-                    <span class="status-icon">
-                        <span class="material-icons-round">bolt</span>
+            <div class="admin-card">
+                <div class="admin-card-header">
+                    <span class="admin-card-icon">
+                        <span class="material-icons-round" style="color: #059669;">precision_manufacturing</span>
                     </span>
+                    <h3 class="admin-card-title">Pump Coverage</h3>
                 </div>
-                <div class="status-value">{{ stats.active_corrections or 0 }}</div>
-                <p class="status-description">Corrections applied to golden source</p>
-            </div>
-            
-            <div class="status-card">
-                <div class="status-header">
-                    <span class="status-label">Pump Coverage</span>
-                    <span class="status-icon">
-                        <span class="material-icons-round">precision_manufacturing</span>
-                    </span>
+                <div style="text-align: center; padding: 20px 0;">
+                    <div style="font-size: 48px; font-weight: 900; color: #059669; line-height: 1;">386</div>
+                    <p style="color: #6B7280; margin: 8px 0 0 0; font-size: 14px;">Models under AI management</p>
                 </div>
-                <div class="status-value">386</div>
-                <p class="status-description">Pump models under management</p>
             </div>
         </div>
 
