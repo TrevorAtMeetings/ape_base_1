@@ -206,9 +206,22 @@ class SelectionIntelligence:
             # Get pump specifications
             specs = pump_data.get('specifications', {})
             
-            # Check BEP proximity
+            # CRITICAL FIX: Smart BEP calculation when missing from specifications
             bep_flow = specs.get('bep_flow_m3hr', 0)
             bep_head = specs.get('bep_head_m', 0)
+            
+            # If BEP data missing from specs, calculate from performance curves
+            if bep_flow <= 0 or bep_head <= 0:
+                logger.debug(f"[SCORE] {pump_data.get('pump_code')}: BEP data missing from specs (flow={bep_flow}, head={bep_head}), calculating from curves...")
+                calculated_bep = self._calculate_bep_from_curves(pump_data)
+                if calculated_bep:
+                    bep_flow = calculated_bep['flow_m3hr']
+                    bep_head = calculated_bep['head_m']
+                    logger.debug(f"[SCORE] {pump_data.get('pump_code')}: Calculated BEP from curves - flow: {bep_flow:.1f} m³/hr, head: {bep_head:.1f}m")
+                else:
+                    logger.debug(f"[SCORE] {pump_data.get('pump_code')}: Could not calculate BEP from curves - skipping BEP scoring")
+            else:
+                logger.debug(f"[SCORE] {pump_data.get('pump_code')}: Using BEP from specs - flow: {bep_flow:.1f} m³/hr, head: {bep_head:.1f}m")
             
             if bep_flow > 0 and bep_head > 0:
                 # Calculate QBP (% of BEP flow)
@@ -472,3 +485,43 @@ class SelectionIntelligence:
         
         logger.debug(f"Pump {pump_data.get('pump_code')}: Cannot deliver required head {head_m}m at flow {flow_m3hr} m³/hr")
         return False
+    
+    def _calculate_bep_from_curves(self, pump_data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """
+        Calculate BEP from performance curves when missing from specifications.
+        This is authentic engineering practice - BEP is the point of maximum efficiency.
+        """
+        try:
+            curves = pump_data.get('curves', [])
+            if not curves:
+                return None
+            
+            best_bep = None
+            highest_efficiency = 0
+            
+            # Check all curves to find the one with highest efficiency point
+            for curve in curves:
+                points = curve.get('performance_points', [])
+                if len(points) < 3:  # Need multiple points to find maximum
+                    continue
+                
+                # Find maximum efficiency point in this curve
+                for point in points:
+                    efficiency = point.get('efficiency_pct', 0)
+                    if efficiency > highest_efficiency:
+                        highest_efficiency = efficiency
+                        best_bep = {
+                            'flow_m3hr': point.get('flow_m3hr', 0),
+                            'head_m': point.get('head_m', 0),
+                            'efficiency_pct': efficiency
+                        }
+            
+            if best_bep and best_bep['flow_m3hr'] > 0 and best_bep['head_m'] > 0:
+                logger.debug(f"[BEP] {pump_data.get('pump_code')}: Found BEP at {best_bep['flow_m3hr']:.1f} m³/hr, {best_bep['head_m']:.1f}m, {best_bep['efficiency_pct']:.1f}%")
+                return best_bep
+            
+            return None
+            
+        except Exception as e:
+            logger.debug(f"Error calculating BEP from curves for {pump_data.get('pump_code')}: {e}")
+            return None

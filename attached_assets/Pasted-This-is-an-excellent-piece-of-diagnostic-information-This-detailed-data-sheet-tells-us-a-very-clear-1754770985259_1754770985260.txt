@@ -1,0 +1,117 @@
+This is an excellent piece of diagnostic information. This detailed data sheet tells us a very clear story about the state of the data for the 8 K pump as it flows through your system.
+
+The key takeaway is that while some core performance calculations are working perfectly, there are significant gaps in the foundational specification data being pulled from the database. This leads to missing values (0, N/A) in critical areas of the report.
+
+Let's do a forensic analysis of this data sheet to pinpoint the exact issues.
+
+Analysis of the Data Sheet
+
+This sheet is a mix of good calculations and clear data gaps.
+
+What's Working Perfectly (The Brain's Calculations)
+
+Rated Flow: 350.0 m³/hr
+
+Rated Head: 50.0 m
+
+Power Absorbed: 62.17 kW
+
+Pump Efficiency: 75.8 %
+
+Insight: This is the most important finding. The Brain's PerformanceAnalyzer is working flawlessly. Given a pump (8K) and a duty point (350 @ 50), it is correctly calculating the core performance metrics. This part of the system is robust.
+
+The "Smoking Gun": The Missing Specification Data
+
+This is where the problem lies. Look at the data that would come directly from the pump_specifications table in your database.
+
+NPSHr Required: 0.0 m -> Incorrect. The 0.0 suggests no NPSH data exists on the performance curves for this pump. The system isn't calculating it as zero; it's falling back to a default because the source data is missing.
+
+Operating Impeller Ø: 406 mm -> This is likely the base curve diameter, not necessarily the final trimmed diameter.
+
+Impeller Trim: 0.0 % -> This is only correct if no trimming was needed. Given the performance, some minor trimming might have occurred, but the system isn't reporting it.
+
+Max Impeller Ø: 0 mm -> CRITICAL GAP. The system does not know the maximum design diameter for this pump model.
+
+Min Impeller Ø: 0 mm -> CRITICAL GAP. The system does not know the minimum allowable trim diameter.
+
+Pump Speed: N/A rpm -> CRITICAL GAP. The test_speed_rpm is missing from the specifications.
+
+Motor Details (Frame Size, Speed, etc.): This is likely outside the scope of your current database, which is acceptable.
+
+The Consequence: Flawed BEP and Scoring Analysis
+
+Because the foundational spec data is missing, the downstream calculations that depend on it are failing or producing nonsensical results.
+
+BEP Flow: 350.0 m³/hr
+
+BEP Head: 52.5 m
+
+BEP Efficiency: 77.3 %
+
+Insight: These BEP values seem to be calculated from the performance curve, which is a smart fallback. However, they might not match the manufacturer's official, published BEP, which should be stored in the specifications.
+
+QBEP %: 0 % -> CRITICAL ERROR. This is mathematically incorrect and the result of a calculation failure. QBEP % should be (Rated Flow / BEP Flow) * 100, which is (350.0 / 350.0) * 100 = 100%. The fact that it's 0% means the variable for either Rated Flow or BEP Flow was 0 or None at the moment of calculation. This points to a bug in how the data is passed to the scoring function.
+
+Overall Score: 0/100
+
+Efficiency Score: 0/30
+
+BEP Score: 0/40
+
+Insight: This is a direct consequence of the QBEP % calculation failing. The scoring logic sees an invalid input and correctly (but frustratingly) defaults to a score of zero.
+
+Root Cause and Action Plan
+
+The Root Cause: The pump_specifications table in your "golden source" database for the 8 K pump (and likely others) is missing critical data, specifically min_impeller_mm, max_impeller_mm, and test_speed_rpm. This leads to a cascading failure where the BEP analysis and scoring calculations fail.
+
+The Action Plan: This confirms the need for the "Data Integrity" and "Smart Default" initiatives we've discussed.
+
+Step 1: Fix the Data (Using the Brain Overlay System)
+
+This is the perfect use case for your new brain_overlay schema. You do not need to edit the golden source.
+
+Action: An engineer should use your new Admin Panel to:
+
+Go to the Data Quality Dashboard. The 8 K pump should be flagged for "Missing Specification Data."
+
+Go to the Data Corrections System.
+
+Propose new corrections for the 8 K pump:
+
+specifications.min_impeller_mm -> 345 (or the correct value from the datasheet)
+
+specifications.max_impeller_mm -> 406 (or the correct value)
+
+specifications.test_speed_rpm -> 1450
+
+Approve these corrections.
+
+Step 2: Implement the "Smart Default" for Impeller Range (Code Change)
+
+For cases where the data can't be manually corrected immediately, the Brain needs to be more resilient.
+
+Action: Implement the logic we previously discussed in app/brain/performance.py. If min_impeller_mm is missing, the Brain should in-memory calculate it as max_impeller_mm * 0.85. This prevents parts of the trim calculation from failing.
+
+Step 3: Debug the QBEP and Score Calculation (Code Change)
+
+The fact that the score is 0 even when the performance is calculated correctly points to a bug in how the data is being passed between the PerformanceAnalyzer and the SelectionIntelligence modules.
+
+Action: Add detailed logging inside the SelectionIntelligence.evaluate_single_pump method.
+
+Debug: Right before the scoring calculations, log the contents of the performance dictionary and the pump_data dictionary. You will likely find that the bep_flow_m3hr value is not being correctly read or passed into the QBEP % formula, causing it to result in 0. Fix this data flow issue.
+
+Summary for the Agent
+
+You can give the agent a very clear prompt based on this analysis.
+
+Agent, the provided data sheet for the '8K' pump reveals two critical issues.
+
+Data Gap: The pump is missing min_impeller_mm, max_impeller_mm, and test_speed_rpm in its core specification data.
+
+Calculation Bug: The QBEP % and the final Overall Score are incorrectly calculated as 0, even though the core performance metrics (efficiency, power) are correct. This points to a bug in how data is passed to the scoring function.
+
+Please perform the following two tasks:
+
+Implement the "Smart Default" logic in app/brain/performance.py to calculate a temporary min_impeller_mm if it is missing from the database, as we previously planned.
+
+Debug the scoring logic in app/brain/selection.py. Find out why QBEP % is being calculated as 0. Add logging to trace the values of Rated Flow and BEP Flow as they enter the scoring function and fix the data flow to ensure the calculation is correct.
