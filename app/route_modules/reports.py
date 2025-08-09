@@ -364,13 +364,29 @@ def engineering_report(pump_code):
         if pump.get('pump_code') != pump_code:
             alternatives.append(pump)
     
+    # Add breadcrumbs for navigation
+    try:
+        from flask import url_for
+        site_reqs = site_requirements_data or {}
+        flow_val = site_reqs.get('flow_m3hr', 0)
+        head_val = site_reqs.get('head_m', 0)
+        breadcrumbs = [
+            {'label': 'Home', 'url': url_for('main_flow.index')},
+            {'label': 'Results', 'url': url_for('main_flow.pump_options', flow=flow_val, head=head_val)},
+            {'label': f'{pump_code} - Engineering Report', 'url': '#'}
+        ]
+    except Exception as e:
+        logger.warning(f"Could not generate breadcrumbs: {e}")
+        breadcrumbs = []
+    
     return render_template(
         'engineering_pump_report.html',
         selected_pump=selected_pump,
         alternative_pumps=alternatives[:10],
         site_requirements=site_requirements_data,
         pump_code=pump_code,
-        current_date=current_date
+        current_date=current_date,
+        breadcrumbs=breadcrumbs
     )
 
 @reports_bp.route('/generate_pdf/<path:pump_code>')

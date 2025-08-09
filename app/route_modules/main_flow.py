@@ -267,9 +267,16 @@ def pump_options():
         # Get pump selections from session (already stored by store_pumps_optimized above)
         stored_pumps = safe_session_get('suitable_pumps', pump_selections)
 
+        # Add breadcrumbs for pump options page
+        breadcrumbs = [
+            {'label': 'Home', 'url': url_for('main_flow.index')},
+            {'label': f'Results - {len(stored_pumps)} Pumps Found', 'url': '#'}
+        ]
+        
         # Render pump options page showing all suitable pumps
         return render_template(
             'pump_options.html',
+            breadcrumbs=breadcrumbs,
             pump_selections=stored_pumps,  # Use optimized session data
             site_requirements={
                 'flow_m3hr': flow,
