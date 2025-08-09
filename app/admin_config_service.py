@@ -419,7 +419,11 @@ class AdminConfigService:
                         user
                     ))
                     
-                    profile_id = cursor.fetchone()[0]
+                    result = cursor.fetchone()
+                    if not result:
+                        logger.error("Failed to create profile: No ID returned")
+                        return None
+                    profile_id = result[0]
                     
                     # Log creation
                     cursor.execute("""
@@ -462,7 +466,7 @@ class AdminConfigService:
                         LIMIT %s
                     """, (limit,))
                 
-                return cursor.fetchall()
+                return [dict(row) for row in cursor.fetchall()]
     
     def clear_cache(self):
         """Clear the configuration cache"""
