@@ -3,8 +3,38 @@
 {% block title %}Pump Selection - APE Pumps{% endblock %}
 
 {% block head %}
+<!-- Google Material Icons (via CDN) -->
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
 
 <style>
+/* Home page specific styling - override base template container spacing */
+.container {
+    margin-top: 0 !important; /* Container already has proper spacing from block */
+    max-width: 1200px;
+}
+
+/* Ensure proper card styling */
+.card {
+    margin: 0.5rem 0 1rem 0;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Fix any Material Design variable fallbacks */
+:root {
+    --md-primary: #1976d2;
+    --md-surface-variant: #f5f5f5;
+    --md-outline-variant: #e0e0e0;
+    --text-secondary: #666;
+}
+
+/* Responsive improvements */
+@media (max-width: 768px) {
+    .container {
+        padding: 0 16px;
+    }
+}
+
 /* Enhanced Autocomplete Styling */
 .autocomplete-container {
     position: relative !important;
@@ -139,11 +169,7 @@
 {% endblock %}
 
 {% block content %}
-
-<!-- Navigation -->
-
-
-<div class="container" style="margin-top: 30px;">
+<div class="container" style="margin-top: 80px; padding: 0 20px;">
     <!-- Header Section -->
     <div class="row stagger-item">
         <div class="col s12">
@@ -1497,10 +1523,5 @@ document.addEventListener('DOMContentLoaded', function() {
 <!-- Materialize JS -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
 
-<!-- Custom JS -->
-<script src="{{ url_for('static', filename='js/main.js') }}"></script>
-<script src="{{ url_for('static', filename='js/floating-ai-chat.js') }}"></script>
-<script src="{{ url_for('static', filename='js/icon-loader.js') }}"></script>
-<script src="{{ url_for('static', filename='js/force-icon-refresh.js') }}"></script>
-<script src="{{ url_for('static', filename='js/micro-interactions.js') }}"></script>
+<!-- Page-specific JS only (base.html handles common scripts) -->
 {% endblock %}
