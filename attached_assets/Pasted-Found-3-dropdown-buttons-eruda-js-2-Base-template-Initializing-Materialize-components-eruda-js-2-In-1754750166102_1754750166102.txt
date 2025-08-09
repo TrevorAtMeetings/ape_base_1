@@ -1,0 +1,68 @@
+Found 3 dropdown buttons
+eruda.js:2 Base template: Initializing Materialize components
+eruda.js:2 Initialized 2 modals
+eruda.js:2 Initialized 0 sidenavs
+eruda.js:2 Form components initialized - enhanced autocomplete ready
+eruda.js:2 MathJax is loaded and ready
+eruda.js:2 Initializing navigation dropdowns...
+eruda.js:2 Found 3 dropdown buttons
+eruda.js:2 Engineering report DOM loaded
+eruda.js:2 Loading pump list for analysis controls
+eruda.js:2 Loading pump list...
+eruda.js:2 Base template: Initializing Materialize components
+eruda.js:2 Initialized 2 modals
+eruda.js:2 Initialized 0 sidenavs
+eruda.js:2 Form components initialized - enhanced autocomplete ready
+eruda.js:2 API response received: 200
+eruda.js:2 Pump data received: 100 pumps
+eruda.js:2 Dropdown button clicked! <button class=​"nav-btn">​…​</button>​flex
+eruda.js:2 Dropdown content found: <div class=​"nav-dropdown-content show">​…​</div>​
+eruda.js:2 Is currently open: false
+eruda.js:2 MathJax is loaded and ready
+eruda.js:2 Initializing navigation dropdowns...
+eruda.js:2 Found 3 dropdown buttons
+eruda.js:2 Engineering report DOM loaded
+eruda.js:2 Loading pump list for analysis controls
+eruda.js:2 Loading pump list...
+eruda.js:2 Base template: Initializing Materialize components
+eruda.js:2 Initialized 2 modals
+eruda.js:2 Initialized 0 sidenavs
+eruda.js:2 Form components initialized - enhanced autocomplete ready
+eruda.js:2 API response received: 200
+eruda.js:2 Pump data received: 100 pumps
+eruda.js:2 MathJax is loaded and ready
+eruda.js:2 Initializing navigation dropdowns...
+eruda.js:2 Found 3 dropdown buttons
+eruda.js:2 Engineering report DOM loaded
+eruda.js:2 Loading pump list for analysis controls
+eruda.js:2 Loading pump list...
+eruda.js:2 Base template: Initializing Materialize components
+eruda.js:2 Initialized 2 modals
+eruda.js:2 Initialized 0 sidenavs
+eruda.js:2 Form components initialized - enhanced autocomplete ready
+eruda.js:2 API response received: 200
+eruda.js:2 Pump data received: 100 pumps
+framework-54876941e2149c9a.js:1 Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+_ @ framework-54876941e2149c9a.js:1
+(anonymous) @ framework-54876941e2149c9a.js:1
+uD @ framework-54876941e2149c9a.js:1
+uI @ framework-54876941e2149c9a.js:1
+uM @ framework-54876941e2149c9a.js:1
+uS @ framework-54876941e2149c9a.js:1
+C @ framework-54876941e2149c9a.js:1
+z @ framework-54876941e2149c9a.js:1Understand this error
+2b3cf6c9-194e-4f41-a916-261c173c707c-00-2xhbijbynxd3g.picard.replit.dev:5000/__replco/workspace_iframe.html?initialPath=%2F&id=%3Arpl%3A:32 Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.Understand this error
+2b3cf6c9-194e-4f41-a916-261c173c707c-00-2xhbijbynxd3g.picard.replit.dev:5000/__replco/workspace_iframe.html?initialPath=%2F&id=%3Arpl%3A:32 Unrecognized feature: 'ambient-light-sensor'.Understand this warning
+2b3cf6c9-194e-4f41-a916-261c173c707c-00-2xhbijbynxd3g.picard.replit.dev:5000/__replco/workspace_iframe.html?initialPath=%2F&id=%3Arpl%3A:32 Unrecognized feature: 'battery'.Understand this warning
+2b3cf6c9-194e-4f41-a916-261c173c707c-00-2xhbijbynxd3g.picard.replit.dev:5000/__replco/workspace_iframe.html?initialPath=%2F&id=%3Arpl%3A:32 Unrecognized feature: 'execution-while-not-rendered'.Understand this warning
+2b3cf6c9-194e-4f41-a916-261c173c707c-00-2xhbijbynxd3g.picard.replit.dev:5000/__replco/workspace_iframe.html?initialPath=%2F&id=%3Arpl%3A:32 Unrecognized feature: 'execution-while-out-of-viewport'.Understand this warning
+2b3cf6c9-194e-4f41-a916-261c173c707c-00-2xhbijbynxd3g.picard.replit.dev:5000/__replco/workspace_iframe.html?initialPath=%2F&id=%3Arpl%3A:32 Unrecognized feature: 'layout-animations'.Understand this warning
+2b3cf6c9-194e-4f41-a916-261c173c707c-00-2xhbijbynxd3g.picard.replit.dev:5000/__replco/workspace_iframe.html?initialPath=%2F&id=%3Arpl%3A:32 Unrecognized feature: 'legacy-image-formats'.Understand this warning
+2b3cf6c9-194e-4f41-a916-261c173c707c-00-2xhbijbynxd3g.picard.replit.dev:5000/__replco/workspace_iframe.html?initialPath=%2F&id=%3Arpl%3A:32 Unrecognized feature: 'navigation-override'.Understand this warning
+2b3cf6c9-194e-4f41-a916-261c173c707c-00-2xhbijbynxd3g.picard.replit.dev:5000/__replco/workspace_iframe.html?initialPath=%2F&id=%3Arpl%3A:32 Unrecognized feature: 'oversized-images'.Understand this warning
+2b3cf6c9-194e-4f41-a916-261c173c707c-00-2xhbijbynxd3g.picard.replit.dev:5000/__replco/workspace_iframe.html?initialPath=%2F&id=%3Arpl%3A:32 Unrecognized feature: 'publickey-credentials'.Understand this warning
+2b3cf6c9-194e-4f41-a916-261c173c707c-00-2xhbijbynxd3g.picard.replit.dev:5000/__replco/workspace_iframe.html?initialPath=%2F&id=%3Arpl%3A:32 Unrecognized feature: 'speaker-selection'.Understand this warning
+2b3cf6c9-194e-4f41-a916-261c173c707c-00-2xhbijbynxd3g.picard.replit.dev:5000/__replco/workspace_iframe.html?initialPath=%2F&id=%3Arpl%3A:32 Unrecognized feature: 'unoptimized-images'.Understand this warning
+2b3cf6c9-194e-4f41-a916-261c173c707c-00-2xhbijbynxd3g.picard.replit.dev:5000/__replco/workspace_iframe.html?initialPath=%2F&id=%3Arpl%3A:32 Unrecognized feature: 'unsized-media'.Understand this warning
+2b3cf6c9-194e-4f41-a916-261c173c707c-00-2xhbijbynxd3g.picard.replit.dev:5000/__replco/workspace_iframe.html?initialPath=%2F&id=%3Arpl%3A:32 Allow attribute will take precedence over 'allowfullscreen'.Understand this warning
+2b3cf6c9-194e-4f41-a916-261c173c707c-00-2xhbijbynxd3g.picard.replit.dev:5000/__replco/workspace_iframe.html?initialPath=%2F&id=%3Arpl%3A:32 Allow attribute will take precedence over 'allowpaymentrequest'.
