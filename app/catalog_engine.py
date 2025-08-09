@@ -540,10 +540,10 @@ class CatalogPump:
 
     def _validate_physical_capability(self, flow_m3hr: float,
                                       head_m: float) -> bool:
-        """Validate that pump can meet requirements - TRUST MANUFACTURER DATA
+        """Validate that pump can meet requirements - check if pump can deliver required head at required flow rate
         
-        If manufacturer provides performance data, it's valid for operation.
-        We only check if the operating point is within the manufacturer's documented envelope.
+        CRITICAL FIX: Must check if pump can actually deliver the required head AT the required flow rate,
+        not just if the pump can deliver that head somewhere in its operating range.
         """
 
         # Get actual manufacturer-provided operating envelope
@@ -553,14 +553,12 @@ class CatalogPump:
             min(p['flow_m3hr'] for p in curve['performance_points'])
             for curve in self.curves)
 
-        # TRUST MANUFACTURER DATA - if it's in the curve, it's valid
-        # Only reject if completely outside manufacturer's documented range
+        # Basic range checks first
         if head_m > max_head * 1.5:  # Only reject extreme extrapolation
             logger.debug(
                 f"Required head {head_m}m significantly exceeds manufacturer data {max_head}m")
             return False
 
-        # Trust manufacturer flow range - if they provide data, it's operational
         if flow_m3hr > max_flow * 1.1:  # Small margin for interpolation only
             logger.debug(
                 f"Required flow {flow_m3hr} m³/hr exceeds manufacturer maximum {max_flow} m³/hr"
@@ -573,8 +571,8 @@ class CatalogPump:
             )
             return False
 
-        # CRITICAL FIX: Check curves starting with maximum impeller diameter first
-        # This ensures we evaluate the pump's full capability envelope
+        # CRITICAL FIX: Check if pump can deliver required head at the specific flow rate
+        # Check curves starting with maximum impeller diameter first
         sorted_curves = sorted(
             self.curves, 
             key=lambda x: x.get('impeller_diameter_mm', 0), 
@@ -583,20 +581,49 @@ class CatalogPump:
         
         for curve in sorted_curves:
             curve_points = curve['performance_points']
+            if not curve_points:
+                continue
+                
             curve_heads = [p['head_m'] for p in curve_points]
             curve_flows = [p['flow_m3hr'] for p in curve_points]
 
-            # Trust manufacturer envelope - if within their data range, it's valid
-            curve_max_head = max(curve_heads)
+            # Check if flow is within curve range
             curve_min_flow = min(curve_flows)
             curve_max_flow = max(curve_flows)
+            
+            if not (curve_min_flow * 0.9 <= flow_m3hr <= curve_max_flow * 1.1):
+                continue  # Flow is outside this curve's range
+            
+            try:
+                # Interpolate head at the required flow rate
+                if len(curve_flows) >= 2:
+                    # Sort points by flow for interpolation
+                    sorted_points = sorted(zip(curve_flows, curve_heads))
+                    flows_sorted, heads_sorted = zip(*sorted_points)
+                    
+                    # Use scipy interpolation to find head at required flow
+                    from scipy import interpolate
+                    head_interp = interpolate.interp1d(
+                        flows_sorted, heads_sorted, 
+                        kind='linear', 
+                        bounds_error=False, 
+                        fill_value='extrapolate'
+                    )
+                    
+                    delivered_head = float(head_interp(flow_m3hr))
+                    
+                    # Check if pump can deliver AT LEAST the required head at this flow rate
+                    if delivered_head >= head_m * 0.98:  # 2% tolerance
+                        logger.debug(f"Pump {self.pump_code}: Can deliver {delivered_head:.1f}m at {flow_m3hr} m³/hr (required: {head_m}m) - VALID")
+                        return True
+                    else:
+                        logger.debug(f"Pump {self.pump_code}: Can only deliver {delivered_head:.1f}m at {flow_m3hr} m³/hr (required: {head_m}m) - INSUFFICIENT")
+                        
+            except Exception as e:
+                logger.debug(f"Error interpolating curve for {self.pump_code}: {e}")
+                continue
 
-            # If operating point is within manufacturer's curve envelope, it's valid
-            if head_m <= curve_max_head * 1.2:  # Small extrapolation margin
-                if curve_min_flow <= flow_m3hr <= curve_max_flow:
-                    logger.debug(f"Operating point validated against {curve.get('impeller_diameter_mm', 0)}mm impeller curve")
-                    return True  # Within manufacturer's documented range
-
+        logger.debug(f"Pump {self.pump_code}: Cannot deliver required head {head_m}m at flow {flow_m3hr} m³/hr")
         return False
 
     def _validate_speed_variation_limits(self, speed_result: Dict[str, Any],
