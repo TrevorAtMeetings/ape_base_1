@@ -46,6 +46,11 @@
     <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='images/ape_logo.svg') }}">
 </head>
 <body>
+    <!-- Mobile Menu Button -->
+    <button class="mobile-menu-btn hide-on-med-and-up" onclick="toggleMobileMenu()" style="display: none;">
+        <i class="material-icons">menu</i>
+    </button>
+    
     <!-- Navigation -->
     <!-- Navigation now handled by includes/navigation.html for consistency -->
     <!-- This prevents duplicate navigation conflicts -->
@@ -165,6 +170,59 @@
 
     <!-- Materialize JavaScript -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+    
+    <!-- Mobile menu toggle script -->
+    <script>
+        function toggleMobileMenu() {
+            const nav = document.querySelector('.unified-nav');
+            const menuBtn = document.querySelector('.mobile-menu-btn');
+            if (nav && menuBtn) {
+                if (nav.style.display === 'none' || nav.style.display === '') {
+                    nav.style.display = 'block';
+                    nav.style.position = 'fixed';
+                    nav.style.top = '60px';
+                    nav.style.left = '0';
+                    nav.style.right = '0';
+                    nav.style.zIndex = '9998';
+                    nav.style.background = 'white';
+                    nav.style.boxShadow = '0 4px 12px rgba(0,0,0,0.2)';
+                    menuBtn.innerHTML = '<i class="material-icons">close</i>';
+                } else {
+                    nav.style.display = 'none';
+                    menuBtn.innerHTML = '<i class="material-icons">menu</i>';
+                }
+            }
+        }
+        
+        // Close mobile menu when clicking outside
+        document.addEventListener('click', function(e) {
+            const nav = document.querySelector('.unified-nav');
+            const menuBtn = document.querySelector('.mobile-menu-btn');
+            if (menuBtn && nav && !nav.contains(e.target) && !menuBtn.contains(e.target)) {
+                if (window.innerWidth <= 768 && nav.style.display === 'block') {
+                    nav.style.display = 'none';
+                    menuBtn.innerHTML = '<i class="material-icons">menu</i>';
+                }
+            }
+        });
+        
+        // Reset menu on window resize
+        window.addEventListener('resize', function() {
+            const nav = document.querySelector('.unified-nav');
+            const menuBtn = document.querySelector('.mobile-menu-btn');
+            if (window.innerWidth > 768 && nav && menuBtn) {
+                nav.style.display = '';
+                nav.style.position = '';
+                nav.style.top = '';
+                nav.style.left = '';
+                nav.style.right = '';
+                nav.style.zIndex = '';
+                nav.style.background = '';
+                nav.style.boxShadow = '';
+                menuBtn.innerHTML = '<i class="material-icons">menu</i>';
+            }
+        });
+    </script>
     <!-- Latest Plotly.js version -->
     <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
     <!-- Floating AI Chat -->

@@ -4,6 +4,7 @@
 
 {% block head %}
     <!-- Custom CSS -->
+    <link href="{{ url_for('static', filename='css/mobile-comparison.css') }}?v={{ range(1000, 9999) | random }}" rel="stylesheet">
     
     <style>
         .comparison-container {
@@ -843,8 +844,13 @@
         <div class="card" style="border-radius: 16px; box-shadow: 0 8px 32px rgba(0,0,0,0.12);">
             <div class="card-content" style="padding: 0;">
                 
+                <!-- Mobile scroll indicator -->
+                <div class="scroll-indicator hide-on-med-and-up">
+                    <i class="material-icons tiny">swap_horiz</i> Swipe table to see all pumps
+                </div>
+                
                 <div class="table-container">
-                    <div class="table-wrapper">
+                    <div class="table-wrapper" style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
                         <table class="comparison-table responsive-table striped">
                         <thead>
                             <tr>

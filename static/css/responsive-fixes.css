@@ -11,7 +11,7 @@
 /* Container width constraints */
 .container {
     max-width: 100% !important;
-    padding: 0 12px !important;
+    padding: 0 8px !important;
     overflow-x: hidden !important;
 }
 
@@ -26,6 +26,26 @@ body {
 main {
     overflow-x: hidden !important;
     width: 100% !important;
+}
+
+/* Mobile hamburger menu button */
+@media only screen and (max-width: 768px) {
+    .mobile-menu-btn {
+        display: block !important;
+        position: fixed !important;
+        top: 10px !important;
+        right: 10px !important;
+        z-index: 9999 !important;
+        background: #1976d2 !important;
+        color: white !important;
+        border-radius: 50% !important;
+        width: 48px !important;
+        height: 48px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.3) !important;
+    }
 }
 
 /* Fix navigation overflow - but allow dropdowns */
@@ -89,10 +109,56 @@ main {
 }
 
 /* Tables responsive wrapper */
-.table-responsive {
+.table-responsive,
+.table-wrapper,
+.table-container {
     overflow-x: auto !important;
     -webkit-overflow-scrolling: touch !important;
     margin-bottom: 16px !important;
+    max-width: 100% !important;
+}
+
+/* Comparison table mobile styles */
+@media only screen and (max-width: 768px) {
+    .comparison-table {
+        display: block !important;
+        width: 100% !important;
+        min-width: 600px !important; /* Allow horizontal scroll */
+    }
+    
+    .comparison-table thead {
+        display: none !important; /* Hide header on very small screens */
+    }
+    
+    .comparison-table tbody {
+        display: block !important;
+    }
+    
+    .comparison-table tr {
+        display: block !important;
+        margin-bottom: 10px !important;
+        border: 1px solid #ddd !important;
+        border-radius: 8px !important;
+        padding: 10px !important;
+        background: white !important;
+    }
+    
+    .comparison-table td {
+        display: block !important;
+        text-align: right !important;
+        padding: 5px 10px !important;
+        position: relative !important;
+        padding-left: 50% !important;
+    }
+    
+    .comparison-table td:before {
+        content: attr(data-label) !important;
+        position: absolute !important;
+        left: 10px !important;
+        width: 45% !important;
+        text-align: left !important;
+        font-weight: bold !important;
+    }
 }
 
 table {
@@ -121,6 +187,109 @@ td, th {
         box-sizing: border-box !important;
     }
 
+    /* Pump selection cards mobile */
+    .pump-result-row {
+        flex-direction: column !important;
+        padding: 12px !important;
+        gap: 12px !important;
+    }
+    
+    .pump-rank-circle {
+        position: absolute !important;
+        top: 10px !important;
+        right: 10px !important;
+        width: 30px !important;
+        height: 30px !important;
+        font-size: 0.9rem !important;
+    }
+    
+    .pump-info-block {
+        width: 100% !important;
+        padding-right: 40px !important;
+    }
+    
+    .pump-metrics-grid {
+        width: 100% !important;
+        display: grid !important;
+        grid-template-columns: repeat(3, 1fr) !important;
+        gap: 8px !important;
+    }
+    
+    .metric-column {
+        text-align: center !important;
+        padding: 8px 4px !important;
+        background: #f5f5f5 !important;
+        border-radius: 6px !important;
+    }
+    
+    .metric-value {
+        font-size: 0.9rem !important;
+    }
+    
+    .metric-label {
+        font-size: 0.65rem !important;
+    }
+    
+    .pump-score-display {
+        width: 100% !important;
+        text-align: center !important;
+        background: #e3f2fd !important;
+        padding: 8px !important;
+        border-radius: 8px !important;
+    }
+    
+    .pump-action-buttons {
+        width: 100% !important;
+        justify-content: center !important;
+    }
+    
+    .pump-chevron {
+        display: none !important;
+    }
+    
+    /* Sorting controls mobile */
+    .sorting-controls {
+        flex-direction: column !important;
+        gap: 8px !important;
+        padding: 12px !important;
+        background: #f5f5f5 !important;
+        border-radius: 8px !important;
+        margin-bottom: 16px !important;
+    }
+    
+    .sorting-label {
+        width: 100% !important;
+        margin-bottom: 8px !important;
+        font-weight: 600 !important;
+    }
+    
+    .sort-option {
+        width: 100% !important;
+        justify-content: space-between !important;
+        padding: 10px 12px !important;
+        margin: 4px 0 !important;
+    }
+    
+    /* Summary cards mobile */
+    .summary-cards {
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 8px !important;
+        padding: 0 8px !important;
+    }
+    
+    .summary-card {
+        padding: 12px 8px !important;
+    }
+    
+    .summary-value {
+        font-size: 1.2rem !important;
+    }
+    
+    .summary-label {
+        font-size: 0.7rem !important;
+    }
+    
     /* Buttons responsive */
     .btn, .btn-large {
         width: 100% !important;
