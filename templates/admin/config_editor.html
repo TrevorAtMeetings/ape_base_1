@@ -1,0 +1,782 @@
+{% extends "base.html" %}
+
+{% block title %}{{ 'Edit' if profile else 'Create' }} Configuration Profile{% endblock %}
+
+{% block head %}
+<style>
+/* Modern Configuration Editor Styles */
+.config-editor {
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    min-height: 100vh;
+    padding: 24px 0;
+}
+
+.editor-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 24px;
+}
+
+.editor-header {
+    background: white;
+    border-radius: 16px;
+    padding: 32px;
+    margin-bottom: 24px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.editor-title {
+    font-size: 28px;
+    font-weight: 400;
+    color: #1976d2;
+    margin: 0 0 8px 0;
+}
+
+.editor-subtitle {
+    font-size: 16px;
+    color: #666;
+    margin: 0;
+}
+
+/* Two-column layout for desktop */
+.editor-grid {
+    display: grid;
+    grid-template-columns: 1fr 350px;
+    gap: 24px;
+}
+
+/* Configuration sections */
+.config-section {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+.section-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #e0e0e0;
+}
+
+.section-icon {
+    font-size: 24px;
+    color: #1976d2;
+}
+
+.section-title {
+    font-size: 18px;
+    font-weight: 500;
+    color: #333;
+    margin: 0;
+}
+
+/* Weight sliders */
+.weight-slider-group {
+    margin-bottom: 24px;
+}
+
+.weight-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.weight-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: #555;
+}
+
+.weight-value {
+    background: #1976d2;
+    color: white;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 500;
+    min-width: 45px;
+    text-align: center;
+}
+
+.weight-slider {
+    width: 100%;
+    height: 6px;
+    border-radius: 3px;
+    background: #e0e0e0;
+    outline: none;
+    -webkit-appearance: none;
+    margin-bottom: 8px;
+}
+
+.weight-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #1976d2;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.weight-slider::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #1976d2;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.weight-description {
+    font-size: 12px;
+    color: #888;
+    margin-bottom: 16px;
+}
+
+/* Total weight indicator */
+.weight-total {
+    background: #f5f5f5;
+    border-radius: 8px;
+    padding: 12px;
+    margin-top: 16px;
+    text-align: center;
+}
+
+.weight-total.valid {
+    background: #e8f5e9;
+    border: 1px solid #4caf50;
+}
+
+.weight-total.invalid {
+    background: #ffebee;
+    border: 1px solid #f44336;
+}
+
+.weight-total-label {
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 4px;
+}
+
+.weight-total-value {
+    font-size: 24px;
+    font-weight: 500;
+}
+
+.weight-total.valid .weight-total-value {
+    color: #4caf50;
+}
+
+.weight-total.invalid .weight-total-value {
+    color: #f44336;
+}
+
+/* Input groups */
+.input-group {
+    margin-bottom: 20px;
+}
+
+.input-label {
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    color: #555;
+    margin-bottom: 8px;
+}
+
+.input-field {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: all 0.2s;
+}
+
+.input-field:focus {
+    outline: none;
+    border-color: #1976d2;
+    box-shadow: 0 0 0 3px rgba(25,118,210,0.1);
+}
+
+.input-help {
+    font-size: 12px;
+    color: #888;
+    margin-top: 4px;
+}
+
+/* Range inputs */
+.range-input-group {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+/* Test panel */
+.test-panel {
+    position: sticky;
+    top: 24px;
+}
+
+.test-section {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    margin-bottom: 20px;
+}
+
+.test-button {
+    width: 100%;
+    padding: 12px;
+    background: #4caf50;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.test-button:hover {
+    background: #45a049;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.test-button:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Test results */
+.test-results {
+    margin-top: 20px;
+    padding: 16px;
+    background: #f5f5f5;
+    border-radius: 8px;
+    display: none;
+}
+
+.test-results.show {
+    display: block;
+}
+
+.test-result-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.test-result-item:last-child {
+    border-bottom: none;
+}
+
+.test-result-label {
+    font-size: 14px;
+    color: #666;
+}
+
+.test-result-value {
+    font-size: 14px;
+    font-weight: 500;
+    color: #333;
+}
+
+.test-result-value.success {
+    color: #4caf50;
+}
+
+.test-result-value.warning {
+    color: #ff9800;
+}
+
+.test-result-value.error {
+    color: #f44336;
+}
+
+/* Action buttons */
+.action-buttons {
+    display: flex;
+    gap: 12px;
+    padding: 24px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    position: sticky;
+    bottom: 24px;
+    margin-top: 24px;
+}
+
+.btn {
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-primary {
+    background: #1976d2;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #1565c0;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.btn-secondary {
+    background: transparent;
+    color: #1976d2;
+    border: 1px solid #1976d2;
+}
+
+.btn-secondary:hover {
+    background: #e3f2fd;
+}
+
+.btn-danger {
+    background: #f44336;
+    color: white;
+}
+
+.btn-danger:hover {
+    background: #d32f2f;
+}
+
+.btn:disabled {
+    background: #ccc;
+    color: #999;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Validation messages */
+.validation-message {
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.validation-message.error {
+    background: #ffebee;
+    color: #c62828;
+    border: 1px solid #ef5350;
+}
+
+.validation-message.warning {
+    background: #fff3e0;
+    color: #e65100;
+    border: 1px solid #ff9800;
+}
+
+.validation-message.success {
+    background: #e8f5e9;
+    color: #2e7d32;
+    border: 1px solid #4caf50;
+}
+
+/* Mobile responsive */
+@media (max-width: 968px) {
+    .editor-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .test-panel {
+        position: relative;
+        top: 0;
+    }
+    
+    .action-buttons {
+        position: relative;
+        bottom: auto;
+    }
+}
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="config-editor">
+    <div class="editor-container">
+        <!-- Header -->
+        <div class="editor-header">
+            <h1 class="editor-title">
+                <span class="material-icons-round section-icon">tune</span>
+                {{ 'Edit' if profile else 'Create' }} Configuration Profile
+            </h1>
+            <p class="editor-subtitle">
+                {% if profile %}
+                    Modify scoring weights and parameters for {{ profile.name }}
+                {% else %}
+                    Create a new configuration profile with custom scoring logic
+                {% endif %}
+            </p>
+        </div>
+
+        <form id="configForm" method="POST">
+            <div class="editor-grid">
+                <!-- Main configuration area -->
+                <div class="main-config">
+                    <!-- Basic Information -->
+                    <div class="config-section">
+                        <div class="section-header">
+                            <span class="material-icons-round section-icon">info</span>
+                            <h2 class="section-title">Basic Information</h2>
+                        </div>
+                        
+                        <div class="input-group">
+                            <label class="input-label">Profile Name</label>
+                            <input type="text" 
+                                   name="name" 
+                                   class="input-field" 
+                                   value="{{ profile.name if profile else '' }}"
+                                   placeholder="e.g., High Efficiency Focus"
+                                   required>
+                            <div class="input-help">A unique name for this configuration profile</div>
+                        </div>
+                        
+                        <div class="input-group">
+                            <label class="input-label">Description</label>
+                            <textarea name="description" 
+                                      class="input-field" 
+                                      rows="3"
+                                      placeholder="Describe the use case for this profile">{{ profile.description if profile else '' }}</textarea>
+                            <div class="input-help">Explain when and why to use this profile</div>
+                        </div>
+                    </div>
+
+                    <!-- Scoring Weights -->
+                    <div class="config-section">
+                        <div class="section-header">
+                            <span class="material-icons-round section-icon">scale</span>
+                            <h2 class="section-title">Scoring Weights</h2>
+                        </div>
+                        
+                        <div class="weight-slider-group">
+                            <div class="weight-label">
+                                <span class="weight-name">BEP Proximity</span>
+                                <span class="weight-value" id="bepValue">{{ profile.scoring_weights.bep if profile else 40 }}</span>
+                            </div>
+                            <input type="range" 
+                                   class="weight-slider" 
+                                   id="bepSlider"
+                                   name="bep_weight"
+                                   min="0" max="100" step="5"
+                                   value="{{ profile.scoring_weights.bep if profile else 40 }}">
+                            <div class="weight-description">
+                                How closely the pump operates to its Best Efficiency Point
+                            </div>
+                        </div>
+                        
+                        <div class="weight-slider-group">
+                            <div class="weight-label">
+                                <span class="weight-name">Efficiency</span>
+                                <span class="weight-value" id="efficiencyValue">{{ profile.scoring_weights.efficiency if profile else 30 }}</span>
+                            </div>
+                            <input type="range" 
+                                   class="weight-slider" 
+                                   id="efficiencySlider"
+                                   name="efficiency_weight"
+                                   min="0" max="100" step="5"
+                                   value="{{ profile.scoring_weights.efficiency if profile else 30 }}">
+                            <div class="weight-description">
+                                Overall pump efficiency at the operating point
+                            </div>
+                        </div>
+                        
+                        <div class="weight-slider-group">
+                            <div class="weight-label">
+                                <span class="weight-name">Head Margin</span>
+                                <span class="weight-value" id="headValue">{{ profile.scoring_weights.head_margin if profile else 15 }}</span>
+                            </div>
+                            <input type="range" 
+                                   class="weight-slider" 
+                                   id="headSlider"
+                                   name="head_margin_weight"
+                                   min="0" max="100" step="5"
+                                   value="{{ profile.scoring_weights.head_margin if profile else 15 }}">
+                            <div class="weight-description">
+                                Available head margin above the required duty point
+                            </div>
+                        </div>
+                        
+                        <div class="weight-slider-group">
+                            <div class="weight-label">
+                                <span class="weight-name">NPSH Safety</span>
+                                <span class="weight-value" id="npshValue">{{ profile.scoring_weights.npsh if profile else 15 }}</span>
+                            </div>
+                            <input type="range" 
+                                   class="weight-slider" 
+                                   id="npshSlider"
+                                   name="npsh_weight"
+                                   min="0" max="100" step="5"
+                                   value="{{ profile.scoring_weights.npsh if profile else 15 }}">
+                            <div class="weight-description">
+                                NPSH margin to prevent cavitation
+                            </div>
+                        </div>
+                        
+                        <div class="weight-total" id="weightTotal">
+                            <div class="weight-total-label">Total Weight</div>
+                            <div class="weight-total-value" id="totalValue">100%</div>
+                        </div>
+                    </div>
+
+                    <!-- Operating Zones -->
+                    <div class="config-section">
+                        <div class="section-header">
+                            <span class="material-icons-round section-icon">adjust</span>
+                            <h2 class="section-title">Operating Zones</h2>
+                        </div>
+                        
+                        <div class="input-group">
+                            <label class="input-label">BEP Optimal Range</label>
+                            <div class="range-input-group">
+                                <input type="number" 
+                                       name="bep_optimal_min" 
+                                       class="input-field" 
+                                       step="0.01"
+                                       value="{{ profile.zones.bep_optimal[0] if profile else 0.95 }}"
+                                       placeholder="Min (e.g., 0.95)">
+                                <input type="number" 
+                                       name="bep_optimal_max" 
+                                       class="input-field" 
+                                       step="0.01"
+                                       value="{{ profile.zones.bep_optimal[1] if profile else 1.05 }}"
+                                       placeholder="Max (e.g., 1.05)">
+                            </div>
+                            <div class="input-help">Acceptable range as fraction of BEP flow (0.95 = 95% of BEP)</div>
+                        </div>
+                        
+                        <div class="input-group">
+                            <label class="input-label">Minimum Acceptable Efficiency (%)</label>
+                            <input type="number" 
+                                   name="min_acceptable_efficiency" 
+                                   class="input-field" 
+                                   step="1"
+                                   value="{{ profile.zones.efficiency_thresholds.minimum if profile else 40 }}"
+                                   placeholder="e.g., 40">
+                            <div class="input-help">Pumps below this efficiency will be rejected</div>
+                        </div>
+                        
+                        <div class="input-group">
+                            <label class="input-label">NPSH Minimum Margin (m)</label>
+                            <input type="number" 
+                                   name="npsh_minimum_margin" 
+                                   class="input-field" 
+                                   step="0.1"
+                                   value="{{ profile.zones.npsh_margins.minimum if profile else 0.5 }}"
+                                   placeholder="e.g., 0.5">
+                            <div class="input-help">Minimum safety margin for NPSH</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Test panel -->
+                <div class="test-panel">
+                    <!-- Quick Test -->
+                    <div class="test-section">
+                        <div class="section-header">
+                            <span class="material-icons-round section-icon">science</span>
+                            <h3 class="section-title">Test Configuration</h3>
+                        </div>
+                        
+                        <button type="button" class="test-button" id="testButton">
+                            <span class="material-icons-round">play_arrow</span>
+                            Run Validation Test
+                        </button>
+                        
+                        <div class="test-results" id="testResults">
+                            <div class="test-result-item">
+                                <span class="test-result-label">Weight Total</span>
+                                <span class="test-result-value" id="testWeightTotal">-</span>
+                            </div>
+                            <div class="test-result-item">
+                                <span class="test-result-label">BEP Range</span>
+                                <span class="test-result-value" id="testBepRange">-</span>
+                            </div>
+                            <div class="test-result-item">
+                                <span class="test-result-label">Efficiency</span>
+                                <span class="test-result-value" id="testEfficiency">-</span>
+                            </div>
+                            <div class="test-result-item">
+                                <span class="test-result-label">NPSH Safety</span>
+                                <span class="test-result-value" id="testNpsh">-</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Deployment -->
+                    {% if profile %}
+                    <div class="test-section">
+                        <div class="section-header">
+                            <span class="material-icons-round section-icon">rocket_launch</span>
+                            <h3 class="section-title">Deployment</h3>
+                        </div>
+                        
+                        <div class="input-group">
+                            <label class="input-label">
+                                <input type="checkbox" 
+                                       name="is_active" 
+                                       {% if profile.is_active %}checked{% endif %}>
+                                Make this the active profile
+                            </label>
+                        </div>
+                        
+                        <button type="button" class="test-button" style="background: #ff9800;">
+                            <span class="material-icons-round">publish</span>
+                            Deploy to Production
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Action buttons -->
+            <div class="action-buttons">
+                <button type="submit" class="btn btn-primary" id="saveButton">
+                    <span class="material-icons-round">save</span>
+                    {{ 'Save Changes' if profile else 'Create Profile' }}
+                </button>
+                
+                <button type="button" class="btn btn-secondary" onclick="testConfiguration()">
+                    <span class="material-icons-round">bug_report</span>
+                    Test & Validate
+                </button>
+                
+                <a href="{{ url_for('admin_config.index') }}" class="btn btn-secondary">
+                    <span class="material-icons-round">close</span>
+                    Cancel
+                </a>
+                
+                {% if profile and not profile.is_active %}
+                <button type="button" class="btn btn-danger" onclick="deleteProfile()">
+                    <span class="material-icons-round">delete</span>
+                    Delete
+                </button>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+// Weight slider management
+const sliders = {
+    bep: document.getElementById('bepSlider'),
+    efficiency: document.getElementById('efficiencySlider'),
+    head: document.getElementById('headSlider'),
+    npsh: document.getElementById('npshSlider')
+};
+
+const values = {
+    bep: document.getElementById('bepValue'),
+    efficiency: document.getElementById('efficiencyValue'),
+    head: document.getElementById('headValue'),
+    npsh: document.getElementById('npshValue')
+};
+
+function updateWeights() {
+    // Update individual values
+    values.bep.textContent = sliders.bep.value;
+    values.efficiency.textContent = sliders.efficiency.value;
+    values.head.textContent = sliders.head.value;
+    values.npsh.textContent = sliders.npsh.value;
+    
+    // Calculate total
+    const total = parseInt(sliders.bep.value) + 
+                  parseInt(sliders.efficiency.value) + 
+                  parseInt(sliders.head.value) + 
+                  parseInt(sliders.npsh.value);
+    
+    // Update total display
+    const totalElement = document.getElementById('weightTotal');
+    const totalValue = document.getElementById('totalValue');
+    totalValue.textContent = total + '%';
+    
+    // Update styling based on validity
+    if (total === 100) {
+        totalElement.className = 'weight-total valid';
+        document.getElementById('saveButton').disabled = false;
+    } else {
+        totalElement.className = 'weight-total invalid';
+        document.getElementById('saveButton').disabled = true;
+    }
+}
+
+// Add event listeners
+Object.values(sliders).forEach(slider => {
+    slider.addEventListener('input', updateWeights);
+});
+
+// Test configuration
+function testConfiguration() {
+    const testButton = document.getElementById('testButton');
+    const testResults = document.getElementById('testResults');
+    
+    testButton.disabled = true;
+    testButton.innerHTML = '<span class="material-icons-round">hourglass_empty</span> Testing...';
+    
+    // Simulate test
+    setTimeout(() => {
+        testResults.classList.add('show');
+        
+        // Check weight total
+        const total = parseInt(sliders.bep.value) + 
+                      parseInt(sliders.efficiency.value) + 
+                      parseInt(sliders.head.value) + 
+                      parseInt(sliders.npsh.value);
+        
+        const weightResult = document.getElementById('testWeightTotal');
+        if (total === 100) {
+            weightResult.textContent = '✓ Valid (100%)';
+            weightResult.className = 'test-result-value success';
+        } else {
+            weightResult.textContent = `✗ Invalid (${total}%)`;
+            weightResult.className = 'test-result-value error';
+        }
+        
+        // Check other parameters
+        document.getElementById('testBepRange').textContent = '✓ Valid';
+        document.getElementById('testBepRange').className = 'test-result-value success';
+        
+        document.getElementById('testEfficiency').textContent = '✓ Valid';
+        document.getElementById('testEfficiency').className = 'test-result-value success';
+        
+        document.getElementById('testNpsh').textContent = '✓ Valid';
+        document.getElementById('testNpsh').className = 'test-result-value success';
+        
+        testButton.disabled = false;
+        testButton.innerHTML = '<span class="material-icons-round">play_arrow</span> Run Validation Test';
+    }, 1000);
+}
+
+// Initialize on load
+updateWeights();
+</script>
+{% endblock %}

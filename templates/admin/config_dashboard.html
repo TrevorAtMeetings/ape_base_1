@@ -243,14 +243,14 @@
                 {% endif %}
                 
                 <div class="btn-group">
-                    <a href="/admin/config/profile/new" class="btn btn-primary">
+                    <a href="{{ url_for('admin_config.create_profile') }}" class="btn btn-primary">
                         <span class="material-icons-round">add</span>
                         Create Profile
                     </a>
-                    <a href="/admin/config/import" class="btn btn-secondary">
-                        <span class="material-icons-round">upload</span>
-                        Import Config
-                    </a>
+                    <button onclick="testAllProfiles()" class="btn btn-secondary">
+                        <span class="material-icons-round">science</span>
+                        Test All
+                    </button>
                 </div>
             </div>
 

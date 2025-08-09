@@ -343,6 +343,47 @@ class AdminConfigService:
                 
                 return cursor.fetchall()
     
+    def get_profile_by_id(self, profile_id: int) -> Optional[Dict]:
+        """Get specific profile by ID"""
+        with self.db.get_connection() as conn:
+            with conn.cursor(cursor_factory=RealDictCursor) as cursor:
+                cursor.execute("""
+                    SELECT * FROM admin_config.application_profiles
+                    WHERE id = %s
+                """, (profile_id,))
+                
+                profile = cursor.fetchone()
+                if not profile:
+                    return None
+                
+                # Convert to expected format
+                return {
+                    'id': profile['id'],
+                    'name': profile['name'],
+                    'description': profile['description'],
+                    'is_active': profile['is_active'],
+                    'scoring_weights': {
+                        'bep': profile['bep_weight'],
+                        'efficiency': profile['efficiency_weight'],
+                        'head_margin': profile['head_margin_weight'],
+                        'npsh': profile['npsh_weight']
+                    },
+                    'zones': {
+                        'bep_optimal': (profile['bep_optimal_min'], profile['bep_optimal_max']),
+                        'efficiency_thresholds': {
+                            'minimum': profile['min_acceptable_efficiency'],
+                            'fair': profile['fair_efficiency'],
+                            'good': profile['good_efficiency'],
+                            'excellent': profile['excellent_efficiency']
+                        },
+                        'npsh_margins': {
+                            'excellent': profile['npsh_excellent_margin'],
+                            'good': profile['npsh_good_margin'],
+                            'minimum': profile['npsh_minimum_margin']
+                        }
+                    }
+                }
+    
     def get_engineering_constants(self) -> List[Dict]:
         """Get all locked engineering constants"""
         with self.db.get_connection() as conn:
