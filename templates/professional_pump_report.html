@@ -672,7 +672,7 @@
                         {% if left_pos < 0 %}{% set left_pos = 0 %}{% endif %}
                         {% if left_pos > 90 %}{% set left_pos = 90 %}{% endif %}
                         
-                        <div class="bep-range {% if 80 <= qbep <= 110 %}bep-optimal{% elif 70 <= qbep <= 120 %}bep-good{% else %}bep-marginal{% endif %}" style="left: {{ left_pos }}%; width: 10%;">
+                        <div class="bep-range{% if 80 <= qbep <= 110 %} bep-optimal{% elif 70 <= qbep <= 120 %} bep-good{% else %} bep-marginal{% endif %}" style="left: {{ left_pos }}%; width: 10%;">
                             {{ qbep|round(0)|int }}%
                         </div>
                     </div>
@@ -827,8 +827,7 @@
                                     <div class="pump-name">{{ pump.pump_code }}</div>
                                     <div style="color: #999; font-size: 0.85rem;">{{ pump.pump_type }}</div>
                                 </div>
-                                <div class="pump-score" style="color: {% if pump.suitability_score >= 80 %}#4caf50{% elif pump.suitability_score >= 60 %}#2196f3{% else %}#ff9800{% endif %};">{{ pump.suitability_score|round(0)|int }}
-                                </div>
+                                <div class="pump-score" style="color: {% if pump.suitability_score >= 80 %}#4caf50{% elif pump.suitability_score >= 60 %}#2196f3{% else %}#ff9800{% endif %};">{{ pump.suitability_score|round(0)|int }}</div>
                             </div>
                             <div class="inline-metrics" style="gap: 16px;">
                                 <div style="font-size: 0.85rem;">
@@ -906,8 +905,8 @@
         document.addEventListener('DOMContentLoaded', function() {
             const chartData = {
                 pumpCode: "{{ selected_pump.get('pump_code', '') }}",
-                flowRate: {{ site_requirements.get('flow_m3hr', 0)|float }},
-                head: {{ site_requirements.get('head_m', 0)|float }}
+                flowRate: {{ site_requirements.get('flow_m3hr', 0)|float|tojson }},
+                head: {{ site_requirements.get('head_m', 0)|float|tojson }}
             };
 
             // Initialize Materialize components if available
@@ -1044,8 +1043,8 @@
         // Comparison Functions
         function addToComparison() {
             const pumpCode = "{{ selected_pump.get('pump_code', '') }}";
-            const flow = {{ site_requirements.get('flow_m3hr', 0) }};
-            const head = {{ site_requirements.get('head_m', 0) }};
+            const flow = {{ site_requirements.get('flow_m3hr', 0)|float|tojson }};
+            const head = {{ site_requirements.get('head_m', 0)|float|tojson }};
             const pumpType = "{{ site_requirements.get('pump_type', 'GENERAL') }}";
             
             // Add to comparison via API
@@ -1086,8 +1085,8 @@
         }
 
         function viewAllAlternatives() {
-            const flow = {{ site_requirements.get('flow_m3hr', 0) }};
-            const head = {{ site_requirements.get('head_m', 0) }};
+            const flow = {{ site_requirements.get('flow_m3hr', 0)|float|tojson }};
+            const head = {{ site_requirements.get('head_m', 0)|float|tojson }};
             const pumpType = "{{ site_requirements.get('pump_type', 'GENERAL') }}";
             
             window.location.href = `/pump_options?flow=${flow}&head=${head}&pump_type=${pumpType}`;
@@ -1101,8 +1100,8 @@
 
         function generatePDF() {
             const pumpCode = "{{ selected_pump.get('pump_code', '') }}";
-            const flow = {{ site_requirements.get('flow_m3hr', 0) }};
-            const head = {{ site_requirements.get('head_m', 0) }};
+            const flow = {{ site_requirements.get('flow_m3hr', 0)|float|tojson }};
+            const head = {{ site_requirements.get('head_m', 0)|float|tojson }};
             const pumpType = "{{ site_requirements.get('pump_type', 'GENERAL') }}";
             
             window.open(`/api/generate_pump_pdf/${encodeURIComponent(pumpCode)}?flow=${flow}&head=${head}&pump_type=${pumpType}`, '_blank');
