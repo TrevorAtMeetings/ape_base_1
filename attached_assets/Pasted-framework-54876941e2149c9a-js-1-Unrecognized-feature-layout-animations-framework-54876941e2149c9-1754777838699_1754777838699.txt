@@ -1,0 +1,29 @@
+framework-54876941e2149c9a.js:1 Unrecognized feature: 'layout-animations'.
+framework-54876941e2149c9a.js:1 Unrecognized feature: 'legacy-image-formats'.
+framework-54876941e2149c9a.js:1 Unrecognized feature: 'navigation-override'.
+framework-54876941e2149c9a.js:1 Unrecognized feature: 'oversized-images'.
+framework-54876941e2149c9a.js:1 Unrecognized feature: 'publickey-credentials'.
+framework-54876941e2149c9a.js:1 Unrecognized feature: 'speaker-selection'.
+framework-54876941e2149c9a.js:1 Unrecognized feature: 'unoptimized-images'.
+framework-54876941e2149c9a.js:1 Unrecognized feature: 'unsized-media'.
+framework-54876941e2149c9a.js:1 Unrecognized feature: 'pointer-lock'.
+framework-54876941e2149c9a.js:1 Allow attribute will take precedence over 'allowfullscreen'.
+framework-54876941e2149c9a.js:1 Allow attribute will take precedence over 'allowpaymentrequest'.
+2b3cf6c9-194e-4f41-a…ig&id=%3Arslu%3A:32 Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+2b3cf6c9-194e-4f41-a…ig&id=%3Arslu%3A:32 Unrecognized feature: 'ambient-light-sensor'.
+2b3cf6c9-194e-4f41-a…ig&id=%3Arslu%3A:32 Unrecognized feature: 'battery'.
+2b3cf6c9-194e-4f41-a…ig&id=%3Arslu%3A:32 Unrecognized feature: 'execution-while-not-rendered'.
+2b3cf6c9-194e-4f41-a…ig&id=%3Arslu%3A:32 Unrecognized feature: 'execution-while-out-of-viewport'.
+2b3cf6c9-194e-4f41-a…ig&id=%3Arslu%3A:32 Unrecognized feature: 'layout-animations'.
+2b3cf6c9-194e-4f41-a…ig&id=%3Arslu%3A:32 Unrecognized feature: 'legacy-image-formats'.
+2b3cf6c9-194e-4f41-a…ig&id=%3Arslu%3A:32 Unrecognized feature: 'navigation-override'.
+2b3cf6c9-194e-4f41-a…ig&id=%3Arslu%3A:32 Unrecognized feature: 'oversized-images'.
+2b3cf6c9-194e-4f41-a…ig&id=%3Arslu%3A:32 Unrecognized feature: 'publickey-credentials'.
+2b3cf6c9-194e-4f41-a…ig&id=%3Arslu%3A:32 Unrecognized feature: 'speaker-selection'.
+2b3cf6c9-194e-4f41-a…ig&id=%3Arslu%3A:32 Unrecognized feature: 'unoptimized-images'.
+2b3cf6c9-194e-4f41-a…ig&id=%3Arslu%3A:32 Unrecognized feature: 'unsized-media'.
+2b3cf6c9-194e-4f41-a…ig&id=%3Arslu%3A:32 Allow attribute will take precedence over 'allowfullscreen'.
+2b3cf6c9-194e-4f41-a…ig&id=%3Arslu%3A:32 Allow attribute will take precedence over 'allowpaymentrequest'.
+workspace_iframe.htm…g&id=%3Arslu%3A:151 Mixed Content: The page at 'https://replit.com/t/xaistudio/repls/APEREBasev21' was loaded over HTTPS, but requested an insecure frame 'http://2b3cf6c9-194e-4f41-a916-261c173c707c-00-2xhbijbynxd3g.picard.replit.dev/admin/config/'. This request has been blocked; the content must be served over HTTPS.
+﻿
+

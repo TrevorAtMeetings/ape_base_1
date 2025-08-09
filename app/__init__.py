@@ -5,6 +5,7 @@ This package initializes the Flask application and imports its components.
 import os
 from dotenv import load_dotenv
 from flask import Flask
+from werkzeug.middleware.proxy_fix import ProxyFix
 import logging
 
 # Load environment variables from .env file
@@ -26,7 +27,10 @@ static_dir = os.path.join(project_root, 'static')
 app = Flask(__name__, 
            template_folder=template_dir,
            static_folder=static_dir)
-logger.info("Flask app instance created.")
+
+# Configure proxy fix for Replit HTTPS environment
+app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1, x_for=1)
+logger.info("Flask app instance created with ProxyFix for Replit.")
 
 # 2. CONFIGURE THE APP
 # Production-ready configuration
