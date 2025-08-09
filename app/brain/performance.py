@@ -90,13 +90,6 @@ class PerformanceAnalyzer:
                         # If power is missing, mark this curve as invalid - never generate synthetic data
                         powers.append(None)  # Mark missing data explicitly - curve will be rejected
                 
-                # Debug: Check if we have valid data
-                if pump_code == "150-400 2F":  # Debug specific pump
-                    logger.debug(f"Debug {pump_code}: flows={flows[:3]}...")
-                    logger.debug(f"Debug {pump_code}: heads={heads[:3]}...")
-                    logger.debug(f"Debug {pump_code}: effs={effs[:3]}...")
-                    logger.debug(f"Debug {pump_code}: powers={powers[:3]}...")
-                
                 # Check if flow is within curve range
                 if not flows or not heads:
                     logger.debug(f"[PERF] {pump_code}: Curve {i+1} skipped - missing flow or head data")
@@ -112,15 +105,18 @@ class PerformanceAnalyzer:
                 logger.debug(f"[PERF] {pump_code}: Curve {i+1} starting interpolation...")
                 
                 try:
-                    # FIXED: Calculate power hydraulically from authentic manufacturer data
-                    # This is standard engineering practice, not a fallback
+                    # CRITICAL FIX: Sort all data by flow to ensure monotonic interpolation
+                    # This prevents scipy interpolation failures that cause NaN results
+                    try:
+                        sorted_points = sorted(zip(flows, heads, effs, powers), key=lambda p: p[0])
+                        flows_sorted, heads_sorted, effs_sorted, powers_sorted = zip(*sorted_points)
+                    except ValueError:
+                        logger.debug(f"[PERF] {pump_code}: Curve {i+1} skipped - empty data lists after extraction")
+                        continue
                     
-                    # Interpolate values at operating flow using authentic manufacturer data
-                    sorted_data = sorted(zip(flows, heads, effs))
-                    flows_sorted, heads_sorted, effs_sorted = zip(*sorted_data)
+                    logger.debug(f"[PERF] {pump_code}: Curve {i+1} creating interpolation functions with sorted data...")
                     
-                    logger.debug(f"[PERF] {pump_code}: Curve {i+1} creating interpolation functions...")
-                    
+                    # Create interpolation functions using SORTED data
                     head_interp = interpolate.interp1d(flows_sorted, heads_sorted, 
                                                      kind='linear', bounds_error=False)
                     eff_interp = interpolate.interp1d(flows_sorted, effs_sorted, 
@@ -131,16 +127,24 @@ class PerformanceAnalyzer:
                     delivered_head = float(head_interp(flow))
                     efficiency = float(eff_interp(flow))
                     
-                    # Calculate power hydraulically from authentic manufacturer data
-                    # Power (kW) = (Flow × Head × Density × g) / (3600 × Efficiency)
-                    # Standard engineering practice using authentic manufacturer curves
-                    if efficiency > 0:
-                        density = 1000  # kg/m³ for water
-                        gravity = 9.81  # m/s²
-                        power = (flow * delivered_head * density * gravity) / (3600 * efficiency / 100)
-                        power = power / 1000  # Convert to kW
+                    # Handle power data: interpolate if complete, calculate hydraulically if incomplete
+                    if None in powers_sorted:
+                        # Cannot interpolate - calculate power hydraulically from authentic manufacturer data
+                        # This is standard engineering practice, not a fallback
+                        if efficiency > 0:
+                            density = 1000  # kg/m³ for water
+                            gravity = 9.81  # m/s²
+                            power = (flow * delivered_head * density * gravity) / (3600 * efficiency / 100)
+                            power = power / 1000  # Convert to kW
+                            logger.debug(f"[PERF] {pump_code}: Curve {i+1} power calculated hydraulically: {power:.2f}kW")
+                        else:
+                            power = 0
                     else:
-                        power = 0
+                        # Safe to interpolate power data
+                        power_interp = interpolate.interp1d(flows_sorted, powers_sorted, 
+                                                          kind='linear', bounds_error=False)
+                        power = float(power_interp(flow))
+                        logger.debug(f"[PERF] {pump_code}: Curve {i+1} power interpolated: {power:.2f}kW")
                     
                     logger.debug(f"[PERF] {pump_code}: Curve {i+1} interpolated results - head: {delivered_head:.2f}m, eff: {efficiency:.1f}%, power: {power:.2f}kW")
                     
@@ -196,14 +200,25 @@ class PerformanceAnalyzer:
                             # Power calculation failed - skip this performance result
                             continue
                         
-                        # IMPROVED: Interpolate NPSH at target flow instead of using first point
+                        # FIXED: Interpolate NPSH using sorted data for accurate results
                         interpolated_npshr = None
                         try:
                             npsh_values = [p.get('npshr_m') for p in curve_points if p.get('npshr_m') is not None]
-                            if npsh_values and len(npsh_values) == len(flows):
-                                # Interpolate NPSH at target flow for more accurate prediction
-                                if len(flows) >= 2:
-                                    npsh_interp = interpolate.interp1d(flows, npsh_values, 
+                            if npsh_values and len(npsh_values) == len(flows_sorted):
+                                # Create sorted NPSH data matching sorted flow data
+                                npsh_sorted = []
+                                for flow_val in flows_sorted:
+                                    # Find corresponding NPSH value for this flow
+                                    for i, orig_flow in enumerate(flows):
+                                        if abs(orig_flow - flow_val) < 0.001:  # Match with small tolerance
+                                            npsh_val = [p.get('npshr_m') for p in curve_points][i]
+                                            if npsh_val is not None:
+                                                npsh_sorted.append(npsh_val)
+                                            break
+                                
+                                # Interpolate NPSH using SORTED data
+                                if len(npsh_sorted) >= 2 and len(npsh_sorted) == len(flows_sorted):
+                                    npsh_interp = interpolate.interp1d(flows_sorted, npsh_sorted, 
                                                                       kind='linear', bounds_error=False)
                                     base_npshr = float(npsh_interp(flow))
                                     if not np.isnan(base_npshr):
@@ -211,7 +226,8 @@ class PerformanceAnalyzer:
                                         interpolated_npshr = base_npshr * (trim_factor ** 2)
                         except Exception:
                             # Fallback to first point only if interpolation fails
-                            interpolated_npshr = curve_points[0].get('npshr_m')
+                            if curve_points:
+                                interpolated_npshr = curve_points[0].get('npshr_m')
                         
                         best_performance = {
                             'flow_m3hr': flow,
