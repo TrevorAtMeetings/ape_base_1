@@ -33,8 +33,8 @@ function initializeFloatingAIChat() {
             existingChat.remove();
         }
     
-    // Add floating chat HTML to body
-    const floatingChatHTML = `
+        // Add floating chat HTML to body  
+        const floatingChatHTML = `
         <!-- Floating AI Chat Bubble -->
         <div id="floating-ai-chat" class="floating-ai-chat">
             <!-- Chat Toggle Button -->
@@ -95,24 +95,25 @@ function initializeFloatingAIChat() {
         </div>
     `;
 
-    // Add to body
-    document.body.insertAdjacentHTML('beforeend', floatingChatHTML);
-    
-    // Force lightbulb icon immediately to override browser cache
-    setTimeout(() => {
-        const toggleIcon = document.getElementById('chat-toggle-icon');
-        if (toggleIcon) {
-            toggleIcon.textContent = 'lightbulb';
-            toggleIcon.innerHTML = 'lightbulb';
-            toggleIcon.className = 'material-icons';
-        }
-    }, 10);
-    
-    // Setup input handlers
-    setupAIChatInput();
-    
-    // Setup pump autocomplete
-    setupPumpAutocomplete();
+        // Add to body
+        document.body.insertAdjacentHTML('beforeend', floatingChatHTML);
+        
+        // Force lightbulb icon immediately to override browser cache
+        setTimeout(() => {
+            const toggleIcon = document.getElementById('chat-toggle-icon');
+            if (toggleIcon) {
+                toggleIcon.textContent = 'lightbulb';
+                toggleIcon.innerHTML = 'lightbulb';
+                toggleIcon.className = 'material-icons';
+            }
+        }, 10);
+        
+        // Setup input handlers
+        setupAIChatInput();
+        
+        // Setup pump autocomplete
+        setupPumpAutocomplete();
+    });
 }
 
 function toggleAIChat() {

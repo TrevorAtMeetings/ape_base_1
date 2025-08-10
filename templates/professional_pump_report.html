@@ -829,7 +829,7 @@
                                     <div class="pump-name">{{ pump.pump_code }}</div>
                                     <div style="color: #999; font-size: 0.85rem;">{{ pump.pump_type }}</div>
                                 </div>
-                                <div class="pump-score" style="color: {% if pump.suitability_score >= 80 %}#4caf50{% elif pump.suitability_score >= 60 %}#2196f3{% else %}#ff9800{% endif %};">{{ pump.suitability_score|round(0)|int }}</div>
+                                <div class="pump-score" style="color: {% if pump.get('suitability_score', 0) >= 80 %}#4caf50{% elif pump.get('suitability_score', 0) >= 60 %}#2196f3{% else %}#ff9800{% endif %};">{{ pump.get('suitability_score', 0)|round(0)|int }}</div>
                             </div>
                             <div class="inline-metrics" style="gap: 16px;">
                                 <div style="font-size: 0.85rem;">
