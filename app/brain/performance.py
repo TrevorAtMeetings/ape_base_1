@@ -177,7 +177,7 @@ class PerformanceAnalyzer:
                 head_ratio = head / delivered_head if delivered_head > 0 else 1.0
                 diameter_ratio = np.sqrt(head_ratio)
                 required_diameter = largest_diameter * diameter_ratio
-                trim_percent = diameter_ratio * 100
+                trim_percent = (required_diameter / largest_diameter) * 100  # Correct: percentage of original diameter
                 
                 logger.debug(f"[INDUSTRY] {pump_code}: Affinity law calculation - head ratio: {head_ratio:.3f}, diameter ratio: {diameter_ratio:.3f}")
                 logger.debug(f"[INDUSTRY] {pump_code}: Required diameter: {required_diameter:.1f}mm (trim: {trim_percent:.1f}%)")
@@ -191,8 +191,10 @@ class PerformanceAnalyzer:
                 # STEP 5: Apply industry-standard affinity laws to calculate final performance
                 final_head = head  # By design, this matches our target
                 
-                # Industry standard efficiency scaling with trimming
-                final_efficiency = base_efficiency * (diameter_ratio ** self.affinity_efficiency_exp)
+                # Industry standard efficiency scaling with trimming (reduced penalty)
+                # Manufacturers don't penalize efficiency as harshly for moderate trimming
+                trim_penalty_factor = 1.0 - (1.0 - diameter_ratio) * 0.2  # Much gentler penalty
+                final_efficiency = base_efficiency * trim_penalty_factor
                 
                 # Handle power calculation
                 if None in powers_sorted:
