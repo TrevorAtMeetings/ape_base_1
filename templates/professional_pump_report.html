@@ -906,7 +906,7 @@
         // Initialize charts when page loads
         document.addEventListener('DOMContentLoaded', function() {
             const chartData = {
-                pumpCode: {{ selected_pump.get('pump_code', '')|tojson }},
+                pumpCode: {{ selected_pump.get('pump_code', '')|tojson|safe }},
                 flowRate: {{ site_requirements.get('flow_m3hr', 0)|float }},
                 head: {{ site_requirements.get('head_m', 0)|float }}
             };
@@ -960,13 +960,13 @@
             `;
 
             const data = {
-                pump_code: "{{ selected_pump.get('pump_code', '') }}",
-                flow: "{{ site_requirements.get('flow_m3hr', 0) }}",
-                head: "{{ site_requirements.get('head_m', 0) }}",
-                efficiency: "{{ selected_pump.get('efficiency_pct', 75) }}",
-                power: "{{ selected_pump.get('power_kw', 50) }}",
-                npshr: "{{ selected_pump.get('npshr_m', 5) }}",
-                application: "{{ site_requirements.get('application', 'water') }}",
+                pump_code: {{ selected_pump.get('pump_code', '')|tojson|safe }},
+                flow: {{ site_requirements.get('flow_m3hr', 0)|float }},
+                head: {{ site_requirements.get('head_m', 0)|float }},
+                efficiency: {{ selected_pump.get('efficiency_pct', 75)|float }},
+                power: {{ selected_pump.get('power_kw', 50)|float }},
+                npshr: {{ selected_pump.get('npshr_m', 5)|float }},
+                application: {{ site_requirements.get('application', 'water')|tojson|safe }},
                 topic: topic
             };
 
@@ -1045,10 +1045,10 @@
 
         // Comparison Functions
         function addToComparison() {
-            const pumpCode = {{ selected_pump.get('pump_code', '')|tojson }};
+            const pumpCode = {{ selected_pump.get('pump_code', '')|tojson|safe }};
             const flow = {{ site_requirements.get('flow_m3hr', 0)|float }};
             const head = {{ site_requirements.get('head_m', 0)|float }};
-            const pumpType = {{ site_requirements.get('pump_type', 'GENERAL')|tojson }};
+            const pumpType = {{ site_requirements.get('pump_type', 'GENERAL')|tojson|safe }};
             
             // Add to comparison via API
             fetch('/api/add_to_comparison', {
@@ -1090,7 +1090,7 @@
         function viewAllAlternatives() {
             const flow = {{ site_requirements.get('flow_m3hr', 0)|float }};
             const head = {{ site_requirements.get('head_m', 0)|float }};
-            const pumpType = {{ site_requirements.get('pump_type', 'GENERAL')|tojson }};
+            const pumpType = {{ site_requirements.get('pump_type', 'GENERAL')|tojson|safe }};
             
             window.location.href = `/pump_options?flow=${flow}&head=${head}&pump_type=${pumpType}`;
         }
@@ -1102,10 +1102,10 @@
         }
 
         function generatePDF() {
-            const pumpCode = {{ selected_pump.get('pump_code', '')|tojson }};
+            const pumpCode = {{ selected_pump.get('pump_code', '')|tojson|safe }};
             const flow = {{ site_requirements.get('flow_m3hr', 0)|float }};
             const head = {{ site_requirements.get('head_m', 0)|float }};
-            const pumpType = {{ site_requirements.get('pump_type', 'GENERAL')|tojson }};
+            const pumpType = {{ site_requirements.get('pump_type', 'GENERAL')|tojson|safe }};
             
             window.open(`/api/generate_pump_pdf/${encodeURIComponent(pumpCode)}?flow=${flow}&head=${head}&pump_type=${pumpType}`, '_blank');
         }
