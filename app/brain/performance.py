@@ -147,6 +147,11 @@ class PerformanceAnalyzer:
                 
                 logger.debug(f"[INDUSTRY] {pump_code}: Creating interpolation functions with sorted data...")
                 
+                # CRITICAL DEBUG: Show actual performance points for problematic pumps
+                if "VBK 35-22" in pump_code or "PL 200" in pump_code:
+                    logger.error(f"[CURVE DEBUG] {pump_code}: Using {largest_diameter}mm diameter curve")
+                    logger.error(f"[CURVE DEBUG] {pump_code}: Performance points: {list(zip(flows_sorted, heads_sorted))}")
+                
                 # Create interpolation functions using SORTED data
                 head_interp = interpolate.interp1d(flows_sorted, heads_sorted, 
                                                  kind='linear', bounds_error=False)
@@ -160,6 +165,15 @@ class PerformanceAnalyzer:
                 base_efficiency = float(eff_interp(flow))
                 
                 logger.debug(f"[INDUSTRY] {pump_code}: Base curve performance - head: {delivered_head:.2f}m, eff: {base_efficiency:.1f}%")
+                
+                # Special debug for 6 WLN 18A
+                if "6 WLN 18A" in pump_code:
+                    logger.error(f"[DEBUG 6WLN] Flow: {flow}, Required head: {head}")
+                    logger.error(f"[DEBUG 6WLN] Delivered head: {delivered_head:.2f}m")
+                    logger.error(f"[DEBUG 6WLN] Largest diameter: {largest_diameter}mm")
+                    logger.error(f"[DEBUG 6WLN] Performance points: {len(curve_points)}")
+                    logger.error(f"[DEBUG 6WLN] Flow range: {min(flows)} to {max(flows)} m³/hr")
+                    logger.error(f"[DEBUG 6WLN] Head range: {min(heads)} to {max(heads)} m")
                 
                 # Check for NaN values (NO FALLBACKS EVER)
                 if np.isnan(delivered_head) or np.isnan(base_efficiency):
@@ -186,6 +200,10 @@ class PerformanceAnalyzer:
                 # Industry standard for reliable operation
                 if trim_percent < 85.0:
                     logger.warning(f"[INDUSTRY] {pump_code}: Excessive trim required ({trim_percent:.1f}% < 85%) - cannot proceed")
+                    # CRITICAL DIAGNOSIS: Log the exact values causing excessive trim
+                    logger.error(f"[TRIM DEBUG] {pump_code}: Required {head}m but delivered {delivered_head:.1f}m at {flow} m³/hr")
+                    logger.error(f"[TRIM DEBUG] {pump_code}: head_ratio={head_ratio:.3f}, diameter_ratio={diameter_ratio:.3f}")
+                    logger.error(f"[TRIM DEBUG] {pump_code}: Using curve with {largest_diameter}mm diameter, {len(curve_points)} points")
                     return None
                 
                 # STEP 5: Apply industry-standard affinity laws to calculate final performance

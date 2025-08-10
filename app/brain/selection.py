@@ -71,23 +71,56 @@ class SelectionIntelligence:
             logger.warning("No pump models available in repository")
             return {'ranked_pumps': [], 'exclusion_details': None}
         
-        # INTELLIGENT PRE-FILTERING: Only evaluate pumps in reasonable range
+        # Debug: Check if 6 WLN 18A is in loaded pumps
+        wln_pumps = [p for p in all_pumps if "6 WLN 18A" in str(p.get('pump_code', ''))]
+        logger.error(f"[DEBUG] Found {len(wln_pumps)} 6 WLN 18A pumps in {len(all_pumps)} total loaded pumps")
+        for pump in wln_pumps:
+            logger.error(f"[DEBUG] 6 WLN 18A found: code='{pump.get('pump_code')}' name='{pump.get('pump_name')}'")
+        
+        # Also check variations
+        wln_variations = [p for p in all_pumps if "WLN" in str(p.get('pump_code', '')).upper()]
+        logger.error(f"[DEBUG] Found {len(wln_variations)} WLN pumps total")
+        for pump in wln_variations[:5]:  # Show first 5
+            logger.error(f"[DEBUG] WLN variant: '{pump.get('pump_code')}'")  
+        
+        # INTELLIGENT PRE-FILTERING: Only evaluate pumps in reasonable flow AND head range
         # This prevents evaluating 0.1 m³/hr pumps for 350 m³/hr applications
+        # AND prevents 100m+ head pumps for 50m applications (excessive trim)
         min_flow_threshold = max(flow * 0.4, 5.0)  # At least 40% of required flow, minimum 5 m³/hr
         max_flow_threshold = flow * 3.0  # Maximum 300% of required flow
         
+        # CRITICAL FIX: Add head-based pre-filtering to prevent excessive trim
+        # Conservative thresholds to exclude pumps likely to require excessive trim
+        min_head_threshold = head * 0.8   # Minimum 80% of required head  
+        max_head_threshold = head * 1.6   # Maximum 160% of required head (conservative limit)
+        
         pump_models = []
         pre_filtered_count = 0
+        flow_filtered_count = 0
+        head_filtered_count = 0
         
         for pump in all_pumps:
             specs = pump.get('specifications', {})
             bep_flow = specs.get('bep_flow_m3hr', 0)
+            bep_head = specs.get('bep_head_m', 0)
             
-            # Pre-filter by flow range - intelligent range matching
-            if bep_flow > 0 and min_flow_threshold <= bep_flow <= max_flow_threshold:
-                pump_models.append(pump)
-            else:
-                pre_filtered_count += 1
+            # Pre-filter by flow range
+            if not (bep_flow > 0 and min_flow_threshold <= bep_flow <= max_flow_threshold):
+                flow_filtered_count += 1
+                continue
+            
+            # CRITICAL FIX: Pre-filter by head compatibility 
+            # This prevents high-head pumps requiring excessive trim from being evaluated
+            if bep_head > 0 and not (min_head_threshold <= bep_head <= max_head_threshold):
+                head_filtered_count += 1
+                logger.debug(f"[PRE-FILTER] {pump.get('pump_code')}: Head incompatible - BEP {bep_head:.1f}m outside range {min_head_threshold:.1f}-{max_head_threshold:.1f}m")
+                continue
+            
+            pump_models.append(pump)
+        
+        pre_filtered_count = flow_filtered_count + head_filtered_count
+        logger.info(f"Smart pre-filtering: {len(pump_models)} pumps selected from {len(all_pumps)} total")
+        logger.info(f"Filtered out: {flow_filtered_count} flow-incompatible + {head_filtered_count} head-incompatible = {pre_filtered_count} total")
         
         logger.info(f"Smart pre-filtering: {len(pump_models)} pumps selected from {len(all_pumps)} total (filtered out {pre_filtered_count} inappropriate pumps)")
         
@@ -211,6 +244,12 @@ class SelectionIntelligence:
             bep_head = specs.get('bep_head_m', 0)
             
             logger.debug(f"[SCORE] {pump_data.get('pump_code')}: BEP from specs - flow: {bep_flow:.1f} m³/hr, head: {bep_head:.1f}m")
+            
+            # Special debug for 6 WLN 18A
+            if "6 WLN 18A" in str(pump_data.get('pump_code', '')):
+                logger.error(f"[DEBUG 6WLN QBP] Found pump: {pump_data.get('pump_code')}")
+                logger.error(f"[DEBUG 6WLN QBP] BEP Flow: {bep_flow} m³/hr, BEP Head: {bep_head} m")
+                logger.error(f"[DEBUG 6WLN QBP] Required Flow: {flow} m³/hr")
             
             if bep_flow > 0 and bep_head > 0:
                 # Calculate QBP (% of BEP flow)
