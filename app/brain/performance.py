@@ -174,6 +174,19 @@ class PerformanceAnalyzer:
                     logger.error(f"[DEBUG 6WLN] Performance points: {len(curve_points)}")
                     logger.error(f"[DEBUG 6WLN] Flow range: {min(flows)} to {max(flows)} m³/hr")
                     logger.error(f"[DEBUG 6WLN] Head range: {min(heads)} to {max(heads)} m")
+                    
+                    # CRITICAL ANALYSIS: Compare with manufacturer expectation
+                    # Manufacturer shows 11.65% trim, which means 88.35% diameter
+                    # This corresponds to head ratio: (88.35/100)² = 0.781
+                    # Expected delivered head: 50m / 0.781 = 64.0m
+                    manufacturer_diameter_ratio = 0.8835  # 88.35%
+                    manufacturer_head_ratio = manufacturer_diameter_ratio ** 2
+                    expected_delivered_head = head / manufacturer_head_ratio
+                    logger.error(f"[TRIM ANALYSIS] Manufacturer expects: 64.0m delivered head for 11.65% trim")
+                    logger.error(f"[TRIM ANALYSIS] Our data shows: {delivered_head:.2f}m delivered head")
+                    logger.error(f"[TRIM ANALYSIS] Difference: {delivered_head - 64.0:.2f}m higher than expected")
+                    trim_diff = 16.5 - 11.65
+                    logger.error(f"[TRIM ANALYSIS] This explains why our trim is {trim_diff + 11.65:.1f}% vs manufacturer's 11.65%")
                 
                 # Check for NaN values (NO FALLBACKS EVER)
                 if np.isnan(delivered_head) or np.isnan(base_efficiency):
