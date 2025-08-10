@@ -190,14 +190,18 @@ def search_pumps():
 @api_bp.route('/ai_analysis_fast', methods=['POST'])
 def ai_analysis_fast():
     """
-    Generate AI-powered pump analysis content for report pages.
-    Fast endpoint optimized for pump selection insights.
+    BRAIN-ONLY API: Generate AI-powered pump analysis content for report pages.
+    API is "dumb" - delegates all intelligence to Brain system.
     """
     try:
         data = request.get_json()
         if not data:
             return jsonify({'error': 'No data provided'}), 400
-        
+
+        if not BRAIN_AVAILABLE:
+            logger.error("AI Analysis API call failed: Brain system is not available.")
+            return jsonify({'error': 'AI analysis engine is currently offline.'}), 503
+
         # Extract pump parameters
         pump_code = data.get('pump_code', '')
         flow = float(data.get('flow', 0))
@@ -207,159 +211,64 @@ def ai_analysis_fast():
         npshr = float(data.get('npshr', 0))
         application = data.get('application', 'water')
         topic = data.get('topic', 'general')
-        
+
         if not pump_code or flow <= 0 or head <= 0:
             return jsonify({'error': 'Invalid pump parameters'}), 400
+
+        # SINGLE SOURCE OF TRUTH: Brain handles ALL AI analysis logic
+        brain = get_pump_brain()
         
-        # Generate context-specific analysis prompt
-        if topic == 'general':
-            analysis_prompt = f"""
-            Analyze the pump selection for {pump_code} at {flow} m³/hr and {head}m head:
+        # Import and create analysis request
+        from ..brain.ai_analysis import AnalysisRequest
+        request_obj = AnalysisRequest(
+            pump_code=pump_code,
+            flow_m3hr=flow,
+            head_m=head,
+            efficiency_pct=efficiency,
+            power_kw=power,
+            npshr_m=npshr,
+            application=application,
+            topic=topic
+        )
 
-            Performance Metrics:
-            - Efficiency: {efficiency}%
-            - Power Consumption: {power} kW
-            - NPSHr: {npshr}m
-            - Application: {application}
-
-            Provide a brief technical analysis covering:
-            1. Performance suitability for this duty point
-            2. Energy efficiency assessment
-            3. Key engineering considerations
-            4. Operational recommendations
-
-            Keep response under 300 words and use professional engineering language.
-            """
-        elif topic == 'efficiency':
-            analysis_prompt = f"""
-            Analyze the energy efficiency of pump {pump_code} at {flow} m³/hr @ {head}m:
-            
-            Current efficiency: {efficiency}%
-            Power consumption: {power} kW
-            
-            Provide efficiency analysis including:
-            1. Efficiency rating assessment
-            2. Energy cost implications  
-            3. Comparison to industry standards
-            4. Optimization opportunities
-            
-            Keep response focused and under 200 words.
-            """
-        elif topic == 'application':
-            analysis_prompt = f"""
-            Evaluate pump {pump_code} for {application} application at {flow} m³/hr @ {head}m:
-            
-            Performance: {efficiency}% efficiency, {power} kW power, {npshr}m NPSHr
-            
-            Analyze:
-            1. Application suitability
-            2. Operating point assessment
-            3. Reliability considerations
-            4. Installation recommendations
-            
-            Keep response practical and under 250 words.
-            """
-        else:
-            analysis_prompt = f"""
-            Provide technical assessment of pump {pump_code} for {topic}:
-            Operating conditions: {flow} m³/hr @ {head}m
-            Performance: {efficiency}% efficiency, {power} kW power
-            
-            Focus on {topic} specific considerations and keep under 200 words.
-            """
-
-        # Import AI functionality
-        try:
-            from ..ai_model_router import AIModelRouter, ExtractionRequest, ModelProvider
-            import os
-            
-            # Check if AI services are available
-            openai_available = bool(os.getenv('OPENAI_API_KEY'))
-            gemini_available = bool(os.getenv('GOOGLE_API_KEY'))
-            
-            if not (openai_available or gemini_available):
-                return jsonify({
-                    'response': f"**Analysis for {pump_code}**\n\nPerformance Summary:\n- Operating at {flow} m³/hr @ {head}m head\n- Efficiency: {efficiency}%\n- Power: {power} kW\n- NPSHr: {npshr}m\n\n*Note: AI analysis requires API key configuration.*"
-                }), 200
-            
-            # Create extraction request
-            request_obj = ExtractionRequest(
-                content_type='text',
-                user_preference=ModelProvider.AUTO,
-                priority='speed',
-                batch_size=1
-            )
-            
-            router = AIModelRouter()
-            selected_model, reason = router.select_model(request_obj)
-            
-            if selected_model == ModelProvider.OPENAI and openai_available:
-                from openai import OpenAI
-                client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
-                
-                response = client.chat.completions.create(
-                    model="gpt-3.5-turbo",
-                    messages=[
-                        {"role": "system", "content": "You are a professional pump engineer providing technical analysis. Use clear, concise language with engineering terminology."},
-                        {"role": "user", "content": analysis_prompt}
-                    ],
-                    max_tokens=500,
-                    temperature=0.3
-                )
-                
-                ai_response = response.choices[0].message.content
-                
-            elif selected_model == ModelProvider.GEMINI and gemini_available:
-                import google.generativeai as genai
-                genai.configure(api_key=os.getenv('GOOGLE_API_KEY'))
-                model = genai.GenerativeModel('gemini-1.5-flash')
-                
-                response = model.generate_content(analysis_prompt)
-                ai_response = response.text
-                
-            else:
-                ai_response = f"**Analysis for {pump_code}**\n\nPerformance Summary:\n- Operating at {flow} m³/hr @ {head}m head\n- Efficiency: {efficiency}%\n- Power: {power} kW\n- NPSHr: {npshr}m\n\n*AI analysis temporarily unavailable.*"
-                
-        except ImportError:
-            ai_response = f"**Technical Analysis - {pump_code}**\n\n**Operating Conditions:** {flow} m³/hr @ {head}m\n\n**Performance Metrics:**\n- Efficiency: {efficiency}%\n- Power: {power} kW\n- NPSHr: {npshr}m\n\n**Assessment:** This pump operates at the specified duty point with {efficiency}% efficiency. The power consumption of {power} kW indicates {'good' if efficiency > 75 else 'adequate' if efficiency > 65 else 'below optimal'} performance for this application.\n\n*Enhanced AI analysis available with API configuration.*"
-        except Exception as e:
-            logger.error(f"AI analysis error: {str(e)}")
-            ai_response = f"**Analysis for {pump_code}**\n\nTechnical Summary:\n- Flow: {flow} m³/hr\n- Head: {head}m\n- Efficiency: {efficiency}%\n- Power: {power} kW\n\nThis pump meets the basic requirements for the specified application."
+        # One call to Brain's AI analysis intelligence - this is the ONLY logic
+        ai_response = brain.ai_analysis.generate_pump_analysis(request_obj)
         
+        if not ai_response:
+            return jsonify({'error': 'Brain could not generate analysis'}), 404
+
         return jsonify({'response': ai_response})
         
     except Exception as e:
-        logger.error(f"Error in AI analysis API: {str(e)}")
+        logger.error(f"Error in Brain-only AI analysis API: {str(e)}")
         return jsonify({'error': 'Analysis service temporarily unavailable'}), 500
 
 
 @api_bp.route('/convert_markdown', methods=['POST'])
 def convert_markdown():
     """
-    Convert markdown text to HTML for display in reports.
+    BRAIN-ONLY API: Convert markdown text to HTML for display in reports.
+    API is "dumb" - delegates markdown conversion to Brain system.
     """
     try:
         data = request.get_json()
         if not data or 'markdown' not in data:
             return jsonify({'error': 'No markdown content provided'}), 400
-        
+
+        if not BRAIN_AVAILABLE:
+            logger.error("Markdown conversion API call failed: Brain system is not available.")
+            return jsonify({'error': 'Markdown conversion engine is currently offline.'}), 503
+
         markdown_text = data['markdown']
         
-        try:
-            import markdown2
-            html = markdown2.markdown(markdown_text)
-        except ImportError:
-            # Fallback: Simple markdown-like conversion
-            html = markdown_text.replace('\n\n', '</p><p>')
-            html = html.replace('\n', '<br>')
-            html = html.replace('**', '<strong>', 1).replace('**', '</strong>', 1)
-            html = html.replace('*', '<em>', 1).replace('*', '</em>', 1)
-            html = f'<p>{html}</p>'
+        # SINGLE SOURCE OF TRUTH: Brain handles markdown conversion
+        brain = get_pump_brain()
+        html = brain.ai_analysis.convert_markdown_to_html(markdown_text)
         
         return jsonify({'html': html})
         
     except Exception as e:
-        logger.error(f"Error converting markdown: {str(e)}")
+        logger.error(f"Error in Brain-only markdown conversion: {str(e)}")
         return jsonify({'html': data.get('markdown', 'Content unavailable')})
 
 

@@ -23,6 +23,7 @@ from .brain.performance import PerformanceAnalyzer
 from .brain.charts import ChartIntelligence
 from .brain.validation import DataValidator
 from .brain.cache import BrainCache
+from .brain.ai_analysis import AIAnalysisIntelligence
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -155,6 +156,7 @@ class PumpBrain:
         self.performance = PerformanceAnalyzer(self)
         self.charts = ChartIntelligence(self)
         self.validator = DataValidator(self)
+        self.ai_analysis = AIAnalysisIntelligence(self)
         
         # Initialize cache
         self._cache = BrainCache()
