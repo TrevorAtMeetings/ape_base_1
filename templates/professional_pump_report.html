@@ -665,8 +665,15 @@
                         {% set left_pos = ((qbep - 60) / 70 * 100)|round(1) %}
                         {% if left_pos < 0 %}{% set left_pos = 0 %}{% endif %}
                         {% if left_pos > 90 %}{% set left_pos = 90 %}{% endif %}
+                        {% if 80 <= qbep <= 110 %}
+                            {% set bep_class = "bep-range bep-optimal" %}
+                        {% elif 70 <= qbep <= 120 %}
+                            {% set bep_class = "bep-range bep-good" %}
+                        {% else %}
+                            {% set bep_class = "bep-range bep-marginal" %}
+                        {% endif %}
                         
-                        <div class="bep-range{% if 80 <= qbep <= 110 %} bep-optimal{% elif 70 <= qbep <= 120 %} bep-good{% else %} bep-marginal{% endif %}" style="left: {{ left_pos }}%; width: 10%;">
+                        <div class="{{ bep_class }}" style="left: {{ left_pos }}%; width: 10%;">
                             {{ qbep|round(0)|int }}%
                         </div>
                     </div>
@@ -815,13 +822,14 @@
                 <div class="section-content">
                     <div class="pump-grid">
                         {% for pump in alternative_pumps[:6] %}
+                        {% set score_color = "#4caf50" if pump.get('suitability_score', 0) >= 80 else ("#2196f3" if pump.get('suitability_score', 0) >= 60 else "#ff9800") %}
                         <div class="pump-card" onclick="location.href='{{ url_for('reports.pump_report', pump_code=pump.pump_code, flow=site_requirements.get('flow_m3hr', 0), head=site_requirements.get('head_m', 0), pump_type=site_requirements.get('pump_type', 'GENERAL')) }}'">
                             <div class="pump-card-header">
                                 <div>
                                     <div class="pump-name">{{ pump.pump_code }}</div>
                                     <div style="color: #999; font-size: 0.85rem;">{{ pump.pump_type }}</div>
                                 </div>
-                                <div class="pump-score" style="color: {% if pump.get('suitability_score', 0) >= 80 %}#4caf50{% elif pump.get('suitability_score', 0) >= 60 %}#2196f3{% else %}#ff9800{% endif %};">{{ pump.get('suitability_score', 0)|round(0)|int }}</div>
+                                <div class="pump-score" style="color: {{ score_color }};">{{ pump.get('suitability_score', 0)|round(0)|int }}</div>
                             </div>
                             <div class="inline-metrics" style="gap: 16px;">
                                 <div style="font-size: 0.85rem;">
@@ -898,9 +906,9 @@
         // Initialize charts when page loads
         document.addEventListener('DOMContentLoaded', function() {
             const chartData = {
-                pumpCode: "{{ selected_pump.get('pump_code', '') }}",
-                flowRate: {{ site_requirements.get('flow_m3hr', 0)|float|tojson }},
-                head: {{ site_requirements.get('head_m', 0)|float|tojson }}
+                pumpCode: {{ selected_pump.get('pump_code', '')|tojson }},
+                flowRate: {{ site_requirements.get('flow_m3hr', 0)|float }},
+                head: {{ site_requirements.get('head_m', 0)|float }}
             };
 
             // Initialize Materialize components if available
@@ -1037,10 +1045,10 @@
 
         // Comparison Functions
         function addToComparison() {
-            const pumpCode = "{{ selected_pump.get('pump_code', '') }}";
-            const flow = {{ site_requirements.get('flow_m3hr', 0)|float|tojson }};
-            const head = {{ site_requirements.get('head_m', 0)|float|tojson }};
-            const pumpType = "{{ site_requirements.get('pump_type', 'GENERAL') }}";
+            const pumpCode = {{ selected_pump.get('pump_code', '')|tojson }};
+            const flow = {{ site_requirements.get('flow_m3hr', 0)|float }};
+            const head = {{ site_requirements.get('head_m', 0)|float }};
+            const pumpType = {{ site_requirements.get('pump_type', 'GENERAL')|tojson }};
             
             // Add to comparison via API
             fetch('/api/add_to_comparison', {
@@ -1080,9 +1088,9 @@
         }
 
         function viewAllAlternatives() {
-            const flow = {{ site_requirements.get('flow_m3hr', 0)|float|tojson }};
-            const head = {{ site_requirements.get('head_m', 0)|float|tojson }};
-            const pumpType = "{{ site_requirements.get('pump_type', 'GENERAL') }}";
+            const flow = {{ site_requirements.get('flow_m3hr', 0)|float }};
+            const head = {{ site_requirements.get('head_m', 0)|float }};
+            const pumpType = {{ site_requirements.get('pump_type', 'GENERAL')|tojson }};
             
             window.location.href = `/pump_options?flow=${flow}&head=${head}&pump_type=${pumpType}`;
         }
@@ -1094,10 +1102,10 @@
         }
 
         function generatePDF() {
-            const pumpCode = "{{ selected_pump.get('pump_code', '') }}";
-            const flow = {{ site_requirements.get('flow_m3hr', 0)|float|tojson }};
-            const head = {{ site_requirements.get('head_m', 0)|float|tojson }};
-            const pumpType = "{{ site_requirements.get('pump_type', 'GENERAL') }}";
+            const pumpCode = {{ selected_pump.get('pump_code', '')|tojson }};
+            const flow = {{ site_requirements.get('flow_m3hr', 0)|float }};
+            const head = {{ site_requirements.get('head_m', 0)|float }};
+            const pumpType = {{ site_requirements.get('pump_type', 'GENERAL')|tojson }};
             
             window.open(`/api/generate_pump_pdf/${encodeURIComponent(pumpCode)}?flow=${flow}&head=${head}&pump_type=${pumpType}`, '_blank');
         }

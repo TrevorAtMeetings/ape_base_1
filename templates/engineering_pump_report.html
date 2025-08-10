@@ -789,9 +789,9 @@
 
     <script>
         // Store original values
-        let currentFlow = {{ site_requirements.get('flow_m3hr', 0)|round(1) if site_requirements.get('flow_m3hr') else 0 }};
-        let currentHead = {{ site_requirements.get('head_m', 0)|round(1) if site_requirements.get('head_m') else 0 }};
-        const pumpCode = "{{ selected_pump.get('pump_code', '') }}";
+        let currentFlow = {{ site_requirements.get('flow_m3hr', 0)|float }};
+        let currentHead = {{ site_requirements.get('head_m', 0)|float }};
+        const pumpCode = {{ selected_pump.get('pump_code', '')|tojson }};
 
         // Initialize engineering charts
         document.addEventListener('DOMContentLoaded', function() {
