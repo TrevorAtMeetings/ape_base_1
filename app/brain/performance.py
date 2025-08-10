@@ -26,7 +26,7 @@ class PerformanceAnalyzer:
         
         # Performance thresholds
         self.min_efficiency = 40.0
-        self.min_trim_percent = 80.0  # Allow up to 20% trim maximum
+        self.min_trim_percent = 85.0  # Maximum 15% trim (industry standard)
         self.max_trim_percent = 100.0
         
         # Industry standard affinity law exponents
@@ -182,10 +182,10 @@ class PerformanceAnalyzer:
                 logger.debug(f"[INDUSTRY] {pump_code}: Affinity law calculation - head ratio: {head_ratio:.3f}, diameter ratio: {diameter_ratio:.3f}")
                 logger.debug(f"[INDUSTRY] {pump_code}: Required diameter: {required_diameter:.1f}mm (trim: {trim_percent:.1f}%)")
                 
-                # STEP 4: Check trim limits - allow up to 20% trim (80% minimum diameter)
-                # Manufacturers typically allow more aggressive trimming than 15%
-                if trim_percent < 80.0:
-                    logger.debug(f"[INDUSTRY] {pump_code}: Excessive trim required ({trim_percent:.1f}% < 80%) - cannot proceed")
+                # STEP 4: Check trim limits - maximum 15% trim (85% minimum diameter)
+                # Industry standard for reliable operation
+                if trim_percent < 85.0:
+                    logger.debug(f"[INDUSTRY] {pump_code}: Excessive trim required ({trim_percent:.1f}% < 85%) - cannot proceed")
                     return None
                 
                 # STEP 5: Apply industry-standard affinity laws to calculate final performance

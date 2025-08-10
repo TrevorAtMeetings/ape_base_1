@@ -216,16 +216,16 @@ class SelectionIntelligence:
                 # Calculate QBP (% of BEP flow)
                 qbp = (flow / bep_flow) * 100
                 
-                # NEW: Add operating zone classification (widened to match manufacturer standards)
+                # Operating zone classification (proper engineering standards)
                 operating_zone = 'disqualified'
                 if 70 <= qbp <= 120:
                     operating_zone = 'preferred'  # Best reliability and efficiency zone
-                elif 50 <= qbp < 70 or 120 < qbp <= 150:
+                elif 60 <= qbp < 70 or 120 < qbp <= 130:
                     operating_zone = 'allowable'  # Acceptable but not optimal zone
                 
                 evaluation['operating_zone'] = operating_zone
                 
-                # Check QBP gates - disqualify anything outside 50-150% (manufacturer standards)
+                # Check QBP gates - disqualify anything outside 60-130% (proper engineering standards)
                 if operating_zone == 'disqualified':
                     evaluation['feasible'] = False
                     evaluation['exclusion_reasons'].append(f'QBP {qbp:.0f}% outside allowable range')
