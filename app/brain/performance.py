@@ -26,7 +26,7 @@ class PerformanceAnalyzer:
         
         # Performance thresholds
         self.min_efficiency = 40.0
-        self.min_trim_percent = 85.0  # Never trim more than 15%
+        self.min_trim_percent = 80.0  # Allow up to 20% trim maximum
         self.max_trim_percent = 100.0
         
         # Industry standard affinity law exponents
@@ -166,9 +166,10 @@ class PerformanceAnalyzer:
                     logger.debug(f"[INDUSTRY] {pump_code}: NaN interpolation result - cannot proceed")
                     return None
                 
-                # STEP 2: Check if pump can deliver required head (must be able to trim down)
-                if delivered_head < head:
-                    logger.debug(f"[INDUSTRY] {pump_code}: Cannot deliver head - base curve gives {delivered_head:.2f}m < required {head}m")
+                # STEP 2: Check if pump can deliver required head with reasonable margin
+                # Allow some tolerance - pump should deliver at least 98% of required head
+                if delivered_head < head * 0.98:
+                    logger.debug(f"[INDUSTRY] {pump_code}: Insufficient head capability - base curve gives {delivered_head:.2f}m < required {head*0.98:.2f}m")
                     return None
                 
                 # STEP 3: Calculate required trim using affinity laws  
@@ -181,9 +182,10 @@ class PerformanceAnalyzer:
                 logger.debug(f"[INDUSTRY] {pump_code}: Affinity law calculation - head ratio: {head_ratio:.3f}, diameter ratio: {diameter_ratio:.3f}")
                 logger.debug(f"[INDUSTRY] {pump_code}: Required diameter: {required_diameter:.1f}mm (trim: {trim_percent:.1f}%)")
                 
-                # STEP 4: Check 15% trim limit (85% minimum diameter)
-                if trim_percent < 85.0:
-                    logger.debug(f"[INDUSTRY] {pump_code}: Excessive trim required ({trim_percent:.1f}% < 85%) - cannot proceed")
+                # STEP 4: Check trim limits - allow up to 20% trim (80% minimum diameter)
+                # Manufacturers typically allow more aggressive trimming than 15%
+                if trim_percent < 80.0:
+                    logger.debug(f"[INDUSTRY] {pump_code}: Excessive trim required ({trim_percent:.1f}% < 80%) - cannot proceed")
                     return None
                 
                 # STEP 5: Apply industry-standard affinity laws to calculate final performance
