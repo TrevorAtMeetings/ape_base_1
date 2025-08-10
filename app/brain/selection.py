@@ -228,6 +228,7 @@ class SelectionIntelligence:
                 # Check QBP gates - disqualify anything outside 60-130% (proper engineering standards)
                 if operating_zone == 'disqualified':
                     evaluation['feasible'] = False
+                    logger.warning(f"[SELECTION] {pump_data.get('pump_code')}: QBP {qbp:.0f}% outside 60-130% range (BEP: {bep_flow:.1f} m³/hr)")
                     evaluation['exclusion_reasons'].append(f'QBP {qbp:.0f}% outside allowable range')
                     return evaluation
                 

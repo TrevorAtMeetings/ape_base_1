@@ -169,7 +169,7 @@ class PerformanceAnalyzer:
                 # STEP 2: Check if pump can deliver required head with reasonable margin
                 # Allow some tolerance - pump should deliver at least 98% of required head
                 if delivered_head < head * 0.98:
-                    logger.debug(f"[INDUSTRY] {pump_code}: Insufficient head capability - base curve gives {delivered_head:.2f}m < required {head*0.98:.2f}m")
+                    logger.warning(f"[INDUSTRY] {pump_code}: Insufficient head capability - base curve gives {delivered_head:.2f}m < required {head*0.98:.2f}m")
                     return None
                 
                 # STEP 3: Calculate required trim using affinity laws  
@@ -185,7 +185,7 @@ class PerformanceAnalyzer:
                 # STEP 4: Check trim limits - maximum 15% trim (85% minimum diameter)
                 # Industry standard for reliable operation
                 if trim_percent < 85.0:
-                    logger.debug(f"[INDUSTRY] {pump_code}: Excessive trim required ({trim_percent:.1f}% < 85%) - cannot proceed")
+                    logger.warning(f"[INDUSTRY] {pump_code}: Excessive trim required ({trim_percent:.1f}% < 85%) - cannot proceed")
                     return None
                 
                 # STEP 5: Apply industry-standard affinity laws to calculate final performance
