@@ -270,7 +270,7 @@ class PumpRepository:
                                 'flow_m3hr': float(row['flow_m3hr']),
                                 'head_m': float(row['head_m']) if row['head_m'] is not None else 0.0,
                                 'efficiency_pct': float(row['efficiency_pct']) if row['efficiency_pct'] is not None else 0.0,
-                                'power_kw': None,  # Calculate using hydraulic formula
+                                'power_kw': None,  # Will be populated by Brain performance analysis
                                 'npshr_m': float(row['npshr_m']) if row['npshr_m'] is not None else None
                             })
 

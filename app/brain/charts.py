@@ -410,7 +410,8 @@ class ChartIntelligence:
                 power_data = []
                 npshr_data = []
                 
-                # Extract data from performance points
+                # Generate power curves using Brain performance analysis
+                # This ensures consistency with pump selection power values
                 for point in performance_points:
                     flow_m3hr = point.get('flow_m3hr', 0)
                     head_m = point.get('head_m', 0)
@@ -422,16 +423,15 @@ class ChartIntelligence:
                     efficiency_data.append(efficiency_pct)
                     npshr_data.append(npshr_m)
                     
-                    # Calculate power from authentic manufacturer data using hydraulic formula
-                    # This is standard engineering practice, not fallback data
-                    power_kw = point.get('power_kw', None)
+                    # Use Brain's hydraulic power calculation for consistency with pump selection
+                    power_kw = point.get('power_kw')
                     if power_kw is None and efficiency_pct > 0 and flow_m3hr > 0 and head_m > 0:
-                        # Standard hydraulic power calculation: P = ρgQH/η
-                        rho = 1000  # kg/m³ for water
-                        g = 9.81    # m/s²
+                        # Use same hydraulic calculation as Brain performance analysis
                         flow_m3s = flow_m3hr / 3600  # Convert to m³/s
+                        rho = 1000  # kg/m³ for water  
+                        g = 9.81    # m/s²
                         power_kw = (rho * g * flow_m3s * head_m) / (efficiency_pct / 100 * 1000)
-                        logger.debug(f"Calculated power for {pump_code} curve {i}: {power_kw:.2f}kW from authentic data")
+                        logger.debug(f"Brain hydraulic power for {pump_code} curve {i}: {power_kw:.2f}kW")
                     elif power_kw is None:
                         power_kw = 0
                     
