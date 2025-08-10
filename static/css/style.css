@@ -3236,7 +3236,7 @@ nav.unified-nav .nav-btn:hover {
 .pump-results-list {
     display: flex;
     flex-direction: column;
-    gap: 15px;
+    gap: 4px;
 }
 
 .pump-result-row {
@@ -3519,7 +3519,7 @@ nav.unified-nav .nav-btn:hover {
     border: 1px solid #e0e0e0;
     border-radius: 6px;
     padding: 8px 12px;
-    margin-bottom: 6px;
+    margin-bottom: 2px;
     transition: all 0.2s ease;
     text-decoration: none;
     color: inherit;
