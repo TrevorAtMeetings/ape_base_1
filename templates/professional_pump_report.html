@@ -35,10 +35,10 @@
 
         /* Compact Header */
         .report-header {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-            color: white;
-            padding: 20px 0;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%) !important;
+            color: white !important;
+            padding: 20px 0 !important;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
         }
 
         .header-content {
@@ -73,15 +73,16 @@
 
         /* Compact Cards - Uniform Sizing */
         .metric-card {
-            background: white;
-            border-radius: 8px;
-            padding: 16px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            background: white !important;
+            border-radius: 8px !important;
+            padding: 16px !important;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08) !important;
             height: 120px !important;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            box-sizing: border-box;
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: space-between !important;
+            box-sizing: border-box !important;
+            margin-bottom: 16px !important;
         }
 
         .metric-label {
@@ -149,20 +150,21 @@
 
         /* Compact Section Headers */
         .section-header {
-            background: linear-gradient(90deg, var(--primary) 0%, var(--primary-dark) 100%);
-            color: white;
-            padding: 10px 16px;
-            border-radius: 8px 8px 0 0;
-            font-size: 1.1rem;
-            font-weight: 500;
-            margin-bottom: 0;
+            background: linear-gradient(90deg, var(--primary) 0%, var(--primary-dark) 100%) !important;
+            color: white !important;
+            padding: 10px 16px !important;
+            border-radius: 8px 8px 0 0 !important;
+            font-size: 1.1rem !important;
+            font-weight: 500 !important;
+            margin-bottom: 0 !important;
+            display: block !important;
         }
 
         .section-content {
-            background: white;
-            padding: 16px;
-            border-radius: 0 0 8px 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            background: white !important;
+            padding: 16px !important;
+            border-radius: 0 0 8px 8px !important;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05) !important;
         }
 
         /* Score Display */
@@ -432,8 +434,8 @@
 
 {% block content %}
     <!-- Navigation -->
-    {% set engineering_url = url_for('reports.engineering_report', pump_code=selected_pump.get('pump_code'), flow=site_requirements.get('flow_m3hr', 0), head=site_requirements.get('head_m', 0), pump_type=site_requirements.get('pump_type', 'GENERAL')) %}
-    {% set presentation_url = url_for('reports.pump_report', pump_code=selected_pump.get('pump_code'), flow=site_requirements.get('flow_m3hr', 0), head=site_requirements.get('head_m', 0), pump_type=site_requirements.get('pump_type', 'GENERAL')) %}
+    {% set engineering_url = url_for('reports.engineering_report', pump_code=selected_pump.get('pump_code', ''), flow=site_requirements.get('flow_m3hr', 0), head=site_requirements.get('head_m', 0), pump_type=site_requirements.get('pump_type', 'GENERAL')) %}
+    {% set presentation_url = url_for('reports.pump_report', pump_code=selected_pump.get('pump_code', ''), flow=site_requirements.get('flow_m3hr', 0), head=site_requirements.get('head_m', 0), pump_type=site_requirements.get('pump_type', 'GENERAL')) %}
     {% set show_view_toggle = true %}
     {% set current_view = 'presentation' %}
     {% set show_print = true %}
@@ -823,7 +825,7 @@
                     <div class="pump-grid">
                         {% for pump in alternative_pumps[:6] %}
                         {% set score_color = "#4caf50" if pump.get('suitability_score', 0) >= 80 else ("#2196f3" if pump.get('suitability_score', 0) >= 60 else "#ff9800") %}
-                        <div class="pump-card" onclick="location.href='{{ url_for('reports.pump_report', pump_code=pump.pump_code, flow=site_requirements.get('flow_m3hr', 0), head=site_requirements.get('head_m', 0), pump_type=site_requirements.get('pump_type', 'GENERAL')) }}'">
+                        <div class="pump-card" onclick="location.href='{{ url_for('reports.pump_report', pump_code=pump.get('pump_code', pump.pump_code), flow=site_requirements.get('flow_m3hr', 0), head=site_requirements.get('head_m', 0), pump_type=site_requirements.get('pump_type', 'GENERAL')) }}'">
                             <div class="pump-card-header">
                                 <div>
                                     <div class="pump-name">{{ pump.pump_code }}</div>
