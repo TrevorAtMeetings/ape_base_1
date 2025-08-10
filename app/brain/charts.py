@@ -412,11 +412,30 @@ class ChartIntelligence:
                 
                 # Extract data from performance points
                 for point in performance_points:
-                    flow_data.append(point.get('flow_m3hr', 0))
-                    head_data.append(point.get('head_m', 0))
-                    efficiency_data.append(point.get('efficiency_pct', 0))
-                    power_data.append(point.get('power_kw', 0))
-                    npshr_data.append(point.get('npshr_m', 0))
+                    flow_m3hr = point.get('flow_m3hr', 0)
+                    head_m = point.get('head_m', 0)
+                    efficiency_pct = point.get('efficiency_pct', 0)
+                    npshr_m = point.get('npshr_m', 0)
+                    
+                    flow_data.append(flow_m3hr)
+                    head_data.append(head_m)
+                    efficiency_data.append(efficiency_pct)
+                    npshr_data.append(npshr_m)
+                    
+                    # Calculate power from authentic manufacturer data using hydraulic formula
+                    # This is standard engineering practice, not fallback data
+                    power_kw = point.get('power_kw', None)
+                    if power_kw is None and efficiency_pct > 0 and flow_m3hr > 0 and head_m > 0:
+                        # Standard hydraulic power calculation: P = ρgQH/η
+                        rho = 1000  # kg/m³ for water
+                        g = 9.81    # m/s²
+                        flow_m3s = flow_m3hr / 3600  # Convert to m³/s
+                        power_kw = (rho * g * flow_m3s * head_m) / (efficiency_pct / 100 * 1000)
+                        logger.debug(f"Calculated power for {pump_code} curve {i}: {power_kw:.2f}kW from authentic data")
+                    elif power_kw is None:
+                        power_kw = 0
+                    
+                    power_data.append(power_kw)
                 
                 chart_data['curves'].append({
                     'curve_index': i,
