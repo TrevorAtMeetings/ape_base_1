@@ -145,6 +145,10 @@ def engineering_report(pump_code):
     # NO other recalculations are needed - Brain provides everything
     selected_pump = evaluation_result.copy()
     
+    # CRITICAL FIX: Map Brain's total_score to template's expected suitability_score
+    if 'total_score' in selected_pump:
+        selected_pump['suitability_score'] = selected_pump['total_score']
+    
     # Add pump specifications for template fields that need min/max impeller, test speed, etc.
     pump_models = brain.repository.get_pump_models()
     pump_model = next((p for p in pump_models if p.get('pump_code') == pump_code), None)
@@ -267,6 +271,10 @@ def pump_report_data_api(pump_code):
         
         if not evaluation_result:
             return jsonify({'error': f'Pump {pump_code} not found or not suitable'}), 404
+        
+        # CRITICAL FIX: Map Brain's total_score to template's expected suitability_score
+        if 'total_score' in evaluation_result:
+            evaluation_result['suitability_score'] = evaluation_result['total_score']
             
         return jsonify({
             'success': True,
