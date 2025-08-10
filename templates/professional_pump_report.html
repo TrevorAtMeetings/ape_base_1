@@ -1,19 +1,10 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pump Report - {{ selected_pump.get('pump_code', 'N/A') }} | APE Pumps</title>
-    
-    <!-- Materialize CSS -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    
+{% extends "base.html" %}
+
+{% block title %}Pump Report - {{ selected_pump.get('pump_code', 'N/A') }} | APE Pumps{% endblock %}
+
+{% block head %}
     <!-- Plotly.js for Charts -->
     <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
-    
-    <!-- Materialize JavaScript -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
     
     <!-- Chart Scripts -->
     <script src="{{ url_for('static', filename='js/error-handler.js') }}"></script>
@@ -437,8 +428,9 @@
             }
         }
     </style>
-</head>
-<body>
+{% endblock %}
+
+{% block content %}
     <!-- Navigation -->
     {% set engineering_url = url_for('reports.engineering_report', pump_code=selected_pump.get('pump_code'), flow=site_requirements.get('flow_m3hr', 0), head=site_requirements.get('head_m', 0), pump_type=site_requirements.get('pump_type', 'GENERAL')) %}
     {% set presentation_url = url_for('reports.pump_report', pump_code=selected_pump.get('pump_code'), flow=site_requirements.get('flow_m3hr', 0), head=site_requirements.get('head_m', 0), pump_type=site_requirements.get('pump_type', 'GENERAL')) %}
@@ -1114,5 +1106,4 @@
     <!-- Floating AI Chat -->
     <link href="{{ url_for('static', filename='css/floating-ai-chat.css') }}?v={{ range(1000, 9999) | random }}" rel="stylesheet">
     <script src="{{ url_for('static', filename='js/floating-ai-chat.js') }}"></script>
-</body>
-</html>
+{% endblock %}
