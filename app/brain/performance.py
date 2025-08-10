@@ -52,6 +52,107 @@ class PerformanceAnalyzer:
         """
         # Use new industry-standard method
         return self.calculate_at_point_industry_standard(pump_data, flow, head, impeller_trim)
+
+    def _find_required_diameter_affinity_law(self, flows_sorted, heads_sorted, 
+                                           largest_diameter, target_flow, target_head, pump_code):
+        """
+        Find the required impeller diameter using correct affinity law methodology.
+        
+        Instead of scaling the final result, this method generates performance curves
+        for different diameters and finds which one naturally delivers the target head.
+        
+        Returns:
+            Tuple[float, float]: (required_diameter, trim_percent) or (None, None) if failed
+        """
+        try:
+            from scipy import interpolate
+            
+            # Try diameter ratios from 85% to 100% (15% max trim to no trim)
+            min_diameter_ratio = 0.85  # 15% maximum trim
+            max_diameter_ratio = 1.00  # No trim
+            
+            # Test 50 different diameters for precision
+            test_ratios = np.linspace(min_diameter_ratio, max_diameter_ratio, 50)
+            
+            for diameter_ratio in reversed(test_ratios):  # Start from largest (least trim)
+                test_diameter = largest_diameter * diameter_ratio
+                
+                # Generate new performance curve using affinity laws
+                # Q₂ = Q₁ × (D₂/D₁), H₂ = H₁ × (D₂/D₁)²
+                scaled_flows = [f * diameter_ratio for f in flows_sorted]
+                scaled_heads = [h * (diameter_ratio ** 2) for h in heads_sorted]
+                
+                # Create interpolation function for this scaled curve
+                if len(scaled_flows) < 2:
+                    continue
+                    
+                head_interp = interpolate.interp1d(scaled_flows, scaled_heads, 
+                                                 kind='linear', bounds_error=False)
+                
+                # Check if target flow is within this scaled curve's range
+                min_flow, max_flow = min(scaled_flows), max(scaled_flows)
+                if not (min_flow * 0.9 <= target_flow <= max_flow * 1.1):
+                    continue
+                
+                # Get head delivered by this diameter at target flow
+                delivered_head = float(head_interp(target_flow))
+                
+                if np.isnan(delivered_head):
+                    continue
+                
+                # Check if this diameter delivers the required head (within 2% tolerance)
+                if abs(delivered_head - target_head) / target_head <= 0.02:
+                    trim_percent = diameter_ratio * 100  # Percentage of original diameter
+                    
+                    if pump_code and "6 WLN 18A" in str(pump_code):
+                        logger.error(f"[AFFINITY DEBUG] {pump_code}: Found diameter {test_diameter:.1f}mm ({trim_percent:.1f}%)")
+                        logger.error(f"[AFFINITY DEBUG] {pump_code}: Delivers {delivered_head:.2f}m vs required {target_head:.2f}m")
+                        logger.error(f"[AFFINITY DEBUG] {pump_code}: Scaled curve range: {min_flow:.1f}-{max_flow:.1f} m³/hr")
+                    
+                    return test_diameter, trim_percent
+            
+            # If no exact match found, find the best compromise
+            best_diameter = None
+            best_trim = None
+            smallest_error = float('inf')
+            
+            for diameter_ratio in reversed(test_ratios):
+                test_diameter = largest_diameter * diameter_ratio
+                scaled_flows = [f * diameter_ratio for f in flows_sorted]
+                scaled_heads = [h * (diameter_ratio ** 2) for h in heads_sorted]
+                
+                if len(scaled_flows) < 2:
+                    continue
+                    
+                head_interp = interpolate.interp1d(scaled_flows, scaled_heads, 
+                                                 kind='linear', bounds_error=False)
+                
+                min_flow, max_flow = min(scaled_flows), max(scaled_flows)
+                if not (min_flow * 0.9 <= target_flow <= max_flow * 1.1):
+                    continue
+                
+                delivered_head = float(head_interp(target_flow))
+                if np.isnan(delivered_head):
+                    continue
+                
+                # Find diameter that delivers closest to target head
+                error = abs(delivered_head - target_head)
+                if error < smallest_error and delivered_head >= target_head * 0.98:
+                    smallest_error = error
+                    best_diameter = test_diameter
+                    best_trim = diameter_ratio * 100
+            
+            if best_diameter is not None:
+                if pump_code and "6 WLN 18A" in str(pump_code):
+                    logger.error(f"[AFFINITY DEBUG] {pump_code}: Best compromise: {best_diameter:.1f}mm ({best_trim:.1f}%)")
+                    logger.error(f"[AFFINITY DEBUG] {pump_code}: Error: {smallest_error:.2f}m")
+                return best_diameter, best_trim
+                
+            return None, None
+            
+        except Exception as e:
+            logger.error(f"[AFFINITY ERROR] {pump_code}: Error in affinity law calculation: {e}")
+            return None, None
     
     def calculate_at_point_industry_standard(self, pump_data: Dict[str, Any], flow: float, 
                           head: float, impeller_trim: Optional[float] = None) -> Optional[Dict[str, Any]]:
@@ -148,7 +249,7 @@ class PerformanceAnalyzer:
                 logger.debug(f"[INDUSTRY] {pump_code}: Creating interpolation functions with sorted data...")
                 
                 # CRITICAL DEBUG: Show actual performance points for problematic pumps
-                if "VBK 35-22" in pump_code or "PL 200" in pump_code:
+                if pump_code and ("VBK 35-22" in str(pump_code) or "PL 200" in str(pump_code)):
                     logger.error(f"[CURVE DEBUG] {pump_code}: Using {largest_diameter}mm diameter curve")
                     logger.error(f"[CURVE DEBUG] {pump_code}: Performance points: {list(zip(flows_sorted, heads_sorted))}")
                 
@@ -167,7 +268,7 @@ class PerformanceAnalyzer:
                 logger.debug(f"[INDUSTRY] {pump_code}: Base curve performance - head: {delivered_head:.2f}m, eff: {base_efficiency:.1f}%")
                 
                 # Special debug for 6 WLN 18A
-                if "6 WLN 18A" in pump_code:
+                if pump_code and "6 WLN 18A" in str(pump_code):
                     logger.error(f"[DEBUG 6WLN] Flow: {flow}, Required head: {head}")
                     logger.error(f"[DEBUG 6WLN] Delivered head: {delivered_head:.2f}m")
                     logger.error(f"[DEBUG 6WLN] Largest diameter: {largest_diameter}mm")
@@ -199,15 +300,18 @@ class PerformanceAnalyzer:
                     logger.warning(f"[INDUSTRY] {pump_code}: Insufficient head capability - base curve gives {delivered_head:.2f}m < required {head*0.98:.2f}m")
                     return None
                 
-                # STEP 3: Calculate required trim using affinity laws  
-                # H₂ = H₁ × (D₂/D₁)² → D₂/D₁ = √(H₂/H₁)
-                head_ratio = head / delivered_head if delivered_head > 0 else 1.0
-                diameter_ratio = np.sqrt(head_ratio)
-                required_diameter = largest_diameter * diameter_ratio
-                trim_percent = (required_diameter / largest_diameter) * 100  # Correct: percentage of original diameter
+                # STEP 3: CORRECT AFFINITY LAW METHODOLOGY
+                # Instead of scaling the final result, generate curves for different diameters
+                # and find which diameter naturally delivers the required head
+                required_diameter, trim_percent = self._find_required_diameter_affinity_law(
+                    flows_sorted, heads_sorted, largest_diameter, flow, head, pump_code
+                )
                 
-                logger.debug(f"[INDUSTRY] {pump_code}: Affinity law calculation - head ratio: {head_ratio:.3f}, diameter ratio: {diameter_ratio:.3f}")
-                logger.debug(f"[INDUSTRY] {pump_code}: Required diameter: {required_diameter:.1f}mm (trim: {trim_percent:.1f}%)")
+                if required_diameter is None:
+                    logger.warning(f"[INDUSTRY] {pump_code}: Could not determine required diameter using affinity laws")
+                    return None
+                    
+                logger.debug(f"[INDUSTRY] {pump_code}: Affinity law result - required diameter: {required_diameter:.1f}mm (trim: {trim_percent:.1f}%)")
                 
                 # STEP 4: Check trim limits - maximum 15% trim (85% minimum diameter)
                 # Industry standard for reliable operation
@@ -219,7 +323,8 @@ class PerformanceAnalyzer:
                     logger.error(f"[TRIM DEBUG] {pump_code}: Using curve with {largest_diameter}mm diameter, {len(curve_points)} points")
                     return None
                 
-                # STEP 5: Apply industry-standard affinity laws to calculate final performance
+                # STEP 5: Calculate performance at the required diameter using affinity laws
+                diameter_ratio = required_diameter / largest_diameter
                 final_head = head  # By design, this matches our target
                 
                 # Industry standard efficiency scaling with trimming (reduced penalty)
