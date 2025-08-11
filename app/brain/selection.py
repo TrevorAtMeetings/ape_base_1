@@ -81,9 +81,20 @@ class SelectionIntelligence:
         # COMPREHENSIVE HC PUMP PIPELINE ANALYSIS
         logger.error(f"🔍 [PIPELINE STEP 1] Repository loaded {len(all_pumps)} total pumps")
         
-        # Check if HC pumps are in repository
-        target_hc_pumps = [p for p in all_pumps if p.get('pump_code') in ['32 HC 6P', '30 HC 6P', '28 HC 6P']]
+        # Check if HC pumps are in repository - INCLUDING 8P models
+        target_hc_pumps = [p for p in all_pumps if p.get('pump_code') in ['32 HC 6P', '30 HC 6P', '28 HC 6P', '32 HC 8P']]
         logger.error(f"🔍 [PIPELINE STEP 1] Found {len(target_hc_pumps)} target HC pumps in repository")
+        
+        # Check specifically for 32 HC 8P which user says should handle 2000 m³/hr @ 100m
+        hc_8p_pump = [p for p in all_pumps if p.get('pump_code') == '32 HC 8P']
+        if hc_8p_pump:
+            specs = hc_8p_pump[0].get('specifications', {})
+            logger.error(f"🎯 [32 HC 8P CHECK] Found 32 HC 8P in database:")
+            logger.error(f"🎯 [32 HC 8P CHECK] BEP: {specs.get('bep_flow_m3hr', 0)} m³/hr @ {specs.get('bep_head_m', 0)}m")
+            logger.error(f"🎯 [32 HC 8P CHECK] Max impeller: {specs.get('max_impeller_diameter_mm', 0)}mm")
+            logger.error(f"🎯 [32 HC 8P CHECK] Pump type: {hc_8p_pump[0].get('pump_type', 'Unknown')}")
+        else:
+            logger.error(f"🚨 [32 HC 8P CHECK] 32 HC 8P NOT FOUND in repository!")
         
         if not target_hc_pumps:
             all_hc = [p for p in all_pumps if 'HC' in str(p.get('pump_code', ''))]
@@ -133,15 +144,15 @@ class SelectionIntelligence:
             # Pre-filter by flow range
             pump_code = pump.get('pump_code', 'Unknown')
             if not (bep_flow > 0 and min_flow_threshold <= bep_flow <= max_flow_threshold):
-                if pump_code in ['32 HC 6P', '30 HC 6P', '28 HC 6P']:
-                    logger.error(f"🚨 [PIPELINE STEP 2] {pump_code} FILTERED BY FLOW: BEP {bep_flow} not in range {min_flow_threshold:.1f}-{max_flow_threshold:.1f}")
+                if pump_code in ['32 HC 6P', '30 HC 6P', '28 HC 6P', '32 HC 8P']:
+                    logger.error(f"🚨 [FLOW PRE-FILTER] {pump_code} EXCLUDED: BEP {bep_flow} not in range {min_flow_threshold:.1f}-{max_flow_threshold:.1f}")
                 flow_filtered_count += 1
                 continue
             
             # Head compatibility check with trimming consideration
             # Allow pumps with lower BEP heads since trimming can increase head output
             if bep_head > 0 and not (min_head_threshold <= bep_head <= max_head_threshold):
-                if pump_code in ['32 HC 6P', '30 HC 6P', '28 HC 6P']:
+                if pump_code in ['32 HC 6P', '30 HC 6P', '28 HC 6P', '32 HC 8P']:
                     logger.error(f"🚨 [HEAD PRE-FILTER] {pump_code} EXCLUDED: BEP {bep_head:.1f}m not in range {min_head_threshold:.1f}-{max_head_threshold:.1f}m")
                     logger.error(f"🚨 [HEAD PRE-FILTER] {pump_code}: Required head {head}m, thresholds: {min_head_threshold:.1f}-{max_head_threshold:.1f}m")
                 head_filtered_count += 1
@@ -149,8 +160,8 @@ class SelectionIntelligence:
                 continue
             
             # HC pump passed pre-filtering
-            if pump_code in ['32 HC 6P', '30 HC 6P', '28 HC 6P']:
-                logger.error(f"✅ [PIPELINE STEP 3] {pump_code} PASSED PRE-FILTERING!")
+            if pump_code in ['32 HC 6P', '30 HC 6P', '28 HC 6P', '32 HC 8P']:
+                logger.error(f"✅ [PRE-FILTER] {pump_code} PASSED PRE-FILTERING!")
                 
             pump_models.append(pump)
         
