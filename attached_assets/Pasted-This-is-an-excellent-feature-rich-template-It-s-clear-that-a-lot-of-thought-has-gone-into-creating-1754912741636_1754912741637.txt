@@ -1,0 +1,92 @@
+This is an excellent, feature-rich template. It's clear that a lot of thought has gone into creating a comprehensive and professional-looking results page. The inclusion of AI analysis, lifecycle costs, and environmental impact is top-tier and provides immense value to the user.
+
+However, the template is suffering from a significant amount of "Architectural Drift." It contains a mix of old and new patterns, direct calls to decommissioned data keys, and structural issues that are preventing it from working correctly with your new, clean Brain system.
+
+This review will focus on identifying these legacy artifacts and providing a clear plan to refactor the template to be fully "Brain-compatible."
+
+Priority Issues (By Severity)
+🟥 Critical Issues
+
+Direct Access to Decommissioned Legacy Data Keys:
+
+Problem: This is the most critical issue. The template is littered with calls to data keys that existed in the old catalog_engine but are no longer provided by the Brain. This will either cause the template rendering to crash or, more likely, result in large empty sections and missing data on the page.
+
+Examples:
+
+top_selections[0].overall_score -> WRONG. The Brain provides total_score.
+
+top_selections[0].operating_point.efficiency_pct -> WRONG. The Brain provides this at the top level: top_selections[0].efficiency_pct. The operating_point dictionary from the Brain is for the charts API, not the main report data.
+
+top_selections[0].selection_reason -> WRONG. This key does not exist in the Brain's output. The reasoning is now built from the score_components.
+
+top_selections[0].bep_analysis -> WRONG. This was a nested object in the legacy system. The Brain provides the relevant values directly (e.g., qbp_percent, operating_zone).
+
+Impact: The page will be visibly broken, showing missing scores, performance data, and analysis.
+
+Recommendation: A complete "find and replace" pass is required. Every variable must be updated to match the clean, flat data structure returned by the Brain's evaluate_pump and find_best_pumps methods.
+
+Dual, Conflicting Chart Initialization Logic:
+
+Problem: The template has two completely different and conflicting ways of trying to initialize the performance charts.
+
+Method 1 (Modern): A div with id="chart-data" and data-* attributes. This is a clean, modern pattern.
+
+Method 2 (Old/Incorrect): A <script> block at the very end of the file that also tries to initialize the charts by passing Jinja variables directly into a JavaScript object.
+
+Impact: This will cause JavaScript errors. The two scripts will race against each other, and it's unpredictable which one will run first or if they will interfere with each other, leading to charts that don't load.
+
+Recommendation: Choose one method and delete the other. The first method (using the data-* attributes on the #chart-data div) is the superior, safer, and more standard approach. The entire <script> block at the end that re-declares chartData should be deleted.
+
+🟨 High-Priority Issues
+
+Broken Template Inheritance (Still Present):
+
+Problem: The file does not begin with {% extends "base.html" %}. It re-declares the entire HTML structure.
+
+Impact: As before, this isolates the page from the rest of the application, causing inconsistent navigation, footers, and global styles. This is a primary cause of your reported UI issues.
+
+Recommendation: This must be fixed. The file must be wrapped in the standard {% extends %} and {% block %} structure.
+
+Hardcoded, Static Data:
+
+Problem: The "Selection Process Transparency" card contains hardcoded numbers (386, 26, 360, 10).
+
+Impact: This information is static and will be incorrect for every single pump selection, misleading the user.
+
+Recommendation: The backend route (main_flow.py) must calculate these numbers and pass them to the template in a selection_summary dictionary. The template must then render these dynamic values.
+
+Action Plan: Refactoring the Results Page
+
+This template needs to be brought in line with the new architecture.
+
+Step 1: Fix the Foundation
+
+Implement Template Inheritance: Add {% extends "base.html" %} at the top and wrap the content in the appropriate blocks. Move the custom CSS to a {% block head %}. This will solve the global navigation and styling problems.
+
+Step 2: Fix the Data Flow (Backend)
+
+In app/route_modules/main_flow.py, modify the pump_options route.
+
+Ensure it passes the selection_summary dictionary with the correct counts (total_evaluated, feasible_count, etc.) to the template.
+
+Step 3: Fix the Data Binding (The Core Task)
+
+Get a sample JSON output from a successful brain.find_best_pumps call. This is your "data contract."
+
+Go through the template line by line and replace every legacy variable with the correct key from the Brain's data contract.
+
+Legacy Variable in Template	Correct Brain Variable
+top_selections[0].overall_score	top_selections[0].get('total_score')
+top_selections[0].operating_point.efficiency_pct	top_selections[0].get('efficiency_pct')
+top_selections[0].operating_point.power_kw	top_selections[0].get('power_kw')
+top_selections[0].selection_reason	This must be generated from score_components
+top_selections[0].bep_analysis.distance_pct	Calculate from qbp_percent
+top_selections[0].bep_analysis.operating_zone	top_selections[0].get('operating_zone')
+
+Step 4: Unify Chart Initialization
+
+Delete the entire <script> block at the bottom of the file that contains document.addEventListener('DOMContentLoaded', ...).
+
+Ensure the div with id="chart-data" and the data-* attributes is present and contains the correct variables. This will be the single, reliable method for initializing the charts.
+
+By completing this refactor, you will have a results page that is not only visually impressive but also robust, accurate, and perfectly synchronized with your new Brain system.

@@ -1,0 +1,158 @@
+[LaunchDarkly] LaunchDarkly client initialized
+APEREBasev3:1 Banner not shown: beforeinstallpromptevent.preventDefault() called. The page must call beforeinstallpromptevent.prompt() to show the banner.
+_app-87e3bcb1484a8afd.js:13 Adding extension: Interactions121 Object
+framework-d49db226030ffeda.js:1 Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+_ @ framework-d49db226030ffeda.js:1Understand this error
+framework-d49db226030ffeda.js:1 Unrecognized feature: 'ambient-light-sensor'.
+_ @ framework-d49db226030ffeda.js:1Understand this warning
+framework-d49db226030ffeda.js:1 Unrecognized feature: 'battery'.
+_ @ framework-d49db226030ffeda.js:1Understand this warning
+framework-d49db226030ffeda.js:1 Unrecognized feature: 'execution-while-not-rendered'.
+_ @ framework-d49db226030ffeda.js:1Understand this warning
+framework-d49db226030ffeda.js:1 Unrecognized feature: 'execution-while-out-of-viewport'.
+_ @ framework-d49db226030ffeda.js:1Understand this warning
+framework-d49db226030ffeda.js:1 Unrecognized feature: 'layout-animations'.
+_ @ framework-d49db226030ffeda.js:1Understand this warning
+framework-d49db226030ffeda.js:1 Unrecognized feature: 'legacy-image-formats'.
+_ @ framework-d49db226030ffeda.js:1Understand this warning
+framework-d49db226030ffeda.js:1 Unrecognized feature: 'navigation-override'.
+_ @ framework-d49db226030ffeda.js:1Understand this warning
+framework-d49db226030ffeda.js:1 Unrecognized feature: 'oversized-images'.
+_ @ framework-d49db226030ffeda.js:1Understand this warning
+framework-d49db226030ffeda.js:1 Unrecognized feature: 'publickey-credentials'.
+_ @ framework-d49db226030ffeda.js:1Understand this warning
+framework-d49db226030ffeda.js:1 Unrecognized feature: 'speaker-selection'.
+_ @ framework-d49db226030ffeda.js:1Understand this warning
+framework-d49db226030ffeda.js:1 Unrecognized feature: 'unoptimized-images'.
+_ @ framework-d49db226030ffeda.js:1Understand this warning
+framework-d49db226030ffeda.js:1 Unrecognized feature: 'unsized-media'.
+_ @ framework-d49db226030ffeda.js:1Understand this warning
+framework-d49db226030ffeda.js:1 Unrecognized feature: 'pointer-lock'.
+_ @ framework-d49db226030ffeda.js:1Understand this warning
+framework-d49db226030ffeda.js:1 Allow attribute will take precedence over 'allowfullscreen'.
+_ @ framework-d49db226030ffeda.js:1Understand this warning
+framework-d49db226030ffeda.js:1 Allow attribute will take precedence over 'allowpaymentrequest'.
+_ @ framework-d49db226030ffeda.js:1Understand this warning
+background.js:3 Extension background script loading...
+background.js:8 Initializing Replit API...
+patchConsole.ts:16 Replit API initialized successfully
+patchConsole.ts:16 Logger module loading...
+patchConsole.ts:16 Logger module imported successfully
+patchConsole.ts:16 Setting up extension commands and events...
+patchConsole.ts:26 Error initializing extension: TypeError: Cannot read properties of undefined (reading 'commands')
+    at initializeExtension (replit-logger.js:174:21)
+    at initializeExtension (background.js:17:11)
+console.error @ patchConsole.ts:26Understand this error
+patchConsole.ts:16 Extension fully initialized with React!
+_app-87e3bcb1484a8afd.js:13 Replit API initialized successfully Object
+_app-87e3bcb1484a8afd.js:13 Logger module loading... Object
+_app-87e3bcb1484a8afd.js:13 Logger module imported successfully Object
+_app-87e3bcb1484a8afd.js:13 Setting up extension commands and events... Object
+_app-87e3bcb1484a8afd.js:13 Error initializing extension: Object
+(anonymous) @ _app-87e3bcb1484a8afd.js:13Understand this error
+_app-87e3bcb1484a8afd.js:13 Extension fully initialized with React! Object
+framework-d49db226030ffeda.js:1 Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+_ @ framework-d49db226030ffeda.js:1Understand this error
+workspace_iframe.html:32 Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.Understand this error
+workspace_iframe.html:32 Unrecognized feature: 'ambient-light-sensor'.Understand this warning
+workspace_iframe.html:32 Unrecognized feature: 'battery'.Understand this warning
+workspace_iframe.html:32 Unrecognized feature: 'execution-while-not-rendered'.Understand this warning
+workspace_iframe.html:32 Unrecognized feature: 'execution-while-out-of-viewport'.Understand this warning
+workspace_iframe.html:32 Unrecognized feature: 'layout-animations'.Understand this warning
+workspace_iframe.html:32 Unrecognized feature: 'legacy-image-formats'.Understand this warning
+workspace_iframe.html:32 Unrecognized feature: 'navigation-override'.Understand this warning
+workspace_iframe.html:32 Unrecognized feature: 'oversized-images'.Understand this warning
+workspace_iframe.html:32 Unrecognized feature: 'publickey-credentials'.Understand this warning
+workspace_iframe.html:32 Unrecognized feature: 'speaker-selection'.Understand this warning
+workspace_iframe.html:32 Unrecognized feature: 'unoptimized-images'.Understand this warning
+workspace_iframe.html:32 Unrecognized feature: 'unsized-media'.Understand this warning
+workspace_iframe.html:32 Allow attribute will take precedence over 'allowfullscreen'.Understand this warning
+workspace_iframe.html:32 Allow attribute will take precedence over 'allowpaymentrequest'.Understand this warning
+Console.js:61 MathJax is loaded and ready
+Console.js:61 Initializing navigation dropdowns...
+Console.js:61 Found 4 dropdown buttons
+Console.js:61 Form components initialized - enhanced autocomplete ready
+Console.js:61 Advanced options initialized
+Console.js:61 Setting up event listeners for: flow_rate total_head
+Console.js:61 Adding event listeners to: flow_rate
+Console.js:61 Adding event listeners to: total_head
+Console.js:61 Form components initialized - enhanced autocomplete ready
+Console.js:61 Advanced options initialized
+Console.js:61 Setting up event listeners for: flow_rate total_head
+Console.js:61 Adding event listeners to: flow_rate
+Console.js:61 Adding event listeners to: total_head
+Console.js:61 Base template: Initializing Materialize components
+Console.js:61 Initialized 2 modals
+Console.js:61 Initialized 0 sidenavs
+Console.js:61 Form components initialized - enhanced autocomplete ready
+Console.js:61 Enhanced autocomplete initialized successfully
+Console.js:61 Enhanced autocomplete already initialized, skipping...
+2Console.js:61 Stored typed flow rate (metric): 1
+2Console.js:61 Stored typed flow rate (metric): 14
+2Console.js:61 Stored typed flow rate (metric): 140
+2Console.js:61 Stored typed flow rate (metric): 1400
+2Console.js:61 Stored typed head (metric): 2
+2Console.js:61 Stored typed head (metric): 25
+Console.js:61 MathJax is loaded and ready
+Console.js:61 Initializing navigation dropdowns...
+Console.js:61 Found 4 dropdown buttons
+Console.js:61 Pump sorting initialized
+Console.js:61 Base template: Initializing Materialize components
+Console.js:61 Initialized 2 modals
+Console.js:61 Initialized 0 sidenavs
+Console.js:61 Form components initialized - enhanced autocomplete ready
+Console.js:61 MathJax is loaded and ready
+Console.js:61 Initializing navigation dropdowns...
+Console.js:61 Found 4 dropdown buttons
+Console.js:61 Engineering report DOM loaded
+Console.js:61 Loading pump list for analysis controls
+Console.js:61 Loading pump list...
+Console.js:61 Base template: Initializing Materialize components
+Console.js:61 Initialized 2 modals
+Console.js:61 Initialized 0 sidenavs
+Console.js:61 Form components initialized - enhanced autocomplete ready
+Console.js:61 API response received: 200
+Console.js:61 Pump data received: 386 pumps
+Console.js:61 MathJax is loaded and ready
+Console.js:61 === CREATING CHART MANAGER ===
+Console.js:61 ChartManager: Constructor started
+Console.js:61 ChartManager: Constructor completed
+Console.js:61 ✅ GLOBAL pumpChartsManager created successfully
+Console.js:61 === INITIALIZING CHARTS ===
+Console.js:61 Chart data: Object
+Console.js:61 pumpChartsManager available: true
+Console.js:61 ChartManager: Starting chart initialization
+Console.js:61 ChartManager: Loading data for Object
+Console.js:61 ChartManager: API response status: 200
+Console.js:61 ChartManager: Received chart data: Object
+Console.js:61 ChartManager: Rendering head_flow in head-flow-chart
+Console.js:61 ❌ Chart initialization failed: ReferenceError: Plotly is not defined
+    at ChartManager.renderChart (14%20BLE?flow=1400.0&head=25.0&pump_type=GENERAL:1307:17)
+    at ChartManager.initializeCharts (14%20BLE?flow=1400.0&head=25.0&pump_type=GENERAL:1315:22)
+Mt.forEach.n.<computed> @ Console.js:61Understand this error
+Console.js:61 Initializing navigation dropdowns...
+Console.js:61 Found 4 dropdown buttons
+Console.js:61 === CHART INITIALIZATION ===
+Console.js:61 Plotly available: true
+Console.js:61 pumpChartsManager available: true
+Console.js:61 === INITIALIZING CHARTS ===
+Console.js:61 Chart data: Object
+Console.js:61 pumpChartsManager available: true
+Console.js:61 ChartManager: Starting chart initialization
+Console.js:61 ChartManager: Loading data for Object
+Console.js:61 Base template: Initializing Materialize components
+Console.js:61 Initialized 2 modals
+Console.js:61 Initialized 0 sidenavs
+Console.js:61 Form components initialized - enhanced autocomplete ready
+Console.js:61 ChartManager: API response status: 200
+Console.js:61 ChartManager: Received chart data: Object
+Console.js:61 ChartManager: Rendering head_flow in head-flow-chart
+Console.js:61 ChartManager: head_flow rendered successfully
+Console.js:61 ChartManager: Rendering efficiency_flow in efficiency-flow-chart
+Console.js:61 ChartManager: efficiency_flow rendered successfully
+Console.js:61 ChartManager: Rendering power_flow in power-flow-chart
+Console.js:61 ChartManager: power_flow rendered successfully
+Console.js:61 ChartManager: Rendering npshr_flow in npshr-flow-chart
+Console.js:61 ChartManager: npshr_flow rendered successfully
+Console.js:61 ChartManager: All charts initialized
+Console.js:61 ✅ Charts initialized successfully
