@@ -77,41 +77,72 @@ class BrainCalibrator:
     
     def _generate_test_cases(self) -> List[Dict]:
         """
-        Generate test cases from repository pump data.
-        Focus on pumps with known BEP data and performance curves.
+        Generate test cases from repository pump data with authentic BEP specifications.
+        Focus on pumps with known BEP data from manufacturer specifications.
         """
         test_cases = []
-        pump_models = self.repository.get_pump_models()
         
-        # Select pumps with reliable manufacturer data
-        reliable_pumps = [
-            pump for pump in pump_models 
-            if (pump.get('bep_flow_m3hr', 0) > 0 and 
-                pump.get('bep_head_m', 0) > 0 and
-                pump.get('curves', []))
-        ]
+        # Query database directly for pumps with BEP data
+        import os
+        import psycopg2
+        from psycopg2.extras import RealDictCursor
         
-        # Generate test cases around BEP operating points
-        for pump in reliable_pumps[:20]:  # Limit to 20 pumps for testing
-            bep_flow = pump.get('bep_flow_m3hr', 0)
-            bep_head = pump.get('bep_head_m', 0)
-            
-            if bep_flow > 0 and bep_head > 0:
-                # Test at BEP and nearby points
-                for flow_factor in [0.8, 0.9, 1.0, 1.1, 1.2]:
-                    for head_factor in [0.9, 1.0, 1.1]:
-                        test_flow = bep_flow * flow_factor
-                        test_head = bep_head * head_factor
+        database_url = os.environ.get('DATABASE_URL')
+        
+        try:
+            with psycopg2.connect(database_url) as conn:
+                with conn.cursor(cursor_factory=RealDictCursor) as cursor:
+                    # Get pumps with BEP data and performance curves
+                    cursor.execute("""
+                        SELECT p.pump_code, ps.bep_flow_m3hr, ps.bep_head_m,
+                               COUNT(pc.id) as curve_count
+                        FROM pumps p 
+                        JOIN pump_specifications ps ON p.id = ps.pump_id 
+                        LEFT JOIN pump_curves pc ON p.id = pc.pump_id
+                        WHERE ps.bep_flow_m3hr > 0 AND ps.bep_head_m > 0
+                        GROUP BY p.pump_code, ps.bep_flow_m3hr, ps.bep_head_m
+                        HAVING COUNT(pc.id) > 0
+                        ORDER BY ps.bep_flow_m3hr
+                        LIMIT 30
+                    """)
+                    
+                    pumps_with_bep = cursor.fetchall()
+                    logger.info(f"Found {len(pumps_with_bep)} pumps with BEP data and curves")
+                    
+                    # Generate test cases around BEP operating points
+                    for pump in pumps_with_bep:
+                        bep_flow = float(pump['bep_flow_m3hr'])
+                        bep_head = float(pump['bep_head_m'])
+                        pump_code = pump['pump_code']
                         
-                        test_cases.append({
-                            'pump_code': pump['pump_code'],
-                            'test_flow': test_flow,
-                            'test_head': test_head,
-                            'expected_bep_flow': bep_flow,
-                            'expected_bep_head': bep_head,
-                            'manufacturer': pump.get('manufacturer', 'APE PUMPS'),
-                            'test_type': 'bep_validation'
-                        })
+                        # Test at BEP and strategic nearby points
+                        test_points = [
+                            (0.8, 1.0),   # Part load at BEP head
+                            (1.0, 1.0),   # Exact BEP point
+                            (1.2, 1.0),   # Overload at BEP head
+                            (1.0, 0.9),   # BEP flow at lower head
+                            (1.0, 1.1),   # BEP flow at higher head
+                        ]
+                        
+                        for flow_factor, head_factor in test_points:
+                            test_flow = bep_flow * flow_factor
+                            test_head = bep_head * head_factor
+                            
+                            test_cases.append({
+                                'pump_code': pump_code,
+                                'test_flow': test_flow,
+                                'test_head': test_head,
+                                'expected_bep_flow': bep_flow,
+                                'expected_bep_head': bep_head,
+                                'manufacturer': 'APE PUMPS',
+                                'test_type': 'bep_validation',
+                                'curve_count': pump['curve_count']
+                            })
+        
+        except Exception as e:
+            logger.error(f"Error generating test cases from database: {e}")
+            # Fallback to empty test cases with clear error
+            test_cases = []
         
         logger.info(f"Generated {len(test_cases)} test cases for calibration")
         return test_cases
