@@ -46,10 +46,12 @@
         }
         
         /* Main content wrapper */
+        body .main-content,
         .main-content {
-            background: #f5f5f5;
-            min-height: 100vh;
-            padding-bottom: 40px;
+            background: #f5f5f5 !important;
+            min-height: 100vh !important;
+            padding-bottom: 40px !important;
+            padding-top: 20px !important;
         }
 
         /* Compact Header */
@@ -106,12 +108,15 @@
             border-color: var(--primary-dark) !important;
         }
 
-        /* Compact Cards - Uniform Sizing */
+        /* Professional Metric Cards with Maximum Specificity */
+        body .main-content .metric-card,
+        .main-content .metric-card,
+        .container .metric-card,
         .metric-card {
             background: white !important;
-            border-radius: 4px !important;
+            border-radius: 6px !important;
             padding: 20px !important;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.12) !important;
             height: 140px !important;
             display: flex !important;
             flex-direction: column !important;
@@ -119,6 +124,15 @@
             box-sizing: border-box !important;
             margin-bottom: 20px !important;
             border: 1px solid #e0e0e0 !important;
+            transition: all 0.3s ease !important;
+        }
+        
+        body .main-content .metric-card:hover,
+        .main-content .metric-card:hover,
+        .container .metric-card:hover,
+        .metric-card:hover {
+            transform: translateY(-2px) !important;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.15) !important;
         }
 
         .metric-label {
@@ -190,26 +204,37 @@
             letter-spacing: 0.5px;
         }
 
-        /* Compact Section Headers */
+        /* Professional Section Headers with Maximum Specificity */
+        body .main-content .section-header,
+        .main-content .section-header,
+        .container .section-header,
         .section-header {
-            background: #1e3c72 !important;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%) !important;
             color: white !important;
-            padding: 12px 20px !important;
-            border-radius: 4px 4px 0 0 !important;
-            font-size: 1.15rem !important;
+            padding: 16px 20px !important;
+            border-radius: 6px 6px 0 0 !important;
+            font-size: 1.1rem !important;
             font-weight: 600 !important;
             margin-bottom: 0 !important;
+            margin-top: 20px !important;
             display: block !important;
-            letter-spacing: 0.3px !important;
+            letter-spacing: 0.5px !important;
+            text-transform: uppercase !important;
+            border-bottom: 3px solid #0d2240 !important;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
         }
 
+        body .main-content .section-content,
+        .main-content .section-content,
+        .container .section-content,
         .section-content {
             background: white !important;
             padding: 24px !important;
-            border-radius: 0 0 4px 4px !important;
+            border-radius: 0 0 6px 6px !important;
             box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
             border: 1px solid #e0e0e0 !important;
             border-top: none !important;
+            margin-bottom: 20px !important;
         }
 
         /* Score Display */
@@ -507,37 +532,52 @@
             justify-content: center !important;
         }
         
+        /* Professional Action Buttons with Maximum Specificity */
+        body .main-content .action-btn,
+        .main-content .action-btn,
+        .container .action-btn,
         .action-btn {
             flex: 0 0 auto !important;
             min-width: 140px !important;
             background: white !important;
             border: 2px solid #e0e0e0 !important;
-            border-radius: 6px !important;
-            padding: 16px 12px !important;
+            border-radius: 8px !important;
+            padding: 18px 12px !important;
             text-align: center !important;
             cursor: pointer !important;
             transition: all 0.3s ease !important;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.08) !important;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.08) !important;
+            margin: 0 !important;
         }
         
+        body .main-content .action-btn:hover,
+        .main-content .action-btn:hover,
+        .container .action-btn:hover,
         .action-btn:hover {
             border-color: #1e3c72 !important;
             background: #f8f9fa !important;
-            transform: translateY(-2px) !important;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+            transform: translateY(-3px) !important;
+            box-shadow: 0 6px 20px rgba(30, 60, 114, 0.15) !important;
         }
         
+        body .main-content .action-btn i,
+        .main-content .action-btn i,
+        .container .action-btn i,
         .action-btn i {
             display: block !important;
-            font-size: 28px !important;
-            margin-bottom: 8px !important;
+            font-size: 32px !important;
+            margin-bottom: 10px !important;
             color: #1e3c72 !important;
         }
         
+        body .main-content .action-btn-label,
+        .main-content .action-btn-label,
+        .container .action-btn-label,
         .action-btn-label {
             font-size: 0.9rem !important;
             color: #333 !important;
-            font-weight: 500 !important;
+            font-weight: 600 !important;
+            line-height: 1.2 !important;
         }
         
         /* Ensure sections have proper spacing */
