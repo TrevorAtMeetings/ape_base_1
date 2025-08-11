@@ -33,7 +33,7 @@
                         <div class="col s12 m4">
                             <div class="card-panel blue lighten-5">
                                 <h6>BEP Flow Exponent</h6>
-                                <h4 class="blue-text">{{ calibration_factors.bep_shift_flow_exponent }}</h4>
+                                <h4 class="blue-text" data-factor="flow">{{ calibration_factors.bep_shift_flow_exponent }}</h4>
                                 <p class="grey-text text-darken-1">Controls flow migration rate during impeller trimming</p>
                                 <small>Formula: BEP_Q₂ = BEP_Q₁ × (D₂/D₁)^x</small>
                             </div>
@@ -41,7 +41,7 @@
                         <div class="col s12 m4">
                             <div class="card-panel green lighten-5">
                                 <h6>BEP Head Exponent</h6>
-                                <h4 class="green-text">{{ calibration_factors.bep_shift_head_exponent }}</h4>
+                                <h4 class="green-text" data-factor="head">{{ calibration_factors.bep_shift_head_exponent }}</h4>
                                 <p class="grey-text text-darken-1">Controls head migration rate during impeller trimming</p>
                                 <small>Formula: BEP_H₂ = BEP_H₁ × (D₂/D₁)^y</small>
                             </div>
@@ -49,7 +49,7 @@
                         <div class="col s12 m4">
                             <div class="card-panel purple lighten-5">
                                 <h6>Efficiency Correction</h6>
-                                <h4 class="purple-text">{{ calibration_factors.efficiency_correction_exponent }}</h4>
+                                <h4 class="purple-text" data-factor="efficiency">{{ calibration_factors.efficiency_correction_exponent }}</h4>
                                 <p class="grey-text text-darken-1">Efficiency penalty factor for off-BEP operation</p>
                                 <small>Formula: η_penalty = (|QBP - 100|) × z</small>
                             </div>
@@ -281,40 +281,150 @@ function updateFactors() {
         efficiency_correction_exponent: parseFloat(document.getElementById('efficiency_factor').value)
     };
     
+    // Client-side validation
+    const errors = [];
+    if (factors.bep_shift_flow_exponent < 1.0 || factors.bep_shift_flow_exponent > 1.5) {
+        errors.push('Flow exponent must be between 1.0 and 1.5');
+    }
+    if (factors.bep_shift_head_exponent < 1.8 || factors.bep_shift_head_exponent > 2.5) {
+        errors.push('Head exponent must be between 1.8 and 2.5');
+    }
+    if (factors.efficiency_correction_exponent < 0.05 || factors.efficiency_correction_exponent > 0.2) {
+        errors.push('Efficiency factor must be between 0.05 and 0.2');
+    }
+    
+    if (errors.length > 0) {
+        M.toast({html: 'Validation error: ' + errors.join(', '), classes: 'red'});
+        return;
+    }
+    
+    // Add user context for audit logging
+    factors.user_id = 'web_admin';
+    
     fetch('/admin/brain/calibration/update', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify({factors: factors})
+        body: JSON.stringify({factors: factors, user_id: 'web_admin'})
     })
     .then(response => response.json())
     .then(data => {
         if (data.status === 'success') {
             M.toast({html: 'Calibration factors updated successfully', classes: 'green'});
-            location.reload(); // Reload to show updated values
+            
+            // Update displayed values without full reload
+            updateDisplayedFactors(factors);
         } else {
-            M.toast({html: 'Error updating factors: ' + data.error, classes: 'red'});
+            if (data.details) {
+                M.toast({html: 'Validation errors: ' + data.details.join(', '), classes: 'red'});
+            } else {
+                M.toast({html: 'Error updating factors: ' + data.error, classes: 'red'});
+            }
         }
+    })
+    .catch(error => {
+        M.toast({html: 'Network error: ' + error, classes: 'red'});
     });
     
     const modal = M.Modal.getInstance(document.getElementById('edit-factors-modal'));
     modal.close();
 }
 
+function updateDisplayedFactors(factors) {
+    // Update the display cards without requiring page reload
+    const flowCard = document.querySelector('[data-factor="flow"]');
+    if (flowCard) flowCard.textContent = factors.bep_shift_flow_exponent;
+    
+    const headCard = document.querySelector('[data-factor="head"]');
+    if (headCard) headCard.textContent = factors.bep_shift_head_exponent;
+    
+    const effCard = document.querySelector('[data-factor="efficiency"]');
+    if (effCard) effCard.textContent = factors.efficiency_correction_exponent;
+}
+
 function runQuickTest() {
-    M.toast({html: 'Running quick test...', classes: 'blue'});
-    // Implement quick test logic
+    M.toast({html: 'Running quick calibration test...', classes: 'blue'});
+    
+    // Show loading state
+    document.getElementById('calibration-status').classList.remove('hide');
+    document.getElementById('calibration-results').classList.add('hide');
+    
+    fetch('/admin/brain/calibration/run', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({quick_test: true, test_count: 5})
+    })
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById('calibration-status').classList.add('hide');
+        
+        if (data.status === 'success') {
+            displayResults(data.results);
+            M.toast({html: 'Quick test completed successfully', classes: 'green'});
+        } else {
+            M.toast({html: 'Quick test failed: ' + data.error, classes: 'red'});
+        }
+    })
+    .catch(error => {
+        document.getElementById('calibration-status').classList.add('hide');
+        M.toast({html: 'Error running quick test: ' + error, classes: 'red'});
+    });
 }
 
 function validateCurrentSettings() {
-    M.toast({html: 'Validating current settings...', classes: 'orange'});
-    // Implement validation logic
+    const factors = {
+        flow: parseFloat(document.querySelector('[data-factor="flow"]').textContent),
+        head: parseFloat(document.querySelector('[data-factor="head"]').textContent),
+        efficiency: parseFloat(document.querySelector('[data-factor="efficiency"]').textContent)
+    };
+    
+    let validationResults = [];
+    
+    // Physics bounds validation
+    if (factors.flow < 1.0 || factors.flow > 1.5) {
+        validationResults.push('Flow exponent outside recommended range (1.0-1.5)');
+    }
+    if (factors.head < 1.8 || factors.head > 2.5) {
+        validationResults.push('Head exponent outside recommended range (1.8-2.5)');
+    }
+    if (factors.efficiency < 0.05 || factors.efficiency > 0.2) {
+        validationResults.push('Efficiency factor outside recommended range (0.05-0.2)');
+    }
+    
+    if (validationResults.length === 0) {
+        M.toast({html: 'All settings are within recommended ranges', classes: 'green'});
+    } else {
+        M.toast({html: 'Warning: ' + validationResults.join(', '), classes: 'orange'});
+    }
 }
 
 function generateReport() {
-    M.toast({html: 'Generating calibration report...', classes: 'purple'});
-    // Implement report generation
+    M.toast({html: 'Generating comprehensive calibration report...', classes: 'purple'});
+    
+    fetch('/admin/brain/calibration/report', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.blob())
+    .then(blob => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = 'brain_calibration_report.pdf';
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        M.toast({html: 'Report downloaded successfully', classes: 'green'});
+    })
+    .catch(error => {
+        M.toast({html: 'Error generating report: ' + error, classes: 'red'});
+    });
 }
 
 function resetToDefaults() {

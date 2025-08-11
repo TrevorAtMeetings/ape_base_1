@@ -42,10 +42,24 @@ class PerformanceAnalyzer:
         """
         Load BEP migration calibration factors from configuration service.
         These factors control the physics model for impeller trimming effects.
+        Cache at class level to avoid repeated database hits.
         """
+        # Check if factors are already cached at class level
+        if hasattr(PerformanceAnalyzer, '_cached_factors') and hasattr(PerformanceAnalyzer, '_cache_time'):
+            from datetime import datetime, timedelta
+            if datetime.now() - PerformanceAnalyzer._cache_time < timedelta(minutes=5):
+                self.calibration_factors = PerformanceAnalyzer._cached_factors
+                return
+        
         try:
             config_service = self.brain.get_config_service()
             self.calibration_factors = config_service.get_calibration_factors()
+            
+            # Cache at class level for 5 minutes
+            from datetime import datetime
+            PerformanceAnalyzer._cached_factors = self.calibration_factors
+            PerformanceAnalyzer._cache_time = datetime.now()
+            
             logger.debug(f"[TUNABLE PHYSICS] Loaded calibration factors: {self.calibration_factors}")
         except Exception as e:
             logger.warning(f"[TUNABLE PHYSICS] Failed to load calibration factors, using defaults: {e}")

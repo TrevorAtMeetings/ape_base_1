@@ -58,9 +58,9 @@ def brain_dashboard():
 @brain_admin_bp.route('/admin/brain/status')
 def brain_status():
     """Brain system status endpoint"""
+    import time
     try:
         from ..pump_brain import get_pump_brain
-        import time
         
         brain = get_pump_brain()
         status = brain.get_status()
@@ -83,9 +83,9 @@ def brain_status():
 @brain_admin_bp.route('/admin/brain/health')
 def brain_health():
     """Brain system health check endpoint"""
+    import time
     try:
         from ..pump_brain import get_pump_brain
-        import time
         
         brain = get_pump_brain()
         status = brain.get_status()
@@ -132,7 +132,7 @@ def calibration_tool():
 
 @brain_admin_bp.route('/admin/brain/calibration/run', methods=['POST'])
 def run_calibration():
-    """Run brain calibration test"""
+    """Run brain calibration test with enhanced options"""
     try:
         import sys
         import os
@@ -140,11 +140,19 @@ def run_calibration():
         
         from tools.calibrate_brain import BrainCalibrator
         
+        # Get request parameters
+        data = request.get_json() if request.is_json else {}
+        quick_test = data.get('quick_test', False)
+        test_count = data.get('test_count', 20 if not quick_test else 5)
+        
         # Initialize calibrator
         calibrator = BrainCalibrator()
         
-        # Load test cases
-        calibrator.load_test_cases()
+        # Load test cases (limit for quick test)
+        test_cases = calibrator.load_test_cases()
+        if quick_test:
+            calibrator.test_cases = test_cases[:test_count]
+            logger.info(f"Running quick calibration test with {len(calibrator.test_cases)} pumps")
         
         # Run calibration test
         results = calibrator.run_calibration_test()
@@ -153,7 +161,9 @@ def run_calibration():
             'status': 'success',
             'results': results,
             'summary': results.get('summary_stats', {}),
-            'recommendations': results.get('recommendations', [])
+            'recommendations': results.get('recommendations', []),
+            'test_type': 'quick' if quick_test else 'full',
+            'test_count': len(calibrator.test_cases)
         })
         
     except Exception as e:
@@ -163,28 +173,96 @@ def run_calibration():
             'error': str(e)
         }), 500
 
+@brain_admin_bp.route('/admin/brain/calibration/report', methods=['POST'])
+def generate_calibration_report():
+    """Generate downloadable calibration report"""
+    try:
+        import sys
+        import os
+        sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+        
+        from tools.calibrate_brain import BrainCalibrator
+        from io import StringIO
+        
+        # Run full calibration test
+        calibrator = BrainCalibrator()
+        calibrator.load_test_cases()
+        results = calibrator.run_calibration_test()
+        
+        # Generate comprehensive report
+        report_text = calibrator.generate_report()
+        
+        # Create downloadable response
+        from flask import make_response
+        response = make_response(report_text)
+        response.headers['Content-Type'] = 'text/plain'
+        response.headers['Content-Disposition'] = 'attachment; filename=brain_calibration_report.txt'
+        
+        return response
+        
+    except Exception as e:
+        logger.error(f"Report generation failed: {e}")
+        return jsonify({
+            'status': 'error',
+            'error': str(e)
+        }), 500
+
 @brain_admin_bp.route('/admin/brain/calibration/update', methods=['POST'])
 def update_calibration_factors():
-    """Update calibration factors"""
+    """Update calibration factors with validation and audit logging"""
     try:
         from ..admin_config_service import admin_config_service
         
         data = request.get_json()
         factors = data.get('factors', {})
+        user_id = data.get('user_id', 'admin')
         
-        # Update each factor in the database
+        # Validate physics parameters
+        validation_errors = []
+        physics_bounds = {
+            'bep_shift_flow_exponent': (1.0, 1.5),
+            'bep_shift_head_exponent': (1.8, 2.5),
+            'efficiency_correction_exponent': (0.05, 0.2)
+        }
+        
+        for factor_name, value in factors.items():
+            try:
+                float_value = float(value)
+                if factor_name in physics_bounds:
+                    min_val, max_val = physics_bounds[factor_name]
+                    if not (min_val <= float_value <= max_val):
+                        validation_errors.append(f"{factor_name} must be between {min_val} and {max_val}")
+            except (ValueError, TypeError):
+                validation_errors.append(f"{factor_name} must be a valid number")
+        
+        if validation_errors:
+            return jsonify({
+                'status': 'error', 
+                'error': 'Validation failed',
+                'details': validation_errors
+            }), 400
+        
+        # Update database with audit trail
+        import os
         import psycopg2
-        from ..pump_repository import get_pump_repository
-        repository = get_pump_repository()
         
-        with repository.db.get_connection() as conn:
+        database_url = os.environ.get('DATABASE_URL')
+        with psycopg2.connect(database_url) as conn:
             with conn.cursor() as cursor:
+                # Update factors
                 for factor_name, value in factors.items():
                     cursor.execute("""
                         UPDATE admin_config.engineering_constants 
-                        SET value = %s 
+                        SET value = %s, updated_at = NOW()
                         WHERE name = %s AND category = 'BEP Migration'
                     """, (str(value), factor_name))
+                
+                # Log the change for audit
+                cursor.execute("""
+                    INSERT INTO admin_config.audit_log (
+                        profile_id, action, user_id, changes, timestamp
+                    ) VALUES (1, 'calibration_update', %s, %s, NOW())
+                """, (user_id, f"Updated calibration factors: {factors}"))
                 
                 conn.commit()
         
@@ -192,8 +270,8 @@ def update_calibration_factors():
         admin_config_service._config_cache.clear()
         admin_config_service._cache_timestamp = None
         
-        flash('Calibration factors updated successfully', 'success')
-        return jsonify({'status': 'success', 'message': 'Calibration factors updated'})
+        logger.info(f"Calibration factors updated by {user_id}: {factors}")
+        return jsonify({'status': 'success', 'message': 'Calibration factors updated successfully'})
         
     except Exception as e:
         logger.error(f"Failed to update calibration factors: {e}")
@@ -239,9 +317,14 @@ def data_quality_dashboard():
     except Exception as e:
         logger.error(f"Error loading data quality dashboard: {e}")
         flash(f'Error loading data quality dashboard: {str(e)}', 'error')
+        # Provide default breadcrumbs in error case
+        breadcrumbs = [
+            {'label': 'Home', 'url': url_for('main_flow.index'), 'icon': 'home'},
+            {'label': 'Brain Dashboard', 'url': url_for('brain_admin.brain_dashboard'), 'icon': 'psychology'},
+            {'label': 'Data Quality', 'url': '#', 'icon': 'assessment'}
+        ]
         return render_template('admin/data_quality.html', 
-                             issues_by_severity={}, pump_issues={}, total_issues=0,
-                             breadcrumbs=breadcrumbs)
+                             issues_by_severity={}, pump_issues={}, total_issues=0, breadcrumbs=breadcrumbs)
 
 @brain_admin_bp.route('/admin/brain/corrections')
 def corrections_dashboard():
