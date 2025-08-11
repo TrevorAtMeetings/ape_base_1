@@ -142,6 +142,21 @@ def run_performance_test():
         # Run comparison tests
         test_results = []
         for pump in test_pumps:
+            pump_code = _get_pump_attr(pump, 'pump_code')
+            logger.error(f"[ADMIN TEST] Processing pump: {pump_code}")
+            
+            # Special debug for HC pumps
+            if pump_code and "HC" in str(pump_code):
+                logger.error(f"[HC DEBUG] Processing HC pump: {pump_code}")
+                logger.error(f"[HC DEBUG] Pump type: {type(pump)}")
+                logger.error(f"[HC DEBUG] Pump keys: {list(pump.keys()) if isinstance(pump, dict) else 'Not a dict'}")
+                logger.error(f"[HC DEBUG] Has curves: {'curves' in pump}")
+                if 'curves' in pump:
+                    curves = pump.get('curves', [])
+                    logger.error(f"[HC DEBUG] Number of curves: {len(curves)}")
+                    if curves:
+                        logger.error(f"[HC DEBUG] First curve sample: {list(curves[0].keys())}")
+            
             if envelope_testing:
                 # Run comprehensive envelope testing (10-20 points)
                 result = _test_pump_performance_envelope(pump, flow_rate, head, pump_repo)
@@ -155,6 +170,9 @@ def run_performance_test():
             
             if result:
                 test_results.append(result)
+                logger.error(f"[ADMIN TEST] {pump_code}: Test completed successfully")
+            else:
+                logger.error(f"[ADMIN TEST] {pump_code}: Test failed - no result returned")
         
         logger.info(f"Performance test completed: {len(test_results)} pumps tested")
         
@@ -247,6 +265,15 @@ def _get_database_performance(pump, flow_rate, head):
         
         pump_code = _get_pump_attr(pump, 'pump_code')
         logger.debug(f"Using Brain system for {pump_code} at {flow_rate}/{head}")
+        
+        # Debug: Check pump data structure for HC pumps
+        if pump_code and "HC" in str(pump_code):
+            logger.error(f"[ADMIN DEBUG] Pump data structure for {pump_code}:")
+            logger.error(f"[ADMIN DEBUG] - Type: {type(pump)}")
+            logger.error(f"[ADMIN DEBUG] - Keys: {list(pump.keys()) if isinstance(pump, dict) else 'Not a dict'}")
+            logger.error(f"[ADMIN DEBUG] - Has curves: {'curves' in pump}")
+            if 'curves' in pump:
+                logger.error(f"[ADMIN DEBUG] - Number of curves: {len(pump.get('curves', []))}")
         
         # Use Brain's calculate_performance method with authentic database data
         performance_result = brain.calculate_performance(pump, flow_rate, head)

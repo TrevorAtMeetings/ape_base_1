@@ -443,19 +443,25 @@ class PerformanceAnalyzer:
             pump_code = pump_data.get('pump_code')
             logger.debug(f"[INDUSTRY] Starting industry-standard calculation for {pump_code} at {flow} m³/hr @ {head}m")
             
-            # Enhanced debugging for 8/8 DME
-            if pump_code and "8/8 DME" in str(pump_code):
-                logger.error(f"[8/8 DME DEBUG] Starting calculation for {pump_code}")
-                logger.error(f"[8/8 DME DEBUG] Requirements: {flow} m³/hr @ {head}m")
+            # Enhanced debugging for HC pumps and 8/8 DME
+            if pump_code and ("HC" in str(pump_code) or "8/8 DME" in str(pump_code)):
+                logger.error(f"[DEBUG] Starting calculation for {pump_code}")
+                logger.error(f"[DEBUG] Requirements: {flow} m³/hr @ {head}m")
+                logger.error(f"[DEBUG] Pump data keys: {list(pump_data.keys())}")
             
             curves = pump_data.get('curves', [])
             logger.debug(f"[INDUSTRY] {pump_code}: Found {len(curves)} curves")
             
-            if pump_code and "8/8 DME" in str(pump_code):
-                logger.error(f"[8/8 DME DEBUG] Found {len(curves)} curves")
+            if pump_code and ("HC" in str(pump_code) or "8/8 DME" in str(pump_code)):
+                logger.error(f"[DEBUG] Found {len(curves)} curves")
+                if curves:
+                    for i, curve in enumerate(curves):
+                        logger.error(f"[DEBUG] Curve {i}: diameter={curve.get('impeller_diameter_mm')}, points={len(curve.get('performance_points', []))}")
             
             if not curves:
                 logger.debug(f"[INDUSTRY] {pump_code}: No curves found - returning None")
+                if pump_code and "HC" in str(pump_code):
+                    logger.error(f"[DEBUG] {pump_code}: NO CURVES FOUND - This is why calculation fails!")
                 return None
             
             # INDUSTRY STANDARD: Find largest impeller curve (manufacturer approach)
@@ -470,8 +476,9 @@ class PerformanceAnalyzer:
             
             if not largest_curve or largest_diameter <= 0:
                 logger.debug(f"[INDUSTRY] {pump_code}: No valid curves with impeller diameter found")
-                if pump_code and "8/8 DME" in str(pump_code):
-                    logger.error(f"[8/8 DME DEBUG] No valid curves found - largest_diameter: {largest_diameter}")
+                if pump_code and ("HC" in str(pump_code) or "8/8 DME" in str(pump_code)):
+                    logger.error(f"[DEBUG] No valid curves found - largest_diameter: {largest_diameter}")
+                    logger.error(f"[DEBUG] {pump_code}: INVALID CURVES - This is why calculation fails!")
                 return None
                 
             logger.debug(f"[INDUSTRY] {pump_code}: Using largest impeller {largest_diameter}mm as base curve")
