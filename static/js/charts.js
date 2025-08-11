@@ -116,13 +116,71 @@ class ChartManager {
             });
         }
 
-        // Add BEP zones for head-flow charts (enhanced feature restoration)
-        if (chartType === 'head_flow') {
-            this.addBEPZoneTraces(traces, this.currentChartData.curves || [], [], []);
+        // Add authentic BEP marker for head-flow charts (enhanced feature)
+        if (chartType === 'head_flow' && opPoint && opPoint.bep_flow_m3hr && opPoint.bep_head_m) {
+            // Blue BEP marker with enhanced information
+            traces.push({
+                x: [opPoint.bep_flow_m3hr],
+                y: [opPoint.bep_head_m],
+                type: 'scatter',
+                mode: 'markers+text',
+                name: 'BEP (Manufacturer)',
+                marker: {
+                    color: 'blue',
+                    size: 12,
+                    symbol: 'circle',
+                    line: {
+                        color: 'darkblue',
+                        width: 2
+                    }
+                },
+                text: [`BEP: ${Math.round(opPoint.bep_flow_m3hr)} m³/hr @ ${opPoint.bep_head_m.toFixed(1)}m`],
+                textposition: 'top right',
+                textfont: {
+                    color: 'blue',
+                    size: 10
+                },
+                hovertemplate: `<b>Best Efficiency Point (BEP)</b><br>` +
+                             `Flow: ${opPoint.bep_flow_m3hr.toFixed(0)} m³/hr<br>` +
+                             `Head: ${opPoint.bep_head_m.toFixed(1)} m<br>` +
+                             `<i>Manufacturer Specification</i><extra></extra>`,
+                showlegend: true
+            });
         }
 
-        // Add system curve if available (enhanced feature restoration)  
+        // Add enhanced operating point marker with BEP percentage for head-flow charts
         if (opPoint && opPoint.flow_m3hr && opPoint.head_m && chartType === 'head_flow') {
+            const qbepText = opPoint.qbep_percentage ? `${Math.round(opPoint.qbep_percentage)}% BEP` : '';
+            
+            traces.push({
+                x: [opPoint.flow_m3hr],
+                y: [opPoint.head_m],
+                type: 'scatter',
+                mode: 'markers+text',
+                name: 'Operating Point',
+                marker: {
+                    color: 'red',
+                    size: 10,
+                    symbol: 'triangle-up',
+                    line: {
+                        color: 'darkred',
+                        width: 2
+                    }
+                },
+                text: [qbepText],
+                textposition: 'bottom center',
+                textfont: {
+                    color: 'red',
+                    size: 9
+                },
+                hovertemplate: `<b>Operating Point</b><br>` +
+                             `Flow: ${opPoint.flow_m3hr.toFixed(0)} m³/hr<br>` +
+                             `Head: ${opPoint.head_m.toFixed(1)} m<br>` +
+                             `Efficiency: ${opPoint.efficiency_pct.toFixed(1)}%<br>` +
+                             `BEP Flow: ${qbepText}<br>` +
+                             `<extra></extra>`,
+                showlegend: true
+            });
             this.addSystemCurve(traces, opPoint, [], []);
         }
 

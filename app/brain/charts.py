@@ -127,19 +127,23 @@ class ChartIntelligence:
                     'detailed_annotations': True
                 }
             
-            # Add BEP annotation if available
+            # Add enhanced BEP annotation with authentic manufacturer data
             specs = pump.get('specifications', {})
             bep_flow = specs.get('bep_flow_m3hr')
             bep_head = specs.get('bep_head_m')
             
             if bep_flow and bep_head and self.annotation_config['show_bep']:
+                # Enhanced BEP annotation with flow/head values
+                bep_text = f'BEP: {bep_flow:.0f} m³/hr @ {bep_head:.1f}m'
                 config['annotations'].append({
                     'type': 'point',
                     'x': bep_flow,
                     'y': bep_head,
-                    'text': 'BEP',
-                    'style': 'star',
-                    'color': 'gold'
+                    'text': bep_text,
+                    'style': 'circle',
+                    'color': 'blue',
+                    'size': 10,
+                    'label_position': 'top-right'
                 })
             
         except Exception as e:
@@ -362,7 +366,9 @@ class ChartIntelligence:
                     'trim_percent': evaluation_result.get('trim_percent', 100),
                     'qbep_percentage': evaluation_result.get('qbep_percentage', 100),
                     'extrapolated': evaluation_result.get('extrapolated', False),
-                    'sizing_info': evaluation_result.get('sizing_info', {})
+                    'sizing_info': evaluation_result.get('sizing_info', {}),
+                    'bep_flow_m3hr': 0,  # Will be populated with authentic data below
+                    'bep_head_m': 0,     # Will be populated with authentic data below
                 },
                 'brain_config': {
                     'context': 'web',
@@ -377,14 +383,35 @@ class ChartIntelligence:
                 }
             }
             
-            # Add BEP annotation if available - BRAIN INTELLIGENCE
-            bep_flow = evaluation_result.get('bep_flow_m3hr')
-            bep_head = evaluation_result.get('bep_head_m')
+            # Add enhanced BEP annotation with authentic manufacturer data - BRAIN INTELLIGENCE
+            specs = pump.get('specifications', {})
+            bep_flow = specs.get('bep_flow_m3hr')
+            bep_head = specs.get('bep_head_m')
+            
             if bep_flow and bep_head:
-                chart_data['brain_config']['annotations'].append({
-                    'type': 'point', 'x': bep_flow, 'y': bep_head, 
-                    'text': 'BEP', 'style': 'star', 'color': 'gold'
-                })
+                # Calculate BEP percentage relative to operating point
+                op_flow = evaluation_result.get('flow_m3hr', 0)
+                qbep_percentage = (op_flow / bep_flow * 100) if bep_flow > 0 else 0
+                
+                # Enhanced BEP annotation with blue marker and detailed info
+                bep_text = f'BEP: {bep_flow:.0f} m³/hr @ {bep_head:.1f}m'
+                chart_data['brain_config']['annotations'].extend([
+                    {
+                        'type': 'point', 
+                        'x': bep_flow, 
+                        'y': bep_head,
+                        'text': bep_text,
+                        'style': 'circle', 
+                        'color': 'blue',
+                        'size': 12,
+                        'label_position': 'top-right'
+                    }
+                ])
+                
+                # Add BEP data to operating point for enhanced display
+                chart_data['operating_point']['bep_flow_m3hr'] = bep_flow
+                chart_data['operating_point']['bep_head_m'] = bep_head
+                chart_data['operating_point']['qbep_percentage'] = qbep_percentage
             
             # Process curves - BRAIN HANDLES ALL TRANSFORMATIONS
             for i, curve in enumerate(curves):
