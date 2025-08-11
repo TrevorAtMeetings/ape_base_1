@@ -451,23 +451,28 @@ class ChartIntelligence:
                     efficiency_pct = point.get('efficiency_pct', 0)
                     npshr_m = point.get('npshr_m', 0)
                     
-                    flow_data.append(flow_m3hr)
-                    head_data.append(head_m)
-                    efficiency_data.append(efficiency_pct)
-                    npshr_data.append(npshr_m)
+                    # Skip points with zero flow for better curve quality
+                    if flow_m3hr <= 0:
+                        continue
                     
                     # Use Brain's hydraulic power calculation for consistency with pump selection
                     power_kw = point.get('power_kw')
-                    if power_kw is None and efficiency_pct > 0 and flow_m3hr > 0 and head_m > 0:
+                    if power_kw is None and efficiency_pct > 20 and flow_m3hr > 0 and head_m > 0:
                         # Use same hydraulic calculation as Brain performance analysis
                         flow_m3s = flow_m3hr / 3600  # Convert to m³/s
                         rho = 1000  # kg/m³ for water  
                         g = 9.81    # m/s²
                         power_kw = (rho * g * flow_m3s * head_m) / (efficiency_pct / 100 * 1000)
                         logger.debug(f"Brain hydraulic power for {pump_code} curve {i}: {power_kw:.2f}kW")
-                    elif power_kw is None:
-                        power_kw = 0
+                    elif power_kw is None or power_kw <= 0:
+                        # Skip invalid power points to improve curve quality
+                        continue
                     
+                    # Only add valid points to all arrays together
+                    flow_data.append(flow_m3hr)
+                    head_data.append(head_m)
+                    efficiency_data.append(efficiency_pct)
+                    npshr_data.append(npshr_m)
                     power_data.append(power_kw)
                 
                 chart_data['curves'].append({

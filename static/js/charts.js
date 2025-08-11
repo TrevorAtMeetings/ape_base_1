@@ -88,6 +88,12 @@ class ChartManager {
 
         const traces = [];
         const opPoint = this.currentChartData.operating_point;
+        
+        // DEBUG: Log operating point data for BEP troubleshooting
+        console.log(`[CHART DEBUG] Chart type: ${chartType}, Operating point:`, opPoint);
+        if (opPoint) {
+            console.log(`[CHART DEBUG] BEP data check - flow: ${opPoint.bep_flow_m3hr}, head: ${opPoint.bep_head_m}`);
+        }
 
         // BRAIN SYSTEM: Use API data directly - NO CLIENT-SIDE TRANSFORMATIONS
         if (Array.isArray(this.currentChartData.curves)) {
