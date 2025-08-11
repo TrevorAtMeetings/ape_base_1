@@ -368,6 +368,8 @@ def _get_bep_analysis(pump, pump_repo):
         bep_head = specifications.get('bep_head_m') 
         bep_efficiency = None  # BEP efficiency not stored as separate specification - would need calculation from curves
         
+        # DEBUG: Check what's actually in specifications
+        logger.error(f"DEBUG: Full specifications data for {pump_code}: {specifications}")
         logger.info(f"Database BEP specifications for {pump_code}: Flow={bep_flow}, Head={bep_head}, Efficiency={bep_efficiency}")
         
         # CRITICAL: If no authentic BEP data exists, FAIL - never use fallbacks
