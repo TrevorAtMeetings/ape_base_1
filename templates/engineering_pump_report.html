@@ -788,7 +788,7 @@
         let currentHead = {{ site_requirements.get('head_m', 0)|float }};
         const pumpCode = {{ selected_pump.get('pump_code', '')|tojson }};
 
-        // Initialize engineering charts
+        // Initialize non-chart components only
         document.addEventListener('DOMContentLoaded', function() {
             console.log('Engineering report DOM loaded');
             
@@ -799,22 +799,12 @@
                 loadingOverlay.style.display = 'none';
             }
             
-            // Initialize Materialize components
-            M.AutoInit();
-            
             // Load pump list immediately since controls are always visible
             console.log('Loading pump list for analysis controls');
             loadPumpList();
             
-            // Load and render the engineering two-chart layout
-            const chartData = {
-                pumpCode: pumpCode,
-                flowRate: currentFlow,
-                head: currentHead
-            };
-            
-            // Use the custom engineering charts function
-            loadEngineeringCharts(chartData);
+            // Initialize charts after Plotly is ready
+            initializeEngineeringChartsWhenReady();
         });
 
         // Analysis controls are now always visible, no toggle needed
@@ -950,6 +940,25 @@
             }
             
             window.location.href = `/engineering_report/${encodeURIComponent(selectedPumpCode)}?${params.toString()}`;
+        }
+
+        // Wait for Plotly to fully load before initializing charts
+        function initializeEngineeringChartsWhenReady() {
+            if (typeof Plotly !== 'undefined') {
+                console.log('✅ Plotly available: true');
+                
+                // Load and render the engineering two-chart layout
+                const chartData = {
+                    pumpCode: pumpCode,
+                    flowRate: currentFlow,
+                    head: currentHead
+                };
+                
+                loadEngineeringCharts(chartData);
+            } else {
+                console.log('⏳ Waiting for Plotly...');
+                setTimeout(initializeEngineeringChartsWhenReady, 100);
+            }
         }
 
         function loadEngineeringCharts(data) {

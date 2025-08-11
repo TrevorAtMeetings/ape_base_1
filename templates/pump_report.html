@@ -341,10 +341,10 @@
                                         <td>
                                             <div class="progress">
                                                 <div class="determinate green" 
-                                                     style="width: {{ selected_pump.overall_score|default(0) }}%;">
+                                                     style="width: {{ selected_pump.get('total_score', 0) }}%;">
                                                 </div>
                                             </div>
-                                            <span style="font-weight: 500;">{{ "%.0f"|default(0.0)|format(selected_pump.overall_score|default(0)) }}%</span>
+                                            <span style="font-weight: 500;">{{ "%.0f"|default(0.0)|format(selected_pump.get('total_score', 0)) }}%</span>
                                         </td>
                                     </tr>
                                     {% if selected_pump.ai_reasoning %}
@@ -440,7 +440,7 @@
                                     </div>
                                     <div class="col-md-3">
                                         <strong>Score:</strong><br>
-                                        {{ "%.0f"|default(0.0)|format(pump.overall_score|default(0)) }}%
+                                        {{ "%.0f"|default(0.0)|format(pump.get('total_score', 0)) }}%
                                     </div>
                                 </div>
                             </div>
@@ -474,23 +474,31 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{{ url_for('static', filename='js/charts.js') }}"></script>
     <script>
-        // Initialize charts when page loads
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('Pump report page loaded, initializing charts...');
-            
-            // Get data from hidden elements
-            const pumpCode = document.getElementById('pump-code').textContent;
-            const flowRate = parseFloat(document.getElementById('flow-rate').textContent);
-            const head = parseFloat(document.getElementById('head').textContent);
-            
-            console.log('Report data:', {pumpCode, flowRate, head});
-            
-            // Initialize charts with the selection data
-            if (typeof renderAllCharts === 'function') {
-                renderAllCharts(pumpCode, flowRate, head);
+        // Wait for Plotly to fully load before initializing charts
+        function initializeChartsWhenReady() {
+            if (typeof Plotly !== 'undefined' && window.pumpChartsManager) {
+                console.log('✅ Plotly available: true');
+                console.log('✅ pumpChartsManager available: true');
+                
+                // Get data from hidden elements
+                const pumpCode = document.getElementById('pump-code').textContent;
+                const flowRate = parseFloat(document.getElementById('flow-rate').textContent);
+                const head = parseFloat(document.getElementById('head').textContent);
+                
+                console.log('Report data:', {pumpCode, flowRate, head});
+                
+                // Initialize charts with the selection data
+                window.pumpChartsManager.initializeCharts(pumpCode, flowRate, head);
             } else {
-                console.error('Charts.js not loaded properly');
+                console.log('⏳ Waiting for Plotly and chart manager...');
+                setTimeout(initializeChartsWhenReady, 100);
             }
+        }
+        
+        // Start initialization after DOM is ready
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('=== CHART INITIALIZATION ===');
+            initializeChartsWhenReady();
         });
     </script>
     
