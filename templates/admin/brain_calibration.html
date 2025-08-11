@@ -129,24 +129,55 @@
             <!-- Physics Guidelines -->
             <div class="card">
                 <div class="card-content">
-                    <span class="card-title">Physics Guidelines</span>
+                    <span class="card-title">Physics Guidelines & Effect Guide</span>
                     <table class="striped">
                         <tbody>
                             <tr>
-                                <td>Flow Exponent</td>
-                                <td>1.0 - 2.0</td>
+                                <td><strong>Flow Exponent</strong><br><small class="grey-text">BEP flow shift factor</small></td>
+                                <td>1.0 - 2.0<br>
+                                    <small class="green-text">↑ Higher = More flow shift during trimming</small><br>
+                                    <small class="orange-text">↓ Lower = Less flow shift during trimming</small>
+                                </td>
                             </tr>
                             <tr>
-                                <td>Head Exponent</td>
-                                <td>1.0 - 3.0</td>
+                                <td><strong>Head Exponent</strong><br><small class="grey-text">Impeller diameter calculation</small></td>
+                                <td>1.0 - 3.0<br>
+                                    <small class="green-text">↑ Higher (2.5-3.0) = Smaller diameter changes</small><br>
+                                    <small class="orange-text">↓ Lower (1.0-1.5) = MAJOR diameter changes</small>
+                                </td>
                             </tr>
                             <tr>
-                                <td>Efficiency Factor</td>
-                                <td>0.01 - 0.5</td>
+                                <td><strong>Efficiency Factor</strong><br><small class="grey-text">Power calculation impact</small></td>
+                                <td>0.01 - 0.5<br>
+                                    <small class="green-text">↑ Higher (0.3-0.5) = MAJOR power impact</small><br>
+                                    <small class="orange-text">↓ Lower (0.01-0.1) = Minimal power impact</small>
+                                </td>
                             </tr>
                         </tbody>
                     </table>
-                    <p class="grey-text small">Typical ranges for industrial centrifugal pumps</p>
+                    <div class="row">
+                        <div class="col s12 m4">
+                            <div class="card-panel blue lighten-4">
+                                <h6 class="blue-text">Test Extreme Values</h6>
+                                <p><strong>Head Exp: 1.2</strong><br>Major impeller size changes</p>
+                                <p><strong>Head Exp: 2.8</strong><br>Minimal impeller changes</p>
+                            </div>
+                        </div>
+                        <div class="col s12 m4">
+                            <div class="card-panel green lighten-4">
+                                <h6 class="green-text">Standard Values</h6>
+                                <p><strong>Flow: 1.2</strong><br>Balanced flow migration</p>
+                                <p><strong>Head: 2.0</strong><br>Standard affinity law</p>
+                            </div>
+                        </div>
+                        <div class="col s12 m4">
+                            <div class="card-panel orange lighten-4">
+                                <h6 class="orange-text">Power Testing</h6>
+                                <p><strong>Efficiency: 0.4</strong><br>High power sensitivity</p>
+                                <p><strong>Efficiency: 0.05</strong><br>Low power sensitivity</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -163,7 +194,7 @@
                     <input id="flow_exponent" type="number" step="0.01" min="1.0" max="2.0" 
                            value="{{ calibration_factors.bep_shift_flow_exponent }}">
                     <label for="flow_exponent">BEP Flow Exponent</label>
-                    <span class="helper-text">Range: 1.0 - 2.0 (typical: 1.2)</span>
+                    <span class="helper-text">Range: 1.0 - 2.0 (typical: 1.2) - Higher = more flow shift during trimming</span>
                 </div>
             </div>
             <div class="row">
@@ -171,7 +202,7 @@
                     <input id="head_exponent" type="number" step="0.01" min="1.0" max="3.0" 
                            value="{{ calibration_factors.bep_shift_head_exponent }}">
                     <label for="head_exponent">BEP Head Exponent</label>
-                    <span class="helper-text">Range: 1.0 - 3.0 (typical: 2.0)</span>
+                    <span class="helper-text">Range: 1.0 - 3.0 (typical: 2.0) - Lower = MAJOR diameter changes, Higher = minimal changes</span>
                 </div>
             </div>
             <div class="row">
@@ -179,7 +210,7 @@
                     <input id="efficiency_factor" type="number" step="0.01" min="0.01" max="0.5" 
                            value="{{ calibration_factors.efficiency_correction_exponent }}">
                     <label for="efficiency_factor">Efficiency Correction Factor</label>
-                    <span class="helper-text">Range: 0.01 - 0.5 (typical: 0.1)</span>
+                    <span class="helper-text">Range: 0.01 - 0.5 (typical: 0.1) - Higher = MAJOR power impact, Lower = minimal impact</span>
                 </div>
             </div>
         </form>
