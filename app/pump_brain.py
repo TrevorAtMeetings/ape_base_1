@@ -298,16 +298,14 @@ class PumpBrain:
         """
         Find best pumps with optional detailed exclusion analysis.
         
-        Args:
-            site_requirements: Dictionary with 'flow_m3hr' and 'head_m'
-            constraints: Optional constraints (pump_type, etc.)
-            include_exclusions: If True, return detailed exclusion data
-        
-        Returns:
-            Dictionary with 'ranked_pumps' and optionally 'exclusion_details'
+        DEBUG: Main Brain entry point for pump selection.
         """
+        # CRITICAL DEBUG: Log main Brain entry point
         flow = site_requirements.get('flow_m3hr', 0)
         head = site_requirements.get('head_m', 0)
+        logger.error(f"🎯 [MAIN BRAIN] find_best_pumps called: flow={flow}, head={head}")
+        logger.error(f"🎯 [MAIN BRAIN] Constraints: {constraints}")
+        logger.error(f"🎯 [MAIN BRAIN] Include exclusions: {include_exclusions}")
         
         # Validate inputs
         validation = self.validator.validate_operating_point(flow, head)

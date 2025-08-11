@@ -68,28 +68,33 @@ class SelectionIntelligence:
         
         constraints = constraints or {}
         
+        # CRITICAL DEBUG: Log Brain selection entry point
+        logger.error(f"🎯 [BRAIN ENTRY] find_best_pumps called: flow={flow}, head={head}")
+        logger.error(f"🎯 [BRAIN ENTRY] Constraints: {constraints}")
+        
         # Get all pumps from repository
         all_pumps = self.brain.repository.get_pump_models()
         if not all_pumps:
             logger.warning("No pump models available in repository")
             return {'ranked_pumps': [], 'exclusion_details': None}
         
-        # MANDATORY DEBUG: Force logging of HC pump loading status
-        print(f"FORCE DEBUG: Loaded {len(all_pumps)} pumps from repository")
-        target_hc_pumps = [p for p in all_pumps if p.get('pump_code') in ['32 HC 6P', '30 HC 6P', '28 HC 6P']]
-        print(f"FORCE DEBUG: Found {len(target_hc_pumps)} target HC pumps")
+        # COMPREHENSIVE HC PUMP PIPELINE ANALYSIS
+        logger.error(f"🔍 [PIPELINE STEP 1] Repository loaded {len(all_pumps)} total pumps")
         
-        if target_hc_pumps:
-            for target_pump in target_hc_pumps:
-                specs = target_pump.get('specifications', {})
-                curves = target_pump.get('curves', [])
-                print(f"FORCE DEBUG: {target_pump.get('pump_code')} - BEP: {specs.get('bep_flow_m3hr', 0)} m³/hr @ {specs.get('bep_head_m', 0)}m, Curves: {len(curves)}")
-        else:
+        # Check if HC pumps are in repository
+        target_hc_pumps = [p for p in all_pumps if p.get('pump_code') in ['32 HC 6P', '30 HC 6P', '28 HC 6P']]
+        logger.error(f"🔍 [PIPELINE STEP 1] Found {len(target_hc_pumps)} target HC pumps in repository")
+        
+        if not target_hc_pumps:
             all_hc = [p for p in all_pumps if 'HC' in str(p.get('pump_code', ''))]
-            print(f"FORCE DEBUG: NO target HC, but found {len(all_hc)} total HC pumps: {[p.get('pump_code') for p in all_hc[:5]]}")
-            
-        # Also force log the actual repository data call
-        logger.error(f"REPOSITORY FORCE: Total pumps loaded = {len(all_pumps)}")
+            logger.error(f"🚨 [PIPELINE STEP 1] NO target HC pumps! Found {len(all_hc)} other HC pumps: {[p.get('pump_code') for p in all_hc[:5]]}")
+            return {'ranked_pumps': [], 'exclusion_details': None}
+        
+        # Log HC pump details
+        for target_pump in target_hc_pumps:
+            specs = target_pump.get('specifications', {})
+            curves = target_pump.get('curves', [])
+            logger.error(f"🔍 [PIPELINE STEP 1] {target_pump.get('pump_code')}: BEP {specs.get('bep_flow_m3hr', 0)} m³/hr @ {specs.get('bep_head_m', 0)}m, {len(curves)} curves")
         
         # Debug: Check if 6 WLN 18A is in loaded pumps
         wln_pumps = [p for p in all_pumps if "6 WLN 18A" in str(p.get('pump_code', ''))]
@@ -126,24 +131,27 @@ class SelectionIntelligence:
             bep_head = specs.get('bep_head_m', 0)
             
             # Pre-filter by flow range
+            pump_code = pump.get('pump_code', 'Unknown')
             if not (bep_flow > 0 and min_flow_threshold <= bep_flow <= max_flow_threshold):
+                if pump_code in ['32 HC 6P', '30 HC 6P', '28 HC 6P']:
+                    logger.error(f"🚨 [PIPELINE STEP 2] {pump_code} FILTERED BY FLOW: BEP {bep_flow} not in range {min_flow_threshold:.1f}-{max_flow_threshold:.1f}")
                 flow_filtered_count += 1
                 continue
             
             # Head compatibility check with trimming consideration
             # Allow pumps with lower BEP heads since trimming can increase head output
             if bep_head > 0 and not (min_head_threshold <= bep_head <= max_head_threshold):
+                if pump_code in ['32 HC 6P', '30 HC 6P', '28 HC 6P']:
+                    logger.error(f"🚨 [HEAD PRE-FILTER] {pump_code} EXCLUDED: BEP {bep_head:.1f}m not in range {min_head_threshold:.1f}-{max_head_threshold:.1f}m")
+                    logger.error(f"🚨 [HEAD PRE-FILTER] {pump_code}: Required head {head}m, thresholds: {min_head_threshold:.1f}-{max_head_threshold:.1f}m")
                 head_filtered_count += 1
-                
-                # Special debugging for HC pumps that might be filtered out
-                pump_code = pump.get('pump_code', 'Unknown')
-                if pump_code and any(hc in str(pump_code) for hc in ['32 HC', '30 HC', '28 HC']):
-                    logger.error(f"[HC PRE-FILTER DEBUG] {pump_code}: Would be filtered by head - BEP {bep_head:.1f}m outside range {min_head_threshold:.1f}-{max_head_threshold:.1f}m")
-                    logger.error(f"[HC PRE-FILTER DEBUG] {pump_code}: But trimming effects can increase head output!")
-                
                 logger.debug(f"[PRE-FILTER] {pump_code}: Head incompatible - BEP {bep_head:.1f}m outside range {min_head_threshold:.1f}-{max_head_threshold:.1f}m")
                 continue
             
+            # HC pump passed pre-filtering
+            if pump_code in ['32 HC 6P', '30 HC 6P', '28 HC 6P']:
+                logger.error(f"✅ [PIPELINE STEP 3] {pump_code} PASSED PRE-FILTERING!")
+                
             pump_models.append(pump)
         
         pre_filtered_count = flow_filtered_count + head_filtered_count
@@ -159,9 +167,20 @@ class SelectionIntelligence:
         for pump_data in pump_models:
             try:
                 # Apply pump type constraint early
+                pump_code = pump_data.get('pump_code', 'Unknown')
                 if constraints.get('pump_type') and constraints['pump_type'] != 'GENERAL':
                     pump_type = pump_data.get('pump_type', '').upper()
-                    if pump_type != constraints['pump_type'].upper():
+                    constraint_type = constraints['pump_type'].upper()
+                    
+                    # DEBUG: Log pump type filtering for HC pumps
+                    if pump_code in ['32 HC 6P', '30 HC 6P', '28 HC 6P']:
+                        logger.error(f"🔍 [PUMP TYPE FILTER] {pump_code}: pump_type='{pump_type}', constraint='{constraint_type}'")
+                    
+                    if pump_type != constraint_type:
+                        # DEBUG: Log HC pump exclusions due to pump type
+                        if pump_code in ['32 HC 6P', '30 HC 6P', '28 HC 6P']:
+                            logger.error(f"🚨 [PUMP TYPE FILTER] {pump_code}: EXCLUDED - type '{pump_type}' != constraint '{constraint_type}'")
+                        
                         if include_exclusions:
                             excluded_pumps.append({
                                 'pump_code': pump_data.get('pump_code'),
@@ -171,6 +190,11 @@ class SelectionIntelligence:
                             })
                             exclusion_summary['Wrong pump type'] = exclusion_summary.get('Wrong pump type', 0) + 1
                         continue
+                else:
+                    # DEBUG: Log when pump type constraint is bypassed
+                    if pump_code in ['32 HC 6P', '30 HC 6P', '28 HC 6P']:
+                        constraint_value = constraints.get('pump_type', 'None')
+                        logger.error(f"✅ [PUMP TYPE FILTER] {pump_code}: BYPASSED pump type filter (constraint='{constraint_value}')")
                 
                 # CRITICAL: Evaluate physical capability at specific operating point
                 pump_code = pump_data.get('pump_code', 'Unknown')
@@ -186,12 +210,14 @@ class SelectionIntelligence:
                 evaluation = self.evaluate_single_pump(pump_data, flow, head)
                 
                 # Check if HC pump was excluded and why
-                if pump_code and any(hc in str(pump_code) for hc in ['32 HC', '30 HC', '28 HC']):
+                if pump_code in ['32 HC 6P', '30 HC 6P', '28 HC 6P']:
                     if evaluation.get('feasible', False):
-                        logger.error(f"[HC SELECTION DEBUG] {pump_code}: PASSED evaluation - feasible!")
+                        logger.error(f"✅ [PIPELINE STEP 4] {pump_code}: PASSED evaluation - feasible with score {evaluation.get('total_score', 0):.1f}!")
                     else:
-                        logger.error(f"[HC SELECTION DEBUG] {pump_code}: FAILED evaluation - reasons: {evaluation.get('exclusion_reasons', [])}")
-                        logger.error(f"[HC SELECTION DEBUG] {pump_code}: Score components: {evaluation.get('score_components', {})}")
+                        logger.error(f"🚨 [PIPELINE STEP 4] {pump_code}: FAILED evaluation")
+                        logger.error(f"🚨 [PIPELINE STEP 4] {pump_code}: Exclusion reasons: {evaluation.get('exclusion_reasons', [])}")
+                        logger.error(f"🚨 [PIPELINE STEP 4] {pump_code}: Score components: {evaluation.get('score_components', {})}")
+                        logger.error(f"🚨 [PIPELINE STEP 4] {pump_code}: Performance data: {evaluation.get('performance', 'None')}")
                 
                 # Apply additional constraints
                 # NPSH constraint removed - data is collected for display but not used as hard gate
