@@ -263,7 +263,26 @@ class PerformanceAnalyzer:
                 
                 # STEP 1: Get performance at target flow on largest curve
                 delivered_head = float(head_interp(flow))
-                base_efficiency = float(eff_interp(flow))
+                
+                # CRITICAL FIX: Use authentic BEP efficiency from specifications when available
+                specs = pump_data.get('specifications', {})
+                authentic_bep_efficiency = specs.get('bep_efficiency', 0)
+                bep_flow = specs.get('bep_flow_m3hr', 0)
+                
+                # If operating near BEP flow and authentic efficiency is available, use it
+                if authentic_bep_efficiency > 0 and bep_flow > 0:
+                    flow_deviation = abs(flow - bep_flow) / bep_flow
+                    if flow_deviation < 0.15:  # Within 15% of BEP flow
+                        base_efficiency = authentic_bep_efficiency
+                        logger.debug(f"[INDUSTRY] {pump_code}: Using authentic BEP efficiency {base_efficiency:.1f}% (near BEP flow)")
+                    else:
+                        # Interpolate efficiency at target flow (industry standard)
+                        base_efficiency = float(eff_interp(flow))
+                        logger.debug(f"[INDUSTRY] {pump_code}: Using interpolated efficiency {base_efficiency:.1f}% (away from BEP)")
+                else:
+                    # Fallback to interpolation when no authentic data
+                    base_efficiency = float(eff_interp(flow))
+                    logger.debug(f"[INDUSTRY] {pump_code}: Using interpolated efficiency {base_efficiency:.1f}% (no authentic BEP data)")
                 
                 logger.debug(f"[INDUSTRY] {pump_code}: Base curve performance - head: {delivered_head:.2f}m, eff: {base_efficiency:.1f}%")
                 
@@ -438,7 +457,20 @@ class PerformanceAnalyzer:
             eff_interp = interpolate.interp1d(flows, effs, kind=kind, bounds_error=False)
             
             base_head_at_flow = float(head_interp(target_flow))
-            base_efficiency = float(eff_interp(target_flow))
+            
+            # CRITICAL FIX: Use authentic BEP efficiency when available and operating near BEP
+            specs = base_curve.get('specifications', {})
+            authentic_bep_efficiency = specs.get('bep_efficiency', 0)
+            bep_flow = specs.get('bep_flow_m3hr', 0)
+            
+            if authentic_bep_efficiency > 0 and bep_flow > 0:
+                flow_deviation = abs(target_flow - bep_flow) / bep_flow
+                if flow_deviation < 0.15:  # Within 15% of BEP flow
+                    base_efficiency = authentic_bep_efficiency
+                else:
+                    base_efficiency = float(eff_interp(target_flow))
+            else:
+                base_efficiency = float(eff_interp(target_flow))
             
             if np.isnan(base_head_at_flow) or base_head_at_flow <= 0:
                 return None

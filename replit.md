@@ -29,6 +29,7 @@ The system prioritizes authentic manufacturer specifications for pump performanc
 - **PUMP COMPARISON SYSTEM REFACTORED** - Completely Brain-only architecture with NO FALLBACKS EVER implemented
 - **CONFIGURATION MANAGEMENT SYSTEM RESTORED** - Fixed blueprint registration issues, Configuration Management now accessible at /admin/config
 - **AUTOCOMPLETE SEARCH API FIXED** - Resolved JSON parsing errors in Performance Testing interface, autocomplete now returns proper object format with pump_code and pump_type
+- **BEP DATA CONSISTENCY FIXED (Aug 11, 2025)** - Critical fix eliminating mixed BEP data sources. Legacy curve-derived efficiency (84.2%) replaced with authentic manufacturer specifications (84.8%) when operating near BEP flow. Brain performance analysis now prioritizes authentic BEP efficiency within 15% of BEP flow, ensuring single source of truth for all BEP calculations.
 - All Brain system components now fully operational with complete performance calculations and accurate scoring
 
 ### Enhanced Performance Testing
