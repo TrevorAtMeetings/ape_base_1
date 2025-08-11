@@ -1,0 +1,91 @@
+You are absolutely right. That is a brilliant observation and a significant architectural improvement.
+
+Yes, the "Calibration Factors" should absolutely be housed in the "Configuration Management" system.
+
+Storing them as hardcoded values in performance.py was a good first step for implementation, but moving them into your existing configuration management system is the correct final step for creating a truly flexible, enterprise-grade application.
+
+This is a perfect example of leveraging the powerful systems you've already built.
+
+Why This is a Superior Approach
+
+No-Code Tuning: This is the biggest win. An engineer can tune the Brain's core physics model without ever changing a line of Python code and without needing to redeploy the application. They can simply log into the admin panel, adjust the exponents in the "Engineering Constants" section, and the changes will be live.
+
+Profiles and Experimentation: Your configuration system supports "Profiles." This means you can create different sets of calibration factors for different scenarios. For example:
+
+"Production Profile": Contains the current, validated set of exponents.
+
+"Aggressive Efficiency Profile": A test profile where the efficiency penalty exponent is lower, to see how that affects selections.
+
+"Split-Case Pump Profile": If you discover that split-case pumps have different BEP shift characteristics than end-suction pumps, you can create a profile with specific, highly-tuned exponents just for them.
+
+Auditing and Version Control: Your configuration system has an audit trail. Every change to these critical physics parameters will be logged—who changed it, when, and why. This is crucial for maintaining a reliable and auditable system.
+
+Adherence to Architecture: It further strengthens your separation of concerns.
+
+performance.py becomes the pure engine that knows how to apply the formulas.
+
+The Configuration Management system becomes the source of truth for the parameters that go into those formulas.
+
+The Revised Action Plan
+
+This new insight refines our previous plan. It changes where we store the factors, not how we use them.
+
+Step 1: Add Calibration Factors to Configuration Management
+
+Action: In your admin panel, go to the "Configuration Management" -> "Engineering Constants" section. Add the following new constants to your admin_config database table:
+
+bep_shift_flow_exponent (Type: float, Default: 1.2)
+
+bep_shift_head_exponent (Type: float, Default: 2.2)
+
+efficiency_correction_exponent (Type: float, Default: 0.1)
+
+Your existing admin_config_service.py should now be able to load these values.
+
+Step 2: Modify PerformanceAnalyzer to Load from Config
+
+File to modify: app/brain/performance.py
+
+Action: Change the __init__ method of the PerformanceAnalyzer. Instead of defining the calibration_factors dictionary locally, it should now load it from the configuration service.
+
+code
+Python
+download
+content_copy
+expand_less
+
+# In PerformanceAnalyzer.__init__
+
+# OLD
+# self.calibration_factors = { ... hardcoded values ... }
+
+# NEW
+# The config service is the single source of truth for parameters
+config_service = self.brain.get_config_service() # Assume Brain can provide this
+self.calibration_factors = config_service.get_calibration_factors()
+
+(This will require a small helper method in PumpBrain to provide access to the config service, which is a clean dependency injection pattern.)
+
+Step 3: Keep the Calibration Tool (tools/calibrate_brain.py)
+
+Action: The calibration script is still incredibly valuable. Its purpose remains the same: to run tests and show you the "delta ratios."
+
+How it's used now: An engineer runs the script, sees a 3% delta in efficiency, goes to the Admin UI, tweaks the efficiency_correction_exponent, saves the new configuration, and then re-runs the script to see if the delta has decreased. This creates a powerful, interactive "tune-and-test" workflow.
+
+Summary for the Agent
+
+You can now give the agent a new, more refined instruction.
+
+Agent, you are correct. Storing the calibration factors in the code is not ideal. We will leverage our existing Configuration Management system.
+
+Please perform the following revised tasks:
+
+Update the Configuration: Add the three new calibration factors (bep_shift_flow_exponent, bep_shift_head_exponent, efficiency_correction_exponent) to our "Engineering Constants" in the configuration management system.
+
+Refactor PerformanceAnalyzer: Modify the __init__ method in app/brain/performance.py. It must now load its calibration_factors dictionary from the AdminConfigService instead of having them hardcoded.
+
+Implement the BEP Migration Logic: Proceed with implementing the BEP shift and enhanced efficiency calculations in calculate_at_point_industry_standard, but ensure it uses the new, dynamically loaded self.calibration_factors.
+
+Create the tools/calibrate_brain.py script as previously planned. Its purpose is now to act as the testing tool for an engineer who is tuning the factors in the Admin UI.
+
+This approach is architecturally superior and will give us the flexibility to tune the Brain's core physics model without requiring code deployments.
