@@ -314,13 +314,14 @@ class SelectionIntelligence:
                     # No penalty for reasonable BEP head ratios
                     evaluation['score_components']['head_oversizing_penalty'] = 0
             
-            # CRITICAL: Physical capability validation at operating point
-            if not self._validate_physical_capability_at_point(pump_data, flow, head):
-                evaluation['feasible'] = False
-                evaluation['excluded'] = True
-                evaluation['exclusion_reasons'].append('Cannot deliver required head at operating flow')
-                logger.debug(f"Pump {pump_data.get('pump_code')} excluded: Physical capability failed")
-                return evaluation
+            # Physical capability check - CONVERT TO SCORING PENALTY (no rejection)
+            physical_capable = self._validate_physical_capability_at_point(pump_data, flow, head)
+            if not physical_capable:
+                # Apply severe scoring penalty but keep pump in results
+                evaluation['score_components']['physical_limitation_penalty'] = -50
+                evaluation['operating_zone'] = 'marginal'  # Force to marginal tier
+                evaluation['tier'] = 4
+                logger.info(f"[SELECTION] {pump_data.get('pump_code')}: Physical capability limited - applying penalty but keeping in results")
 
             # Get performance at operating point
             performance = self.brain.performance.calculate_at_point(pump_data, flow, head)
@@ -464,9 +465,14 @@ class SelectionIntelligence:
                         evaluation['score_components']['trim_penalty'] = trim_penalty
                 
             else:
-                evaluation['feasible'] = False
-                evaluation['exclusion_reasons'].append('Cannot meet requirements')
-                return evaluation
+                # No performance data - apply penalty but keep pump in results
+                evaluation['score_components']['no_performance_penalty'] = -40
+                evaluation['operating_zone'] = 'marginal'  # Force to marginal tier
+                evaluation['tier'] = 4
+                evaluation['efficiency_pct'] = 0
+                evaluation['head_m'] = head  # Assume it meets basic requirement
+                evaluation['power_kw'] = 0
+                logger.info(f"[SELECTION] {pump_data.get('pump_code')}: No performance data - applying penalty but keeping in results")
             
             # Calculate total score
             evaluation['total_score'] = sum(evaluation['score_components'].values())
