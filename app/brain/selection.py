@@ -93,9 +93,10 @@ class SelectionIntelligence:
         max_flow_threshold = flow * 3.0  # Maximum 300% of required flow
         
         # CRITICAL FIX: Add head-based pre-filtering to prevent excessive trim
-        # Conservative thresholds to exclude pumps likely to require excessive trim
-        min_head_threshold = head * 0.8   # Minimum 80% of required head  
-        max_head_threshold = head * 1.6   # Maximum 160% of required head (conservative limit)
+        # ADJUSTED: More permissive thresholds to allow for impeller trimming effects
+        # Trimming can increase head output, so lower BEP heads can still meet requirements
+        min_head_threshold = head * 0.3   # Minimum 30% of required head (was 80% - too restrictive!)
+        max_head_threshold = head * 2.0   # Maximum 200% of required head (increased from 160%)
         
         pump_models = []
         pre_filtered_count = 0
@@ -112,11 +113,18 @@ class SelectionIntelligence:
                 flow_filtered_count += 1
                 continue
             
-            # CRITICAL FIX: Pre-filter by head compatibility 
-            # This prevents high-head pumps requiring excessive trim from being evaluated
+            # Head compatibility check with trimming consideration
+            # Allow pumps with lower BEP heads since trimming can increase head output
             if bep_head > 0 and not (min_head_threshold <= bep_head <= max_head_threshold):
                 head_filtered_count += 1
-                logger.debug(f"[PRE-FILTER] {pump.get('pump_code')}: Head incompatible - BEP {bep_head:.1f}m outside range {min_head_threshold:.1f}-{max_head_threshold:.1f}m")
+                
+                # Special debugging for HC pumps that might be filtered out
+                pump_code = pump.get('pump_code', 'Unknown')
+                if pump_code and any(hc in str(pump_code) for hc in ['32 HC', '30 HC', '28 HC']):
+                    logger.error(f"[HC PRE-FILTER DEBUG] {pump_code}: Would be filtered by head - BEP {bep_head:.1f}m outside range {min_head_threshold:.1f}-{max_head_threshold:.1f}m")
+                    logger.error(f"[HC PRE-FILTER DEBUG] {pump_code}: But trimming effects can increase head output!")
+                
+                logger.debug(f"[PRE-FILTER] {pump_code}: Head incompatible - BEP {bep_head:.1f}m outside range {min_head_threshold:.1f}-{max_head_threshold:.1f}m")
                 continue
             
             pump_models.append(pump)
@@ -148,7 +156,22 @@ class SelectionIntelligence:
                         continue
                 
                 # CRITICAL: Evaluate physical capability at specific operating point
+                pump_code = pump_data.get('pump_code', 'Unknown')
+                
+                # Add debugging for HC pumps that manufacturer found viable
+                if pump_code and any(hc in str(pump_code) for hc in ['32 HC', '30 HC', '28 HC']):
+                    logger.error(f"[HC SELECTION DEBUG] {pump_code}: Starting evaluation for {flow} m³/hr @ {head}m")
+                    logger.error(f"[HC SELECTION DEBUG] {pump_code}: Pump data keys: {list(pump_data.keys())}")
+                
                 evaluation = self.evaluate_single_pump(pump_data, flow, head)
+                
+                # Check if HC pump was excluded and why
+                if pump_code and any(hc in str(pump_code) for hc in ['32 HC', '30 HC', '28 HC']):
+                    if evaluation.get('feasible', False):
+                        logger.error(f"[HC SELECTION DEBUG] {pump_code}: PASSED evaluation - feasible!")
+                    else:
+                        logger.error(f"[HC SELECTION DEBUG] {pump_code}: FAILED evaluation - reasons: {evaluation.get('exclusion_reasons', [])}")
+                        logger.error(f"[HC SELECTION DEBUG] {pump_code}: Score components: {evaluation.get('score_components', {})}")
                 
                 # Apply additional constraints
                 # NPSH constraint removed - data is collected for display but not used as hard gate

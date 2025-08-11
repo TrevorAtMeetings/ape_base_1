@@ -610,6 +610,13 @@ class PerformanceAnalyzer:
                 original_bep_flow = specs.get('bep_flow_m3hr', 0)
                 original_bep_head = specs.get('bep_head_m', 0)
                 
+                # Add debugging for HC pumps that manufacturer found viable
+                if pump_code and any(hc in str(pump_code) for hc in ['32 HC', '30 HC', '28 HC']):
+                    logger.error(f"[HC DEBUG] {pump_code}: Starting efficiency optimization - largest diameter: {largest_diameter}mm")
+                    logger.error(f"[HC DEBUG] {pump_code}: Requirements: {flow} m³/hr @ {head}m")
+                    logger.error(f"[HC DEBUG] {pump_code}: BEP data: {original_bep_flow} m³/hr @ {original_bep_head}m")
+                    logger.error(f"[HC DEBUG] {pump_code}: Curve points: {len(curve_points)} points")
+                
                 optimal_trim_result = self._calculate_efficiency_optimized_trim(
                     flows_sorted, heads_sorted, largest_diameter, flow, head, 
                     original_bep_flow, original_bep_head, pump_code or "Unknown"
@@ -623,9 +630,19 @@ class PerformanceAnalyzer:
                 else:
                     # If efficiency optimization fails, fall back to simple affinity law calculation
                     logger.info(f"[FALLBACK TO SIMPLE] {pump_code}: Efficiency optimization failed, using simple affinity law")
-                    required_diameter, trim_percent = self._calculate_required_diameter_direct(
-                        flows_sorted, heads_sorted, largest_diameter, flow, head, pump_code or "Unknown"
-                    )
+                    if pump_code and any(hc in str(pump_code) for hc in ['32 HC', '30 HC', '28 HC']):
+                        logger.error(f"[HC DEBUG] {pump_code}: Efficiency optimization FAILED - falling back to simple calculation")
+                    
+                    # Ensure we have a working fallback
+                    try:
+                        required_diameter, trim_percent = self._calculate_required_diameter_direct(
+                            flows_sorted, heads_sorted, largest_diameter, flow, head, pump_code or "Unknown"
+                        )
+                        if pump_code and any(hc in str(pump_code) for hc in ['32 HC', '30 HC', '28 HC']):
+                            logger.error(f"[HC DEBUG] {pump_code}: Simple calculation result: {required_diameter}mm ({trim_percent:.1f}%)")
+                    except Exception as e:
+                        logger.error(f"[FALLBACK ERROR] {pump_code}: Simple calculation also failed: {e}")
+                        required_diameter, trim_percent = None, None
                 
                 if pump_code and "8/8 DME" in str(pump_code):
                     logger.error(f"[8/8 DME DEBUG] Efficiency-optimized result: diameter={required_diameter}, trim={trim_percent}")
@@ -1176,6 +1193,12 @@ class PerformanceAnalyzer:
                 logger.warning(f"[EFFICIENCY TRIM] {pump_code}: Tested {len(test_trims)} trim levels: {test_trims}")
                 logger.warning(f"[EFFICIENCY TRIM] {pump_code}: Deliverable head: {deliverable_head:.1f}m, target: {target_head:.1f}m")
                 logger.warning(f"[EFFICIENCY TRIM] {pump_code}: Min trim for head: {min_trim_for_head:.1f}%")
+                
+                # Special debugging for HC pumps  
+                if any(hc in str(pump_code) for hc in ['32 HC', '30 HC', '28 HC']):
+                    logger.error(f"[HC DEBUG] {pump_code}: OPTIMIZATION FAILED - no viable trims found!")
+                    logger.error(f"[HC DEBUG] {pump_code}: This pump should be viable per manufacturer data")
+                    
                 return None
                 
             # Step 4: Select optimal trim level
