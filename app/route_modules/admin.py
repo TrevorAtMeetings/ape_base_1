@@ -240,109 +240,97 @@ def _compare_pump_performance(pump, flow_rate, head, pump_repo):
         return None
 
 def _get_database_performance(pump, flow_rate, head):
-    """Get raw database performance using direct curve interpolation (no transformations)"""
+    """Get performance using Brain system's authentic database calculations"""
     try:
-        # Use the existing _get_performance_interpolated method which gives raw curve data
-        if isinstance(pump, dict):
-            # For dictionary format, we need to use Brain system for performance calculation
-            raw_performance = None  # Dictionary format doesn't have _get_performance_interpolated method
-        else:
-            raw_performance = pump._get_performance_interpolated(flow_rate, head)
+        # Use Brain system for all performance calculations
+        from app.pump_brain import get_pump_brain
+        brain = get_pump_brain()
         
         pump_code = _get_pump_attr(pump, 'pump_code')
-        logger.debug(f"Database performance for {pump_code} at {flow_rate}/{head}: {raw_performance}")
+        logger.debug(f"Using Brain system for {pump_code} at {flow_rate}/{head}")
         
-        if raw_performance:
-            # Fix NPSH handling - 0.0 is valid NPSH data, not "no data"
-            npsh_value = raw_performance.get('npshr_m')
-            if npsh_value is not None and npsh_value >= 0:
-                npsh_result = npsh_value
-            else:
-                npsh_result = None
-                
+        # Use Brain's calculate_performance method with authentic database data
+        performance_result = brain.calculate_performance(pump, flow_rate, head)
+        
+        if performance_result and isinstance(performance_result, dict):
+            # Extract performance values from Brain result
+            efficiency = performance_result.get('efficiency_pct')
+            power_kw = performance_result.get('power_kw') 
+            npshr_m = performance_result.get('npshr_m')
+            
+            logger.debug(f"Brain performance for {pump_code}: efficiency={efficiency}%, power={power_kw}kW, npsh={npshr_m}m")
+            
             return {
-                'efficiency': raw_performance.get('efficiency_pct'),
-                'power_kw': raw_performance.get('power_kw'),
-                'npshr_m': npsh_result
+                'efficiency': efficiency,
+                'power_kw': power_kw,
+                'npshr_m': npshr_m
             }
-        
-        # Enhanced debug info when no data found
-        logger.warning(f"No database performance data for {pump_code} at {flow_rate} m³/hr, {head} m")
-        pump_curves = _get_pump_attr(pump, 'curves', [])
-        logger.debug(f"Available curves for {pump_code}: {len(pump_curves) if pump_curves else 0}")
-        if pump_curves:
-            for i, curve in enumerate(pump_curves):
-                points = curve.get('performance_points', [])
-                if points:
-                    flow_range = f"{min(p.get('flow_m3hr', 0) for p in points):.0f}-{max(p.get('flow_m3hr', 0) for p in points):.0f}"
-                    head_range = f"{min(p.get('head_m', 0) for p in points):.1f}-{max(p.get('head_m', 0) for p in points):.1f}"
-                    logger.debug(f"Curve {i} flow range: {flow_range} m³/hr, head range: {head_range} m")
-        
-        return {'efficiency': None, 'power_kw': None, 'npshr_m': None}
+        else:
+            logger.warning(f"Brain system returned no performance data for {pump_code} at {flow_rate} m³/hr, {head} m")
+            return {'efficiency': None, 'power_kw': None, 'npshr_m': None}
         
     except Exception as e:
         pump_code = _get_pump_attr(pump, 'pump_code')
-        logger.warning(f"Database performance calculation failed for {pump_code}: {str(e)}")
+        logger.warning(f"Brain performance calculation failed for {pump_code}: {str(e)}")
         import traceback
         logger.debug(f"Full traceback: {traceback.format_exc()}")
         return {'efficiency': None, 'power_kw': None, 'npshr_m': None}
 
 def _get_ui_performance(pump, flow_rate, head):
-    """Get UI calculated performance using catalog engine's full methodology"""
+    """Get UI performance using Brain system's selection logic with trimming/scaling"""
     try:
-        # Primary method: Use catalog engine's unified evaluation method
+        # Use Brain system for selection-based performance (with trimming logic)
+        from app.pump_brain import get_pump_brain
+        brain = get_pump_brain()
+        
         pump_code = _get_pump_attr(pump, 'pump_code')
-        if isinstance(pump, dict):
-            # For dictionary format, we can't call methods directly - need Brain system
-            ui_solution = None  # Dictionary format doesn't have find_best_solution_for_duty method
-        else:
-            ui_solution = pump.find_best_solution_for_duty(flow_rate, head)
+        logger.debug(f"Using Brain selection logic for {pump_code} at {flow_rate}/{head}")
         
-        logger.info(f"UI solution for {pump_code}: {ui_solution}")
+        # Use Brain's find_best_pump method to get selection-based performance
+        # This includes trimming, scaling, and all the intelligent selection logic
+        selection_result = brain.find_best_pump(flow_rate, head, pump_filter=[pump_code])
         
-        # Check if we have a complete solution with performance data
-        if ui_solution and ui_solution.get('score') is not None:
-            # Extract performance data - it might be in different places
-            performance = ui_solution
-            if 'performance' in ui_solution:
-                performance = ui_solution['performance']
-                
-            logger.info(f"UI performance data for {pump_code}: {performance}")
+        if selection_result and len(selection_result) > 0:
+            # Get the result for our specific pump
+            pump_result = selection_result[0]  # Should be our pump since we filtered
             
-            # Fix NPSH handling - 0.0 is valid NPSH data, not "no data"
-            npsh_value = performance.get('npshr_m')
-            if npsh_value is not None and npsh_value >= 0:
-                npsh_result = npsh_value
-            else:
-                npsh_result = None
-                
+            # Extract performance values from selection result
+            efficiency = pump_result.get('efficiency_pct')
+            power_kw = pump_result.get('power_kw')
+            npshr_m = pump_result.get('npshr_m')
+            score = pump_result.get('score')
+            trim_percent = pump_result.get('trim_percent')
+            
+            logger.debug(f"Brain selection for {pump_code}: efficiency={efficiency}%, power={power_kw}kW, npsh={npshr_m}m, score={score}")
+            
             return {
-                'efficiency_pct': performance.get('efficiency_pct'),
-                'power_kw': performance.get('power_kw'), 
-                'npshr_m': npsh_result,
-                'suitability_score': ui_solution.get('score'),
-                'trim_percent': performance.get('trim_percent'),  # No default - authentic data only
-                'method': ui_solution.get('method')
+                'efficiency_pct': efficiency,
+                'power_kw': power_kw,
+                'npshr_m': npshr_m,
+                'suitability_score': score,
+                'trim_percent': trim_percent,
+                'method': 'brain_selection_success'
             }
         else:
-            # CRITICAL: NO FALLBACKS ALLOWED - UI method failed, report authentic failure
-            error_msg = f"CRITICAL: UI calculation failed for {pump_code} at {flow_rate} m³/hr, {head} m - operating point outside pump design envelope or insufficient data quality"
+            # Brain selection failed - pump cannot meet requirements
+            error_msg = f"CRITICAL: Brain selection failed for {pump_code} at {flow_rate} m³/hr, {head} m - pump cannot meet requirements"
             logger.error(error_msg)
             
-            # Return clear failure instead of fake interpolation to maintain data integrity
             return {
                 'efficiency_pct': None,
                 'power_kw': None,
                 'npshr_m': None,
                 'suitability_score': None,
                 'trim_percent': None,
-                'method': 'ui_calculation_failed',
-                'failure_reason': 'operating_point_outside_design_envelope'
+                'method': 'brain_selection_failed',
+                'failure_reason': 'pump_cannot_meet_requirements'
             }
         
     except Exception as e:
         pump_code = _get_pump_attr(pump, 'pump_code')
-        logger.warning(f"Could not get UI performance for {pump_code}: {str(e)}")
+        logger.warning(f"Brain selection calculation failed for {pump_code}: {str(e)}")
+        import traceback
+        logger.debug(f"Full traceback: {traceback.format_exc()}")
         return {
             'efficiency_pct': None,
             'power_kw': None, 
@@ -368,39 +356,7 @@ def _get_bep_analysis(pump, pump_repo):
         bep_head = specifications.get('bep_head_m') 
         bep_efficiency = None  # BEP efficiency not stored as separate specification - would need calculation from curves
         
-        # DEBUG: Check curve coverage for BEP point
-        curves = _get_pump_attr(pump, 'curves', [])
-        logger.error(f"DEBUG: Pump {pump_code} has {len(curves)} curves available")
-        
-        # Check which curves can cover the BEP point
-        for i, curve in enumerate(curves):
-            logger.error(f"DEBUG: Curve {i} structure: {list(curve.keys()) if isinstance(curve, dict) else 'Not a dict'}")
-            
-            # Try different possible field names for flow/head data
-            flow_data = curve.get('flow_data', curve.get('flows', curve.get('flow_points', [])))
-            head_data = curve.get('head_data', curve.get('heads', curve.get('head_points', [])))
-            impeller_mm = curve.get('impeller_diameter_mm', curve.get('diameter_mm', curve.get('diameter', 0)))
-            
-            # Check performance_points structure if individual arrays aren't available
-            if not flow_data or not head_data:
-                performance_points = curve.get('performance_points', [])
-                if performance_points:
-                    flows = [p.get('flow_m3hr', p.get('flow_rate', p.get('flow', 0))) for p in performance_points if isinstance(p, dict)]
-                    heads = [p.get('head_m', p.get('head', 0)) for p in performance_points if isinstance(p, dict)]
-                    if flows and heads:
-                        flow_data, head_data = flows, heads
-                        logger.error(f"DEBUG: Curve {i} extracted from performance_points: {len(flows)} flow points, {len(heads)} head points")
-                
-            if flow_data and head_data:
-                min_flow, max_flow = min(flow_data), max(flow_data)
-                min_head, max_head = min(head_data), max(head_data)
-                
-                flow_covered = min_flow <= bep_flow <= max_flow if bep_flow else False
-                head_covered = min_head <= bep_head <= max_head if bep_head else False
-                
-                logger.error(f"DEBUG: {impeller_mm}mm curve: Flow {min_flow}-{max_flow} ({'covers BEP' if flow_covered else 'NO BEP coverage'}), Head {min_head}-{max_head} ({'covers BEP' if head_covered else 'NO BEP coverage'})")
-            else:
-                logger.error(f"DEBUG: Curve {i} ({impeller_mm}mm): No flow/head data found")
+        # Now using Brain system for all calculations - no manual curve debugging needed
                 
         logger.info(f"Database BEP specifications for {pump_code}: Flow={bep_flow}, Head={bep_head}, Efficiency={bep_efficiency}")
         
