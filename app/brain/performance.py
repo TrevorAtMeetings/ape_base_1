@@ -686,7 +686,9 @@ class PerformanceAnalyzer:
                 
                 # STEP 5: Calculate performance at the required diameter using affinity laws
                 diameter_ratio = required_diameter / largest_diameter
-                final_head = head  # By design, this matches our target
+                # CRITICAL FIX: Use ACTUAL head delivered by pump, not required head
+                # The pump delivers more head than required (e.g., 92m vs 50m requirement)
+                final_head = delivered_head * (diameter_ratio ** 2)  # Apply affinity law to get actual head
                 
                 # Research-based efficiency penalty calculation based on pump type
                 # Research: Δη = ε(1-d2'/d2) where ε = 0.15-0.25 for volute, 0.4-0.5 for diffuser
@@ -829,7 +831,7 @@ class PerformanceAnalyzer:
                     'base_diameter_mm': largest_diameter,
                     'trim_percent': trim_percent,
                     'meets_requirements': True,  # By design, this meets requirements
-                    'head_margin_m': 0.0,  # Exact match by affinity law design
+                    'head_margin_m': final_head - head,  # Actual head delivered minus required head
                     # NEW: BEP Migration data for enhanced accuracy
                     'shifted_bep_flow': shifted_bep_flow,
                     'shifted_bep_head': shifted_bep_head,
