@@ -254,21 +254,28 @@ class SelectionIntelligence:
                 # Calculate QBP (% of BEP flow)
                 qbp = (flow / bep_flow) * 100
                 
-                # Operating zone classification (proper engineering standards)
-                operating_zone = 'disqualified'
-                if 70 <= qbp <= 120:
-                    operating_zone = 'preferred'  # Best reliability and efficiency zone
-                elif 60 <= qbp < 70 or 120 < qbp <= 130:
-                    operating_zone = 'allowable'  # Acceptable but not optimal zone
+                # TIERED evaluation - NO REJECTIONS (show all pumps categorized by performance)
+                if 80 <= qbp <= 110:
+                    operating_zone = 'preferred'  # Optimal operating range
+                    tier = 1
+                elif 60 <= qbp < 80 or 110 < qbp <= 140:
+                    operating_zone = 'allowable'  # Good operating range
+                    tier = 2
+                elif 50 <= qbp < 60 or 140 < qbp <= 200:
+                    operating_zone = 'acceptable'  # Acceptable for industrial use
+                    tier = 3
+                else:
+                    operating_zone = 'marginal'  # Outside typical range but still usable
+                    tier = 4
                 
                 evaluation['operating_zone'] = operating_zone
+                evaluation['tier'] = tier
                 
-                # Check QBP gates - disqualify anything outside 60-130% (proper engineering standards)
-                if operating_zone == 'disqualified':
-                    evaluation['feasible'] = False
-                    logger.warning(f"[SELECTION] {pump_data.get('pump_code')}: QBP {qbp:.0f}% outside 60-130% range (BEP: {bep_flow:.1f} m³/hr)")
-                    evaluation['exclusion_reasons'].append(f'QBP {qbp:.0f}% outside allowable range')
-                    return evaluation
+                # LOG but DO NOT REJECT - show all pumps in tiered results
+                if tier > 2:
+                    logger.info(f"[SELECTION] {pump_data.get('pump_code')}: QBP {qbp:.0f}% in {operating_zone} range (BEP: {bep_flow:.1f} m³/hr)")
+                
+                # ALL PUMPS REMAIN FEASIBLE - categorized by tier for user selection
                 
                 # BEP proximity score (Legacy v6.0 tiered scoring - 45 points max)
                 flow_ratio = flow / bep_flow
@@ -342,22 +349,28 @@ class SelectionIntelligence:
                     evaluation['qbp_percent'] = true_qbp
                     evaluation['bep_migration_corrected'] = True
                     
-                    # Recalculate operating zone with TRUE QBP
-                    if 70 <= true_qbp <= 120:
+                    # Recalculate operating zone with TRUE QBP - TIERED APPROACH
+                    if 80 <= true_qbp <= 110:
                         operating_zone = 'preferred'
-                    elif 60 <= true_qbp < 70 or 120 < true_qbp <= 130:
+                        tier = 1
+                    elif 60 <= true_qbp < 80 or 110 < true_qbp <= 140:
                         operating_zone = 'allowable'
+                        tier = 2
+                    elif 50 <= true_qbp < 60 or 140 < true_qbp <= 200:
+                        operating_zone = 'acceptable'
+                        tier = 3
                     else:
-                        operating_zone = 'disqualified'
+                        operating_zone = 'marginal'
+                        tier = 4
                     
                     evaluation['operating_zone'] = operating_zone
+                    evaluation['tier'] = tier
                     
-                    # Check if TRUE QBP disqualifies the pump
-                    if operating_zone == 'disqualified':
-                        evaluation['feasible'] = False
-                        logger.warning(f"[SELECTION] {pump_data.get('pump_code')}: TRUE QBP {true_qbp:.0f}% outside 60-130% range after BEP migration")
-                        evaluation['exclusion_reasons'].append(f'TRUE QBP {true_qbp:.0f}% outside allowable range (BEP migration corrected)')
-                        return evaluation
+                    # LOG but DO NOT REJECT - TRUE QBP pumps also remain feasible
+                    if tier > 2:
+                        logger.info(f"[SELECTION] {pump_data.get('pump_code')}: TRUE QBP {true_qbp:.0f}% in {operating_zone} range after BEP migration")
+                    
+                    # ALL PUMPS REMAIN FEASIBLE - even with BEP migration correction
                     
                     # Recalculate BEP proximity score with TRUE QBP
                     flow_ratio = true_qbp / 100  # Convert back to ratio
