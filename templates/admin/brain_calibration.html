@@ -202,56 +202,136 @@
                     </div>
                 </div>
             </div>
-            
-            <!-- Physics Guidelines -->
+        </div>
+    </div>
+
+    <!-- Enhanced Physics Guidelines & Effect Guide - Full Width -->
+    <div class="row">
+        <div class="col s12">
             <div class="card">
                 <div class="card-content">
-                    <span class="card-title">Physics Guidelines & Effect Guide</span>
-                    <table class="striped">
-                        <tbody>
-                            <tr>
-                                <td><strong>Flow Exponent</strong><br><small class="grey-text">BEP flow shift factor</small></td>
-                                <td>1.0 - 2.0<br>
+                    <span class="card-title">
+                        <i class="material-icons left">science</i>
+                        Enhanced Physics Guidelines & Effect Guide
+                    </span>
+                    <p class="grey-text">Complete reference for all calibration factors and their impact on pump selection calculations</p>
+                    
+                    <!-- Core BEP Migration Factors -->
+                    <h6 class="blue-text text-darken-2">Core BEP Migration Factors</h6>
+                    <div class="row">
+                        <div class="col s12 m6 l4">
+                            <div class="card-panel blue lighten-5 center-align">
+                                <h6 class="blue-text text-darken-2">Flow Exponent</h6>
+                                <p class="grey-text">BEP flow shift factor</p>
+                                <div class="chip blue lighten-4">Range: 1.0 - 2.0</div>
+                                <div style="margin-top: 10px;">
                                     <small class="green-text">↑ Higher = More flow shift during trimming</small><br>
                                     <small class="orange-text">↓ Lower = Less flow shift during trimming</small>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td><strong>Head Exponent</strong><br><small class="grey-text">Impeller diameter calculation</small></td>
-                                <td>1.0 - 3.0<br>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col s12 m6 l4">
+                            <div class="card-panel green lighten-5 center-align">
+                                <h6 class="green-text text-darken-2">Head Exponent</h6>
+                                <p class="grey-text">Impeller diameter calculation</p>
+                                <div class="chip green lighten-4">Range: 1.0 - 3.0</div>
+                                <div style="margin-top: 10px;">
                                     <small class="green-text">↑ Higher (2.5-3.0) = Smaller diameter changes</small><br>
                                     <small class="orange-text">↓ Lower (1.0-1.5) = MAJOR diameter changes</small>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td><strong>Efficiency Factor</strong><br><small class="grey-text">Power calculation impact</small></td>
-                                <td>0.01 - 0.5<br>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col s12 m6 l4">
+                            <div class="card-panel purple lighten-5 center-align">
+                                <h6 class="purple-text text-darken-2">Efficiency Factor</h6>
+                                <p class="grey-text">Power calculation impact</p>
+                                <div class="chip purple lighten-4">Range: 0.01 - 0.5</div>
+                                <div style="margin-top: 10px;">
                                     <small class="green-text">↑ Higher (0.3-0.5) = MAJOR power impact</small><br>
                                     <small class="orange-text">↓ Lower (0.01-0.1) = Minimal power impact</small>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Research-Based Trim Physics -->
+                    <h6 class="deep-orange-text text-darken-2">Research-Based Trim Physics</h6>
                     <div class="row">
-                        <div class="col s12 m4">
+                        <div class="col s12 m6">
+                            <div class="card-panel cyan lighten-5">
+                                <h6 class="cyan-text text-darken-2">Small Trim Exponent</h6>
+                                <p class="grey-text">Enhanced affinity law for precision trims (&lt;5%)</p>
+                                <div class="chip cyan lighten-4">Research Range: 2.8 - 3.0</div>
+                                <p><strong>Current Value:</strong> {{ calibration_factors.trim_dependent_small_exponent }}</p>
+                                <small>Higher precision for small diameter adjustments</small>
+                            </div>
+                        </div>
+                        <div class="col s12 m6">
+                            <div class="card-panel indigo lighten-5">
+                                <h6 class="indigo-text text-darken-2">Large Trim Exponent</h6>
+                                <p class="grey-text">Enhanced affinity law for significant trims (5-15%)</p>
+                                <div class="chip indigo lighten-4">Research Range: 2.0 - 2.2</div>
+                                <p><strong>Current Value:</strong> {{ calibration_factors.trim_dependent_large_exponent }}</p>
+                                <small>Optimized for substantial diameter reductions</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Testing Scenarios -->
+                    <h6 class="grey-text text-darken-2">Testing & Validation Scenarios</h6>
+                    <div class="row">
+                        <div class="col s12 m6 l3">
                             <div class="card-panel blue lighten-4">
-                                <h6 class="blue-text">Test Extreme Values</h6>
+                                <h6 class="blue-text">Extreme Testing</h6>
                                 <p><strong>Head Exp: 1.2</strong><br>Major impeller size changes</p>
                                 <p><strong>Head Exp: 2.8</strong><br>Minimal impeller changes</p>
                             </div>
                         </div>
-                        <div class="col s12 m4">
+                        <div class="col s12 m6 l3">
                             <div class="card-panel green lighten-4">
                                 <h6 class="green-text">Standard Values</h6>
                                 <p><strong>Flow: 1.2</strong><br>Balanced flow migration</p>
-                                <p><strong>Head: 2.0</strong><br>Standard affinity law</p>
+                                <p><strong>Head: 2.2</strong><br>Enhanced affinity law</p>
                             </div>
                         </div>
-                        <div class="col s12 m4">
+                        <div class="col s12 m6 l3">
                             <div class="card-panel orange lighten-4">
                                 <h6 class="orange-text">Power Testing</h6>
                                 <p><strong>Efficiency: 0.4</strong><br>High power sensitivity</p>
                                 <p><strong>Efficiency: 0.05</strong><br>Low power sensitivity</p>
+                            </div>
+                        </div>
+                        <div class="col s12 m6 l3">
+                            <div class="card-panel deep-orange lighten-4">
+                                <h6 class="deep-orange-text">NPSH Protection</h6>
+                                <p><strong>Threshold: 10%</strong><br>Heavy trim detection</p>
+                                <p><strong>Factor: 1.15×</strong><br>Safety penalty applied</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Research References -->
+                    <div class="row">
+                        <div class="col s12">
+                            <div class="card-panel grey lighten-4">
+                                <h6 class="grey-text text-darken-3">Research-Based Validation</h6>
+                                <div class="row">
+                                    <div class="col s12 m4">
+                                        <strong>Efficiency Penalties:</strong><br>
+                                        <small>Volute: 0.15-0.25 (Current: {{ calibration_factors.efficiency_penalty_volute }})</small><br>
+                                        <small>Diffuser: 0.4-0.5 (Current: {{ calibration_factors.efficiency_penalty_diffuser }})</small>
+                                    </div>
+                                    <div class="col s12 m4">
+                                        <strong>NPSH Degradation:</strong><br>
+                                        <small>Threshold: >10% trim causes degradation</small><br>
+                                        <small>Penalty: 15% increase in NPSH requirements</small>
+                                    </div>
+                                    <div class="col s12 m4">
+                                        <strong>Trim-Dependent Laws:</strong><br>
+                                        <small>Small trims: Higher precision (2.8-3.0)</small><br>
+                                        <small>Large trims: Standard behavior (2.0-2.2)</small>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
