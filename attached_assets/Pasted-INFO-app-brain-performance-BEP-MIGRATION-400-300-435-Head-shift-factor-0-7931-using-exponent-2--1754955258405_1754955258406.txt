@@ -1,0 +1,95 @@
+INFO:app.brain.performance:[BEP MIGRATION] 400-300-435: Head shift factor: 0.7931 (using exponent 2.2)
+INFO:app.brain.performance:[BEP MIGRATION] 400-300-435: Shifted BEP: 1461.2 m³/hr @ 42.7m
+INFO:app.brain.performance:[BEP MIGRATION] 400-300-435: Simple QBP (ignoring shift): 89.2%
+INFO:app.brain.performance:[BEP MIGRATION] 400-300-435: TRUE QBP (with BEP shift): 101.3%
+INFO:app.brain.performance:[BEP MIGRATION] 400-300-435: QBP difference: 12.0%
+INFO:app.brain.selection:[BEP SCORING] 400-300-435: Using TRUE QBP 101.3% (vs simple 89.2%)
+INFO:app.brain.selection:[SELECTION] 700-600-710 6P: QBP 35% in marginal range (BEP: 4170.5 m³/hr)
+INFO:app.brain.performance:[EFFICIENCY TRIM] 700-600-710 6P: Optimizing trim for 1479.82 m³/hr @ 38.47m
+INFO:app.brain.performance:[EFFICIENCY TRIM] 700-600-710 6P: Calculated min trim 73.0% below limit, using 85.0%
+INFO:app.brain.performance:[EFFICIENCY TRIM] 700-600-710 6P: Minimum trim for head: 85.0% (522.2mm)
+INFO:app.brain.performance:[EFFICIENCY TRIM] 700-600-710 6P: Testing 7 trim levels: ['85.0%', '87.0%', '90.0%', '93.0%', '96.0%', '99.0%', '100.0%']
+INFO:app.brain.performance:[EFFICIENCY TRIM] 700-600-710 6P: Optimal trim 100.0% (715.0mm) - Score: 65.7
+INFO:app.brain.performance:[EFFICIENCY TRIM] 700-600-710 6P: Performance: 59.5% eff, 73.6m head (+35.1m margin), QBP 100.0%
+INFO:app.brain.performance:[EFFICIENCY TRIM] 700-600-710 6P: Alternative evaluations:
+INFO:app.brain.performance:[EFFICIENCY TRIM] 700-600-710 6P:   #1: 100.0% trim → 59.5% eff, QBP 100.0% (score: 65.7)
+INFO:app.brain.performance:[EFFICIENCY TRIM] 700-600-710 6P:   #2: 85.0% trim → 46.5% eff, QBP 43.1% (score: 50.3)
+INFO:app.brain.performance:[EFFICIENCY TRIM] 700-600-710 6P:   #3: 87.0% trim → 46.9% eff, QBP 41.9% (score: 49.1)
+INFO:app.brain.performance:[EFFICIENCY OPTIMIZED] 700-600-710 6P: Selected 100.0% trim (score: 65.7)
+INFO:app.brain.selection:[SELECTION] 700-600-710 8P: QBP 47% in marginal range (BEP: 3149.1 m³/hr)
+INFO:app.brain.performance:[EFFICIENCY TRIM] 700-600-710 8P: Optimizing trim for 1479.82 m³/hr @ 38.47m
+INFO:app.brain.performance:[EFFICIENCY TRIM] 700-600-710 8P: Minimum trim for head: 97.7% (698.8mm)
+INFO:app.brain.performance:[EFFICIENCY TRIM] 700-600-710 8P: Testing 3 trim levels: ['97.7%', '99.7%', '100.0%']
+INFO:app.brain.performance:[EFFICIENCY TRIM] 700-600-710 8P: Optimal trim 100.0% (715.0mm) - Score: 78.7
+INFO:app.brain.performance:[EFFICIENCY TRIM] 700-600-710 8P: Performance: 59.5% eff, 41.1m head (+2.6m margin), QBP 100.0%
+INFO:app.brain.performance:[EFFICIENCY TRIM] 700-600-710 8P: Alternative evaluations:
+INFO:app.brain.performance:[EFFICIENCY TRIM] 700-600-710 8P:   #1: 100.0% trim → 59.5% eff, QBP 100.0% (score: 78.7)
+INFO:app.brain.performance:[EFFICIENCY TRIM] 700-600-710 8P:   #2: 97.7% trim → 49.0% eff, QBP 48.3% (score: 58.7)
+INFO:app.brain.performance:[EFFICIENCY TRIM] 700-600-710 8P:   #3: 99.7% trim → 49.4% eff, QBP 47.1% (score: 57.9)
+INFO:app.brain.performance:[EFFICIENCY OPTIMIZED] 700-600-710 8P: Selected 100.0% trim (score: 78.7)
+INFO:app.brain.selection:[SELECTION] 8 KL: QBP 207% in marginal range (BEP: 713.3 m³/hr)
+INFO:app.brain.selection:[SELECTION] 8 KL: Physical capability limited - applying penalty but keeping in results
+WARNING:app.brain.selection:[SELECTION] 8 KL: Excluded due to physical impossibility or missing critical data
+INFO:app.brain.selection:[SELECTION] 8 WLN 18A: QBP 203% in marginal range (BEP: 727.3 m³/hr)
+INFO:app.brain.selection:[SELECTION] 8 WLN 18A: Physical capability limited - applying penalty but keeping in results
+WARNING:app.brain.selection:[SELECTION] 8 WLN 18A: Excluded due to physical impossibility or missing critical data
+INFO:app.brain.selection:[SELECTION] 8 WLN 18C: QBP 223% in marginal range (BEP: 662.4 m³/hr)
+INFO:app.brain.selection:[SELECTION] 8 WLN 18C: Physical capability limited - applying penalty but keeping in results
+WARNING:app.brain.selection:[SELECTION] 8 WLN 18C: Excluded due to physical impossibility or missing critical data
+INFO:app.brain.selection:[SELECTION] 8/10 BLE: QBP 205% in marginal range (BEP: 721.9 m³/hr)
+INFO:app.brain.selection:[SELECTION] 8/10 BLE: Physical capability limited - applying penalty but keeping in results
+WARNING:app.brain.selection:[SELECTION] 8/10 BLE: Excluded due to physical impossibility or missing critical data
+INFO:app.brain.selection:[SELECTION] 8/10 CME - TA: QBP 199% in acceptable range (BEP: 745.0 m³/hr)
+INFO:app.brain.selection:[SELECTION] 8/10 CME - TA: Physical capability limited - applying penalty but keeping in results
+WARNING:app.brain.selection:[SELECTION] 8/10 CME - TA: Excluded due to physical impossibility or missing critical data
+INFO:app.brain.selection:[SELECTION] 8/10 CME - TB: QBP 192% in acceptable range (BEP: 768.8 m³/hr)
+INFO:app.brain.selection:[SELECTION] 8/10 CME - TB: Physical capability limited - applying penalty but keeping in results
+WARNING:app.brain.selection:[SELECTION] 8/10 CME - TB: Excluded due to physical impossibility or missing critical data
+INFO:app.brain.selection:[SELECTION] 8312-14 311F: Physical capability limited - applying penalty but keeping in results
+WARNING:app.brain.performance:[INDUSTRY] 8312-14 311F: Insufficient head capability - base curve gives 12.28m < required 37.70m
+WARNING:app.brain.performance:[PHYSICAL LIMIT] 8312-14 311F: Head shortfall too severe (12.3m vs 38.5m required) - pump rejected
+WARNING:app.brain.selection:[SELECTION] 8312-14 311F: Excluded due to physical impossibility or missing critical data
+INFO:app.brain.performance:[EFFICIENCY TRIM] BDM 16/14: Optimizing trim for 1479.82 m³/hr @ 38.47m
+INFO:app.brain.performance:[EFFICIENCY TRIM] BDM 16/14: Minimum trim for head: 94.2% (394.6mm)
+INFO:app.brain.performance:[EFFICIENCY TRIM] BDM 16/14: Testing 4 trim levels: ['94.2%', '96.2%', '99.2%', '100.0%']
+INFO:app.brain.performance:[EFFICIENCY TRIM] BDM 16/14: Optimal trim 94.2% (394.6mm) - Score: 86.8
+INFO:app.brain.performance:[EFFICIENCY TRIM] BDM 16/14: Performance: 78.2% eff, 39.2m head (+0.8m margin), QBP 93.3%
+INFO:app.brain.performance:[EFFICIENCY TRIM] BDM 16/14: Alternative evaluations:
+INFO:app.brain.performance:[EFFICIENCY TRIM] BDM 16/14:   #1: 94.2% trim → 78.2% eff, QBP 93.3% (score: 86.8)
+INFO:app.brain.performance:[EFFICIENCY TRIM] BDM 16/14:   #2: 96.2% trim → 76.6% eff, QBP 91.0% (score: 84.6)
+INFO:app.brain.performance:[EFFICIENCY TRIM] BDM 16/14:   #3: 100.0% trim → 73.8% eff, QBP 100.0% (score: 84.6)
+INFO:app.brain.performance:[EFFICIENCY OPTIMIZED] BDM 16/14: Selected 94.2% trim (score: 86.8)
+INFO:app.brain.performance:[BEP MIGRATION] BDM 16/14: Calculating shifted BEP for 94.2% trim
+INFO:app.brain.performance:[BEP MIGRATION] BDM 16/14: Original BEP: 1703.9 m³/hr @ 40.6m
+INFO:app.brain.performance:[BEP MIGRATION] BDM 16/14: Diameter ratio: 0.9418
+INFO:app.brain.performance:[BEP MIGRATION] BDM 16/14: Flow shift factor: 0.9306 (using exponent 1.2)
+INFO:app.brain.performance:[BEP MIGRATION] BDM 16/14: Head shift factor: 0.8765 (using exponent 2.2)
+INFO:app.brain.performance:[BEP MIGRATION] BDM 16/14: Shifted BEP: 1585.7 m³/hr @ 35.6m
+INFO:app.brain.performance:[BEP MIGRATION] BDM 16/14: Simple QBP (ignoring shift): 86.8%
+INFO:app.brain.performance:[BEP MIGRATION] BDM 16/14: TRUE QBP (with BEP shift): 93.3%
+INFO:app.brain.performance:[BEP MIGRATION] BDM 16/14: QBP difference: 6.5%
+INFO:app.brain.selection:[BEP SCORING] BDM 16/14: Using TRUE QBP 93.3% (vs simple 86.8%)
+INFO:app.brain.selection:[SELECTION] SCP 250/450HA: Physical capability limited - applying penalty but keeping in results
+WARNING:app.brain.selection:[SELECTION] SCP 250/450HA: Excluded due to physical impossibility or missing critical data
+WARNING:app.route_modules.admin:Brain system returned no performance data for 28 HC 6P at 1400.0 m³/hr, 25.0 m
+ERROR:app.route_modules.admin:DEBUG: Specifications structure for 28 HC 6P: {}
+ERROR:app.route_modules.admin:DEBUG: Specifications keys: []
+ERROR:app.route_modules.admin:DEBUG: Specifications empty for 28 HC 6P, querying database directly
+ERROR:app.route_modules.admin:DEBUG: Retrieved BEP from database - Flow: 1644.72, Head: 24.16
+ERROR:app.route_modules.admin:DEBUG: Final BEP data - Flow: 1644.72, Head: 24.16
+INFO:app.route_modules.admin:Database BEP specifications for 28 HC 6P: Flow=1644.72, Head=24.16, Efficiency=None
+WARNING:app.route_modules.admin:Brain system returned no performance data for 28 HC 6P at 1644.72 m³/hr, 24.16 m
+INFO:app.route_modules.admin:Performance test completed: 5 pumps tested
+INFO:werkzeug:10.83.2.4 - - [11/Aug/2025 23:33:59] "POST /admin/testing HTTP/1.1" 200 -
+INFO:werkzeug:10.83.2.4 - - [11/Aug/2025 23:33:59] "GET /static/css/style.css?v=5626 HTTP/1.1" 200 -
+INFO:werkzeug:10.83.6.21 - - [11/Aug/2025 23:34:00] "GET /static/css/professional-theme.css?v=6445 HTTP/1.1" 200 -
+INFO:werkzeug:10.83.4.96 - - [11/Aug/2025 23:34:00] "GET /static/css/admin_executive_theme.css?v=7305 HTTP/1.1" 200 -
+INFO:werkzeug:10.83.6.21 - - [11/Aug/2025 23:34:00] "GET /static/css/responsive-fixes.css?v=9391 HTTP/1.1" 200 -
+INFO:werkzeug:10.83.0.41 - - [11/Aug/2025 23:34:00] "GET /static/css/floating-ai-chat.css?v=7795 HTTP/1.1" 200 -
+INFO:werkzeug:10.83.4.96 - - [11/Aug/2025 23:34:00] "GET /static/js/icon-loader.js HTTP/1.1" 304 -
+INFO:werkzeug:10.83.2.4 - - [11/Aug/2025 23:34:00] "GET /static/js/main.js HTTP/1.1" 304 -
+INFO:werkzeug:10.83.6.21 - - [11/Aug/2025 23:34:00] "GET /static/js/micro-interactions.js HTTP/1.1" 304 -
+INFO:werkzeug:10.83.6.21 - - [11/Aug/2025 23:34:00] "GET /static/js/force-icon-refresh.js HTTP/1.1" 304 -
+INFO:werkzeug:10.83.6.21 - - [11/Aug/2025 23:34:00] "GET /static/js/floating-ai-chat.js HTTP/1.1" 304 -
+INFO:werkzeug:10.83.2.4 - - [11/Aug/2025 23:34:02] "GET /api/features/status HTTP/1.1" 200 -
+INFO:werkzeug:10.83.2.4 - - [11/Aug/2025 23:34:02] "GET /api/pump_list HTTP/1.1" 200 -
