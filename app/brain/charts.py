@@ -147,7 +147,10 @@ class ChartIntelligence:
                 })
             
         except Exception as e:
-            logger.error(f"Error generating chart config: {str(e)}")
+            logger.error(f"[CHART CONFIG] Error generating chart config: {str(e)}")
+            # Chart configuration is non-critical - return basic config for visualization
+            config['annotations'] = []  # Clear any partial annotations
+            config['display_options'] = {'interactive': True, 'show_hover': True}
         
         return config
     
@@ -229,8 +232,9 @@ class ChartIntelligence:
                 })
             
         except Exception as e:
-            logger.error(f"Error generating annotations: {str(e)}")
-        
+            logger.error(f"[CHART ANNOTATIONS] Error generating annotations: {str(e)}")
+            # Annotation failures are non-critical - return empty list for basic charts
+            
         return annotations
     
     def calculate_axis_ranges(self, curves: List[Dict[str, Any]], 

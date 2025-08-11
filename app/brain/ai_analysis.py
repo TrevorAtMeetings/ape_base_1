@@ -17,6 +17,11 @@ from dataclasses import dataclass
 logger = logging.getLogger(__name__)
 
 
+class AnalysisError(Exception):
+    """Custom analysis error for when AI analysis cannot be generated"""
+    pass
+
+
 @dataclass
 class AnalysisRequest:
     """Data structure for AI analysis requests"""
@@ -62,16 +67,16 @@ class AIAnalysisIntelligence:
         try:
             logger.debug(f"[AI Analysis] Generating {request.topic} analysis for {request.pump_code}")
             
-            # Validate request
+            # Validate request - no fallbacks for invalid data
             if not request.pump_code or request.flow_m3hr <= 0 or request.head_m <= 0:
-                return self._generate_fallback_analysis(request, "Invalid parameters provided")
+                raise AnalysisError(f"Invalid analysis parameters: pump_code={request.pump_code}, flow={request.flow_m3hr}, head={request.head_m}")
             
             # Generate analysis prompt based on topic
             prompt = self._create_analysis_prompt(request)
             
             if not self.ai_available:
-                logger.info("AI services not available - using engineering fallback")
-                return self._generate_engineering_analysis(request)
+                logger.error("AI services not available - analysis cannot be generated without proper API keys")
+                raise AnalysisError("AI Analysis requires OpenAI or Google Gemini API key - no fallbacks available")
             
             # Use AI service for analysis
             ai_response = self._call_ai_service(prompt)
@@ -80,11 +85,15 @@ class AIAnalysisIntelligence:
                 logger.debug(f"[AI Analysis] Successfully generated {len(ai_response)} character analysis")
                 return ai_response
             else:
-                return self._generate_engineering_analysis(request)
+                logger.error("AI service call failed and returned no response")
+                raise AnalysisError("AI service failed to generate analysis - no fallbacks available")
                 
+        except AnalysisError:
+            # Re-raise AnalysisError to maintain explicit error handling
+            raise
         except Exception as e:
             logger.error(f"[AI Analysis] Error generating analysis: {str(e)}")
-            return self._generate_fallback_analysis(request, str(e))
+            raise AnalysisError(f"AI Analysis failed due to unexpected error: {str(e)}")
     
     def _create_analysis_prompt(self, request: AnalysisRequest) -> str:
         """Create context-specific analysis prompt"""

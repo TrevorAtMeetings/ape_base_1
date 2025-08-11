@@ -5,7 +5,7 @@ This Flask-based web application provides an intelligent pump recommendation sys
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
-**CRITICAL ENGINEERING PRINCIPLE**: NO FALLBACKS EVER - We fix issues at the root cause, never use fallback systems or workarounds.
+**CRITICAL ENGINEERING PRINCIPLE**: NO FALLBACKS EVER - We fix issues at the root cause, never use fallback systems or workarounds. This principle is now comprehensively enforced throughout the Brain system with all fallback mechanisms, workarounds, and synthetic data generation completely removed.
 
 ## System Architecture
 The application employs a modular Flask architecture with a clear separation of concerns, supporting both backend and frontend components.
@@ -35,6 +35,7 @@ The system prioritizes authentic manufacturer specifications for pump performanc
 - **TUNABLE PHYSICS ENGINE IMPLEMENTATION (Aug 11, 2025)** - Implemented enterprise-grade configuration-driven physics model for BEP migration calculations. Replaced hardcoded exponents (flow: 1.2, head: 2.2, efficiency: 0.1) with dynamically loaded calibration factors from AdminConfigService. Enables no-code tuning of core Brain intelligence through admin interface, supporting profile-based experimentation and full audit trails. PerformanceAnalyzer now uses dependency injection to access calibration factors, maintaining clean architecture separation.
 - **INTELLIGENT CURVE SELECTION SYSTEM (Aug 11, 2025)** - Fixed critical issue where pumps with target head below largest curve capability were incorrectly rejected. Algorithm now intelligently selects optimal impeller curves when target head is significantly lower than largest curve output, enabling proper selection of previously excluded pumps like 8/8 DME for 500 m³/hr @ 65m requirements.
 - **RESEARCH-BASED PHYSICS ENHANCEMENT (Aug 11, 2025)** - Major upgrade to Brain physics modeling based on industrial trimming research. Implemented trim-dependent affinity law exponents (2.8-3.0 for small trims <5%, 2.0-2.2 for large trims), research-based efficiency penalties (0.15-0.25 for volute pumps, 0.4-0.5 for diffuser pumps using formula Δη = ε(1-d2'/d2)), NPSH degradation validation for heavy trimming >10% with 15% penalty factor, and enhanced calibration factor system with 9 new tunable parameters. Physics model now accurately reflects industry standards and pump trimming behavior documented in technical literature.
+- **"NO FALLBACKS EVER" ENFORCEMENT COMPLETED (Aug 11, 2025)** - Comprehensively removed all fallback mechanisms, workarounds, and synthetic data generation from Brain system. AI analysis now requires proper API keys (no engineering fallbacks), missing data defaults eliminated (pumps rejected instead), performance calculation fallback chains removed (explicit PerformanceError raised), exception bypassing fixed (no silent None returns), and hydraulic approximation methods disabled. System now operates exclusively with authentic manufacturer data, enforcing strict data integrity at all levels.
 - All Brain system components now fully operational with complete performance calculations and accurate scoring
 
 ### Enhanced Performance Testing

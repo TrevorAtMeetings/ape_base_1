@@ -286,17 +286,22 @@ class DataValidator:
                         logger.info(f"Determined impeller range for pump {pump.get('pump_code')}")
                 
             elif strategy == "default":
-                # Apply conservative defaults
+                # REMOVED: No default values applied - reject incomplete pumps instead
+                missing_fields = []
                 if not specs.get('bep_flow_m3hr'):
-                    specs['bep_flow_m3hr'] = 100  # Conservative default
+                    missing_fields.append('bep_flow_m3hr')
                 if not specs.get('bep_head_m'):
-                    specs['bep_head_m'] = 30  # Conservative default
+                    missing_fields.append('bep_head_m')
                 if not specs.get('min_impeller_mm'):
-                    specs['min_impeller_mm'] = 200  # Typical minimum
+                    missing_fields.append('min_impeller_mm')
                 if not specs.get('max_impeller_mm'):
-                    specs['max_impeller_mm'] = 250  # Typical maximum
+                    missing_fields.append('max_impeller_mm')
                 
-                logger.warning(f"Applied defaults for pump {pump.get('pump_code')}")
+                if missing_fields:
+                    logger.error(f"Pump {pump.get('pump_code')} missing critical data: {missing_fields} - NO FALLBACKS APPLIED")
+                    handled_pump['data_incomplete'] = True
+                    handled_pump['missing_critical_data'] = True
+                    handled_pump['exclusion_reasons'] = [f'Missing manufacturer data: {", ".join(missing_fields)}']
                 
             elif strategy == "exclude":
                 # Mark pump as incomplete
