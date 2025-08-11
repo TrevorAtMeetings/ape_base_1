@@ -29,6 +29,11 @@
                         <i class="material-icons left">settings</i>
                         Current Calibration Factors
                     </span>
+                    <!-- BEP Migration Parameters -->
+                    <h6 class="orange-text text-darken-2">
+                        <i class="material-icons tiny">psychology</i>
+                        BEP Migration & Correction Physics
+                    </h6>
                     <div class="row">
                         <div class="col s12 m4">
                             <div class="card-panel blue lighten-5">
@@ -52,6 +57,78 @@
                                 <h4 class="purple-text" data-factor="efficiency">{{ calibration_factors.efficiency_correction_exponent }}</h4>
                                 <p class="grey-text text-darken-1">Efficiency penalty factor for off-BEP operation</p>
                                 <small>Formula: η_penalty = (|QBP - 100|) × z</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Research-Based Trim Physics -->
+                    <h6 class="deep-orange-text text-darken-2" style="margin-top: 30px;">
+                        <i class="material-icons tiny">science</i>
+                        Research-Based Trim Physics (Industrial Standards)
+                    </h6>
+                    <div class="row">
+                        <div class="col s12 m6">
+                            <div class="card-panel cyan lighten-5">
+                                <h6>Small Trim Exponent</h6>
+                                <h4 class="cyan-text text-darken-2">{{ calibration_factors.trim_dependent_small_exponent }}</h4>
+                                <p class="grey-text text-darken-1">Enhanced affinity law for small trims (&lt;5%)</p>
+                                <small>Research: 2.8-3.0 range</small>
+                            </div>
+                        </div>
+                        <div class="col s12 m6">
+                            <div class="card-panel indigo lighten-5">
+                                <h6>Large Trim Exponent</h6>
+                                <h4 class="indigo-text text-darken-2">{{ calibration_factors.trim_dependent_large_exponent }}</h4>
+                                <p class="grey-text text-darken-1">Enhanced affinity law for large trims (5-15%)</p>
+                                <small>Research: 2.0-2.2 range</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Efficiency Penalty Factors -->
+                    <h6 class="red-text text-darken-2" style="margin-top: 30px;">
+                        <i class="material-icons tiny">trending_down</i>
+                        Efficiency Penalty Factors (Pump Type Specific)
+                    </h6>
+                    <div class="row">
+                        <div class="col s12 m6">
+                            <div class="card-panel teal lighten-5">
+                                <h6>Volute Pump Factor</h6>
+                                <h4 class="teal-text text-darken-2">{{ calibration_factors.efficiency_penalty_volute }}</h4>
+                                <p class="grey-text text-darken-1">Efficiency penalty for volute pumps</p>
+                                <small>Formula: Δη = ε × (1 - D₂/D₁)</small>
+                            </div>
+                        </div>
+                        <div class="col s12 m6">
+                            <div class="card-panel pink lighten-5">
+                                <h6>Diffuser Pump Factor</h6>
+                                <h4 class="pink-text text-darken-2">{{ calibration_factors.efficiency_penalty_diffuser }}</h4>
+                                <p class="grey-text text-darken-1">Efficiency penalty for diffuser/turbine pumps</p>
+                                <small>Research: Higher penalty (0.4-0.5)</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- NPSH Degradation Parameters -->
+                    <h6 class="brown-text text-darken-2" style="margin-top: 30px;">
+                        <i class="material-icons tiny">water_drop</i>
+                        NPSH Degradation (Heavy Trimming Protection)
+                    </h6>
+                    <div class="row">
+                        <div class="col s12 m6">
+                            <div class="card-panel orange lighten-4">
+                                <h6>Degradation Threshold</h6>
+                                <h4 class="orange-text text-darken-3">{{ calibration_factors.npsh_degradation_threshold }}%</h4>
+                                <p class="grey-text text-darken-1">Trim % above which NPSH degrades</p>
+                                <small>Research: >10% causes NPSH issues</small>
+                            </div>
+                        </div>
+                        <div class="col s12 m6">
+                            <div class="card-panel deep-orange lighten-4">
+                                <h6>Degradation Factor</h6>
+                                <h4 class="deep-orange-text text-darken-3">{{ calibration_factors.npsh_degradation_factor }}×</h4>
+                                <p class="grey-text text-darken-1">NPSH multiplier for heavy trims</p>
+                                <small>Research-based 15% penalty</small>
                             </div>
                         </div>
                     </div>
@@ -213,6 +290,54 @@
                     <span class="helper-text">Range: 0.01 - 0.5 (typical: 0.1) - Higher = MAJOR power impact, Lower = minimal impact</span>
                 </div>
             </div>
+            
+            <h6 class="deep-orange-text text-darken-2">Research-Based Trim Physics</h6>
+            <div class="row">
+                <div class="input-field col s6">
+                    <input id="trim_small_exponent" type="number" step="0.01" min="2.5" max="3.2" 
+                           value="{{ calibration_factors.trim_dependent_small_exponent }}">
+                    <label for="trim_small_exponent">Small Trim Exponent</label>
+                    <span class="helper-text">Research: 2.8-3.0 for trims &lt;5%</span>
+                </div>
+                <div class="input-field col s6">
+                    <input id="trim_large_exponent" type="number" step="0.01" min="1.8" max="2.5" 
+                           value="{{ calibration_factors.trim_dependent_large_exponent }}">
+                    <label for="trim_large_exponent">Large Trim Exponent</label>
+                    <span class="helper-text">Research: 2.0-2.2 for trims 5-15%</span>
+                </div>
+            </div>
+            
+            <h6 class="red-text text-darken-2">Efficiency Penalty Factors</h6>
+            <div class="row">
+                <div class="input-field col s6">
+                    <input id="efficiency_volute" type="number" step="0.01" min="0.10" max="0.30" 
+                           value="{{ calibration_factors.efficiency_penalty_volute }}">
+                    <label for="efficiency_volute">Volute Pump Factor</label>
+                    <span class="helper-text">Research: 0.15-0.25 range</span>
+                </div>
+                <div class="input-field col s6">
+                    <input id="efficiency_diffuser" type="number" step="0.01" min="0.35" max="0.55" 
+                           value="{{ calibration_factors.efficiency_penalty_diffuser }}">
+                    <label for="efficiency_diffuser">Diffuser Pump Factor</label>
+                    <span class="helper-text">Research: 0.4-0.5 range</span>
+                </div>
+            </div>
+            
+            <h6 class="brown-text text-darken-2">NPSH Degradation</h6>
+            <div class="row">
+                <div class="input-field col s6">
+                    <input id="npsh_threshold" type="number" step="1.0" min="5.0" max="20.0" 
+                           value="{{ calibration_factors.npsh_degradation_threshold }}">
+                    <label for="npsh_threshold">Degradation Threshold (%)</label>
+                    <span class="helper-text">Trim % above which NPSH degrades</span>
+                </div>
+                <div class="input-field col s6">
+                    <input id="npsh_factor" type="number" step="0.01" min="1.05" max="1.30" 
+                           value="{{ calibration_factors.npsh_degradation_factor }}">
+                    <label for="npsh_factor">Degradation Factor</label>
+                    <span class="helper-text">NPSH multiplier for heavy trims</span>
+                </div>
+            </div>
         </form>
     </div>
     <div class="modal-footer">
@@ -309,7 +434,13 @@ function updateFactors() {
     const factors = {
         bep_shift_flow_exponent: parseFloat(document.getElementById('flow_exponent').value),
         bep_shift_head_exponent: parseFloat(document.getElementById('head_exponent').value),
-        efficiency_correction_exponent: parseFloat(document.getElementById('efficiency_factor').value)
+        efficiency_correction_exponent: parseFloat(document.getElementById('efficiency_factor').value),
+        trim_dependent_small_exponent: parseFloat(document.getElementById('trim_small_exponent').value),
+        trim_dependent_large_exponent: parseFloat(document.getElementById('trim_large_exponent').value),
+        efficiency_penalty_volute: parseFloat(document.getElementById('efficiency_volute').value),
+        efficiency_penalty_diffuser: parseFloat(document.getElementById('efficiency_diffuser').value),
+        npsh_degradation_threshold: parseFloat(document.getElementById('npsh_threshold').value),
+        npsh_degradation_factor: parseFloat(document.getElementById('npsh_factor').value)
     };
     
     // Client-side validation - EXPANDED RANGES
