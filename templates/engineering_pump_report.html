@@ -1106,7 +1106,7 @@
                     'Power: {{ (selected_pump.get("power_kw") or 0)|round(1) }} kW<br>' +
                     'NPSH Required: {{ (selected_pump.get("npshr_m") or 0)|round(1) }} m<br>' +
                     'Impeller: {{ (selected_pump.get("impeller_diameter_mm") or 0)|round(0)|int }}mm ({{ (100 - (selected_pump.get("trim_percent") or 100))|round(1) }}% trim)<br>' +
-                    'BEP Position: {{ (selected_pump.get("qbep_percentage") or 0)|round(0) }}% of optimal flow<br>' +
+                    'BEP Position: {{ (selected_pump.get("qbp_percent") or 0)|round(1) }}% of optimal flow<br>' +
                     '<extra></extra>'
             });
             
@@ -1233,7 +1233,7 @@
                         'Head: {{ (selected_pump.get("head_m") or 0)|round(1) }} m<br>' +
                         'NPSH Required: {{ (selected_pump.get("npshr_m") or 0)|round(1) }} m<br>' +
                         'Impeller: {{ (selected_pump.get("impeller_diameter_mm") or 0)|round(0)|int }}mm ({{ (100 - (selected_pump.get("trim_percent") or 100))|round(1) }}% trim)<br>' +
-                        'BEP Position: {{ (selected_pump.get("qbep_percentage") or 0)|round(0) }}% of optimal flow<br>' +
+                        'BEP Position: {{ (selected_pump.get("qbp_percent") or 0)|round(1) }}% of optimal flow<br>' +
                         '<extra></extra>'
                 });
             }
