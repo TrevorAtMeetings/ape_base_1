@@ -17,7 +17,7 @@ class PerformanceAnalyzer:
     
     def __init__(self, brain):
         """
-        Initialize with reference to main Brain.
+        Initialize with reference to main Brain and load calibration factors.
         
         Args:
             brain: Parent PumpBrain instance
@@ -34,6 +34,40 @@ class PerformanceAnalyzer:
         self.affinity_head_exp = 2.0      # H2/H1 = (D2/D1)^2  
         self.affinity_power_exp = 3.0     # P2/P1 = (D2/D1)^3
         self.affinity_efficiency_exp = 0.8 # η2/η1 ≈ (D2/D1)^0.8 (industry standard)
+        
+        # Load BEP migration calibration factors from configuration service
+        self._load_calibration_factors()
+    
+    def _load_calibration_factors(self):
+        """
+        Load BEP migration calibration factors from configuration service.
+        These factors control the physics model for impeller trimming effects.
+        """
+        try:
+            config_service = self.brain.get_config_service()
+            self.calibration_factors = config_service.get_calibration_factors()
+            logger.debug(f"[TUNABLE PHYSICS] Loaded calibration factors: {self.calibration_factors}")
+        except Exception as e:
+            logger.warning(f"[TUNABLE PHYSICS] Failed to load calibration factors, using defaults: {e}")
+            # Safe defaults if config service is unavailable
+            self.calibration_factors = {
+                'bep_shift_flow_exponent': 1.2,
+                'bep_shift_head_exponent': 2.2,
+                'efficiency_correction_exponent': 0.1
+            }
+    
+    def get_calibration_factor(self, factor_name: str, default_value: float = 1.0) -> float:
+        """
+        Get a specific calibration factor with fallback to default.
+        
+        Args:
+            factor_name: Name of the calibration factor
+            default_value: Default value if factor not found
+            
+        Returns:
+            Calibration factor value
+        """
+        return self.calibration_factors.get(factor_name, default_value)
     
     def calculate_at_point(self, pump_data: Dict[str, Any], flow: float, 
                           head: float, impeller_trim: Optional[float] = None) -> Optional[Dict[str, Any]]:
@@ -635,11 +669,10 @@ class PerformanceAnalyzer:
                     
                     # Apply exponential BEP shift formulas (Hydraulic Institute methodology)
                     # These exponents account for the non-linear BEP migration with trimming
-                    # x = 1.2 for flow (BEP flow shifts MORE than simple affinity laws predict)
-                    # y = 2.2 for head (BEP head drops MORE than simple affinity laws predict)
+                    # Values are now dynamically loaded from configuration management system
                     
-                    flow_exponent = 1.2  # Can be tuned based on specific speed (1.1 to 1.3 typical)
-                    head_exponent = 2.2  # Can be tuned based on pump design (2.1 to 2.3 typical)
+                    flow_exponent = self.get_calibration_factor('bep_shift_flow_exponent', 1.2)
+                    head_exponent = self.get_calibration_factor('bep_shift_head_exponent', 2.2)
                     
                     # Calculate shifted BEP using exponential formulas
                     shifted_bep_flow = original_bep_flow * (diameter_ratio ** flow_exponent)
@@ -661,10 +694,11 @@ class PerformanceAnalyzer:
                     # Apply performance corrections based on curve rotation
                     # The curve "rotates" counterclockwise, affecting efficiency more at higher flows
                     if true_qbp_percent > 110:  # Operating significantly above shifted BEP
-                        # Additional efficiency degradation for operating far from shifted BEP
-                        qbp_efficiency_penalty = min(5, (true_qbp_percent - 110) * 0.1)
+                        # Efficiency correction factor from tunable physics engine
+                        efficiency_correction_factor = self.get_calibration_factor('efficiency_correction_exponent', 0.1)
+                        qbp_efficiency_penalty = min(5, (true_qbp_percent - 110) * efficiency_correction_factor)
                         final_efficiency = max(40, final_efficiency - qbp_efficiency_penalty)
-                        logger.info(f"[BEP MIGRATION] {pump_code}: Applied {qbp_efficiency_penalty:.1f}% efficiency penalty for QBP {true_qbp_percent:.1f}%")
+                        logger.info(f"[BEP MIGRATION] {pump_code}: Applied {qbp_efficiency_penalty:.1f}% efficiency penalty for QBP {true_qbp_percent:.1f}% (factor: {efficiency_correction_factor})")
                     
                     # Special logging for 8/8 DME
                     if pump_code and "8/8 DME" in str(pump_code):

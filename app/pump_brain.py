@@ -135,12 +135,13 @@ class PumpBrain:
     Consolidates all pump-related calculations and decision-making.
     """
     
-    def __init__(self, repository=None):
+    def __init__(self, repository=None, config_service=None):
         """
         Initialize the Brain with all intelligence modules.
         
         Args:
             repository: PumpRepository instance for data access
+            config_service: AdminConfigService for configuration management
         """
         # CRITICAL FIX: Always ensure repository is available
         if repository is None:
@@ -148,8 +149,15 @@ class PumpBrain:
             repository = get_pump_repository()
             logger.info("PumpBrain: Auto-loaded repository during initialization")
         
-        # Store repository reference
+        # Initialize config service for tunable physics parameters
+        if config_service is None:
+            from .admin_config_service import admin_config_service
+            config_service = admin_config_service
+            logger.debug("PumpBrain: Auto-loaded admin config service")
+        
+        # Store dependencies
         self.repository = repository
+        self.config_service = config_service
         
         # Initialize intelligence modules
         self.selection = SelectionIntelligence(self)
@@ -166,6 +174,15 @@ class PumpBrain:
         
         # Track initialization time for uptime monitoring
         self._initialized_at = datetime.now()
+    
+    def get_config_service(self):
+        """
+        Get the configuration service for accessing tunable parameters.
+        
+        Returns:
+            AdminConfigService instance for physics parameter management
+        """
+        return self.config_service
     
     # ==================== SELECTION OPERATIONS ====================
     

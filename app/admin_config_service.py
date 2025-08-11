@@ -413,6 +413,67 @@ class AdminConfigService:
                 
                 return [dict(row) for row in cursor.fetchall()]
     
+    def get_calibration_factors(self) -> Dict[str, float]:
+        """
+        Get BEP migration calibration factors from engineering constants.
+        These factors control the physics model for impeller trimming effects.
+        
+        Returns:
+            Dict with calibration factors for BEP migration calculations
+        """
+        cache_key = "calibration_factors"
+        
+        # Check cache first
+        if (self._cache_timestamp and 
+            (datetime.utcnow() - self._cache_timestamp).seconds < self._cache_ttl and
+            cache_key in self._config_cache):
+            return self._config_cache[cache_key]
+        
+        # Load from database
+        with self.db.get_connection() as conn:
+            with conn.cursor(cursor_factory=RealDictCursor) as cursor:
+                cursor.execute("""
+                    SELECT name, value FROM admin_config.engineering_constants
+                    WHERE category = 'BEP Migration' 
+                    ORDER BY name
+                """)
+                
+                constants = cursor.fetchall()
+                
+                # Convert to calibration factors dictionary
+                calibration_factors = {}
+                for constant in constants:
+                    try:
+                        calibration_factors[constant['name']] = float(constant['value'])
+                    except (ValueError, TypeError) as e:
+                        logger.warning(f"Invalid calibration factor value for {constant['name']}: {constant['value']}")
+                        # Use safe defaults if database value is invalid
+                        if constant['name'] == 'bep_shift_flow_exponent':
+                            calibration_factors[constant['name']] = 1.2
+                        elif constant['name'] == 'bep_shift_head_exponent':
+                            calibration_factors[constant['name']] = 2.2
+                        elif constant['name'] == 'efficiency_correction_exponent':
+                            calibration_factors[constant['name']] = 0.1
+                
+                # Ensure all required factors are present with safe defaults
+                defaults = {
+                    'bep_shift_flow_exponent': 1.2,
+                    'bep_shift_head_exponent': 2.2,
+                    'efficiency_correction_exponent': 0.1
+                }
+                
+                for key, default_value in defaults.items():
+                    if key not in calibration_factors:
+                        logger.warning(f"Missing calibration factor {key}, using default {default_value}")
+                        calibration_factors[key] = default_value
+                
+                # Cache the result
+                self._config_cache[cache_key] = calibration_factors
+                self._cache_timestamp = datetime.utcnow()
+                
+                logger.debug(f"Loaded calibration factors: {calibration_factors}")
+                return calibration_factors
+    
 
     
     def create_profile(self, profile_data: Dict, user: str) -> Optional[int]:
