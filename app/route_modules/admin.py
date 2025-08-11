@@ -396,7 +396,8 @@ def _get_bep_analysis(pump, pump_repo):
                 conn.close()
                 
                 if result:
-                    bep_flow, bep_head = result
+                    # FIXED: Convert Decimal objects to float to avoid decimal/float mixing in Brain calculations
+                    bep_flow, bep_head = float(result[0]), float(result[1])
                     logger.error(f"DEBUG: Retrieved BEP from database - Flow: {bep_flow}, Head: {bep_head}")
                 else:
                     logger.error(f"DEBUG: No BEP data found in database for {pump_code}")

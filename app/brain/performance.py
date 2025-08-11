@@ -197,8 +197,14 @@ class PerformanceAnalyzer:
                 logger.debug(f"[TRIM PHYSICS] {pump_code}: Large trim (~{estimated_trim_pct:.1f}%) - using exponent {head_exponent}")
             
             # H₂/H₁ = (D₂/D₁)^head_exp  →  D₂ = D₁ × (H₂/H₁)^(1/head_exp)
-            diameter_ratio = np.power(target_head / base_head_at_flow, 1.0 / head_exponent)
-            required_diameter = largest_diameter * diameter_ratio
+            # FIXED: Ensure all values are float to avoid decimal/float mixing in power operations
+            target_head_float = float(target_head)
+            base_head_float = float(base_head_at_flow)
+            largest_diameter_float = float(largest_diameter)
+            head_exponent_float = float(head_exponent)
+            
+            diameter_ratio = np.power(target_head_float / base_head_float, 1.0 / head_exponent_float)
+            required_diameter = largest_diameter_float * diameter_ratio
             trim_percent = diameter_ratio * 100
             
             logger.info(f"[TUNABLE AFFINITY] {pump_code}: Using head exponent {head_exponent} (vs standard 2.0)")
@@ -388,8 +394,9 @@ class PerformanceAnalyzer:
                 if np.isnan(base_power) or base_power <= 0:
                     base_power = flow * head * 1.35 / (367 * base_efficiency / 100)  # Hydraulic calculation
                 # Apply affinity laws for trimmed diameter
-                trim_ratio = required_diameter / diameter
-                adjusted_power = base_power * (trim_ratio ** 3)
+                # FIXED: Ensure all values are float to avoid decimal/float mixing
+                trim_ratio = float(required_diameter) / float(diameter)
+                adjusted_power = float(base_power) * (trim_ratio ** 3)
             else:
                 # Use hydraulic power calculation
                 adjusted_power = flow * head * 1.35 / (367 * base_efficiency / 100)
@@ -785,9 +792,10 @@ class PerformanceAnalyzer:
                     flow_exponent = self.get_calibration_factor('bep_shift_flow_exponent', 1.2)
                     head_exponent = self.get_calibration_factor('bep_shift_head_exponent', 2.2)
                     
-                    # Calculate shifted BEP using exponential formulas
-                    shifted_bep_flow = original_bep_flow * (diameter_ratio ** flow_exponent)
-                    shifted_bep_head = original_bep_head * (diameter_ratio ** head_exponent)
+                    # Calculate shifted BEP using exponential formulas  
+                    # FIXED: Ensure all values are float to avoid decimal/float mixing
+                    shifted_bep_flow = float(original_bep_flow) * (float(diameter_ratio) ** float(flow_exponent))
+                    shifted_bep_head = float(original_bep_head) * (float(diameter_ratio) ** float(head_exponent))
                     
                     logger.info(f"[BEP MIGRATION] {pump_code}: Diameter ratio: {diameter_ratio:.4f}")
                     logger.info(f"[BEP MIGRATION] {pump_code}: Flow shift factor: {diameter_ratio ** flow_exponent:.4f} (using exponent {flow_exponent})")
@@ -1297,12 +1305,13 @@ class PerformanceAnalyzer:
                 # H₂ = H₁ × (D₂/D₁)² × (N₂/N₁)²
                 # P₂ = P₁ × (D₂/D₁)³ × (N₂/N₁)³
                 
-                scaled_flow = point['flow_m3hr'] * diameter_ratio * speed_ratio
-                scaled_head = point['head_m'] * (diameter_ratio ** 2) * (speed_ratio ** 2)
+                # FIXED: Ensure all values are float to avoid decimal/float mixing
+                scaled_flow = float(point['flow_m3hr']) * float(diameter_ratio) * float(speed_ratio)
+                scaled_head = float(point['head_m']) * (float(diameter_ratio) ** 2) * (float(speed_ratio) ** 2)
                 
                 # Power scaling if available
                 if point.get('power_kw'):
-                    scaled_power = point['power_kw'] * (diameter_ratio ** 3) * (speed_ratio ** 3)
+                    scaled_power = float(point['power_kw']) * (float(diameter_ratio) ** 3) * (float(speed_ratio) ** 3)
                 else:
                     scaled_power = None
                 
