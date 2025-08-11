@@ -259,19 +259,23 @@ def pump_options():
                 else:
                     return str(obj)  # Convert everything else to string
             
-            # NEW: Group results into operating zones for tiered presentation
+            # NEW: Group results into ALL operating zones for tiered presentation
             preferred_pumps = [p for p in pump_selections if p.get('operating_zone') == 'preferred']
             allowable_pumps = [p for p in pump_selections if p.get('operating_zone') == 'allowable']
+            acceptable_pumps = [p for p in pump_selections if p.get('operating_zone') == 'acceptable']
+            marginal_pumps = [p for p in pump_selections if p.get('operating_zone') == 'marginal']
             
-            logger.info(f"Tiered results: {len(preferred_pumps)} preferred, {len(allowable_pumps)} allowable pumps")
+            logger.info(f"Tiered results: {len(preferred_pumps)} preferred, {len(allowable_pumps)} allowable, {len(acceptable_pumps)} acceptable, {len(marginal_pumps)} marginal pumps")
             
             # CRITICAL FIX: Use optimized session storage from session_manager
             from ..session_manager import store_pumps_optimized
             store_pumps_optimized(pump_selections)
             
-            # Store tiered results for enhanced UI
+            # Store ALL tiered results for enhanced UI
             safe_session_set('preferred_pumps', preferred_pumps)
             safe_session_set('allowable_pumps', allowable_pumps)
+            safe_session_set('acceptable_pumps', acceptable_pumps)
+            safe_session_set('marginal_pumps', marginal_pumps)
             
             # Store minimal exclusion data for transparency
             if exclusion_data:
@@ -281,7 +285,9 @@ def pump_options():
                     'excluded_count': exclusion_data.get('excluded_count', 0),
                     'suitable_pumps_count': len(pump_selections),
                     'preferred_count': len(preferred_pumps),
-                    'allowable_count': len(allowable_pumps)
+                    'allowable_count': len(allowable_pumps),
+                    'acceptable_count': len(acceptable_pumps),
+                    'marginal_count': len(marginal_pumps)
                 })
             
             # Data flow fixed: Use pump_selections directly instead of creating pump_evaluations
@@ -306,9 +312,11 @@ def pump_options():
             'fluid_type': request.args.get('liquid_type', 'Water')
         })
         
-        # Get tiered results from session
+        # Get ALL tiered results from session
         preferred_pumps = safe_session_get('preferred_pumps', [])
         allowable_pumps = safe_session_get('allowable_pumps', [])
+        acceptable_pumps = safe_session_get('acceptable_pumps', [])
+        marginal_pumps = safe_session_get('marginal_pumps', [])
         stored_pumps = safe_session_get('suitable_pumps', pump_selections)
 
         # Clean breadcrumbs for pump options page
@@ -317,14 +325,17 @@ def pump_options():
             {'label': 'Results', 'url': '#', 'icon': 'view_list'}
         ]
         
-        # Render pump options page with tiered results
-        logger.info(f"Successfully found {len(preferred_pumps)} preferred + {len(allowable_pumps)} allowable pumps, rendering tiered results")
+        # Render pump options page with ALL tiered results
+        total_pumps = len(preferred_pumps) + len(allowable_pumps) + len(acceptable_pumps) + len(marginal_pumps)
+        logger.info(f"Successfully found {total_pumps} total pumps: {len(preferred_pumps)} preferred, {len(allowable_pumps)} allowable, {len(acceptable_pumps)} acceptable, {len(marginal_pumps)} marginal")
         return render_template(
             'pump_options.html',
             breadcrumbs=breadcrumbs,
             pump_selections=stored_pumps,  # Legacy compatibility
-            preferred_pumps=preferred_pumps,  # NEW: Tier 1 - Best Bets
-            allowable_pumps=allowable_pumps,  # NEW: Tier 2 - Viable Alternatives
+            preferred_pumps=preferred_pumps,  # Tier 1 - Optimal range (80-110% BEP)
+            allowable_pumps=allowable_pumps,  # Tier 2 - Good range (60-140% BEP)
+            acceptable_pumps=acceptable_pumps,  # Tier 3 - Industrial range (50-200% BEP)
+            marginal_pumps=marginal_pumps,  # Tier 4 - Outside typical ranges
             site_requirements={
                 'flow_m3hr': flow,
                 'head_m': head,
