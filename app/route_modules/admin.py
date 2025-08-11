@@ -123,7 +123,7 @@ def run_performance_test():
                 for result in limited_results:
                     if isinstance(result, dict) and 'pump' in result:
                         test_pumps.append(result['pump'])
-                    elif hasattr(result, 'pump'):
+                    elif hasattr(result, 'pump') and not isinstance(result, dict):
                         test_pumps.append(result.pump)
                     else:
                         # Handle case where result is the pump data itself
@@ -360,8 +360,8 @@ def _get_bep_analysis(pump, pump_repo):
             pump_code = pump.get('pump_code')
             specifications = pump.get('specifications', {})
         else:
-            pump_code = pump.pump_code
-            specifications = pump.specifications
+            pump_code = _get_pump_attr(pump, 'pump_code')
+            specifications = _get_pump_attr(pump, 'specifications', {})
             
         # Get BEP from AUTHENTIC database specifications only
         bep_flow = specifications.get('bep_flow_m3hr')
@@ -392,7 +392,7 @@ def _get_bep_analysis(pump, pump_repo):
             
     except Exception as e:
         # Handle both dictionary and object formats for error logging
-        pump_code = pump.get('pump_code') if isinstance(pump, dict) else pump.pump_code
+        pump_code = _get_pump_attr(pump, 'pump_code')
         logger.error(f"Error getting authentic BEP data for {pump_code}: {str(e)}")
         raise e
 
@@ -408,7 +408,8 @@ def _test_pump_performance_envelope(pump, base_flow, base_head, pump_repo):
         
         # This should never execute due to exception handling above, but keeping for clarity
         if not bep_data.get('has_bep_data'):
-            error_msg = f"CRITICAL: No authentic BEP data available for envelope testing of {pump.pump_code}"
+            pump_code = _get_pump_attr(pump, 'pump_code')
+            error_msg = f"CRITICAL: No authentic BEP data available for envelope testing of {pump_code}"
             logger.error(error_msg)
             raise ValueError(error_msg)
         
@@ -439,8 +440,8 @@ def _test_pump_performance_envelope(pump, base_flow, base_head, pump_repo):
         total_pumps = pump_repo.get_pump_count()
         
         return {
-            'pump_code': pump.pump_code,
-            'pump_type': pump.pump_type,
+            'pump_code': _get_pump_attr(pump, 'pump_code'),
+            'pump_type': _get_pump_attr(pump, 'pump_type'),
             'envelope_testing': True,
             'bep_analysis': bep_data,
             'test_points_count': len(envelope_results),
@@ -450,7 +451,8 @@ def _test_pump_performance_envelope(pump, base_flow, base_head, pump_repo):
         }
         
     except Exception as e:
-        logger.error(f"Error in envelope testing for {pump.pump_code}: {str(e)}")
+        pump_code = _get_pump_attr(pump, 'pump_code')
+        logger.error(f"Error in envelope testing for {pump_code}: {str(e)}")
         return None
 
 def _generate_envelope_test_points(pump, bep_flow, bep_head, base_head):
@@ -459,9 +461,10 @@ def _generate_envelope_test_points(pump, bep_flow, bep_head, base_head):
     
     # Get the best curve for the pump
     best_curve = None
-    if hasattr(pump, 'curves') and pump.curves:
+    pump_curves = _get_pump_attr(pump, 'curves', [])
+    if pump_curves:
         # Find curve closest to BEP conditions
-        for curve in pump.curves:
+        for curve in pump_curves:
             if 'performance_points' in curve:
                 points = curve['performance_points']
                 flows = [p['flow_m3hr'] for p in points if 'flow_m3hr' in p]
@@ -472,8 +475,8 @@ def _generate_envelope_test_points(pump, bep_flow, bep_head, base_head):
                     break
         
         # Use first curve if no perfect match
-        if not best_curve and pump.curves:
-            best_curve = pump.curves[0]
+        if not best_curve and pump_curves:
+            best_curve = pump_curves[0]
     
     if not best_curve or 'performance_points' not in best_curve:
         # Fallback: use BEP-based estimates
@@ -508,7 +511,7 @@ def _generate_envelope_test_points(pump, bep_flow, bep_head, base_head):
             from scipy import interpolate
             head_interp = interpolate.interp1d(flows, heads, kind='linear', 
                                              bounds_error=False, 
-                                             fill_value=(heads[0], heads[-1]))
+                                             fill_value='extrapolate')
             
             # Generate test points at specific BEP percentages
             test_percentages = [60, 70, 80, 90, 100, 110, 120, 130, 140]
