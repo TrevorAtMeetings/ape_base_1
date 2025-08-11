@@ -412,6 +412,12 @@ class ChartIntelligence:
                 chart_data['operating_point']['bep_flow_m3hr'] = bep_flow
                 chart_data['operating_point']['bep_head_m'] = bep_head
                 chart_data['operating_point']['qbep_percentage'] = qbep_percentage
+                
+                # DEBUG: Log BEP data inclusion for chart markers
+                logger.info(f"[CHART DEBUG] {pump_code}: BEP marker data - Flow: {bep_flow} m³/hr, Head: {bep_head} m")
+            else:
+                # DEBUG: Log when BEP data is missing
+                logger.warning(f"[CHART DEBUG] {pump_code}: No BEP data available - Flow: {bep_flow}, Head: {bep_head}")
             
             # Process curves - BRAIN HANDLES ALL TRANSFORMATIONS
             for i, curve in enumerate(curves):
