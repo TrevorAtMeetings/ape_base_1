@@ -367,9 +367,15 @@ def _get_bep_analysis(pump, pump_repo):
             specifications = _get_pump_attr(pump, 'specifications', {})
             
         # Get BEP from AUTHENTIC database specifications only
+        # DEBUG: Check actual specifications structure
+        logger.error(f"DEBUG: Specifications structure for {pump_code}: {specifications}")
+        logger.error(f"DEBUG: Specifications keys: {list(specifications.keys()) if isinstance(specifications, dict) else 'Not a dict'}")
+        
         bep_flow = specifications.get('bep_flow_m3hr')
         bep_head = specifications.get('bep_head_m') 
         bep_efficiency = None  # BEP efficiency not stored as separate specification - would need calculation from curves
+        
+        logger.error(f"DEBUG: Extracted BEP data - Flow: {bep_flow}, Head: {bep_head}")
         
         # Now using Brain system for all calculations - no manual curve debugging needed
                 
