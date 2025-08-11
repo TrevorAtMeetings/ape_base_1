@@ -465,14 +465,19 @@ class SelectionIntelligence:
                         evaluation['score_components']['trim_penalty'] = trim_penalty
                 
             else:
-                # No performance data - apply penalty but keep pump in results
-                evaluation['score_components']['no_performance_penalty'] = -40
-                evaluation['operating_zone'] = 'marginal'  # Force to marginal tier
-                evaluation['tier'] = 4
-                evaluation['efficiency_pct'] = 0
-                evaluation['head_m'] = head  # Assume it meets basic requirement
-                evaluation['power_kw'] = 0
-                logger.info(f"[SELECTION] {pump_data.get('pump_code')}: No performance data - applying penalty but keeping in results")
+                # When performance analyzer returns None, it could be due to:
+                # 1. Missing data (keep with penalty)  
+                # 2. Physical impossibility (exclude entirely)
+                
+                # Check if this pump was rejected for physical reasons by looking at recent log messages
+                pump_code = pump_data.get('pump_code', 'Unknown')
+                
+                # If the performance analyzer rejected this pump for physical reasons, exclude it entirely
+                # This is indicated by the performance data being None after analyzer evaluation
+                logger.warning(f"[SELECTION] {pump_code}: Excluded due to physical impossibility or missing critical data")
+                evaluation['feasible'] = False
+                evaluation['exclusion_reasons'].append('Physical capability exceeded or critical data missing')
+                return evaluation  # Return early - don't include in results
             
             # Calculate total score
             evaluation['total_score'] = sum(evaluation['score_components'].values())
