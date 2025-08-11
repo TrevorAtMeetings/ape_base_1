@@ -665,23 +665,23 @@
         <div class="data-grid">
             <!-- Best Efficiency Point (BEP) -->
             <div class="data-section">
-                <div class="section-title">BEP DETAILS</div>
+                <div class="section-title">BEP DETAILS (Manufacturer Specifications)</div>
                 <table class="data-table">
                     <tr>
                         <td>BEP Flow</td>
-                        <td>{{ (site_requirements.get('flow_m3hr', 0) / (selected_pump.get('qbep_percentage', 100) / 100))|round(1) }} m³/hr</td>
+                        <td>{{ selected_pump.get('specifications', {}).get('bep_flow_m3hr', 0)|round(1) }} m³/hr</td>
                     </tr>
                     <tr>
                         <td>BEP Head</td>
-                        <td>{{ (site_requirements.get('head_m', 0) * 1.05)|round(1) }} m</td>
+                        <td>{{ selected_pump.get('specifications', {}).get('bep_head_m', 0)|round(1) }} m</td>
                     </tr>
                     <tr>
                         <td>BEP Efficiency</td>
-                        <td>{{ (selected_pump.get('efficiency_pct', 0) * 1.02)|round(1) }} %</td>
+                        <td>{{ selected_pump.get('specifications', {}).get('bep_efficiency', 0)|round(1) }} %</td>
                     </tr>
                     <tr>
                         <td>QBEP %</td>
-                        <td>{{ selected_pump.get('qbp_percent', 0)|round(0)|int }} %</td>
+                        <td>{{ selected_pump.get('qbp_percent', 0)|round(1) }} %</td>
                     </tr>
                     <tr>
                         <td>Operating Zone</td>
