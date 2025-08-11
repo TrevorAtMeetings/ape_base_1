@@ -1156,13 +1156,27 @@ class PerformanceAnalyzer:
             # Estimate power using hydraulic calculation
             estimated_power = self._calculate_hydraulic_power(flow, deliverable_head, estimated_efficiency)
             
-            # Estimate trim based on head shortfall
-            head_ratio = deliverable_head / head if head > 0 else 1.0
-            estimated_trim = max(75, head_ratio * 100)  # Minimum 75% trim
-            estimated_diameter = largest_diameter * (estimated_trim / 100)
+            # Estimate required impeller diameter using affinity laws
+            # When pump delivers more head than required, we need to trim DOWN the impeller
+            if deliverable_head > head and deliverable_head > 0:
+                # Use affinity laws: H ∝ D²  →  D₂/D₁ = sqrt(H₂/H₁)
+                diameter_ratio = np.sqrt(head / deliverable_head)
+                estimated_diameter = largest_diameter * diameter_ratio
+                estimated_trim = diameter_ratio * 100
+                
+                # Ensure trim stays within physical limits (85-100%)
+                if estimated_trim < 85:
+                    logger.warning(f"[HYDRAULIC ESTIMATE] {pump_code}: Required trim {estimated_trim:.1f}% exceeds physical limits - using minimum 85%")
+                    estimated_trim = 85.0
+                    estimated_diameter = largest_diameter * 0.85
+            else:
+                # If pump can't deliver enough head, use largest impeller
+                estimated_diameter = largest_diameter
+                estimated_trim = 100.0
             
             logger.info(f"[HYDRAULIC ESTIMATE] {pump_code}: Delivers {deliverable_head:.1f}m vs required {head:.1f}m")
             logger.info(f"[HYDRAULIC ESTIMATE] {pump_code}: Estimated {estimated_efficiency:.1f}% efficiency, {estimated_power:.1f}kW power")
+            logger.info(f"[HYDRAULIC ESTIMATE] {pump_code}: Impeller diameter {estimated_diameter:.1f}mm ({estimated_trim:.1f}% of {largest_diameter:.1f}mm max)")
             
             return {
                 'flow_m3hr': flow,
