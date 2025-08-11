@@ -342,9 +342,10 @@
 </div>
 
 <!-- Edit Factors Modal -->
-<div id="edit-factors-modal" class="modal">
+<div id="edit-factors-modal" class="modal modal-fixed-footer" style="max-height: 90%; overflow-y: auto;">
     <div class="modal-content">
-        <h4>Edit Calibration Factors</h4>
+        <h4>Edit Enhanced Calibration Factors</h4>
+        <p class="grey-text">Configure all 9 research-based calibration parameters for optimal pump selection accuracy.</p>
         <form id="factors-form">
             <div class="row">
                 <div class="input-field col s12">
@@ -419,14 +420,28 @@
                 </div>
             </div>
         </form>
+        </form>
     </div>
     <div class="modal-footer">
         <a href="#" class="modal-close waves-effect btn-flat">Cancel</a>
-        <a href="#" class="waves-effect btn orange" onclick="updateFactors()">Update Factors</a>
+        <a href="#" class="waves-effect btn orange" onclick="updateFactors()">Update All 9 Factors</a>
     </div>
 </div>
 
 <script>
+// Initialize modal when document loads
+document.addEventListener('DOMContentLoaded', function() {
+    var elems = document.querySelectorAll('.modal');
+    M.Modal.init(elems, {
+        dismissible: true,
+        opacity: 0.5,
+        inDuration: 300,
+        outDuration: 200,
+        startingTop: '4%',
+        endingTop: '10%'
+    });
+});
+
 // Calibration tool JavaScript functions
 function runCalibrationTest() {
     document.getElementById('calibration-status').classList.remove('hide');
