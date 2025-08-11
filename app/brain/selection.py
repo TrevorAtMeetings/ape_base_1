@@ -493,7 +493,14 @@ class SelectionIntelligence:
                 evaluation['efficiency_pct'] = efficiency
                 
                 # CRITICAL FIX: Store actual head delivered by pump AND flow rate
-                evaluation['head_m'] = performance.get('head_m', head)
+                actual_pump_head = performance.get('head_m')
+                if actual_pump_head is None:
+                    logger.error(f"[CHART BUG FIX] No actual head in performance data for {pump_data.get('pump_code')}")
+                    evaluation['head_m'] = head  # Fallback to required head only if performance calculation failed
+                else:
+                    evaluation['head_m'] = actual_pump_head  # Use ACTUAL pump head for chart plotting
+                    logger.debug(f"[CHART BUG FIX] {pump_data.get('pump_code')}: Chart will show operating point at {flow}m³/hr @ {actual_pump_head}m (actual pump head)")
+                
                 evaluation['flow_m3hr'] = flow  # Store the operating flow rate
                 
                 # Head margin score (Legacy v6.0 - 20 points max)
