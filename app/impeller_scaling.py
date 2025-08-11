@@ -149,7 +149,7 @@ class ImpellerScalingEngine:
                 
             diameter_ratio = new_diameter / base_diameter
             
-            # Adaptive interpolation for consistency with catalog_engine
+            # Adaptive interpolation for Brain system consistency
             if len(flows) >= 4:
                 interpolation_kind = 'cubic'
             elif len(flows) == 3:

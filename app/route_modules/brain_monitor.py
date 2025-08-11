@@ -13,23 +13,15 @@ logger = logging.getLogger(__name__)
 # Create blueprint
 brain_monitor_bp = Blueprint('brain_monitor', __name__)
 
-# Check if Brain is available
-try:
-    from ..pump_brain import get_pump_brain, BrainMetrics
-    BRAIN_AVAILABLE = True
-except ImportError:
-    BRAIN_AVAILABLE = False
-    logger.warning("Brain system not available for monitoring")
+# Brain system is ALWAYS available - NO FALLBACKS EVER
+from ..pump_brain import get_pump_brain, BrainMetrics
+BRAIN_AVAILABLE = True
 
 
 @brain_monitor_bp.route('/brain/status')
 def brain_status():
     """Get Brain system status and metrics"""
-    if not BRAIN_AVAILABLE:
-        return jsonify({
-            'status': 'unavailable',
-            'message': 'Brain system not installed'
-        }), 503
+
     
     try:
         brain = get_pump_brain()

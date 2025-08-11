@@ -640,8 +640,7 @@ def api_simulate_selection():
         if flow_rate <= 0 or head <= 0:
             return jsonify({'error': 'Invalid flow rate or head'}), 400
         
-        # CATALOG ENGINE RETIRED - USING BRAIN SYSTEM
-        # from ..catalog_engine import get_catalog_engine
+
         from ..pump_brain import get_pump_brain
         
         brain = get_pump_brain()

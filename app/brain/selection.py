@@ -1,7 +1,7 @@
 """
 Selection Intelligence Module
 =============================
-Consolidates pump selection logic from catalog_engine.py
+Brain-based pump selection intelligence
 """
 
 import logging
@@ -24,7 +24,7 @@ class SelectionIntelligence:
         """
         self.brain = brain
         
-        # Selection parameters (from catalog_engine v6.0)
+        # Brain system selection parameters
         # Legacy uses point-based scoring, not percentage weights
         self.scoring_weights = {
             'bep_proximity': 45,  # Max points (was 40% weight)

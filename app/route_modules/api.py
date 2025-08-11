@@ -10,13 +10,8 @@ logger = logging.getLogger(__name__)
 # Create the API blueprint
 api_bp = Blueprint('api', __name__, url_prefix='/api')
 
-# Brain availability check
-try:
-    BRAIN_AVAILABLE = get_pump_brain() is not None
-    logger.info("Brain system available for API integration")
-except Exception:
-    BRAIN_AVAILABLE = False
-    logger.error("Brain system not available - API will have limited functionality")
+# Brain system is ALWAYS available - NO FALLBACKS EVER
+BRAIN_AVAILABLE = True
 
 
 def sanitize_json_data(data):
@@ -48,9 +43,7 @@ def get_chart_data(pump_code):
         flow_rate = request.args.get('flow', type=float, default=100)
         head = request.args.get('head', type=float, default=50)
 
-        if not BRAIN_AVAILABLE:
-            logger.error("Chart API call failed: Brain system is not available.")
-            return jsonify({'error': 'The intelligence engine is currently offline.'}), 503
+
 
         # SINGLE SOURCE OF TRUTH: Brain handles ALL logic
         brain = get_pump_brain()

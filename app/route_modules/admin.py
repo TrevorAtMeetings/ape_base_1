@@ -7,8 +7,7 @@ import os
 import numpy as np
 from flask import render_template, Blueprint, request, jsonify, current_app, flash
 from werkzeug.utils import secure_filename
-# CATALOG ENGINE RETIRED - USING BRAIN SYSTEM
-# from ..catalog_engine import get_catalog_engine
+
 from ..pump_brain import get_pump_brain
 from ..pump_repository import PumpRepository
 from ..utils import SiteRequirements
@@ -62,7 +61,7 @@ def run_performance_test():
             return render_template('admin_testing.html')
         
         # Initialize engines
-        # BRAIN SYSTEM MIGRATION: Use Brain instead of Catalog Engine
+
         brain = get_pump_brain()
         pump_repo = PumpRepository()
         
@@ -136,13 +135,13 @@ def run_performance_test():
         for pump in test_pumps:
             if envelope_testing:
                 # Run comprehensive envelope testing (10-20 points)
-                result = _test_pump_performance_envelope(pump, flow_rate, head, pump_repo, catalog_engine)
+                result = _test_pump_performance_envelope(pump, flow_rate, head, pump_repo)
             else:
                 # Run single-point testing (existing behavior)
-                result = _compare_pump_performance(pump, flow_rate, head, pump_repo, catalog_engine)
+                result = _compare_pump_performance(pump, flow_rate, head, pump_repo)
                 if result:
                     # Add BEP analysis to each pump result
-                    bep_data = _get_bep_analysis(pump, pump_repo, catalog_engine)
+                    bep_data = _get_bep_analysis(pump, pump_repo)
                     result['bep_analysis'] = bep_data
             
             if result:
@@ -168,14 +167,14 @@ def run_performance_test():
         flash('An error occurred during testing. Please check the logs.', 'error')
         return render_template('admin_testing.html')
 
-def _compare_pump_performance(pump, flow_rate, head, pump_repo, catalog_engine):
+def _compare_pump_performance(pump, flow_rate, head, pump_repo):
     """Compare database raw values vs UI calculated values for a single pump"""
     try:
         # Get raw database performance (direct curve interpolation)
         db_performance = _get_database_performance(pump, flow_rate, head)
         
         # Get UI calculated performance (catalog engine with all transformations)
-        ui_performance = _get_ui_performance(pump, flow_rate, head, catalog_engine)
+        ui_performance = _get_ui_performance(pump, flow_rate, head)
         
         # Calculate deltas
         efficiency_delta = None
@@ -271,7 +270,7 @@ def _get_database_performance(pump, flow_rate, head):
         logger.debug(f"Full traceback: {traceback.format_exc()}")
         return {'efficiency': None, 'power_kw': None, 'npshr_m': None}
 
-def _get_ui_performance(pump, flow_rate, head, catalog_engine):
+def _get_ui_performance(pump, flow_rate, head):
     """Get UI calculated performance using catalog engine's full methodology"""
     try:
         # Primary method: Use catalog engine's unified evaluation method
@@ -330,7 +329,7 @@ def _get_ui_performance(pump, flow_rate, head, catalog_engine):
             'method': 'error'
         }
 
-def _get_bep_analysis(pump, pump_repo, catalog_engine):
+def _get_bep_analysis(pump, pump_repo):
     """Get BEP analysis using ONLY authentic database specifications - NO FALLBACKS"""
     try:
         # Get BEP from AUTHENTIC database specifications only
@@ -348,7 +347,7 @@ def _get_bep_analysis(pump, pump_repo, catalog_engine):
         
         # Calculate performance at authentic BEP using both methods
         bep_db_performance = _get_database_performance(pump, bep_flow, bep_head)
-        bep_ui_performance = _get_ui_performance(pump, bep_flow, bep_head, catalog_engine)
+        bep_ui_performance = _get_ui_performance(pump, bep_flow, bep_head)
         
         return {
             'bep_flow_m3hr': bep_flow,
@@ -368,11 +367,11 @@ def _get_bep_analysis(pump, pump_repo, catalog_engine):
 # Data integrity policy: NEVER use estimated/fallback data for BEP validation
 # If authentic BEP specifications don't exist, the test must fail
 
-def _test_pump_performance_envelope(pump, base_flow, base_head, pump_repo, catalog_engine):
+def _test_pump_performance_envelope(pump, base_flow, base_head, pump_repo):
     """Test pump performance across operating envelope using AUTHENTIC BEP data only"""
     try:
         # Get AUTHENTIC BEP data - will raise exception if not found
-        bep_data = _get_bep_analysis(pump, pump_repo, catalog_engine)
+        bep_data = _get_bep_analysis(pump, pump_repo)
         
         # This should never execute due to exception handling above, but keeping for clarity
         if not bep_data.get('has_bep_data'):
@@ -389,7 +388,7 @@ def _test_pump_performance_envelope(pump, base_flow, base_head, pump_repo, catal
         # Run tests at all points
         envelope_results = []
         for point in test_points:
-            point_result = _compare_pump_performance(pump, point['flow'], point['head'], pump_repo, catalog_engine)
+            point_result = _compare_pump_performance(pump, point['flow'], point['head'], pump_repo)
             if point_result:
                 point_result['test_point'] = {
                     'flow_m3hr': point['flow'],

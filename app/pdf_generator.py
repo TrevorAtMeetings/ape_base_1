@@ -15,8 +15,7 @@ import matplotlib
 matplotlib.use('Agg')  # Use non-interactive backend
 import matplotlib.pyplot as plt
 import numpy as np
-# CATALOG ENGINE RETIRED - Using Brain system dictionary format
-# from .catalog_engine import CatalogPump
+
 
 logger = logging.getLogger(__name__)
 
