@@ -111,8 +111,7 @@ def run_performance_test():
                 # Get suitable pumps from Brain system (limit to top 10 for testing)
                 # Create site requirements - flow_rate and head are guaranteed to be floats here
                 assert flow_rate is not None and head is not None, "Flow rate and head must be provided for duty point testing"
-                constraints = {'pump_type': 'GENERAL', 'max_results': 10}
-                selection_results = brain.find_best_pump(flow_rate, head, constraints=constraints)
+                selection_results = brain.find_best_pump(flow_rate, head)
                 if not selection_results:
                     flash('No suitable pumps found for the given conditions', 'error')
                     return render_template('admin_testing.html')
@@ -288,11 +287,27 @@ def _get_ui_performance(pump, flow_rate, head):
         
         # Use Brain's find_best_pump method to get selection-based performance
         # This includes trimming, scaling, and all the intelligent selection logic
-        selection_result = brain.find_best_pump(flow_rate, head, pump_filter=[pump_code])
+        selection_result = brain.find_best_pump(flow_rate, head)
         
         if selection_result and len(selection_result) > 0:
-            # Get the result for our specific pump
-            pump_result = selection_result[0]  # Should be our pump since we filtered
+            # Find our specific pump in the results
+            pump_result = None
+            for result in selection_result:
+                if result.get('pump_code') == pump_code:
+                    pump_result = result
+                    break
+            
+            if not pump_result:
+                logger.warning(f"Pump {pump_code} not found in Brain selection results")
+                return {
+                    'efficiency_pct': None,
+                    'power_kw': None,
+                    'npshr_m': None,
+                    'suitability_score': None,
+                    'trim_percent': None,
+                    'method': 'pump_not_selected',
+                    'failure_reason': 'pump_not_in_selection_results'
+                }
             
             # Extract performance values from selection result
             efficiency = pump_result.get('efficiency_pct')
