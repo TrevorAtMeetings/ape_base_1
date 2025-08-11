@@ -459,7 +459,13 @@ class AdminConfigService:
                 defaults = {
                     'bep_shift_flow_exponent': 1.2,
                     'bep_shift_head_exponent': 2.2,
-                    'efficiency_correction_exponent': 0.1
+                    'efficiency_correction_exponent': 0.1,
+                    'trim_dependent_small_exponent': 2.9,
+                    'trim_dependent_large_exponent': 2.1,
+                    'efficiency_penalty_volute': 0.20,
+                    'efficiency_penalty_diffuser': 0.45,
+                    'npsh_degradation_threshold': 10.0,
+                    'npsh_degradation_factor': 1.15
                 }
                 
                 for key, default_value in defaults.items():

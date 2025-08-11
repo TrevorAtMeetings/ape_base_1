@@ -197,6 +197,80 @@ class AdminConfigDB:
                 'formula': 'H2 = H1 × (D2/D1)²'
             },
             
+            # BEP Migration (Research-Based Calibration Factors)
+            {
+                'category': 'BEP Migration',
+                'name': 'bep_shift_flow_exponent',
+                'value': '1.2',
+                'unit': None,
+                'description': 'Flow exponent for BEP migration calculations during impeller trimming',
+                'formula': 'Q_shifted = Q_original × (D_trim/D_full)^exponent'
+            },
+            {
+                'category': 'BEP Migration',
+                'name': 'bep_shift_head_exponent',
+                'value': '2.2',
+                'unit': None,
+                'description': 'Head exponent for BEP migration calculations during impeller trimming',
+                'formula': 'H_shifted = H_original × (D_trim/D_full)^exponent'
+            },
+            {
+                'category': 'BEP Migration',
+                'name': 'efficiency_correction_exponent',
+                'value': '0.1',
+                'unit': None,
+                'description': 'Efficiency correction factor for off-BEP operation penalties',
+                'formula': 'η_penalty = (QBP - 110) × correction_exponent'
+            },
+            {
+                'category': 'BEP Migration',
+                'name': 'trim_dependent_small_exponent',
+                'value': '2.9',
+                'unit': None,
+                'description': 'Enhanced affinity law exponent for small trims (<5%) - research-based',
+                'formula': 'H2 = H1 × (D2/D1)^exponent for trims <5%'
+            },
+            {
+                'category': 'BEP Migration',
+                'name': 'trim_dependent_large_exponent',
+                'value': '2.1',
+                'unit': None,
+                'description': 'Enhanced affinity law exponent for large trims (5-15%) - research-based',
+                'formula': 'H2 = H1 × (D2/D1)^exponent for trims 5-15%'
+            },
+            {
+                'category': 'BEP Migration',
+                'name': 'efficiency_penalty_volute',
+                'value': '0.20',
+                'unit': None,
+                'description': 'Efficiency penalty factor for volute pumps (research: 0.15-0.25)',
+                'formula': 'Δη = factor × (1 - D_trim/D_full)'
+            },
+            {
+                'category': 'BEP Migration',
+                'name': 'efficiency_penalty_diffuser',
+                'value': '0.45',
+                'unit': None,
+                'description': 'Efficiency penalty factor for diffuser pumps (research: 0.4-0.5)',
+                'formula': 'Δη = factor × (1 - D_trim/D_full)'
+            },
+            {
+                'category': 'BEP Migration',
+                'name': 'npsh_degradation_threshold',
+                'value': '10.0',
+                'unit': '%',
+                'description': 'Trim percentage above which NPSH degradation occurs (research: >10%)',
+                'formula': 'NPSH penalty applies when trim > threshold'
+            },
+            {
+                'category': 'BEP Migration',
+                'name': 'npsh_degradation_factor',
+                'value': '1.15',
+                'unit': None,
+                'description': 'NPSH multiplier for heavily trimmed impellers (research-based)',
+                'formula': 'NPSH_required = NPSH_base × factor (for heavy trims)'
+            },
+            
             # Physical Limits
             {
                 'category': 'Physical Limits',

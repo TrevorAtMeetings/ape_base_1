@@ -63,11 +63,17 @@ class PerformanceAnalyzer:
             logger.debug(f"[TUNABLE PHYSICS] Loaded calibration factors: {self.calibration_factors}")
         except Exception as e:
             logger.warning(f"[TUNABLE PHYSICS] Failed to load calibration factors, using defaults: {e}")
-            # Safe defaults if config service is unavailable
+            # Safe defaults if config service is unavailable - Research-based values
             self.calibration_factors = {
-                'bep_shift_flow_exponent': 1.0,  # Updated to match expanded range defaults
-                'bep_shift_head_exponent': 2.0,  # Updated to match expanded range defaults
-                'efficiency_correction_exponent': 0.05  # Updated to match expanded range defaults
+                'bep_shift_flow_exponent': 1.2,
+                'bep_shift_head_exponent': 2.2,
+                'efficiency_correction_exponent': 0.1,
+                'trim_dependent_small_exponent': 2.9,  # Research: 2.8-3.0 for small trims
+                'trim_dependent_large_exponent': 2.1,  # Research: 2.0-2.2 for large trims
+                'efficiency_penalty_volute': 0.20,     # Research: 0.15-0.25
+                'efficiency_penalty_diffuser': 0.45,   # Research: 0.4-0.5
+                'npsh_degradation_threshold': 10.0,    # Research: >10% causes NPSH issues
+                'npsh_degradation_factor': 1.15        # Research-based multiplier
             }
     
     def get_calibration_factor(self, factor_name: str, default_value: float = 1.0) -> float:
@@ -167,9 +173,21 @@ class PerformanceAnalyzer:
             
             # Good case: target_head < base_head_at_flow means we can trim to reduce head
             
-            # Calculate required diameter using TUNABLE physics formula
+            # Calculate required diameter using RESEARCH-BASED trim-dependent physics
+            # Research: Exponent varies from 2.8-3.0 for small trims to 2.0-2.2 for large trims
+            # Estimate trim percentage to select appropriate exponent
+            estimated_trim_pct = (1.0 - (target_head / base_head_at_flow) ** 0.5) * 100
+            
+            if estimated_trim_pct < 5.0:
+                # Small trim: Use higher exponent (research: 2.8-3.0)
+                head_exponent = self.get_calibration_factor('trim_dependent_small_exponent', 2.9)
+                logger.debug(f"[TRIM PHYSICS] {pump_code}: Small trim (~{estimated_trim_pct:.1f}%) - using exponent {head_exponent}")
+            else:
+                # Larger trim: Use standard exponent (research: 2.0-2.2)
+                head_exponent = self.get_calibration_factor('trim_dependent_large_exponent', 2.1)
+                logger.debug(f"[TRIM PHYSICS] {pump_code}: Large trim (~{estimated_trim_pct:.1f}%) - using exponent {head_exponent}")
+            
             # H₂/H₁ = (D₂/D₁)^head_exp  →  D₂ = D₁ × (H₂/H₁)^(1/head_exp)
-            head_exponent = self.get_calibration_factor('bep_shift_head_exponent', 2.0)
             diameter_ratio = np.power(target_head / base_head_at_flow, 1.0 / head_exponent)
             required_diameter = largest_diameter * diameter_ratio
             trim_percent = diameter_ratio * 100
@@ -688,10 +706,27 @@ class PerformanceAnalyzer:
                 diameter_ratio = required_diameter / largest_diameter
                 final_head = head  # By design, this matches our target
                 
-                # Industry standard efficiency scaling with trimming (reduced penalty)
-                # Manufacturers don't penalize efficiency as harshly for moderate trimming
-                trim_penalty_factor = 1.0 - (1.0 - diameter_ratio) * 0.2  # Much gentler penalty
-                final_efficiency = base_efficiency * trim_penalty_factor
+                # Research-based efficiency penalty calculation based on pump type
+                # Research: Δη = ε(1-d2'/d2) where ε = 0.15-0.25 for volute, 0.4-0.5 for diffuser
+                pump_type = specs.get('pump_type', '').lower()
+                
+                if 'diffuser' in pump_type or 'turbine' in pump_type:
+                    # Diffuser pumps: Higher efficiency penalty (research: 0.4-0.5)
+                    efficiency_penalty_factor = self.get_calibration_factor('efficiency_penalty_diffuser', 0.45)
+                    pump_type_classification = "diffuser"
+                else:
+                    # Volute pumps (default): Lower efficiency penalty (research: 0.15-0.25)
+                    efficiency_penalty_factor = self.get_calibration_factor('efficiency_penalty_volute', 0.20)
+                    pump_type_classification = "volute"
+                
+                # Calculate efficiency drop: Δη = ε × (1 - D_trim/D_full)
+                trim_ratio = diameter_ratio  # D_trim/D_full
+                efficiency_drop_percentage = efficiency_penalty_factor * (1.0 - trim_ratio) * 100
+                final_efficiency = base_efficiency - efficiency_drop_percentage
+                
+                logger.debug(f"[EFFICIENCY PENALTY] {pump_code}: {pump_type_classification} pump, trim ratio {trim_ratio:.3f}")
+                logger.debug(f"[EFFICIENCY PENALTY] {pump_code}: Efficiency drop {efficiency_drop_percentage:.2f}% (factor: {efficiency_penalty_factor})")
+                logger.debug(f"[EFFICIENCY PENALTY] {pump_code}: Base efficiency {base_efficiency:.1f}% → Final {final_efficiency:.1f}%")
                 
                 # Handle power calculation
                 if None in powers_sorted:
@@ -726,6 +761,13 @@ class PerformanceAnalyzer:
                         if not np.isnan(base_npshr):
                             # NPSH scales with (diameter ratio)²
                             interpolated_npshr = base_npshr * (diameter_ratio ** 2)
+                            
+                            # Research-based NPSH degradation for heavy trimming (>10%)
+                            npsh_threshold = self.get_calibration_factor('npsh_degradation_threshold', 10.0)
+                            if trim_percent < (100 - npsh_threshold):  # More than 10% trim
+                                npsh_degradation_factor = self.get_calibration_factor('npsh_degradation_factor', 1.15)
+                                interpolated_npshr *= npsh_degradation_factor
+                                logger.warning(f"[NPSH DEGRADATION] {pump_code}: Heavy trim ({100-trim_percent:.1f}%) - NPSH increased by {(npsh_degradation_factor-1)*100:.1f}%")
                 except:
                     pass
                 
