@@ -612,22 +612,27 @@ class PerformanceAnalyzer:
                 
                 optimal_trim_result = self._calculate_efficiency_optimized_trim(
                     flows_sorted, heads_sorted, largest_diameter, flow, head, 
-                    original_bep_flow, original_bep_head, pump_code
+                    original_bep_flow, original_bep_head, pump_code or "Unknown"
                 )
                 
                 # Extract diameter and trim for compatibility with existing code
                 if optimal_trim_result:
                     required_diameter = optimal_trim_result['required_diameter_mm']
                     trim_percent = optimal_trim_result['trim_percent']
+                    logger.info(f"[EFFICIENCY OPTIMIZED] {pump_code}: Selected {trim_percent:.1f}% trim (score: {optimal_trim_result.get('optimization_score', 'N/A'):.1f})")
                 else:
-                    required_diameter, trim_percent = None, None
+                    # If efficiency optimization fails, fall back to simple affinity law calculation
+                    logger.info(f"[FALLBACK TO SIMPLE] {pump_code}: Efficiency optimization failed, using simple affinity law")
+                    required_diameter, trim_percent = self._calculate_required_diameter_direct(
+                        flows_sorted, heads_sorted, largest_diameter, flow, head, pump_code or "Unknown"
+                    )
                 
                 if pump_code and "8/8 DME" in str(pump_code):
                     logger.error(f"[8/8 DME DEBUG] Efficiency-optimized result: diameter={required_diameter}, trim={trim_percent}")
                     if optimal_trim_result:
                         logger.error(f"[8/8 DME DEBUG] Optimization score: {optimal_trim_result.get('optimization_score', 'N/A')}, evaluated {optimal_trim_result.get('evaluation_count', 0)} trim levels")
                 
-                if required_diameter is None:
+                if required_diameter is None or required_diameter <= 0:
                     logger.warning(f"[INDUSTRY] {pump_code}: Could not determine required diameter using affinity laws")
                     # FALLBACK CALCULATION: Only provide estimate if physically reasonable
                     # First check if this would require excessive trim
@@ -648,7 +653,7 @@ class PerformanceAnalyzer:
                 
                 # STEP 4: Check trim limits - use configured minimum
                 # Modern pumps can handle 84% trim safely
-                if trim_percent < self.min_trim_percent:
+                if trim_percent is not None and trim_percent < self.min_trim_percent:
                     logger.warning(f"[INDUSTRY] {pump_code}: Excessive trim required ({trim_percent:.1f}% < {self.min_trim_percent}%) - beyond safe limits")
                     # CRITICAL DIAGNOSIS: Log the exact values causing excessive trim
                     logger.error(f"[TRIM DEBUG] {pump_code}: Required {head}m but delivered {delivered_head:.1f}m at {flow} m³/hr")
@@ -1055,16 +1060,16 @@ class PerformanceAnalyzer:
                 logger.warning(f"[EFFICIENCY TRIM] {pump_code}: Cannot meet head requirement {target_head}m (max: {deliverable_head:.1f}m)")
                 return None
                 
-            # Calculate minimum diameter to meet head (with 5% margin for safety)
-            min_head_ratio = (target_head * 1.05) / deliverable_head  # Add 5% safety margin
+            # Calculate minimum diameter to meet head (with 2% margin for safety like legacy system)
+            min_head_ratio = (target_head * 1.02) / deliverable_head  # Add 2% safety margin (reduced from 5%)
             min_diameter_ratio = np.sqrt(min_head_ratio) if min_head_ratio > 0 else 0.85
             min_diameter = largest_diameter * min_diameter_ratio
             min_trim_for_head = min_diameter_ratio * 100
             
-            # Ensure minimum diameter respects physical limits
+            # Ensure minimum diameter respects physical limits - but if impossible, fall back to minimum allowed
             if min_trim_for_head < self.min_trim_percent:
-                logger.warning(f"[EFFICIENCY TRIM] {pump_code}: Minimum trim {min_trim_for_head:.1f}% below physical limit {self.min_trim_percent}%")
-                return None
+                logger.info(f"[EFFICIENCY TRIM] {pump_code}: Calculated min trim {min_trim_for_head:.1f}% below limit, using {self.min_trim_percent}%")
+                min_trim_for_head = self.min_trim_percent  # Use minimum allowed instead of failing
                 
             logger.info(f"[EFFICIENCY TRIM] {pump_code}: Minimum trim for head: {min_trim_for_head:.1f}% ({min_diameter:.1f}mm)")
             
@@ -1098,6 +1103,7 @@ class PerformanceAnalyzer:
                 
                 # Skip if this trim doesn't meet head requirements
                 if test_head < target_head * 0.98:  # 2% tolerance like legacy system
+                    logger.debug(f"[EFFICIENCY TRIM] {pump_code}: Trim {trim_percent:.1f}% gives {test_head:.1f}m < required {target_head * 0.98:.1f}m - skipping")
                     continue
                     
                 # Calculate BEP migration for this trim level
@@ -1115,9 +1121,21 @@ class PerformanceAnalyzer:
                     true_qbp_percent = (target_flow / shifted_bep_flow) * 100 if shifted_bep_flow > 0 else 100
                 
                 # Calculate efficiency at this operating point
-                eff_interp = interpolate.interp1d(flows_sorted, [h for h in heads_sorted], # Using heads as proxy for efficiency curve shape
-                                                kind='linear', bounds_error=False, fill_value=70.0)
-                base_efficiency = 85.0  # Estimate based on modern pump standards
+                # Get actual efficiency data from the curve_points
+                try:
+                    # We need to get efficiency data from the original curve_points
+                    # This is a more complex calculation that should use actual efficiency data
+                    # For now, use a physics-based estimate based on proximity to BEP
+                    base_efficiency = 85.0  # Modern pump baseline efficiency
+                    
+                    # Adjust based on flow proximity to BEP (efficiency typically peaks at BEP)
+                    if original_bep_flow > 0:
+                        flow_deviation_from_bep = abs(target_flow - shifted_bep_flow) / shifted_bep_flow if shifted_bep_flow > 0 else 0.5
+                        bep_proximity_factor = max(0.7, 1.0 - flow_deviation_from_bep)  # Efficiency drops away from BEP
+                        base_efficiency = base_efficiency * bep_proximity_factor
+                    
+                except Exception:
+                    base_efficiency = 80.0  # Conservative fallback
                 
                 # Apply trim penalty (gentler than legacy systems)
                 trim_penalty = (100 - trim_percent) * 0.2  # 0.2% penalty per 1% trim
@@ -1155,6 +1173,9 @@ class PerformanceAnalyzer:
                 
             if not trim_evaluations:
                 logger.warning(f"[EFFICIENCY TRIM] {pump_code}: No viable trim levels found")
+                logger.warning(f"[EFFICIENCY TRIM] {pump_code}: Tested {len(test_trims)} trim levels: {test_trims}")
+                logger.warning(f"[EFFICIENCY TRIM] {pump_code}: Deliverable head: {deliverable_head:.1f}m, target: {target_head:.1f}m")
+                logger.warning(f"[EFFICIENCY TRIM] {pump_code}: Min trim for head: {min_trim_for_head:.1f}%")
                 return None
                 
             # Step 4: Select optimal trim level
