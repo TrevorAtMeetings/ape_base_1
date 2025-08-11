@@ -167,15 +167,18 @@ class PerformanceAnalyzer:
             
             # Good case: target_head < base_head_at_flow means we can trim to reduce head
             
-            # Calculate required diameter using direct formula
-            # H₂/H₁ = (D₂/D₁)²  →  D₂ = D₁ × sqrt(H₂/H₁)
-            diameter_ratio = np.sqrt(target_head / base_head_at_flow)
+            # Calculate required diameter using TUNABLE physics formula
+            # H₂/H₁ = (D₂/D₁)^head_exp  →  D₂ = D₁ × (H₂/H₁)^(1/head_exp)
+            head_exponent = self.get_calibration_factor('bep_shift_head_exponent', 2.0)
+            diameter_ratio = np.power(target_head / base_head_at_flow, 1.0 / head_exponent)
             required_diameter = largest_diameter * diameter_ratio
             trim_percent = diameter_ratio * 100
             
-            logger.debug(f"[DIRECT AFFINITY] {pump_code}: Diameter ratio = sqrt({target_head:.2f}/{base_head_at_flow:.2f}) = {diameter_ratio:.4f}")
-            logger.debug(f"[DIRECT AFFINITY] {pump_code}: Required diameter = {largest_diameter:.1f} × {diameter_ratio:.4f} = {required_diameter:.1f}mm")
-            logger.debug(f"[DIRECT AFFINITY] {pump_code}: Trim percentage = {trim_percent:.2f}%")
+            logger.debug(f"[TUNABLE AFFINITY] {pump_code}: Using head exponent {head_exponent} (vs standard 2.0)")
+            
+            logger.debug(f"[TUNABLE AFFINITY] {pump_code}: Diameter ratio = ({target_head:.2f}/{base_head_at_flow:.2f})^(1/{head_exponent}) = {diameter_ratio:.4f}")
+            logger.debug(f"[TUNABLE AFFINITY] {pump_code}: Required diameter = {largest_diameter:.1f} × {diameter_ratio:.4f} = {required_diameter:.1f}mm")
+            logger.debug(f"[TUNABLE AFFINITY] {pump_code}: Trim percentage = {trim_percent:.2f}%")
             
             # STEP 3: Validate trim limits (industry standard: 85-100%)
             if pump_code and "8/8 DME" in str(pump_code):
@@ -194,8 +197,9 @@ class PerformanceAnalyzer:
                 return None, None
             
             # STEP 4: Enhanced validation - verify result makes physical sense
-            # Calculate what head this diameter would actually deliver
-            verification_head = base_head_at_flow * (diameter_ratio ** 2)
+            # Calculate what head this diameter would actually deliver using tunable physics
+            head_exponent = self.get_calibration_factor('bep_shift_head_exponent', 2.0)
+            verification_head = base_head_at_flow * (diameter_ratio ** head_exponent)
             error_percent = abs(verification_head - target_head) / target_head * 100
             
             logger.debug(f"[DIRECT AFFINITY] {pump_code}: Verification - calculated diameter delivers {verification_head:.3f}m vs target {target_head:.3f}m (error: {error_percent:.2f}%)")
