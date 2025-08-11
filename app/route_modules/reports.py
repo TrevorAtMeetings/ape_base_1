@@ -134,8 +134,15 @@ def engineering_report(pump_code):
     from ..pump_brain import get_pump_brain
     brain = get_pump_brain()
     
+    # Clean pump code (remove any URL encoding artifacts)
+    import urllib.parse
+    clean_pump_code = urllib.parse.unquote(pump_code)
+    # Remove any query parameters that got mixed in
+    if '?' in clean_pump_code:
+        clean_pump_code = clean_pump_code.split('?')[0]
+    
     # Make one definitive call to the Brain to get all necessary data
-    evaluation_result = brain.evaluate_pump(pump_code, flow, head)
+    evaluation_result = brain.evaluate_pump(clean_pump_code, flow, head)
     
     if not evaluation_result or not evaluation_result.get('feasible'):
         safe_flash(f"Pump {pump_code} is not suitable for the duty point {flow}m³/hr @ {head}m.", "warning")
