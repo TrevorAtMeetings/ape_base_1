@@ -118,6 +118,8 @@ class ChartManager {
 
         // Add authentic BEP marker for head-flow charts (enhanced feature)
         if (chartType === 'head_flow' && opPoint && opPoint.bep_flow_m3hr && opPoint.bep_head_m) {
+            console.log(`[BEP DEBUG] Adding BEP marker: ${opPoint.bep_flow_m3hr} m³/hr @ ${opPoint.bep_head_m} m`);
+            
             // Blue BEP marker with enhanced information
             traces.push({
                 x: [opPoint.bep_flow_m3hr],
@@ -145,6 +147,13 @@ class ChartManager {
                              `Head: ${opPoint.bep_head_m.toFixed(1)} m<br>` +
                              `<i>Manufacturer Specification</i><extra></extra>`,
                 showlegend: true
+            });
+        } else if (chartType === 'head_flow') {
+            console.log(`[BEP DEBUG] No BEP marker - missing data:`, {
+                chartType,
+                hasOpPoint: !!opPoint,
+                bep_flow: opPoint?.bep_flow_m3hr,
+                bep_head: opPoint?.bep_head_m
             });
         }
 
@@ -205,11 +214,17 @@ class ChartManager {
         };
 
         try {
+            console.log(`[CHART DEBUG] Rendering ${chartType} with ${traces.length} traces`);
+            traces.forEach((trace, i) => {
+                console.log(`[TRACE ${i}] ${trace.name}: ${trace.x?.length || 0} points`);
+            });
+            
             Plotly.newPlot(containerId, traces, layout, plotConfig);
             console.log(`Charts.js: ${chartType} chart rendered successfully`);
             this.removeLoadingSpinner(containerId);
         } catch (error) {
             console.error(`Error rendering ${chartType} chart:`, error);
+            console.error(`Full error details:`, error.stack);
             document.getElementById(containerId).innerHTML = 
                 '<p style="text-align: center; padding: 50px; color: red;">Error rendering chart</p>';
             this.removeLoadingSpinner(containerId);
