@@ -471,10 +471,46 @@ class ChartManager {
 // Global instance for compatibility
 let chartManager;
 
-// Create global instance that templates expect
+// Create global instance that templates expect  
+console.log('Charts.js: Script is executing...');
+
+// Mark that this script has executed
 if (typeof window !== 'undefined') {
-    window.pumpChartsManager = new ChartManager();
-    console.log('Charts.js: Global pumpChartsManager instance created');
+    window.chartsJsExecuted = true;
+}
+
+// Robust initialization with error handling
+if (typeof window !== 'undefined') {
+    try {
+        console.log('Charts.js: Creating ChartManager...');
+        window.pumpChartsManager = new ChartManager();
+        console.log('Charts.js: Global pumpChartsManager instance created successfully');
+        console.log('Charts.js: pumpChartsManager methods:', Object.getOwnPropertyNames(Object.getPrototypeOf(window.pumpChartsManager)));
+    } catch (error) {
+        console.error('Charts.js: Failed to create ChartManager:', error);
+        console.error('Charts.js: Error stack:', error.stack);
+        
+        // Create a fallback minimal manager
+        window.pumpChartsManager = {
+            initializeCharts: function(pumpCode, flowRate, head) {
+                console.log('Fallback pumpChartsManager: Charts would initialize with', { pumpCode, flowRate, head });
+                // Create placeholder content
+                ['head-flow-chart', 'efficiency-flow-chart', 'power-flow-chart', 'npshr-flow-chart'].forEach(id => {
+                    const container = document.getElementById(id);
+                    if (container) {
+                        container.innerHTML = `<div style="padding: 50px; text-align: center; background: #f0f0f0; border-radius: 8px;">
+                            <h3>Chart Loading Error</h3>
+                            <p>Unable to load ${id}</p>
+                            <p>Pump: ${pumpCode} | Flow: ${flowRate} m³/hr | Head: ${head} m</p>
+                        </div>`;
+                    }
+                });
+            }
+        };
+        console.log('Charts.js: Fallback pumpChartsManager created');
+    }
+} else {
+    console.log('Charts.js: Window object not available');
 }
 
 // Global functions for compatibility with existing code

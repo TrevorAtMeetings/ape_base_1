@@ -457,9 +457,8 @@ def api_audit_log():
 def init_database():
     """Initialize admin config database tables"""
     try:
-        # Use the admin_config_service to initialize
-        # TODO: implement initialize_database method in admin_config_service
-        success, message = True, "Database initialization skipped - method not implemented"
+        # Initialize database schema and seed baseline data
+        success, message = admin_config_service.initialize_database()
         
         if success:
             logger.info("Admin configuration database initialized successfully")

@@ -3,10 +3,25 @@
  * Global AI assistance accessible from any page
  */
 
-// Prevent variable redeclaration errors
-window.aiChatOpen = window.aiChatOpen || false;
-window.aiMessageHistory = window.aiMessageHistory || [];
-window.aiIsProcessing = window.aiIsProcessing || false;
+(function() {
+    'use strict';
+    
+    // Prevent multiple initializations
+    if (window.FloatingAIChatLoaded) {
+        return;
+    }
+    window.FloatingAIChatLoaded = true;
+
+    // Global state variables
+    if (!window.hasOwnProperty('aiChatOpen')) {
+        window.aiChatOpen = false;
+    }
+    if (!window.hasOwnProperty('aiMessageHistory')) {
+        window.aiMessageHistory = [];
+    }
+    if (!window.hasOwnProperty('aiIsProcessing')) {
+        window.aiIsProcessing = false;
+    }
 
 async function checkAIChatFeatureEnabled() {
     try {
@@ -20,10 +35,17 @@ async function checkAIChatFeatureEnabled() {
 }
 
 function initializeFloatingAIChat() {
+    // Prevent multiple initializations
+    if (window.aiChatInitialized) {
+        return;
+    }
+    window.aiChatInitialized = true;
+    
     // Check if AI chatbot feature is enabled
     checkAIChatFeatureEnabled().then(enabled => {
         if (!enabled) {
             console.log('AI Chatbot feature is disabled');
+            window.aiChatInitialized = false; // Reset if feature is disabled
             return;
         }
         
@@ -38,7 +60,7 @@ function initializeFloatingAIChat() {
         <!-- Floating AI Chat Bubble -->
         <div id="floating-ai-chat" class="floating-ai-chat">
             <!-- Chat Toggle Button -->
-            <div id="ai-chat-toggle" class="ai-chat-toggle" onclick="toggleAIChat()">
+            <div id="ai-chat-toggle" class="ai-chat-toggle">
                 <i class="material-icons" id="chat-toggle-icon">auto_awesome</i>
             </div>
 
@@ -49,7 +71,7 @@ function initializeFloatingAIChat() {
                         <i class="material-icons">lightbulb</i>
                         <span>AI Pump Expert</span>
                     </div>
-                    <button class="ai-chat-close" onclick="closeAIChat()">
+                    <button class="ai-chat-close">
                         <i class="material-icons">close</i>
                     </button>
                 </div>
@@ -63,13 +85,13 @@ function initializeFloatingAIChat() {
                             <p><strong>APE Pumps AI Assistant</strong></p>
                             <p style="font-size: 0.85rem; color: #64748b;">Find your perfect pump. Try:</p>
                             <div class="ai-quick-actions">
-                                <button class="ai-quick-btn" onclick="sendQuickQuery('1781 @ 24')">
+                                <button class="ai-quick-btn" data-query='1781 @ 24'>
                                     💧 Quick: "1781 @ 24"
                                 </button>
-                                <button class="ai-quick-btn" onclick="sendQuickQuery('1500 m³/hr at 25 meters')">
+                                <button class="ai-quick-btn" data-query='1500 m³/hr at 25 meters'>
                                     📊 Full: "1500 m³/hr at 25m"
                                 </button>
-                                <button class="ai-quick-btn" onclick="sendQuickQuery('800 30 HSC')">
+                                <button class="ai-quick-btn" data-query='800 30 HSC'>
                                     🏭 Type: "800 30 HSC"
                                 </button>
                             </div>
@@ -86,7 +108,7 @@ function initializeFloatingAIChat() {
                             placeholder="Try: 1781 @ 24 or @12 WLN for pump lookup"
                             rows="1"
                             maxlength="1000"></textarea>
-                        <button id="ai-send-button" class="ai-send-button" onclick="sendAIMessage()">
+                        <button id="ai-send-button" class="ai-send-button">
                             <i class="material-icons">send</i>
                         </button>
                     </div>
@@ -97,6 +119,20 @@ function initializeFloatingAIChat() {
 
         // Add to body
         document.body.insertAdjacentHTML('beforeend', floatingChatHTML);
+
+        // Bind events without inline handlers
+        const toggleBtn = document.getElementById('ai-chat-toggle');
+        if (toggleBtn) toggleBtn.addEventListener('click', window.toggleAIChat);
+        const closeBtn = document.querySelector('.ai-chat-close');
+        if (closeBtn) closeBtn.addEventListener('click', window.closeAIChat);
+        const sendBtn = document.getElementById('ai-send-button');
+        if (sendBtn) sendBtn.addEventListener('click', window.sendAIMessage);
+        document.querySelectorAll('.ai-quick-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const q = btn.getAttribute('data-query') || '';
+                window.sendQuickQuery(q);
+            });
+        });
         
         // Force lightbulb icon immediately to override browser cache
         setTimeout(() => {
@@ -116,18 +152,18 @@ function initializeFloatingAIChat() {
     });
 }
 
-function toggleAIChat() {
+window.toggleAIChat = function() {
     const chatWindow = document.getElementById('ai-chat-window');
     const toggleIcon = document.getElementById('chat-toggle-icon');
     
     if (window.aiChatOpen) {
-        closeAIChat();
+        window.closeAIChat();
     } else {
-        openAIChat();
+        window.openAIChat();
     }
-}
+};
 
-function openAIChat() {
+window.openAIChat = function() {
     const chatWindow = document.getElementById('ai-chat-window');
     const toggleIcon = document.getElementById('chat-toggle-icon');
     
@@ -140,30 +176,30 @@ function openAIChat() {
         const input = document.getElementById('ai-chat-input');
         if (input) input.focus();
     }, 300);
-}
+};
 
-function closeAIChat() {
+window.closeAIChat = function() {
     const chatWindow = document.getElementById('ai-chat-window');
     const toggleIcon = document.getElementById('chat-toggle-icon');
     
     chatWindow.classList.remove('open');
     toggleIcon.textContent = 'auto_awesome';
     window.aiChatOpen = false;
-}
+};
 
-function sendQuickQuery(query) {
+window.sendQuickQuery = function(query) {
     const input = document.getElementById('ai-chat-input');
     if (input) {
         input.value = query;
-        sendAIMessage();
+        window.sendAIMessage();
     }
-}
+};
 
-async function sendAIMessage() {
+window.sendAIMessage = async function() {
     const input = document.getElementById('ai-chat-input');
     const message = input.value.trim();
     
-    if (!message || aiIsProcessing) return;
+    if (!message || window.aiIsProcessing) return;
     
     // Clear input and reset height
     input.value = '';
@@ -173,7 +209,7 @@ async function sendAIMessage() {
     addAIMessage('user', message);
     showAITypingIndicator();
     
-    aiIsProcessing = true;
+    window.aiIsProcessing = true;
     const sendButton = document.getElementById('ai-send-button');
     if (sendButton) sendButton.disabled = true;
     
@@ -185,7 +221,7 @@ async function sendAIMessage() {
             },
             body: JSON.stringify({
                 query: message,
-                history: aiMessageHistory.slice(-10)
+                history: window.aiMessageHistory.slice(-10)
             })
         });
         
@@ -205,10 +241,10 @@ async function sendAIMessage() {
         addAIMessage('assistant', 'I apologize, but I\'m having trouble connecting to the knowledge base. Please try again in a moment.');
     }
     
-    aiIsProcessing = false;
+    window.aiIsProcessing = false;
     if (sendButton) sendButton.disabled = false;
     if (input) input.focus();
-}
+};
 
 function addAIMessage(sender, content, processingTime = null, confidence = null, sources = [], isHtml = false) {
     const messagesContainer = document.getElementById('ai-chat-messages');
@@ -256,7 +292,7 @@ function addAIMessage(sender, content, processingTime = null, confidence = null,
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
     
     // Store in history
-    aiMessageHistory.push({
+    window.aiMessageHistory.push({
         sender: sender,
         content: content,
         timestamp: new Date().toISOString()
@@ -379,14 +415,14 @@ function setupAIChatInput() {
             
             if (e.key === 'Enter' && !e.shiftKey && !isAutocompleteActive) {
                 e.preventDefault();
-                sendAIMessage();
+                window.sendAIMessage();
             }
         });
     }
 }
 
 // Helper function for pump comparison from chat
-function addToComparison(pumpCode) {
+window.addToComparison = function(pumpCode, el) {
     // Store in session storage for comparison page
     let comparisonPumps = JSON.parse(sessionStorage.getItem('comparisonPumps') || '[]');
     if (!comparisonPumps.includes(pumpCode)) {
@@ -394,7 +430,8 @@ function addToComparison(pumpCode) {
         sessionStorage.setItem('comparisonPumps', JSON.stringify(comparisonPumps));
         
         // Show feedback
-        const button = event.target.closest('.compare-btn');
+        const target = el || (typeof event !== 'undefined' ? event.target : null);
+        const button = target && target.closest ? target.closest('.compare-btn') : null;
         if (button) {
             const originalText = button.innerHTML;
             button.innerHTML = '<i class="material-icons">check</i> Added';
@@ -407,7 +444,7 @@ function addToComparison(pumpCode) {
             }, 2000);
         }
     }
-}
+};
 
 // Function to setup pump autocomplete
 function setupPumpAutocomplete() {
@@ -518,7 +555,7 @@ function setupPumpAutocomplete() {
                 ${index === selectedIndex ? 'background: #eff6ff;' : ''}
             " onmouseover="this.style.background='#eff6ff'" 
                onmouseout="this.style.background='${index === selectedIndex ? '#eff6ff' : 'white'}'"
-               onclick="selectPumpFromClick('${pump.replace(/'/g, "\\'")}')">${pump}</div>
+               onclick="window.selectPumpFromClick('${pump.replace(/'/g, "\\'")}')">${pump}</div>
         `).join('');
         
         autocompleteDiv.style.display = 'block';
@@ -538,7 +575,7 @@ function setupPumpAutocomplete() {
     
     window.selectPumpFromClick = function(pumpName) {
         selectPump(pumpName);
-    }
+    };
     
     function selectPump(pumpName) {
         const value = input.value;
@@ -569,3 +606,5 @@ function setupPumpAutocomplete() {
 document.addEventListener('DOMContentLoaded', function() {
     initializeFloatingAIChat();
 });
+
+})();

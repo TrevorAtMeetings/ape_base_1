@@ -2,114 +2,43 @@
 
 {% block title %}Brain Admin - {% block admin_title %}Administration{% endblock %}{% endblock %}
 
+{% block breadcrumbs %}{{ super() }}{% endblock %}
+
 {% block content %}
 <div class="admin-layout">
-    <!-- Admin-Specific Navigation -->
-    <div class="admin-nav-wrapper">
-        <div class="container">
-            <div class="row">
-                <div class="col s12">
-                    <div class="card-panel blue darken-3 white-text" style="margin-bottom: 0;">
-                        <div class="row valign-wrapper" style="margin-bottom: 0;">
-                            <div class="col s12 m8">
-                                <h5 style="margin: 0;">
-                                    <i class="material-icons left">psychology</i>
-                                    Brain System Administration
-                                </h5>
-                            </div>
-                            <div class="col s12 m4 right-align">
-                                <span class="badge green white-text">System Active</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Admin Navigation Tabs -->
-    <div class="admin-tabs-wrapper">
-        <div class="container">
-            <div class="row">
-                <div class="col s12">
-                    <ul class="tabs blue lighten-4">
-                        <li class="tab col s3">
-                            <a href="{{ url_for('brain_admin.brain_dashboard') }}" 
-                               class="{% if request.endpoint == 'brain_admin.brain_dashboard' %}active{% endif %}">
-                                <i class="material-icons left">dashboard</i>Overview
-                            </a>
-                        </li>
-                        <li class="tab col s3">
-                            <a href="{{ url_for('brain_admin.data_quality_dashboard') }}"
-                               class="{% if request.endpoint == 'brain_admin.data_quality_dashboard' %}active{% endif %}">
-                                <i class="material-icons left">assessment</i>Data Quality
-                            </a>
-                        </li>
-                        <li class="tab col s3">
-                            <a href="{{ url_for('brain_admin.corrections_dashboard') }}"
-                               class="{% if request.endpoint == 'brain_admin.corrections_dashboard' %}active{% endif %}">
-                                <i class="material-icons left">edit</i>Corrections
-                            </a>
-                        </li>
-                        <li class="tab col s3">
-                            <a href="{{ url_for('brain_admin.brain_workbench') }}"
-                               class="{% if request.endpoint == 'brain_admin.brain_workbench' %}active{% endif %}">
-                                <i class="material-icons left">science</i>Workbench
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Admin Breadcrumbs -->
+  <!-- Admin Header (consistent style) -->
+  <div class="admin-nav-wrapper">
     <div class="container">
-        {% if breadcrumbs %}
-        <div class="row">
-            <div class="col s12">
-                <nav style="margin-top: 10px;">
-                    <div class="nav-wrapper grey lighten-4">
-                        <div class="col s12">
-                            {% for crumb in breadcrumbs %}
-                                {% if loop.last %}
-                                    <span class="breadcrumb blue-text">{{ crumb.text }}</span>
-                                {% else %}
-                                    <a href="{{ crumb.url }}" class="breadcrumb">{{ crumb.text }}</a>
-                                {% endif %}
-                            {% endfor %}
-                        </div>
-                    </div>
-                </nav>
+      <div class="row">
+        <div class="col s12">
+          <div class="card-panel blue darken-3 white-text" style="margin-bottom: 0;">
+            <div class="row valign-wrapper" style="margin-bottom: 0;">
+              <div class="col s12 m8">
+                <h5 style="margin: 0;">
+                  <i class="material-icons left">psychology</i>
+                  Brain System Administration
+                </h5>
+              </div>
+              <div class="col s12 m4 right-align">
+                <span class="badge green white-text">System Active</span>
+              </div>
             </div>
+          </div>
         </div>
-        {% endif %}
+      </div>
     </div>
+  </div>
 
-    <!-- Admin Content -->
-    <div class="admin-content">
-        {% block admin_content %}{% endblock %}
-    </div>
+  {% include 'includes/admin_nav_tabs.html' %}
+
+  <div class="admin-content">
+    {% block admin_content %}{% endblock %}
+  </div>
 </div>
 
 <!-- Admin-specific CSS -->
 <link href="{{ url_for('static', filename='css/admin_theme.css') }}?v={{ range(1000, 9999) | random }}" rel="stylesheet">
 
 <!-- Admin-specific JavaScript -->
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Initialize Materialize tabs
-    var tabs = document.querySelectorAll('.tabs');
-    M.Tabs.init(tabs);
-    
-    // Initialize other Materialize components for admin
-    var selects = document.querySelectorAll('select');
-    M.FormSelect.init(selects);
-    
-    var modals = document.querySelectorAll('.modal');
-    M.Modal.init(modals);
-    
-    console.log('Admin dashboard components initialized');
-});
-</script>
+<script src="{{ url_for('static', filename='js/admin.js') }}?v={{ range(1000, 9999) | random }}"></script>
 {% endblock %}

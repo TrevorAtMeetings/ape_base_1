@@ -8,7 +8,6 @@
     
     <!-- Chart Scripts -->
     <script src="{{ url_for('static', filename='js/error-handler.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/charts.js') }}?v=20250607-1910"></script>
     
     <style>
         /* Compact Professional Design */
@@ -913,30 +912,17 @@
                 head: {{ site_requirements.get('head_m', 0)|float }}
             };
 
+            // Inline ChartManager should be available now
+            console.log('=== CHART INITIALIZATION ===');
+            console.log('Plotly available:', typeof Plotly !== 'undefined');
+            console.log('pumpChartsManager available:', !!window.pumpChartsManager);
+
             // Initialize Materialize components if available
             if (typeof M !== 'undefined') {
                 M.AutoInit();
             }
 
-            // Wait for chart manager to be ready
-            function initializeCharts() {
-                if (typeof Plotly !== 'undefined' && window.pumpChartsManager) {
-                    try {
-                        console.log('Initializing charts with:', chartData);
-                        // Use the correct method name
-                        window.pumpChartsManager.initializeCharts(
-                            chartData.pumpCode, 
-                            chartData.flowRate, 
-                            chartData.head
-                        );
-                    } catch (error) {
-                        console.error('Error initializing charts:', error);
-                    }
-                } else {
-                    setTimeout(initializeCharts, 100);
-                }
-            }
-
+            // Initialize charts - pumpChartsManager will be created below
             initializeCharts();
             
             // Load AI analysis
@@ -1115,5 +1101,150 @@
     
     <!-- Floating AI Chat -->
     <link href="{{ url_for('static', filename='css/floating-ai-chat.css') }}?v={{ range(1000, 9999) | random }}" rel="stylesheet">
-    <script src="{{ url_for('static', filename='js/floating-ai-chat.js') }}"></script>
+    {# Script is loaded once in base.html #}
+
+    <!-- CHART MANAGER - PRODUCTION VERSION -->
+    <script>
+        console.log('=== CREATING CHART MANAGER ===');
+        
+        // Create ChartManager class
+        class ChartManager {
+            constructor() {
+                console.log('ChartManager: Constructor started');
+                this.currentChartData = null;
+                this.chartConfigs = {
+                    head_flow: { title: 'Head vs Flow Performance', xTitle: 'Flow Rate (m³/hr)', yTitle: 'Head (m)', color: '#007BFF', dataKey: 'head_data' },
+                    efficiency_flow: { title: 'Efficiency vs Flow Performance', xTitle: 'Flow Rate (m³/hr)', yTitle: 'Efficiency (%)', color: '#28A745', dataKey: 'efficiency_data' },
+                    power_flow: { title: 'Power vs Flow Performance', xTitle: 'Flow Rate (m³/hr)', yTitle: 'Power (kW)', color: '#DC3545', dataKey: 'power_data' },
+                    npshr_flow: { title: 'NPSHr vs Flow Performance', xTitle: 'Flow Rate (m³/hr)', yTitle: 'NPSHr (m)', color: '#FFC107', dataKey: 'npshr_data' }
+                };
+                console.log('ChartManager: Constructor completed');
+            }
+
+            async loadChartData(pumpCode, flowRate, head) {
+                console.log('ChartManager: Loading data for', { pumpCode, flowRate, head });
+                const safePumpCode = encodeURIComponent(pumpCode);
+                const url = `/api/chart_data/${safePumpCode}?flow=${flowRate}&head=${head}`;
+                
+                const response = await fetch(url);
+                console.log('ChartManager: API response status:', response.status);
+                
+                const data = await response.json();
+                console.log('ChartManager: Received chart data:', data);
+                
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                
+                this.currentChartData = data;
+                return data;
+            }
+
+            renderChart(containerId, chartType) {
+                console.log(`ChartManager: Rendering ${chartType} in ${containerId}`);
+                
+                if (!this.currentChartData || !this.currentChartData.curves) {
+                    console.error(`No chart data for ${chartType}`);
+                    return;
+                }
+
+                const config = this.chartConfigs[chartType];
+                const traces = [];
+                const opPoint = this.currentChartData.operating_point;
+
+                // Add curve traces
+                this.currentChartData.curves.forEach((curve, index) => {
+                    const flowData = curve.flow_data || [];
+                    const yData = curve[config.dataKey] || [];
+                    
+                    if (flowData.length > 0 && yData.length > 0) {
+                        traces.push({
+                            x: flowData,
+                            y: yData,
+                            type: 'scatter',
+                            mode: 'lines+markers',
+                            name: curve.display_label || `Curve ${index + 1}`,
+                            line: {
+                                color: curve.is_selected ? config.color : ['#6C757D', '#17A2B8', '#FD7E14'][index % 3],
+                                width: curve.is_selected ? 3 : 2
+                            }
+                        });
+                    }
+                });
+
+                // Add operating point
+                if (opPoint && opPoint.flow_m3hr) {
+                    const yValue = opPoint[chartType.replace('_flow', '_') + (chartType.includes('head') ? 'm' : chartType.includes('efficiency') ? 'pct' : chartType.includes('power') ? 'kw' : 'm')];
+                    if (yValue != null) {
+                        traces.push({
+                            x: [opPoint.flow_m3hr],
+                            y: [yValue],
+                            type: 'scatter',
+                            mode: 'markers',
+                            name: 'Operating Point',
+                            marker: { color: 'red', size: 12, symbol: 'diamond' }
+                        });
+                    }
+                }
+
+                const layout = {
+                    title: config.title,
+                    xaxis: { title: config.xTitle },
+                    yaxis: { title: config.yTitle },
+                    showlegend: true
+                };
+
+                Plotly.newPlot(containerId, traces, layout, { responsive: true });
+                console.log(`ChartManager: ${chartType} rendered successfully`);
+            }
+
+            async initializeCharts(pumpCode, flowRate, head) {
+                console.log('ChartManager: Starting chart initialization');
+                await this.loadChartData(pumpCode, flowRate, head);
+                
+                this.renderChart('head-flow-chart', 'head_flow');
+                this.renderChart('efficiency-flow-chart', 'efficiency_flow');
+                this.renderChart('power-flow-chart', 'power_flow');
+                this.renderChart('npshr-flow-chart', 'npshr_flow');
+                
+                console.log('ChartManager: All charts initialized');
+            }
+        }
+
+        // Create global instance
+        window.pumpChartsManager = new ChartManager();
+        window.chartsJsExecuted = true;
+        console.log('✅ GLOBAL pumpChartsManager created successfully');
+
+        // Define initializeCharts function that was called earlier
+        function initializeCharts() {
+            console.log('=== INITIALIZING CHARTS ===');
+            
+            const chartData = {
+                pumpCode: {{ selected_pump.get('pump_code', '')|tojson|safe }},
+                flowRate: {{ site_requirements.get('flow_m3hr', 0)|float }},
+                head: {{ site_requirements.get('head_m', 0)|float }}
+            };
+            
+            console.log('Chart data:', chartData);
+            console.log('pumpChartsManager available:', !!window.pumpChartsManager);
+            
+            if (window.pumpChartsManager && chartData.pumpCode) {
+                window.pumpChartsManager.initializeCharts(
+                    chartData.pumpCode,
+                    chartData.flowRate,
+                    chartData.head
+                ).then(() => {
+                    console.log('✅ Charts initialized successfully');
+                }).catch(error => {
+                    console.error('❌ Chart initialization failed:', error);
+                });
+            } else {
+                console.error('❌ Missing pumpChartsManager or chart data');
+            }
+        }
+
+        // Call initializeCharts now that pumpChartsManager exists
+        initializeCharts();
+    </script>
 {% endblock %}

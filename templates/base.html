@@ -8,8 +8,9 @@
     <!-- Favicon -->
     <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚙️</text></svg>">
     
-    <!-- Materialize CSS -->
+    <!-- Material Icons (Filled + Rounded) -->
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet">
 
     <!-- Custom CSS - Executive-Grade Design System -->
@@ -47,6 +48,8 @@
     <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='images/ape_logo.svg') }}">
 </head>
 <body>
+    {# Optional hook for pages to define nav context variables used by includes/navigation.html #}
+    {% block nav_context %}{% endblock %}
     <!-- Mobile Menu Button -->
     <button class="mobile-menu-btn hide-on-med-and-up" onclick="toggleMobileMenu()" style="display: none;">
         <i class="material-icons">menu</i>
@@ -57,8 +60,7 @@
     <!-- This prevents duplicate navigation conflicts -->
     {% include 'includes/navigation.html' %}
 
-    <!-- Breadcrumb Navigation -->
-    {% include 'includes/breadcrumbs.html' %}
+    {# Breadcrumbs are rendered by includes/navigation.html to ensure consistent placement below the sticky nav #}
 
     <!-- Flash Messages -->
     {% with messages = get_flashed_messages(with_categories=true) %}
@@ -227,7 +229,7 @@
     <!-- Latest Plotly.js version -->
     <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
     <!-- Floating AI Chat -->
-    <script src="{{ url_for('static', filename='js/floating-ai-chat.js') }}"></script>
+    <script defer src="{{ url_for('static', filename='js/floating-ai-chat.js') }}"></script>
 
     <!-- Navigation and Modal JavaScript -->
     <script>
@@ -265,8 +267,7 @@
     <script src="{{ url_for('static', filename='js/micro-interactions.js') }}"></script>
     <script src="{{ url_for('static', filename='js/force-icon-refresh.js') }}"></script>
     
-    <!-- Floating AI Chat JavaScript (CSS already loaded in head) -->
-    <script src="{{ url_for('static', filename='js/floating-ai-chat.js') }}"></script>
+    <!-- Floating AI Chat included above; removed duplicate include -->
 
     <!-- Page-specific scripts -->
     {% block scripts %}{% endblock %}

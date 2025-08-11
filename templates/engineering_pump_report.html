@@ -305,34 +305,29 @@
     </style>
 {% endblock %}
 
+{% block nav_context %}
+    {% set show_view_toggle = true %}
+    {% set current_view = 'engineering' %}
+    {% set presentation_url = url_for('reports.pump_report', pump_code=selected_pump.get('pump_code'), flow=site_requirements.get('flow_m3hr', 0), head=site_requirements.get('head_m', 0), pump_type=site_requirements.get('pump_type', 'GENERAL')) %}
+    {% set engineering_url = url_for('reports.engineering_report', pump_code=selected_pump.get('pump_code'), flow=site_requirements.get('flow_m3hr', 0), head=site_requirements.get('head_m', 0), pump_type=site_requirements.get('pump_type', 'GENERAL')) %}
+{% endblock %}
+
 {% block content %}
-    <!-- Content Container with proper spacing -->
-    <!-- Navigation -->
+    {# Enable nav view toggle and provide URLs for both views #}
+    {# Content-local duplicates removed; vars now defined in nav_context so the nav can see them #}
     {% set breadcrumbs = [
         {'label': 'Home', 'url': '/', 'icon': 'home'},
-        {'label': 'Pump Selection', 'url': '/pump_options?flow=' ~ site_requirements.get('flow_m3hr', 0) ~ '&head=' ~ site_requirements.get('head_m', 0)},
-        {'label': selected_pump.get('pump_code', 'N/A') ~ ' - Engineering'}
+        {'label': 'Results', 'url': url_for('main_flow.pump_selection')},
+        {'label': selected_pump.get('pump_code', 'N/A') ~ ' - Engineering Report'}
     ] %}
 
-
-    <div class="engineering-container" style="padding-top: 20px;">
+    <div class="engineering-container" style="padding-top: 16px;">
 
         <!-- Header Section with View Toggle -->
         <div class="eng-header">
             <div>
                 <div class="eng-title">PUMP DATA SHEET - {{ selected_pump.get('pump_code', 'N/A') }}</div>
                 <div class="eng-subtitle">APE PUMPS | Generated: {{ current_date }}</div>
-            </div>
-            <div class="view-toggle">
-                {% set presentation_url = url_for('reports.pump_report', pump_code=selected_pump.get('pump_code'), flow=site_requirements.get('flow_m3hr', 0), head=site_requirements.get('head_m', 0), pump_type=site_requirements.get('pump_type', 'GENERAL')) %}
-                {% set engineering_url = url_for('reports.engineering_report', pump_code=selected_pump.get('pump_code'), flow=site_requirements.get('flow_m3hr', 0), head=site_requirements.get('head_m', 0), pump_type=site_requirements.get('pump_type', 'GENERAL')) %}
-                {% if current_view == 'presentation' %}
-                    <span class="view-btn active">Presentation View</span>
-                    <a href="{{ engineering_url }}" class="view-btn">Engineering View</a>
-                {% else %}
-                    <a href="{{ presentation_url }}" class="view-btn">Presentation View</a>
-                    <span class="view-btn active">Engineering View</span>
-                {% endif %}
             </div>
         </div>
 

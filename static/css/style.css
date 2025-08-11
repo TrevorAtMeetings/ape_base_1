@@ -3000,6 +3000,22 @@ nav.unified-nav .nav-btn:hover {
   vertical-align: middle;
 }
 
+/* Fallback: if Material Icons Rounded fails to load, display default icon font */
+.material-icons-round {
+  font-family: 'Material Icons', 'Material Symbols Rounded', sans-serif;
+  font-weight: normal;
+  font-style: normal;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
+}
+
 .breadcrumb-link {
     color: #2a5298;
     text-decoration: none;

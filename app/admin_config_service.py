@@ -30,6 +30,24 @@ class AdminConfigService:
         self._config_cache = {}
         self._cache_timestamp = None
         self._cache_ttl = 300  # 5 minutes
+
+    def initialize_database(self) -> tuple[bool, str]:
+        """Create admin schema/tables and seed constants and default profiles."""
+        try:
+            # Create schema and tables
+            self.db.init_tables()
+            # Seed locked engineering constants
+            self.db.seed_engineering_constants()
+            # Seed default configuration profiles
+            self.db.seed_default_profiles()
+            # Clear any stale cache
+            self._config_cache.clear()
+            self._cache_timestamp = None
+            logger.info("Admin configuration database initialized and seeded successfully")
+            return True, "Database initialized and seeded successfully"
+        except Exception as e:
+            logger.error(f"Failed to initialize admin configuration database: {e}", exc_info=True)
+            return False, str(e)
     
     def get_active_profile(self, profile_name: str = 'General Purpose') -> Dict:
         """Get active configuration profile with caching"""
