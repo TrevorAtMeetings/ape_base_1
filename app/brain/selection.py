@@ -30,7 +30,7 @@ class SelectionIntelligence:
             'bep_proximity': 45,  # Max points (was 40% weight)
             'efficiency': 35,     # Max points (was 30% weight)
             'head_margin': 20,    # Max points (was 15% weight)
-            'npsh_margin': 0      # Removed in v6.0 (now hard gate only)
+            'npsh_margin': 0      # Removed in v6.0 (informational only, no gates)
         }
         
         # Operating constraints
@@ -148,11 +148,7 @@ class SelectionIntelligence:
                 evaluation = self.evaluate_single_pump(pump_data, flow, head)
                 
                 # Apply additional constraints
-                if constraints.get('npsh_available'):
-                    npsh_available = constraints['npsh_available']
-                    if evaluation.get('npshr_m', 0) > npsh_available / self.npsh_safety_factor:
-                        evaluation['feasible'] = False
-                        evaluation['exclusion_reasons'].append('NPSH insufficient')
+                # NPSH constraint removed - data is collected for display but not used as hard gate
                 
                 if constraints.get('max_power_kw'):
                     max_power = constraints['max_power_kw']
@@ -369,7 +365,7 @@ class SelectionIntelligence:
                 evaluation['head_margin_m'] = head_margin_m
                 evaluation['head_margin_pct'] = head_margin_pct
                 
-                # NPSH handled as hard gate only in Legacy v6.0 (no scoring)
+                # NPSH collected for informational display only (no hard gate or scoring)
                 npshr = performance.get('npshr_m')
                 if npshr:
                     evaluation['npshr_m'] = npshr
