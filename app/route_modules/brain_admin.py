@@ -270,9 +270,16 @@ def update_calibration_factors():
                 
                 conn.commit()
         
-        # Clear cache to force reload
+        # Clear all caches to force reload of calibration factors
         admin_config_service._config_cache.clear()
         admin_config_service._cache_timestamp = None
+        
+        # CRITICAL: Clear PerformanceAnalyzer's class-level cache
+        from ..brain.performance import PerformanceAnalyzer
+        if hasattr(PerformanceAnalyzer, '_cached_factors'):
+            delattr(PerformanceAnalyzer, '_cached_factors')
+        if hasattr(PerformanceAnalyzer, '_cache_time'):
+            delattr(PerformanceAnalyzer, '_cache_time')
         
         logger.info(f"Calibration factors updated by {user_id}: {factors}")
         return jsonify({'status': 'success', 'message': 'Calibration factors updated successfully'})
