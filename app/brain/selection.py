@@ -74,6 +74,23 @@ class SelectionIntelligence:
             logger.warning("No pump models available in repository")
             return {'ranked_pumps': [], 'exclusion_details': None}
         
+        # MANDATORY DEBUG: Force logging of HC pump loading status
+        print(f"FORCE DEBUG: Loaded {len(all_pumps)} pumps from repository")
+        target_hc_pumps = [p for p in all_pumps if p.get('pump_code') in ['32 HC 6P', '30 HC 6P', '28 HC 6P']]
+        print(f"FORCE DEBUG: Found {len(target_hc_pumps)} target HC pumps")
+        
+        if target_hc_pumps:
+            for target_pump in target_hc_pumps:
+                specs = target_pump.get('specifications', {})
+                curves = target_pump.get('curves', [])
+                print(f"FORCE DEBUG: {target_pump.get('pump_code')} - BEP: {specs.get('bep_flow_m3hr', 0)} m³/hr @ {specs.get('bep_head_m', 0)}m, Curves: {len(curves)}")
+        else:
+            all_hc = [p for p in all_pumps if 'HC' in str(p.get('pump_code', ''))]
+            print(f"FORCE DEBUG: NO target HC, but found {len(all_hc)} total HC pumps: {[p.get('pump_code') for p in all_hc[:5]]}")
+            
+        # Also force log the actual repository data call
+        logger.error(f"REPOSITORY FORCE: Total pumps loaded = {len(all_pumps)}")
+        
         # Debug: Check if 6 WLN 18A is in loaded pumps
         wln_pumps = [p for p in all_pumps if "6 WLN 18A" in str(p.get('pump_code', ''))]
         logger.error(f"[DEBUG] Found {len(wln_pumps)} 6 WLN 18A pumps in {len(all_pumps)} total loaded pumps")
@@ -162,6 +179,9 @@ class SelectionIntelligence:
                 if pump_code and any(hc in str(pump_code) for hc in ['32 HC', '30 HC', '28 HC']):
                     logger.error(f"[HC SELECTION DEBUG] {pump_code}: Starting evaluation for {flow} m³/hr @ {head}m")
                     logger.error(f"[HC SELECTION DEBUG] {pump_code}: Pump data keys: {list(pump_data.keys())}")
+                    specs = pump_data.get('specifications', {})
+                    logger.error(f"[HC SELECTION DEBUG] {pump_code}: BEP {specs.get('bep_flow_m3hr', 0)} m³/hr @ {specs.get('bep_head_m', 0)}m")
+                    logger.error(f"[HC SELECTION DEBUG] {pump_code}: Max impeller: {specs.get('max_impeller_diameter_mm', 0)}mm")
                 
                 evaluation = self.evaluate_single_pump(pump_data, flow, head)
                 
