@@ -78,7 +78,7 @@ def run_performance_test():
                 return render_template('admin_testing.html')
             
             # Get BEP coordinates using Brain system
-            bep_data = _get_bep_analysis_brain(pump_data, brain)
+            bep_data = _get_bep_analysis(pump_data, pump_repo)
             if not bep_data.get('has_bep_data'):
                 flash(f'No BEP data available for pump "{pump_code}"', 'error')
                 return render_template('admin_testing.html')
