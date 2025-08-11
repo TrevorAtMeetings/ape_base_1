@@ -32,6 +32,19 @@
             padding: 0;
         }
 
+        /* Container fix for full width */
+        .container {
+            width: 95% !important;
+            max-width: 1400px !important;
+            margin: 0 auto !important;
+        }
+        
+        @media only screen and (max-width: 992px) {
+            .container {
+                width: 98% !important;
+            }
+        }
+
         /* Compact Header */
         .report-header {
             background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%) !important;
@@ -64,10 +77,26 @@
         }
 
         .header-actions .btn {
-            height: 36px;
-            line-height: 36px;
-            padding: 0 20px;
-            font-size: 0.9rem;
+            height: 36px !important;
+            line-height: 36px !important;
+            padding: 0 20px !important;
+            font-size: 0.9rem !important;
+            background-color: white !important;
+            color: var(--primary) !important;
+            box-shadow: none !important;
+            border: 1px solid white !important;
+        }
+        
+        .header-actions .btn:hover {
+            background-color: rgba(255,255,255,0.9) !important;
+            transform: translateY(-1px) !important;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15) !important;
+        }
+        
+        .header-actions .btn.active-view {
+            background-color: var(--primary-dark) !important;
+            color: white !important;
+            border-color: var(--primary-dark) !important;
         }
 
         /* Compact Cards - Uniform Sizing */
@@ -295,16 +324,35 @@
         .chart-container {
             background: white;
             border-radius: 8px;
-            padding: 16px;
+            padding: 20px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            margin-bottom: 16px;
+            margin-bottom: 20px;
+            min-height: 400px;
         }
 
         .chart-title {
-            font-size: 1rem;
+            font-size: 1.1rem;
             font-weight: 600;
             color: var(--text-primary);
-            margin-bottom: 12px;
+            margin-bottom: 16px;
+            border-bottom: 2px solid var(--bg-light);
+            padding-bottom: 8px;
+        }
+        
+        /* Chart sizing */
+        .plotly-chart {
+            width: 100% !important;
+            height: 400px !important;
+            min-height: 400px !important;
+        }
+        
+        /* Performance curves specific styling */
+        #head-flow-chart,
+        #efficiency-flow-chart,
+        #power-flow-chart,
+        #npshr-flow-chart {
+            height: 400px !important;
+            min-height: 400px !important;
         }
 
         /* Compact Table */
@@ -421,6 +469,29 @@
             }
         }
 
+        /* Fix material icons display */
+        .material-icons {
+            vertical-align: middle !important;
+            display: inline-block !important;
+        }
+        
+        /* Additional action buttons improvements */
+        .action-buttons {
+            display: grid !important;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)) !important;
+            gap: 16px !important;
+            margin: 20px 0 !important;
+        }
+        
+        /* Ensure sections have proper spacing */
+        .section-header + .section-content {
+            margin-top: 0 !important;
+        }
+        
+        .row {
+            margin-bottom: 20px !important;
+        }
+        
         /* Print Styles */
         @media print {
             .header-actions,
@@ -457,19 +528,22 @@
                     </div>
                 </div>
                 <div class="header-actions">
-                    <a href="{{ presentation_url }}" class="btn {% if current_view == 'presentation' %}btn-primary{% else %}btn-outline{% endif %}" style="margin-right: 8px;">
+                    <a href="{{ presentation_url }}" class="btn waves-effect waves-light {% if current_view == 'presentation' %}active-view{% endif %}">
                         <i class="material-icons left">dashboard</i>Presentation
                     </a>
-                    <a href="{{ engineering_url }}" class="btn {% if current_view == 'engineering' %}btn-primary{% else %}btn-outline{% endif %}">
+                    <a href="{{ engineering_url }}" class="btn waves-effect waves-light {% if current_view == 'engineering' %}active-view{% endif %}">
                         <i class="material-icons left">engineering</i>Engineering
                     </a>
+                    <button onclick="window.print()" class="btn waves-effect waves-light">
+                        <i class="material-icons left">print</i>Export PDF
+                    </button>
                 </div>
             </div>
         </div>
     </div>
 
     <!-- Main Content Container -->
-    <div class="container" style="margin-top: 20px; padding-top: 20px;">
+    <div class="container" style="margin-top: 30px; padding: 0 16px;">
         <!-- Row 1: Key Metrics -->
         <div class="row">
             <div class="col s12 m3">
@@ -705,7 +779,7 @@
                             <i class="material-icons">view_list</i>
                             <div class="action-btn-label">View All Options</div>
                         </div>
-                        <div class="action-btn" id="showDataBtn" onclick="toggleChartData()">
+                        <div class="action-btn" id="showDataBtn1" onclick="toggleChartData('1')">
                             <i class="material-icons">table_chart</i>
                             <div class="action-btn-label">Show Data</div>
                         </div>
@@ -716,7 +790,7 @@
                     </div>
                     
                     <!-- Data Container (Hidden by Default) -->
-                    <div id="chartDataContainer" style="display: none; margin-top: 20px; padding: 16px; background: #f8f9fa; border-radius: 8px;">
+                    <div id="chartDataContainer1" style="display: none; margin-top: 20px; padding: 16px; background: #f8f9fa; border-radius: 8px;">
                         <h5 style="margin: 0 0 16px 0; color: #333;">Comprehensive Pump Data</h5>
                         <div style="display: grid; gap: 16px;">
                             <div style="background: white; padding: 12px; border-radius: 6px;">
@@ -747,7 +821,7 @@
         <div class="row">
             <div class="col s12">
                 <div class="section-header">Interactive Performance Analysis</div>
-                <div class="section-content" style="padding: 8px;">
+                <div class="section-content" style="padding: 20px;">
                     <!-- Head-Flow Chart -->
                     <div class="chart-container">
                         <div class="chart-title">Head-Flow Curve</div>
@@ -777,7 +851,7 @@
                             <i class="material-icons">zoom_out_map</i>
                             <div class="action-btn-label">Reset Zoom</div>
                         </div>
-                        <div class="action-btn" id="showDataBtn" onclick="toggleChartData()">
+                        <div class="action-btn" id="showDataBtn2" onclick="toggleChartData('2')">
                             <i class="material-icons">table_chart</i>
                             <div class="action-btn-label">Show Data</div>
                         </div>
@@ -788,7 +862,7 @@
                     </div>
                     
                     <!-- Data Container (Hidden by Default) -->
-                    <div id="chartDataContainer" style="display: none; margin-top: 20px; padding: 16px; background: #f8f9fa; border-radius: 8px;">
+                    <div id="chartDataContainer2" style="display: none; margin-top: 20px; padding: 16px; background: #f8f9fa; border-radius: 8px;">
                         <h5 style="margin: 0 0 16px 0; color: #333;">Comprehensive Pump Data</h5>
                         <div style="display: grid; gap: 16px;">
                             <div style="background: white; padding: 12px; border-radius: 6px;">
