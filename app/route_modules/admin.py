@@ -16,6 +16,13 @@ logger = logging.getLogger(__name__)
 
 admin_bp = Blueprint('admin', __name__)
 
+def _get_pump_attr(pump, attr_name, default=None):
+    """Helper function to get pump attribute from either dict or object"""
+    if isinstance(pump, dict):
+        return pump.get(attr_name, default)
+    else:
+        return getattr(pump, attr_name, default)
+
 # Allowed file extensions for document upload
 ALLOWED_EXTENSIONS = {'pdf', 'txt', 'doc', 'docx', 'md'}
 
@@ -118,6 +125,9 @@ def run_performance_test():
                         test_pumps.append(result['pump'])
                     elif hasattr(result, 'pump'):
                         test_pumps.append(result.pump)
+                    else:
+                        # Handle case where result is the pump data itself
+                        test_pumps.append(result)
                         
                 if not test_pumps:
                     flash('Unable to extract pump objects from selection results', 'error')
@@ -209,8 +219,8 @@ def _compare_pump_performance(pump, flow_rate, head, pump_repo):
             status = 'NO_DATA'  # Both sides missing data or UI calculation failed
         
         return {
-            'pump_code': pump.pump_code,
-            'pump_type': pump.pump_type,
+            'pump_code': _get_pump_attr(pump, 'pump_code'),
+            'pump_type': _get_pump_attr(pump, 'pump_type'),
             'db_efficiency': db_performance.get('efficiency'),
             'ui_efficiency': ui_performance.get('efficiency_pct'),
             'efficiency_delta': efficiency_delta,
@@ -225,16 +235,22 @@ def _compare_pump_performance(pump, flow_rate, head, pump_repo):
         }
         
     except Exception as e:
-        logger.error(f"Error comparing performance for {pump.pump_code}: {str(e)}")
+        pump_code = _get_pump_attr(pump, 'pump_code')
+        logger.error(f"Error comparing performance for {pump_code}: {str(e)}")
         return None
 
 def _get_database_performance(pump, flow_rate, head):
     """Get raw database performance using direct curve interpolation (no transformations)"""
     try:
         # Use the existing _get_performance_interpolated method which gives raw curve data
-        raw_performance = pump._get_performance_interpolated(flow_rate, head)
+        if isinstance(pump, dict):
+            # For dictionary format, we need to use Brain system for performance calculation
+            raw_performance = None  # Dictionary format doesn't have _get_performance_interpolated method
+        else:
+            raw_performance = pump._get_performance_interpolated(flow_rate, head)
         
-        logger.debug(f"Database performance for {pump.pump_code} at {flow_rate}/{head}: {raw_performance}")
+        pump_code = _get_pump_attr(pump, 'pump_code')
+        logger.debug(f"Database performance for {pump_code} at {flow_rate}/{head}: {raw_performance}")
         
         if raw_performance:
             # Fix NPSH handling - 0.0 is valid NPSH data, not "no data"
@@ -251,8 +267,9 @@ def _get_database_performance(pump, flow_rate, head):
             }
         
         # Enhanced debug info when no data found
-        logger.warning(f"No database performance data for {pump.pump_code} at {flow_rate} m³/hr, {head} m")
-        logger.debug(f"Available curves for {pump.pump_code}: {len(pump.curves) if pump.curves else 0}")
+        logger.warning(f"No database performance data for {pump_code} at {flow_rate} m³/hr, {head} m")
+        pump_curves = _get_pump_attr(pump, 'curves', [])
+        logger.debug(f"Available curves for {pump_code}: {len(pump_curves) if pump_curves else 0}")
         
         if pump.curves:
             for i, curve in enumerate(pump.curves):
@@ -332,16 +349,24 @@ def _get_ui_performance(pump, flow_rate, head):
 def _get_bep_analysis(pump, pump_repo):
     """Get BEP analysis using ONLY authentic database specifications - NO FALLBACKS"""
     try:
+        # Handle both dictionary and object formats
+        if isinstance(pump, dict):
+            pump_code = pump.get('pump_code')
+            specifications = pump.get('specifications', {})
+        else:
+            pump_code = pump.pump_code
+            specifications = pump.specifications
+            
         # Get BEP from AUTHENTIC database specifications only
-        bep_flow = pump.specifications.get('bep_flow_m3hr')
-        bep_head = pump.specifications.get('bep_head_m') 
+        bep_flow = specifications.get('bep_flow_m3hr')
+        bep_head = specifications.get('bep_head_m') 
         bep_efficiency = None  # BEP efficiency not stored as separate specification - would need calculation from curves
         
-        logger.info(f"Database BEP specifications for {pump.pump_code}: Flow={bep_flow}, Head={bep_head}, Efficiency={bep_efficiency}")
+        logger.info(f"Database BEP specifications for {pump_code}: Flow={bep_flow}, Head={bep_head}, Efficiency={bep_efficiency}")
         
         # CRITICAL: If no authentic BEP data exists, FAIL - never use fallbacks
         if not bep_flow or not bep_head:
-            error_msg = f"CRITICAL ERROR: No authentic BEP data found for {pump.pump_code}. BEP Flow={bep_flow}, Head={bep_head}. Testing cannot proceed with estimated data."
+            error_msg = f"CRITICAL ERROR: No authentic BEP data found for {pump_code}. BEP Flow={bep_flow}, Head={bep_head}. Testing cannot proceed with estimated data."
             logger.error(error_msg)
             raise ValueError(error_msg)
         
@@ -360,7 +385,9 @@ def _get_bep_analysis(pump, pump_repo):
         }
             
     except Exception as e:
-        logger.error(f"Error getting authentic BEP data for {pump.pump_code}: {str(e)}")
+        # Handle both dictionary and object formats for error logging
+        pump_code = pump.get('pump_code') if isinstance(pump, dict) else pump.pump_code
+        logger.error(f"Error getting authentic BEP data for {pump_code}: {str(e)}")
         raise e
 
 # REMOVED: _estimate_bep_from_curves function
