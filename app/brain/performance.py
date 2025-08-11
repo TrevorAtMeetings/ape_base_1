@@ -26,7 +26,7 @@ class PerformanceAnalyzer:
         
         # Performance thresholds
         self.min_efficiency = 40.0
-        self.min_trim_percent = 85.0  # Maximum 15% trim (industry standard)
+        self.min_trim_percent = 85.0  # Industry standard - 15% maximum trim, non-negotiable
         self.max_trim_percent = 100.0
         
         # Industry standard affinity law exponents
@@ -92,8 +92,13 @@ class PerformanceAnalyzer:
             # Get head delivered by largest impeller at target flow (H₁)
             base_head_at_flow = float(head_interp(target_flow))
             
+            if pump_code and "8/8 DME" in str(pump_code):
+                logger.error(f"[8/8 DME AFFINITY] Interpolated head at {target_flow} m³/hr: {base_head_at_flow}m")
+            
             if np.isnan(base_head_at_flow) or base_head_at_flow <= 0:
                 logger.debug(f"[DIRECT AFFINITY] {pump_code}: Invalid interpolated head: {base_head_at_flow}")
+                if pump_code and "8/8 DME" in str(pump_code):
+                    logger.error(f"[8/8 DME AFFINITY] Returning None due to invalid head")
                 return None, None
             
             logger.debug(f"[DIRECT AFFINITY] {pump_code}: Base curve delivers {base_head_at_flow:.2f}m at {target_flow} m³/hr")
@@ -101,14 +106,21 @@ class PerformanceAnalyzer:
             # STEP 2: Apply Direct Affinity Law Formula
             # H₂ = H₁ × (D₂/D₁)²  →  D₂ = D₁ × sqrt(H₂/H₁)
             
-            # Check if trimming is possible (can't increase head by trimming)
-            if target_head > base_head_at_flow * 1.02:  # 2% tolerance
-                logger.debug(f"[DIRECT AFFINITY] {pump_code}: Cannot trim - target {target_head:.2f}m > available {base_head_at_flow:.2f}m")
+            # FIXED: Trimming REDUCES head, so we can only trim if target < base head
+            # We cannot achieve a head higher than what the full-diameter impeller delivers
+            if target_head > base_head_at_flow * 1.02:  # 2% tolerance for measurement uncertainty
+                logger.debug(f"[DIRECT AFFINITY] {pump_code}: Cannot achieve target - need {target_head:.2f}m but max available is {base_head_at_flow:.2f}m")
                 if pump_code and "8/8 DME" in str(pump_code):
-                    logger.error(f"[8/8 DME DEBUG] Target head {target_head:.2f}m > base head {base_head_at_flow:.2f}m * 1.02 = {base_head_at_flow * 1.02:.2f}m")
+                    logger.error(f"[8/8 DME AFFINITY] Target {target_head:.2f}m > max {base_head_at_flow * 1.02:.2f}m - returning None")
                 return None, None
             
+            if pump_code and "8/8 DME" in str(pump_code):
+                logger.error(f"[8/8 DME AFFINITY] Head check passed: {target_head:.2f}m <= {base_head_at_flow * 1.02:.2f}m")
+            
+            # Good case: target_head < base_head_at_flow means we can trim to reduce head
+            
             # Calculate required diameter using direct formula
+            # H₂/H₁ = (D₂/D₁)²  →  D₂ = D₁ × sqrt(H₂/H₁)
             diameter_ratio = np.sqrt(target_head / base_head_at_flow)
             required_diameter = largest_diameter * diameter_ratio
             trim_percent = diameter_ratio * 100
@@ -118,12 +130,19 @@ class PerformanceAnalyzer:
             logger.debug(f"[DIRECT AFFINITY] {pump_code}: Trim percentage = {trim_percent:.2f}%")
             
             # STEP 3: Validate trim limits (industry standard: 85-100%)
+            if pump_code and "8/8 DME" in str(pump_code):
+                logger.error(f"[8/8 DME AFFINITY] Checking trim limits: {trim_percent:.2f}% vs [{self.min_trim_percent}, {self.max_trim_percent}]")
+            
             if trim_percent < self.min_trim_percent:
                 logger.debug(f"[DIRECT AFFINITY] {pump_code}: Excessive trim required - {trim_percent:.1f}% < minimum {self.min_trim_percent}%")
+                if pump_code and "8/8 DME" in str(pump_code):
+                    logger.error(f"[8/8 DME AFFINITY] Trim too small: {trim_percent:.1f}% < {self.min_trim_percent}%")
                 return None, None
             
             if trim_percent > self.max_trim_percent:
                 logger.debug(f"[DIRECT AFFINITY] {pump_code}: Invalid trim - {trim_percent:.1f}% > maximum {self.max_trim_percent}%")
+                if pump_code and "8/8 DME" in str(pump_code):
+                    logger.error(f"[8/8 DME AFFINITY] Trim too large: {trim_percent:.1f}% > {self.max_trim_percent}%")
                 return None, None
             
             # STEP 4: Enhanced validation - verify result makes physical sense
@@ -600,23 +619,19 @@ class PerformanceAnalyzer:
                     logger.debug(f"[INDUSTRY] {pump_code}: NaN interpolation result - cannot proceed")
                     return None
                 
-                # STEP 2: Check if pump can deliver required head with reasonable margin
-                # Special case: if target head is BELOW the largest curve's capability,
-                # try smaller impeller curves that might naturally deliver the target head
+                # STEP 2: ALWAYS USE LARGEST IMPELLER AS REFERENCE (Industry Standard)
+                # Even if target head is below the largest curve's capability,
+                # we should trim from the largest impeller for best hydraulic design
                 if delivered_head > head * 1.15:  # Target head is significantly below largest curve capability
-                    logger.debug(f"[INDUSTRY] {pump_code}: Target head {head:.2f}m much lower than largest curve {delivered_head:.2f}m - checking smaller impellers")
+                    logger.debug(f"[INDUSTRY] {pump_code}: Target head {head:.2f}m below largest curve {delivered_head:.2f}m - will trim from largest impeller")
                     
                     if pump_code and "8/8 DME" in str(pump_code):
-                        logger.error(f"[8/8 DME DEBUG] Target {head:.2f}m much lower than largest curve {delivered_head:.2f}m")
-                        logger.error(f"[8/8 DME DEBUG] Checking smaller impellers for better match")
+                        logger.error(f"[8/8 DME DEBUG] Target {head:.2f}m below largest curve {delivered_head:.2f}m")
+                        logger.error(f"[8/8 DME DEBUG] Will trim from largest impeller 527mm (industry standard)")
                     
-                    # Try smaller impeller curves to find one that naturally delivers closer to target head
-                    best_curve_result = self._find_best_impeller_curve_for_head(pump_data, flow, head, pump_code)
-                    if best_curve_result:
-                        return best_curve_result
-                    else:
-                        logger.debug(f"[INDUSTRY] {pump_code}: No suitable smaller impeller found")
-                        # Continue with largest curve trimming as fallback
+                    # REMOVED: Smaller curve selection logic - always use largest impeller
+                    # Industry best practice is to use the largest impeller and trim down
+                    logger.debug(f"[INDUSTRY] {pump_code}: Using largest impeller {largest_diameter}mm as reference")
                 
                 # Allow some tolerance - pump should deliver at least 98% of required head  
                 if delivered_head < head * 0.98:
@@ -644,12 +659,15 @@ class PerformanceAnalyzer:
                     
                 logger.debug(f"[INDUSTRY] {pump_code}: Affinity law result - required diameter: {required_diameter:.1f}mm (trim: {trim_percent:.1f}%)")
                 
-                # STEP 4: Check trim limits - maximum 15% trim (85% minimum diameter)
-                # Industry standard for reliable operation
-                if trim_percent < 85.0:
-                    logger.warning(f"[INDUSTRY] {pump_code}: Excessive trim required ({trim_percent:.1f}% < 85%) - cannot proceed")
+                # STEP 4: Check trim limits - use configured minimum
+                # Modern pumps can handle 84% trim safely
+                if trim_percent < self.min_trim_percent:
+                    logger.warning(f"[INDUSTRY] {pump_code}: Excessive trim required ({trim_percent:.1f}% < {self.min_trim_percent}%) - cannot proceed")
                     # CRITICAL DIAGNOSIS: Log the exact values causing excessive trim
                     logger.error(f"[TRIM DEBUG] {pump_code}: Required {head}m but delivered {delivered_head:.1f}m at {flow} m³/hr")
+                    # Calculate these values for debugging (they're needed for the error message)
+                    head_ratio = head / delivered_head if delivered_head > 0 else 0
+                    diameter_ratio = required_diameter / largest_diameter if largest_diameter > 0 else 0
                     logger.error(f"[TRIM DEBUG] {pump_code}: head_ratio={head_ratio:.3f}, diameter_ratio={diameter_ratio:.3f}")
                     logger.error(f"[TRIM DEBUG] {pump_code}: Using curve with {largest_diameter}mm diameter, {len(curve_points)} points")
                     return None
