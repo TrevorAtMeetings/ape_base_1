@@ -174,11 +174,11 @@ class PerformanceAnalyzer:
             required_diameter = largest_diameter * diameter_ratio
             trim_percent = diameter_ratio * 100
             
-            logger.debug(f"[TUNABLE AFFINITY] {pump_code}: Using head exponent {head_exponent} (vs standard 2.0)")
+            logger.info(f"[TUNABLE AFFINITY] {pump_code}: Using head exponent {head_exponent} (vs standard 2.0)")
             
-            logger.debug(f"[TUNABLE AFFINITY] {pump_code}: Diameter ratio = ({target_head:.2f}/{base_head_at_flow:.2f})^(1/{head_exponent}) = {diameter_ratio:.4f}")
-            logger.debug(f"[TUNABLE AFFINITY] {pump_code}: Required diameter = {largest_diameter:.1f} × {diameter_ratio:.4f} = {required_diameter:.1f}mm")
-            logger.debug(f"[TUNABLE AFFINITY] {pump_code}: Trim percentage = {trim_percent:.2f}%")
+            logger.info(f"[TUNABLE AFFINITY] {pump_code}: Diameter ratio = ({target_head:.2f}/{base_head_at_flow:.2f})^(1/{head_exponent}) = {diameter_ratio:.4f}")
+            logger.info(f"[TUNABLE AFFINITY] {pump_code}: Required diameter = {largest_diameter:.1f} × {diameter_ratio:.4f} = {required_diameter:.1f}mm")
+            logger.info(f"[TUNABLE AFFINITY] {pump_code}: Trim percentage = {trim_percent:.2f}%")
             
             # STEP 3: Validate trim limits (industry standard: 85-100%)
             if pump_code and "8/8 DME" in str(pump_code):

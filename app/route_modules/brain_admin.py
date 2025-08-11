@@ -217,12 +217,12 @@ def update_calibration_factors():
         factors = data.get('factors', {})
         user_id = str(data.get('user_id', 'web_admin'))  # Ensure string format
         
-        # Validate physics parameters
+        # Validate physics parameters - EXPANDED RANGES for comprehensive testing
         validation_errors = []
         physics_bounds = {
             'bep_shift_flow_exponent': (1.0, 1.5),
-            'bep_shift_head_exponent': (1.8, 2.5),
-            'efficiency_correction_exponent': (0.05, 0.2)
+            'bep_shift_head_exponent': (1.0, 3.0),  # EXPANDED: 1.8-2.5 → 1.0-3.0
+            'efficiency_correction_exponent': (0.01, 0.5)  # EXPANDED: 0.05-0.2 → 0.01-0.5
         }
         
         # Validate user_id (must be non-empty string)

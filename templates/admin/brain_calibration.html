@@ -138,11 +138,11 @@
                             </tr>
                             <tr>
                                 <td>Head Exponent</td>
-                                <td>1.8 - 2.5</td>
+                                <td>1.0 - 3.0</td>
                             </tr>
                             <tr>
                                 <td>Efficiency Factor</td>
-                                <td>0.05 - 0.2</td>
+                                <td>0.01 - 0.5</td>
                             </tr>
                         </tbody>
                     </table>
@@ -168,18 +168,18 @@
             </div>
             <div class="row">
                 <div class="input-field col s12">
-                    <input id="head_exponent" type="number" step="0.01" min="1.8" max="2.5" 
+                    <input id="head_exponent" type="number" step="0.01" min="1.0" max="3.0" 
                            value="{{ calibration_factors.bep_shift_head_exponent }}">
                     <label for="head_exponent">BEP Head Exponent</label>
-                    <span class="helper-text">Range: 1.8 - 2.5 (typical: 2.2)</span>
+                    <span class="helper-text">Range: 1.0 - 3.0 (typical: 2.0)</span>
                 </div>
             </div>
             <div class="row">
                 <div class="input-field col s12">
-                    <input id="efficiency_factor" type="number" step="0.01" min="0.05" max="0.2" 
+                    <input id="efficiency_factor" type="number" step="0.01" min="0.01" max="0.5" 
                            value="{{ calibration_factors.efficiency_correction_exponent }}">
                     <label for="efficiency_factor">Efficiency Correction Factor</label>
-                    <span class="helper-text">Range: 0.05 - 0.2 (typical: 0.1)</span>
+                    <span class="helper-text">Range: 0.01 - 0.5 (typical: 0.1)</span>
                 </div>
             </div>
         </form>
