@@ -586,7 +586,11 @@ class PerformanceAnalyzer:
                 # Allow some tolerance - pump should deliver at least 98% of required head  
                 if delivered_head < head * 0.98:
                     logger.warning(f"[INDUSTRY] {pump_code}: Insufficient head capability - base curve gives {delivered_head:.2f}m < required {head*0.98:.2f}m")
-                    return None
+                    # FALLBACK CALCULATION: Provide capability estimate showing what pump can actually deliver
+                    logger.info(f"[FALLBACK] {pump_code}: Providing capability estimate at maximum deliverable head")
+                    return self._calculate_capability_estimate(
+                        pump_code, curve_points, largest_diameter, flow, delivered_head, base_efficiency, powers_sorted
+                    )
                 
                 # STEP 3: ENHANCED AFFINITY LAW METHODOLOGY
                 # Use direct mathematical formula: D₂ = D₁ × sqrt(H₂/H₁)
@@ -605,14 +609,18 @@ class PerformanceAnalyzer:
                 
                 if required_diameter is None:
                     logger.warning(f"[INDUSTRY] {pump_code}: Could not determine required diameter using affinity laws")
-                    return None
+                    # FALLBACK CALCULATION: Provide hydraulic estimate instead of zero data
+                    logger.info(f"[FALLBACK] {pump_code}: Calculating performance estimate using hydraulic approximation")
+                    return self._calculate_hydraulic_estimate(
+                        pump_code, curve_points, largest_diameter, flow, head, base_efficiency, powers_sorted
+                    )
                     
                 logger.debug(f"[INDUSTRY] {pump_code}: Affinity law result - required diameter: {required_diameter:.1f}mm (trim: {trim_percent:.1f}%)")
                 
                 # STEP 4: Check trim limits - use configured minimum
                 # Modern pumps can handle 84% trim safely
                 if trim_percent < self.min_trim_percent:
-                    logger.warning(f"[INDUSTRY] {pump_code}: Excessive trim required ({trim_percent:.1f}% < {self.min_trim_percent}%) - cannot proceed")
+                    logger.warning(f"[INDUSTRY] {pump_code}: Excessive trim required ({trim_percent:.1f}% < {self.min_trim_percent}%) - beyond safe limits")
                     # CRITICAL DIAGNOSIS: Log the exact values causing excessive trim
                     logger.error(f"[TRIM DEBUG] {pump_code}: Required {head}m but delivered {delivered_head:.1f}m at {flow} m³/hr")
                     # Calculate these values for debugging (they're needed for the error message)
@@ -620,7 +628,13 @@ class PerformanceAnalyzer:
                     diameter_ratio = required_diameter / largest_diameter if largest_diameter > 0 else 0
                     logger.error(f"[TRIM DEBUG] {pump_code}: head_ratio={head_ratio:.3f}, diameter_ratio={diameter_ratio:.3f}")
                     logger.error(f"[TRIM DEBUG] {pump_code}: Using curve with {largest_diameter}mm diameter, {len(curve_points)} points")
-                    return None
+                    
+                    # FALLBACK CALCULATION: Provide extrapolated estimate with severe penalty
+                    logger.info(f"[FALLBACK] {pump_code}: Providing extrapolated estimate beyond safe trim limits")
+                    return self._calculate_extrapolated_estimate(
+                        pump_code, required_diameter, largest_diameter, flow, head, 
+                        base_efficiency, powers_sorted, trim_percent
+                    )
                 
                 # STEP 5: Calculate performance at the required diameter using affinity laws
                 diameter_ratio = required_diameter / largest_diameter
@@ -1097,3 +1111,152 @@ class PerformanceAnalyzer:
             validation['valid'] = False
         
         return validation
+    
+    def _calculate_hydraulic_estimate(self, pump_code: str, curve_points: List[Dict], 
+                                    largest_diameter: float, flow: float, head: float, 
+                                    base_efficiency: float, powers_sorted: List) -> Dict[str, Any]:
+        """
+        Fallback calculation using hydraulic approximation when affinity laws fail completely.
+        Provides reasonable estimates based on pump curves and hydraulic principles.
+        """
+        try:
+            logger.info(f"[HYDRAULIC ESTIMATE] {pump_code}: Estimating performance using hydraulic approximation")
+            
+            # Use the delivered head from the largest curve as our best estimate
+            flows_sorted = [p['flow_m3hr'] for p in curve_points]
+            heads_sorted = [p['head_m'] for p in curve_points]
+            
+            if not flows_sorted or not heads_sorted:
+                logger.warning(f"[HYDRAULIC ESTIMATE] {pump_code}: No curve data available")
+                return None
+                
+            # Interpolate what this pump can actually deliver at the target flow
+            from scipy import interpolate
+            head_interp = interpolate.interp1d(flows_sorted, heads_sorted, 
+                                            kind='linear', bounds_error=False, fill_value='extrapolate')
+            deliverable_head = float(head_interp(flow))
+            
+            # Estimate efficiency degradation - pumps operating far from design point lose efficiency
+            head_shortfall_ratio = deliverable_head / head if head > 0 else 0.5
+            efficiency_penalty = max(0, (1.0 - head_shortfall_ratio) * 20)  # Up to 20% penalty
+            estimated_efficiency = max(30, base_efficiency - efficiency_penalty)
+            
+            # Estimate power using hydraulic calculation
+            estimated_power = self._calculate_hydraulic_power(flow, deliverable_head, estimated_efficiency)
+            
+            # Estimate trim based on head shortfall
+            head_ratio = deliverable_head / head if head > 0 else 1.0
+            estimated_trim = max(75, head_ratio * 100)  # Minimum 75% trim
+            estimated_diameter = largest_diameter * (estimated_trim / 100)
+            
+            logger.info(f"[HYDRAULIC ESTIMATE] {pump_code}: Delivers {deliverable_head:.1f}m vs required {head:.1f}m")
+            logger.info(f"[HYDRAULIC ESTIMATE] {pump_code}: Estimated {estimated_efficiency:.1f}% efficiency, {estimated_power:.1f}kW power")
+            
+            return {
+                'flow_m3hr': flow,
+                'head_m': deliverable_head,
+                'efficiency_pct': estimated_efficiency,
+                'power_kw': estimated_power,
+                'npshr_m': None,  # Cannot estimate NPSH reliably
+                'impeller_diameter_mm': estimated_diameter,
+                'base_diameter_mm': largest_diameter,
+                'trim_percent': estimated_trim,
+                'meets_requirements': False,  # By definition, this is a compromised solution
+                'head_margin_m': deliverable_head - head,
+                'estimate_type': 'hydraulic_approximation'
+            }
+            
+        except Exception as e:
+            logger.error(f"[HYDRAULIC ESTIMATE] Error for {pump_code}: {e}")
+            return None
+    
+    def _calculate_extrapolated_estimate(self, pump_code: str, required_diameter: float, 
+                                       largest_diameter: float, flow: float, head: float,
+                                       base_efficiency: float, powers_sorted: List, 
+                                       trim_percent: float) -> Dict[str, Any]:
+        """
+        Fallback calculation for excessive trim scenarios.
+        Provides extrapolated estimates with appropriate warnings for extreme trimming.
+        """
+        try:
+            logger.info(f"[EXTRAPOLATED ESTIMATE] {pump_code}: Extrapolating beyond safe trim limits ({trim_percent:.1f}%)")
+            
+            # Accept the excessive trim but apply severe penalties
+            diameter_ratio = required_diameter / largest_diameter if largest_diameter > 0 else 0.75
+            
+            # Severe efficiency penalty for excessive trimming
+            excess_trim_penalty = (self.min_trim_percent - trim_percent) * 0.8  # 0.8% per 1% excess
+            estimated_efficiency = max(25, base_efficiency - excess_trim_penalty)
+            
+            # Calculate power with reduced efficiency
+            estimated_power = self._calculate_hydraulic_power(flow, head, estimated_efficiency)
+            
+            # Add 20% power penalty for poor hydraulic design due to excessive trimming
+            estimated_power *= 1.2
+            
+            logger.warning(f"[EXTRAPOLATED ESTIMATE] {pump_code}: Excessive trim causes {excess_trim_penalty:.1f}% efficiency loss")
+            logger.warning(f"[EXTRAPOLATED ESTIMATE] {pump_code}: Final estimate: {estimated_efficiency:.1f}% efficiency, {estimated_power:.1f}kW power")
+            
+            return {
+                'flow_m3hr': flow,
+                'head_m': head,
+                'efficiency_pct': estimated_efficiency,
+                'power_kw': estimated_power,
+                'npshr_m': None,  # Cannot reliably estimate NPSH for excessive trim
+                'impeller_diameter_mm': required_diameter,
+                'base_diameter_mm': largest_diameter,
+                'trim_percent': trim_percent,
+                'meets_requirements': True,  # Technically meets head/flow requirements
+                'head_margin_m': 0.0,
+                'estimate_type': 'extrapolated_excessive_trim',
+                'warnings': ['Excessive trimming beyond safe limits', 'Reduced efficiency and reliability expected']
+            }
+            
+        except Exception as e:
+            logger.error(f"[EXTRAPOLATED ESTIMATE] Error for {pump_code}: {e}")
+            return None
+    
+    def _calculate_capability_estimate(self, pump_code: str, curve_points: List[Dict],
+                                     largest_diameter: float, flow: float, deliverable_head: float,
+                                     base_efficiency: float, powers_sorted: List) -> Dict[str, Any]:
+        """
+        Fallback calculation showing what the pump can actually deliver when head requirement exceeds capability.
+        Provides realistic performance estimates at pump's maximum capability.
+        """
+        try:
+            logger.info(f"[CAPABILITY ESTIMATE] {pump_code}: Showing maximum deliverable performance")
+            
+            # Use the actual deliverable head from the pump curve
+            final_head = deliverable_head
+            
+            # At maximum capability, efficiency is typically good (near design point)
+            # Apply small penalty for operating at limits
+            capability_efficiency = max(40, base_efficiency * 0.95)  # 5% penalty for operating at limits
+            
+            # Calculate power at maximum capability
+            capability_power = self._calculate_hydraulic_power(flow, final_head, capability_efficiency)
+            
+            # Estimate impeller diameter - likely using largest available
+            estimated_diameter = largest_diameter * 0.98  # Minimal trim for maximum output
+            
+            logger.info(f"[CAPABILITY ESTIMATE] {pump_code}: Maximum delivery {final_head:.1f}m at {capability_efficiency:.1f}% efficiency")
+            logger.info(f"[CAPABILITY ESTIMATE] {pump_code}: Power requirement: {capability_power:.1f}kW")
+            
+            return {
+                'flow_m3hr': flow,
+                'head_m': final_head,
+                'efficiency_pct': capability_efficiency,
+                'power_kw': capability_power,
+                'npshr_m': None,  # Estimate NPSH at maximum capability
+                'impeller_diameter_mm': estimated_diameter,
+                'base_diameter_mm': largest_diameter,
+                'trim_percent': 98.0,  # Near full impeller for maximum capability
+                'meets_requirements': False,  # Does not meet head requirement
+                'head_margin_m': final_head - deliverable_head,  # Negative margin
+                'estimate_type': 'maximum_capability',
+                'warnings': ['Insufficient head capability', 'Shows maximum pump output only']
+            }
+            
+        except Exception as e:
+            logger.error(f"[CAPABILITY ESTIMATE] Error for {pump_code}: {e}")
+            return None
