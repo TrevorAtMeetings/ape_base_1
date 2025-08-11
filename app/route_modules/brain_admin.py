@@ -281,6 +281,13 @@ def update_calibration_factors():
         if hasattr(PerformanceAnalyzer, '_cache_time'):
             delattr(PerformanceAnalyzer, '_cache_time')
         
+        # Force all existing Brain instances to reload calibration factors
+        from ..pump_brain import get_pump_brain
+        brain = get_pump_brain()
+        # Clear any performance analyzer instances that might have cached factors
+        if hasattr(brain, '_performance_analyzer'):
+            brain._performance_analyzer = None
+        
         logger.info(f"Calibration factors updated by {user_id}: {factors}")
         return jsonify({'status': 'success', 'message': 'Calibration factors updated successfully'})
         
