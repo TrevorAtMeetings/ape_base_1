@@ -53,11 +53,106 @@ class PerformanceAnalyzer:
         # Use new industry-standard method
         return self.calculate_at_point_industry_standard(pump_data, flow, head, impeller_trim)
 
+    def _calculate_required_diameter_direct(self, flows_sorted, heads_sorted, 
+                                          largest_diameter, target_flow, target_head, pump_code):
+        """
+        ENHANCED: Calculate required impeller diameter using direct affinity law formula.
+        
+        Uses the mathematically precise formula: D₂ = D₁ × sqrt(H₂ / H₁)
+        where H₁ is interpolated head at target flow on largest curve.
+        
+        Args:
+            flows_sorted: Sorted flow data from largest curve
+            heads_sorted: Sorted head data from largest curve  
+            largest_diameter: Diameter of largest available impeller
+            target_flow: Required flow rate (m³/hr)
+            target_head: Required head (m)
+            pump_code: Pump identifier for logging
+            
+        Returns:
+            Tuple[float, float]: (required_diameter, trim_percent) or (None, None) if failed
+        """
+        try:
+            from scipy import interpolate
+            
+            # STEP 1: Interpolate head at target flow on largest curve (H₁)
+            if len(flows_sorted) < 2 or len(heads_sorted) < 2:
+                logger.debug(f"[DIRECT AFFINITY] {pump_code}: Insufficient data points")
+                return None, None
+                
+            head_interp = interpolate.interp1d(flows_sorted, heads_sorted, 
+                                             kind='linear', bounds_error=False)
+            
+            # Check flow range coverage
+            min_flow, max_flow = min(flows_sorted), max(flows_sorted)
+            if not (min_flow * 0.9 <= target_flow <= max_flow * 1.1):
+                logger.debug(f"[DIRECT AFFINITY] {pump_code}: Flow {target_flow} outside range {min_flow*0.9:.1f}-{max_flow*1.1:.1f}")
+                return None, None
+            
+            # Get head delivered by largest impeller at target flow (H₁)
+            base_head_at_flow = float(head_interp(target_flow))
+            
+            if np.isnan(base_head_at_flow) or base_head_at_flow <= 0:
+                logger.debug(f"[DIRECT AFFINITY] {pump_code}: Invalid interpolated head: {base_head_at_flow}")
+                return None, None
+            
+            logger.debug(f"[DIRECT AFFINITY] {pump_code}: Base curve delivers {base_head_at_flow:.2f}m at {target_flow} m³/hr")
+            
+            # STEP 2: Apply Direct Affinity Law Formula
+            # H₂ = H₁ × (D₂/D₁)²  →  D₂ = D₁ × sqrt(H₂/H₁)
+            
+            # Check if trimming is possible (can't increase head by trimming)
+            if target_head > base_head_at_flow * 1.02:  # 2% tolerance
+                logger.debug(f"[DIRECT AFFINITY] {pump_code}: Cannot trim - target {target_head:.2f}m > available {base_head_at_flow:.2f}m")
+                return None, None
+            
+            # Calculate required diameter using direct formula
+            diameter_ratio = np.sqrt(target_head / base_head_at_flow)
+            required_diameter = largest_diameter * diameter_ratio
+            trim_percent = diameter_ratio * 100
+            
+            logger.debug(f"[DIRECT AFFINITY] {pump_code}: Diameter ratio = sqrt({target_head:.2f}/{base_head_at_flow:.2f}) = {diameter_ratio:.4f}")
+            logger.debug(f"[DIRECT AFFINITY] {pump_code}: Required diameter = {largest_diameter:.1f} × {diameter_ratio:.4f} = {required_diameter:.1f}mm")
+            logger.debug(f"[DIRECT AFFINITY] {pump_code}: Trim percentage = {trim_percent:.2f}%")
+            
+            # STEP 3: Validate trim limits (industry standard: 85-100%)
+            if trim_percent < self.min_trim_percent:
+                logger.debug(f"[DIRECT AFFINITY] {pump_code}: Excessive trim required - {trim_percent:.1f}% < minimum {self.min_trim_percent}%")
+                return None, None
+            
+            if trim_percent > self.max_trim_percent:
+                logger.debug(f"[DIRECT AFFINITY] {pump_code}: Invalid trim - {trim_percent:.1f}% > maximum {self.max_trim_percent}%")
+                return None, None
+            
+            # STEP 4: Enhanced validation - verify result makes physical sense
+            # Calculate what head this diameter would actually deliver
+            verification_head = base_head_at_flow * (diameter_ratio ** 2)
+            error_percent = abs(verification_head - target_head) / target_head * 100
+            
+            logger.debug(f"[DIRECT AFFINITY] {pump_code}: Verification - calculated diameter delivers {verification_head:.3f}m vs target {target_head:.3f}m (error: {error_percent:.2f}%)")
+            
+            if error_percent > 1.0:  # Should be essentially zero for direct calculation
+                logger.warning(f"[DIRECT AFFINITY] {pump_code}: Unexpected calculation error: {error_percent:.2f}%")
+            
+            # Enhanced logging for specific pumps
+            if pump_code and "6 WLN 18A" in str(pump_code):
+                logger.error(f"[ENHANCED TRIM] {pump_code}: Direct calculation complete")
+                logger.error(f"[ENHANCED TRIM] {pump_code}: H₁ = {base_head_at_flow:.2f}m, H₂ = {target_head:.2f}m")
+                logger.error(f"[ENHANCED TRIM] {pump_code}: D₁ = {largest_diameter:.1f}mm, D₂ = {required_diameter:.1f}mm")
+                logger.error(f"[ENHANCED TRIM] {pump_code}: Trim = {trim_percent:.2f}% (vs iterative method)")
+            
+            return required_diameter, trim_percent
+            
+        except Exception as e:
+            logger.error(f"[DIRECT AFFINITY ERROR] {pump_code}: {e}")
+            return None, None
+
     def _find_required_diameter_affinity_law(self, flows_sorted, heads_sorted, 
                                            largest_diameter, target_flow, target_head, pump_code):
         """
-        Find the required impeller diameter using correct affinity law methodology.
+        LEGACY: Find the required impeller diameter using iterative testing method.
         
+        This method is kept for comparison but should be replaced by the direct method.
         Instead of scaling the final result, this method generates performance curves
         for different diameters and finds which one naturally delivers the target head.
         
@@ -319,10 +414,9 @@ class PerformanceAnalyzer:
                     logger.warning(f"[INDUSTRY] {pump_code}: Insufficient head capability - base curve gives {delivered_head:.2f}m < required {head*0.98:.2f}m")
                     return None
                 
-                # STEP 3: CORRECT AFFINITY LAW METHODOLOGY
-                # Instead of scaling the final result, generate curves for different diameters
-                # and find which diameter naturally delivers the required head
-                required_diameter, trim_percent = self._find_required_diameter_affinity_law(
+                # STEP 3: ENHANCED AFFINITY LAW METHODOLOGY
+                # Use direct mathematical formula: D₂ = D₁ × sqrt(H₂/H₁)
+                required_diameter, trim_percent = self._calculate_required_diameter_direct(
                     flows_sorted, heads_sorted, largest_diameter, flow, head, pump_code
                 )
                 

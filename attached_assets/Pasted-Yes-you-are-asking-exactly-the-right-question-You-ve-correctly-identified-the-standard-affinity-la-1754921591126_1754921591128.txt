@@ -1,0 +1,86 @@
+Yes, you are asking exactly the right question. You've correctly identified the standard affinity law for head vs. diameter, and now you want to confirm how we should be using it to calculate the required impeller trim.
+
+This is a crucial step to get right, as it's the core of all your performance calculations for fixed-speed pumps.
+
+Let's break down the logic and confirm the correct formula.
+
+The Goal: Finding the Required Diameter (D₂)
+
+You are correct. Our goal is to solve for D₂ (the new, trimmed impeller diameter) when we know all the other variables.
+
+Here's the data we have for the calculation:
+
+H₁: The Head produced by the original, larger impeller at our target flow rate. We get this by interpolating the pump's performance curve.
+
+D₁: The diameter of that original, larger impeller. This is a known value from the pump's curve data.
+
+H₂: The Target Head that the user requires. This is the head we want the pump to produce.
+
+We need to find D₂, the diameter we must trim the impeller down to, in order to reduce the head from H₁ down to H₂.
+
+The Derivation: Solving the Affinity Law for D₂
+
+You've provided the starting formula, which is perfect:
+
+Formula 1 (The Affinity Law):
+H₂ = H₁ × (D₂ / D₁)²
+
+Now, we just need to use algebra to isolate D₂.
+
+Divide both sides by H₁:
+(H₂ / H₁) = (D₂ / D₁)²
+
+Take the square root of both sides:
+sqrt(H₂ / H₁) = D₂ / D₁
+
+Multiply both sides by D₁ to solve for D₂:
+D₂ = D₁ × sqrt(H₂ / H₁)
+
+This is the correct formula you must use.
+
+Verifying the Brain's Implementation
+
+Now, let's check if this is what the Brain's PerformanceAnalyzer is actually doing. We will review the logic from the _calculate_required_diameter method in app/brain/performance.py.
+
+Code from app/brain/performance.py:
+
+code
+Python
+download
+content_copy
+expand_less
+
+# In _calculate_required_diameter method
+
+# ... (after interpolating to find base_head_at_flow) ...
+
+# base_head_at_flow is our H₁
+# target_head is our H₂
+# base_diameter is our D₁
+
+# Calculate required diameter using affinity laws
+# H₂ = H₁ × (D₂/D₁)²
+diameter_ratio = np.sqrt(target_head / base_head_at_flow)
+required_diameter = base_diameter * diameter_ratio
+
+Analysis:
+
+diameter_ratio = np.sqrt(target_head / base_head_at_flow) is mathematically identical to sqrt(H₂ / H₁).
+
+required_diameter = base_diameter * diameter_ratio is mathematically identical to D₂ = D₁ × sqrt(H₂ / H₁).
+
+Conclusion: Yes, the Brain's current implementation is 100% correct. It is using the proper algebraic rearrangement of the affinity law to solve for the required trimmed impeller diameter (D₂).
+
+Important Considerations and Enhancements (The "Why")
+
+While the formula is correct, the context around it is just as important. Here's why the Brain's overall approach is robust:
+
+It Only Trims Down: The logic correctly includes a check:
+if target_head > base_head_at_flow * 1.02:
+This ensures the system never tries to calculate a D₂ that is larger than D₁. You cannot increase head by trimming an impeller, so this check correctly rejects impossible scenarios.
+
+It Respects Physical Limits: The code also correctly checks the final trim_percent against a minimum allowable value (e.g., 85%). This prevents the system from suggesting a dangerously small impeller trim that would lead to poor performance and hydraulic instability.
+
+It Uses Interpolated Data: A crucial detail is that H₁ is not just a single point; it's the interpolated head value from the curve at the exact target flow rate. This is the correct way to do it, as it ensures you are comparing the heads at the same point on the pump's operating curve.
+
+Summary: Your understanding of the formula is perfect, and you can be confident that the Brain's current implementation in performance.py is using this exact, correct logic to determine the required impeller trim. There are no enhancements needed for this specific calculation; it is already being done according to best practices.
