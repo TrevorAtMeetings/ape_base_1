@@ -289,7 +289,14 @@ def update_calibration_factors():
             brain._performance_analyzer = None
         
         logger.info(f"Calibration factors updated by {user_id}: {factors}")
-        return jsonify({'status': 'success', 'message': 'Calibration factors updated successfully'})
+        
+        # Return updated factors to refresh frontend immediately
+        fresh_factors = admin_config_service.get_calibration_factors()
+        return jsonify({
+            'status': 'success', 
+            'message': 'Calibration factors updated successfully',
+            'updated_factors': fresh_factors  # Include fresh data for frontend refresh
+        })
         
     except Exception as e:
         logger.error(f"Failed to update calibration factors: {e}")
