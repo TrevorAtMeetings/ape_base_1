@@ -368,10 +368,25 @@ def _get_bep_analysis(pump, pump_repo):
         bep_head = specifications.get('bep_head_m') 
         bep_efficiency = None  # BEP efficiency not stored as separate specification - would need calculation from curves
         
-        # DEBUG: Check what's actually in specifications and pump object
-        logger.error(f"DEBUG: Full pump object type for {pump_code}: {type(pump)}")
-        logger.error(f"DEBUG: Full pump object keys for {pump_code}: {list(pump.keys()) if isinstance(pump, dict) else 'Not a dict'}")
-        logger.error(f"DEBUG: Full specifications data for {pump_code}: {specifications}")
+        # DEBUG: Check curve coverage for BEP point
+        curves = _get_pump_attr(pump, 'curves', [])
+        logger.error(f"DEBUG: Pump {pump_code} has {len(curves)} curves available")
+        
+        # Check which curves can cover the BEP point
+        for curve in curves:
+            flow_data = curve.get('flow_data', [])
+            head_data = curve.get('head_data', [])
+            impeller_mm = curve.get('impeller_diameter_mm', 0)
+            
+            if flow_data and head_data:
+                min_flow, max_flow = min(flow_data), max(flow_data)
+                min_head, max_head = min(head_data), max(head_data)
+                
+                flow_covered = min_flow <= bep_flow <= max_flow if bep_flow else False
+                head_covered = min_head <= bep_head <= max_head if bep_head else False
+                
+                logger.error(f"DEBUG: {impeller_mm}mm curve: Flow {min_flow}-{max_flow} ({'covers BEP' if flow_covered else 'NO BEP coverage'}), Head {min_head}-{max_head} ({'covers BEP' if head_covered else 'NO BEP coverage'})")
+                
         logger.info(f"Database BEP specifications for {pump_code}: Flow={bep_flow}, Head={bep_head}, Efficiency={bep_efficiency}")
         
         # CRITICAL: If no authentic BEP data exists, FAIL - never use fallbacks
