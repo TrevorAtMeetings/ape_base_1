@@ -18,13 +18,13 @@
                 Pump Selection Results
             </h1>
             <div class="results-subtitle">
-                <strong>{{ (preferred_pumps|length + allowable_pumps|length) }}</strong> suitable pumps found for 
+                <strong>{{ (preferred_pumps|length + allowable_pumps|length + acceptable_pumps|length + marginal_pumps|length) }}</strong> suitable pumps found for 
                 <span style="color: #1565C0; font-weight: 600;">{{ "%.1f"|format(site_requirements['flow_m3hr']) }} m³/hr</span> at 
                 <span style="color: #1565C0; font-weight: 600;">{{ "%.1f"|format(site_requirements['head_m']) }} m</span> head
                 {% if preferred_pumps %}
                     <span class="tier-summary">
                         <i class="material-icons-round" style="font-size: 14px; vertical-align: middle; margin-right: 4px;">star</i>
-                        {{ preferred_pumps|length }} preferred, {{ allowable_pumps|length }} allowable
+                        {{ preferred_pumps|length }} preferred, {{ allowable_pumps|length }} allowable, {{ acceptable_pumps|length }} acceptable, {{ marginal_pumps|length }} marginal
                     </span>
                 {% endif %}
             </div>
@@ -37,7 +37,7 @@
     <div class="summary-cards">
         <!-- PRIMARY: Most Important Metric -->
         <div class="summary-card" data-category="primary">
-            <div class="summary-value">{{ (preferred_pumps|length + allowable_pumps|length) }}</div>
+            <div class="summary-value">{{ (preferred_pumps|length + allowable_pumps|length + acceptable_pumps|length + marginal_pumps|length) }}</div>
             <div class="summary-label">Pumps Found</div>
         </div>
         
@@ -52,7 +52,7 @@
             <div class="summary-label">Head (M)</div>
         </div>
         
-        {% set best_pump = preferred_pumps[0] if preferred_pumps else (allowable_pumps[0] if allowable_pumps else none) %}
+        {% set best_pump = preferred_pumps[0] if preferred_pumps else (allowable_pumps[0] if allowable_pumps else (acceptable_pumps[0] if acceptable_pumps else (marginal_pumps[0] if marginal_pumps else none))) %}
         {% if best_pump %}
         <!-- PRIMARY: Best Overall Result -->
         <div class="summary-card" data-category="primary">
@@ -358,13 +358,229 @@
         </div>
         {% endif %}
         
+        <!-- TIER 3: Acceptable Operating Range (50-60% & 130-200% of BEP) -->
+        {% if acceptable_pumps %}
+        <div class="tier-section acceptable-tier">
+            <h4 class="tier-title">
+                <i class="material-icons" style="color: #ff5722;">info</i>
+                Acceptable Operating Range (50-60% & 130-200% of BEP)
+            </h4>
+            <p class="tier-subtitle">These pumps can operate at the duty point but are outside normal operating ranges. Consider carefully for industrial applications.</p>
+            
+            <div class="pump-results-list compact-view" id="acceptable-pump-list">
+                {% for pump in acceptable_pumps %}
+                <a href="{{ url_for('reports.engineering_report', 
+                                  pump_code=pump['pump_code']) }}?flow={{ site_requirements['flow_m3hr'] }}&head={{ site_requirements['head_m'] }}&pump_type={{ site_requirements['pump_type'] }}" 
+                   class="pump-card-compact acceptable-card"
+                   data-total-score="{{ pump.get('total_score', 0) }}"
+                   data-efficiency-pct="{{ pump.get('efficiency_pct', 0) }}"
+                   data-power-kw="{{ pump.get('power_kw', 0) }}"
+                   data-pump-type="{{ pump['pump_type'] }}"
+                   data-manufacturer="{{ pump['manufacturer'] }}"
+                   data-qbp-percent="{{ pump.get('qbp_percent', 0) }}"
+                   data-npshr-m="{{ pump.get('npshr_m', 0) }}"
+                   data-pump-code="{{ pump['pump_code'] }}">
+                    
+                    <div class="pump-rank-badge acceptable">{{ loop.index }}</div>
+                    
+                    <div class="pump-identity">
+                        <div class="pump-code">{{ pump['pump_code'] }}</div>
+                        <div class="pump-type-tag">{{ pump['pump_type'] }}</div>
+                    </div>
+                    
+                    <div class="pump-metrics-inline">
+                        <div class="metric-item">
+                            <span class="metric-label-inline">EFF</span>
+                            <span class="metric-value-inline">
+                                {% if pump.get('efficiency_pct') is not none %}
+                                    {{ "%.1f"|format(pump.get('efficiency_pct')) }}%
+                                {% else %}
+                                    --%
+                                {% endif %}
+                            </span>
+                        </div>
+                        
+                        <div class="metric-item">
+                            <span class="metric-label-inline">PWR</span>
+                            <span class="metric-value-inline">
+                                {% if pump.get('power_kw') is not none %}
+                                    {{ "%.1f"|format(pump.get('power_kw')) }}kW
+                                {% else %}
+                                    --
+                                {% endif %}
+                            </span>
+                        </div>
+                        
+                        <div class="metric-item">
+                            <span class="metric-label-inline">NPSH</span>
+                            <span class="metric-value-inline">
+                                {% if pump.get('npshr_m') is not none %}
+                                    {{ "%.1f"|format(pump.get('npshr_m')) }}m
+                                {% else %}
+                                    --
+                                {% endif %}
+                            </span>
+                        </div>
+                        
+                        <div class="metric-item">
+                            <span class="metric-label-inline">TRIM</span>
+                            <span class="metric-value-inline">
+                                {% if pump.get('trim_percent') %}
+                                    {{ (100 - pump['trim_percent'])|round|int }}%
+                                {% else %}
+                                    0%
+                                {% endif %}
+                            </span>
+                        </div>
+                        
+                        <div class="metric-item">
+                            <span class="metric-label-inline">QBP</span>
+                            <span class="metric-value-inline">
+                                {% if pump.get('qbp_percent') %}
+                                    {{ pump['qbp_percent']|round|int }}%
+                                {% else %}
+                                    100%
+                                {% endif %}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="pump-score-compact">
+                        <span class="score-label-compact">Score</span>
+                        <span class="score-value-compact">{{ "%.1f"|format(pump.get('total_score', 0)) }}</span>
+                    </div>
+                    
+                    <button class="compare-btn-compact" 
+                            data-pump-code="{{ pump['pump_code'] }}"
+                            data-flow="{{ site_requirements['flow_m3hr'] }}"
+                            data-head="{{ site_requirements['head_m'] }}"
+                            onclick="event.preventDefault(); event.stopPropagation(); addToComparison(this);"
+                            title="Add to comparison">
+                        <i class="material-icons" style="font-size: 16px;">add_circle</i>
+                    </button>
+                    
+                    <i class="material-icons pump-arrow">chevron_right</i>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- TIER 4: Marginal Operating Range (Outside normal ranges or physical limitations) -->
+        {% if marginal_pumps %}
+        <div class="tier-section marginal-tier">
+            <h4 class="tier-title">
+                <i class="material-icons" style="color: #9e9e9e;">report_problem</i>
+                Marginal Options (Outside normal ranges or physical limitations)
+            </h4>
+            <p class="tier-subtitle">These pumps may have physical limitations or operate far outside normal ranges. Suitable only for specialized applications with engineering review.</p>
+            
+            <div class="pump-results-list compact-view" id="marginal-pump-list">
+                {% for pump in marginal_pumps %}
+                <a href="{{ url_for('reports.engineering_report', 
+                                  pump_code=pump['pump_code']) }}?flow={{ site_requirements['flow_m3hr'] }}&head={{ site_requirements['head_m'] }}&pump_type={{ site_requirements['pump_type'] }}" 
+                   class="pump-card-compact marginal-card"
+                   data-total-score="{{ pump.get('total_score', 0) }}"
+                   data-efficiency-pct="{{ pump.get('efficiency_pct', 0) }}"
+                   data-power-kw="{{ pump.get('power_kw', 0) }}"
+                   data-pump-type="{{ pump['pump_type'] }}"
+                   data-manufacturer="{{ pump['manufacturer'] }}"
+                   data-qbp-percent="{{ pump.get('qbp_percent', 0) }}"
+                   data-npshr-m="{{ pump.get('npshr_m', 0) }}"
+                   data-pump-code="{{ pump['pump_code'] }}">
+                    
+                    <div class="pump-rank-badge marginal">{{ loop.index }}</div>
+                    
+                    <div class="pump-identity">
+                        <div class="pump-code">{{ pump['pump_code'] }}</div>
+                        <div class="pump-type-tag">{{ pump['pump_type'] }}</div>
+                    </div>
+                    
+                    <div class="pump-metrics-inline">
+                        <div class="metric-item">
+                            <span class="metric-label-inline">EFF</span>
+                            <span class="metric-value-inline">
+                                {% if pump.get('efficiency_pct') is not none %}
+                                    {{ "%.1f"|format(pump.get('efficiency_pct')) }}%
+                                {% else %}
+                                    --%
+                                {% endif %}
+                            </span>
+                        </div>
+                        
+                        <div class="metric-item">
+                            <span class="metric-label-inline">PWR</span>
+                            <span class="metric-value-inline">
+                                {% if pump.get('power_kw') is not none %}
+                                    {{ "%.1f"|format(pump.get('power_kw')) }}kW
+                                {% else %}
+                                    --
+                                {% endif %}
+                            </span>
+                        </div>
+                        
+                        <div class="metric-item">
+                            <span class="metric-label-inline">NPSH</span>
+                            <span class="metric-value-inline">
+                                {% if pump.get('npshr_m') is not none %}
+                                    {{ "%.1f"|format(pump.get('npshr_m')) }}m
+                                {% else %}
+                                    --
+                                {% endif %}
+                            </span>
+                        </div>
+                        
+                        <div class="metric-item">
+                            <span class="metric-label-inline">TRIM</span>
+                            <span class="metric-value-inline">
+                                {% if pump.get('trim_percent') %}
+                                    {{ (100 - pump['trim_percent'])|round|int }}%
+                                {% else %}
+                                    0%
+                                {% endif %}
+                            </span>
+                        </div>
+                        
+                        <div class="metric-item">
+                            <span class="metric-label-inline">QBP</span>
+                            <span class="metric-value-inline">
+                                {% if pump.get('qbp_percent') %}
+                                    {{ pump['qbp_percent']|round|int }}%
+                                {% else %}
+                                    100%
+                                {% endif %}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="pump-score-compact">
+                        <span class="score-label-compact">Score</span>
+                        <span class="score-value-compact">{{ "%.1f"|format(pump.get('total_score', 0)) }}</span>
+                    </div>
+                    
+                    <button class="compare-btn-compact" 
+                            data-pump-code="{{ pump['pump_code'] }}"
+                            data-flow="{{ site_requirements['flow_m3hr'] }}"
+                            data-head="{{ site_requirements['head_m'] }}"
+                            onclick="event.preventDefault(); event.stopPropagation(); addToComparison(this);"
+                            title="Add to comparison">
+                        <i class="material-icons" style="font-size: 16px;">add_circle</i>
+                    </button>
+                    
+                    <i class="material-icons pump-arrow">chevron_right</i>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+        
         <!-- No Results Message -->
-        {% if not preferred_pumps and not allowable_pumps %}
+        {% if not preferred_pumps and not allowable_pumps and not acceptable_pumps and not marginal_pumps %}
         <div class="no-results-section">
             <div class="no-results-card">
                 <i class="material-icons" style="font-size: 48px; color: #bdbdbd;">search_off</i>
                 <h3>No Suitable Pumps Found</h3>
-                <p>No pumps found that can operate within the acceptable range (60-130% of BEP) for your requirements.</p>
+                <p>No pumps found that can meet your requirements across all operating ranges.</p>
                 <p><strong>Suggestions:</strong></p>
                 <ul>
                     <li>Consider adjusting your flow or head requirements</li>
@@ -384,6 +600,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const sortButtons = document.querySelectorAll('.sort-option');
     const preferredList = document.getElementById('preferred-pump-list');
     const allowableList = document.getElementById('allowable-pump-list');
+    const acceptableList = document.getElementById('acceptable-pump-list');
+    const marginalList = document.getElementById('marginal-pump-list');
     
     console.log('Pump sorting initialized');
     
