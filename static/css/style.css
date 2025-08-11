@@ -2876,7 +2876,7 @@ nav.unified-nav {
     position: fixed;
     top: 0;
     left: 0;
-    z-index: 1000;
+    z-index: 999;
     height: 64px;
 }
 
@@ -2939,14 +2939,18 @@ nav.unified-nav .nav-btn:hover {
     background-color: #f5f5f5;
 }
 
-/* Modern Minimal Breadcrumb System */
+/* Modern Minimal Breadcrumb System - Fixed positioning for mobile */
 .breadcrumb-container {
   padding: 12px 0 8px;
   border-bottom: 1px solid #F3F4F6;
   margin-bottom: 0;
-  margin-top: 0;
+  margin-top: 64px;
   background: #FAFBFC;
   font-size: 13px;
+  position: relative;
+  z-index: 1001 !important;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .breadcrumb {
@@ -3034,6 +3038,11 @@ nav.unified-nav .nav-btn:hover {
 
 .breadcrumb-current {
     color: #6c757d;
+}
+
+/* Body margin to account for fixed navigation */
+body {
+    margin-top: 64px !important;
 }
 
 /* Nav spacer to prevent content overlap */
