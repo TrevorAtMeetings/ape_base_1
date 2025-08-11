@@ -215,7 +215,7 @@ def update_calibration_factors():
         
         data = request.get_json()
         factors = data.get('factors', {})
-        user_id = data.get('user_id', 'admin')
+        user_id = str(data.get('user_id', 'web_admin'))  # Ensure string format
         
         # Validate physics parameters
         validation_errors = []
@@ -224,6 +224,10 @@ def update_calibration_factors():
             'bep_shift_head_exponent': (1.8, 2.5),
             'efficiency_correction_exponent': (0.05, 0.2)
         }
+        
+        # Validate user_id (must be non-empty string)
+        if not user_id or not user_id.strip():
+            validation_errors.append("user_id is required")
         
         for factor_name, value in factors.items():
             try:
@@ -266,9 +270,8 @@ def update_calibration_factors():
                 
                 conn.commit()
         
-        # Clear cache to force reload
-        admin_config_service._config_cache.clear()
-        admin_config_service._cache_timestamp = None
+        # Clear cache to force reload - use the proper invalidation method
+        admin_config_service._invalidate_cache()
         
         logger.info(f"Calibration factors updated by {user_id}: {factors}")
         return jsonify({'status': 'success', 'message': 'Calibration factors updated successfully'})

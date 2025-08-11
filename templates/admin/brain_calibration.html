@@ -298,9 +298,6 @@ function updateFactors() {
         return;
     }
     
-    // Add user context for audit logging
-    factors.user_id = 'web_admin';
-    
     fetch('/admin/brain/calibration/update', {
         method: 'POST',
         headers: {
