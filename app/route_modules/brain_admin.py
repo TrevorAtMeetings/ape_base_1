@@ -107,6 +107,98 @@ def brain_health():
             'timestamp': time.time()
         }), 503
 
+@brain_admin_bp.route('/admin/brain/calibration')
+def calibration_tool():
+    """Brain Calibration Tool - Tunable Physics Engine Interface"""
+    try:
+        breadcrumbs = [
+            {'label': 'Home', 'url': url_for('main_flow.index'), 'icon': 'home'},
+            {'label': 'Brain Dashboard', 'url': url_for('brain_admin.brain_dashboard'), 'icon': 'psychology'},
+            {'label': 'Calibration Tool', 'url': '#', 'icon': 'tune'}
+        ]
+        
+        # Get current calibration factors
+        from ..admin_config_service import admin_config_service
+        calibration_factors = admin_config_service.get_calibration_factors()
+        
+        return render_template('admin/brain_calibration.html', 
+                             calibration_factors=calibration_factors,
+                             breadcrumbs=breadcrumbs)
+        
+    except Exception as e:
+        logger.error(f"Error loading calibration tool: {e}")
+        flash(f'Error loading calibration tool: {str(e)}', 'error')
+        return redirect(url_for('brain_admin.brain_dashboard'))
+
+@brain_admin_bp.route('/admin/brain/calibration/run', methods=['POST'])
+def run_calibration():
+    """Run brain calibration test"""
+    try:
+        import sys
+        import os
+        sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+        
+        from tools.calibrate_brain import BrainCalibrator
+        
+        # Initialize calibrator
+        calibrator = BrainCalibrator()
+        
+        # Load test cases
+        calibrator.load_test_cases()
+        
+        # Run calibration test
+        results = calibrator.run_calibration_test()
+        
+        return jsonify({
+            'status': 'success',
+            'results': results,
+            'summary': results.get('summary_stats', {}),
+            'recommendations': results.get('recommendations', [])
+        })
+        
+    except Exception as e:
+        logger.error(f"Calibration test failed: {e}")
+        return jsonify({
+            'status': 'error',
+            'error': str(e)
+        }), 500
+
+@brain_admin_bp.route('/admin/brain/calibration/update', methods=['POST'])
+def update_calibration_factors():
+    """Update calibration factors"""
+    try:
+        from ..admin_config_service import admin_config_service
+        
+        data = request.get_json()
+        factors = data.get('factors', {})
+        
+        # Update each factor in the database
+        import psycopg2
+        from ..pump_repository import get_pump_repository
+        repository = get_pump_repository()
+        
+        with repository.db.get_connection() as conn:
+            with conn.cursor() as cursor:
+                for factor_name, value in factors.items():
+                    cursor.execute("""
+                        UPDATE admin_config.engineering_constants 
+                        SET value = %s 
+                        WHERE name = %s AND category = 'BEP Migration'
+                    """, (str(value), factor_name))
+                
+                conn.commit()
+        
+        # Clear cache to force reload
+        admin_config_service._config_cache.clear()
+        admin_config_service._cache_timestamp = None
+        
+        flash('Calibration factors updated successfully', 'success')
+        return jsonify({'status': 'success', 'message': 'Calibration factors updated'})
+        
+    except Exception as e:
+        logger.error(f"Failed to update calibration factors: {e}")
+        return jsonify({'status': 'error', 'error': str(e)}), 500
+
 @brain_admin_bp.route('/admin/brain/data-quality')
 def data_quality_dashboard():
     """Data Quality Management Dashboard"""

@@ -96,6 +96,33 @@
         </div>
     </div>
 
+    <!-- Tunable Physics Engine Section -->
+    <div class="row">
+        <div class="col s12">
+            <div class="card">
+                <div class="card-content">
+                    <span class="card-title">
+                        <i class="material-icons left">tune</i>
+                        Tunable Physics Engine
+                    </span>
+                    <p>Calibrate the Brain's physics model for BEP migration calculations. Compare against manufacturer data, analyze accuracy, and tune calibration factors for optimal performance.</p>
+                    <div class="chip orange lighten-4">
+                        <span class="orange-text text-darken-2">NEW</span>
+                    </div>
+                </div>
+                <div class="card-action">
+                    <a href="{{ url_for('brain_admin.calibration_tool') }}" class="btn orange">
+                        <i class="material-icons left">tune</i>
+                        Calibration Tool
+                    </a>
+                    <a href="#" class="btn-flat orange-text" onclick="runQuickCalibration()">
+                        Quick Test
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Brain Logic Workbench Section -->
     <div class="row">
         <div class="col s12">

@@ -1,0 +1,372 @@
+{% extends "admin/base.html" %}
+
+{% block admin_title %}Brain Calibration Tool - Tunable Physics Engine{% endblock %}
+
+{% block admin_content %}
+<div class="container" style="margin-top: 20px;">
+    <!-- Page Header -->
+    <div class="row">
+        <div class="col s12">
+            <div class="card-panel orange lighten-5">
+                <h4 class="orange-text text-darken-2">
+                    <i class="material-icons left">tune</i>
+                    Tunable Physics Engine Calibration
+                </h4>
+                <p>Calibrate BEP migration physics parameters against manufacturer data for optimal accuracy.</p>
+                <div class="chip orange lighten-4">
+                    <span class="orange-text text-darken-2">Enterprise-Grade Configuration Platform</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Current Calibration Factors -->
+    <div class="row">
+        <div class="col s12">
+            <div class="card">
+                <div class="card-content">
+                    <span class="card-title">
+                        <i class="material-icons left">settings</i>
+                        Current Calibration Factors
+                    </span>
+                    <div class="row">
+                        <div class="col s12 m4">
+                            <div class="card-panel blue lighten-5">
+                                <h6>BEP Flow Exponent</h6>
+                                <h4 class="blue-text">{{ calibration_factors.bep_shift_flow_exponent }}</h4>
+                                <p class="grey-text text-darken-1">Controls flow migration rate during impeller trimming</p>
+                                <small>Formula: BEP_Q₂ = BEP_Q₁ × (D₂/D₁)^x</small>
+                            </div>
+                        </div>
+                        <div class="col s12 m4">
+                            <div class="card-panel green lighten-5">
+                                <h6>BEP Head Exponent</h6>
+                                <h4 class="green-text">{{ calibration_factors.bep_shift_head_exponent }}</h4>
+                                <p class="grey-text text-darken-1">Controls head migration rate during impeller trimming</p>
+                                <small>Formula: BEP_H₂ = BEP_H₁ × (D₂/D₁)^y</small>
+                            </div>
+                        </div>
+                        <div class="col s12 m4">
+                            <div class="card-panel purple lighten-5">
+                                <h6>Efficiency Correction</h6>
+                                <h4 class="purple-text">{{ calibration_factors.efficiency_correction_exponent }}</h4>
+                                <p class="grey-text text-darken-1">Efficiency penalty factor for off-BEP operation</p>
+                                <small>Formula: η_penalty = (|QBP - 100|) × z</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-action">
+                    <a href="#edit-factors-modal" class="btn blue modal-trigger">
+                        <i class="material-icons left">edit</i>
+                        Edit Factors
+                    </a>
+                    <a href="#" class="btn-flat blue-text" onclick="resetToDefaults()">
+                        Reset to Defaults
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Calibration Test Section -->
+    <div class="row">
+        <div class="col s12 l8">
+            <div class="card">
+                <div class="card-content">
+                    <span class="card-title">
+                        <i class="material-icons left">assessment</i>
+                        Calibration Test & Validation
+                    </span>
+                    <p>Run comprehensive tests against manufacturer data to validate physics model accuracy.</p>
+                    
+                    <div id="calibration-status" class="hide">
+                        <div class="progress">
+                            <div class="indeterminate orange"></div>
+                        </div>
+                        <p class="center-align">Running calibration test...</p>
+                    </div>
+                    
+                    <div id="calibration-results" class="hide">
+                        <!-- Results will be populated by JavaScript -->
+                    </div>
+                </div>
+                <div class="card-action">
+                    <a href="#" class="btn orange" onclick="runCalibrationTest()">
+                        <i class="material-icons left">play_arrow</i>
+                        Run Calibration Test
+                    </a>
+                    <a href="#" class="btn-flat orange-text" onclick="downloadResults()" id="download-btn" style="display: none;">
+                        <i class="material-icons left">download</i>
+                        Download Report
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Quick Actions -->
+        <div class="col s12 l4">
+            <div class="card">
+                <div class="card-content">
+                    <span class="card-title">Quick Actions</span>
+                    <div class="collection">
+                        <a href="#" class="collection-item" onclick="runQuickTest()">
+                            <i class="material-icons left">speed</i>
+                            Quick Test (5 pumps)
+                        </a>
+                        <a href="#" class="collection-item" onclick="validateCurrentSettings()">
+                            <i class="material-icons left">check_circle</i>
+                            Validate Settings
+                        </a>
+                        <a href="#" class="collection-item" onclick="generateReport()">
+                            <i class="material-icons left">description</i>
+                            Generate Report
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Physics Guidelines -->
+            <div class="card">
+                <div class="card-content">
+                    <span class="card-title">Physics Guidelines</span>
+                    <table class="striped">
+                        <tbody>
+                            <tr>
+                                <td>Flow Exponent</td>
+                                <td>1.0 - 1.5</td>
+                            </tr>
+                            <tr>
+                                <td>Head Exponent</td>
+                                <td>1.8 - 2.5</td>
+                            </tr>
+                            <tr>
+                                <td>Efficiency Factor</td>
+                                <td>0.05 - 0.2</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <p class="grey-text small">Typical ranges for industrial centrifugal pumps</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Factors Modal -->
+<div id="edit-factors-modal" class="modal">
+    <div class="modal-content">
+        <h4>Edit Calibration Factors</h4>
+        <form id="factors-form">
+            <div class="row">
+                <div class="input-field col s12">
+                    <input id="flow_exponent" type="number" step="0.01" min="1.0" max="1.5" 
+                           value="{{ calibration_factors.bep_shift_flow_exponent }}">
+                    <label for="flow_exponent">BEP Flow Exponent</label>
+                    <span class="helper-text">Range: 1.0 - 1.5 (typical: 1.2)</span>
+                </div>
+            </div>
+            <div class="row">
+                <div class="input-field col s12">
+                    <input id="head_exponent" type="number" step="0.01" min="1.8" max="2.5" 
+                           value="{{ calibration_factors.bep_shift_head_exponent }}">
+                    <label for="head_exponent">BEP Head Exponent</label>
+                    <span class="helper-text">Range: 1.8 - 2.5 (typical: 2.2)</span>
+                </div>
+            </div>
+            <div class="row">
+                <div class="input-field col s12">
+                    <input id="efficiency_factor" type="number" step="0.01" min="0.05" max="0.2" 
+                           value="{{ calibration_factors.efficiency_correction_exponent }}">
+                    <label for="efficiency_factor">Efficiency Correction Factor</label>
+                    <span class="helper-text">Range: 0.05 - 0.2 (typical: 0.1)</span>
+                </div>
+            </div>
+        </form>
+    </div>
+    <div class="modal-footer">
+        <a href="#" class="modal-close waves-effect btn-flat">Cancel</a>
+        <a href="#" class="waves-effect btn orange" onclick="updateFactors()">Update Factors</a>
+    </div>
+</div>
+
+<script>
+// Calibration tool JavaScript functions
+function runCalibrationTest() {
+    document.getElementById('calibration-status').classList.remove('hide');
+    document.getElementById('calibration-results').classList.add('hide');
+    
+    fetch('/admin/brain/calibration/run', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById('calibration-status').classList.add('hide');
+        
+        if (data.status === 'success') {
+            displayResults(data.results);
+            document.getElementById('download-btn').style.display = 'inline-block';
+        } else {
+            M.toast({html: 'Calibration test failed: ' + data.error, classes: 'red'});
+        }
+    })
+    .catch(error => {
+        document.getElementById('calibration-status').classList.add('hide');
+        M.toast({html: 'Error running calibration test: ' + error, classes: 'red'});
+    });
+}
+
+function displayResults(results) {
+    const resultsDiv = document.getElementById('calibration-results');
+    const stats = results.summary_stats;
+    
+    let html = `
+        <div class="card-panel">
+            <h6>Calibration Test Results</h6>
+            <div class="row">
+                <div class="col s6 m3">
+                    <div class="statistic">
+                        <h4 class="blue-text">${stats.success_rate?.toFixed(1) || 0}%</h4>
+                        <p>Success Rate</p>
+                    </div>
+                </div>
+                <div class="col s6 m3">
+                    <div class="statistic">
+                        <h4 class="green-text">${stats.average_flow_error?.toFixed(2) || 0}%</h4>
+                        <p>Avg Flow Error</p>
+                    </div>
+                </div>
+                <div class="col s6 m3">
+                    <div class="statistic">
+                        <h4 class="orange-text">${stats.average_head_error?.toFixed(2) || 0}%</h4>
+                        <p>Avg Head Error</p>
+                    </div>
+                </div>
+                <div class="col s6 m3">
+                    <div class="statistic">
+                        <h4 class="purple-text">${stats.overall_grade?.toUpperCase() || 'UNKNOWN'}</h4>
+                        <p>Overall Grade</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    if (results.recommendations && results.recommendations.length > 0) {
+        html += '<div class="card-panel yellow lighten-4"><h6>Recommendations</h6><ul class="collection">';
+        results.recommendations.forEach(rec => {
+            if (rec.parameter) {
+                html += `<li class="collection-item">
+                    <strong>${rec.parameter}:</strong> ${rec.current_value} → ${rec.recommended_value}
+                    <br><small class="grey-text">${rec.reason}</small>
+                </li>`;
+            } else {
+                html += `<li class="collection-item">${rec.message || rec.action}</li>`;
+            }
+        });
+        html += '</ul></div>';
+    }
+    
+    resultsDiv.innerHTML = html;
+    resultsDiv.classList.remove('hide');
+}
+
+function updateFactors() {
+    const factors = {
+        bep_shift_flow_exponent: parseFloat(document.getElementById('flow_exponent').value),
+        bep_shift_head_exponent: parseFloat(document.getElementById('head_exponent').value),
+        efficiency_correction_exponent: parseFloat(document.getElementById('efficiency_factor').value)
+    };
+    
+    fetch('/admin/brain/calibration/update', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({factors: factors})
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            M.toast({html: 'Calibration factors updated successfully', classes: 'green'});
+            location.reload(); // Reload to show updated values
+        } else {
+            M.toast({html: 'Error updating factors: ' + data.error, classes: 'red'});
+        }
+    });
+    
+    const modal = M.Modal.getInstance(document.getElementById('edit-factors-modal'));
+    modal.close();
+}
+
+function runQuickTest() {
+    M.toast({html: 'Running quick test...', classes: 'blue'});
+    // Implement quick test logic
+}
+
+function validateCurrentSettings() {
+    M.toast({html: 'Validating current settings...', classes: 'orange'});
+    // Implement validation logic
+}
+
+function generateReport() {
+    M.toast({html: 'Generating calibration report...', classes: 'purple'});
+    // Implement report generation
+}
+
+function resetToDefaults() {
+    if (confirm('Reset all calibration factors to default values?')) {
+        const defaults = {
+            bep_shift_flow_exponent: 1.2,
+            bep_shift_head_exponent: 2.2,
+            efficiency_correction_exponent: 0.1
+        };
+        
+        fetch('/admin/brain/calibration/update', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({factors: defaults})
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                M.toast({html: 'Factors reset to defaults', classes: 'green'});
+                location.reload();
+            }
+        });
+    }
+}
+
+function downloadResults() {
+    // Implement results download
+    M.toast({html: 'Downloading calibration report...', classes: 'blue'});
+}
+
+// Initialize page
+document.addEventListener('DOMContentLoaded', function() {
+    const elems = document.querySelectorAll('.modal');
+    M.Modal.init(elems);
+});
+</script>
+
+<style>
+.statistic {
+    text-align: center;
+    padding: 10px;
+}
+.statistic h4 {
+    margin: 0;
+    font-weight: bold;
+}
+.statistic p {
+    margin: 5px 0 0 0;
+    color: #666;
+    font-size: 0.9rem;
+}
+</style>
+{% endblock admin_content %}
