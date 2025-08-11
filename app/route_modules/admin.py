@@ -373,11 +373,24 @@ def _get_bep_analysis(pump, pump_repo):
         logger.error(f"DEBUG: Pump {pump_code} has {len(curves)} curves available")
         
         # Check which curves can cover the BEP point
-        for curve in curves:
-            flow_data = curve.get('flow_data', [])
-            head_data = curve.get('head_data', [])
-            impeller_mm = curve.get('impeller_diameter_mm', 0)
+        for i, curve in enumerate(curves):
+            logger.error(f"DEBUG: Curve {i} structure: {list(curve.keys()) if isinstance(curve, dict) else 'Not a dict'}")
             
+            # Try different possible field names for flow/head data
+            flow_data = curve.get('flow_data', curve.get('flows', curve.get('flow_points', [])))
+            head_data = curve.get('head_data', curve.get('heads', curve.get('head_points', [])))
+            impeller_mm = curve.get('impeller_diameter_mm', curve.get('diameter_mm', curve.get('diameter', 0)))
+            
+            # Check performance_points structure if individual arrays aren't available
+            if not flow_data or not head_data:
+                performance_points = curve.get('performance_points', [])
+                if performance_points:
+                    flows = [p.get('flow_m3hr', p.get('flow_rate', p.get('flow', 0))) for p in performance_points if isinstance(p, dict)]
+                    heads = [p.get('head_m', p.get('head', 0)) for p in performance_points if isinstance(p, dict)]
+                    if flows and heads:
+                        flow_data, head_data = flows, heads
+                        logger.error(f"DEBUG: Curve {i} extracted from performance_points: {len(flows)} flow points, {len(heads)} head points")
+                
             if flow_data and head_data:
                 min_flow, max_flow = min(flow_data), max(flow_data)
                 min_head, max_head = min(head_data), max(head_data)
@@ -386,6 +399,8 @@ def _get_bep_analysis(pump, pump_repo):
                 head_covered = min_head <= bep_head <= max_head if bep_head else False
                 
                 logger.error(f"DEBUG: {impeller_mm}mm curve: Flow {min_flow}-{max_flow} ({'covers BEP' if flow_covered else 'NO BEP coverage'}), Head {min_head}-{max_head} ({'covers BEP' if head_covered else 'NO BEP coverage'})")
+            else:
+                logger.error(f"DEBUG: Curve {i} ({impeller_mm}mm): No flow/head data found")
                 
         logger.info(f"Database BEP specifications for {pump_code}: Flow={bep_flow}, Head={bep_head}, Efficiency={bep_efficiency}")
         
