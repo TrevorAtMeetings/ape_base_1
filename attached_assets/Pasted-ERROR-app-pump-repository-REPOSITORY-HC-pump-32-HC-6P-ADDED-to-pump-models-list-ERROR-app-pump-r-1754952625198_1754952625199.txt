@@ -1,0 +1,47 @@
+ERROR:app.pump_repository:✅ [REPOSITORY] HC pump 32 HC 6P ADDED to pump_models list
+ERROR:app.pump_repository:Repository: Could not derive min/max impeller for 8312-30 A333T from curves or specifications.
+INFO:app.pump_repository:Repository: Successfully loaded 386 pump models from PostgreSQL
+ERROR:app.pump_repository:🎯 [REPOSITORY FINAL] Found 3 HC pumps in final pump_models list
+ERROR:app.pump_repository:🎯 [REPOSITORY FINAL] 28 HC 6P: BEP 1644.72 m³/hr @ 24.16m
+ERROR:app.pump_repository:🎯 [REPOSITORY FINAL] 30 HC 6P: BEP 2182.05 m³/hr @ 29.35m
+ERROR:app.pump_repository:🎯 [REPOSITORY FINAL] 32 HC 6P: BEP 2435.99 m³/hr @ 35.83m
+INFO:app.pump_repository:Repository: Total curves: 869
+INFO:app.pump_repository:Repository: Total points: 6273
+INFO:app.pump_repository:Repository: NPSH curves: 612
+INFO:app.pump_repository:Repository: Tables used: ['engineering_constants', 'extras', 'processed_files', 'pump_curves', 'pump_diameters', 'pump_eff_iso', 'pump_names', 'pump_performance_points', 'pump_specifications', 'pump_speeds', 'pumps']
+INFO:app.pump_brain:Brain: Generated pump list with 386 pumps
+WARNING:app.pump_brain:Brain.get_all_pump_codes took 771.22ms
+INFO:werkzeug:10.83.2.4 - - [11/Aug/2025 22:48:02] "GET /api/pump_list HTTP/1.1" 200 -
+INFO:werkzeug:10.83.6.21 - - [11/Aug/2025 22:49:20] "GET /admin/testing HTTP/1.1" 200 -
+INFO:werkzeug:10.83.6.21 - - [11/Aug/2025 22:49:20] "GET /static/css/style.css?v=8803 HTTP/1.1" 200 -
+INFO:werkzeug:10.83.4.96 - - [11/Aug/2025 22:49:21] "GET /static/css/professional-theme.css?v=4635 HTTP/1.1" 200 -
+INFO:werkzeug:10.83.6.21 - - [11/Aug/2025 22:49:21] "GET /static/css/admin_executive_theme.css?v=2907 HTTP/1.1" 200 -
+INFO:werkzeug:10.83.5.4 - - [11/Aug/2025 22:49:21] "GET /static/css/responsive-fixes.css?v=2555 HTTP/1.1" 200 -
+INFO:werkzeug:10.83.5.4 - - [11/Aug/2025 22:49:21] "GET /static/css/floating-ai-chat.css?v=7789 HTTP/1.1" 200 -
+INFO:werkzeug:10.83.6.21 - - [11/Aug/2025 22:49:21] "GET /static/js/icon-loader.js HTTP/1.1" 304 -
+INFO:werkzeug:10.83.4.96 - - [11/Aug/2025 22:49:21] "GET /static/js/force-icon-refresh.js HTTP/1.1" 304 -
+INFO:werkzeug:10.83.4.96 - - [11/Aug/2025 22:49:21] "GET /static/js/main.js HTTP/1.1" 304 -
+INFO:werkzeug:10.83.5.4 - - [11/Aug/2025 22:49:21] "GET /static/js/micro-interactions.js HTTP/1.1" 304 -
+INFO:werkzeug:10.83.5.4 - - [11/Aug/2025 22:49:22] "GET /static/js/floating-ai-chat.js HTTP/1.1" 304 -
+INFO:werkzeug:10.83.4.96 - - [11/Aug/2025 22:49:23] "GET /api/features/status HTTP/1.1" 200 -
+INFO:werkzeug:10.83.4.96 - - [11/Aug/2025 22:49:23] "GET /api/pump_list HTTP/1.1" 200 -
+INFO:werkzeug:10.83.5.4 - - [11/Aug/2025 22:49:27] "GET /api/pumps/search?q=28 HTTP/1.1" 200 -
+INFO:werkzeug:10.83.5.4 - - [11/Aug/2025 22:49:28] "GET /api/pumps/search?q=28 HTTP/1.1" 200 -
+INFO:app.route_modules.admin:Running BEP testing mode for pump: 20 WLN 28B 6P
+INFO:app.route_modules.admin:Database BEP specifications for 20 WLN 28B 6P: Flow=4645.47, Head=63.03, Efficiency=None
+WARNING:app.route_modules.admin:No database performance data for 20 WLN 28B 6P at 4645.47 m³/hr, 63.03 m
+ERROR:app.route_modules.admin:Error getting authentic BEP data for 20 WLN 28B 6P: 'dict' object has no attribute 'pump_code'
+ERROR:app.route_modules.admin:Error in performance test: 'dict' object has no attribute 'pump_code'
+INFO:werkzeug:10.83.2.4 - - [11/Aug/2025 22:49:32] "POST /admin/testing HTTP/1.1" 200 -
+INFO:werkzeug:10.83.2.4 - - [11/Aug/2025 22:49:33] "GET /static/css/style.css?v=8548 HTTP/1.1" 200 -
+INFO:werkzeug:10.83.2.4 - - [11/Aug/2025 22:49:33] "GET /static/css/admin_executive_theme.css?v=4427 HTTP/1.1" 200 -
+INFO:werkzeug:10.83.2.4 - - [11/Aug/2025 22:49:33] "GET /static/css/professional-theme.css?v=7579 HTTP/1.1" 200 -
+INFO:werkzeug:10.83.4.96 - - [11/Aug/2025 22:49:33] "GET /static/css/responsive-fixes.css?v=5376 HTTP/1.1" 200 -
+INFO:werkzeug:10.83.2.4 - - [11/Aug/2025 22:49:33] "GET /static/css/floating-ai-chat.css?v=8017 HTTP/1.1" 200 -
+INFO:werkzeug:10.83.2.4 - - [11/Aug/2025 22:49:34] "GET /static/js/icon-loader.js HTTP/1.1" 304 -
+INFO:werkzeug:10.83.4.96 - - [11/Aug/2025 22:49:34] "GET /static/js/force-icon-refresh.js HTTP/1.1" 304 -
+INFO:werkzeug:10.83.2.4 - - [11/Aug/2025 22:49:34] "GET /static/js/main.js HTTP/1.1" 304 -
+INFO:werkzeug:10.83.2.4 - - [11/Aug/2025 22:49:34] "GET /static/js/micro-interactions.js HTTP/1.1" 304 -
+INFO:werkzeug:10.83.2.4 - - [11/Aug/2025 22:49:34] "GET /static/js/floating-ai-chat.js HTTP/1.1" 304 -
+INFO:werkzeug:10.83.4.96 - - [11/Aug/2025 22:49:41] "GET /api/features/status HTTP/1.1" 200 -
+INFO:werkzeug:10.83.4.96 - - [11/Aug/2025 22:49:41] "GET /api/pump_list HTTP/1.1" 200 -

@@ -270,9 +270,8 @@ def _get_database_performance(pump, flow_rate, head):
         logger.warning(f"No database performance data for {pump_code} at {flow_rate} m³/hr, {head} m")
         pump_curves = _get_pump_attr(pump, 'curves', [])
         logger.debug(f"Available curves for {pump_code}: {len(pump_curves) if pump_curves else 0}")
-        
-        if pump.curves:
-            for i, curve in enumerate(pump.curves):
+        if pump_curves:
+            for i, curve in enumerate(pump_curves):
                 points = curve.get('performance_points', [])
                 if points:
                     flow_range = f"{min(p.get('flow_m3hr', 0) for p in points):.0f}-{max(p.get('flow_m3hr', 0) for p in points):.0f}"
@@ -282,7 +281,8 @@ def _get_database_performance(pump, flow_rate, head):
         return {'efficiency': None, 'power_kw': None, 'npshr_m': None}
         
     except Exception as e:
-        logger.warning(f"Database performance calculation failed for {pump.pump_code}: {str(e)}")
+        pump_code = _get_pump_attr(pump, 'pump_code')
+        logger.warning(f"Database performance calculation failed for {pump_code}: {str(e)}")
         import traceback
         logger.debug(f"Full traceback: {traceback.format_exc()}")
         return {'efficiency': None, 'power_kw': None, 'npshr_m': None}
@@ -291,9 +291,14 @@ def _get_ui_performance(pump, flow_rate, head):
     """Get UI calculated performance using catalog engine's full methodology"""
     try:
         # Primary method: Use catalog engine's unified evaluation method
-        ui_solution = pump.find_best_solution_for_duty(flow_rate, head)
+        pump_code = _get_pump_attr(pump, 'pump_code')
+        if isinstance(pump, dict):
+            # For dictionary format, we can't call methods directly - need Brain system
+            ui_solution = None  # Dictionary format doesn't have find_best_solution_for_duty method
+        else:
+            ui_solution = pump.find_best_solution_for_duty(flow_rate, head)
         
-        logger.info(f"UI solution for {pump.pump_code}: {ui_solution}")
+        logger.info(f"UI solution for {pump_code}: {ui_solution}")
         
         # Check if we have a complete solution with performance data
         if ui_solution and ui_solution.get('score') is not None:
@@ -302,7 +307,7 @@ def _get_ui_performance(pump, flow_rate, head):
             if 'performance' in ui_solution:
                 performance = ui_solution['performance']
                 
-            logger.info(f"UI performance data for {pump.pump_code}: {performance}")
+            logger.info(f"UI performance data for {pump_code}: {performance}")
             
             # Fix NPSH handling - 0.0 is valid NPSH data, not "no data"
             npsh_value = performance.get('npshr_m')
@@ -321,7 +326,7 @@ def _get_ui_performance(pump, flow_rate, head):
             }
         else:
             # CRITICAL: NO FALLBACKS ALLOWED - UI method failed, report authentic failure
-            error_msg = f"CRITICAL: UI calculation failed for {pump.pump_code} at {flow_rate} m³/hr, {head} m - operating point outside pump design envelope or insufficient data quality"
+            error_msg = f"CRITICAL: UI calculation failed for {pump_code} at {flow_rate} m³/hr, {head} m - operating point outside pump design envelope or insufficient data quality"
             logger.error(error_msg)
             
             # Return clear failure instead of fake interpolation to maintain data integrity
@@ -336,7 +341,8 @@ def _get_ui_performance(pump, flow_rate, head):
             }
         
     except Exception as e:
-        logger.warning(f"Could not get UI performance for {pump.pump_code}: {str(e)}")
+        pump_code = _get_pump_attr(pump, 'pump_code')
+        logger.warning(f"Could not get UI performance for {pump_code}: {str(e)}")
         return {
             'efficiency_pct': None,
             'power_kw': None, 
@@ -638,9 +644,10 @@ def _determine_status(efficiency_delta, power_delta, npsh_delta, pump=None):
     minor_diff = False
     
     # Pump-specific efficiency thresholds based on pump characteristics
-    if pump and hasattr(pump, 'specifications'):
+    pump_specifications = _get_pump_attr(pump, 'specifications', {})
+    if pump and pump_specifications:
         # Use pump-specific thresholds if available, otherwise conservative defaults
-        max_power = pump.specifications.get('max_power_kw', 10)  # kW
+        max_power = pump_specifications.get('max_power_kw', 10)  # kW
         if max_power and max_power > 0:
             # Scale power thresholds based on pump size
             major_power_threshold = max(2.0, max_power * 0.1)  # 10% of max power or 2kW minimum
