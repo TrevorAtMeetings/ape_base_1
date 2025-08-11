@@ -220,7 +220,7 @@ def update_calibration_factors():
         # Validate physics parameters - EXPANDED RANGES for comprehensive testing
         validation_errors = []
         physics_bounds = {
-            'bep_shift_flow_exponent': (1.0, 1.5),
+            'bep_shift_flow_exponent': (1.0, 2.0),  # EXPANDED: 1.0-1.5 → 1.0-2.0
             'bep_shift_head_exponent': (1.0, 3.0),  # EXPANDED: 1.8-2.5 → 1.0-3.0
             'efficiency_correction_exponent': (0.01, 0.5)  # EXPANDED: 0.05-0.2 → 0.01-0.5
         }

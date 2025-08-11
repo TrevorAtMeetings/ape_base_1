@@ -65,9 +65,9 @@ class PerformanceAnalyzer:
             logger.warning(f"[TUNABLE PHYSICS] Failed to load calibration factors, using defaults: {e}")
             # Safe defaults if config service is unavailable
             self.calibration_factors = {
-                'bep_shift_flow_exponent': 1.2,
-                'bep_shift_head_exponent': 2.2,
-                'efficiency_correction_exponent': 0.1
+                'bep_shift_flow_exponent': 1.0,  # Updated to match expanded range defaults
+                'bep_shift_head_exponent': 2.0,  # Updated to match expanded range defaults
+                'efficiency_correction_exponent': 0.05  # Updated to match expanded range defaults
             }
     
     def get_calibration_factor(self, factor_name: str, default_value: float = 1.0) -> float:
