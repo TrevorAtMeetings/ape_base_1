@@ -37,8 +37,17 @@ class SelectionIntelligence:
         self.min_trim_percent = 85.0
         self.max_trim_percent = 100.0
         self.npsh_safety_factor = 1.5
-        self.qbp_min_percent = 60.0
-        self.qbp_max_percent = 130.0
+        
+        # Load QBP ranges from configuration (more realistic for industrial applications)
+        try:
+            from ..admin_config_service import admin_config_service
+            self.qbp_min_percent = float(admin_config_service.get_value('qbp_min_percent', '50.0'))
+            self.qbp_max_percent = float(admin_config_service.get_value('qbp_max_percent', '200.0'))
+            logger.debug(f"[SELECTION] Loaded QBP range: {self.qbp_min_percent}-{self.qbp_max_percent}%")
+        except Exception as e:
+            logger.warning(f"[SELECTION] Failed to load QBP ranges from config, using defaults: {e}")
+            self.qbp_min_percent = 50.0  # More realistic than 60%
+            self.qbp_max_percent = 200.0  # More realistic than 130%
         
         # FIXED: Head oversizing constraints - much more realistic thresholds
         self.head_oversizing_threshold = 150.0  # % above requirement triggers penalty (was 40%)
