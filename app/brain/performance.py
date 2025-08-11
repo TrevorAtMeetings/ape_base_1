@@ -215,8 +215,7 @@ class PerformanceAnalyzer:
                 return None, None
             
             # STEP 4: Enhanced validation - verify result makes physical sense
-            # Calculate what head this diameter would actually deliver using tunable physics
-            head_exponent = self.get_calibration_factor('bep_shift_head_exponent', 2.0)
+            # Calculate what head this diameter would actually deliver using SAME trim-dependent physics
             verification_head = base_head_at_flow * (diameter_ratio ** head_exponent)
             error_percent = abs(verification_head - target_head) / target_head * 100
             
@@ -764,10 +763,11 @@ class PerformanceAnalyzer:
                             
                             # Research-based NPSH degradation for heavy trimming (>10%)
                             npsh_threshold = self.get_calibration_factor('npsh_degradation_threshold', 10.0)
-                            if trim_percent < (100 - npsh_threshold):  # More than 10% trim
+                            if trim_percent is not None and trim_percent < (100 - npsh_threshold):  # More than 10% trim
                                 npsh_degradation_factor = self.get_calibration_factor('npsh_degradation_factor', 1.15)
                                 interpolated_npshr *= npsh_degradation_factor
-                                logger.warning(f"[NPSH DEGRADATION] {pump_code}: Heavy trim ({100-trim_percent:.1f}%) - NPSH increased by {(npsh_degradation_factor-1)*100:.1f}%")
+                                actual_trim_amount = 100 - trim_percent if trim_percent is not None else 0
+                                logger.warning(f"[NPSH DEGRADATION] {pump_code}: Heavy trim ({actual_trim_amount:.1f}%) - NPSH increased by {(npsh_degradation_factor-1)*100:.1f}%")
                 except:
                     pass
                 

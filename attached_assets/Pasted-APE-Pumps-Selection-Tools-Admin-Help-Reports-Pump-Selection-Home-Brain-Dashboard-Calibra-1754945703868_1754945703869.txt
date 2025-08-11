@@ -1,0 +1,92 @@
+APE Pumps Selection
+
+Tools ▾
+
+Admin ▾
+
+Help ▾
+
+Reports ▾
+Pump Selection
+Home
+Brain Dashboard
+Calibration Tool
+auto_awesomeBrain System Administration
+System Active
+dashboardOverview
+assessmentData Quality
+editCorrections
+scienceWorkbench
+tuneTunable Physics Engine Calibration
+Calibrate BEP migration physics parameters against manufacturer data for optimal accuracy.
+
+Enterprise-Grade Configuration Platform
+settingsCurrent Calibration Factors
+BEP Flow Exponent
+1.2
+Controls flow migration rate during impeller trimming
+
+Formula: BEP_Q₂ = BEP_Q₁ × (D₂/D₁)^x
+BEP Head Exponent
+2.2
+Controls head migration rate during impeller trimming
+
+Formula: BEP_H₂ = BEP_H₁ × (D₂/D₁)^y
+Efficiency Correction
+0.1
+Efficiency penalty factor for off-BEP operation
+
+Formula: η_penalty = (|QBP - 100|) × z
+editEdit Factors Reset to Defaults
+assessmentCalibration Test & Validation
+Run comprehensive tests against manufacturer data to validate physics model accuracy.
+
+play_arrowRun Calibration Test
+Quick Actions
+speedQuick Test (5 pumps)
+check_circleValidate Settings
+descriptionGenerate Report
+Physics Guidelines & Effect Guide
+Flow Exponent
+BEP flow shift factor	1.0 - 2.0
+↑ Higher = More flow shift during trimming
+↓ Lower = Less flow shift during trimming
+Head Exponent
+Impeller diameter calculation	1.0 - 3.0
+↑ Higher (2.5-3.0) = Smaller diameter changes
+↓ Lower (1.0-1.5) = MAJOR diameter changes
+Efficiency Factor
+Power calculation impact	0.01 - 0.5
+↑ Higher (0.3-0.5) = MAJOR power impact
+↓ Lower (0.01-0.1) = Minimal power impact
+Test Extreme Values
+Head Exp: 1.2
+Major impeller size changes
+
+Head Exp: 2.8
+Minimal impeller changes
+
+Standard Values
+Flow: 1.2
+Balanced flow migration
+
+Head: 2.0
+Standard affinity law
+
+Power Testing
+Efficiency: 0.4
+High power sensitivity
+
+Efficiency: 0.05
+Low power sensitivity
+
+APE Pumps
+AI-powered pump selection and sizing solutions for industrial applications.
+
+Quick Links
+Pump Selection
+Technical Support
+Documentation
+© 2025 APE Pumps. All rights reserved.Privacy Policy
+auto_awesome
+Calibration test failed: 400 Bad Request: Failed to decode JSON object: Expecting value: line 1 column 1 (char 0)
