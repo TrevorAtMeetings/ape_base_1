@@ -375,7 +375,36 @@ def _get_bep_analysis(pump, pump_repo):
         bep_head = specifications.get('bep_head_m') 
         bep_efficiency = None  # BEP efficiency not stored as separate specification - would need calculation from curves
         
-        logger.error(f"DEBUG: Extracted BEP data - Flow: {bep_flow}, Head: {bep_head}")
+        # FIXED: If specifications are empty, query database directly
+        if not bep_flow or not bep_head:
+            logger.error(f"DEBUG: Specifications empty for {pump_code}, querying database directly")
+            try:
+                # Query database directly for BEP data
+                import psycopg2
+                import os
+                
+                conn = psycopg2.connect(os.environ.get('DATABASE_URL'))
+                cursor = conn.cursor()
+                cursor.execute("""
+                    SELECT ps.bep_flow_m3hr, ps.bep_head_m
+                    FROM pump_specifications ps
+                    JOIN pumps p ON ps.pump_id = p.id
+                    WHERE p.pump_code = %s
+                """, (pump_code,))
+                result = cursor.fetchone()
+                cursor.close()
+                conn.close()
+                
+                if result:
+                    bep_flow, bep_head = result
+                    logger.error(f"DEBUG: Retrieved BEP from database - Flow: {bep_flow}, Head: {bep_head}")
+                else:
+                    logger.error(f"DEBUG: No BEP data found in database for {pump_code}")
+                    
+            except Exception as db_error:
+                logger.error(f"DEBUG: Database query failed for {pump_code}: {db_error}")
+        
+        logger.error(f"DEBUG: Final BEP data - Flow: {bep_flow}, Head: {bep_head}")
         
         # Now using Brain system for all calculations - no manual curve debugging needed
                 
@@ -383,8 +412,10 @@ def _get_bep_analysis(pump, pump_repo):
         
         # CRITICAL: If no authentic BEP data exists, FAIL - never use fallbacks
         if not bep_flow or not bep_head:
+            # Provide helpful guidance for pumps with BEP data
             error_msg = f"CRITICAL ERROR: No authentic BEP data found for {pump_code}. BEP Flow={bep_flow}, Head={bep_head}. Testing cannot proceed with estimated data."
             logger.error(error_msg)
+            logger.error(f"SUGGESTION: For BEP testing, use pumps with authentic BEP data like 'APE DWU-150 BC' (568.73 m³/hr @ 135.61 m)")
             raise ValueError(error_msg)
         
         # Calculate performance at authentic BEP using both methods
