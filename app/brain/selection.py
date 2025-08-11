@@ -327,6 +327,58 @@ class SelectionIntelligence:
             
             # Be more lenient like Legacy - accept if performance exists even if marginal
             if performance:
+                # Check if we have BEP migration data (from Hydraulic Institute Correction Model)
+                if 'true_qbp_percent' in performance and performance.get('trim_percent', 100) < 100:
+                    # Use TRUE QBP that accounts for BEP migration with trimming
+                    true_qbp = performance.get('true_qbp_percent', 100)
+                    original_qbp = evaluation.get('qbp_percent', 100)
+                    
+                    logger.info(f"[BEP SCORING] {pump_data.get('pump_code')}: Using TRUE QBP {true_qbp:.1f}% (vs simple {original_qbp:.1f}%)")
+                    
+                    # Update QBP percent with the more accurate value
+                    evaluation['qbp_percent'] = true_qbp
+                    evaluation['bep_migration_corrected'] = True
+                    
+                    # Recalculate operating zone with TRUE QBP
+                    if 70 <= true_qbp <= 120:
+                        operating_zone = 'preferred'
+                    elif 60 <= true_qbp < 70 or 120 < true_qbp <= 130:
+                        operating_zone = 'allowable'
+                    else:
+                        operating_zone = 'disqualified'
+                    
+                    evaluation['operating_zone'] = operating_zone
+                    
+                    # Check if TRUE QBP disqualifies the pump
+                    if operating_zone == 'disqualified':
+                        evaluation['feasible'] = False
+                        logger.warning(f"[SELECTION] {pump_data.get('pump_code')}: TRUE QBP {true_qbp:.0f}% outside 60-130% range after BEP migration")
+                        evaluation['exclusion_reasons'].append(f'TRUE QBP {true_qbp:.0f}% outside allowable range (BEP migration corrected)')
+                        return evaluation
+                    
+                    # Recalculate BEP proximity score with TRUE QBP
+                    flow_ratio = true_qbp / 100  # Convert back to ratio
+                    
+                    if 0.95 <= flow_ratio <= 1.05:  # Sweet spot
+                        bep_score = 45
+                    elif 0.90 <= flow_ratio < 0.95 or 1.05 < flow_ratio <= 1.10:
+                        bep_score = 40
+                    elif 0.80 <= flow_ratio < 0.90 or 1.10 < flow_ratio <= 1.20:
+                        bep_score = 30
+                    elif 0.70 <= flow_ratio < 0.80 or 1.20 < flow_ratio <= 1.30:
+                        bep_score = 20
+                    else:  # 0.60-0.70 or 1.30-1.40
+                        bep_score = 10
+                    
+                    evaluation['score_components']['bep_proximity'] = bep_score
+                    
+                    # Store shifted BEP data for transparency
+                    if 'shifted_bep_flow' in performance:
+                        evaluation['shifted_bep_flow'] = performance['shifted_bep_flow']
+                        evaluation['shifted_bep_head'] = performance['shifted_bep_head']
+                        evaluation['original_bep_flow'] = performance.get('original_bep_flow', 0)
+                        evaluation['original_bep_head'] = performance.get('original_bep_head', 0)
+                
                 # Efficiency score (Legacy v6.0 - 35 points max)
                 efficiency = performance.get('efficiency_pct', 0)
                 if efficiency >= 85:

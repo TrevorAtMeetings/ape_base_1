@@ -701,7 +701,69 @@ class PerformanceAnalyzer:
                 
                 logger.debug(f"[INDUSTRY] {pump_code}: Final performance - head: {final_head:.2f}m, eff: {final_efficiency:.1f}%, power: {final_power:.2f}kW, trim: {trim_percent:.1f}%")
                 
-                # Return industry-standard performance calculation
+                # ===============================================================
+                # STEP 6: BEP MIGRATION & CORRECTION (Hydraulic Institute Model)
+                # ===============================================================
+                
+                # Get original BEP from specifications (manufacturer data)
+                original_bep_flow = specs.get('bep_flow_m3hr', 0)
+                original_bep_head = specs.get('bep_head_m', 0)
+                
+                shifted_bep_flow = original_bep_flow
+                shifted_bep_head = original_bep_head
+                true_qbp_percent = 100.0
+                
+                if original_bep_flow > 0 and original_bep_head > 0 and diameter_ratio < 1.0:
+                    logger.info(f"[BEP MIGRATION] {pump_code}: Calculating shifted BEP for {trim_percent:.1f}% trim")
+                    logger.info(f"[BEP MIGRATION] {pump_code}: Original BEP: {original_bep_flow:.1f} m³/hr @ {original_bep_head:.1f}m")
+                    
+                    # Apply exponential BEP shift formulas (Hydraulic Institute methodology)
+                    # These exponents account for the non-linear BEP migration with trimming
+                    # x = 1.2 for flow (BEP flow shifts MORE than simple affinity laws predict)
+                    # y = 2.2 for head (BEP head drops MORE than simple affinity laws predict)
+                    
+                    flow_exponent = 1.2  # Can be tuned based on specific speed (1.1 to 1.3 typical)
+                    head_exponent = 2.2  # Can be tuned based on pump design (2.1 to 2.3 typical)
+                    
+                    # Calculate shifted BEP using exponential formulas
+                    shifted_bep_flow = original_bep_flow * (diameter_ratio ** flow_exponent)
+                    shifted_bep_head = original_bep_head * (diameter_ratio ** head_exponent)
+                    
+                    logger.info(f"[BEP MIGRATION] {pump_code}: Diameter ratio: {diameter_ratio:.4f}")
+                    logger.info(f"[BEP MIGRATION] {pump_code}: Flow shift factor: {diameter_ratio ** flow_exponent:.4f} (using exponent {flow_exponent})")
+                    logger.info(f"[BEP MIGRATION] {pump_code}: Head shift factor: {diameter_ratio ** head_exponent:.4f} (using exponent {head_exponent})")
+                    logger.info(f"[BEP MIGRATION] {pump_code}: Shifted BEP: {shifted_bep_flow:.1f} m³/hr @ {shifted_bep_head:.1f}m")
+                    
+                    # Calculate TRUE QBP (operating flow as % of SHIFTED BEP flow)
+                    true_qbp_percent = (flow / shifted_bep_flow) * 100 if shifted_bep_flow > 0 else 100
+                    simple_qbp_percent = (flow / original_bep_flow) * 100 if original_bep_flow > 0 else 100
+                    
+                    logger.info(f"[BEP MIGRATION] {pump_code}: Simple QBP (ignoring shift): {simple_qbp_percent:.1f}%")
+                    logger.info(f"[BEP MIGRATION] {pump_code}: TRUE QBP (with BEP shift): {true_qbp_percent:.1f}%")
+                    logger.info(f"[BEP MIGRATION] {pump_code}: QBP difference: {true_qbp_percent - simple_qbp_percent:.1f}%")
+                    
+                    # Apply performance corrections based on curve rotation
+                    # The curve "rotates" counterclockwise, affecting efficiency more at higher flows
+                    if true_qbp_percent > 110:  # Operating significantly above shifted BEP
+                        # Additional efficiency degradation for operating far from shifted BEP
+                        qbp_efficiency_penalty = min(5, (true_qbp_percent - 110) * 0.1)
+                        final_efficiency = max(40, final_efficiency - qbp_efficiency_penalty)
+                        logger.info(f"[BEP MIGRATION] {pump_code}: Applied {qbp_efficiency_penalty:.1f}% efficiency penalty for QBP {true_qbp_percent:.1f}%")
+                    
+                    # Special logging for 8/8 DME
+                    if pump_code and "8/8 DME" in str(pump_code):
+                        logger.error(f"[8/8 DME BEP MIGRATION] Original BEP: {original_bep_flow:.1f} m³/hr @ {original_bep_head:.1f}m")
+                        logger.error(f"[8/8 DME BEP MIGRATION] Trim: {trim_percent:.1f}% (ratio: {diameter_ratio:.4f})")
+                        logger.error(f"[8/8 DME BEP MIGRATION] Shifted BEP: {shifted_bep_flow:.1f} m³/hr @ {shifted_bep_head:.1f}m")
+                        logger.error(f"[8/8 DME BEP MIGRATION] Operating at {flow} m³/hr = {true_qbp_percent:.1f}% of shifted BEP")
+                    
+                else:
+                    # No trimming or no BEP data - use original values
+                    if original_bep_flow > 0:
+                        true_qbp_percent = (flow / original_bep_flow) * 100
+                    logger.debug(f"[BEP MIGRATION] {pump_code}: No trimming or BEP data - using original values")
+                
+                # Return industry-standard performance calculation with BEP migration data
                 return {
                     'flow_m3hr': flow,
                     'head_m': final_head,
@@ -712,7 +774,13 @@ class PerformanceAnalyzer:
                     'base_diameter_mm': largest_diameter,
                     'trim_percent': trim_percent,
                     'meets_requirements': True,  # By design, this meets requirements
-                    'head_margin_m': 0.0  # Exact match by affinity law design
+                    'head_margin_m': 0.0,  # Exact match by affinity law design
+                    # NEW: BEP Migration data for enhanced accuracy
+                    'shifted_bep_flow': shifted_bep_flow,
+                    'shifted_bep_head': shifted_bep_head,
+                    'true_qbp_percent': true_qbp_percent,
+                    'original_bep_flow': original_bep_flow,
+                    'original_bep_head': original_bep_head
                 }
                 
             except Exception as e:
