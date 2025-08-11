@@ -270,8 +270,9 @@ def update_calibration_factors():
                 
                 conn.commit()
         
-        # Clear cache to force reload - use the proper invalidation method
-        admin_config_service._invalidate_cache()
+        # Clear cache to force reload
+        admin_config_service._config_cache.clear()
+        admin_config_service._cache_timestamp = None
         
         logger.info(f"Calibration factors updated by {user_id}: {factors}")
         return jsonify({'status': 'success', 'message': 'Calibration factors updated successfully'})
