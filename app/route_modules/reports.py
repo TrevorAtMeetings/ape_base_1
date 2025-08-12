@@ -193,13 +193,16 @@ def bep_proximity_report(pump_code):
         {'label': pump_code, 'url': '#', 'icon': 'description'}
     ]
     
-    return render_template('professional_pump_report.html',
+    from datetime import datetime
+    
+    return render_template('engineering_pump_report.html',
                          selected_pump=selected_pump,
                          chart_data=chart_data,
                          site_requirements={'flow_m3hr': flow, 'head_m': head},
                          alternatives=[],  # No alternatives for BEP proximity
                          breadcrumbs=breadcrumbs,
-                         is_bep_proximity=True)  # Flag to show this is BEP proximity selection
+                         is_bep_proximity=True,  # Flag to show this is BEP proximity selection
+                         current_date=datetime.now().strftime('%B %d, %Y'))
 
 @reports_bp.route('/engineering_report/<path:pump_code>')
 def engineering_report(pump_code):
