@@ -9,18 +9,18 @@
 <style>
 /* Home page specific styling - override base template container spacing */
 .container {
-    margin-top: 0 !important; /* Container already has proper spacing from block */
+    margin-top: 0 !important;
     max-width: 1200px;
 }
 
-/* Ensure proper card styling */
+/* Card styling */
 .card {
     margin: 0.5rem 0 1rem 0;
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-/* Fix any Material Design variable fallbacks */
+/* Material Design variables */
 :root {
     --md-primary: #1976d2;
     --md-surface-variant: #f5f5f5;
@@ -28,46 +28,86 @@
     --text-secondary: #666;
 }
 
-/* Complete Form Design Overhaul */
-.card-content {
-    padding: 32px !important;
-    background: #fff;
-    border-radius: 12px;
+/* Tabbed Interface Styling */
+.tabs {
+    background-color: transparent;
+    box-shadow: none;
+    margin-bottom: 0;
+    border-bottom: 1px solid #e0e0e0;
 }
 
-/* Input field styling */
+.tabs .tab {
+    text-transform: none;
+    font-weight: 500;
+    line-height: 48px;
+}
+
+.tabs .tab a {
+    color: var(--md-primary) !important;
+    font-size: 15px;
+    padding: 0 24px;
+    transition: all 0.3s ease;
+}
+
+.tabs .tab a:hover {
+    background-color: rgba(25, 118, 210, 0.08);
+    color: var(--md-primary) !important;
+}
+
+.tabs .tab a.active {
+    color: var(--md-primary) !important;
+    font-weight: 600;
+}
+
+.tabs .indicator {
+    background-color: var(--md-primary);
+    height: 3px;
+}
+
+.tab-content {
+    padding: 24px;
+    min-height: 400px;
+}
+
+/* Form styling */
 .input-field {
-    margin-bottom: 32px !important;
+    margin-bottom: 24px !important;
     position: relative;
 }
 
-/* Optimized input field styling - removed to use global styles */
+.input-field label {
+    font-size: 14px !important;
+    color: #666 !important;
+}
 
 .input-field label.active {
-    font-size: 14px !important;
-    transform: none !important;
+    font-size: 12px !important;
+    color: var(--md-primary) !important;
 }
 
-.input-field .prefix {
-    display: none !important;
+.input-field input:focus + label {
+    color: var(--md-primary) !important;
 }
 
-.input-field .helper-text {
+.input-field input:focus {
+    border-bottom: 2px solid var(--md-primary) !important;
+    box-shadow: 0 1px 0 0 var(--md-primary) !important;
+}
+
+.helper-text {
     font-size: 12px !important;
     line-height: 1.4 !important;
     margin-top: 6px !important;
     display: block !important;
     color: #666 !important;
-    margin-left: 0 !important;
 }
 
-/* Radio group improvements */
+/* Radio group styling */
 .radio-group {
-    margin-top: 12px !important;
-}
-
-.radio-group p {
-    margin: 10px 0 !important;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin-top: 12px;
 }
 
 .radio-group label {
@@ -76,13 +116,7 @@
     cursor: pointer !important;
 }
 
-.radio-group input[type="radio"] + span {
-    padding-left: 35px !important;
-    font-size: 14px !important;
-    line-height: 1.5 !important;
-}
-
-/* Form section labels */
+/* Form labels */
 .form-label {
     display: block !important;
     margin-bottom: 12px !important;
@@ -91,56 +125,34 @@
     font-size: 14px !important;
 }
 
-/* Card title improvements */
-.card-title {
-    font-size: 1.4rem !important;
-    line-height: 1.3 !important;
-    margin-bottom: 16px !important;
+/* Button styling */
+.btn-large {
+    height: 48px;
+    line-height: 48px;
+    font-size: 16px;
+    padding: 0 32px;
+    border-radius: 8px;
 }
 
-/* Better spacing between sections */
-.row {
-    margin-bottom: 24px !important;
+.btn {
+    border-radius: 6px;
+    text-transform: none;
+    font-weight: 500;
 }
 
-/* Badge styling */
-.badge {
-    font-size: 11px !important;
-    padding: 3px 8px !important;
-    border-radius: 12px !important;
-}
-
-/* Helper text improvements */
-.helper-text {
-    max-width: 100% !important;
-    word-wrap: break-word !important;
-    overflow-wrap: break-word !important;
-}
-
-/* Responsive improvements */
-@media (max-width: 768px) {
-    .container {
-        padding: 0 16px;
-    }
-    
-    .card-content {
-        padding: 16px !important;
-    }
-    
-    .input-field .helper-text {
-        font-size: 11px;
-    }
-}
-
-/* Enhanced Autocomplete Styling */
+/* Autocomplete styling */
 .autocomplete-container {
-    position: relative !important;
+    position: relative;
     z-index: 100;
 }
 
 .enhanced-autocomplete {
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 12px 16px;
     transition: all 0.3s ease;
-    position: relative;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .enhanced-autocomplete:focus {
@@ -149,16 +161,25 @@
     outline: none;
 }
 
-.enhanced-autocomplete[data-search-status="searching"] {
-    border-color: #ff9800 !important;
-    background: linear-gradient(90deg, transparent 0%, rgba(255, 152, 0, 0.1) 50%, transparent 100%);
-    background-size: 200% 100%;
-    animation: searchingPulse 2s ease-in-out infinite;
+.autocomplete-dropdown {
+    position: absolute !important;
+    top: 100% !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 9999 !important;
+    margin-top: 2px;
+    border: 2px solid var(--md-primary);
+    border-radius: 8px;
+    background: white;
+    max-height: 300px;
+    overflow-y: auto;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
 }
 
-@keyframes searchingPulse {
-    0%, 100% { background-position: 200% 0; }
-    50% { background-position: -200% 0; }
+/* Animations */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes spin {
@@ -166,100 +187,23 @@
     to { transform: rotate(360deg); }
 }
 
-.autocomplete-dropdown {
-    position: absolute !important;
-    top: 100% !important;
-    left: 0 !important;
-    right: 0 !important;
-    z-index: 9999 !important;
-}
-
-.suggestion-item {
-    padding: 12px 16px;
-    cursor: pointer;
-    border-bottom: 1px solid #f0f0f0;
-    transition: background-color 0.2s ease;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-
-.suggestion-item:hover {
-    background-color: rgba(25, 118, 210, 0.08);
-}
-
-.suggestion-item:last-child {
-    border-bottom: none;
-}
-
-.suggestion-item.selected {
-    background-color: rgba(25, 118, 210, 0.12);
-}
-
-.pump-code {
-    font-weight: 600;
-    color: var(--md-primary);
-    font-size: 14px;
-}
-
-.pump-details {
-    font-size: 12px;
-    color: #666;
-    margin-top: 2px;
-}
-
-.pump-type-badge {
-    background: #e3f2fd;
-    color: var(--md-primary);
-    padding: 2px 8px;
-    border-radius: 12px;
-    font-size: 11px;
-    font-weight: 500;
-}
-
-.suggestion-chip {
-    background: #e3f2fd;
-    color: var(--md-primary);
-    padding: 4px 8px;
-    border-radius: 12px;
-    font-size: 11px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.suggestion-chip:hover {
-    background: var(--md-primary);
-    color: white;
-    transform: scale(1.05);
-}
-
-/* Mobile responsive styles for direct search button */
-@media (max-width: 600px) {
-    .custom-input-wrapper div[style*="display: flex"] {
-        flex-direction: column !important;
-        gap: 12px !important;
+/* Responsive improvements */
+@media (max-width: 768px) {
+    .container {
+        padding: 0 16px;
     }
-
-    #direct_search_button[style*="display: flex"] {
-        width: 100% !important;
-        min-width: auto !important;
-        justify-content: center !important;
-        display: flex !important;
+    
+    .tab-content {
+        padding: 16px !important;
     }
-
-    #direct_search_button .btn-text {
-        display: inline !important;
+    
+    .tabs .tab a {
+        font-size: 13px;
+        padding: 0 12px;
     }
-}
-
-@media (max-width: 400px) {
-    #direct_search_button .btn-text {
-        display: none !important;
-    }
-
-    #direct_search_button[style*="display: flex"] {
-        min-width: 60px !important;
-        display: flex !important;
+    
+    .tabs .tab a i.material-icons {
+        display: none;
     }
 }
 </style>
@@ -267,292 +211,171 @@
 
 {% block content %}
 <div class="container" style="margin-top: 80px; padding: 0 20px;">
-    <!-- Header Section -->
-    <div class="row stagger-item">
+    <!-- Simplified Header -->
+    <div class="row">
         <div class="col s12">
-            <div class="card-panel fade-in-up" style="background: var(--md-surface-variant); border: 1px solid var(--md-outline-variant);">
-                <h4 style="color: var(--md-primary);">
-                    <i class="material-icons left">engineering</i>
-                    AI-Powered Pump Selection Tool
-                </h4>
-                <p class="flow-text">
-                    Enter your pump requirements below and our intelligent selection algorithm 
-                    will recommend the best pump options for your application.
-                </p>
-
-
-            </div>
+            <h4 style="color: var(--md-primary); text-align: center; margin-bottom: 8px;">
+                <i class="material-icons" style="vertical-align: middle; margin-right: 8px;">engineering</i>
+                Pump Selection Center
+            </h4>
+            <p style="text-align: center; color: var(--text-secondary); margin-bottom: 30px;">
+                Choose your preferred selection method below
+            </p>
         </div>
     </div>
 
-    <!-- Main Form -->
-    <form id="pumpSelectionForm" 
-      action="{{ url_for('main_flow.pump_selection') }}" 
-      method="POST" 
-      class="needs-validation" 
-      novalidate>
-        <!-- Primary Requirements Section -->
-        <div class="row section-card stagger-item" id="primary-requirements-section">
-            <div class="col s12">
-                <div class="card">
-                    <div class="card-content">
-                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
-                            <span class="card-title" style="color: var(--md-primary); margin: 0;">
-                                <i class="material-icons left">speed</i>
-                                Essential Requirements
-                                <span class="new badge red" data-badge-caption="Required" style="margin-left: 10px;"></span>
-                            </span>
-                            <i class="material-icons tooltipped" data-position="left" data-tooltip="Flow Rate and Head are the key parameters for pump selection and sizing calculations." style="color: var(--md-primary); cursor: help;">help_outline</i>
-                        </div>
-                        <p style="color: var(--text-secondary); margin-bottom: 24px; font-size: 14px; line-height: 1.5;">
-                            <strong>Quick pump selection</strong> - Enter these essential parameters to find the best pump for your application.
-                        </p>
+    <!-- Main Tabbed Interface Card -->
+    <div class="row">
+        <div class="col s12">
+            <div class="card">
+                <!-- Tab Navigation -->
+                <div class="card-tabs">
+                    <ul class="tabs tabs-fixed-width">
+                        <li class="tab">
+                            <a href="#intelligent-tab" class="active">
+                                <i class="material-icons" style="vertical-align: middle; margin-right: 8px; font-size: 18px;">psychology</i>
+                                Intelligent Selection
+                            </a>
+                        </li>
+                        <li class="tab">
+                            <a href="#bep-tab">
+                                <i class="material-icons" style="vertical-align: middle; margin-right: 8px; font-size: 18px;">trending_up</i>
+                                BEP Proximity Search
+                            </a>
+                        </li>
+                        <li class="tab">
+                            <a href="#direct-tab">
+                                <i class="material-icons" style="vertical-align: middle; margin-right: 8px; font-size: 18px;">search</i>
+                                Direct Search
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                
+                <!-- Tab Content -->
+                <div class="card-content tab-content">
+                    <!-- Tab 1: Intelligent Selection -->
+                    <div id="intelligent-tab">
+                        <form id="intelligentSelectionForm" 
+                              action="{{ url_for('main_flow.pump_selection') }}" 
+                              method="POST">
+                            
+                            <h5 style="color: var(--md-primary); margin-bottom: 20px;">
+                                <i class="material-icons" style="vertical-align: middle; margin-right: 8px;">settings</i>
+                                Full-Featured Pump Selection
+                            </h5>
+                            <p style="color: var(--text-secondary); margin-bottom: 24px;">
+                                Our intelligent algorithm analyzes all parameters to find the optimal pump for your specific application.
+                            </p>
 
-                        <!-- Unit System Selection -->
-                        <div class="row" style="margin-bottom: 20px;">
-                            <div class="col s12">
-                                <div class="input-group">
-                                    <label class="form-label" style="color: var(--md-primary); font-size: 14px; font-weight: 600; margin-bottom: 10px; display: block;">
+                            <!-- Unit System Selection -->
+                            <div class="row">
+                                <div class="col s12">
+                                    <label class="form-label">
                                         <i class="material-icons" style="font-size: 16px; vertical-align: middle; margin-right: 8px;">straighten</i>
                                         Unit System
                                     </label>
-                                    <div class="radio-group" style="display: flex; gap: 30px;">
-                                        <p style="margin: 0;">
-                                            <label>
-                                                <input name="unit_system" type="radio" value="metric" checked onchange="switchUnitSystem('metric')" />
-                                                <span>Metric (m³/hr, m)</span>
-                                            </label>
-                                        </p>
-                                        <p style="margin: 0;">
-                                            <label>
-                                                <input name="unit_system" type="radio" value="imperial" onchange="switchUnitSystem('imperial')" />
-                                                <span>Imperial (GPM, ft)</span>
-                                            </label>
-                                        </p>
+                                    <div class="radio-group">
+                                        <label>
+                                            <input name="unit_system" type="radio" value="metric" checked onchange="switchUnitSystem('metric')" />
+                                            <span>Metric (m³/hr, m)</span>
+                                        </label>
+                                        <label>
+                                            <input name="unit_system" type="radio" value="imperial" onchange="switchUnitSystem('imperial')" />
+                                            <span>Imperial (GPM, ft)</span>
+                                        </label>
                                     </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <!-- Flow Rate and Head -->
-                        <div class="row">
-                            <div class="col s12 m6">
-                                <div class="input-field">
-                                    <i class="material-icons prefix">water_drop</i>
-                                    <input id="flow_rate" name="flow_m3hr" type="number" step="0.01" min="0.1" max="10000" required class="validate" data-metric-min="0.1" data-metric-max="10000" data-imperial-min="0.44" data-imperial-max="44029">
-                                    <label for="flow_rate">Flow Rate *</label>
-                                    <span class="helper-text" data-error="Flow rate must be between 0.1 and 10000 m³/hr">Enter flow rate in m³/hr (metric) or GPM (imperial)</span>
-                                </div>
-                            </div>
-                            <div class="col s12 m6">
-                                <div class="input-field">
-                                    <i class="material-icons prefix">height</i>
-                                    <input id="total_head" name="head_m" type="number" step="0.01" min="0.1" max="1000" required class="validate" data-metric-min="0.1" data-metric-max="1000" data-imperial-min="0.32" data-imperial-max="3280">
-                                    <label for="total_head">Total Head *</label>
-                                    <span class="helper-text" data-error="Total head must be between 0.1 and 1000 m">Enter total head in meters (metric) or feet (imperial)</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Pump Type and Direct Selection -->
-                        <div class="row">
-                            <div class="col s12 m6">
-                                <div class="input-group">
-                                    <label class="form-label" style="color: var(--md-primary); font-size: 14px; font-weight: 600; margin-bottom: 10px; display: block;">
-                                        <i class="material-icons" style="font-size: 16px; vertical-align: middle; margin-right: 8px;">category</i>
-                                        Pump Type
-                                    </label>
-                                    <div class="radio-group" style="margin-top: 8px;">
-                                        <p style="margin: 6px 0;">
-                                            <label>
-                                                <input name="pump_type" type="radio" value="GENERAL" checked />
-                                                <span>All Types (Recommended)</span>
-                                            </label>
-                                        </p>
-                                        <p style="margin: 6px 0;">
-                                            <label>
-                                                <input name="pump_type" type="radio" value="HSC" />
-                                                <span>HSC - Horizontal Split Case</span>
-                                            </label>
-                                        </p>
-                                        <p style="margin: 6px 0;">
-                                            <label>
-                                                <input name="pump_type" type="radio" value="END SUCTION" />
-                                                <span>End Suction</span>
-                                            </label>
-                                        </p>
-                                        <p style="margin: 6px 0;">
-                                            <label>
-                                                <input name="pump_type" type="radio" value="MULTI-STAGE" />
-                                                <span>Multi-Stage</span>
-                                            </label>
-                                        </p>
-                                        <p style="margin: 6px 0;">
-                                            <label>
-                                                <input name="pump_type" type="radio" value="VERTICAL TURBINE" />
-                                                <span>Vertical Turbine</span>
-                                            </label>
-                                        </p>
-                                        <p style="margin: 6px 0;">
-                                            <label>
-                                                <input name="pump_type" type="radio" value="AXIAL FLOW" />
-                                                <span>Axial Flow</span>
-                                            </label>
-                                        </p>
+                            <!-- Flow and Head Inputs -->
+                            <div class="row">
+                                <div class="col s12 m6">
+                                    <div class="input-field">
+                                        <i class="material-icons prefix">water</i>
+                                        <input id="flow_rate" name="flow_rate" type="number" step="0.01" min="0.1" required>
+                                        <label for="flow_rate">Flow Rate <span id="flow_unit">(m³/hr)</span> *</label>
+                                        <span class="helper-text">Required flow rate for your application</span>
                                     </div>
-                                    <span class="helper-text">Select specific type or 'All Types' for best options</span>
                                 </div>
-                            </div>
-                            <div class="col s12 m6">
-                                <div class="autocomplete-container" style="position: relative; z-index: 10000;">
-                                    <label class="form-label" style="color: var(--md-primary); font-size: 14px; font-weight: 600; margin-bottom: 10px; display: block;">
-                                        <i class="material-icons" style="font-size: 16px; vertical-align: middle; margin-right: 8px;">search</i>
-                                        Direct Pump Selection (Optional)
-                                    </label>
-                                    <div class="custom-input-wrapper" style="margin-top: 0; position: relative;">
-                                        <div style="display: flex; gap: 8px; align-items: flex-start;">
-                                            <input type="text" id="direct_pump_search" name="direct_pump_search" 
-                                                   class="enhanced-autocomplete" autocomplete="off" 
-                                                   placeholder="e.g., 6/8 ALE, 10 WLN 26A"
-                                                   data-search-status="ready"
-                                                   onkeydown="handleDirectSearchKeydown(event)"
-                                                   style="border: 2px solid #e0e0e0; border-radius: 8px; padding: 12px 16px; flex: 1; box-sizing: border-box;">
-                                            <button type="button" id="direct_search_button" 
-                                                    onclick="searchDirectPump()" 
-                                                    class="btn waves-effect waves-light" 
-                                                    style="background: var(--md-primary); height: 48px; min-width: 100px; border-radius: 8px; display: none; align-items: center; justify-content: center; gap: 8px; padding: 0 16px; transition: all 0.3s ease;"
-                                                    title="Search for this specific pump model">
-                                                <i class="material-icons" style="font-size: 18px;">search</i>
-                                                <span class="btn-text" style="font-size: 14px; font-weight: 500;">Search</span>
-                                            </button>
-                                        </div>
-                                        <span class="helper-text" style="display: block; margin-top: 8px;">
-                                            <span id="pump-search-status">Analyze a specific pump model</span>
-                                            <span id="pump-count-status" style="display: none; color: var(--md-primary); font-weight: 500;"></span>
-                                        </span>
-                                    </div>
-
-                                    <!-- Enhanced dropdown suggestions -->
-                                    <div id="pump_search_suggestions" class="autocomplete-dropdown" style="display: none; position: absolute; top: 100%; left: 0; right: 0; z-index: 99999; margin-top: 2px; border: 2px solid var(--md-primary); border-radius: 8px; background: white; max-height: 300px; overflow-y: auto; box-shadow: 0 8px 24px rgba(0,0,0,0.15);">
-                                        <!-- Loading indicator -->
-                                        <div class="suggestions-loading" style="display: none; padding: 12px; text-align: center; color: #666;">
-                                            <i class="material-icons small" style="vertical-align: middle; margin-right: 8px; animation: spin 1s linear infinite;">autorenew</i>
-                                            Searching pumps...
-                                        </div>
-
-                                        <!-- Results container -->
-                                        <div class="suggestions-list">
-                                            <!-- Dynamic pump suggestions will appear here -->
-                                        </div>
-
-                                        <!-- No results message -->
-                                        <div class="suggestions-empty" style="display: none; padding: 16px; text-align: center; color: #666;">
-                                            <i class="material-icons small" style="vertical-align: middle; margin-right: 8px;">search_off</i>
-                                            No pumps found matching your search
-                                            <div style="font-size: 12px; margin-top: 4px; color: #999;">Try shorter terms like "6" or "ALE"</div>
-                                        </div>
-
-                                        <!-- Quick suggestions when empty -->
-                                        <div class="suggestions-help" style="display: none; padding: 12px; border-top: 1px solid #eee; background: #f9f9f9;">
-                                            <div style="font-size: 12px; color: #666; margin-bottom: 6px;">Popular models:</div>
-                                            <div class="quick-suggestions" style="display: flex; flex-wrap: wrap; gap: 6px;">
-                                                <span class="suggestion-chip" onclick="selectQuickSuggestion('6/8 ALE')">6/8 ALE</span>
-                                                <span class="suggestion-chip" onclick="selectQuickSuggestion('10 WLN')">10 WLN</span>
-                                                <span class="suggestion-chip" onclick="selectQuickSuggestion('28 HC')">28 HC</span>
-                                                <span class="suggestion-chip" onclick="selectQuickSuggestion('DVMS')">DVMS</span>
-                                            </div>
-                                        </div>
+                                <div class="col s12 m6">
+                                    <div class="input-field">
+                                        <i class="material-icons prefix">height</i>
+                                        <input id="total_head" name="total_head" type="number" step="0.01" min="0.1" required>
+                                        <label for="total_head">Total Head <span id="head_unit">(m)</span> *</label>
+                                        <span class="helper-text">Total dynamic head including static and friction losses</span>
                                     </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <!-- Find Best Pump Button - appears when essential requirements are complete -->
-                        <div class="row" id="find-best-pump-section" style="display: none; margin-top: 24px;">
-                            <div class="col s12" style="text-align: center;">
-                                <div style="background: linear-gradient(135deg, #f8f9fa 0%, #e3f2fd 100%); border-radius: 12px; padding: 20px; border: 2px solid #2196f3;">
-                                    <div style="margin-bottom: 12px;">
-                                        <i class="material-icons" style="font-size: 32px; color: #2196f3;">rocket_launch</i>
-                                    </div>
-                                    <h6 style="color: #1976d2; margin: 0 0 8px 0; font-weight: 600;">Ready to Find Your Perfect Pump?</h6>
-                                    <p style="color: #666; margin: 0 0 16px 0; font-size: 14px;">All essential requirements completed. Let's find the best pump options for your application.</p>
-                                    <button type="submit" id="find-best-pump-btn" class="btn-large waves-effect waves-light" 
-                                            style="background: linear-gradient(135deg, #2196f3 0%, #21cbf3 100%); border: none; border-radius: 8px; padding: 0 32px; height: 48px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3); transition: all 0.3s ease;"
-                                            onmouseover="this.style.transform = 'translateY(-2px)'; this.style.boxShadow = '0 6px 20px rgba(33, 150, 243, 0.4)'"
-                                            onmouseout="this.style.transform = 'translateY(0)'; this.style.boxShadow = '0 4px 12px rgba(33, 150, 243, 0.3)'">
-                                        <i class="material-icons left" style="margin-right: 8px;">search</i>
-                                        Find Best Pump
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Advanced Options Section -->
-        <div class="row section-card stagger-item" id="advanced-options-section">
-            <div class="col s12">
-                <div class="card">
-                    <div class="card-content">
-                        <div class="collapsible-header" style="display: flex; align-items: center; justify-content: space-between; padding: 0; margin-bottom: 16px; cursor: pointer; border-bottom: 1px solid #e0e0e0; padding-bottom: 12px;" onclick="toggleAdvancedOptions()">
-                            <span class="card-title" style="color: var(--md-primary); margin: 0;">
-                                <i class="material-icons left">tune</i>
-                                Advanced Options
-                                <span class="new badge orange" data-badge-caption="Optional" style="margin-left: 10px;"></span>
-                            </span>
-                            <div style="display: flex; align-items: center;">
-                                <span id="advanced-status" style="color: #666; font-size: 14px; margin-right: 10px;">Click to expand detailed parameters</span>
-                                <i class="material-icons" id="advanced-arrow" style="color: var(--md-primary); transition: transform 0.3s;">expand_more</i>
-                            </div>
-                        </div>
-
-                        <div id="advanced-options-content" style="display: none;">
-                            <!-- Application Context -->
-                            <div class="row" style="margin-bottom: 20px;">
+                            <!-- Pump Type Selection -->
+                            <div class="row">
                                 <div class="col s12">
-                                    <h6 style="color: var(--md-primary); margin-bottom: 15px;">
-                                        <i class="material-icons tiny">business</i>
-                                        Application Context
-                                    </h6>
-                                    <div class="input-group">
-                                        <div class="radio-group" style="display: flex; flex-wrap: wrap; gap: 15px;">
-                                            <label style="margin-right: 20px;">
+                                    <label class="form-label">
+                                        <i class="material-icons" style="font-size: 16px; vertical-align: middle; margin-right: 8px;">build</i>
+                                        Pump Type (Optional)
+                                    </label>
+                                    <div class="radio-group">
+                                        <label>
+                                            <input name="pump_type" type="radio" value="GENERAL" checked />
+                                            <span>All Types</span>
+                                        </label>
+                                        <label>
+                                            <input name="pump_type" type="radio" value="HSC" />
+                                            <span>HSC</span>
+                                        </label>
+                                        <label>
+                                            <input name="pump_type" type="radio" value="END SUCTION" />
+                                            <span>End Suction</span>
+                                        </label>
+                                        <label>
+                                            <input name="pump_type" type="radio" value="MULTI-STAGE" />
+                                            <span>Multi-Stage</span>
+                                        </label>
+                                        <label>
+                                            <input name="pump_type" type="radio" value="VERTICAL TURBINE" />
+                                            <span>Vertical Turbine</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Advanced Options (Collapsed) -->
+                            <div class="row">
+                                <div class="col s12">
+                                    <div class="collapsible-header" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 0; cursor: pointer; border-top: 1px solid #e0e0e0; margin-top: 20px;" onclick="toggleAdvancedOptions()">
+                                        <span style="color: var(--md-primary); font-weight: 500;">
+                                            <i class="material-icons" style="vertical-align: middle; margin-right: 8px;">tune</i>
+                                            Advanced Options
+                                        </span>
+                                        <i class="material-icons" id="advanced-arrow" style="color: var(--md-primary); transition: transform 0.3s;">expand_more</i>
+                                    </div>
+                                    <div id="advanced-options-content" style="display: none; padding-top: 20px;">
+                                        <!-- Application Context -->
+                                        <label class="form-label">Application Context</label>
+                                        <div class="radio-group" style="margin-bottom: 20px;">
+                                            <label>
                                                 <input name="application" type="radio" value="water" checked />
                                                 <span>Water Supply</span>
                                             </label>
-                                            <label style="margin-right: 20px;">
+                                            <label>
                                                 <input name="application" type="radio" value="industrial" />
                                                 <span>Industrial</span>
                                             </label>
-                                            <label style="margin-right: 20px;">
+                                            <label>
                                                 <input name="application" type="radio" value="cooling" />
                                                 <span>Cooling</span>
                                             </label>
-                                            <label style="margin-right: 20px;">
+                                            <label>
                                                 <input name="application" type="radio" value="fire_protection" />
                                                 <span>Fire Protection</span>
                                             </label>
-                                            <label>
-                                                <input name="application" type="radio" value="general" />
-                                                <span>General Service</span>
-                                            </label>
                                         </div>
-                                    </div>
-                                </div>
-                            </div>
 
-                            <!-- Variable Flow Options -->
-                            <div class="row" style="margin-bottom: 20px;">
-                                <div class="col s12">
-                                    <h6 style="color: var(--md-primary); margin-bottom: 15px;">
-                                        <i class="material-icons tiny">tune</i>
-                                        Flow Characteristics
-                                    </h6>
-                                    <div class="input-group">
-                                        <div class="radio-group" style="margin-bottom: 15px;">
-                                            <label style="margin-right: 30px;">
+                                        <!-- Variable Flow Options -->
+                                        <label class="form-label">Flow Characteristics</label>
+                                        <div class="radio-group">
+                                            <label>
                                                 <input name="variable_flow" type="radio" value="no" checked />
                                                 <span>Fixed Flow Rate</span>
                                             </label>
@@ -561,1076 +384,418 @@
                                                 <span>Variable Flow Required</span>
                                             </label>
                                         </div>
-
-                                        <div class="row" id="flow-range-section" style="display: none; margin-top: 15px;">
-                                            <div class="col s12 m6">
-                                                <div class="input-field">
-                                                    <i class="material-icons prefix">trending_down</i>
-                                                    <input id="min_flow_rate" name="min_flow_rate" type="number" step="0.01" min="0.1">
-                                                    <label for="min_flow_rate">Min Flow Rate</label>
-                                                </div>
-                                            </div>
-                                            <div class="col s12 m6">
-                                                <div class="input-field">
-                                                    <i class="material-icons prefix">trending_up</i>
-                                                    <input id="max_flow_rate" name="max_flow_rate" type="number" step="0.01" min="0.1">
-                                                    <label for="max_flow_rate">Max Flow Rate</label>
-                                                </div>
-                                            </div>
-                                        </div>
                                     </div>
                                 </div>
                             </div>
 
-                            <!-- Coming Soon Badge -->
-                            <div class="row">
-                                <div class="col s12">
-                                    <div class="card-panel orange lighten-4" style="border-left: 4px solid #ff9800; margin: 0;">
-                                        <div style="display: flex; align-items: center;">
-                                            <i class="material-icons orange-text" style="margin-right: 10px;">construction</i>
-                                            <div>
-                                                <strong>Additional Advanced Features Coming Soon</strong>
-                                                <p style="margin: 5px 0 0 0; color: #666;">
-                                                    Liquid properties, system conditions, motor specifications, and project details will be available in the next update.
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Hidden fields with default values for backend compatibility -->
-                        <div style="display: none;">
-                            <!-- Contact defaults -->
+                            <!-- Hidden fields for compatibility -->
                             <input name="contact_name" type="hidden" value="">
                             <input name="company" type="hidden" value="">
                             <input name="email" type="hidden" value="">
                             <input name="project_name" type="hidden" value="">
-                            <input name="project_location" type="hidden" value="">
+                            <input name="liquid_type" type="hidden" value="water">
+                            <input name="temperature" type="hidden" value="20">
+                            <input name="specific_gravity" type="hidden" value="1.0">
+                            <input name="viscosity" type="hidden" value="1.0">
+                            <input name="npsh_available" type="hidden" value="">
+                            <input name="motor_speed" type="hidden" value="2960">
 
-                            <!-- Liquid properties defaults -->
+                            <!-- Submit Button -->
+                            <div class="row" style="margin-top: 30px;">
+                                <div class="col s12" style="text-align: center;">
+                                    <button type="submit" class="btn-large waves-effect waves-light" style="background: linear-gradient(135deg, #2196f3 0%, #21cbf3 100%); border: none;">
+                                        <i class="material-icons left">search</i>
+                                        Find Best Pumps
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Tab 2: BEP Proximity Search -->
+                    <div id="bep-tab" style="display: none;">
+                        <form id="bepProximityForm" 
+                              action="{{ url_for('main_flow.bep_proximity_results') }}" 
+                              method="GET">
+                            
+                            <h5 style="color: var(--md-primary); margin-bottom: 20px;">
+                                <i class="material-icons" style="vertical-align: middle; margin-right: 8px;">trending_up</i>
+                                BEP Proximity Search
+                            </h5>
+                            <p style="color: var(--text-secondary); margin-bottom: 24px;">
+                                Find pumps with Best Efficiency Points (BEP) closest to your operating requirements. 
+                                This method identifies pumps that will operate most efficiently at your specified conditions.
+                            </p>
+
+                            <!-- Info Card -->
+                            <div class="card-panel" style="background: #e3f2fd; border-left: 4px solid var(--md-primary); margin-bottom: 24px;">
+                                <p style="margin: 0; color: #1565c0;">
+                                    <i class="material-icons" style="vertical-align: middle; margin-right: 8px; font-size: 20px;">info</i>
+                                    <strong>What is BEP?</strong> The Best Efficiency Point is where a pump operates at maximum efficiency. 
+                                    Running pumps near their BEP reduces energy costs and extends equipment life.
+                                </p>
+                            </div>
+
+                            <!-- Simple Flow and Head Inputs -->
+                            <div class="row">
+                                <div class="col s12 m6">
+                                    <div class="input-field">
+                                        <i class="material-icons prefix">water</i>
+                                        <input id="bep_flow_rate" name="flow" type="number" step="0.01" min="0.1" required>
+                                        <label for="bep_flow_rate">Flow Rate (m³/hr) *</label>
+                                        <span class="helper-text">Target flow rate</span>
+                                    </div>
+                                </div>
+                                <div class="col s12 m6">
+                                    <div class="input-field">
+                                        <i class="material-icons prefix">height</i>
+                                        <input id="bep_total_head" name="head" type="number" step="0.01" min="0.1" required>
+                                        <label for="bep_total_head">Total Head (m) *</label>
+                                        <span class="helper-text">Target head</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Optional Pump Type Filter -->
+                            <div class="row">
+                                <div class="col s12">
+                                    <label class="form-label">
+                                        <i class="material-icons" style="font-size: 16px; vertical-align: middle; margin-right: 8px;">filter_list</i>
+                                        Filter by Pump Type (Optional)
+                                    </label>
+                                    <div class="radio-group">
+                                        <label>
+                                            <input name="pump_type" type="radio" value="" checked />
+                                            <span>All Types</span>
+                                        </label>
+                                        <label>
+                                            <input name="pump_type" type="radio" value="HSC" />
+                                            <span>HSC</span>
+                                        </label>
+                                        <label>
+                                            <input name="pump_type" type="radio" value="END SUCTION" />
+                                            <span>End Suction</span>
+                                        </label>
+                                        <label>
+                                            <input name="pump_type" type="radio" value="MULTI-STAGE" />
+                                            <span>Multi-Stage</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Submit Button -->
+                            <div class="row" style="margin-top: 30px;">
+                                <div class="col s12" style="text-align: center;">
+                                    <button type="submit" class="btn-large waves-effect waves-light" style="background: linear-gradient(135deg, #4caf50 0%, #8bc34a 100%); border: none;">
+                                        <i class="material-icons left">trending_up</i>
+                                        Find BEP Matches
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Tab 3: Direct Search -->
+                    <div id="direct-tab" style="display: none;">
+                        <form id="directSearchForm" 
+                              action="{{ url_for('main_flow.pump_selection') }}" 
+                              method="POST">
+                            
+                            <h5 style="color: var(--md-primary); margin-bottom: 20px;">
+                                <i class="material-icons" style="vertical-align: middle; margin-right: 8px;">search</i>
+                                Direct Pump Search
+                            </h5>
+                            <p style="color: var(--text-secondary); margin-bottom: 24px;">
+                                Analyze a specific pump model at your operating conditions. 
+                                Enter the pump code and your flow/head requirements to see detailed performance analysis.
+                            </p>
+
+                            <!-- Pump Code Input with Autocomplete -->
+                            <div class="row">
+                                <div class="col s12">
+                                    <div class="autocomplete-container">
+                                        <label class="form-label">
+                                            <i class="material-icons" style="font-size: 16px; vertical-align: middle; margin-right: 8px;">qr_code</i>
+                                            Pump Model Code *
+                                        </label>
+                                        <input type="text" 
+                                               id="direct_pump_code" 
+                                               name="direct_pump_search" 
+                                               class="enhanced-autocomplete" 
+                                               placeholder="e.g., 6/8 ALE, 10 WLN 26A" 
+                                               required
+                                               autocomplete="off">
+                                        <span class="helper-text">Start typing to see available pump models</span>
+                                        
+                                        <!-- Autocomplete dropdown -->
+                                        <div id="direct_pump_suggestions" class="autocomplete-dropdown" style="display: none;">
+                                            <div class="suggestions-list"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Flow and Head Inputs -->
+                            <div class="row">
+                                <div class="col s12 m6">
+                                    <div class="input-field">
+                                        <i class="material-icons prefix">water</i>
+                                        <input id="direct_flow_rate" name="flow_rate" type="number" step="0.01" min="0.1" required>
+                                        <label for="direct_flow_rate">Flow Rate (m³/hr) *</label>
+                                        <span class="helper-text">Operating flow rate</span>
+                                    </div>
+                                </div>
+                                <div class="col s12 m6">
+                                    <div class="input-field">
+                                        <i class="material-icons prefix">height</i>
+                                        <input id="direct_total_head" name="total_head" type="number" step="0.01" min="0.1" required>
+                                        <label for="direct_total_head">Total Head (m) *</label>
+                                        <span class="helper-text">Operating head</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Hidden fields for compatibility -->
+                            <input name="unit_system" type="hidden" value="metric">
+                            <input name="pump_type" type="hidden" value="GENERAL">
+                            <input name="application" type="hidden" value="water">
                             <input name="liquid_type" type="hidden" value="water">
                             <input name="temperature" type="hidden" value="20">
                             <input name="specific_gravity" type="hidden" value="1.0">
                             <input name="viscosity" type="hidden" value="1.0">
 
-                            <!-- System conditions defaults -->
-                            <input name="suction_pressure" type="hidden" value="0">
-                            <input name="static_head" type="hidden" value="0">
-                            <input name="npsh_available" type="hidden" value="">
-                            <input name="site_altitude" type="hidden" value="">
-                            <input name="discharge_pressure" type="hidden" value="">
-                            <input name="vapor_pressure" type="hidden" value="3.074">
-
-                            <!-- Motor defaults -->
-                            <input name="max_power" type="hidden" value="">
-                            <input name="motor_speed" type="hidden" value="2960">
-                            <input name="voltage" type="hidden" value="380">
-                            <input name="frequency" type="hidden" value="50">
-                            <input name="motor_phase" type="hidden" value="three_phase">
-                            <input name="sealing" type="hidden" value="mechanical_seal">
-                            <input name="atex_required" type="hidden" value="no">
-                        </div>
+                            <!-- Submit Button -->
+                            <div class="row" style="margin-top: 30px;">
+                                <div class="col s12" style="text-align: center;">
+                                    <button type="submit" class="btn-large waves-effect waves-light" style="background: linear-gradient(135deg, #ff9800 0%, #ffc107 100%); border: none;">
+                                        <i class="material-icons left">analytics</i>
+                                        Analyze Pump
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </div>
         </div>
-
-
-
-        <!-- Form Actions -->
-        <div class="row stagger-item">
-            <div class="col s12">
-                <div class="card-panel center-align fade-in-up">
-                    <button class="btn-large waves-effect waves-light teal" type="submit" id="submit-btn">
-                        <i class="material-icons left">search</i>
-                        Find Best Pumps
-                    </button>
-                    <br><br>
-                    <button class="btn waves-effect waves-light grey" type="reset" onclick="resetForm()">
-                        <i class="material-icons left">refresh</i>
-                        Reset Form
-                    </button>
-                </div>
-            </div>
-        </div>
-    </form>
-</div>
-
-<!-- Progress Indicator -->
-<div class="progress" id="loading-progress" style="display: none;">
-    <div class="indeterminate teal"></div>
+    </div>
 </div>
 
 <script>
+// Initialize tabs and form components
 document.addEventListener('DOMContentLoaded', function() {
-    const flowInput = document.getElementById('flow_rate');
-    const headInput = document.getElementById('total_head');
-    const pumpTypeInputs = document.querySelectorAll('input[name="pump_type"]');
+    // Initialize Materialize tabs
+    var tabsElems = document.querySelectorAll('.tabs');
+    M.Tabs.init(tabsElems, {
+        onShow: function(tab) {
+            // Hide all tab panes
+            document.querySelectorAll('.tab-content > div').forEach(function(pane) {
+                pane.style.display = 'none';
+            });
+            // Show the selected tab pane
+            var selectedTab = tab.getAttribute('href').substring(1);
+            document.getElementById(selectedTab).style.display = 'block';
+        }
+    });
 
-    // Initialize form components
-    initializeFormComponents();
-    initializeAdvancedOptions();
-
-    setupEssentialRequirementsWatcher();
+    // Initialize form labels
+    updateActiveLabels();
+    
+    // Setup autocomplete for direct search
+    setupDirectSearchAutocomplete();
 });
 
-function initializeFormComponents() {
-    // Initialize tooltips for this form
-    var tooltips = document.querySelectorAll('.tooltipped');
-    M.Tooltip.init(tooltips);
-
-    // Prevent Materialize from auto-initializing autocomplete on our custom input
-    const customInput = document.getElementById('direct_pump_search');
-    if (customInput) {
-        customInput.setAttribute('data-no-autoinit', 'true');
-    }
-
-    // Form submission handling
-    var form = document.getElementById('pumpSelectionForm');
-    var submitBtn = document.getElementById('submit-btn');
-    var progressBar = document.getElementById('loading-progress');
-
-    // Form submission handling
-    form.addEventListener('submit', function(e) {
-        // Convert to metric if in imperial mode before submission
-        // But only convert fields that haven't been converted already
-        const imperialRadio = document.querySelector('input[name="unit_system"][value="imperial"]');
-        const isImperialSelected = imperialRadio && imperialRadio.checked;
-        
-        if (isImperialSelected) {
-            const flowInput = document.getElementById('flow_rate');
-            const headInput = document.getElementById('total_head');
-
-            if (flowInput && flowInput.value && !convertedFields.has('flow_rate')) {
-                const flowGPM = parseFloat(flowInput.value);
-                const flowM3hr = flowGPM * 0.227124; // GPM to m³/hr
-                flowInput.value = flowM3hr.toFixed(3);
-                console.log('Form submission: Converting flow rate', flowGPM, 'GPM to', flowM3hr.toFixed(3), 'm³/hr');
-            }
-
-            if (headInput && headInput.value && !convertedFields.has('total_head')) {
-                const headFt = parseFloat(headInput.value);
-                const headM = headFt * 0.3048; // ft to m
-                headInput.value = headM.toFixed(3);
-                console.log('Form submission: Converting head', headFt, 'ft to', headM.toFixed(3), 'm');
+// Update active labels for pre-filled inputs
+function updateActiveLabels() {
+    document.querySelectorAll('input[type="number"], input[type="text"]').forEach(function(input) {
+        if (input.value) {
+            var label = input.parentElement.querySelector('label');
+            if (label) {
+                label.classList.add('active');
             }
         }
-
-        // Show loading state
-        const submitBtn = document.getElementById('submit-btn');
-        if (submitBtn) {
-            submitBtn.innerHTML = '<i class="material-icons left">hourglass_empty</i>Processing...';
-            submitBtn.disabled = true;
-        }
     });
-
-    // Variable flow handling
-    const variableFlowRadios = document.querySelectorAll('input[name="variable_flow"]');
-    const flowRangeSection = document.getElementById('flow-range-section');
-
-    variableFlowRadios.forEach(radio => {
-        radio.addEventListener('change', function() {
-            if (this.value === 'yes') {
-                flowRangeSection.style.display = 'block';
-            } else {
-                flowRangeSection.style.display = 'none';
-            }
-        });
-    });
-
-    // Enhanced Direct Pump Search with improved autocomplete
-    // Add a small delay to ensure Materialize doesn't interfere
-    setTimeout(function() {
-        initializeEnhancedAutocomplete();
-    }, 100);
-
-    console.log('Form components initialized - enhanced autocomplete ready');
 }
 
-function initializeEnhancedAutocomplete() {
-    const pumpSearchInput = document.getElementById('direct_pump_search');
-    const suggestionsDiv = document.getElementById('pump_search_suggestions');
-    const statusSpan = document.getElementById('pump-search-status');
-    const countSpan = document.getElementById('pump-count-status');
-
-    if (!pumpSearchInput || !suggestionsDiv) return;
-
-    // Check if already initialized to prevent duplicates
-    if (pumpSearchInput.dataset.autocompleteInitialized === 'true') {
-        console.log('Enhanced autocomplete already initialized, skipping...');
-        return;
+// Toggle advanced options
+function toggleAdvancedOptions() {
+    var content = document.getElementById('advanced-options-content');
+    var arrow = document.getElementById('advanced-arrow');
+    
+    if (content.style.display === 'none') {
+        content.style.display = 'block';
+        arrow.style.transform = 'rotate(180deg)';
+    } else {
+        content.style.display = 'none';
+        arrow.style.transform = 'rotate(0deg)';
     }
+}
 
-    // Mark as initialized
-    pumpSearchInput.dataset.autocompleteInitialized = 'true';
-
-    // Disable any existing Materialize autocomplete initialization
-    pumpSearchInput.removeAttribute('data-autocomplete');
-    pumpSearchInput.classList.remove('autocomplete');
-
-    // Remove any existing Materialize autocomplete instances
-    if (window.M && window.M.Autocomplete) {
-        const existingInstance = window.M.Autocomplete.getInstance(pumpSearchInput);
-        if (existingInstance) {
-            console.log('Destroying existing Materialize autocomplete instance');
-            existingInstance.destroy();
+// Switch unit system
+function switchUnitSystem(system) {
+    var flowUnit = document.getElementById('flow_unit');
+    var headUnit = document.getElementById('head_unit');
+    var flowInput = document.getElementById('flow_rate');
+    var headInput = document.getElementById('total_head');
+    
+    if (system === 'imperial') {
+        if (flowUnit) flowUnit.textContent = '(GPM)';
+        if (headUnit) headUnit.textContent = '(ft)';
+        
+        // Convert existing values if present
+        if (flowInput && flowInput.value) {
+            var m3hr = parseFloat(flowInput.value);
+            flowInput.value = (m3hr * 4.40287).toFixed(2); // m³/hr to GPM
+        }
+        if (headInput && headInput.value) {
+            var meters = parseFloat(headInput.value);
+            headInput.value = (meters * 3.28084).toFixed(2); // m to ft
+        }
+    } else {
+        if (flowUnit) flowUnit.textContent = '(m³/hr)';
+        if (headUnit) headUnit.textContent = '(m)';
+        
+        // Convert back to metric if needed
+        if (flowInput && flowInput.value) {
+            var gpm = parseFloat(flowInput.value);
+            flowInput.value = (gpm * 0.227124).toFixed(2); // GPM to m³/hr
+        }
+        if (headInput && headInput.value) {
+            var feet = parseFloat(headInput.value);
+            headInput.value = (feet * 0.3048).toFixed(2); // ft to m
         }
     }
+    
+    updateActiveLabels();
+}
 
-    // Clear any existing event listeners by cloning the element
-    const newInput = pumpSearchInput.cloneNode(true);
-    pumpSearchInput.parentNode.replaceChild(newInput, pumpSearchInput);
-    const cleanInput = document.getElementById('direct_pump_search');
-
-    let searchTimeout;
-    let selectedIndex = -1;
-    let currentSuggestions = [];
-
-    // Enhanced input handler with loading states and better UX - use the clean input
-    cleanInput.addEventListener('input', function() {
+// Setup autocomplete for direct pump search
+function setupDirectSearchAutocomplete() {
+    var input = document.getElementById('direct_pump_code');
+    var dropdown = document.getElementById('direct_pump_suggestions');
+    var suggestionsList = dropdown.querySelector('.suggestions-list');
+    var searchTimeout;
+    
+    if (!input || !dropdown) return;
+    
+    // Handle input events
+    input.addEventListener('input', function() {
         clearTimeout(searchTimeout);
-        const query = this.value.trim();
-        const searchButton = document.getElementById('direct_search_button');
-
-        // Show/hide search button based on input content
-        if (searchButton) {
-            if (query.length > 0) {
-                searchButton.style.display = 'flex';
-            } else {
-                searchButton.style.display = 'none';
-            }
-        }
-
-        // Reset UI state
-        selectedIndex = -1;
-        this.setAttribute('data-search-status', 'ready');
-
-        if (query.length < 1) {
-            hideSuggestions();
-            updateStatus('Skip selection algorithm and analyze a specific pump model');
-            return;
-        }
-
+        var query = this.value.trim();
+        
         if (query.length < 2) {
-            showQuickHelp();
-            updateStatus('Keep typing to search our pump database...');
+            dropdown.style.display = 'none';
             return;
         }
-
-        // Show loading state
-        this.setAttribute('data-search-status', 'searching');
-        showLoading();
-        updateStatus('Searching pump database...');
-
+        
+        // Debounce search
         searchTimeout = setTimeout(function() {
             searchPumps(query);
         }, 300);
     });
-
-    // Keyboard navigation - use the clean input
-    cleanInput.addEventListener('keydown', function(e) {
-        if (!suggestionsDiv.style.display || suggestionsDiv.style.display === 'none') return;
-
-        const suggestions = suggestionsDiv.querySelectorAll('.suggestion-item');
-
-        switch(e.key) {
-            case 'ArrowDown':
-                e.preventDefault();
-                selectedIndex = Math.min(selectedIndex + 1, suggestions.length - 1);
-                updateSelection(suggestions);
-                break;
-            case 'ArrowUp':
-                e.preventDefault();
-                selectedIndex = Math.max(selectedIndex - 1, -1);
-                updateSelection(suggestions);
-                break;
-            case 'Enter':
-                e.preventDefault();
-                if (selectedIndex >= 0 && suggestions[selectedIndex]) {
-                    const pumpCode = suggestions[selectedIndex].dataset.pumpCode;
-                    selectPump(pumpCode);
-                }
-                break;
-            case 'Escape':
-                e.preventDefault();
-                hideSuggestions();
-                break;
-        }
-    });
-
-    // Enhanced search function
+    
+    // Search pumps function
     function searchPumps(query) {
-        fetch('/api/pumps/search?q=' + encodeURIComponent(query))
+        fetch('/api/pump_autocomplete?q=' + encodeURIComponent(query))
             .then(function(response) {
                 return response.json();
             })
             .then(function(data) {
-                cleanInput.setAttribute('data-search-status', 'ready');
-
                 if (data.pumps && data.pumps.length > 0) {
-                    currentSuggestions = data.pumps;
-                    showSuggestions(data.pumps);
-                    updateStatus('Found ' + data.pumps.length + ' matching pump' + (data.pumps.length > 1 ? 's' : ''));
+                    displaySuggestions(data.pumps);
                 } else {
-                    showEmptyState();
-                    updateStatus('No pumps found - try different search terms');
+                    suggestionsList.innerHTML = '<div style="padding: 12px; color: #666;">No pumps found</div>';
+                    dropdown.style.display = 'block';
                 }
             })
             .catch(function(error) {
-                console.error('Error fetching pump suggestions:', error);
-                cleanInput.setAttribute('data-search-status', 'ready');
-                showErrorState();
-                updateStatus('Search temporarily unavailable');
+                console.error('Search error:', error);
+                dropdown.style.display = 'none';
             });
     }
-
-    function showSuggestions(pumps) {
-        const loadingDiv = suggestionsDiv.querySelector('.suggestions-loading');
-        const listDiv = suggestionsDiv.querySelector('.suggestions-list');
-        const emptyDiv = suggestionsDiv.querySelector('.suggestions-empty');
-        const helpDiv = suggestionsDiv.querySelector('.suggestions-help');
-
-        // Hide other states
-        loadingDiv.style.display = 'none';
-        emptyDiv.style.display = 'none';
-        helpDiv.style.display = 'none';
-
-        // Show suggestions - only pump codes
-        listDiv.innerHTML = pumps.map(function(pump, index) {
-            return '<div class="suggestion-item" data-pump-code="' + pump.pump_code + '" onclick="selectPump(\'' + pump.pump_code + '\')" style="padding: 8px 16px;">' +
-                '<div class="pump-code" style="font-size: 14px; color: #333;">' + pump.pump_code + '</div>' +
-            '</div>';
-        }).join('');
-
-        suggestionsDiv.style.display = 'block';
+    
+    // Display suggestions
+    function displaySuggestions(pumps) {
+        suggestionsList.innerHTML = '';
+        
+        pumps.forEach(function(pump) {
+            var item = document.createElement('div');
+            item.className = 'suggestion-item';
+            item.style.cssText = 'padding: 12px; cursor: pointer; border-bottom: 1px solid #f0f0f0;';
+            item.innerHTML = '<strong>' + pump.pump_code + '</strong> - ' + pump.pump_type;
+            
+            item.addEventListener('click', function() {
+                input.value = pump.pump_code;
+                dropdown.style.display = 'none';
+                updateActiveLabels();
+            });
+            
+            item.addEventListener('mouseenter', function() {
+                this.style.backgroundColor = 'rgba(25, 118, 210, 0.08)';
+            });
+            
+            item.addEventListener('mouseleave', function() {
+                this.style.backgroundColor = 'transparent';
+            });
+            
+            suggestionsList.appendChild(item);
+        });
+        
+        dropdown.style.display = 'block';
     }
+    
+    // Hide dropdown when clicking outside
+    document.addEventListener('click', function(event) {
+        if (!input.contains(event.target) && !dropdown.contains(event.target)) {
+            dropdown.style.display = 'none';
+        }
+    });
+    
+    // Handle escape key
+    input.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+            dropdown.style.display = 'none';
+        }
+    });
+}
 
-    function showLoading() {
-        const loadingDiv = suggestionsDiv.querySelector('.suggestions-loading');
-        const listDiv = suggestionsDiv.querySelector('.suggestions-list');
-        const emptyDiv = suggestionsDiv.querySelector('.suggestions-empty');
-        const helpDiv = suggestionsDiv.querySelector('.suggestions-help');
-
-        loadingDiv.style.display = 'block';
-        listDiv.innerHTML = '';
-        emptyDiv.style.display = 'none';
-        helpDiv.style.display = 'none';
-
-        suggestionsDiv.style.display = 'block';
-    }
-
-    function showEmptyState() {
-        const loadingDiv = suggestionsDiv.querySelector('.suggestions-loading');
-        const listDiv = suggestionsDiv.querySelector('.suggestions-list');
-        const emptyDiv = suggestionsDiv.querySelector('.suggestions-empty');
-        const helpDiv = suggestionsDiv.querySelector('.suggestions-help');
-
-        loadingDiv.style.display = 'none';
-        listDiv.innerHTML = '';
-        emptyDiv.style.display = 'block';
-        helpDiv.style.display = 'none';
-
-        suggestionsDiv.style.display = 'block';
-    }
-
-    function showQuickHelp() {
-        const loadingDiv = suggestionsDiv.querySelector('.suggestions-loading');
-        const listDiv = suggestionsDiv.querySelector('.suggestions-list');
-        const emptyDiv = suggestionsDiv.querySelector('.suggestions-empty');
-        const helpDiv = suggestionsDiv.querySelector('.suggestions-help');
-
-        loadingDiv.style.display = 'none';
-        listDiv.innerHTML = '';
-        emptyDiv.style.display = 'none';
-        helpDiv.style.display = 'block';
-
-        suggestionsDiv.style.display = 'block';
-    }
-
-    function showErrorState() {
-        hideSuggestions();
-    }
-
-    function hideSuggestions() {
-        suggestionsDiv.style.display = 'none';
-        selectedIndex = -1;
-    }
-
-    function updateSelection(suggestions) {
-        suggestions.forEach(function(item, index) {
-            if (index === selectedIndex) {
-                item.classList.add('selected');
-                item.scrollIntoView({ block: 'nearest' });
+// Form validation
+document.querySelectorAll('form').forEach(function(form) {
+    form.addEventListener('submit', function(event) {
+        var isValid = true;
+        
+        // Check required fields
+        this.querySelectorAll('[required]').forEach(function(field) {
+            if (!field.value || field.value.trim() === '') {
+                isValid = false;
+                field.style.borderColor = '#f44336';
+                
+                // Add error message if not exists
+                if (!field.nextElementSibling || !field.nextElementSibling.classList.contains('error-text')) {
+                    var errorText = document.createElement('span');
+                    errorText.className = 'error-text';
+                    errorText.style.color = '#f44336';
+                    errorText.style.fontSize = '12px';
+                    errorText.textContent = 'This field is required';
+                    field.parentElement.appendChild(errorText);
+                }
             } else {
-                item.classList.remove('selected');
+                field.style.borderColor = '';
+                
+                // Remove error message if exists
+                var errorText = field.parentElement.querySelector('.error-text');
+                if (errorText) {
+                    errorText.remove();
+                }
             }
         });
-    }
-
-    function updateStatus(message) {
-        if (statusSpan) {
-            statusSpan.textContent = message;
-        }
-    }
-
-    // Hide suggestions when clicking outside - use the clean input
-    document.addEventListener('click', function(e) {
-        if (!cleanInput.contains(e.target) && !suggestionsDiv.contains(e.target)) {
-            hideSuggestions();
-            updateStatus('Skip selection algorithm and analyze a specific pump model');
+        
+        if (!isValid) {
+            event.preventDefault();
+            M.toast({html: 'Please fill in all required fields', classes: 'red'});
         }
     });
-
-    console.log('Enhanced autocomplete initialized successfully');
-}
-
-// Global pump selection function
-function selectPump(pumpCode) {
-    const input = document.getElementById('direct_pump_search');
-    const suggestions = document.getElementById('pump_search_suggestions');
-    const statusSpan = document.getElementById('pump-search-status');
-    const searchButton = document.getElementById('direct_search_button');
-
-    if (input) {
-        input.value = pumpCode;
-        input.setAttribute('data-search-status', 'ready');
-        // Trigger change event for any listeners
-        input.dispatchEvent(new Event('change'));
-    }
-
-    // Show search button since there's now content in the input
-    if (searchButton && pumpCode.trim().length > 0) {
-        searchButton.style.display = 'flex';
-    }
-
-    if (suggestions) {
-        suggestions.style.display = 'none';
-    }
-
-    if (statusSpan) {
-        statusSpan.textContent = `Selected: ${pumpCode}`;
-    }
-
-    // Add visual feedback
-    if (input) {
-        input.style.borderColor = '#4caf50';
-        setTimeout(() => {
-            input.style.borderColor = '';
-        }, 2000);
-    }
-}
-
-// Quick suggestion selection function
-function selectQuickSuggestion(pumpCode) {
-    selectPump(pumpCode);
-}
-
-function initializeAdvancedOptions() {
-    // Advanced options initialization - no longer using Materialize autocomplete
-    // The enhanced autocomplete is handled in initializeEnhancedAutocomplete()
-    console.log('Advanced options initialized');
-}
-
-// Advanced options toggle functionality
-function toggleAdvancedOptions() {
-    const content = document.getElementById('advanced-options-content');
-    const arrow = document.getElementById('advanced-arrow');
-    const status = document.getElementById('advanced-status');
-
-    if (content.style.display === 'none' || content.style.display === '') {
-        // Expand
-        content.style.display = 'block';
-        arrow.style.transform = 'rotate(180deg)';
-        status.textContent = 'Click to collapse advanced options';
-
-        // Smooth scroll into view
-        setTimeout(() => {
-            content.scrollIntoView({ 
-                behavior: 'smooth', 
-                block: 'nearest' 
-            });
-        }, 100);
-    } else {
-        // Collapse
-        content.style.display = 'none';
-        arrow.style.transform = 'rotate(0deg)';
-        status.textContent = 'Click to expand detailed parameters';
-    }
-}
-
-// Handle Enter key in direct search input
-function handleDirectSearchKeydown(event) {
-    if (event.key === 'Enter') {
-        event.preventDefault();
-        searchDirectPump();
-    }
-}
-
-// Direct pump search function
-function searchDirectPump() {
-    const input = document.getElementById('direct_pump_search');
-    const flowInput = document.getElementById('flow_rate');
-    const headInput = document.getElementById('total_head');
-    const button = document.getElementById('direct_search_button');
-
-    if (!input || !flowInput || !headInput) {
-        alert('Please make sure all required fields are filled');
-        return;
-    }
-
-    const pumpCode = input.value.trim();
-    const flow = flowInput.value;
-    const head = headInput.value;
-
-    if (!pumpCode) {
-        alert('Please enter a pump code to search');
-        input.focus();
-        return;
-    }
-
-    if (!flow || !head) {
-        alert('Please enter both flow rate and total head before searching');
-        if (!flow) flowInput.focus();
-        else if (!head) headInput.focus();
-        return;
-    }
-
-    // Show loading state
-    if (button) {
-        button.style.opacity = '0.7';
-        const buttonText = button.querySelector('.btn-text');
-        if (buttonText) buttonText.textContent = 'Searching...';
-        button.disabled = true;
-    }
-
-    // Construct the direct search URL
-    const url = `/pump_report/${encodeURIComponent(pumpCode)}?flow=${flow}&head=${head}&direct_search=true`;
-
-    // Navigate to the pump report
-    window.location.href = url;
-}
-
-// Pump suggestion selection
-function selectPumpSuggestion(pumpCode) {
-    const input = document.getElementById('direct_pump_search');
-    const suggestions = document.getElementById('pump_search_suggestions');
-
-    if (input) {
-        input.value = pumpCode;
-        // Trigger change event for any listeners
-        input.dispatchEvent(new Event('change'));
-    }
-
-    if (suggestions) {
-        suggestions.style.display = 'none';
-    }
-}
-
-// Form reset functionality
-function resetForm() {
-    const form = document.getElementById('pumpSelectionForm');
-    if (form) {
-        form.reset();
-
-        // Reset advanced options to collapsed state
-        const content = document.getElementById('advanced-options-content');
-        const arrow = document.getElementById('advanced-arrow');
-        const status = document.getElementById('advanced-status');
-
-        if (content) content.style.display = 'none';
-        if (arrow) arrow.style.transform = 'rotate(0deg)';
-        if (status) status.textContent = 'Click to expand detailed parameters';
-
-        // Hide variable flow section
-        const flowRangeSection = document.getElementById('flow-range-section');
-        if (flowRangeSection) flowRangeSection.style.display = 'none';
-
-        // Hide pump suggestions
-        const suggestions = document.getElementById('pump_search_suggestions');
-        if (suggestions) suggestions.style.display = 'none';
-    }
-}
-// Add unit conversion logic and essential requirements watcher
-// Define global variable for current unit system
-let currentUnitSystem = 'metric';
-
-// Function to switch unit systems (called by radio buttons)
-function switchUnitSystem(newSystem) {
-    console.log('switchUnitSystem called with:', newSystem, 'current:', currentUnitSystem);
-    
-    if (currentUnitSystem === newSystem) return;
-    
-    const flowInput = document.getElementById('flow_rate');
-    const headInput = document.getElementById('total_head');
-    
-    // Convert existing values if they exist
-    if (flowInput && flowInput.value) {
-        const flowValue = parseFloat(flowInput.value);
-        if (!isNaN(flowValue)) {
-            if (newSystem === 'imperial' && currentUnitSystem === 'metric') {
-                // Converting FROM metric TO imperial
-                // Check if we have stored imperial value first, otherwise convert
-                if (storedValues.flow_rate_imperial !== null) {
-                    flowInput.value = storedValues.flow_rate_imperial.toString();
-                    showConversionMessage(`Flow rate restored to ${flowInput.value} GPM`);
-                    console.log('Restored stored imperial flow rate:', storedValues.flow_rate_imperial);
-                } else {
-                    // Convert m³/hr to GPM: 1 m³/hr = 4.40287 GPM
-                    const convertedValue = (flowValue * 4.40287);
-                    flowInput.value = convertedValue.toFixed(2);
-                    storedValues.flow_rate_imperial = convertedValue;
-                    showConversionMessage(`Flow rate converted: ${flowValue} m³/hr → ${flowInput.value} GPM`);
-                }
-            } else if (newSystem === 'metric' && currentUnitSystem === 'imperial') {
-                // Converting FROM imperial TO metric
-                // Check if we have stored metric value first, otherwise convert
-                if (storedValues.flow_rate_metric !== null) {
-                    flowInput.value = storedValues.flow_rate_metric.toString();
-                    showConversionMessage(`Flow rate restored to ${flowInput.value} m³/hr`);
-                    console.log('Restored stored metric flow rate:', storedValues.flow_rate_metric);
-                } else {
-                    // Convert GPM to m³/hr: 1 GPM = 0.227124 m³/hr
-                    const convertedValue = (flowValue * 0.227124);
-                    flowInput.value = convertedValue.toFixed(2);
-                    storedValues.flow_rate_metric = convertedValue;
-                    showConversionMessage(`Flow rate converted: ${flowValue} GPM → ${flowInput.value} m³/hr`);
-                }
-            }
-        }
-    }
-    
-    if (headInput && headInput.value) {  
-        const headValue = parseFloat(headInput.value);
-        if (!isNaN(headValue)) {
-            if (newSystem === 'imperial' && currentUnitSystem === 'metric') {
-                // Converting FROM metric TO imperial
-                // Check if we have stored imperial value first, otherwise convert
-                if (storedValues.total_head_imperial !== null) {
-                    headInput.value = storedValues.total_head_imperial.toString();
-                    showConversionMessage(`Head restored to ${headInput.value} ft`);
-                    console.log('Restored stored imperial head:', storedValues.total_head_imperial);
-                } else {
-                    // Convert meters to feet: 1 m = 3.28084 ft
-                    const convertedValue = (headValue * 3.28084);
-                    headInput.value = convertedValue.toFixed(2);
-                    storedValues.total_head_imperial = convertedValue;
-                    showConversionMessage(`Head converted: ${headValue} m → ${headInput.value} ft`);
-                }
-            } else if (newSystem === 'metric' && currentUnitSystem === 'imperial') {
-                // Converting FROM imperial TO metric
-                // Check if we have stored metric value first, otherwise convert
-                if (storedValues.total_head_metric !== null) {
-                    headInput.value = storedValues.total_head_metric.toString();
-                    showConversionMessage(`Head restored to ${headInput.value} m`);
-                    console.log('Restored stored metric head:', storedValues.total_head_metric);
-                } else {
-                    // Convert feet to meters: 1 ft = 0.3048 m
-                    const convertedValue = (headValue * 0.3048);
-                    headInput.value = convertedValue.toFixed(2);
-                    storedValues.total_head_metric = convertedValue;
-                    showConversionMessage(`Head converted: ${headValue} ft → ${headInput.value} m`);
-                }
-            }
-        }
-    }
-    
-    // Clear the converted fields tracking when switching unit systems  
-    convertedFields.clear();
-    console.log('Cleared converted fields tracking');
-    
-    // Update current system
-    currentUnitSystem = newSystem;
-    console.log('currentUnitSystem updated to:', currentUnitSystem);
-    
-    // Update labels and validation
-    updateUnitLabels();
-    
-    // Trigger validation check
-    checkEssentialRequirements();
-}
-
-
-
-// Function to update labels based on the unit system
-function updateUnitLabels() {
-    const flowLabel = document.querySelector('label[for="flow_rate"]');
-    const headLabel = document.querySelector('label[for="total_head"]');
-    const flowHelper = document.querySelector('#flow_rate + .helper-text');
-    const headHelper = document.querySelector('#total_head + .helper-text') || document.querySelector('span.helper-text[data-error*="head"]');
-    
-    // Update input validation ranges
-    const flowInput = document.getElementById('flow_rate');
-    const headInput = document.getElementById('total_head');
-
-    if (currentUnitSystem === 'metric') {
-        if (flowLabel) flowLabel.textContent = 'Flow Rate *';
-        if (headLabel) headLabel.textContent = 'Total Head *';
-        if (flowHelper) {
-            flowHelper.dataset.error = "Flow rate must be between 0.1 and 10000 m³/hr";
-            flowHelper.textContent = "Enter flow rate in m³/hr (metric units)";
-        }
-        if (headHelper) {
-            headHelper.dataset.error = "Total head must be between 0.1 and 1000 m";
-            headHelper.textContent = "Enter total head in meters (metric units)";
-        }
-        
-        // Update validation ranges
-        if (flowInput) {
-            flowInput.min = flowInput.dataset.metricMin || "0.1";
-            flowInput.max = flowInput.dataset.metricMax || "10000";
-        }
-        if (headInput) {
-            headInput.min = headInput.dataset.metricMin || "0.1";
-            headInput.max = headInput.dataset.metricMax || "1000";
-        }
-    } else {
-        if (flowLabel) flowLabel.textContent = 'Flow Rate *';
-        if (headLabel) headLabel.textContent = 'Total Head *';
-        if (flowHelper) {
-            flowHelper.dataset.error = "Flow rate must be between 0.44 and 44029 GPM";
-            flowHelper.textContent = "Enter flow rate in GPM (imperial units)";
-        }
-        if (headHelper) {
-            headHelper.dataset.error = "Total head must be between 0.32 and 3280 ft";
-            headHelper.textContent = "Enter total head in feet (imperial units)";
-        }
-        
-        // Update validation ranges
-        if (flowInput) {
-            flowInput.min = flowInput.dataset.imperialMin || "0.44";
-            flowInput.max = flowInput.dataset.imperialMax || "44029";
-        }
-        if (headInput) {
-            headInput.min = headInput.dataset.imperialMin || "0.32";
-            headInput.max = headInput.dataset.imperialMax || "3280";
-        }
-    }
-}
-
-
-
-// Function to show conversion message
-function showConversionMessage(message) {
-    // Remove any existing conversion message
-    const existingMessage = document.getElementById('conversion-message');
-    if (existingMessage) {
-        existingMessage.remove();
-    }
-    
-    // Create new message element
-    const messageDiv = document.createElement('div');
-    messageDiv.id = 'conversion-message';
-    messageDiv.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        background: #4caf50;
-        color: white;
-        padding: 12px 20px;
-        border-radius: 8px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        font-size: 14px;
-        z-index: 1000;
-        opacity: 0;
-        transform: translateX(100%);
-        transition: all 0.3s ease;
-    `;
-    messageDiv.innerHTML = `<i class="material-icons" style="font-size: 16px; vertical-align: middle; margin-right: 8px;">check_circle</i>${message}`;
-    
-    document.body.appendChild(messageDiv);
-    
-    // Animate in
-    setTimeout(() => {
-        messageDiv.style.opacity = '1';
-        messageDiv.style.transform = 'translateX(0)';
-    }, 10);
-    
-    // Auto remove after 3 seconds
-    setTimeout(() => {
-        messageDiv.style.opacity = '0';
-        messageDiv.style.transform = 'translateX(100%)';
-        setTimeout(() => {
-            if (messageDiv.parentNode) {
-                messageDiv.parentNode.removeChild(messageDiv);
-            }
-        }, 300);
-    }, 3000);
-}
-
-// Track which fields have been converted to avoid double conversion
-const convertedFields = new Set();
-
-// Store values in both unit systems for proper bidirectional conversion
-const storedValues = {
-    flow_rate_metric: null,
-    flow_rate_imperial: null,
-    total_head_metric: null,
-    total_head_imperial: null
-};
-
-// Remove automatic conversion on blur - this was causing double conversion issues
-// Values entered in imperial mode should stay as imperial until user switches units
-function handleUnitConversionOnBlur(input) {
-    // Disabled - conversion only happens when user explicitly switches unit systems
-    // This prevents the confusion where users enter imperial values and they get auto-converted
-    return;
-}
-
-// Set up essential requirements watcher
-function setupEssentialRequirementsWatcher() {
-    const flowInput = document.getElementById('flow_rate');
-    const headInput = document.getElementById('total_head');
-    const pumpTypeInputs = document.querySelectorAll('input[name="pump_type"]');
-    
-    console.log('Setting up event listeners for:', flowInput?.id, headInput?.id);
-    
-    // Add event listeners - only input for real-time validation, blur for conversion
-    [flowInput, headInput].forEach(input => {
-        if (input) {
-            console.log('Adding event listeners to:', input.id);
-            input.addEventListener('input', function() {
-                checkEssentialRequirements();
-                
-                // Store the value as user types it (in the current unit system)
-                const value = parseFloat(this.value);
-                if (!isNaN(value) && value > 0) {
-                    if (this.id === 'flow_rate') {
-                        if (currentUnitSystem === 'metric') {
-                            storedValues.flow_rate_metric = value;
-                            console.log('Stored typed flow rate (metric):', value);
-                        } else {
-                            storedValues.flow_rate_imperial = value;  
-                            console.log('Stored typed flow rate (imperial):', value);
-                        }
-                    } else if (this.id === 'total_head') {
-                        if (currentUnitSystem === 'metric') {
-                            storedValues.total_head_metric = value;
-                            console.log('Stored typed head (metric):', value);
-                        } else {
-                            storedValues.total_head_imperial = value;
-                            console.log('Stored typed head (imperial):', value);
-                        }
-                    }
-                }
-                
-                // Clear converted flag as user is editing and clear opposite unit system storage
-                convertedFields.delete(this.id);
-                
-                // When user edits, clear the opposite unit system's stored value
-                if (this.id === 'flow_rate') {
-                    if (currentUnitSystem === 'metric') {
-                        storedValues.flow_rate_imperial = null;
-                    } else {
-                        storedValues.flow_rate_metric = null;
-                    }
-                } else if (this.id === 'total_head') {
-                    if (currentUnitSystem === 'metric') {
-                        storedValues.total_head_imperial = null;
-                    } else {
-                        storedValues.total_head_metric = null;
-                    }
-                }
-            });
-            
-            // Add blur event listener for conversion
-            input.addEventListener('blur', function(event) {
-                handleUnitConversionOnBlur(input);
-            });
-        }
-    });
-
-    pumpTypeInputs.forEach(input => {
-        input.addEventListener('change', checkEssentialRequirements);
-    });
-
-    // Initial check
-    checkEssentialRequirements();
-}
-
-// Check essential requirements function
-function checkEssentialRequirements() {
-        // Get the input elements each time to ensure they exist
-        const flowInput = document.getElementById('flow_rate');
-        const headInput = document.getElementById('total_head');
-        const pumpTypeInputs = document.querySelectorAll('input[name="pump_type"]');
-        
-        if (!flowInput || !headInput) {
-            console.warn('Flow or head input elements not found');
-            return;
-        }
-        
-        let flowValue = parseFloat(flowInput.value);
-        let headValue = parseFloat(headInput.value);
-
-        // Convert to metric for validation if in imperial mode
-        // Check actual radio button state for accuracy
-        const imperialRadio = document.querySelector('input[name="unit_system"][value="imperial"]');
-        const isImperialMode = imperialRadio && imperialRadio.checked;
-        
-        if (isImperialMode) {
-            // Only convert values that haven't been converted already
-            if (!isNaN(flowValue) && !convertedFields.has('flow_rate')) {
-                flowValue = flowValue * 0.227124; // GPM to m³/hr  
-            }
-            if (!isNaN(headValue) && !convertedFields.has('total_head')) {
-                headValue = headValue * 0.3048; // ft to m
-            }
-        }
-
-        const pumpTypeSelected = Array.from(pumpTypeInputs).some(input => input.checked);
-
-        const hasFlow = !isNaN(flowValue) && flowValue > 0;
-        const hasHead = !isNaN(headValue) && headValue > 0;
-
-    const findBestPumpSection = document.getElementById('find-best-pump-section');
-    if (hasFlow && hasHead && pumpTypeSelected) {
-        findBestPumpSection.style.display = 'block';
-    } else {
-        findBestPumpSection.style.display = 'none';
-    }
-}
-
-// Test function for head conversion  
-function testHeadConversion() {
-    const headInput = document.getElementById('total_head');
-    if (headInput) {
-        console.log('Testing head conversion manually...');
-        console.log('Head input found:', headInput.id, 'value:', headInput.value);
-        console.log('Current unit system:', currentUnitSystem);
-        handleUnitConversionOnBlur(headInput);
-    } else {
-        console.log('Head input not found!');
-    }
-}
-
-// Direct test for head blur event
-function triggerHeadBlur() {
-    const headInput = document.getElementById('total_head');
-    if (headInput) {
-        console.log('Manually triggering blur event on head input...');
-        headInput.blur();
-        headInput.dispatchEvent(new Event('blur'));
-        headInput.dispatchEvent(new Event('focusout'));
-    }
-}
-
-// Comprehensive test function for unit conversion robustness
-function testUnitConversionRobustness() {
-    console.log('=== UNIT CONVERSION ROBUSTNESS TEST ===');
-    
-    // Test 1: Basic conversion
-    console.log('Test 1: Basic conversion functionality');
-    const flowInput = document.getElementById('flow_rate');
-    const headInput = document.getElementById('total_head');
-    
-    if (flowInput && headInput) {
-        // Set test values
-        flowInput.value = '1000';
-        headInput.value = '100';
-        
-        // Switch to imperial
-        const imperialRadio = document.querySelector('input[name="unit_system"][value="imperial"]');
-        if (imperialRadio) {
-            imperialRadio.checked = true;
-            currentUnitSystem = 'imperial';
-            console.log('Switched to imperial, testing conversions...');
-            
-            // Test blur events
-            // Test blur events
-            handleUnitConversionOnBlur(flowInput);
-            handleUnitConversionOnBlur(headInput);
-            
-            console.log('Flow after conversion:', flowInput.value);
-            console.log('Head after conversion:', headInput.value);
-        }
-    }
-    
-    // Test 2: Validation ranges
-    console.log('Test 2: Validation range updates');
-    updateUnitLabels();
-    console.log('Flow min/max:', flowInput?.min, '/', flowInput?.max);
-    console.log('Head min/max:', headInput?.min, '/', headInput?.max);
-    
-    // Test 3: Edge cases
-    console.log('Test 3: Edge case handling');
-    flowInput.value = '';
-    headInput.value = '0';
-    handleUnitConversionOnBlur(flowInput);
-    handleUnitConversionOnBlur(headInput);
-    
-    console.log('=== TEST COMPLETE ===');
-}
-
-// Call setup function after DOM is loaded
-document.addEventListener('DOMContentLoaded', function() {
-    // Initialize form components
-    initializeFormComponents();
-    initializeAdvancedOptions();
-
-        // Set up unit conversion and essential requirements watcher
-    setupEssentialRequirementsWatcher();
-    
-    // Add manual test for head input (for debugging)
-    window.testHeadConversion = testHeadConversion;
-    window.triggerHeadBlur = triggerHeadBlur;
-    window.testUnitConversionRobustness = testUnitConversionRobustness;
-    
-    // Add debugging function to check stored values
-    window.checkStoredValues = function() {
-        console.log('Stored values:', storedValues);
-        console.log('Current unit system:', currentUnitSystem);
-        console.log('Converted fields:', Array.from(convertedFields));
-    };
-    
-    // Comprehensive system review function
-    window.reviewSystem = function() {
-        console.log('=== SYSTEM REVIEW ===');
-        
-        // Check for essential elements
-        const flowInput = document.getElementById('flow_rate');
-        const headInput = document.getElementById('total_head');
-        const imperialRadio = document.querySelector('input[name="unit_system"][value="imperial"]');
-        const metricRadio = document.querySelector('input[name="unit_system"][value="metric"]');
-        
-        console.log('✓ Essential elements found:', {
-            flow_input: !!flowInput,
-            head_input: !!headInput,
-            imperial_radio: !!imperialRadio,
-            metric_radio: !!metricRadio
-        });
-        
-        // Check conversion calculations
-        console.log('✓ Conversion calculation test:');
-        const testFlow = 1614.27;
-        const testHead = 164.08;
-        const expectedFlowMetric = 366.64;
-        const expectedHeadMetric = 50.00;
-        
-        const calculatedFlow = (testFlow * 0.227124).toFixed(2);
-        const calculatedHead = (testHead * 0.3048).toFixed(2);
-        
-        console.log(`  Flow: ${testFlow} GPM → ${calculatedFlow} m³/hr (expected: ${expectedFlowMetric})`);
-        console.log(`  Head: ${testHead} ft → ${calculatedHead} m (expected: ${expectedHeadMetric})`);
-        console.log(`  Flow accurate: ${calculatedFlow == expectedFlowMetric}`);
-        console.log(`  Head accurate: ${calculatedHead == expectedHeadMetric}`);
-        
-        // Check state
-        console.log('✓ Current state:', {
-            unit_system: currentUnitSystem,
-            converted_fields: Array.from(convertedFields),
-            stored_values: storedValues
-        });
-        
-        console.log('=== REVIEW COMPLETE ===');
-        return 'System review completed - check console for results';
-    };
 });
 </script>
-
-<!-- Materialize JS -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
-
-<!-- Page-specific JS only (base.html handles common scripts) -->
 {% endblock %}
