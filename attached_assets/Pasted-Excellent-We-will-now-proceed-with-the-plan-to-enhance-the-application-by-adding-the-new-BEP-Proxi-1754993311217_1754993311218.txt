@@ -1,0 +1,35 @@
+Excellent. We will now proceed with the plan to enhance the application by adding the new "BEP Proximity Selection" feature. This will be a new, fast selection path for experienced engineers.
+Please follow this two-phase plan. After you complete Phase 1, please stop and show me the new code you have written for review before you begin Phase 2.
+Phase 1: Build the Core Backend Logic
+Your first task is to build the new intelligence into the Brain and create a route to expose it.
+Step 1: Create a New Method in the Brain's SelectionIntelligence
+File to modify: app/brain/selection.py
+Action: Add a new method to the SelectionIntelligence class called find_pumps_by_bep_proximity.
+Logic for the new method:
+It should accept flow, head, and an optional pump_type as arguments.
+It will get the list of all pump models from the repository.
+It will loop through every pump and calculate the Euclidean distance between the user's duty point (flow, head) and the pump's stored BEP data (bep_flow_m3hr, bep_head_m). The formula is distance = sqrt((flow - bep_flow)² + (head - bep_head)²).
+It will store a list of tuples or dictionaries containing the pump_code and the calculated distance.
+It will sort this list by distance in ascending order (smallest distance is best).
+It will return the top 20 pumps from the sorted list.
+Step 2: Create a New Backend Route
+File to modify: app/route_modules/main_flow.py
+Action: Add a new route called /bep_proximity_results.
+Logic for the new route:
+It should be available via a GET request.
+It will get the flow and head from the URL query parameters.
+It will call the new brain.selection.find_pumps_by_bep_proximity(...) method to get the list of the 20 closest pumps.
+It will then pass this list of pumps to a new template for rendering.
+Step 3: Create a Placeholder Results Template
+File to create: app/templates/bep_proximity_results.html
+Action: Create a simple HTML page that proves the logic is working.
+It should extend "base.html".
+It should have a title like "BEP Proximity Search Results."
+It should display the pumps from the list passed in by the route, showing the pump_code and its calculated distance.
+For each pump in the list, it must include a link to that pump's full engineering_report page, passing the correct flow and head parameters in the URL.
+Request for Review:
+Once you have completed all three steps of Phase 1, please stop.
+Share the following two new/modified files with me for review:
+The updated app/brain/selection.py (showing the new find_pumps_by_bep_proximity method).
+The updated app/route_modules/main_flow.py (showing the new /bep_proximity_results route).
+After I have reviewed and approved this core logic, we will proceed to Phase 2, where we will build the UI enhancements on the main selection page to make this new feature accessible to the user.
