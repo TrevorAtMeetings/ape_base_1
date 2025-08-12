@@ -111,6 +111,59 @@ def pump_search():
         return jsonify({'error': 'Search failed'}), 500
 
 
+@api_bp.route('/pump_autocomplete')
+def pump_autocomplete():
+    """
+    Autocomplete endpoint for pump selection inputs.
+    Returns pump codes and types matching the search query.
+    """
+    try:
+        query = request.args.get('q', '').strip()
+        limit = request.args.get('limit', type=int, default=10)
+        
+        if not BRAIN_AVAILABLE:
+            return jsonify({'error': 'Autocomplete unavailable'}), 503
+            
+        brain = get_pump_brain()
+        
+        if not query:
+            # Return empty list when no query
+            return jsonify({'pumps': []})
+        
+        # Get all pumps and filter by query
+        all_pumps = brain.repository.get_pump_models()
+        
+        # Smart search: match at beginning of code, or anywhere in code
+        search_results = []
+        
+        # First priority: starts with query
+        starts_with = [p for p in all_pumps if p.get('pump_code', '').upper().startswith(query.upper())]
+        search_results.extend(starts_with)
+        
+        # Second priority: contains query but doesn't start with it
+        contains = [p for p in all_pumps 
+                   if query.upper() in p.get('pump_code', '').upper() 
+                   and p not in starts_with]
+        search_results.extend(contains)
+        
+        # Limit results and format for autocomplete
+        limited_results = search_results[:limit]
+        
+        pump_list = []
+        for pump in limited_results:
+            pump_list.append({
+                'pump_code': pump.get('pump_code', ''),
+                'pump_type': pump.get('pump_type', 'General'),
+                'manufacturer': pump.get('manufacturer', 'APE')
+            })
+        
+        return jsonify({'pumps': pump_list})
+        
+    except Exception as e:
+        logger.error(f"Error in pump autocomplete: {str(e)}")
+        return jsonify({'pumps': []}), 200  # Return empty list on error
+
+
 @api_bp.route('/pump_list')
 def get_pump_list():
     """API endpoint to get a list of all available pumps for UI controls."""
