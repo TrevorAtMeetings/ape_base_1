@@ -1,0 +1,62 @@
+Yes — the impact ratio values (and the exponents in the scaling laws) do vary with pump type, because trimming affects the hydraulic geometry differently depending on how the pump develops head and how the impeller interacts with the casing/volute or diffuser.
+
+The “pure” affinity law exponents Q \propto D^1,\ H \propto D^2,\ P \propto D^3 assume perfect geometric similarity and no secondary losses.
+In reality, the departure from those ideal ratios depends on:
+
+⸻
+
+1️⃣ Radial / Mixed-Flow Centrifugal Pumps (e.g., HSC — Horizontal Split Case, end suction)
+	•	Typical range:
+	•	Q \propto D^{0.98–1.02}
+	•	H \propto D^{1.9–2.1}
+	•	P \propto D^{2.85–3.05}
+	•	Why: Trimming mostly changes the vane outlet diameter, which is directly linked to tip speed and thus head. The loss of vane length slightly reduces head more than pure D^2 scaling predicts, so y is often just under 2.0.
+	•	NPSHr: Usually drops proportionally to Q^2.
+	•	Efficiency: Small drop (0.5–3 percentage points near BEP).
+
+⸻
+
+2️⃣ Axial-Flow Pumps
+	•	Typical range:
+	•	Q \propto D^{0.9–1.0}
+	•	H \propto D^{1.5–1.8} (significantly less than 2.0)
+	•	P \propto D^{2.4–2.8}
+	•	Why: In axial-flow hydraulics, head comes more from lift on the blades than from pure tip-speed energy. Trimming shortens chord length and reduces lift more than velocity² scaling alone would suggest. Flow changes are also slightly smaller relative to r because the hub/shroud geometry starts to dominate.
+	•	NPSHr: Often more sensitive — can drop more sharply due to reduced blade loading.
+	•	Efficiency: Can suffer more rapidly with trimming than radial designs.
+
+⸻
+
+3️⃣ Vertical Turbine Pumps (Mixed-Flow or Radial-Flow bowls)
+	•	Radial-flow bowl: behaves like radial centrifugal (see HSC above).
+	•	Mixed-flow bowl: scaling exponents in between radial and axial — e.g.
+	•	Q \propto D^{0.95–1.0}
+	•	H \propto D^{1.8–1.9}
+	•	P \propto D^{2.7–2.9}
+	•	Why: Mixed-flow vane angles + inlet bell geometry cause a slightly lower head exponent than pure radial designs.
+
+⸻
+
+4️⃣ Multistage Pumps (BB3, BB5)
+	•	Each stage trims independently, but total head = sum of stage heads. Scaling ratios per stage are similar to single-stage radial.
+	•	Caveat: Trimming may disturb head balance between stages slightly, so field scaling should be validated.
+
+⸻
+
+5️⃣ Effect of Specific Speed (N_s)
+
+A good mental model:
+	•	Low N_s (radial): scaling is closest to D^2 for head.
+	•	High N_s (axial): scaling exponent for head drops toward 1.5–1.8.
+	•	Mid N_s (mixed): sits between those extremes.
+
+⸻
+
+📌 Practical takeaways:
+	•	No, the “ideal” r, r^2, r^3 ratios are not universal — they’re most accurate for radial centrifugal pumps, less so for axial/mixed.
+	•	Yes, the deviation from ideal depends heavily on pump type, vane geometry, and N_s.
+	•	Best practice: use pump-family-specific exponents if you can get them from the manufacturer’s trim data. In absence of that, start with the ranges above and apply a head correction factor (\phi_H).
+
+⸻
+
+If you want, I can put together a table of recommended trim exponents by pump type and N_s band, so you have a quick lookup for any pump family. That would let you predict the trimmed curve much more accurately than using the same D^2 scaling across the board.

@@ -717,6 +717,97 @@ class SelectionIntelligence:
         except Exception as e:
             logger.debug(f"Error calculating BEP from curves for {pump_data.get('pump_code')}: {e}")
             return None
+
+    def _calculate_bep_from_curves_intelligent(self, pump_data: Dict[str, Any], 
+                                              target_flow: float, target_head: float) -> Optional[Dict[str, Any]]:
+        """
+        Intelligently calculate BEP from curves by selecting the most appropriate curve
+        for the target operating conditions, then finding maximum efficiency.
+        """
+        try:
+            curves = pump_data.get('curves', [])
+            if not curves:
+                return None
+            
+            # Score each curve based on how well it matches the target conditions
+            curve_scores = []
+            
+            for curve in curves:
+                points = curve.get('performance_points', [])
+                if len(points) < 3:
+                    continue
+                
+                # Get curve operating range
+                flows = [p.get('flow_m3hr', 0) for p in points if p.get('flow_m3hr', 0) > 0]
+                heads = [p.get('head_m', 0) for p in points if p.get('head_m', 0) > 0]
+                
+                if not flows or not heads:
+                    continue
+                
+                min_flow, max_flow = min(flows), max(flows)
+                min_head, max_head = min(heads), max(heads)
+                
+                # Calculate how well this curve covers the target point
+                flow_coverage = 1.0
+                if target_flow < min_flow:
+                    flow_coverage = min_flow / target_flow if target_flow > 0 else 0
+                elif target_flow > max_flow:
+                    flow_coverage = max_flow / target_flow if target_flow > 0 else 0
+                
+                head_coverage = 1.0
+                if target_head < min_head:
+                    head_coverage = min_head / target_head if target_head > 0 else 0
+                elif target_head > max_head:
+                    head_coverage = max_head / target_head if target_head > 0 else 0
+                
+                # Prefer curves that can handle the target conditions
+                coverage_score = min(flow_coverage, head_coverage)
+                
+                # Get curve diameter for tie-breaking (larger = higher flow capability)
+                diameter = curve.get('impeller_diameter_mm', 0)
+                
+                curve_scores.append({
+                    'curve': curve,
+                    'coverage_score': coverage_score,
+                    'diameter': diameter,
+                    'points': points
+                })
+            
+            if not curve_scores:
+                return None
+            
+            # Sort by coverage (best coverage first), then by diameter (larger first)
+            curve_scores.sort(key=lambda x: (-x['coverage_score'], -x['diameter']))
+            best_curve = curve_scores[0]['curve']
+            best_points = curve_scores[0]['points']
+            
+            # Find BEP (maximum efficiency) in the selected curve
+            best_bep = None
+            highest_efficiency = 0
+            
+            for point in best_points:
+                efficiency = point.get('efficiency_pct', 0)
+                if efficiency > highest_efficiency:
+                    highest_efficiency = efficiency
+                    best_bep = {
+                        'flow_m3hr': point.get('flow_m3hr', 0),
+                        'head_m': point.get('head_m', 0),
+                        'efficiency_pct': efficiency,
+                        'diameter_mm': best_curve.get('impeller_diameter_mm', 0)
+                    }
+            
+            if best_bep and best_bep['flow_m3hr'] > 0 and best_bep['head_m'] > 0:
+                pump_code = pump_data.get('pump_code', 'Unknown')
+                logger.debug(f"[BEP INTELLIGENT] {pump_code}: Selected {best_bep['diameter_mm']}mm curve - "
+                           f"BEP at {best_bep['flow_m3hr']:.1f} m³/hr, {best_bep['head_m']:.1f}m, {best_bep['efficiency_pct']:.1f}%")
+                return best_bep
+            
+            return None
+            
+        except Exception as e:
+            logger.debug(f"Error in intelligent BEP calculation for {pump_data.get('pump_code')}: {e}")
+            # Fallback to simple method
+            return self._calculate_bep_from_curves(pump_data)
     
     def find_pumps_by_bep_proximity(self, flow: float, head: float, 
                                    pump_type: Optional[str] = None) -> List[Dict[str, Any]]:
@@ -741,10 +832,17 @@ class SelectionIntelligence:
             logger.error("[BEP PROXIMITY] Repository not available")
             return []
         
-        # Validate inputs
+        # Enhanced input validation
         if flow <= 0 or head <= 0:
             logger.error(f"[BEP PROXIMITY] Invalid inputs: flow={flow}, head={head}")
             return []
+        
+        # Additional safety checks
+        if flow > 20000:  # Unrealistic for centrifugal pumps
+            logger.warning(f"[BEP PROXIMITY] Unusually high flow rate: {flow} m³/hr")
+        
+        if head > 2000:  # Unrealistic for centrifugal pumps
+            logger.warning(f"[BEP PROXIMITY] Unusually high head: {head} m")
         
         # Get all pumps from repository
         all_pumps = self.brain.repository.get_pump_models()
@@ -770,10 +868,10 @@ class SelectionIntelligence:
                 logger.debug(f"[BEP PROXIMITY] {pump_code}: Skipping - no valid BEP data")
                 continue
             
-            # Calculate normalized percentage differences
-            # This prevents flow (larger numbers) from dominating the distance calculation
-            flow_delta = abs(flow - bep_flow) / flow
-            head_delta = abs(head - bep_head) / head
+            # Calculate symmetric normalized differences
+            # Uses max() to prevent asymmetric scoring bias - treats over/under equally
+            flow_delta = abs(flow - bep_flow) / max(flow, bep_flow)
+            head_delta = abs(head - bep_head) / max(head, bep_head)
             
             # Calculate normalized Euclidean distance (proximity score)
             # Smaller distance means BEP is closer to the duty point
@@ -782,17 +880,46 @@ class SelectionIntelligence:
             # Convert to percentage for display
             proximity_score_pct = distance * 100
             
+            # Determine proximity category for user guidance
+            if proximity_score_pct < 10:
+                proximity_category = "Excellent"
+                category_color = "#4CAF50"
+            elif proximity_score_pct < 25:
+                proximity_category = "Good"
+                category_color = "#8BC34A"
+            elif proximity_score_pct < 50:
+                proximity_category = "Moderate"
+                category_color = "#FF9800"
+            else:
+                proximity_category = "Poor"
+                category_color = "#F44336"
+            
             # Get BEP efficiency, default to 0 if not available
             if not bep_efficiency:
                 # Try to get from curves if not in specifications
-                bep_data = self._calculate_bep_from_curves(pump)
+                bep_data = self._calculate_bep_from_curves_intelligent(pump, flow, head)
                 bep_efficiency = bep_data.get('efficiency_pct', 0) if bep_data else 0
+                if bep_data:
+                    # Update BEP values from intelligent curve calculation
+                    bep_flow = bep_data.get('flow_m3hr', bep_flow)
+                    bep_head = bep_data.get('head_m', bep_head)
+                    # Recalculate distance with updated BEP values
+                    flow_delta = abs(flow - bep_flow) / max(flow, bep_flow)
+                    head_delta = abs(head - bep_head) / max(head, bep_head)
+                    distance = math.sqrt(flow_delta**2 + head_delta**2)
+                    proximity_score_pct = distance * 100
+            
+            # Validate BEP efficiency is realistic for centrifugal pumps
+            if bep_efficiency and (bep_efficiency < 30 or bep_efficiency > 95):
+                logger.warning(f"[BEP PROXIMITY] {pump_code}: Questionable BEP efficiency {bep_efficiency}%")
             
             candidate_pumps.append({
                 'pump_code': pump_code,
                 'pump': pump,  # Include full pump data for downstream processing
                 'proximity_score': distance,  # Raw score for sorting
                 'proximity_score_pct': proximity_score_pct,  # Percentage for display
+                'proximity_category': proximity_category,  # User-friendly category
+                'category_color': category_color,  # Color coding for UI
                 'bep_efficiency': bep_efficiency or 0,
                 'bep_flow': bep_flow,
                 'bep_head': bep_head,
