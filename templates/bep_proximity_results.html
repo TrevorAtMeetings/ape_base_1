@@ -3,293 +3,386 @@
 {% block title %}BEP Proximity Search Results - APE Pumps{% endblock %}
 
 {% block head %}
-{{ super() }}
-<style>
-    .bep-results-container {
-        max-width: 1400px;
-        margin: 0 auto;
-        padding: 20px;
-    }
-    
-    .search-summary {
-        background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%);
-        color: white;
-        padding: 20px;
-        border-radius: 8px;
-        margin-bottom: 30px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    }
-    
-    .search-summary h4 {
-        margin: 0 0 15px 0;
-        font-size: 1.5rem;
-    }
-    
-    .search-params {
-        display: flex;
-        gap: 30px;
-        flex-wrap: wrap;
-    }
-    
-    .param-item {
-        display: flex;
-        flex-direction: column;
-    }
-    
-    .param-label {
-        font-size: 0.85rem;
-        opacity: 0.9;
-        margin-bottom: 3px;
-    }
-    
-    .param-value {
-        font-size: 1.2rem;
-        font-weight: 600;
-    }
-    
-    .results-table {
-        background: white;
-        border-radius: 8px;
-        overflow: hidden;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-    
-    .results-table table {
-        width: 100%;
-        margin: 0;
-    }
-    
-    .results-table th {
-        background: #f5f5f5;
-        padding: 15px;
-        text-align: left;
-        font-weight: 600;
-        color: #333;
-        border-bottom: 2px solid #e0e0e0;
-    }
-    
-    .results-table td {
-        padding: 12px 15px;
-        border-bottom: 1px solid #f0f0f0;
-    }
-    
-    .results-table tbody tr:hover {
-        background: #f8f9fa;
-    }
-    
-    .rank-badge {
-        display: inline-block;
-        background: #e3f2fd;
-        color: #1976d2;
-        padding: 4px 10px;
-        border-radius: 20px;
-        font-weight: 600;
-        font-size: 0.9rem;
-    }
-    
-    .rank-badge.top-3 {
-        background: #4caf50;
-        color: white;
-    }
-    
-    .pump-link {
-        color: #1976d2;
-        text-decoration: none;
-        font-weight: 500;
-        transition: color 0.2s;
-    }
-    
-    .pump-link:hover {
-        color: #1565c0;
-        text-decoration: underline;
-    }
-    
-    .proximity-score {
-        font-weight: 600;
-    }
-    
-    .proximity-score.excellent {
-        color: #4caf50;
-    }
-    
-    .proximity-score.good {
-        color: #ff9800;
-    }
-    
-    .proximity-score.fair {
-        color: #f44336;
-    }
-    
-    .efficiency-value {
-        font-weight: 500;
-    }
-    
-    .efficiency-value.high {
-        color: #4caf50;
-    }
-    
-    .efficiency-value.medium {
-        color: #ff9800;
-    }
-    
-    .efficiency-value.low {
-        color: #f44336;
-    }
-    
-    .no-results {
-        text-align: center;
-        padding: 60px 20px;
-        color: #666;
-    }
-    
-    .info-box {
-        background: #e3f2fd;
-        border-left: 4px solid #1976d2;
-        padding: 15px;
-        margin-bottom: 20px;
-        border-radius: 4px;
-    }
-    
-    .info-box h5 {
-        margin: 0 0 10px 0;
-        color: #1565c0;
-        font-size: 1.1rem;
-    }
-    
-    .info-box p {
-        margin: 0;
-        color: #555;
-        line-height: 1.6;
-    }
-</style>
+<!-- Use the same CSS as pump results for consistency -->
+<link href="{{ url_for('static', filename='css/pump-results-fix.css') }}?v={{ range(1000, 9999) | random }}" rel="stylesheet">
 {% endblock %}
 
 {% block content %}
-<div class="bep-results-container">
-    <!-- Search Summary -->
-    <div class="search-summary">
-        <h4>BEP Proximity Search Results</h4>
-        <div class="search-params">
-            <div class="param-item">
-                <span class="param-label">Flow Rate</span>
-                <span class="param-value">{{ search_params.flow|round(1) }} m³/hr</span>
-            </div>
-            <div class="param-item">
-                <span class="param-label">Head</span>
-                <span class="param-value">{{ search_params.head|round(1) }} m</span>
-            </div>
-            <div class="param-item">
-                <span class="param-label">Pump Type</span>
-                <span class="param-value">{{ search_params.pump_type }}</span>
+
+<!-- Modern Results Header -->
+<div class="results-header">
+    <div class="container">
+        <div style="max-width: 1200px; margin: 0 auto;">
+            <h1 class="results-title">
+                <i class="material-icons-round">scatter_plot</i>
+                BEP Proximity Results
+            </h1>
+            <div class="results-subtitle">
+                Found <strong>{{ pumps|length if pumps else 0 }}</strong> pumps with BEP data for 
+                <span style="color: #4caf50; font-weight: 600;">{{ "%.1f"|format(search_params.flow) }} m³/hr</span> at 
+                <span style="color: #4caf50; font-weight: 600;">{{ "%.1f"|format(search_params.head) }} m</span> head
+                {% if pumps %}
+                    <span class="tier-summary">
+                        <i class="material-icons-round" style="font-size: 14px; vertical-align: middle; margin-right: 4px;">speed</i>
+                        Sorted by proximity to your target operating point
+                    </span>
+                {% endif %}
             </div>
         </div>
     </div>
-    
-    <!-- Information Box -->
-    <div class="info-box">
-        <h5>About BEP Proximity Selection</h5>
-        <p>
-            This fast selection method finds pumps whose Best Efficiency Point (BEP) is closest to your specified duty point. 
-            The proximity score represents the normalized distance between the pump's BEP and your requirements - 
-            lower scores indicate better matches. Results are sorted by proximity with efficiency as a tie-breaker.
-        </p>
-    </div>
-    
-    <!-- Results Table -->
-    {% if pumps %}
-    <div class="results-table">
-        <table>
-            <thead>
-                <tr>
-                    <th>Rank</th>
-                    <th>Pump Code</th>
-                    <th>Proximity Score</th>
-                    <th>BEP Efficiency</th>
-                    <th>BEP Flow</th>
-                    <th>BEP Head</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for pump in pumps %}
-                <tr>
-                    <td>
-                        <span class="rank-badge {% if loop.index <= 3 %}top-3{% endif %}">
-                            #{{ loop.index }}
-                        </span>
-                    </td>
-                    <td>
-                        <strong>{{ pump.pump_code }}</strong>
-                    </td>
-                    <td>
-                        {% set score = pump.proximity_score_pct %}
-                        <span class="proximity-score {% if score < 10 %}excellent{% elif score < 25 %}good{% else %}fair{% endif %}">
-                            {{ score|round(1) }}%
-                        </span>
-                    </td>
-                    <td>
-                        {% set eff = pump.bep_efficiency %}
-                        <span class="efficiency-value {% if eff >= 80 %}high{% elif eff >= 70 %}medium{% else %}low{% endif %}">
-                            {{ eff|round(1) }}%
-                        </span>
-                    </td>
-                    <td>{{ pump.bep_flow|round(1) }} m³/hr</td>
-                    <td>{{ pump.bep_head|round(1) }} m</td>
-                    <td>
-                        <a href="{{ url_for('reports.engineering_report', pump_code=pump.pump_code, flow=search_params.flow, head=search_params.head) }}" 
-                           class="pump-link">
-                            View Details →
-                        </a>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-    {% else %}
-    <div class="no-results">
-        <h5>No Results Found</h5>
-        <p>No pumps with valid BEP data were found. Please try different search parameters.</p>
-    </div>
-    {% endif %}
-    
-    <!-- Action Buttons -->
-    <div style="margin-top: 30px; text-align: center;">
-        <a href="{{ url_for('main_flow.index') }}" class="btn waves-effect waves-light blue">
-            <i class="material-icons left">arrow_back</i>
-            New Search
-        </a>
+</div>
+
+<!-- Enhanced Summary Cards with BEP-specific metrics -->
+<div class="container">
+    <div class="summary-cards">
+        <!-- PRIMARY: Most Important Metric -->
+        <div class="summary-card" data-category="primary">
+            <div class="summary-value">{{ pumps|length if pumps else 0 }}</div>
+            <div class="summary-label">Pumps Found</div>
+        </div>
+        
+        <!-- REQUIREMENTS: Input Parameters -->
+        <div class="summary-card" data-category="requirements">
+            <div class="summary-value">{{ "%.1f"|format(search_params.flow) }}</div>
+            <div class="summary-label">Target Flow (m³/hr)</div>
+        </div>
+        
+        <div class="summary-card" data-category="requirements">
+            <div class="summary-value">{{ "%.1f"|format(search_params.head) }}</div>
+            <div class="summary-label">Target Head (m)</div>
+        </div>
+        
         {% if pumps %}
-        <a href="{{ url_for('main_flow.pump_selection') }}?flow={{ search_params.flow }}&head={{ search_params.head }}" 
-           class="btn waves-effect waves-light green">
-            <i class="material-icons left">search</i>
-            Full Selection Analysis
-        </a>
+        {% set best_pump = pumps[0] %}
+        <!-- PRIMARY: Best Overall Result -->
+        <div class="summary-card" data-category="primary">
+            <div class="summary-value">{{ "%.1f"|format(best_pump.proximity_score_pct) }}%</div>
+            <div class="summary-label">Best Proximity</div>
+        </div>
+        
+        <!-- PERFORMANCE: Technical Results -->
+        <div class="summary-card" data-category="performance">
+            <div class="summary-value">{{ "%.1f"|format(best_pump.bep_efficiency) }}%</div>
+            <div class="summary-label">Best BEP Efficiency</div>
+        </div>
+        
+        <div class="summary-card" data-category="performance">
+            <div class="summary-value">{{ "%.0f"|format(best_pump.bep_flow) }}</div>
+            <div class="summary-label">Best BEP Flow (m³/hr)</div>
+        </div>
+        {% else %}
+        <!-- Fallback cards when no pumps found -->
+        <div class="summary-card" data-category="primary">
+            <div class="summary-value">--</div>
+            <div class="summary-label">Best Proximity</div>
+        </div>
+        
+        <div class="summary-card" data-category="performance">
+            <div class="summary-value">--%</div>
+            <div class="summary-label">Best BEP Efficiency</div>
+        </div>
+        
+        <div class="summary-card" data-category="performance">
+            <div class="summary-value">--</div>
+            <div class="summary-label">Best BEP Flow</div>
+        </div>
         {% endif %}
+    </div>
+</div>
+
+<!-- Results List Section -->
+<div class="pump-results-section">
+    <div class="container">
+        
+        <!-- Information Box -->
+        <div style="background: #e8f5e8; border-left: 4px solid #4caf50; padding: 16px; margin-bottom: 24px; border-radius: 8px;">
+            <h5 style="margin: 0 0 8px 0; color: #2e7d32; font-size: 1.1rem;">
+                <i class="material-icons" style="font-size: 18px; vertical-align: middle; margin-right: 8px;">info</i>
+                About BEP Proximity Selection
+            </h5>
+            <p style="margin: 0; color: #2e7d32; line-height: 1.6; font-size: 0.95rem;">
+                This method finds pumps whose Best Efficiency Point (BEP) is closest to your duty point. Lower proximity scores indicate better matches. Results are sorted by proximity with efficiency as a tie-breaker.
+            </p>
+        </div>
+        
+        {% if pumps %}
+        <!-- Mobile View Toggle -->
+        <div class="hide-on-med-and-up" style="padding: 12px; background: #e3f2fd; border-radius: 8px; margin-bottom: 12px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <i class="material-icons" style="color: #1976d2;">touch_app</i>
+                <span style="font-size: 0.9rem; color: #1976d2;">Tap any pump for details • Swipe for more metrics</span>
+            </div>
+        </div>
+        
+        <!-- Sorting Controls -->
+        <div class="sorting-controls">
+            <div class="sorting-label">
+                <i class="material-icons" style="font-size: 18px;">tune</i>
+                Sort by:
+            </div>
+            <button class="sort-option active" data-sort="proximity-score" data-order="asc">
+                Proximity Score
+                <span class="sort-direction">↑</span>
+            </button>
+            <button class="sort-option" data-sort="bep-efficiency" data-order="desc">
+                BEP Efficiency
+                <span class="sort-direction">↓</span>
+            </button>
+            <button class="sort-option" data-sort="bep-flow" data-order="asc">
+                BEP Flow
+                <span class="sort-direction">↑</span>
+            </button>
+            <button class="sort-option" data-sort="bep-head" data-order="asc">
+                BEP Head  
+                <span class="sort-direction">↑</span>
+            </button>
+            <button class="sort-option" data-sort="pump-code" data-order="asc">
+                Pump Code
+                <span class="sort-direction">↑</span>
+            </button>
+        </div>
+        
+        <!-- BEP Proximity Results -->
+        <div class="tier-section preferred-tier">
+            <h4 class="tier-title">
+                <i class="material-icons" style="color: #4caf50;">scatter_plot</i>
+                BEP Proximity Analysis Results
+            </h4>
+            <p class="tier-subtitle">Pumps ranked by how close their Best Efficiency Point matches your target operating conditions.</p>
+            
+            <div class="pump-results-list compact-view" id="bep-proximity-list">
+                {% for pump in pumps %}
+                <a href="{{ url_for('reports.engineering_report', pump_code=pump.pump_code) }}?flow={{ search_params.flow }}&head={{ search_params.head }}" 
+                   class="pump-card-compact"
+                   data-proximity-score="{{ pump.proximity_score_pct }}"
+                   data-bep-efficiency="{{ pump.bep_efficiency }}"
+                   data-bep-flow="{{ pump.bep_flow }}"
+                   data-bep-head="{{ pump.bep_head }}"
+                   data-pump-code="{{ pump.pump_code }}">
+                    
+                    <div class="pump-rank-badge {% if loop.index <= 3 %}top-rank{% endif %}">{{ loop.index }}</div>
+                    
+                    <div class="pump-identity">
+                        <div class="pump-code">{{ pump.pump_code }}</div>
+                        <div class="pump-type-tag">{{ pump.pump_type or 'GENERAL' }}</div>
+                    </div>
+                    
+                    <div class="pump-metrics-inline">
+                        <div class="metric-item">
+                            <span class="metric-label-inline">PROX</span>
+                            <span class="metric-value-inline proximity-score-value">
+                                {{ "%.1f"|format(pump.proximity_score_pct) }}%
+                            </span>
+                        </div>
+                        
+                        <div class="metric-item">
+                            <span class="metric-label-inline">BEP EFF</span>
+                            <span class="metric-value-inline">
+                                {{ "%.1f"|format(pump.bep_efficiency) }}%
+                            </span>
+                        </div>
+                        
+                        <div class="metric-item">
+                            <span class="metric-label-inline">BEP FLOW</span>
+                            <span class="metric-value-inline">
+                                {{ "%.0f"|format(pump.bep_flow) }} m³/hr
+                            </span>
+                        </div>
+                        
+                        <div class="metric-item">
+                            <span class="metric-label-inline">BEP HEAD</span>
+                            <span class="metric-value-inline">
+                                {{ "%.1f"|format(pump.bep_head) }} m
+                            </span>
+                        </div>
+                        
+                        <div class="metric-item">
+                            <span class="metric-label-inline">MANUFACTURER</span>
+                            <span class="metric-value-inline">
+                                {{ pump.manufacturer or 'APE' }}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="pump-score-compact">
+                        <span class="score-label-compact">Proximity</span>
+                        <span class="score-value-compact proximity-badge">{{ "%.1f"|format(pump.proximity_score_pct) }}%</span>
+                    </div>
+                    
+                    <i class="material-icons pump-arrow">chevron_right</i>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+        
+        {% else %}
+        <div style="text-align: center; padding: 60px 20px; background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+            <i class="material-icons" style="font-size: 48px; color: #ccc; margin-bottom: 16px;">search_off</i>
+            <h5 style="color: #666; margin-bottom: 8px;">No BEP Data Available</h5>
+            <p style="color: #999; margin: 0;">No pumps with valid BEP data were found. Please try different search parameters.</p>
+        </div>
+        {% endif %}
+        
+        <!-- Action Buttons -->
+        <div style="margin-top: 32px; text-align: center; padding: 24px; background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+            <a href="{{ url_for('main_flow.index') }}" class="btn waves-effect waves-light blue" style="margin-right: 12px;">
+                <i class="material-icons left">arrow_back</i>
+                New Search
+            </a>
+            {% if pumps %}
+            <a href="{{ url_for('main_flow.pump_selection') }}?flow={{ search_params.flow }}&head={{ search_params.head }}" 
+               class="btn waves-effect waves-light green">
+                <i class="material-icons left">psychology</i>
+                Full Brain Analysis
+            </a>
+            {% endif %}
+        </div>
+        
     </div>
 </div>
 {% endblock %}
 
 {% block scripts %}
 {{ super() }}
+<style>
+/* BEP-specific styling additions */
+.proximity-score-value {
+    font-weight: 600;
+}
+
+.proximity-badge {
+    background: linear-gradient(135deg, #4caf50, #66bb6a);
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.top-rank {
+    background: linear-gradient(135deg, #ff9800, #ffb74d);
+    color: white;
+}
+
+/* Color coding for proximity scores */
+.pump-card-compact[data-proximity-score*="."]:nth-child(-n+3) .proximity-badge {
+    background: linear-gradient(135deg, #4caf50, #66bb6a); /* Green for top 3 */
+}
+
+.pump-card-compact[data-proximity-score] .proximity-score-value {
+    color: #4caf50;
+}
+</style>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     console.log('BEP Proximity Results page loaded');
     
-    // Add sorting functionality if needed in the future
-    // For now, results are pre-sorted by the backend
+    // Initialize pump sorting functionality
+    console.log('Initializing BEP proximity sorting...');
     
-    // Add hover effects for better interactivity
-    const rows = document.querySelectorAll('.results-table tbody tr');
-    rows.forEach(row => {
-        row.addEventListener('mouseenter', function() {
-            this.style.transform = 'translateX(2px)';
-            this.style.transition = 'transform 0.2s ease';
-        });
-        row.addEventListener('mouseleave', function() {
-            this.style.transform = 'translateX(0)';
+    const sortButtons = document.querySelectorAll('.sort-option');
+    const pumpList = document.getElementById('bep-proximity-list');
+    
+    if (!pumpList) {
+        console.log('No pump list found for sorting');
+        return;
+    }
+    
+    sortButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const sortBy = this.getAttribute('data-sort');
+            const currentOrder = this.getAttribute('data-order');
+            const newOrder = currentOrder === 'asc' ? 'desc' : 'asc';
+            
+            console.log(`Sorting by ${sortBy} in ${newOrder} order`);
+            
+            // Update active state
+            sortButtons.forEach(btn => btn.classList.remove('active'));
+            this.classList.add('active');
+            
+            // Update order and direction indicator
+            this.setAttribute('data-order', newOrder);
+            const directionSpan = this.querySelector('.sort-direction');
+            if (directionSpan) {
+                directionSpan.textContent = newOrder === 'asc' ? '↑' : '↓';
+            }
+            
+            // Sort pump cards
+            const cards = Array.from(pumpList.querySelectorAll('.pump-card-compact'));
+            
+            cards.sort((a, b) => {
+                let valueA, valueB;
+                
+                switch(sortBy) {
+                    case 'proximity-score':
+                        valueA = parseFloat(a.getAttribute('data-proximity-score') || '999');
+                        valueB = parseFloat(b.getAttribute('data-proximity-score') || '999');
+                        break;
+                    case 'bep-efficiency':
+                        valueA = parseFloat(a.getAttribute('data-bep-efficiency') || '0');
+                        valueB = parseFloat(b.getAttribute('data-bep-efficiency') || '0');
+                        break;
+                    case 'bep-flow':
+                        valueA = parseFloat(a.getAttribute('data-bep-flow') || '0');
+                        valueB = parseFloat(b.getAttribute('data-bep-flow') || '0');
+                        break;
+                    case 'bep-head':
+                        valueA = parseFloat(a.getAttribute('data-bep-head') || '0');
+                        valueB = parseFloat(b.getAttribute('data-bep-head') || '0');
+                        break;
+                    case 'pump-code':
+                        valueA = a.getAttribute('data-pump-code') || '';
+                        valueB = b.getAttribute('data-pump-code') || '';
+                        break;
+                    default:
+                        return 0;
+                }
+                
+                if (typeof valueA === 'string' && typeof valueB === 'string') {
+                    return newOrder === 'asc' ? valueA.localeCompare(valueB) : valueB.localeCompare(valueA);
+                }
+                
+                return newOrder === 'asc' ? valueA - valueB : valueB - valueA;
+            });
+            
+            // Re-append sorted cards and update rank badges
+            cards.forEach((card, index) => {
+                const rankBadge = card.querySelector('.pump-rank-badge');
+                if (rankBadge) {
+                    rankBadge.textContent = index + 1;
+                    // Update top rank styling
+                    rankBadge.classList.toggle('top-rank', index < 3);
+                }
+                pumpList.appendChild(card);
+            });
+            
+            console.log('Sorting complete');
         });
     });
+    
+    // Add color coding based on proximity scores
+    const proximityCards = document.querySelectorAll('.pump-card-compact[data-proximity-score]');
+    proximityCards.forEach(card => {
+        const score = parseFloat(card.getAttribute('data-proximity-score'));
+        const scoreElement = card.querySelector('.proximity-score-value');
+        const badgeElement = card.querySelector('.proximity-badge');
+        
+        if (scoreElement && badgeElement) {
+            if (score < 10) {
+                scoreElement.style.color = '#4caf50'; // Excellent
+                badgeElement.style.background = 'linear-gradient(135deg, #4caf50, #66bb6a)';
+            } else if (score < 25) {
+                scoreElement.style.color = '#ff9800'; // Good
+                badgeElement.style.background = 'linear-gradient(135deg, #ff9800, #ffb74d)';
+            } else {
+                scoreElement.style.color = '#f44336'; // Fair
+                badgeElement.style.background = 'linear-gradient(135deg, #f44336, #ef5350)';
+            }
+        }
+    });
+    
+    console.log('BEP proximity results initialized with sorting and color coding');
 });
 </script>
 {% endblock %}
