@@ -1,0 +1,295 @@
+{% extends "base.html" %}
+
+{% block title %}BEP Proximity Search Results - APE Pumps{% endblock %}
+
+{% block head %}
+{{ super() }}
+<style>
+    .bep-results-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+    
+    .search-summary {
+        background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%);
+        color: white;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 30px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    
+    .search-summary h4 {
+        margin: 0 0 15px 0;
+        font-size: 1.5rem;
+    }
+    
+    .search-params {
+        display: flex;
+        gap: 30px;
+        flex-wrap: wrap;
+    }
+    
+    .param-item {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .param-label {
+        font-size: 0.85rem;
+        opacity: 0.9;
+        margin-bottom: 3px;
+    }
+    
+    .param-value {
+        font-size: 1.2rem;
+        font-weight: 600;
+    }
+    
+    .results-table {
+        background: white;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .results-table table {
+        width: 100%;
+        margin: 0;
+    }
+    
+    .results-table th {
+        background: #f5f5f5;
+        padding: 15px;
+        text-align: left;
+        font-weight: 600;
+        color: #333;
+        border-bottom: 2px solid #e0e0e0;
+    }
+    
+    .results-table td {
+        padding: 12px 15px;
+        border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .results-table tbody tr:hover {
+        background: #f8f9fa;
+    }
+    
+    .rank-badge {
+        display: inline-block;
+        background: #e3f2fd;
+        color: #1976d2;
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+    
+    .rank-badge.top-3 {
+        background: #4caf50;
+        color: white;
+    }
+    
+    .pump-link {
+        color: #1976d2;
+        text-decoration: none;
+        font-weight: 500;
+        transition: color 0.2s;
+    }
+    
+    .pump-link:hover {
+        color: #1565c0;
+        text-decoration: underline;
+    }
+    
+    .proximity-score {
+        font-weight: 600;
+    }
+    
+    .proximity-score.excellent {
+        color: #4caf50;
+    }
+    
+    .proximity-score.good {
+        color: #ff9800;
+    }
+    
+    .proximity-score.fair {
+        color: #f44336;
+    }
+    
+    .efficiency-value {
+        font-weight: 500;
+    }
+    
+    .efficiency-value.high {
+        color: #4caf50;
+    }
+    
+    .efficiency-value.medium {
+        color: #ff9800;
+    }
+    
+    .efficiency-value.low {
+        color: #f44336;
+    }
+    
+    .no-results {
+        text-align: center;
+        padding: 60px 20px;
+        color: #666;
+    }
+    
+    .info-box {
+        background: #e3f2fd;
+        border-left: 4px solid #1976d2;
+        padding: 15px;
+        margin-bottom: 20px;
+        border-radius: 4px;
+    }
+    
+    .info-box h5 {
+        margin: 0 0 10px 0;
+        color: #1565c0;
+        font-size: 1.1rem;
+    }
+    
+    .info-box p {
+        margin: 0;
+        color: #555;
+        line-height: 1.6;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="bep-results-container">
+    <!-- Search Summary -->
+    <div class="search-summary">
+        <h4>BEP Proximity Search Results</h4>
+        <div class="search-params">
+            <div class="param-item">
+                <span class="param-label">Flow Rate</span>
+                <span class="param-value">{{ search_params.flow|round(1) }} m³/hr</span>
+            </div>
+            <div class="param-item">
+                <span class="param-label">Head</span>
+                <span class="param-value">{{ search_params.head|round(1) }} m</span>
+            </div>
+            <div class="param-item">
+                <span class="param-label">Pump Type</span>
+                <span class="param-value">{{ search_params.pump_type }}</span>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Information Box -->
+    <div class="info-box">
+        <h5>About BEP Proximity Selection</h5>
+        <p>
+            This fast selection method finds pumps whose Best Efficiency Point (BEP) is closest to your specified duty point. 
+            The proximity score represents the normalized distance between the pump's BEP and your requirements - 
+            lower scores indicate better matches. Results are sorted by proximity with efficiency as a tie-breaker.
+        </p>
+    </div>
+    
+    <!-- Results Table -->
+    {% if pumps %}
+    <div class="results-table">
+        <table>
+            <thead>
+                <tr>
+                    <th>Rank</th>
+                    <th>Pump Code</th>
+                    <th>Proximity Score</th>
+                    <th>BEP Efficiency</th>
+                    <th>BEP Flow</th>
+                    <th>BEP Head</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for pump in pumps %}
+                <tr>
+                    <td>
+                        <span class="rank-badge {% if loop.index <= 3 %}top-3{% endif %}">
+                            #{{ loop.index }}
+                        </span>
+                    </td>
+                    <td>
+                        <strong>{{ pump.pump_code }}</strong>
+                    </td>
+                    <td>
+                        {% set score = pump.proximity_score_pct %}
+                        <span class="proximity-score {% if score < 10 %}excellent{% elif score < 25 %}good{% else %}fair{% endif %}">
+                            {{ score|round(1) }}%
+                        </span>
+                    </td>
+                    <td>
+                        {% set eff = pump.bep_efficiency %}
+                        <span class="efficiency-value {% if eff >= 80 %}high{% elif eff >= 70 %}medium{% else %}low{% endif %}">
+                            {{ eff|round(1) }}%
+                        </span>
+                    </td>
+                    <td>{{ pump.bep_flow|round(1) }} m³/hr</td>
+                    <td>{{ pump.bep_head|round(1) }} m</td>
+                    <td>
+                        <a href="{{ url_for('reports.engineering_report', pump_code=pump.pump_code, flow=search_params.flow, head=search_params.head) }}" 
+                           class="pump-link">
+                            View Details →
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="no-results">
+        <h5>No Results Found</h5>
+        <p>No pumps with valid BEP data were found. Please try different search parameters.</p>
+    </div>
+    {% endif %}
+    
+    <!-- Action Buttons -->
+    <div style="margin-top: 30px; text-align: center;">
+        <a href="{{ url_for('main_flow.index') }}" class="btn waves-effect waves-light blue">
+            <i class="material-icons left">arrow_back</i>
+            New Search
+        </a>
+        {% if pumps %}
+        <a href="{{ url_for('main_flow.pump_selection') }}?flow={{ search_params.flow }}&head={{ search_params.head }}" 
+           class="btn waves-effect waves-light green">
+            <i class="material-icons left">search</i>
+            Full Selection Analysis
+        </a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('BEP Proximity Results page loaded');
+    
+    // Add sorting functionality if needed in the future
+    // For now, results are pre-sorted by the backend
+    
+    // Add hover effects for better interactivity
+    const rows = document.querySelectorAll('.results-table tbody tr');
+    rows.forEach(row => {
+        row.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateX(2px)';
+            this.style.transition = 'transform 0.2s ease';
+        });
+        row.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateX(0)';
+        });
+    });
+});
+</script>
+{% endblock %}

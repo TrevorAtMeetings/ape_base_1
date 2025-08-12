@@ -64,6 +64,66 @@ def help_features_page():
     ]
     return render_template('help_brochure.html', breadcrumbs=breadcrumbs)
 
+@main_flow_bp.route('/bep_proximity_results')
+def bep_proximity_results():
+    """
+    BEP Proximity Search Results - Fast selection based on BEP proximity.
+    Finds pumps whose Best Efficiency Point is closest to the specified duty point.
+    """
+    try:
+        # Get parameters from URL
+        flow = request.args.get('flow', type=float)
+        head = request.args.get('head', type=float)
+        pump_type = request.args.get('pump_type', default=None)
+        
+        # Validate inputs
+        if not flow or not head or flow <= 0 or head <= 0:
+            safe_flash('Invalid flow or head values. Please enter positive numbers.', 'error')
+            return redirect(url_for('main_flow.index'))
+        
+        logger.info(f"BEP Proximity search: flow={flow} m³/hr, head={head}m, pump_type={pump_type}")
+        
+        # Get Brain instance and find pumps by BEP proximity
+        from ..pump_brain import get_pump_brain
+        brain = get_pump_brain()
+        
+        if not brain or not brain.selection:
+            logger.error("Brain system not available for BEP proximity search")
+            safe_flash('System temporarily unavailable. Please try again.', 'error')
+            return redirect(url_for('main_flow.index'))
+        
+        # Find pumps by BEP proximity using normalized distance calculation
+        proximity_results = brain.selection.find_pumps_by_bep_proximity(flow, head, pump_type)
+        
+        if not proximity_results:
+            safe_flash('No pumps found with valid BEP data. Please try different parameters.', 'warning')
+            return redirect(url_for('main_flow.index'))
+        
+        # Prepare breadcrumbs
+        breadcrumbs = [
+            {'label': 'Home', 'url': url_for('main_flow.index'), 'icon': 'home'},
+            {'label': 'BEP Proximity Results', 'url': '#', 'icon': 'trending_up'}
+        ]
+        
+        # Render results template
+        return render_template(
+            'bep_proximity_results.html',
+            breadcrumbs=breadcrumbs,
+            pumps=proximity_results,
+            search_params={
+                'flow': flow,
+                'head': head,
+                'pump_type': pump_type or 'All Types'
+            }
+        )
+        
+    except Exception as e:
+        logger.error(f"Error in BEP proximity search: {str(e)}")
+        import traceback
+        logger.error(f"Traceback: {traceback.format_exc()}")
+        safe_flash('An error occurred during BEP proximity search. Please try again.', 'error')
+        return redirect(url_for('main_flow.index'))
+
 
 
 @main_flow_bp.route('/pump_selection', methods=['POST', 'GET'])

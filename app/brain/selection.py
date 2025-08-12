@@ -717,3 +717,100 @@ class SelectionIntelligence:
         except Exception as e:
             logger.debug(f"Error calculating BEP from curves for {pump_data.get('pump_code')}: {e}")
             return None
+    
+    def find_pumps_by_bep_proximity(self, flow: float, head: float, 
+                                   pump_type: Optional[str] = None) -> List[Dict[str, Any]]:
+        """
+        Find pumps based on proximity of their BEP to the specified duty point.
+        Uses normalized Euclidean distance for fair comparison across different scales.
+        
+        Args:
+            flow: Required flow rate (m³/hr)
+            head: Required head (m)
+            pump_type: Optional pump type filter
+        
+        Returns:
+            List of top 20 pumps sorted by proximity score (closest first),
+            with efficiency as tie-breaker
+        """
+        import math
+        
+        logger.info(f"[BEP PROXIMITY] Finding pumps near flow={flow} m³/hr, head={head}m")
+        
+        if not self.brain.repository:
+            logger.error("[BEP PROXIMITY] Repository not available")
+            return []
+        
+        # Validate inputs
+        if flow <= 0 or head <= 0:
+            logger.error(f"[BEP PROXIMITY] Invalid inputs: flow={flow}, head={head}")
+            return []
+        
+        # Get all pumps from repository
+        all_pumps = self.brain.repository.get_pump_models()
+        candidate_pumps = []
+        
+        for pump in all_pumps:
+            pump_code = pump.get('pump_code', 'Unknown')
+            
+            # Apply pump type filter if specified
+            if pump_type:
+                pump_type_actual = pump.get('pump_type', '')
+                if pump_type.upper() not in pump_type_actual.upper():
+                    continue
+            
+            # Get BEP data from specifications (authentic manufacturer data)
+            specs = pump.get('specifications', {})
+            bep_flow = specs.get('bep_flow_m3hr')
+            bep_head = specs.get('bep_head_m')
+            bep_efficiency = specs.get('bep_efficiency_pct')
+            
+            # Skip pumps without valid BEP data
+            if not bep_flow or not bep_head or bep_flow <= 0 or bep_head <= 0:
+                logger.debug(f"[BEP PROXIMITY] {pump_code}: Skipping - no valid BEP data")
+                continue
+            
+            # Calculate normalized percentage differences
+            # This prevents flow (larger numbers) from dominating the distance calculation
+            flow_delta = abs(flow - bep_flow) / flow
+            head_delta = abs(head - bep_head) / head
+            
+            # Calculate normalized Euclidean distance (proximity score)
+            # Smaller distance means BEP is closer to the duty point
+            distance = math.sqrt(flow_delta**2 + head_delta**2)
+            
+            # Convert to percentage for display
+            proximity_score_pct = distance * 100
+            
+            # Get BEP efficiency, default to 0 if not available
+            if not bep_efficiency:
+                # Try to get from curves if not in specifications
+                bep_data = self._calculate_bep_from_curves(pump)
+                bep_efficiency = bep_data.get('efficiency_pct', 0) if bep_data else 0
+            
+            candidate_pumps.append({
+                'pump_code': pump_code,
+                'pump': pump,  # Include full pump data for downstream processing
+                'proximity_score': distance,  # Raw score for sorting
+                'proximity_score_pct': proximity_score_pct,  # Percentage for display
+                'bep_efficiency': bep_efficiency or 0,
+                'bep_flow': bep_flow,
+                'bep_head': bep_head,
+                'flow_delta_pct': flow_delta * 100,  # Individual deltas for debugging
+                'head_delta_pct': head_delta * 100
+            })
+        
+        # Multi-level sort: first by proximity (ascending), then by efficiency (descending)
+        candidate_pumps.sort(key=lambda x: (x['proximity_score'], -x['bep_efficiency']))
+        
+        # Return top 20 pumps
+        top_pumps = candidate_pumps[:20]
+        
+        logger.info(f"[BEP PROXIMITY] Found {len(candidate_pumps)} pumps with BEP data, returning top 20")
+        if top_pumps:
+            best = top_pumps[0]
+            logger.info(f"[BEP PROXIMITY] Best match: {best['pump_code']} - "
+                      f"Proximity: {best['proximity_score_pct']:.1f}%, "
+                      f"Efficiency: {best['bep_efficiency']:.1f}%")
+        
+        return top_pumps
