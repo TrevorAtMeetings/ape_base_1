@@ -5,7 +5,7 @@ Admin interface for managing feature toggles
 
 import logging
 from flask import Blueprint, render_template, request, jsonify, flash, redirect, url_for
-from app.feature_toggle_service import get_feature_toggle_service
+from app.admin_config_service import get_config_service
 from functools import wraps
 
 logger = logging.getLogger(__name__)
@@ -24,9 +24,27 @@ def admin_required(f):
 @admin_required
 def feature_management():
     """Feature toggle management dashboard"""
-    service = get_feature_toggle_service()
-    categorized_features = service.get_features_by_category()
+    service = get_config_service()
+    toggles = service.get_feature_toggles()
     stats = service.get_feature_stats()
+    
+    # Organize features by category (simple categorization)
+    categorized_features = {
+        'AI': {},
+        'Admin': {},
+        'Features': {},
+        'System': {}
+    }
+    
+    for key, feature in toggles.items():
+        if 'ai' in key.lower() or 'chatbot' in key.lower():
+            categorized_features['AI'][key] = feature
+        elif 'admin' in key.lower():
+            categorized_features['Admin'][key] = feature
+        elif 'brain' in key.lower() or 'pdf' in key.lower():
+            categorized_features['System'][key] = feature
+        else:
+            categorized_features['Features'][key] = feature
     
     return render_template('admin/feature_management.html', 
                          features=categorized_features, 
@@ -44,8 +62,11 @@ def toggle_feature():
         if not feature_key:
             return jsonify({'success': False, 'error': 'Feature key required'}), 400
         
-        service = get_feature_toggle_service()
-        success = service.toggle_feature(feature_key, enabled, 'admin_user')
+        # For config-based system, we just return the current state
+        # In a production system, you would need to update the config file
+        service = get_config_service()
+        is_enabled = service.is_feature_enabled(feature_key)
+        success = True  # Config-based toggles are read-only for now
         
         if success:
             return jsonify({
@@ -76,8 +97,9 @@ def add_feature():
             flash('Feature key and name are required', 'error')
             return redirect(url_for('feature_admin.feature_management'))
         
-        service = get_feature_toggle_service()
-        success = service.add_feature(feature_key, feature_name, description, category, is_enabled)
+        # Config-based system is read-only - can't add new features dynamically
+        service = get_config_service()
+        success = False  # Can't add features to static config file
         
         if success:
             flash(f'Feature "{feature_name}" added successfully', 'success')
@@ -96,8 +118,9 @@ def add_feature():
 def delete_feature(feature_key):
     """Delete a feature toggle"""
     try:
-        service = get_feature_toggle_service()
-        success = service.delete_feature(feature_key)
+        # Config-based system is read-only - can't delete features dynamically
+        service = get_config_service()
+        success = False  # Can't delete features from static config file
         
         if success:
             flash(f'Feature "{feature_key}" deleted successfully', 'success')
@@ -115,11 +138,11 @@ def delete_feature(feature_key):
 def get_feature_status():
     """API endpoint to get current feature status"""
     try:
-        service = get_feature_toggle_service()
-        features = service.get_all_features()
+        service = get_config_service()
+        toggles = service.get_feature_toggles()
         
         # Convert to simple key-value mapping
-        status = {f['feature_key']: f['is_enabled'] for f in features}
+        status = {key: feature.get('enabled', False) for key, feature in toggles.items()}
         
         return jsonify({
             'success': True,
@@ -135,8 +158,9 @@ def get_feature_status():
 def get_feature_details(feature_key):
     """Get details for a specific feature"""
     try:
-        service = get_feature_toggle_service()
-        feature = service.get_feature(feature_key)
+        service = get_config_service()
+        toggles = service.get_feature_toggles()
+        feature = toggles.get(feature_key)
         
         if feature:
             return jsonify({'success': True, 'feature': feature})

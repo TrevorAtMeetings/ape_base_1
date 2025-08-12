@@ -46,7 +46,7 @@ Comprehensive Best Efficiency Point (BEP)-centered envelope testing is included 
 The chatbot supports natural language pump selection queries, metric-first design, template card results, and seamless integration for detailed analysis and comparison. It includes shorthand query support, `@pump` lookup with autocomplete, and flexible unit recognition.
 
 ### Administrative Feature Toggle System
-Comprehensive admin control system with database-backed feature toggles for managing AI chatbot, performance testing, data quality tools, and other administrative features. Features are organized by category (AI, Admin, Features, System) with real-time status management, professional admin interface, and API endpoints for programmatic control.
+**CONFIG-BASED ARCHITECTURE (Aug 12, 2025)**: Migrated from broken database-backed feature toggles to clean config-file approach using config/features.json. This eliminates database dependencies, improves performance, and provides version-controllable feature management. Features are organized by category (AI, Admin, Features, System) with JSON config file management and API endpoints for reading feature status. AdminConfigService now serves dual purpose: pump configuration management and feature toggle reading from static config file.
 
 ### User Experience Improvements
 Default views are set to "engineering view" for all pump selections, and the shortlist capacity has been increased to 10 pumps. Operating point markers are enhanced on charts with transparent red triangles, crosshairs, and a small red dot. Consistent X-axis ranges are maintained, and hover templates provide comprehensive data.

@@ -8,6 +8,8 @@ from psycopg2.extras import RealDictCursor
 import json
 from datetime import datetime
 import psycopg2
+from functools import lru_cache
+import os
 
 logger = logging.getLogger(__name__)
 
@@ -30,6 +32,7 @@ class AdminConfigService:
         self._config_cache = {}
         self._cache_timestamp = None
         self._cache_ttl = 300  # 5 minutes
+        self._features_cache = None  # Cache for feature toggles
 
     def initialize_database(self) -> tuple[bool, str]:
         """Create admin schema/tables and seed constants and default profiles."""
@@ -121,6 +124,68 @@ class AdminConfigService:
                 self._cache_timestamp = datetime.utcnow()
                 
                 return config
+    
+    @lru_cache(maxsize=1)
+    def _load_feature_toggles(self) -> Dict:
+        """Loads feature toggles from the JSON config file."""
+        try:
+            # Look for config file in project root or config directory
+            config_paths = [
+                'config/features.json',
+                os.path.join(os.path.dirname(os.path.dirname(__file__)), 'config', 'features.json')
+            ]
+            
+            for config_path in config_paths:
+                if os.path.exists(config_path):
+                    with open(config_path, 'r') as f:
+                        logger.info(f"Loaded feature toggles from {config_path}")
+                        return json.load(f)
+            
+            logger.warning("No features.json file found, using default toggles")
+            return self._get_default_feature_toggles()
+            
+        except (json.JSONDecodeError, Exception) as e:
+            logger.error(f"Error loading feature toggles: {e}")
+            return self._get_default_feature_toggles()
+    
+    def _get_default_feature_toggles(self) -> Dict:
+        """Returns default feature toggles when config file is not available."""
+        return {
+            "enable_ai_analysis": {"enabled": True, "description": "AI Technical Analysis"},
+            "enable_comparison_feature": {"enabled": True, "description": "Pump comparison"},
+            "enable_bep_proximity_search": {"enabled": True, "description": "BEP Proximity Search"},
+            "enable_ai_chatbot": {"enabled": True, "description": "AI Chatbot"},
+            "enable_performance_testing": {"enabled": True, "description": "Performance Testing"},
+            "enable_direct_search": {"enabled": True, "description": "Direct Search"},
+            "enable_admin_features": {"enabled": True, "description": "Admin Features"},
+            "enable_brain_monitoring": {"enabled": True, "description": "Brain Monitoring"},
+            "enable_pdf_reports": {"enabled": True, "description": "PDF Reports"}
+        }
+    
+    def get_feature_toggles(self) -> Dict:
+        """Returns the full dictionary of feature toggles."""
+        return self._load_feature_toggles()
+    
+    def is_feature_enabled(self, feature_name: str) -> bool:
+        """Checks if a specific feature is enabled."""
+        toggles = self._load_feature_toggles()
+        feature = toggles.get(feature_name)
+        if feature:
+            return feature.get('enabled', False)
+        return False  # Default to false if the feature is not defined
+    
+    def get_feature_stats(self) -> Dict:
+        """Returns statistics about feature toggles."""
+        toggles = self._load_feature_toggles()
+        enabled_count = sum(1 for f in toggles.values() if f.get('enabled', False))
+        total_count = len(toggles)
+        
+        return {
+            'total': total_count,
+            'enabled': enabled_count,
+            'disabled': total_count - enabled_count,
+            'percentage_enabled': round((enabled_count / total_count * 100) if total_count > 0 else 0, 1)
+        }
     
     def _get_default_config(self) -> Dict:
         """Get default configuration values"""
@@ -562,3 +627,7 @@ class AdminConfigService:
 
 # Create global instance
 admin_config_service = AdminConfigService()
+
+def get_config_service():
+    """Get the singleton AdminConfigService instance"""
+    return admin_config_service
