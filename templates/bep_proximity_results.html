@@ -111,14 +111,23 @@
 <div class="pump-results-section">
     <div class="container">
         
-        <!-- Information Box -->
+        <!-- Enhanced Information Box with Technical Details -->
         <div style="background: #e8f5e8; border-left: 4px solid #4caf50; padding: 16px; margin-bottom: 24px; border-radius: 8px;">
             <h5 style="margin: 0 0 8px 0; color: #2e7d32; font-size: 1.1rem;">
                 <i class="material-icons" style="font-size: 18px; vertical-align: middle; margin-right: 8px;">info</i>
-                About BEP Proximity Selection
+                Enhanced BEP Proximity Analysis
             </h5>
-            <p style="margin: 0; color: #2e7d32; line-height: 1.6; font-size: 0.95rem;">
-                This method finds pumps whose Best Efficiency Point (BEP) is closest to your duty point. Lower proximity scores indicate better matches. Results are sorted by proximity with efficiency as a tie-breaker.
+            <p style="margin: 0 0 8px 0; color: #2e7d32; line-height: 1.6; font-size: 0.95rem;">
+                This advanced selection method uses pump-specific hydraulic characteristics to find optimal matches:
+            </p>
+            <ul style="margin: 8px 0 0 20px; color: #2e7d32; font-size: 0.9rem;">
+                <li><strong>Specific Speed (Ns):</strong> Classifies pumps as radial, mixed, or axial flow</li>
+                <li><strong>Weighted Distance:</strong> Applies pump-type-specific weighting to flow/head differences</li>
+                <li><strong>Trim Prediction:</strong> Estimates impeller trimming requirements and efficiency impact</li>
+                <li><strong>Operating Range:</strong> Considers pump stability across flow variations</li>
+            </ul>
+            <p style="margin: 8px 0 0 0; color: #1b5e20; font-size: 0.85rem; font-style: italic;">
+                <strong>Legend:</strong> TRIM % = Impeller trim required | Ns = Specific speed | → = Predicted efficiency after trim
             </p>
         </div>
         
@@ -157,6 +166,18 @@
                 Pump Code
                 <span class="sort-direction">↑</span>
             </button>
+            {% if pumps and pumps[0].specific_speed is defined %}
+            <button class="sort-option" data-sort="specific-speed" data-order="asc">
+                Specific Speed
+                <span class="sort-direction">↑</span>
+            </button>
+            {% endif %}
+            {% if pumps and pumps[0].trim_percent is defined %}
+            <button class="sort-option" data-sort="trim-percent" data-order="asc">
+                Trim Required
+                <span class="sort-direction">↑</span>
+            </button>
+            {% endif %}
         </div>
         
         <!-- BEP Proximity Results -->
@@ -175,7 +196,9 @@
                    data-bep-efficiency="{{ pump.bep_efficiency }}"
                    data-bep-flow="{{ pump.bep_flow }}"
                    data-bep-head="{{ pump.bep_head }}"
-                   data-pump-code="{{ pump.pump_code }}">
+                   data-pump-code="{{ pump.pump_code }}"
+                   data-specific-speed="{{ pump.specific_speed or 0 }}"
+                   data-trim-percent="{{ pump.trim_percent or 0 }}">
                     
                     <div class="pump-rank-badge {% if loop.index <= 3 %}top-rank{% endif %}">{{ loop.index }}</div>
                     
@@ -197,6 +220,9 @@
                             <span class="metric-label-inline">BEP EFF</span>
                             <span class="metric-value-inline">
                                 {{ "%.1f"|format(pump.bep_efficiency) }}%
+                                {% if pump.trim_percent > 0.1 %}
+                                <small style="color: #ff9800;">→{{ "%.1f"|format(pump.predicted_efficiency) }}%</small>
+                                {% endif %}
                             </span>
                         </div>
                         
@@ -214,12 +240,26 @@
                             </span>
                         </div>
                         
+                        {% if pump.hydraulic_type %}
                         <div class="metric-item">
-                            <span class="metric-label-inline">MANUFACTURER</span>
-                            <span class="metric-value-inline">
-                                {{ pump.manufacturer or 'APE' }}
+                            <span class="metric-label-inline">TYPE</span>
+                            <span class="metric-value-inline" title="{{ pump.hydraulic_description }}">
+                                {{ pump.hydraulic_type|upper }}
+                                {% if pump.specific_speed %}
+                                <small style="opacity: 0.7;">(Ns={{ "%.0f"|format(pump.specific_speed) }})</small>
+                                {% endif %}
                             </span>
                         </div>
+                        {% endif %}
+                        
+                        {% if pump.trim_percent > 0.1 %}
+                        <div class="metric-item">
+                            <span class="metric-label-inline">TRIM</span>
+                            <span class="metric-value-inline" style="color: {% if pump.trim_percent > 10 %}#f44336{% elif pump.trim_percent > 5 %}#ff9800{% else %}#4caf50{% endif %};">
+                                {{ "%.1f"|format(pump.trim_percent) }}%
+                            </span>
+                        </div>
+                        {% endif %}
                     </div>
                     
                     <div class="pump-score-compact">
@@ -350,6 +390,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     case 'bep-head':
                         valueA = parseFloat(a.getAttribute('data-bep-head') || '0');
                         valueB = parseFloat(b.getAttribute('data-bep-head') || '0');
+                        break;
+                    case 'specific-speed':
+                        valueA = parseFloat(a.getAttribute('data-specific-speed') || '0');
+                        valueB = parseFloat(b.getAttribute('data-specific-speed') || '0');
+                        break;
+                    case 'trim-percent':
+                        valueA = parseFloat(a.getAttribute('data-trim-percent') || '0');
+                        valueB = parseFloat(b.getAttribute('data-trim-percent') || '0');
                         break;
                     case 'pump-code':
                         valueA = a.getAttribute('data-pump-code') || '';
