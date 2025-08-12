@@ -461,6 +461,10 @@ class PumpRepository:
         if not self._is_loaded:
             self.load_catalog()
         return self._pump_models or []
+    
+    def get_all_pumps(self) -> List[Dict[str, Any]]:
+        """Get all pumps - alias for get_pump_models for Brain system compatibility"""
+        return self.get_pump_models()
 
     def get_metadata(self) -> Dict[str, Any]:
         """Get catalog metadata"""
