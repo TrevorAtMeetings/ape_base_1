@@ -1,0 +1,49 @@
+nalysis of the Error: jinja2.exceptions.UndefinedError: 'dict object' has no attribute 'pump'
+What happened? The pump_options.html template is trying to access a nested dictionary called 'pump' inside the main pump dictionary.
+Where did it happen? The error is on line 44 of templates/pump_options.html.
+The Code: <p>...{{ pump['pump']['manufacturer'] }} - {{ pump['pump']['pump_type'] }}</p>
+Why did it fail? Let's look at the "lean" dictionary structure we created in main_flow.py to solve the session size issue. It looks like this:
+code
+Python
+lean_result = {
+    'pump_code': '...',
+    'suitability_score': 85.7,
+    'performance': { ... },
+    'pump': {  # <--- HERE is the nested dictionary
+        'manufacturer': 'APE Pumps',
+        'pump_type': 'END SUCTION',
+    },
+    'score_breakdown': { ... }
+}
+The template code is correct. It is correctly trying to access pump['pump']['manufacturer']. The problem is that the pump_selections list being passed to the template is not the essential_results list we so carefully constructed.
+Root Cause:
+In main_flow.py, you are correctly creating the essential_results list. You are correctly saving it to the session. However, at the very end of the function, you are passing the original, unserialized, large pump_selections list to the template.
+Line 289: return render_template('pump_options.html', pump_selections=pump_selections, ...)
+The template is receiving the wrong variable.
+Directive: Pass the Correct Data to the Template
+This is the final fix.
+Your task is to modify the pump_options function in app/route_modules/main_flow.py.
+Instructions:
+Open app/route_modules/main_flow.py.
+Locate the final return render_template(...) statement (around line 289).
+Change the variable being passed.
+Change this line:
+code
+Python
+# OLD, INCORRECT CODE
+return render_template(
+    'pump_options.html',
+    pump_selections=pump_selections, # This is the wrong variable
+    # ...
+)
+To this:
+code
+Python
+# NEW, CORRECT CODE
+return render_template(
+    'pump_options.html',
+    pump_selections=essential_results, # Pass the lean, structured, correct variable
+    # ...
+)
+This ensures that the template receives the exact same lean, structured, and serializable data that is being saved to the session. This will resolve the UndefinedError and fix the data flow completely.
+This is the last bug. Proceed with this final change.

@@ -379,6 +379,54 @@ def pump_options():
         marginal_pumps = safe_session_get('marginal_pumps', [])
         stored_pumps = safe_session_get('suitable_pumps', pump_selections)
 
+        # CRITICAL FIX: Create essential_results with proper nested structure for template
+        def create_essential_result(pump_data):
+            """Create properly structured data for template compatibility."""
+            essential = {
+                'pump_code': pump_data.get('pump_code', 'N/A'),
+                'suitability_score': pump_data.get('total_score', pump_data.get('suitability_score', 0)),
+                'total_score': pump_data.get('total_score', pump_data.get('suitability_score', 0)),
+                'efficiency_pct': pump_data.get('efficiency_pct', pump_data.get('efficiency_at_duty', 0)),
+                'power_kw': pump_data.get('power_kw', 0),
+                'npshr_m': pump_data.get('npshr_m', 0),
+                'qbp_percent': pump_data.get('qbp_percent', pump_data.get('qbep_percentage', 100)),
+                'trim_percent': pump_data.get('trim_percent', 100),
+                'operating_zone': pump_data.get('operating_zone', 'unknown'),
+                'performance': {
+                    'efficiency_pct': pump_data.get('efficiency_pct', pump_data.get('efficiency_at_duty', 0)),
+                    'power_kw': pump_data.get('power_kw', 0),
+                    'npshr_m': pump_data.get('npshr_m', 0),
+                    'flow_m3hr': pump_data.get('flow_m3hr', 0),
+                    'head_m': pump_data.get('head_m', 0),
+                    'impeller_diameter_mm': pump_data.get('impeller_diameter_mm', 187)
+                },
+                # CRITICAL: Template expects nested pump structure
+                'pump': {
+                    'manufacturer': pump_data.get('manufacturer', 'APE PUMPS'),
+                    'pump_type': pump_data.get('pump_type', 'END SUCTION'),
+                    'model_series': pump_data.get('model_series', 'Industrial'),
+                    'stages': pump_data.get('stages', '1')
+                },
+                # Direct access fields for template compatibility
+                'manufacturer': pump_data.get('manufacturer', 'APE PUMPS'),
+                'pump_type': pump_data.get('pump_type', 'END SUCTION'),
+                'score_breakdown': {
+                    'bep_score': pump_data.get('bep_score', 0),
+                    'efficiency_score': pump_data.get('efficiency_score', 0),
+                    'margin_score': pump_data.get('margin_score', 0),
+                    'npsh_score': pump_data.get('npsh_score', 0)
+                }
+            }
+            return essential
+
+        # Create essential_results for template with proper nested structure
+        essential_results = []
+        all_pumps = preferred_pumps + allowable_pumps + acceptable_pumps + marginal_pumps
+        for pump in all_pumps:
+            essential_results.append(create_essential_result(pump))
+        
+        logger.info(f"Created {len(essential_results)} essential results with proper nested structure for template")
+
         # Clean breadcrumbs for pump options page
         breadcrumbs = [
             {'label': 'Home', 'url': url_for('main_flow.index'), 'icon': 'home'},
@@ -391,7 +439,7 @@ def pump_options():
         return render_template(
             'pump_options.html',
             breadcrumbs=breadcrumbs,
-            pump_selections=stored_pumps,  # Legacy compatibility
+            pump_selections=essential_results,  # FIXED: Pass properly structured data
             preferred_pumps=preferred_pumps,  # Tier 1 - Optimal range (80-110% BEP)
             allowable_pumps=allowable_pumps,  # Tier 2 - Good range (60-140% BEP)
             acceptable_pumps=acceptable_pumps,  # Tier 3 - Industrial range (50-200% BEP)
