@@ -668,12 +668,21 @@ class PerformanceAnalyzer:
                     trim_percent = optimal_trim_result['trim_percent']
                     logger.info(f"[EFFICIENCY OPTIMIZED] {pump_code}: Selected {trim_percent:.1f}% trim (score: {optimal_trim_result.get('optimization_score', 'N/A'):.1f})")
                 else:
-                    # NO FALLBACKS: If efficiency optimization fails, reject the pump
-                    logger.error(f"[NO FALLBACKS] {pump_code}: Efficiency optimization failed - pump rejected")
-                    if pump_code and any(hc in str(pump_code) for hc in ['32 HC', '30 HC', '28 HC']):
-                        logger.error(f"[HC DEBUG] {pump_code}: Efficiency optimization FAILED - NO FALLBACKS APPLIED")
+                    # If efficiency optimization fails, use standard affinity law calculation
+                    logger.info(f"[STANDARD AFFINITY] {pump_code}: Using standard affinity law calculation")
                     
-                    return None  # Explicit rejection - no fallback calculations
+                    # Calculate required diameter using standard affinity laws
+                    # D2/D1 = sqrt(H2/H1) for constant flow
+                    import math
+                    if delivered_head > 0 and head <= delivered_head:
+                        diameter_ratio = math.sqrt(head / delivered_head)
+                        required_diameter = largest_diameter * diameter_ratio
+                        trim_percent = (1 - diameter_ratio) * 100
+                        
+                        logger.info(f"[STANDARD AFFINITY] {pump_code}: Required diameter {required_diameter:.1f}mm, trim {trim_percent:.1f}%")
+                    else:
+                        logger.warning(f"[STANDARD AFFINITY] {pump_code}: Cannot achieve required head - pump may not be suitable")
+                        return None
                 
                 if pump_code and "8/8 DME" in str(pump_code):
                     logger.error(f"[8/8 DME DEBUG] Efficiency-optimized result: diameter={required_diameter}, trim={trim_percent}")
