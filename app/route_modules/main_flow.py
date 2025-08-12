@@ -133,9 +133,9 @@ def pump_selection():
         return render_template('input_form.html')
 
     try:
-        # Validate required fields
-        flow_m3hr = request.form.get('flow_m3hr')
-        head_m = request.form.get('head_m')
+        # Validate required fields - support both old and new field names
+        flow_m3hr = request.form.get('flow_m3hr') or request.form.get('flow_rate')
+        head_m = request.form.get('head_m') or request.form.get('total_head')
 
         if not flow_m3hr or not head_m:
             safe_flash('Flow rate and head are required fields.', 'error')
