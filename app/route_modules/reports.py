@@ -184,8 +184,8 @@ def bep_proximity_report(pump_code):
         'note': performance_at_flow.get('note', '')
     }
     
-    # Generate chart data
-    chart_data = brain.charts.get_pump_chart_data(pump_code, flow, head)
+    # Generate chart data using the charts intelligence module
+    chart_data = brain.charts.generate_chart_data_payload(pump_data, performance_at_flow)
     
     breadcrumbs = [
         {'label': 'Home', 'url': url_for('main_flow.index'), 'icon': 'home'},
@@ -193,7 +193,7 @@ def bep_proximity_report(pump_code):
         {'label': pump_code, 'url': '#', 'icon': 'description'}
     ]
     
-    return render_template('engineering_report.html',
+    return render_template('professional_pump_report.html',
                          selected_pump=selected_pump,
                          chart_data=chart_data,
                          site_requirements={'flow_m3hr': flow, 'head_m': head},
