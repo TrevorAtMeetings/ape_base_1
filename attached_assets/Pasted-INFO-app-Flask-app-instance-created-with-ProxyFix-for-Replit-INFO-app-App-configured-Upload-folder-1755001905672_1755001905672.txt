@@ -1,0 +1,64 @@
+INFO:app:Flask app instance created with ProxyFix for Replit.
+INFO:app:App configured. Upload folder: /home/runner/workspace/app/static/temp
+INFO:app:Session manager initialized.
+INFO:app:Repository cache retained for performance - will auto-initialize with cINFO:app.route_modules.comparison:All route modules imported and registered successfully
+INFO:app:Routes imported.
+INFO:app.route_modules.pump_editor_routes:[Pump Editor] Routes module loaded successfully
+INFO:app:Brain monitoring routes registered
+ * Serving Flask app 'app'
+ * Debug mode: on
+INFO:werkzeug:WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://172.31.65.162:5000
+INFO:werkzeug:Press CTRL+C to quit
+INFO:werkzeug: * Restarting with stat
+INFO:app:Flask app instance created with ProxyFix for Replit.
+INFO:app:App configured. Upload folder: /home/runner/workspace/app/static/temp
+INFO:app:Session manager initialized.
+INFO:app:Repository cache retained for performance - will auto-initialize with correct DATABASE_URL.
+INFO:app.route_modules.comparison:All route modules imported and registered successfully
+INFO:app:Routes imported.
+INFO:app.route_modules.pump_editor_routes:[Pump Editor] Routes module loaded successfully
+INFO:app:Brain monitoring routes registered
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 280-391-474
+INFO:app.route_modules.main_flow:Index route accessed.
+INFO:werkzeug:127.0.0.1 - - [12/Aug/2025 12:31:02] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [12/Aug/2025 12:31:02] "GET /static/css/responsive-fixes.css?v=3216 HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [12/Aug/2025 12:31:02] "GET /static/css/professional-theme.css?v=2049 HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [12/Aug/2025 12:31:02] "GET /static/css/style.css?v=7108 HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [12/Aug/2025 12:31:02] "GET /static/css/admin_executive_theme.css?v=4650 HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [12/Aug/2025 12:31:02] "GET /static/css/floating-ai-chat.css?v=8358 HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [12/Aug/2025 12:31:02] "GET /static/js/main.js HTTP/1.1" 304 -
+INFO:werkzeug:127.0.0.1 - - [12/Aug/2025 12:31:02] "GET /static/js/micro-interactions.js HTTP/1.1" 304 -
+INFO:werkzeug:127.0.0.1 - - [12/Aug/2025 12:31:02] "GET /static/js/icon-loader.js HTTP/1.1" 304 -
+INFO:werkzeug:127.0.0.1 - - [12/Aug/2025 12:31:02] "GET /static/js/force-icon-refresh.js HTTP/1.1" 304 -
+INFO:werkzeug:127.0.0.1 - - [12/Aug/2025 12:31:02] "GET /static/js/floating-ai-chat.js HTTP/1.1" 304 -
+INFO:app.route_modules.main_flow:Index route accessed.
+INFO:werkzeug:10.83.7.132 - - [12/Aug/2025 12:31:03] "GET / HTTP/1.1" 200 -
+INFO:app.admin_config_service:Loaded feature toggles from config/features.json
+INFO:werkzeug:127.0.0.1 - - [12/Aug/2025 12:31:03] "GET /api/features/status HTTP/1.1" 200 -
+INFO:werkzeug:10.83.7.132 - - [12/Aug/2025 12:31:04] "GET /static/css/style.css?v=8689 HTTP/1.1" 200 -
+INFO:werkzeug:10.83.10.37 - - [12/Aug/2025 12:31:04] "GET /static/css/professional-theme.css?v=2087 HTTP/1.1" 200 -
+INFO:werkzeug:10.83.6.19 - - [12/Aug/2025 12:31:04] "GET /static/css/admin_executive_theme.css?v=8699 HTTP/1.1" 200 -
+INFO:werkzeug:10.83.4.97 - - [12/Aug/2025 12:31:04] "GET /static/css/responsive-fixes.css?v=2987 HTTP/1.1" 200 -
+INFO:werkzeug:10.83.0.40 - - [12/Aug/2025 12:31:04] "GET /static/css/floating-ai-chat.css?v=5608 HTTP/1.1" 200 -
+INFO:werkzeug:10.83.10.37 - - [12/Aug/2025 12:31:04] "GET /static/js/main.js HTTP/1.1" 304 -
+INFO:werkzeug:10.83.6.19 - - [12/Aug/2025 12:31:04] "GET /static/js/force-icon-refresh.js HTTP/1.1" 304 -
+INFO:werkzeug:10.83.4.97 - - [12/Aug/2025 12:31:04] "GET /static/js/icon-loader.js HTTP/1.1" 304 -
+INFO:werkzeug:10.83.0.40 - - [12/Aug/2025 12:31:04] "GET /static/js/micro-interactions.js HTTP/1.1" 304 -
+INFO:werkzeug:10.83.0.40 - - [12/Aug/2025 12:31:05] "GET /static/js/floating-ai-chat.js HTTP/1.1" 304 -
+INFO:werkzeug:10.83.9.33 - - [12/Aug/2025 12:31:07] "GET /api/features/status HTTP/1.1" 200 -
+INFO:werkzeug:10.83.9.33 - - [12/Aug/2025 12:31:14] "POST /pump_selection HTTP/1.1" 400 -
+INFO:werkzeug:10.83.7.132 - - [12/Aug/2025 12:31:15] "GET /static/css/professional-theme.css?v=5477 HTTP/1.1" 200 -
+INFO:werkzeug:10.83.6.19 - - [12/Aug/2025 12:31:15] "GET /static/css/style.css?v=7071 HTTP/1.1" 200 -
+INFO:werkzeug:10.83.10.37 - - [12/Aug/2025 12:31:15] "GET /static/css/admin_executive_theme.css?v=1617 HTTP/1.1" 200 -
+INFO:werkzeug:10.83.4.97 - - [12/Aug/2025 12:31:15] "GET /static/css/responsive-fixes.css?v=9974 HTTP/1.1" 200 -
+INFO:werkzeug:10.83.10.37 - - [12/Aug/2025 12:31:15] "GET /static/css/floating-ai-chat.css?v=2130 HTTP/1.1" 200 -
+INFO:werkzeug:10.83.10.37 - - [12/Aug/2025 12:31:15] "GET /static/js/micro-interactions.js HTTP/1.1" 304 -
+INFO:werkzeug:10.83.4.97 - - [12/Aug/2025 12:31:15] "GET /static/js/main.js HTTP/1.1" 304 -
+INFO:werkzeug:10.83.9.33 - - [12/Aug/2025 12:31:15] "GET /static/js/icon-loader.js HTTP/1.1" 304 -
+INFO:werkzeug:10.83.6.19 - - [12/Aug/2025 12:31:16] "GET /static/js/force-icon-refresh.js HTTP/1.1" 304 -
+INFO:werkzeug:10.83.6.19 - - [12/Aug/2025 12:31:16] "GET /static/js/floating-ai-chat.js HTTP/1.1" 304 -
+INFO:werkzeug:10.83.0.40 - - [12/Aug/2025 12:31:17] "GET /api/features/status HTTP/1.1" 200 -
