@@ -190,7 +190,7 @@
             
             <div class="pump-results-list compact-view" id="bep-proximity-list">
                 {% for pump in pumps %}
-                <a href="{{ url_for('reports.engineering_report', pump_code=pump.pump_code) }}?flow={{ search_params.flow }}&head={{ search_params.head }}" 
+                <a href="{{ url_for('reports.bep_proximity_report', pump_code=pump.pump_code) }}?flow={{ search_params.flow }}&head={{ search_params.head }}" 
                    class="pump-card-compact"
                    data-proximity-score="{{ pump.proximity_score_pct }}"
                    data-bep-efficiency="{{ pump.bep_efficiency }}"

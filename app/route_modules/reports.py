@@ -108,6 +108,99 @@ def pump_report(pump_code):
 # REMOVED: Redundant route - professional_pump_report was identical to pump_report
 # Users should use /pump_report directly for consistency
 
+@reports_bp.route('/bep_proximity_report/<path:pump_code>')
+def bep_proximity_report(pump_code):
+    """
+    Dedicated report for BEP proximity selection.
+    Shows pump capabilities at BEP without strict selection constraints.
+    """
+    pump_code = unquote(pump_code)
+    logger.info(f"BEP Proximity Report for pump: {pump_code}")
+    
+    # Get duty point from request
+    flow = request.args.get('flow', type=float)
+    head = request.args.get('head', type=float)
+    
+    if not (flow and head):
+        safe_flash("Flow and head are required to view a report.", "error")
+        return redirect(url_for('main_flow.index'))
+    
+    from ..pump_brain import get_pump_brain
+    brain = get_pump_brain()
+    
+    # Get pump data without strict evaluation
+    pump_data = None
+    if brain.repository:
+        all_pumps = brain.repository.get_pump_models()
+        for pump in all_pumps:
+            if pump.get('pump_code') == pump_code:
+                pump_data = pump
+                break
+    
+    if not pump_data:
+        safe_flash(f"Pump {pump_code} not found.", "error")
+        return redirect(url_for('main_flow.index'))
+    
+    # Get BEP data and performance capabilities
+    specs = pump_data.get('specifications', {})
+    bep_flow = specs.get('bep_flow_m3hr', 0)
+    bep_head = specs.get('bep_head_m', 0)
+    bep_efficiency = specs.get('bep_efficiency_pct', 0)
+    
+    # Calculate what the pump CAN deliver at the requested flow
+    performance_at_flow = brain.performance.calculate_performance_at_flow(
+        pump_data, flow, allow_excessive_trim=True  # Allow showing performance even with excessive trim
+    )
+    
+    # If performance calculation fails, show BEP data
+    if not performance_at_flow:
+        performance_at_flow = {
+            'flow_m3hr': bep_flow,
+            'head_m': bep_head,
+            'efficiency_pct': bep_efficiency,
+            'power_kw': specs.get('power_kw', 0),
+            'npsh_r': specs.get('npsh_r', 0),
+            'note': 'Showing pump BEP performance'
+        }
+    
+    # Prepare pump data for display
+    selected_pump = {
+        'pump_code': pump_code,
+        'pump_name': pump_data.get('pump_name', pump_code),
+        'manufacturer': pump_data.get('manufacturer', 'APE'),
+        'pump_type': pump_data.get('pump_type', 'Centrifugal'),
+        'flow_m3hr': flow,
+        'required_head_m': head,
+        'delivered_head_m': performance_at_flow.get('head_m', bep_head),
+        'efficiency_pct': performance_at_flow.get('efficiency_pct', bep_efficiency),
+        'power_kw': performance_at_flow.get('power_kw', 0),
+        'npsh_r': performance_at_flow.get('npsh_r', 0),
+        'bep_flow_m3hr': bep_flow,
+        'bep_head_m': bep_head,
+        'bep_efficiency_pct': bep_efficiency,
+        'trim_percent': performance_at_flow.get('trim_percent', 0),
+        'specifications': specs,
+        'curves': pump_data.get('curves', []),
+        'note': performance_at_flow.get('note', '')
+    }
+    
+    # Generate chart data
+    chart_data = brain.charts.get_pump_chart_data(pump_code, flow, head)
+    
+    breadcrumbs = [
+        {'label': 'Home', 'url': url_for('main_flow.index'), 'icon': 'home'},
+        {'label': 'BEP Proximity', 'url': url_for('main_flow.bep_proximity_results', flow=flow, head=head)},
+        {'label': pump_code, 'url': '#', 'icon': 'description'}
+    ]
+    
+    return render_template('engineering_report.html',
+                         selected_pump=selected_pump,
+                         chart_data=chart_data,
+                         site_requirements={'flow_m3hr': flow, 'head_m': head},
+                         alternatives=[],  # No alternatives for BEP proximity
+                         breadcrumbs=breadcrumbs,
+                         is_bep_proximity=True)  # Flag to show this is BEP proximity selection
+
 @reports_bp.route('/engineering_report/<path:pump_code>')
 def engineering_report(pump_code):
     """BRAIN-ONLY Engineering Report - Single Source of Truth"""

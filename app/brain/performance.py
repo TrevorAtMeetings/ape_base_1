@@ -20,6 +20,103 @@ class PerformanceError(Exception):
 class PerformanceAnalyzer:
     """Analyzes pump performance using affinity laws and interpolation"""
     
+    def calculate_performance_at_flow(self, pump_data: Dict[str, Any], 
+                                     flow: float, allow_excessive_trim: bool = False) -> Optional[Dict[str, Any]]:
+        """
+        Calculate pump performance at a specific flow rate.
+        Used for BEP proximity analysis where we want to see what the pump can deliver.
+        
+        Args:
+            pump_data: Pump data dictionary
+            flow: Target flow rate (m³/hr)
+            allow_excessive_trim: If True, show performance even with excessive trim
+        
+        Returns:
+            Performance data at the given flow, or None if pump cannot operate at this flow
+        """
+        try:
+            curves = pump_data.get('curves', [])
+            if not curves:
+                return None
+            
+            # Find the largest diameter curve
+            largest_curve = max(curves, key=lambda c: c.get('impeller_diameter_mm', 0))
+            curve_points = largest_curve.get('performance_points', [])
+            
+            if not curve_points:
+                return None
+            
+            # Sort points by flow
+            sorted_points = sorted(curve_points, key=lambda p: p.get('flow_m3hr', 0))
+            flows = [p['flow_m3hr'] for p in sorted_points if 'flow_m3hr' in p and 'head_m' in p]
+            heads = [p['head_m'] for p in sorted_points if 'flow_m3hr' in p and 'head_m' in p]
+            
+            if len(flows) < 2:
+                return None
+            
+            # Check if flow is within pump's range (with some tolerance)
+            min_flow = min(flows) * 0.5  # Allow 50% below minimum
+            max_flow = max(flows) * 1.5  # Allow 50% above maximum
+            
+            if not allow_excessive_trim and (flow < min_flow or flow > max_flow):
+                return None
+            
+            # Interpolate head at the given flow
+            from scipy import interpolate
+            import numpy as np
+            
+            # Use linear interpolation for head
+            head_interp = interpolate.interp1d(flows, heads, kind='linear', 
+                                              fill_value='extrapolate', bounds_error=False)
+            delivered_head = float(head_interp(flow))
+            
+            # Get efficiency at this flow (if available)
+            efficiencies = [p.get('efficiency_pct', 0) for p in sorted_points if 'efficiency_pct' in p]
+            if efficiencies and len(efficiencies) == len(flows):
+                eff_interp = interpolate.interp1d(flows, efficiencies, kind='linear',
+                                                 fill_value='extrapolate', bounds_error=False)
+                efficiency = float(eff_interp(flow))
+            else:
+                # Estimate efficiency based on BEP
+                specs = pump_data.get('specifications', {})
+                bep_efficiency = specs.get('bep_efficiency_pct', 75)
+                bep_flow = specs.get('bep_flow_m3hr', flow)
+                
+                # Simple efficiency curve estimation
+                flow_ratio = flow / bep_flow if bep_flow > 0 else 1.0
+                if 0.7 <= flow_ratio <= 1.2:
+                    efficiency = bep_efficiency * (1 - 0.1 * abs(1 - flow_ratio))
+                else:
+                    efficiency = bep_efficiency * 0.85  # Significant drop off-BEP
+            
+            # Calculate power
+            if efficiency > 0:
+                power_kw = (flow * delivered_head * 9.81) / (3600 * efficiency / 100 * 10)
+            else:
+                power_kw = 0
+            
+            # Get NPSH if available
+            npsh_r = 0
+            for point in sorted_points:
+                if abs(point.get('flow_m3hr', 0) - flow) < 10:  # Close to our flow
+                    npsh_r = point.get('npsh_r', 0)
+                    break
+            
+            return {
+                'flow_m3hr': flow,
+                'head_m': delivered_head,
+                'efficiency_pct': max(efficiency, 30),  # Floor at 30%
+                'power_kw': power_kw,
+                'npsh_r': npsh_r,
+                'diameter_mm': largest_curve.get('impeller_diameter_mm', 0),
+                'trim_percent': 0,  # Will be calculated if trimming is needed
+                'note': f'Performance at {flow:.1f} m³/hr'
+            }
+            
+        except Exception as e:
+            logger.error(f"Error calculating performance at flow: {e}")
+            return None
+    
     def __init__(self, brain):
         """
         Initialize with reference to main Brain and load calibration factors.
