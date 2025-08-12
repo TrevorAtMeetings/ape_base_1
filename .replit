@@ -23,3 +23,6 @@ waitForPort = 5000
 [[ports]]
 localPort = 5000
 externalPort = 5000
+
+[agent]
+integrations = ["python_database==1.0.0"]
