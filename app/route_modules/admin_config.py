@@ -3,29 +3,15 @@ Admin configuration routes
 """
 from flask import Blueprint, render_template, request, jsonify, session, redirect, url_for, flash
 import logging
+import traceback
 from functools import wraps
 from app.admin_config_service import admin_config_service, ValidationError, ConfigurationError
 from app.database import admin_db
-import traceback
+from app.admin_utils import admin_required
 
 logger = logging.getLogger(__name__)
 
-admin_config_bp = Blueprint('admin_config', __name__, url_prefix='/admin/config')
-
-
-def admin_required(f):
-    """Decorator to require admin access"""
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        # For demonstration, we'll use a simple check
-        # In production, implement proper authentication
-        # Temporarily disabled admin check for development
-        session['is_admin'] = True  # Force admin access for development
-        if False:  # Disable admin check temporarily
-            flash('Admin access required', 'error')
-            return redirect(url_for('main_flow.index'))
-        return f(*args, **kwargs)
-    return decorated_function
+admin_config_bp = Blueprint('admin_config', __name__)
 
 
 def handle_api_errors(f):

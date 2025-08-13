@@ -56,7 +56,7 @@ def brain_dashboard():
         return render_template('admin/brain_dashboard_clean.html', stats={}, breadcrumbs=breadcrumbs)
 
 @brain_admin_bp.route('/admin/brain/status')
-def brain_status():
+def brain_status_admin():
     """Brain system status endpoint"""
     import time
     try:

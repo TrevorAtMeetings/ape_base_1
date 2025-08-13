@@ -6,19 +6,11 @@ Admin interface for managing feature toggles
 import logging
 from flask import Blueprint, render_template, request, jsonify, flash, redirect, url_for
 from app.admin_config_service import get_config_service
-from functools import wraps
+from app.admin_utils import admin_required
 
 logger = logging.getLogger(__name__)
 
 feature_admin_bp = Blueprint('feature_admin', __name__)
-
-def admin_required(f):
-    """Decorator to require admin access (placeholder - implement proper auth as needed)"""
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        # TODO: Implement proper admin authentication
-        return f(*args, **kwargs)
-    return decorated_function
 
 @feature_admin_bp.route('/admin/features')
 @admin_required

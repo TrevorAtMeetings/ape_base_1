@@ -64,10 +64,8 @@ logger.info("Session manager initialized.")
 # Repository will use the correct DATABASE_URL when initialized
 logger.info("Repository cache retained for performance - will auto-initialize with correct DATABASE_URL.")
 
-# 3. IMPORT YOUR APPLICATION MODULES
-# Import routes *after* the app is created and configured
-from .route_modules import routes
-logger.info("Routes imported.")
+# 3. REGISTER BLUEPRINTS
+# All routes are now registered via individual blueprints below (no star imports)
 
 # Register admin blueprint for admin routes
 from .route_modules.admin import admin_bp
@@ -117,9 +115,9 @@ app.register_blueprint(chat_bp)
 from .route_modules.api import api_bp
 app.register_blueprint(api_bp, url_prefix='/api')
 
-# Register the Admin Config blueprint
+# Register the Admin Config blueprint with proper URL prefix
 from .route_modules.admin_config import admin_config_bp
-app.register_blueprint(admin_config_bp)
+app.register_blueprint(admin_config_bp, url_prefix='/admin/config')
 
 # Register the Feature Admin blueprint
 from .route_modules.feature_admin import feature_admin_bp
@@ -129,13 +127,10 @@ app.register_blueprint(feature_admin_bp)
 from .route_modules.pump_editor_routes import pump_editor_bp
 app.register_blueprint(pump_editor_bp)
 
-# Register the Brain Monitor blueprint (if available)
-try:
-    from .route_modules.brain_monitoring import brain_monitoring_bp
-    app.register_blueprint(brain_monitoring_bp)
-    logger.info("Brain monitoring routes registered")
-except ImportError:
-    logger.info("Brain monitoring not available - continuing without it")
+# Register the Brain Monitor blueprint
+from .route_modules.brain_monitor import brain_monitor_bp
+app.register_blueprint(brain_monitor_bp)
+logger.info("Brain monitoring routes registered")
 
 # Import core functions from appropriate modules
 from .data_models import SiteRequirements
