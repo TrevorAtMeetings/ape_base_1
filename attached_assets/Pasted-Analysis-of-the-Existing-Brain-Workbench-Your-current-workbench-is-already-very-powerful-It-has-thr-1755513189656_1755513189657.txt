@@ -1,0 +1,157 @@
+Analysis of the Existing Brain Workbench
+Your current workbench is already very powerful. It has three core components:
+Configuration Display: Shows what's currently active.
+Pump Testing: A "white-box" test to see how the Brain processes a single, known pump.
+Selection Simulation: A "black-box" test to see the final ranked list for a given duty point.
+What's missing is the crucial third piece of the puzzle: Comparison against an external benchmark.
+The New, Enhanced Vision: The "Calibration & Validation" Workbench
+We will evolve the existing page. It will no longer be just a "Logic Tester"; it will be a complete Calibration and Validation Workbench.
+Here is the plan to build out this analyst feature directly into the existing workbench.
+Step 1: Enhance the UI of the Workbench Template
+We will add a new card to the existing brain_workbench.html template for entering the ground-truth data.
+File to modify: app/templates/admin/brain_workbench.html
+Action:
+Find the main div that contains the "Pump Testing" and "Selection Simulation" cards.
+Add a third card, "Ground Truth Calibration," to this section.
+The form on this new card will POST to a new backend route specifically for this comparison logic.
+Example of the New Card in brain_workbench.html:
+code
+Html
+<!-- Add this new card next to the "Selection Simulation" card -->
+<div class="col s12 l6"> <!-- Or adjust grid size as needed -->
+    <div class="card">
+        <div class="card-content">
+            <span class="card-title green-text">
+                <i class="material-icons left">verified_user</i>
+                Ground Truth Calibration
+            </span>
+            <p class="grey-text">Enter manufacturer data to validate and tune the Brain's physics model.</p>
+            
+            <form id="calibrationForm" method="POST" action="{{ url_for('admin.run_calibration') }}">
+                <!-- Input for Pump Code -->
+                <div class="input-field">
+                    <input id="cal_pump_code" name="pump_code" type="text" required>
+                    <label for="cal_pump_code">Pump Code to Validate</label>
+                </div>
+                <!-- Inputs for Duty Flow and Head -->
+                <div class="row">
+                    <div class="input-field col s6"><input id="cal_duty_flow" name="duty_flow" type="number" step="any" required><label>Duty Flow (m³/hr)</label></div>
+                    <div class="input-field col s6"><input id="cal_duty_head" name="duty_head" type="number" step="any" required><label>Duty Head (m)</label></div>
+                </div>
+                <!-- Inputs for Manufacturer's Stated Performance -->
+                <h6>Manufacturer's Stated Performance (Ground Truth)</h6>
+                <div class="row">
+                    <div class="input-field col s4"><input name="truth_trim" type="number" step="any" required><label>Trimmed Ø (mm)</label></div>
+                    <div class="input-field col s4"><input name="truth_eff" type="number" step="any" required><label>Efficiency (%)</label></div>
+                    <div class="input-field col s4"><input name="truth_power" type="number" step="any" required><label>Power (kW)</label></div>
+                </div>
+            </form>
+        </div>
+        <div class="card-action">
+            <!-- The form submit is now handled by the button below -->
+            <a href="#" class="btn green" onclick="document.getElementById('calibrationForm').submit();">
+                <i class="material-icons left">analytics</i>
+                Run Calibration
+            </a>
+        </div>
+    </div>
+</div>
+Step 2: Create the New Backend Route for Calibration Logic
+This new route will handle the comparison and pass the results back, but it will render them on the same workbench page.
+File to modify: app/route_modules/admin_routes.py (or brain_admin.py)
+Action: Add this new route.
+code
+Python
+# In your admin routes file
+
+@admin_bp.route('/brain-workbench/run-calibration', methods=['POST'])
+@admin_required
+def run_calibration():
+    """Handles the form submission from the Ground Truth Calibration card."""
+    
+    # Get all the "ground truth" data from the form
+    pump_code = request.form.get('pump_code')
+    duty_flow = request.form.get('duty_flow', type=float)
+    duty_head = request.form.get('duty_head', type=float)
+    
+    ground_truth = {
+        'impeller_diameter_mm': request.form.get('truth_trim', type=float),
+        'efficiency_pct': request.form.get('truth_eff', type=float),
+        'power_kw': request.form.get('truth_power', type=float)
+    }
+
+    # Call the Brain to get its prediction
+    brain = get_pump_brain()
+    pump_data = brain.repository.get_pump_by_code(pump_code)
+    prediction = brain.performance.calculate_at_point(pump_data, duty_flow, duty_head)
+
+    # Package up the results
+    calibration_results = {
+        "ground_truth": ground_truth,
+        "brain_prediction": prediction,
+        "duty_point": {"flow": duty_flow, "head": duty_head},
+        "pump_code": pump_code
+    }
+
+    # Re-render the SAME workbench page, now with the calibration_results
+    return render_template('admin/brain_workbench.html', calibration_results=calibration_results)
+Step 3: Enhance the Workbench Template to Display Results
+Finally, we'll add a new section to the brain_workbench.html template that only appears when calibration results are available.
+File to modify: app/templates/admin/brain_workbench.html
+Action: Add this block of Jinja2 code to the bottom of the template, inside the main container.
+code
+Html
+<!-- Add this to the bottom of brain_workbench.html -->
+
+{% if calibration_results %}
+<div class="row">
+    <div class="col s12">
+        <div class="card">
+            <div class="card-content">
+                <span class="card-title">
+                    <i class="material-icons left">bar_chart</i>
+                    Calibration Results for {{ calibration_results.pump_code }}
+                </span>
+                <table class="striped responsive-table">
+                    <thead>
+                        <tr>
+                            <th>Parameter</th>
+                            <th>Manufacturer (Truth)</th>
+                            <th>Brain Prediction</th>
+                            <th class="center-align">Delta (%)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% set pred = calibration_results.brain_prediction %}
+                        {% set truth = calibration_results.ground_truth %}
+                        {% for key, label in {'impeller_diameter_mm': 'Trimmed Ø (mm)', 'efficiency_pct': 'Efficiency (%)', 'power_kw': 'Power (kW)'}.items() %}
+                        <tr>
+                            <td><strong>{{ label }}</strong></td>
+                            <td>{{ "%.2f"|format(truth.get(key, 0)) }}</td>
+                            <td>{{ "%.2f"|format(pred.get(key, 0)) if pred else 'N/A' }}</td>
+                            <td class="center-align">
+                                {% if pred and truth.get(key) and truth.get(key) > 0 %}
+                                    {% set delta = (pred.get(key, 0) - truth.get(key, 0)) / truth.get(key, 0) * 100 %}
+                                    {% set color = 'green-text' if delta|abs <= 2 else 'orange-text' if delta|abs <= 5 else 'red-text' %}
+                                    <span class="{{ color }} text-darken-2" style="font-weight: bold;">
+                                        {{ "%+.2f"|format(delta) }}%
+                                    </span>
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+Summary of the Enhanced Plan
+This revised plan is superior because it:
+Keeps Related Tools Together: All testing, simulation, and calibration logic now lives on a single, powerful "Workbench" page.
+Creates a Seamless Workflow: An engineer can simulate a selection, see a result, then immediately switch to the calibration tool to validate that result against a datasheet, all on the same screen.
+Reduces Code Duplication: We are enhancing an existing template (brain_workbench.html) rather than creating a whole new one.
+This approach will deliver the powerful calibration feature you want in a way that feels like a natural and integrated part of your existing admin toolkit.
