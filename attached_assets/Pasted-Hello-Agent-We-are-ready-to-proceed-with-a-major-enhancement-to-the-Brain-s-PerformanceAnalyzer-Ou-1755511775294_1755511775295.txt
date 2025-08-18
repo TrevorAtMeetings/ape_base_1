@@ -1,0 +1,48 @@
+Hello Agent,
+We are ready to proceed with a major enhancement to the Brain's PerformanceAnalyzer. Our goal is to upgrade its physics model to achieve the highest level of engineering accuracy by accounting for how different pump types behave when their impellers are trimmed.
+The core architectural principle for this task is: "Logic lives in the code." We will build this intelligence directly into the Brain, not into the database. The Brain itself will be the single source of truth for all physical formulas and selection rules.
+Context: The Engineering Research
+Our research has shown that the simple affinity laws are an approximation. Different pump types follow slightly different physical laws, which we will model using unique exponents. Here is the ground-truth data we will use:
+1. Axial Flow:
+flow_exponent_x: 0.95 (midpoint of 0.90-1.00)
+head_exponent_y: 1.65 (midpoint of 1.50-1.80)
+power_exponent_z: 2.60 (midpoint of 2.40-2.80)
+npshr_exponent_alpha: 1.70 (midpoint of 1.6-1.8)
+2. End Suction (Radial):
+flow_exponent_x: 1.00 (midpoint of 0.98-1.02)
+head_exponent_y: 1.95 (midpoint of 1.90-2.00)
+power_exponent_z: 2.93 (midpoint of 2.85-3.00)
+npshr_exponent_alpha: 1.95 (midpoint of 1.9-2.0)
+3. Horizontal Split Case (HSC):
+flow_exponent_x: 1.00
+head_exponent_y: 2.01 (midpoint of 1.98-2.05)
+power_exponent_z: 3.00 (midpoint of 2.95-3.05)
+npshr_exponent_alpha: 2.0
+4. Multi-Stage (Radial):
+flow_exponent_x: 1.00
+head_exponent_y: 1.97 (midpoint of 1.95-2.00)
+power_exponent_z: 2.95 (midpoint of 2.9-3.0)
+npshr_exponent_alpha: 2.0
+5. Vertical Turbine (Mixed-flow bowl - most common):
+flow_exponent_x: 0.97 (midpoint of 0.95-1.00)
+head_exponent_y: 1.85 (midpoint of 1.80-1.90)
+power_exponent_z: 2.80 (midpoint of 2.7-2.9)
+npshr_exponent_alpha: 1.8
+6. Default (Fallback):
+Use the standard, ideal affinity law exponents: flow: 1.0, head: 2.0, power: 3.0, npshr: 2.0.
+Implementation Plan:
+Please follow this three-step plan to build out this "Polymorphic Physics Model."
+Step 1: Create the "Physics Model" Store
+Create a new file at app/brain/physics_models.py.
+In this file, create a single Python dictionary named PUMP_TYPE_EXPONENTS.
+This dictionary will be our "Trim Calculator." Populate it with the research data provided above for all pump types, including a default key for the fallback values. This will be the single source of truth for our physics models.
+Step 2: Create the "Physics Model Selector" in the Brain
+Modify the file app/brain/performance.py.
+In the PerformanceAnalyzer class, create a new private helper method named _get_exponents_for_pump(self, pump_data: dict).
+This method's job is to select the correct set of exponents from the PUMP_TYPE_EXPONENTS dictionary based on the pump_type of the pump_data it receives. It must handle cases where the pump type might not be in our dictionary, in which case it should safely return the default set of exponents.
+Step 3: Upgrade the Performance Calculation to Use the New Model
+Still in app/brain/performance.py, modify the calculate_at_point_industry_standard method.
+At the beginning of the function, it must now call your new _get_exponents_for_pump() method to get the correct physics model for the pump it is analyzing.
+Update all the affinity law calculations inside this method (for BEP shift, efficiency correction, power, NPSH, etc.) to use the dynamically selected exponents from the model it just fetched. All hardcoded exponents like 1.2 or 2.2 must be replaced with a lookup from the fetched exponents dictionary (e.g., exponents['head_exponent_y']).
+Request for Review:
+Once you have analyzed this plan, please provide your feedback. Specifically, present your own step-by-step execution plan for how you will implement these changes. I want to review your proposed implementation strategy before you begin coding.
