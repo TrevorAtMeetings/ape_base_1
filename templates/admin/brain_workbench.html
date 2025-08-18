@@ -3,31 +3,15 @@
 {% block admin_title %}Brain Logic Workbench{% endblock %}
 
 {% block admin_content %}
-<div class="container">
-        <!-- Breadcrumb Navigation -->
-        <nav class="transparent z-depth-0" style="margin-bottom: 20px;">
-            <div class="nav-wrapper">
-                <div class="col s12">
-                    <a href="/" class="breadcrumb grey-text text-darken-2">Home</a>
-                    <a href="/admin" class="breadcrumb grey-text text-darken-2">Admin</a>
-                    <a href="/admin/brain" class="breadcrumb grey-text text-darken-2">Brain Dashboard</a>
-                    <a href="#!" class="breadcrumb blue-text">Workbench</a>
-                </div>
-            </div>
-        </nav>
-
-        <h1 class="blue-text text-darken-2" style="margin-bottom: 30px; font-size: 2.5rem;">
-            <i class="material-icons left" style="font-size: 2.5rem;">science</i>
-            Brain Logic Workbench
-        </h1>
+<div class="container" style="margin-top: 20px;">
 
         <!-- Current Configuration -->
         <div class="row">
             <div class="col s12">
-                <div class="card">
+                <div class="card workbench-card">
                     <div class="card-content">
-                        <span class="card-title">
-                            <i class="material-icons left">settings</i>
+                        <span class="card-title grey-text text-darken-2">
+                            <i class="material-icons">settings</i>
                             Current Production Configuration
                         </span>
                         <div class="row">
@@ -51,10 +35,10 @@
         <div class="row">
             <!-- Pump Testing -->
             <div class="col s12 l6">
-                <div class="card">
+                <div class="card workbench-card">
                     <div class="card-content">
                         <span class="card-title blue-text">
-                            <i class="material-icons left">search</i>
+                            <i class="material-icons">search</i>
                             Pump Testing
                         </span>
                         <p class="grey-text">Test individual pump data and Brain logic processing</p>
@@ -85,10 +69,10 @@
 
             <!-- Selection Simulation -->
             <div class="col s12 l6">
-                <div class="card">
+                <div class="card workbench-card">
                     <div class="card-content">
                         <span class="card-title purple-text">
-                            <i class="material-icons left">timeline</i>
+                            <i class="material-icons">timeline</i>
                             Selection Simulation
                         </span>
                         <p class="grey-text">Simulate pump selection scenarios with different configurations</p>
@@ -117,10 +101,10 @@
         <!-- Ground Truth Calibration -->
         <div class="row">
             <div class="col s12">
-                <div class="card">
+                <div class="card workbench-card">
                     <div class="card-content">
                         <span class="card-title teal-text">
-                            <i class="material-icons left">tune</i>
+                            <i class="material-icons">tune</i>
                             Ground Truth Calibration
                         </span>
                         <p class="grey-text">Compare Brain predictions against manufacturer datasheet values</p>
@@ -281,10 +265,10 @@
         <!-- Results Area -->
         <div class="row">
             <div class="col s12">
-                <div class="card">
+                <div class="card workbench-card">
                     <div class="card-content">
                         <span class="card-title">
-                            <i class="material-icons left">bar_chart</i>
+                            <i class="material-icons">bar_chart</i>
                             Test Results
                         </span>
                         <div id="results-area" class="grey-text center-align" style="padding: 40px; min-height: 200px;">
@@ -296,123 +280,94 @@
             </div>
         </div>
 
-        <!-- Navigation -->
-        <div class="row">
-            <div class="col s12">
-                <div class="card">
-                    <div class="card-content">
-                        <span class="card-title grey-text text-darken-2">
-                            <i class="material-icons left">dashboard</i>
-                            Workbench Actions
-                        </span>
-                    </div>
-                    <div class="card-action">
-                        <a href="/admin/brain" class="btn waves-effect waves-light blue darken-1" style="margin-right: 10px;">
-                            <i class="material-icons left">arrow_back</i>
-                            Back to Brain Dashboard
-                        </a>
-                        <a href="/admin/brain/data-quality" class="btn waves-effect waves-light green darken-1" style="margin-right: 10px;">
-                            <i class="material-icons left">assessment</i>
-                            Data Quality
-                        </a>
-                        <a href="/admin/brain/corrections" class="btn waves-effect waves-light orange darken-1">
-                            <i class="material-icons left">edit</i>
-                            Corrections
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
+
     </div>
 
 <style>
-/* Fix breadcrumb styling */
-.breadcrumb {
-    color: #616161 !important;
-    font-size: 14px;
-}
-.breadcrumb:before {
-    color: #9e9e9e !important;
-}
-.breadcrumb:last-child {
-    color: #1976d2 !important;
+/* Workbench specific styles */
+.workbench-container {
+    padding-top: 0;
 }
 
-/* Improve card styling */
-.card {
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+/* Card improvements */
+.workbench-card {
+    border-radius: 4px;
+    margin-bottom: 20px;
 }
 
-.card-title {
-    font-size: 1.4rem !important;
-    font-weight: 500 !important;
-    margin-bottom: 10px !important;
+.workbench-card .card-title {
+    font-size: 1.3rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
 }
 
-/* Better button spacing */
-.card-action {
-    padding: 20px 24px !important;
-    border-top: 1px solid #e0e0e0 !important;
+.workbench-card .card-title i {
+    margin-right: 10px;
 }
 
-/* Fix dropdown styling */
-.dropdown-content {
-    max-height: 300px !important;
+/* Button consistency */
+.workbench-card .card-action {
+    padding: 16px 24px;
+    background-color: #fafafa;
 }
 
-.select-wrapper input.select-dropdown {
+.workbench-card .btn {
+    margin-right: 8px;
+    margin-bottom: 8px;
+}
+
+/* Form field improvements */
+.workbench-card .input-field {
+    margin-top: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+/* Fix select dropdown */
+.workbench-card .select-wrapper input.select-dropdown {
     margin-bottom: 0;
     border-bottom: 1px solid #9e9e9e;
 }
 
-/* Ensure proper label positioning */
-.input-field label {
-    color: #616161;
+.workbench-card .dropdown-content {
+    max-height: 300px !important;
+    overflow-y: auto;
 }
 
-.input-field label.active {
-    color: #1976d2 !important;
-}
-
-/* Better spacing for form sections */
-.row {
-    margin-bottom: 10px;
-}
-
-h6 {
-    color: #616161;
+/* Section headers */
+.workbench-section-title {
+    color: #424242;
+    font-size: 1.1rem;
     font-weight: 500;
-    margin-bottom: 15px;
+    margin: 20px 0 15px 0;
+    padding-bottom: 5px;
+    border-bottom: 1px solid #e0e0e0;
 }
 </style>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize all Materialize components
-    console.log('Initializing Materialize components...');
-    
-    // Initialize all select elements
-    var selectElems = document.querySelectorAll('select');
-    selectElems.forEach(function(elem) {
-        M.FormSelect.init(elem, {
-            dropdownOptions: {
-                coverTrigger: false,
-                hover: false
-            }
-        });
-    });
-    
-    // Re-initialize after a short delay to ensure proper rendering
+    // Wait for page to fully load then initialize
     setTimeout(function() {
-        M.FormSelect.init(selectElems, {
-            dropdownOptions: {
-                coverTrigger: false,
-                hover: false
+        // Initialize all select elements
+        var selectElems = document.querySelectorAll('select');
+        selectElems.forEach(function(elem) {
+            var instance = M.FormSelect.getInstance(elem);
+            if (instance) {
+                instance.destroy();
             }
+            M.FormSelect.init(elem, {
+                dropdownOptions: {
+                    coverTrigger: false,
+                    hover: false,
+                    constrainWidth: false
+                }
+            });
         });
-        M.updateTextFields(); // Update all text fields
-    }, 100);
+        
+        // Update text fields
+        M.updateTextFields();
+    }, 200);
     
     // Handle calibration form submission
     const calibrationForm = document.getElementById('calibration-form');
