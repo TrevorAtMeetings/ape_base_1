@@ -102,6 +102,170 @@
             </div>
         </div>
 
+        <!-- Ground Truth Calibration -->
+        <div class="row">
+            <div class="col s12">
+                <div class="card">
+                    <div class="card-content">
+                        <span class="card-title teal-text">
+                            <i class="material-icons left">tune</i>
+                            Ground Truth Calibration
+                        </span>
+                        <p class="grey-text">Compare Brain predictions against manufacturer datasheet values</p>
+                        
+                        <form id="calibration-form" method="POST" action="/admin/brain-workbench/run-calibration">
+                            <div class="row" style="margin-top: 20px;">
+                                <div class="col s12 m6">
+                                    <div class="input-field">
+                                        <select id="calibration-pump-code" name="pump_code" required>
+                                            <option value="" disabled selected>Choose a pump</option>
+                                            {% for pump_code in pump_codes %}
+                                            <option value="{{ pump_code }}">{{ pump_code }}</option>
+                                            {% endfor %}
+                                        </select>
+                                        <label>Pump Code</label>
+                                    </div>
+                                </div>
+                                <div class="col s12 m3">
+                                    <div class="input-field">
+                                        <input id="calibration-flow" name="duty_flow" type="number" step="0.01" min="0" required>
+                                        <label for="calibration-flow">Duty Flow (m³/hr)</label>
+                                    </div>
+                                </div>
+                                <div class="col s12 m3">
+                                    <div class="input-field">
+                                        <input id="calibration-head" name="duty_head" type="number" step="0.01" min="0" required>
+                                        <label for="calibration-head">Duty Head (m)</label>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col s12">
+                                    <h6 class="grey-text">Manufacturer Datasheet Values</h6>
+                                </div>
+                                <div class="col s12 m4">
+                                    <div class="input-field">
+                                        <input id="truth-diameter" name="truth_diameter" type="number" step="0.1" min="0" required>
+                                        <label for="truth-diameter">Trimmed Impeller Ø (mm)</label>
+                                    </div>
+                                </div>
+                                <div class="col s12 m4">
+                                    <div class="input-field">
+                                        <input id="truth-efficiency" name="truth_efficiency" type="number" step="0.01" min="0" max="100" required>
+                                        <label for="truth-efficiency">Efficiency (%)</label>
+                                    </div>
+                                </div>
+                                <div class="col s12 m4">
+                                    <div class="input-field">
+                                        <input id="truth-power" name="truth_power" type="number" step="0.01" min="0" required>
+                                        <label for="truth-power">Power Absorbed (kW)</label>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="card-action">
+                                <button type="submit" class="btn teal">
+                                    <i class="material-icons left">compare_arrows</i>
+                                    Run Calibration
+                                </button>
+                                <button type="button" class="btn grey" onclick="clearCalibrationForm()">
+                                    <i class="material-icons left">clear</i>
+                                    Clear
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Calibration Results Area (only shows when results exist) -->
+        {% if calibration_results %}
+        <div class="row">
+            <div class="col s12">
+                <div class="card">
+                    <div class="card-content">
+                        <span class="card-title">
+                            <i class="material-icons left">assessment</i>
+                            Calibration Results - {{ calibration_results.pump_code }}
+                        </span>
+                        <p class="grey-text">
+                            Duty Point: {{ calibration_results.duty_flow }} m³/hr @ {{ calibration_results.duty_head }}m
+                        </p>
+                        
+                        <table class="striped highlight responsive-table" style="margin-top: 20px;">
+                            <thead>
+                                <tr>
+                                    <th>Parameter</th>
+                                    <th>Manufacturer (Truth)</th>
+                                    <th>Brain Prediction</th>
+                                    <th>Delta (%)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>Trimmed Impeller Ø</strong></td>
+                                    <td>{{ calibration_results.truth_diameter|round(1) }} mm</td>
+                                    <td>{{ calibration_results.brain_diameter|round(1) }} mm</td>
+                                    <td>
+                                        <span class="badge {% if calibration_results.delta_diameter|abs < 2 %}green{% elif calibration_results.delta_diameter|abs < 5 %}orange{% else %}red{% endif %} white-text">
+                                            {{ calibration_results.delta_diameter|round(2) }}%
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Efficiency</strong></td>
+                                    <td>{{ calibration_results.truth_efficiency|round(1) }}%</td>
+                                    <td>{{ calibration_results.brain_efficiency|round(1) }}%</td>
+                                    <td>
+                                        <span class="badge {% if calibration_results.delta_efficiency|abs < 2 %}green{% elif calibration_results.delta_efficiency|abs < 5 %}orange{% else %}red{% endif %} white-text">
+                                            {{ calibration_results.delta_efficiency|round(2) }}%
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Power</strong></td>
+                                    <td>{{ calibration_results.truth_power|round(1) }} kW</td>
+                                    <td>{{ calibration_results.brain_power|round(1) }} kW</td>
+                                    <td>
+                                        <span class="badge {% if calibration_results.delta_power|abs < 2 %}green{% elif calibration_results.delta_power|abs < 5 %}orange{% else %}red{% endif %} white-text">
+                                            {{ calibration_results.delta_power|round(2) }}%
+                                        </span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        
+                        <div class="card-action" style="margin-top: 20px;">
+                            <div class="row">
+                                <div class="col s12">
+                                    <h6>Calibration Summary</h6>
+                                    {% set avg_delta = ((calibration_results.delta_diameter|abs + calibration_results.delta_efficiency|abs + calibration_results.delta_power|abs) / 3)|round(2) %}
+                                    <p>
+                                        <strong>Average Delta:</strong> 
+                                        <span class="{% if avg_delta < 2 %}green-text{% elif avg_delta < 5 %}orange-text{% else %}red-text{% endif %}">
+                                            {{ avg_delta }}%
+                                        </span>
+                                    </p>
+                                    <p class="grey-text">
+                                        {% if avg_delta < 2 %}
+                                        <i class="material-icons tiny green-text">check_circle</i> Excellent accuracy - Brain predictions are highly reliable
+                                        {% elif avg_delta < 5 %}
+                                        <i class="material-icons tiny orange-text">warning</i> Good accuracy - Minor adjustments may improve predictions
+                                        {% else %}
+                                        <i class="material-icons tiny red-text">error</i> Significant deviation - Physics model may need calibration
+                                        {% endif %}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
         <!-- Results Area -->
         <div class="row">
             <div class="col s12">
@@ -150,7 +314,58 @@
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize Materialize select
     M.FormSelect.init(document.querySelectorAll('select'));
+    
+    // Handle calibration form submission
+    const calibrationForm = document.getElementById('calibration-form');
+    if (calibrationForm) {
+        calibrationForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Show loading state
+            const submitBtn = calibrationForm.querySelector('button[type="submit"]');
+            const originalBtnText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i class="material-icons left">hourglass_empty</i>Processing...';
+            submitBtn.disabled = true;
+            
+            // Prepare form data
+            const formData = new FormData(calibrationForm);
+            
+            // Submit form
+            fetch('/admin/brain-workbench/run-calibration', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.text();
+            })
+            .then(html => {
+                // Replace the entire page content with the response
+                document.open();
+                document.write(html);
+                document.close();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                M.toast({html: 'Error running calibration: ' + error, classes: 'red'});
+                submitBtn.innerHTML = originalBtnText;
+                submitBtn.disabled = false;
+            });
+        });
+    }
 });
+
+function clearCalibrationForm() {
+    const form = document.getElementById('calibration-form');
+    if (form) {
+        form.reset();
+        // Re-initialize select dropdowns
+        M.FormSelect.init(document.querySelectorAll('select'));
+        M.toast({html: 'Form cleared', classes: 'grey'});
+    }
+}
 
 function testPump() {
     const pumpCode = document.getElementById('pump-select').value;

@@ -442,6 +442,102 @@ def brain_workbench():
                              production_config={}, pump_codes=[],
                              breadcrumbs=breadcrumbs)
 
+@brain_admin_bp.route('/admin/brain-workbench/run-calibration', methods=['POST'])
+def run_ground_truth_calibration():
+    """Ground Truth Calibration - Compare Brain predictions against manufacturer datasheet"""
+    try:
+        # Get form data
+        pump_code = request.form.get('pump_code')
+        duty_flow = float(request.form.get('duty_flow'))
+        duty_head = float(request.form.get('duty_head'))
+        truth_diameter = float(request.form.get('truth_diameter'))
+        truth_efficiency = float(request.form.get('truth_efficiency'))
+        truth_power = float(request.form.get('truth_power'))
+        
+        logger.info(f"Running calibration for {pump_code} at {duty_flow} m³/hr @ {duty_head}m")
+        logger.info(f"Ground truth values - Diameter: {truth_diameter}mm, Efficiency: {truth_efficiency}%, Power: {truth_power}kW")
+        
+        # Get the pump data
+        pump_repo = PumpRepository()
+        pump_repo.load_catalog()
+        pump_models = pump_repo.get_pump_models()
+        pump_data = None
+        for pump in pump_models:
+            if pump['pump_code'] == pump_code:
+                pump_data = pump
+                break
+        
+        if not pump_data:
+            raise ValueError(f"Pump {pump_code} not found in repository")
+        
+        # Get Brain prediction using the Brain system
+        from ..pump_brain import PumpBrain
+        brain = PumpBrain()
+        
+        # Calculate using Brain's performance analyzer
+        brain_result = brain.performance.calculate_at_point_industry_standard(
+            pump_data, duty_flow, duty_head
+        )
+        
+        if not brain_result:
+            raise ValueError(f"Brain could not calculate performance for {pump_code} at specified duty point")
+        
+        # Extract Brain predictions
+        brain_diameter = brain_result.get('impeller_diameter_mm', 0)
+        brain_efficiency = brain_result.get('efficiency_pct', 0)
+        brain_power = brain_result.get('power_kw', 0)
+        
+        # Calculate deltas (percentage difference)
+        def calculate_delta(truth, prediction):
+            if truth == 0:
+                return 0
+            return ((prediction - truth) / truth) * 100
+        
+        delta_diameter = calculate_delta(truth_diameter, brain_diameter)
+        delta_efficiency = calculate_delta(truth_efficiency, brain_efficiency)
+        delta_power = calculate_delta(truth_power, brain_power)
+        
+        logger.info(f"Brain predictions - Diameter: {brain_diameter:.1f}mm, Efficiency: {brain_efficiency:.1f}%, Power: {brain_power:.1f}kW")
+        logger.info(f"Deltas - Diameter: {delta_diameter:.2f}%, Efficiency: {delta_efficiency:.2f}%, Power: {delta_power:.2f}%")
+        
+        # Prepare calibration results
+        calibration_results = {
+            'pump_code': pump_code,
+            'duty_flow': duty_flow,
+            'duty_head': duty_head,
+            'truth_diameter': truth_diameter,
+            'truth_efficiency': truth_efficiency,
+            'truth_power': truth_power,
+            'brain_diameter': brain_diameter,
+            'brain_efficiency': brain_efficiency,
+            'brain_power': brain_power,
+            'delta_diameter': delta_diameter,
+            'delta_efficiency': delta_efficiency,
+            'delta_power': delta_power
+        }
+        
+        # Re-render the workbench page with calibration results
+        breadcrumbs = [
+            {'text': 'Home', 'url': url_for('main_flow.index'), 'icon': 'home'},
+            {'text': 'Brain Dashboard', 'url': url_for('brain_admin.brain_dashboard'), 'icon': 'psychology'},
+            {'text': 'Workbench', 'url': '', 'icon': 'science'}
+        ]
+        
+        brain_service = BrainDataService()
+        prod_config = brain_service.get_production_config()
+        pump_codes = [pump['pump_code'] for pump in pump_models[:50]]
+        
+        return render_template('admin/brain_workbench.html',
+                             production_config=prod_config,
+                             pump_codes=pump_codes,
+                             breadcrumbs=breadcrumbs,
+                             calibration_results=calibration_results)
+        
+    except Exception as e:
+        logger.error(f"Error running calibration: {e}")
+        flash(f'Error running calibration: {str(e)}', 'error')
+        return redirect(url_for('brain_admin.brain_workbench'))
+
 # ============================================================================
 # API ENDPOINTS FOR AJAX OPERATIONS
 # ============================================================================
