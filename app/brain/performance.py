@@ -8,6 +8,7 @@ import logging
 import numpy as np
 from typing import Dict, List, Any, Optional, Tuple
 from scipy import interpolate
+from .physics_models import get_exponents_for_pump_type
 
 logger = logging.getLogger(__name__)
 
@@ -191,6 +192,37 @@ class PerformanceAnalyzer:
         """
         return self.calibration_factors.get(factor_name, default_value)
     
+    def _get_exponents_for_pump(self, pump_data: Dict[str, Any]) -> Dict[str, float]:
+        """
+        Get the pump-type-specific physics model exponents.
+        
+        This method implements the Polymorphic Physics Model by selecting
+        the correct set of affinity law exponents based on the pump type.
+        Different pump types (axial, radial, mixed flow) have different
+        scaling behaviors when their impellers are trimmed.
+        
+        Args:
+            pump_data: Pump data dictionary containing pump_type
+            
+        Returns:
+            Dictionary of physics exponents for this pump type
+        """
+        pump_type = pump_data.get('pump_type', '')
+        pump_code = pump_data.get('pump_code', 'Unknown')
+        
+        # Get pump-type-specific exponents from physics model
+        exponents = get_exponents_for_pump_type(pump_type)
+        
+        # Log which physics model is being used
+        model_type = exponents.get('description', 'Unknown model')
+        logger.debug(f"[PHYSICS MODEL] {pump_code}: Using {pump_type or 'DEFAULT'} physics model")
+        logger.debug(f"[PHYSICS MODEL] {pump_code}: {model_type}")
+        logger.debug(f"[PHYSICS MODEL] {pump_code}: Exponents - Flow: {exponents['flow_exponent_x']}, "
+                    f"Head: {exponents['head_exponent_y']}, Power: {exponents['power_exponent_z']}, "
+                    f"NPSH: {exponents['npshr_exponent_alpha']}")
+        
+        return exponents
+    
     def calculate_at_point(self, pump_data: Dict[str, Any], flow: float, 
                           head: float, impeller_trim: Optional[float] = None) -> Optional[Dict[str, Any]]:
         """
@@ -210,7 +242,7 @@ class PerformanceAnalyzer:
         return self.calculate_at_point_industry_standard(pump_data, flow, head, impeller_trim)
 
     def _calculate_required_diameter_direct(self, flows_sorted, heads_sorted, 
-                                          largest_diameter, target_flow, target_head, pump_code):
+                                          largest_diameter, target_flow, target_head, pump_code, physics_exponents=None):
         """
         ENHANCED: Calculate required impeller diameter using direct affinity law formula.
         
@@ -281,17 +313,22 @@ class PerformanceAnalyzer:
             
             # Calculate required diameter using RESEARCH-BASED trim-dependent physics
             # Research: Exponent varies from 2.8-3.0 for small trims to 2.0-2.2 for large trims
-            # Estimate trim percentage to select appropriate exponent
-            estimated_trim_pct = (1.0 - (target_head / base_head_at_flow) ** 0.5) * 100
-            
-            if estimated_trim_pct < 5.0:
-                # Small trim: Use higher exponent (research: 2.8-3.0)
-                head_exponent = self.get_calibration_factor('trim_dependent_small_exponent', 2.9)
-                logger.debug(f"[TRIM PHYSICS] {pump_code}: Small trim (~{estimated_trim_pct:.1f}%) - using exponent {head_exponent}")
+            # Use pump-type-specific head exponent from physics model
+            if physics_exponents and 'head_exponent_y' in physics_exponents:
+                head_exponent = physics_exponents['head_exponent_y']
+                logger.debug(f"[TRIM PHYSICS] {pump_code}: Using pump-type-specific head exponent {head_exponent}")
             else:
-                # Larger trim: Use standard exponent (research: 2.0-2.2)
-                head_exponent = self.get_calibration_factor('trim_dependent_large_exponent', 2.1)
-                logger.debug(f"[TRIM PHYSICS] {pump_code}: Large trim (~{estimated_trim_pct:.1f}%) - using exponent {head_exponent}")
+                # Fallback to trim-dependent exponents if physics model not provided
+                estimated_trim_pct = (1.0 - (target_head / base_head_at_flow) ** 0.5) * 100
+                
+                if estimated_trim_pct < 5.0:
+                    # Small trim: Use higher exponent (research: 2.8-3.0)
+                    head_exponent = self.get_calibration_factor('trim_dependent_small_exponent', 2.9)
+                    logger.debug(f"[TRIM PHYSICS] {pump_code}: Small trim (~{estimated_trim_pct:.1f}%) - using exponent {head_exponent}")
+                else:
+                    # Larger trim: Use standard exponent (research: 2.0-2.2)
+                    head_exponent = self.get_calibration_factor('trim_dependent_large_exponent', 2.1)
+                    logger.debug(f"[TRIM PHYSICS] {pump_code}: Large trim (~{estimated_trim_pct:.1f}%) - using exponent {head_exponent}")
             
             # H₂/H₁ = (D₂/D₁)^head_exp  →  D₂ = D₁ × (H₂/H₁)^(1/head_exp)
             # FIXED: Ensure all values are float to avoid decimal/float mixing in power operations
@@ -450,8 +487,11 @@ class PerformanceAnalyzer:
         """Calculate performance using a specific impeller curve."""
         try:
             # Use the enhanced direct affinity law calculation for this curve
+            # Get physics exponents for this pump
+            physics_exponents = self._get_exponents_for_pump(pump_data)
+            
             required_diameter, trim_percent = self._calculate_required_diameter_direct(
-                flows_sorted, heads_sorted, diameter, flow, head, pump_code
+                flows_sorted, heads_sorted, diameter, flow, head, pump_code, physics_exponents
             )
             
             if required_diameter is None:
@@ -540,11 +580,15 @@ class PerformanceAnalyzer:
             pump_code = pump_data.get('pump_code')
             logger.debug(f"[INDUSTRY] Starting industry-standard calculation for {pump_code} at {flow} m³/hr @ {head}m")
             
+            # Get pump-type-specific physics model exponents
+            physics_exponents = self._get_exponents_for_pump(pump_data)
+            
             # Enhanced debugging for HC pumps and 8/8 DME
             if pump_code and ("HC" in str(pump_code) or "8/8 DME" in str(pump_code)):
                 logger.error(f"[DEBUG] Starting calculation for {pump_code}")
                 logger.error(f"[DEBUG] Requirements: {flow} m³/hr @ {head}m")
                 logger.error(f"[DEBUG] Pump data keys: {list(pump_data.keys())}")
+                logger.error(f"[DEBUG] Using physics model - Flow exp: {physics_exponents['flow_exponent_x']}, Head exp: {physics_exponents['head_exponent_y']}")
             
             curves = pump_data.get('curves', [])
             logger.debug(f"[INDUSTRY] {pump_code}: Found {len(curves)} curves")
@@ -756,7 +800,7 @@ class PerformanceAnalyzer:
                 
                 optimal_trim_result = self._calculate_efficiency_optimized_trim(
                     flows_sorted, heads_sorted, largest_diameter, flow, head, 
-                    original_bep_flow, original_bep_head, pump_code or "Unknown"
+                    original_bep_flow, original_bep_head, pump_code or "Unknown", physics_exponents
                 )
                 
                 # Extract diameter and trim for compatibility with existing code
@@ -812,7 +856,8 @@ class PerformanceAnalyzer:
                 diameter_ratio = required_diameter / largest_diameter
                 # CRITICAL FIX: Use ACTUAL head delivered by pump, not required head
                 # The pump delivers more head than required (e.g., 92m vs 50m requirement)
-                final_head = delivered_head * (diameter_ratio ** 2)  # Apply affinity law to get actual head
+                # Use pump-type-specific head exponent from physics model
+                final_head = delivered_head * (diameter_ratio ** physics_exponents['head_exponent_y'])  # Apply affinity law to get actual head
                 
                 # Research-based efficiency penalty calculation based on pump type
                 # Research: Δη = ε(1-d2'/d2) where ε = 0.15-0.25 for volute, 0.4-0.5 for diffuser
@@ -852,8 +897,9 @@ class PerformanceAnalyzer:
                                                       kind='linear', bounds_error=False)
                     base_power = float(power_interp(flow))
                     if not np.isnan(base_power):
-                        final_power = base_power * (diameter_ratio ** self.affinity_power_exp)
-                        logger.debug(f"[INDUSTRY] {pump_code}: Power scaled with affinity laws: {final_power:.2f}kW")
+                        # Use pump-type-specific power exponent from physics model
+                        final_power = base_power * (diameter_ratio ** physics_exponents['power_exponent_z'])
+                        logger.debug(f"[INDUSTRY] {pump_code}: Power scaled with affinity laws (exp={physics_exponents['power_exponent_z']}): {final_power:.2f}kW")
                     else:
                         # Fallback to hydraulic calculation
                         final_power = (flow * final_head * 1000 * 9.81) / (3600 * final_efficiency / 100 * 1000)
@@ -867,8 +913,8 @@ class PerformanceAnalyzer:
                                                          kind='linear', bounds_error=False)
                         base_npshr = float(npsh_interp(flow))
                         if not np.isnan(base_npshr):
-                            # NPSH scales with (diameter ratio)²
-                            interpolated_npshr = base_npshr * (diameter_ratio ** 2)
+                            # NPSH scales with pump-type-specific exponent from physics model
+                            interpolated_npshr = base_npshr * (diameter_ratio ** physics_exponents['npshr_exponent_alpha'])
                             
                             # Research-based NPSH degradation for heavy trimming (>10%)
                             npsh_threshold = self.get_calibration_factor('npsh_degradation_threshold', 10.0)
@@ -900,10 +946,11 @@ class PerformanceAnalyzer:
                     
                     # Apply exponential BEP shift formulas (Hydraulic Institute methodology)
                     # These exponents account for the non-linear BEP migration with trimming
-                    # Values are now dynamically loaded from configuration management system
+                    # Use pump-type-specific exponents from physics model for BEP migration
+                    # These account for how different pump types respond to trimming
                     
-                    flow_exponent = self.get_calibration_factor('bep_shift_flow_exponent', 1.2)
-                    head_exponent = self.get_calibration_factor('bep_shift_head_exponent', 2.2)
+                    flow_exponent = physics_exponents['flow_exponent_x']
+                    head_exponent = physics_exponents['head_exponent_y']
                     
                     # Calculate shifted BEP using exponential formulas  
                     # FIXED: Ensure all values are float to avoid decimal/float mixing
@@ -1196,7 +1243,7 @@ class PerformanceAnalyzer:
     def _calculate_efficiency_optimized_trim(self, flows_sorted: List[float], heads_sorted: List[float], 
                                            largest_diameter: float, target_flow: float, target_head: float,
                                            original_bep_flow: float, original_bep_head: float, 
-                                           pump_code: str) -> Optional[Dict[str, Any]]:
+                                           pump_code: str, physics_exponents: Optional[Dict[str, float]] = None) -> Optional[Dict[str, Any]]:
         """
         Calculate optimal impeller trim that balances efficiency and head requirements.
         
@@ -1272,8 +1319,9 @@ class PerformanceAnalyzer:
                 diameter_ratio = trim_percent / 100.0
                 test_diameter = largest_diameter * diameter_ratio
                 
-                # Calculate performance at this trim level
-                test_head = deliverable_head * (diameter_ratio ** 2)
+                # Calculate performance at this trim level using pump-type-specific exponent
+                head_exponent = physics_exponents['head_exponent_y'] if physics_exponents else 2.0
+                test_head = deliverable_head * (diameter_ratio ** head_exponent)
                 
                 # Skip if this trim doesn't meet head requirements
                 if test_head < target_head * 0.98:  # 2% tolerance like legacy system
@@ -1286,9 +1334,9 @@ class PerformanceAnalyzer:
                 true_qbp_percent = 100.0
                 
                 if original_bep_flow > 0 and original_bep_head > 0 and diameter_ratio < 1.0:
-                    # Apply BEP shift using tunable physics engine
-                    flow_exponent = self.get_calibration_factor('bep_shift_flow_exponent', 1.2)
-                    head_exponent = self.get_calibration_factor('bep_shift_head_exponent', 2.2)
+                    # Apply BEP shift using pump-type-specific physics engine
+                    flow_exponent = physics_exponents['flow_exponent_x'] if physics_exponents else self.get_calibration_factor('bep_shift_flow_exponent', 1.2)
+                    head_exponent = physics_exponents['head_exponent_y'] if physics_exponents else self.get_calibration_factor('bep_shift_head_exponent', 2.2)
                     
                     shifted_bep_flow = original_bep_flow * (diameter_ratio ** flow_exponent)
                     shifted_bep_head = original_bep_head * (diameter_ratio ** head_exponent)
