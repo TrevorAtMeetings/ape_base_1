@@ -4,8 +4,20 @@
 
 {% block admin_content %}
 <div class="container">
-        <h1 class="blue-text text-darken-2" style="margin-bottom: 30px;">
-            <i class="material-icons left">science</i>
+        <!-- Breadcrumb Navigation -->
+        <nav class="transparent z-depth-0" style="margin-bottom: 20px;">
+            <div class="nav-wrapper">
+                <div class="col s12">
+                    <a href="/" class="breadcrumb grey-text text-darken-2">Home</a>
+                    <a href="/admin" class="breadcrumb grey-text text-darken-2">Admin</a>
+                    <a href="/admin/brain" class="breadcrumb grey-text text-darken-2">Brain Dashboard</a>
+                    <a href="#!" class="breadcrumb blue-text">Workbench</a>
+                </div>
+            </div>
+        </nav>
+
+        <h1 class="blue-text text-darken-2" style="margin-bottom: 30px; font-size: 2.5rem;">
+            <i class="material-icons left" style="font-size: 2.5rem;">science</i>
             Brain Logic Workbench
         </h1>
 
@@ -58,14 +70,14 @@
                         </div>
                         
                         <div class="card-action">
-                            <a href="#" class="btn blue" onclick="testPump()">
+                            <button class="btn waves-effect waves-light blue darken-1" onclick="testPump()" style="margin-right: 10px;">
                                 <i class="material-icons left">play_arrow</i>
                                 Test Pump
-                            </a>
-                            <a href="#" class="btn blue-grey" onclick="runQualityCheck()">
+                            </button>
+                            <button class="btn waves-effect waves-light blue-grey darken-1" onclick="runQualityCheck()">
                                 <i class="material-icons left">assessment</i>
                                 Quality Check
-                            </a>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -92,10 +104,10 @@
                         </div>
                         
                         <div class="card-action">
-                            <a href="#" class="btn purple" onclick="simulateSelection()">
+                            <button class="btn waves-effect waves-light purple darken-1" onclick="simulateSelection()">
                                 <i class="material-icons left">play_circle_filled</i>
                                 Simulate Selection
-                            </a>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -165,11 +177,11 @@
                             </div>
                             
                             <div class="card-action">
-                                <button type="submit" class="btn teal">
+                                <button type="submit" class="btn waves-effect waves-light teal darken-1" style="margin-right: 10px;">
                                     <i class="material-icons left">compare_arrows</i>
                                     Run Calibration
                                 </button>
-                                <button type="button" class="btn grey" onclick="clearCalibrationForm()">
+                                <button type="button" class="btn waves-effect waves-light grey" onclick="clearCalibrationForm()">
                                     <i class="material-icons left">clear</i>
                                     Clear
                                 </button>
@@ -289,31 +301,118 @@
             <div class="col s12">
                 <div class="card">
                     <div class="card-content">
-                        <span class="card-title">Workbench Actions</span>
-                        <div class="card-action">
-                            <a href="/admin/brain" class="btn blue">
-                                <i class="material-icons left">arrow_back</i>
-                                Back to Brain Dashboard
-                            </a>
-                            <a href="/admin/brain/data-quality" class="btn green">
-                                <i class="material-icons left">assessment</i>
-                                Data Quality
-                            </a>
-                            <a href="/admin/brain/corrections" class="btn orange">
-                                <i class="material-icons left">edit</i>
-                                Corrections
-                            </a>
-                        </div>
+                        <span class="card-title grey-text text-darken-2">
+                            <i class="material-icons left">dashboard</i>
+                            Workbench Actions
+                        </span>
+                    </div>
+                    <div class="card-action">
+                        <a href="/admin/brain" class="btn waves-effect waves-light blue darken-1" style="margin-right: 10px;">
+                            <i class="material-icons left">arrow_back</i>
+                            Back to Brain Dashboard
+                        </a>
+                        <a href="/admin/brain/data-quality" class="btn waves-effect waves-light green darken-1" style="margin-right: 10px;">
+                            <i class="material-icons left">assessment</i>
+                            Data Quality
+                        </a>
+                        <a href="/admin/brain/corrections" class="btn waves-effect waves-light orange darken-1">
+                            <i class="material-icons left">edit</i>
+                            Corrections
+                        </a>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
+<style>
+/* Fix breadcrumb styling */
+.breadcrumb {
+    color: #616161 !important;
+    font-size: 14px;
+}
+.breadcrumb:before {
+    color: #9e9e9e !important;
+}
+.breadcrumb:last-child {
+    color: #1976d2 !important;
+}
+
+/* Improve card styling */
+.card {
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.card-title {
+    font-size: 1.4rem !important;
+    font-weight: 500 !important;
+    margin-bottom: 10px !important;
+}
+
+/* Better button spacing */
+.card-action {
+    padding: 20px 24px !important;
+    border-top: 1px solid #e0e0e0 !important;
+}
+
+/* Fix dropdown styling */
+.dropdown-content {
+    max-height: 300px !important;
+}
+
+.select-wrapper input.select-dropdown {
+    margin-bottom: 0;
+    border-bottom: 1px solid #9e9e9e;
+}
+
+/* Ensure proper label positioning */
+.input-field label {
+    color: #616161;
+}
+
+.input-field label.active {
+    color: #1976d2 !important;
+}
+
+/* Better spacing for form sections */
+.row {
+    margin-bottom: 10px;
+}
+
+h6 {
+    color: #616161;
+    font-weight: 500;
+    margin-bottom: 15px;
+}
+</style>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize Materialize select
-    M.FormSelect.init(document.querySelectorAll('select'));
+    // Initialize all Materialize components
+    console.log('Initializing Materialize components...');
+    
+    // Initialize all select elements
+    var selectElems = document.querySelectorAll('select');
+    selectElems.forEach(function(elem) {
+        M.FormSelect.init(elem, {
+            dropdownOptions: {
+                coverTrigger: false,
+                hover: false
+            }
+        });
+    });
+    
+    // Re-initialize after a short delay to ensure proper rendering
+    setTimeout(function() {
+        M.FormSelect.init(selectElems, {
+            dropdownOptions: {
+                coverTrigger: false,
+                hover: false
+            }
+        });
+        M.updateTextFields(); // Update all text fields
+    }, 100);
     
     // Handle calibration form submission
     const calibrationForm = document.getElementById('calibration-form');
@@ -361,8 +460,16 @@ function clearCalibrationForm() {
     const form = document.getElementById('calibration-form');
     if (form) {
         form.reset();
-        // Re-initialize select dropdowns
-        M.FormSelect.init(document.querySelectorAll('select'));
+        // Re-initialize select dropdowns after reset
+        setTimeout(function() {
+            var selectElems = document.querySelectorAll('select');
+            M.FormSelect.init(selectElems, {
+                dropdownOptions: {
+                    coverTrigger: false,
+                    hover: false
+                }
+            });
+        }, 50);
         M.toast({html: 'Form cleared', classes: 'grey'});
     }
 }
