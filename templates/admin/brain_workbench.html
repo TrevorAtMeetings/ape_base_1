@@ -2,6 +2,33 @@
 
 {% block admin_title %}Brain Logic Workbench{% endblock %}
 
+{% block additional_scripts %}
+<script>
+// Ensure dropdowns work even if other scripts interfere
+document.addEventListener('DOMContentLoaded', function() {
+    // Additional failsafe for dropdown initialization
+    var checkInterval = setInterval(function() {
+        if (typeof M !== 'undefined' && M.FormSelect) {
+            var selects = document.querySelectorAll('select:not(.browser-default)');
+            if (selects.length > 0) {
+                selects.forEach(function(select) {
+                    if (!select.M_FormSelect) {
+                        M.FormSelect.init(select);
+                    }
+                });
+                clearInterval(checkInterval);
+            }
+        }
+    }, 100);
+    
+    // Clear after 5 seconds to prevent infinite loop
+    setTimeout(function() {
+        clearInterval(checkInterval);
+    }, 5000);
+});
+</script>
+{% endblock %}
+
 {% block admin_content %}
 <div class="container" style="margin-top: 20px;">
 
@@ -346,28 +373,43 @@
 </style>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Wait for page to fully load then initialize
-    setTimeout(function() {
-        // Initialize all select elements
+// Initialize select dropdowns after window load
+window.addEventListener('load', function() {
+    console.log('Initializing workbench dropdowns...');
+    
+    // Force initialization with a delay to ensure Materialize is ready
+    function initializeSelects() {
         var selectElems = document.querySelectorAll('select');
+        console.log('Found ' + selectElems.length + ' select elements');
+        
         selectElems.forEach(function(elem) {
+            // Destroy any existing instance
             var instance = M.FormSelect.getInstance(elem);
             if (instance) {
                 instance.destroy();
             }
+            
+            // Initialize with options
             M.FormSelect.init(elem, {
                 dropdownOptions: {
                     coverTrigger: false,
                     hover: false,
-                    constrainWidth: false
+                    constrainWidth: false,
+                    closeOnClick: true
                 }
             });
         });
         
         // Update text fields
         M.updateTextFields();
-    }, 200);
+        console.log('Dropdowns initialized');
+    }
+    
+    // Initialize immediately
+    initializeSelects();
+    
+    // And again after a short delay as a fallback
+    setTimeout(initializeSelects, 500);
     
     // Handle calibration form submission
     const calibrationForm = document.getElementById('calibration-form');
@@ -417,14 +459,21 @@ function clearCalibrationForm() {
         form.reset();
         // Re-initialize select dropdowns after reset
         setTimeout(function() {
-            var selectElems = document.querySelectorAll('select');
-            M.FormSelect.init(selectElems, {
-                dropdownOptions: {
-                    coverTrigger: false,
-                    hover: false
+            var selectElems = form.querySelectorAll('select');
+            selectElems.forEach(function(elem) {
+                var instance = M.FormSelect.getInstance(elem);
+                if (instance) {
+                    instance.destroy();
                 }
+                M.FormSelect.init(elem, {
+                    dropdownOptions: {
+                        coverTrigger: false,
+                        hover: false,
+                        constrainWidth: false
+                    }
+                });
             });
-        }, 50);
+        }, 100);
         M.toast({html: 'Form cleared', classes: 'grey'});
     }
 }
