@@ -864,15 +864,11 @@ body .brain-dashboard .brain-header {
                     Analyze multi-point calibration with AI insights and visual overlays.
                 </p>
                 <div class="feature-actions">
-                    <a href="{{ url_for('brain_admin.brain_workbench') }}" class="btn btn-primary">
-                        <span class="material-icons-round">science</span>
-                        <span>Open Workbench</span>
+                    <a href="/admin/brain/workbench" onclick="window.location.href='/admin/brain/workbench'; return false;" class="btn btn-primary" style="opacity: 1 !important; pointer-events: auto !important; cursor: pointer !important; background: #6750A4 !important; color: white !important;">
+                        <span class="material-icons-round">compare</span>
+                        <span>Comparison Tool</span>
                     </a>
-                    <a href="#" onclick="showPumpSelector()" class="btn btn-secondary">
-                        <span class="material-icons-round">tune</span>
-                        <span>Calibrate Pump</span>
-                    </a>
-                    <a href="#" onclick="uploadDatasheet()" class="btn btn-secondary">
+                    <a href="#" onclick="uploadDatasheet(); return false;" class="btn btn-secondary" style="opacity: 1 !important; pointer-events: auto !important; cursor: pointer !important;">
                         <span class="material-icons-round">upload_file</span>
                         <span>Upload Datasheet</span>
                     </a>
