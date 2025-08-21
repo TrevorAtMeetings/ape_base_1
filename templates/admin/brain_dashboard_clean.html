@@ -179,11 +179,11 @@
                     <p>Compare Brain selections against manufacturer recommendations. Upload datasheets, analyze differences, and identify opportunities for improvement.</p>
                 </div>
                 <div class="card-action">
-                    <a href="#" class="btn disabled">
+                    <a href="{{ url_for('brain_admin.brain_workbench') }}" class="btn blue">
                         Comparison Tool
                     </a>
-                    <a href="#" class="btn-flat blue-text disabled">
-                        Upload Datasheet
+                    <a href="#" onclick="showPumpSelector()" class="btn-flat blue-text">
+                        Calibrate Pump
                     </a>
                 </div>
             </div>
@@ -214,3 +214,66 @@
     </div>
 </div>
 {% endblock admin_content %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+function runQuickCalibration() {
+    alert('Quick calibration test will be implemented soon');
+}
+
+function showPumpSelector() {
+    // Create a modal for pump selection
+    const modalHtml = `
+        <div id="pump-selector-modal" class="modal">
+            <div class="modal-content">
+                <h4>Select Pump for Calibration</h4>
+                <p>Enter the pump code to open its calibration workbench:</p>
+                <div class="input-field">
+                    <input type="text" id="pump-code-input" placeholder="e.g., 4503-44648">
+                    <label for="pump-code-input">Pump Code</label>
+                </div>
+                <div class="row">
+                    <div class="col s12">
+                        <p class="grey-text">Or select from recent pumps:</p>
+                        <div class="collection">
+                            <a href="/admin/pump-calibration/4503-44648" class="collection-item">4503-44648 - 6x8x10 WL</a>
+                            <a href="/admin/pump-calibration/4502-42848" class="collection-item">4502-42848 - 6x8x10 WLN</a>
+                            <a href="/admin/pump-calibration/2502-55" class="collection-item">2502-55 - 10 WLN 32A</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <a href="#!" class="modal-close waves-effect waves-red btn-flat">Cancel</a>
+                <a href="#!" onclick="navigateToCalibration()" class="waves-effect waves-green btn-flat">Open Calibration</a>
+            </div>
+        </div>
+    `;
+    
+    // Add modal to page if not exists
+    if (!document.getElementById('pump-selector-modal')) {
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+    }
+    
+    // Initialize and open modal
+    const modal = document.getElementById('pump-selector-modal');
+    const instance = M.Modal.init(modal);
+    instance.open();
+    
+    // Focus on input
+    setTimeout(() => {
+        document.getElementById('pump-code-input').focus();
+    }, 100);
+}
+
+function navigateToCalibration() {
+    const pumpCode = document.getElementById('pump-code-input').value.trim();
+    if (pumpCode) {
+        window.location.href = `/admin/pump-calibration/${pumpCode}`;
+    } else {
+        M.toast({html: 'Please enter a pump code', classes: 'red'});
+    }
+}
+</script>
+{% endblock %}
