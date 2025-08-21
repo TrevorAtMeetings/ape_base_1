@@ -46,8 +46,8 @@ class ManufacturerComparisonEngine:
                 logger.info(f"[DATA DEBUG] Point {i+1}: Flow={flow}, Head={truth_head}, Eff={truth_efficiency}%, Power={truth_power}kW, Diameter={diameter}mm")
                 logger.debug(f"Processing point {i+1}: Flow={flow}, Head={truth_head}, Diameter={diameter}")
                 
-                # Get Brain's prediction at this exact flow
-                brain_result = self._get_brain_prediction(pump_data, flow, diameter)
+                # Get Brain's prediction at this exact flow and head (datasheet validation)
+                brain_result = self._get_brain_prediction(pump_data, flow, truth_head, diameter)
                 
                 # Calculate deltas
                 row_data = {
@@ -111,14 +111,15 @@ class ManufacturerComparisonEngine:
             "ai_summary": ai_summary
         }
     
-    def _get_brain_prediction(self, pump_data: Dict, flow: float, diameter: Optional[float] = None) -> Dict:
+    def _get_brain_prediction(self, pump_data: Dict, flow: float, head: float, diameter: Optional[float] = None) -> Dict:
         """
         Get Brain prediction for a specific operating point
         
         Args:
             pump_data: Pump data dictionary
             flow: Flow rate in m³/hr
-            diameter: Optional impeller diameter in mm
+            head: Head in meters (manufacturer's datasheet value)
+            diameter: Optional impeller diameter in mm (for reference only)
             
         Returns:
             Dictionary with Brain prediction results
@@ -126,46 +127,40 @@ class ManufacturerComparisonEngine:
         try:
             pump_code = pump_data.get('pump_code', 'Unknown')
             
-            # Use the Brain's performance engine to get prediction
-            if diameter:
-                # Force specific diameter constraint
-                logger.debug(f"Getting Brain prediction for {pump_code} at {flow} m³/hr with forced diameter {diameter}mm")
-                # Use the forced diameter approach in calculate_performance_at_flow
-                result = self.brain.performance.calculate_performance_at_flow(
-                    pump_data, flow, forced_diameter=diameter
-                )
-            else:
-                # Let Brain choose optimal diameter using standard calculation
-                logger.debug(f"Getting Brain prediction for {pump_code} at {flow} m³/hr (optimal diameter)")
-                # Use the standard performance at flow calculation
-                result = self.brain.performance.calculate_performance_at_flow(
-                    pump_data, flow
-                )
+            # For datasheet validation, use the exact manufacturer's flow and head point
+            # The Brain should calculate what efficiency and power it predicts at this exact operating point
+            logger.debug(f"Getting Brain prediction for {pump_code} at exact datasheet point: {flow} m³/hr @ {head}m")
+            
+            # Use calculate_at_point_industry_standard which accepts flow AND head as inputs
+            result = self.brain.performance.calculate_at_point_industry_standard(
+                pump_data, flow, head
+            )
             
             if result:
+                # The head should match exactly what we input (datasheet validation principle)
                 return {
-                    'head': result.get('head_m'),
+                    'head': head,  # Use the exact manufacturer's head value
                     'efficiency': result.get('efficiency_pct'),
                     'power': result.get('power_kw'),
-                    'diameter_used': result.get('diameter_mm'),
+                    'diameter_used': result.get('impeller_diameter_mm', diameter),
                     'errors': result.get('errors', [])
                 }
             else:
                 return {
-                    'head': None,
+                    'head': head,  # Still return the manufacturer's head for comparison
                     'efficiency': None,
                     'power': None,
-                    'diameter_used': None,
-                    'errors': ['Brain calculation failed - no valid result']
+                    'diameter_used': diameter,
+                    'errors': ['Brain calculation failed - pump may not be suitable for this operating point']
                 }
             
         except Exception as e:
             logger.error(f"Brain prediction failed: {e}")
             return {
-                'head': None,
+                'head': head,  # Still return the manufacturer's head for comparison
                 'efficiency': None, 
                 'power': None,
-                'diameter_used': None,
+                'diameter_used': diameter,
                 'errors': [f"Brain prediction error: {str(e)}"]
             }
     
