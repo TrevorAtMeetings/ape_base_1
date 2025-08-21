@@ -587,15 +587,27 @@ class ManufacturerComparisonEngine:
         # This creates a curve across the pump's operating range
         expanded_points = self._generate_expanded_flow_range(pump_data, ground_truth_points, brain)
         
+        # Get BEP flow for QBep% calculations
+        bep_flow = pump_data.get('bep_flow', 0)
+        
         # Process each ground truth point
         comparison_results = []
         for point in ground_truth_points:
             try:
+                # Calculate actual flow if QBep% is provided
+                actual_flow = point['flow']
+                qbep_percent = point.get('qbep_percent')
+                
+                if qbep_percent and bep_flow > 0:
+                    # Use QBep% to determine the actual flow
+                    actual_flow = bep_flow * (qbep_percent / 100.0)
+                    self.logger.info(f"Using QBep% {qbep_percent}% -> Flow = {actual_flow:.1f} m³/hr (BEP = {bep_flow:.1f})")
+                
                 # CRITICAL: Use calculate_performance_at_flow to get Brain's actual prediction
                 # This gives us what the brain thinks the pump would deliver at this flow
                 brain_prediction = brain.performance.calculate_performance_at_flow(
                     pump_data, 
-                    point['flow'],
+                    actual_flow,
                     allow_excessive_trim=True  # Allow comparison even at extreme flows
                 )
                 
@@ -612,7 +624,8 @@ class ManufacturerComparisonEngine:
                     delta_power = self._calculate_delta(point['power'], brain_power)
                     
                     comparison = {
-                        'flow': point['flow'],
+                        'flow': actual_flow,
+                        'qbep_percent': qbep_percent,
                         'truth_head': point['head'],
                         'truth_efficiency': point['efficiency'],
                         'truth_power': point['power'],
@@ -749,10 +762,17 @@ class ManufacturerComparisonEngine:
             return {}
             
         # Extract deltas
+        head_deltas = [r['delta_head'] for r in comparison_results if 'delta_head' in r]
         efficiency_deltas = [r['delta_efficiency'] for r in comparison_results]
         power_deltas = [r['delta_power'] for r in comparison_results]
         
         metrics = {
+            'head': {
+                'rmse': np.sqrt(np.mean(np.square(head_deltas))) if head_deltas else 0,
+                'mean_delta': np.mean(head_deltas) if head_deltas else 0,
+                'max_delta': max(head_deltas, key=abs) if head_deltas else 0,
+                'std_dev': np.std(head_deltas) if head_deltas else 0
+            },
             'efficiency': {
                 'rmse': np.sqrt(np.mean(np.square(efficiency_deltas))) if efficiency_deltas else 0,
                 'mean_delta': np.mean(efficiency_deltas) if efficiency_deltas else 0,
@@ -765,7 +785,7 @@ class ManufacturerComparisonEngine:
                 'max_delta': max(power_deltas, key=abs) if power_deltas else 0,
                 'std_dev': np.std(power_deltas) if power_deltas else 0
             },
-            'overall_accuracy': 100 - np.mean([abs(d) for d in efficiency_deltas + power_deltas]) if (efficiency_deltas + power_deltas) else 100,
+            'overall_accuracy': 100 - np.mean([abs(d) for d in head_deltas + efficiency_deltas + power_deltas]) if (head_deltas + efficiency_deltas + power_deltas) else 100,
             'point_count': len(comparison_results)
         }
         
@@ -978,14 +998,34 @@ def analyze_pump_calibration(pump_code):
                 flow_str = data.get(f'flow_{i}')
                 head_str = data.get(f'head_{i}')
                 efficiency_str = data.get(f'efficiency_{i}')
-                power_str = data.get(f'power_{i}')
+                power_str = data.get(f'power_{i}')  # Optional
+                qbep_str = data.get(f'qbep_{i}')  # Optional
                 
-                if flow_str and head_str and efficiency_str and power_str:
+                # Required fields
+                if flow_str and head_str and efficiency_str:
                     # Safe conversion with validation
                     flow = float(flow_str)
                     head = float(head_str)
                     efficiency = float(efficiency_str)
-                    power = float(power_str)
+                    
+                    # Optional power - calculate if not provided
+                    if power_str and power_str.strip():
+                        power = float(power_str)
+                        if power <= 0 or power > 100000:  # Max 100MW is reasonable
+                            logger.warning(f"Power value out of range: {power}, calculating from efficiency")
+                            # Calculate power from flow, head, and efficiency
+                            power = (flow * head * 9.81) / (3600 * efficiency / 100 * 10)
+                    else:
+                        # Calculate power from flow, head, and efficiency
+                        power = (flow * head * 9.81) / (3600 * efficiency / 100 * 10)
+                    
+                    # Optional QBep%
+                    qbep_percent = None
+                    if qbep_str and qbep_str.strip():
+                        qbep_percent = float(qbep_str)
+                        if qbep_percent <= 0 or qbep_percent > 200:
+                            logger.warning(f"QBep% value out of range: {qbep_percent}")
+                            qbep_percent = None
                     
                     # Validate ranges
                     if flow <= 0 or flow > 50000:  # Max 50,000 m³/hr is reasonable
@@ -997,15 +1037,13 @@ def analyze_pump_calibration(pump_code):
                     if efficiency <= 0 or efficiency > 100:
                         logger.warning(f"Efficiency value out of range: {efficiency}")
                         continue
-                    if power <= 0 or power > 100000:  # Max 100MW is reasonable
-                        logger.warning(f"Power value out of range: {power}")
-                        continue
                     
                     ground_truth_points.append({
                         'flow': flow,
                         'head': head,
                         'efficiency': efficiency,
-                        'power': power
+                        'power': power,
+                        'qbep_percent': qbep_percent
                     })
                     
             except (ValueError, TypeError) as e:

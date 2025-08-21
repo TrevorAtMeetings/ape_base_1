@@ -633,8 +633,13 @@ function addDataRow() {
                    data-row-id="${newRowId}">
         </td>
         <td>
-            <input type="number" name="power_${newRowId}" step="0.1" required 
-                   class="validate power-input" placeholder="${placeholders.power}"
+            <input type="number" name="power_${newRowId}" step="0.1"
+                   class="validate power-input" placeholder="${placeholders.power} (optional)"
+                   data-row-id="${newRowId}">
+        </td>
+        <td>
+            <input type="number" name="qbep_${newRowId}" step="0.1" 
+                   class="validate" min="0" max="200" placeholder="e.g., 100"
                    data-row-id="${newRowId}">
         </td>
         <td>
@@ -1191,7 +1196,8 @@ document.addEventListener('DOMContentLoaded', function() {
                             <th id="flow-header">Flow (m³/hr)</th>
                             <th id="head-header">Head (m)</th>
                             <th>Efficiency (%)</th>
-                            <th id="power-header">Power (kW)</th>
+                            <th id="power-header">Power (kW)<br><span class="grey-text" style="font-size: 0.8em">(Optional)</span></th>
+                            <th>QBep %<br><span class="grey-text" style="font-size: 0.8em">(Optional)</span></th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -1233,16 +1239,16 @@ document.addEventListener('DOMContentLoaded', function() {
                         </p>
                     </div>
                     <div class="col s12 m3">
+                        <p class="grey-text">Head RMSE</p>
+                        <p class="metric-value">{{ calibration_results.metrics.head.rmse|round(2) }}%</p>
+                    </div>
+                    <div class="col s12 m3">
                         <p class="grey-text">Efficiency RMSE</p>
                         <p class="metric-value">{{ calibration_results.metrics.efficiency.rmse|round(2) }}%</p>
                     </div>
                     <div class="col s12 m3">
                         <p class="grey-text">Power RMSE</p>
                         <p class="metric-value">{{ calibration_results.metrics.power.rmse|round(2) }}%</p>
-                    </div>
-                    <div class="col s12 m3">
-                        <p class="grey-text">Data Points</p>
-                        <p class="metric-value">{{ calibration_results.metrics.point_count }}</p>
                     </div>
                 </div>
             </div>
@@ -1253,9 +1259,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 <thead>
                     <tr>
                         <th rowspan="2">Flow<br>(m³/hr)</th>
+                        <th rowspan="2">QBep%</th>
                         <th colspan="3" class="center-align">Manufacturer Data</th>
                         <th colspan="3" class="center-align">Brain Prediction</th>
-                        <th colspan="2" class="center-align">Delta (%)</th>
+                        <th colspan="3" class="center-align">Delta (%)</th>
                     </tr>
                     <tr>
                         <th>Head (m)</th>
@@ -1264,6 +1271,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <th>Head (m)</th>
                         <th>Eff (%)</th>
                         <th>Power (kW)</th>
+                        <th>ΔHead</th>
                         <th>ΔEff</th>
                         <th>ΔPwr</th>
                     </tr>
@@ -1272,12 +1280,24 @@ document.addEventListener('DOMContentLoaded', function() {
                     {% for point in calibration_results.comparison_points %}
                     <tr>
                         <td>{{ point.flow|round(2) }}</td>
+                        <td>
+                            {% if point.qbep_percent %}
+                                {{ point.qbep_percent|round(0) }}%
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
                         <td>{{ point.truth_head|round(2) }}</td>
                         <td>{{ point.truth_efficiency|round(1) }}</td>
                         <td>{{ point.truth_power|round(2) }}</td>
                         <td>{{ point.brain_head|round(2) }}</td>
                         <td>{{ point.brain_efficiency|round(1) }}</td>
                         <td>{{ point.brain_power|round(2) }}</td>
+                        <td>
+                            <span class="badge {% if point.delta_head|abs < 2 %}green{% elif point.delta_head|abs < 5 %}orange{% else %}red{% endif %} white-text">
+                                {{ point.delta_head|round(1) }}%
+                            </span>
+                        </td>
                         <td>
                             <span class="badge {% if point.delta_efficiency|abs < 2 %}green{% elif point.delta_efficiency|abs < 5 %}orange{% else %}red{% endif %} white-text">
                                 {{ point.delta_efficiency|round(1) }}%
