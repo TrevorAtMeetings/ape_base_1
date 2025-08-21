@@ -603,14 +603,15 @@ class ManufacturerComparisonEngine:
                     actual_flow = bep_flow * (qbep_percent / 100.0)
                     self.logger.info(f"Using QBep% {qbep_percent}% -> Flow = {actual_flow:.1f} m³/hr (BEP = {bep_flow:.1f})")
                 
-                # PURE VALIDATION: Use calculate_at_diameter to get Brain's prediction at EXACT diameter
+                # PURE VALIDATION: Use calculate_performance_at_flow with forced_diameter constraint
                 # This is the core of the validation interface - no optimization, just pure comparison
                 if point.get('diameter'):
                     # User provided diameter - this is MANDATORY for validation
-                    brain_prediction = brain.performance.calculate_at_diameter(
+                    brain_prediction = brain.performance.calculate_performance_at_flow(
                         pump_data, 
                         actual_flow,
-                        point['diameter']  # Use EXACT diameter specified by user
+                        allow_excessive_trim=True,
+                        forced_diameter=point['diameter']  # This is the new, correct parameter
                     )
                     
                     if brain_prediction:
