@@ -1,0 +1,53 @@
+Hello Agent,
+Our next major task is to complete the Brain's core selection capabilities by building out the logic for Variable Speed (VFD) pumps. This is a critical feature that will allow us to correctly evaluate the 11.66% of our pump catalog that are "VFD-Only," as well as the 64.25% that are "Flexible."
+Our goal is to create a new, parallel calculation path within the Brain that respects the unique physics and engineering principles of variable speed pump operation.
+Context: The Engineering Principles
+The logic for VFD selection is based on two core principles:
+System Curve: For a given piping system, the head required to move fluid through it follows the formula H = H_static + k * Q², where k is a constant representing friction loss. Any two operating points in that same system will share the same friction constant k. Therefore, for any two points (Q₁, H₁) and (Q₂, H₂), the relationship (H₁ - H_static) / Q₁² = (H₂ - H_static) / Q₂² holds true.
+Affinity Laws for Speed: The performance of a pump with a fixed impeller diameter changes predictably with speed (n):
+Q₂/Q₁ = n₂/n₁
+H₂/H₁ = (n₂/n₁)²
+P₂/P₁ = (n₂/n₁)^3
+Efficiency (η) remains approximately constant.
+Our task is to combine these principles to find the new speed (n₂) required to meet a user's duty point.
+Implementation Plan:
+Please follow this three-step plan to build the VFD calculation path.
+Step 1: Create the New VFD Calculation Method in PerformanceAnalyzer
+File to modify: app/brain/performance.py
+Action: Create a new, public method in the PerformanceAnalyzer class named calculate_performance_with_speed_variation(...).
+Logic for the new method: This is the core physics engine.
+It should accept pump_data, a target flow, and a target head.
+It must use the pump's largest nominal impeller diameter curve as the reference.
+Find the corresponding point on the reference curve. This is the most critical step. You will need to iterate through the points on the reference curve to find a point (Q₁, H₁) that lies on the same system curve as the user's target duty point (Q₂, H₂). Assume a default H_static of head * 0.4 for this calculation if no other information is available.
+Once you find this corresponding point (Q₁, H₁) on the 100% speed curve, use the affinity law H₂/H₁ = (n₂/n₁)² to solve for the required new speed (n₂).
+Validate the new speed. The calculated n₂ must be within the pump's min_speed_rpm and max_speed_rpm from its specifications. If it's outside this range, the solution is not feasible, and the method should return None.
+If the speed is valid, calculate the final performance.
+The flow and head are the user's target values.
+The efficiency is the efficiency of the reference point (η₁) on the original curve (it remains constant).
+Calculate the new power using the affinity law P₂ = P₁ * (n₂/n₁)^3.
+Return a complete performance dictionary containing all these calculated values, along with sizing_method: 'Speed Variation' and the required_speed_rpm: n₂.
+Step 2: Integrate the New Method into SelectionIntelligence
+File to modify: app/brain/selection.py
+Method to enhance: evaluate_single_pump
+Action: Update the "Three-Path Selection Logic" to call your new VFD calculation method.
+Find the if/elif block that checks the variable_speed and variable_diameter flags.
+In the branch for "VFD-Only" pumps (is_var_speed and not is_var_diameter), instead of excluding the pump, you will now call your new brain.performance.calculate_performance_with_speed_variation(...) method.
+For "Flexible" pumps, you will eventually need logic to decide between trimming and VFD. For this initial implementation, you can also call the VFD method in addition to the trim method and we can add the decision logic later. The goal for now is to get the VFD calculation working and returning data.
+Step 3: Update the UI to Display VFD Results
+Files to modify: app/templates/pump_options.html and app/templates/professional_pump_report.html.
+Action: The performance dictionary from the Brain will now sometimes contain sizing_method: 'Speed Variation' and required_speed_rpm. The templates need to display this information correctly.
+Logic for the templates:
+Use a Jinja2 if statement:
+code
+Jinja
+{% if pump.get('sizing_info', {}).get('sizing_method') == 'Speed Variation' %}
+    <!-- Display VFD-specific information -->
+    <p><strong>Required Speed:</strong> {{ pump.get('sizing_info').get('required_speed_rpm')|round }} RPM</p>
+    <p><strong>Sizing Method:</strong> Variable Speed (VFD)</p>
+{% else %}
+    <!-- Display the existing impeller trim information -->
+    <p><strong>Trimmed Diameter:</strong> {{ pump.get('impeller_diameter_mm')|round(1) }} mm</p>
+    <p><strong>Impeller Trim:</strong> {{ (100 - pump.get('trim_percent', 100))|round(1) }}%</p>
+{% endif %}
+Integrate this logic into the relevant sections of the results and report pages so the user clearly understands how the pump is intended to be applied.
+This is a critical feature that will complete the Brain's core selection capabilities. Please proceed with this plan, starting with the implementation of the new PerformanceAnalyzer method.
