@@ -591,30 +591,47 @@ class ManufacturerComparisonEngine:
         comparison_results = []
         for point in ground_truth_points:
             try:
-                # Get Brain prediction
-                brain_result = brain.performance.calculate_at_point_industry_standard(
+                # CRITICAL: Use calculate_performance_at_flow to get Brain's actual prediction
+                # This gives us what the brain thinks the pump would deliver at this flow
+                brain_prediction = brain.performance.calculate_performance_at_flow(
                     pump_data, 
-                    point['flow'], 
-                    point['head']
+                    point['flow'],
+                    allow_excessive_trim=True  # Allow comparison even at extreme flows
                 )
                 
-                if brain_result:
-                    # Calculate deltas
+                if brain_prediction:
+                    # Now we have the brain's prediction at this flow point
+                    # Compare it to the manufacturer's actual data
+                    brain_head = brain_prediction.get('head_m', 0)
+                    brain_efficiency = brain_prediction.get('efficiency_pct', 0)
+                    brain_power = brain_prediction.get('power_kw', 0)
+                    
+                    # Calculate percentage deltas for head as well
+                    delta_head = self._calculate_delta(point['head'], brain_head)
+                    delta_efficiency = self._calculate_delta(point['efficiency'], brain_efficiency)
+                    delta_power = self._calculate_delta(point['power'], brain_power)
+                    
                     comparison = {
                         'flow': point['flow'],
                         'truth_head': point['head'],
                         'truth_efficiency': point['efficiency'],
                         'truth_power': point['power'],
-                        'brain_head': point['head'],  # Brain calculates for exact head
-                        'brain_efficiency': brain_result.get('efficiency_pct', 0),
-                        'brain_power': brain_result.get('power_kw', 0),
-                        'brain_diameter': brain_result.get('impeller_diameter_mm', 0),
-                        'delta_efficiency': self._calculate_delta(point['efficiency'], brain_result.get('efficiency_pct', 0)),
-                        'delta_power': self._calculate_delta(point['power'], brain_result.get('power_kw', 0))
+                        'brain_head': brain_head,  # ACTUAL brain calculated head
+                        'brain_efficiency': brain_efficiency,
+                        'brain_power': brain_power,
+                        'brain_diameter': brain_prediction.get('diameter_mm', 0),
+                        'delta_head': delta_head,  # Added head comparison
+                        'delta_efficiency': delta_efficiency,
+                        'delta_power': delta_power
                     }
                     comparison_results.append(comparison)
+                    
+                    # Log significant deviations for debugging
+                    if abs(delta_head) > 10:
+                        self.logger.info(f"Significant head deviation for {pump_code} at {point['flow']} m³/hr: "
+                                       f"Truth={point['head']:.2f}m, Brain={brain_head:.2f}m (Δ={delta_head:.1f}%)")
                 else:
-                    self.logger.warning(f"No Brain result for {pump_code} at {point['flow']} m³/hr @ {point['head']}m")
+                    self.logger.warning(f"No Brain prediction for {pump_code} at {point['flow']} m³/hr")
                     
             except Exception as e:
                 self.logger.error(f"Error processing point {point}: {e}")
@@ -681,27 +698,32 @@ class ManufacturerComparisonEngine:
                     continue
                     
                 try:
-                    # Get Brain prediction for this flow
-                    brain_result = brain.performance.calculate_at_point_industry_standard(
+                    # Get Brain's actual prediction at this flow
+                    brain_prediction = brain.performance.calculate_performance_at_flow(
                         pump_data, 
-                        flow, 
-                        avg_head
+                        flow,
+                        allow_excessive_trim=True
                     )
                     
-                    if brain_result:
-                        # For expanded points, use Brain predictions for both "truth" and "brain"
-                        # This allows us to show the curve shape even with limited input data
+                    if brain_prediction:
+                        # Use brain's actual prediction for the pump curve
+                        brain_head = brain_prediction.get('head_m', 0)
+                        brain_efficiency = brain_prediction.get('efficiency_pct', 0)
+                        brain_power = brain_prediction.get('power_kw', 0)
+                        
                         expanded_points.append({
                             'flow': float(flow),
-                            'truth_head': avg_head,
-                            'truth_efficiency': brain_result.get('efficiency_pct', 0),
-                            'truth_power': brain_result.get('power_kw', 0),
-                            'brain_head': avg_head,
-                            'brain_efficiency': brain_result.get('efficiency_pct', 0),
-                            'brain_power': brain_result.get('power_kw', 0),
-                            'brain_diameter': brain_result.get('impeller_diameter_mm', 0),
-                            'delta_efficiency': 0,  # No delta for expanded points
-                            'delta_power': 0
+                            'truth_head': brain_head,  # Use brain prediction as baseline
+                            'truth_efficiency': brain_efficiency,
+                            'truth_power': brain_power,
+                            'brain_head': brain_head,
+                            'brain_efficiency': brain_efficiency,
+                            'brain_power': brain_power,
+                            'brain_diameter': brain_prediction.get('diameter_mm', 0),
+                            'delta_head': 0,  # No delta for expanded points
+                            'delta_efficiency': 0,
+                            'delta_power': 0,
+                            'is_expanded': True  # Mark as expanded for UI
                         })
                 except Exception as e:
                     self.logger.debug(f"Could not generate expanded point at {flow}: {e}")
