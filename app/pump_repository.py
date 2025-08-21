@@ -241,6 +241,27 @@ class PumpRepository:
 
                     all_curves_data = cursor.fetchall()
                     logger.info(f"Repository: Retrieved {len(all_curves_data)} performance points")
+                    
+                    # Load available diameters from pump_diameters table  
+                    cursor.execute("""
+                        SELECT 
+                            p.pump_code,
+                            pd.diameter_value
+                        FROM pumps p
+                        JOIN pump_diameters pd ON p.id = pd.pump_id
+                        WHERE pd.diameter_value > 0
+                        ORDER BY p.pump_code, pd.diameter_value
+                    """)
+                    
+                    diameter_data = cursor.fetchall()
+                    
+                    # Group diameters by pump code
+                    diameters_by_pump = {}
+                    for row in diameter_data:
+                        pump_code = row['pump_code']
+                        if pump_code not in diameters_by_pump:
+                            diameters_by_pump[pump_code] = []
+                        diameters_by_pump[pump_code].append(float(row['diameter_value']))
 
                     # Process data efficiently using dictionaries for grouping
                     pump_models = []
@@ -286,6 +307,9 @@ class PumpRepository:
                         # Get curves for this pump - ensure we process ALL pumps, not just those with performance data
                         pump_curves = curves_by_pump.get(pump_code, {})
                         curves = []
+                        
+                        # Get available diameters for this pump from pump_diameters table
+                        available_diameters = diameters_by_pump.get(pump_code, [])
                         
                         # Log pump processing for debugging
                         logger.debug(f"Repository: Processing pump {pump_code} with {len(pump_curves)} curves")
@@ -379,6 +403,8 @@ class PumpRepository:
                                 'variable_diameter': bool(pump_row_dict.get('variable_diameter', True))
                             },
                             'curves': curves,
+                            # Add available diameters from pump_diameters table
+                            'available_diameters': available_diameters,
                             # Use aggregated statistics from SQL
                             'curve_count': int(pump_row_dict.get('curve_count', 0)),
                             'total_points': int(pump_row_dict.get('total_points', 0)),

@@ -59,16 +59,25 @@ class PerformanceAnalyzer:
                     logger.error(f"[FORCED CONSTRAINT] {pump_code}: Invalid reference diameter")
                     return None
                 
-                # Get all available diameters for this pump
+                # Get all available diameters from pump specifications (pump_diameters table)
                 all_diameters = []
-                if 'curves' in pump_data:
+                if 'available_diameters' in pump_data and pump_data['available_diameters']:
+                    # Use actual diameter specifications from database
+                    all_diameters = [d for d in pump_data['available_diameters'] if d > 0]
+                    all_diameters.sort()
+                elif 'curves' in pump_data:
+                    # Fallback to curve diameters if no specifications available
                     all_diameters = [c.get('impeller_diameter_mm', 0) for c in pump_data['curves'] if c.get('impeller_diameter_mm', 0) > 0]
                     all_diameters.sort()
                 
-                # For calibration purposes, allow more flexible diameter constraints
-                # Engineers might test with non-standard diameters for troubleshooting
-                min_diameter = min(all_diameters) * 0.70 if all_diameters else largest_diameter * 0.70  # Allow 30% trim for calibration
-                max_diameter = max(all_diameters) * 1.15 if all_diameters else largest_diameter * 1.15  # Allow 15% above for calibration
+                # Use actual diameter specifications instead of calculated ranges
+                if all_diameters:
+                    min_diameter = min(all_diameters)  # Use actual minimum from specifications
+                    max_diameter = max(all_diameters)  # Use actual maximum from specifications
+                else:
+                    # Fallback calculation if no diameter data available
+                    min_diameter = largest_diameter * 0.70  
+                    max_diameter = largest_diameter * 1.15
                 
                 if forced_diameter < min_diameter or forced_diameter > max_diameter:
                     logger.error(f"[FORCED CONSTRAINT] {pump_code}: Forced diameter {forced_diameter}mm is outside calibration range [{min_diameter:.0f}-{max_diameter:.0f}mm]")
@@ -90,7 +99,7 @@ class PerformanceAnalyzer:
                 import numpy as np
                 
                 head_interp = interpolate.interp1d(flows, heads, kind='linear',
-                                                 fill_value='extrapolate', bounds_error=False)
+                                                 bounds_error=False, fill_value='extrapolate')
                 reference_head = float(head_interp(flow))
                 
                 if np.isnan(reference_head) or reference_head <= 0:
@@ -108,7 +117,7 @@ class PerformanceAnalyzer:
                 efficiencies = [p.get('efficiency_pct', 0) for p in sorted_points if 'efficiency_pct' in p]
                 if efficiencies and len(efficiencies) == len(flows):
                     eff_interp = interpolate.interp1d(flows, efficiencies, kind='linear',
-                                                     fill_value='extrapolate', bounds_error=False)
+                                                     bounds_error=False, fill_value='extrapolate')
                     base_efficiency = float(eff_interp(flow))
                 else:
                     base_efficiency = 75.0  # Default
