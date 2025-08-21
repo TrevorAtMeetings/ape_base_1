@@ -374,30 +374,56 @@ document.addEventListener('DOMContentLoaded', function() {
 <script>
 // Track the number of data rows
 let dataRowCount = 1;
+let currentUnitSystem = 'metric';
+
+// Conversion constants
+const CONVERSIONS = {
+    flow: {
+        toImperial: 4.4028, // m³/hr to gpm
+        toMetric: 0.2271   // gpm to m³/hr
+    },
+    head: {
+        toImperial: 3.28084, // m to ft
+        toMetric: 0.3048    // ft to m
+    },
+    power: {
+        toImperial: 1.34102, // kW to hp
+        toMetric: 0.7457    // hp to kW
+    }
+};
 
 // Add a new performance data row
 function addDataRow() {
     const tableBody = document.getElementById('data-rows');
     const newRowId = dataRowCount++;
     
+    // Get appropriate placeholders based on current unit system
+    const placeholders = currentUnitSystem === 'metric' 
+        ? { flow: 'e.g., 1500', head: 'e.g., 25.5', power: 'e.g., 125.5' }
+        : { flow: 'e.g., 6600', head: 'e.g., 83.7', power: 'e.g., 168' };
+    
     const newRow = document.createElement('tr');
     newRow.id = `data-row-${newRowId}`;
     newRow.innerHTML = `
         <td>
             <input type="number" name="flow_${newRowId}" step="0.1" required 
-                   class="validate" placeholder="e.g., 1500">
+                   class="validate flow-input" placeholder="${placeholders.flow}"
+                   data-row-id="${newRowId}">
         </td>
         <td>
             <input type="number" name="head_${newRowId}" step="0.1" required 
-                   class="validate" placeholder="e.g., 25.5">
+                   class="validate head-input" placeholder="${placeholders.head}"
+                   data-row-id="${newRowId}">
         </td>
         <td>
             <input type="number" name="efficiency_${newRowId}" step="0.1" required 
-                   class="validate" min="0" max="100" placeholder="e.g., 85.2">
+                   class="validate" min="0" max="100" placeholder="e.g., 85.2"
+                   data-row-id="${newRowId}">
         </td>
         <td>
             <input type="number" name="power_${newRowId}" step="0.1" required 
-                   class="validate" min="0" placeholder="e.g., 125.5">
+                   class="validate power-input" placeholder="${placeholders.power}"
+                   data-row-id="${newRowId}">
         </td>
         <td>
             <a href="javascript:void(0)" onclick="removeDataRow(${newRowId})" 
@@ -486,6 +512,104 @@ function validateCalibrationForm() {
     return isValid;
 }
 
+// Switch to metric units
+function switchToMetric() {
+    if (currentUnitSystem === 'metric') return;
+    
+    // Update UI
+    document.getElementById('metric-btn').classList.add('blue');
+    document.getElementById('metric-btn').classList.remove('grey', 'lighten-1');
+    document.getElementById('imperial-btn').classList.remove('blue');
+    document.getElementById('imperial-btn').classList.add('grey', 'lighten-1');
+    
+    // Update headers
+    document.getElementById('flow-header').textContent = 'Flow (m³/hr)';
+    document.getElementById('head-header').textContent = 'Head (m)';
+    document.getElementById('power-header').textContent = 'Power (kW)';
+    
+    // Update unit display
+    document.getElementById('unit-display').textContent = 'Flow: m³/hr | Head: m | Power: kW';
+    document.getElementById('unit-display').classList.add('blue');
+    document.getElementById('unit-display').classList.remove('orange');
+    
+    // Convert existing values
+    convertExistingValues('toMetric');
+    currentUnitSystem = 'metric';
+    document.getElementById('unit_system').value = 'metric';
+    
+    M.toast({
+        html: '<i class="material-icons left">straighten</i>Switched to Metric units',
+        classes: 'blue',
+        displayLength: 2000
+    });
+}
+
+// Switch to imperial units
+function switchToImperial() {
+    if (currentUnitSystem === 'imperial') return;
+    
+    // Update UI
+    document.getElementById('imperial-btn').classList.add('blue');
+    document.getElementById('imperial-btn').classList.remove('grey', 'lighten-1');
+    document.getElementById('metric-btn').classList.remove('blue');
+    document.getElementById('metric-btn').classList.add('grey', 'lighten-1');
+    
+    // Update headers
+    document.getElementById('flow-header').textContent = 'Flow (gpm)';
+    document.getElementById('head-header').textContent = 'Head (ft)';
+    document.getElementById('power-header').textContent = 'Power (hp)';
+    
+    // Update unit display
+    document.getElementById('unit-display').textContent = 'Flow: gpm | Head: ft | Power: hp';
+    document.getElementById('unit-display').classList.remove('blue');
+    document.getElementById('unit-display').classList.add('orange');
+    
+    // Convert existing values
+    convertExistingValues('toImperial');
+    currentUnitSystem = 'imperial';
+    document.getElementById('unit_system').value = 'imperial';
+    
+    M.toast({
+        html: '<i class="material-icons left">square_foot</i>Switched to Imperial units',
+        classes: 'orange',
+        displayLength: 2000
+    });
+}
+
+// Convert existing values in the form
+function convertExistingValues(direction) {
+    const flowInputs = document.querySelectorAll('.flow-input');
+    const headInputs = document.querySelectorAll('.head-input');
+    const powerInputs = document.querySelectorAll('.power-input');
+    
+    flowInputs.forEach(input => {
+        if (input.value) {
+            const converted = parseFloat(input.value) * CONVERSIONS.flow[direction];
+            input.value = converted.toFixed(1);
+        }
+        // Update placeholder
+        input.placeholder = direction === 'toImperial' ? 'e.g., 6600' : 'e.g., 1500';
+    });
+    
+    headInputs.forEach(input => {
+        if (input.value) {
+            const converted = parseFloat(input.value) * CONVERSIONS.head[direction];
+            input.value = converted.toFixed(1);
+        }
+        // Update placeholder
+        input.placeholder = direction === 'toImperial' ? 'e.g., 83.7' : 'e.g., 25.5';
+    });
+    
+    powerInputs.forEach(input => {
+        if (input.value) {
+            const converted = parseFloat(input.value) * CONVERSIONS.power[direction];
+            input.value = converted.toFixed(1);
+        }
+        // Update placeholder
+        input.placeholder = direction === 'toImperial' ? 'e.g., 168' : 'e.g., 125.5';
+    });
+}
+
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
     // Set initial point count
@@ -500,12 +624,34 @@ document.addEventListener('DOMContentLoaded', function() {
         addDataRow(); // Start with one empty row
     }
     
+    // Setup unit toggle buttons
+    const metricBtn = document.getElementById('metric-btn');
+    const imperialBtn = document.getElementById('imperial-btn');
+    
+    if (metricBtn) {
+        metricBtn.addEventListener('click', switchToMetric);
+    }
+    if (imperialBtn) {
+        imperialBtn.addEventListener('click', switchToImperial);
+    }
+    
     // Add form validation
     const form = document.getElementById('calibration-form');
     if (form) {
         form.addEventListener('submit', function(e) {
+            // Convert all values to metric before submission if in imperial
+            if (currentUnitSystem === 'imperial') {
+                convertExistingValues('toMetric');
+                // Update hidden field to indicate conversion was done
+                document.getElementById('unit_system').value = 'metric';
+            }
+            
             if (!validateCalibrationForm()) {
                 e.preventDefault();
+                // Convert back to imperial if validation failed
+                if (currentUnitSystem === 'imperial') {
+                    convertExistingValues('toImperial');
+                }
                 return false;
             }
             
@@ -521,6 +667,22 @@ document.addEventListener('DOMContentLoaded', function() {
     // Add tooltips for help
     const tooltipped = document.querySelectorAll('.tooltipped');
     M.Tooltip.init(tooltipped);
+    
+    // Add keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+        if (e.ctrlKey || e.metaKey) {
+            switch(e.key.toLowerCase()) {
+                case 'm':
+                    e.preventDefault();
+                    switchToMetric();
+                    break;
+                case 'i':
+                    e.preventDefault();
+                    switchToImperial();
+                    break;
+            }
+        }
+    });
     
     console.log('Pump calibration form initialized');
 });
@@ -777,18 +939,41 @@ document.addEventListener('DOMContentLoaded', function() {
             </span>
             <p class="grey-text">Enter manufacturer datasheet performance points for comparison</p>
             
+            <!-- Unit System Toggle -->
+            <div class="row" style="margin-top: 20px; margin-bottom: 10px;">
+                <div class="col s12">
+                    <div class="switch-container" style="display: flex; align-items: center; gap: 20px;">
+                        <span class="grey-text">Unit System:</span>
+                        <div class="btn-group" role="group">
+                            <button type="button" id="metric-btn" class="btn btn-small blue waves-effect waves-light active">
+                                <i class="material-icons left">straighten</i>
+                                Metric
+                            </button>
+                            <button type="button" id="imperial-btn" class="btn btn-small grey lighten-1 waves-effect waves-light">
+                                <i class="material-icons left">square_foot</i>
+                                Imperial
+                            </button>
+                        </div>
+                        <span id="unit-display" class="chip blue white-text">
+                            Flow: m³/hr | Head: m | Power: kW
+                        </span>
+                    </div>
+                </div>
+            </div>
+            
             <form id="calibration-form" action="/admin/pump-calibration/{{ pump_code }}/analyze" method="POST">
                 <!-- CSRF Protection -->
                 <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                 <input type="hidden" id="point_count" name="point_count" value="0">
+                <input type="hidden" id="unit_system" name="unit_system" value="metric">
                 
                 <table class="striped responsive-table data-entry-table">
                     <thead>
                         <tr>
-                            <th>Flow (m³/hr)</th>
-                            <th>Head (m)</th>
+                            <th id="flow-header">Flow (m³/hr)</th>
+                            <th id="head-header">Head (m)</th>
                             <th>Efficiency (%)</th>
-                            <th>Power (kW)</th>
+                            <th id="power-header">Power (kW)</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
