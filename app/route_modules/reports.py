@@ -254,9 +254,29 @@ def engineering_report(pump_code):
     
     # Add pump specifications for template fields that need min/max impeller, test speed, etc.
     pump_models = brain.repository.get_pump_models()
-    pump_model = next((p for p in pump_models if p.get('pump_code') == pump_code), None)
+    pump_model = next((p for p in pump_models if p.get('pump_code') == clean_pump_code), None)
     if pump_model and 'specifications' in pump_model:
-        selected_pump['specifications'] = pump_model['specifications']
+        specs = pump_model['specifications'].copy()
+        
+        # Calculate BEP efficiency if we have BEP flow and head
+        bep_flow = specs.get('bep_flow_m3hr')
+        bep_head = specs.get('bep_head_m')
+        if bep_flow and bep_head:
+            # Calculate efficiency at BEP point using brain
+            bep_performance = brain.performance.calculate_performance_at_flow(
+                pump_model, bep_flow, allow_excessive_trim=True
+            )
+            if bep_performance:
+                specs['bep_efficiency'] = bep_performance.get('efficiency_pct', 0)
+                logger.info(f"Calculated BEP efficiency for {clean_pump_code}: {specs['bep_efficiency']:.1f}%")
+            else:
+                specs['bep_efficiency'] = 0
+                logger.warning(f"Could not calculate BEP efficiency for {clean_pump_code}")
+        
+        selected_pump['specifications'] = specs
+        
+        # Log the min/max impeller values for debugging
+        logger.info(f"Pump {clean_pump_code} specifications: min_impeller={specs.get('min_impeller_diameter_mm')}, max_impeller={specs.get('max_impeller_diameter_mm')}")
     
     # Get alternatives from the session if they exist
     pump_selections = safe_session_get('suitable_pumps', [])
