@@ -995,11 +995,14 @@ class PerformanceAnalyzer:
                 # Handle power calculation
                 if None in powers_sorted:
                     # Calculate power hydraulically from manufacturer data
+                    # CRITICAL: Use the actual operating head, not the pump's capability
                     if final_efficiency > 0:
                         density = 1000  # kg/m³ for water
                         gravity = 9.81  # m/s²
-                        final_power = (flow * final_head * density * gravity) / (3600 * final_efficiency / 100 * 1000)
-                        logger.debug(f"[INDUSTRY] {pump_code}: Power calculated hydraulically: {final_power:.2f}kW")
+                        # Use the required head (operating point), not final_head (pump capability)
+                        actual_operating_head = head  # The head we're actually operating at
+                        final_power = (flow * actual_operating_head * density * gravity) / (3600 * final_efficiency / 100 * 1000)
+                        logger.debug(f"[INDUSTRY] {pump_code}: Power calculated hydraulically at {actual_operating_head:.1f}m (operating point): {final_power:.2f}kW")
                     else:
                         final_power = 0
                 else:
@@ -1013,7 +1016,9 @@ class PerformanceAnalyzer:
                         logger.debug(f"[INDUSTRY] {pump_code}: Power scaled with affinity laws (exp={physics_exponents['power_exponent_z']}): {final_power:.2f}kW")
                     else:
                         # Fallback to hydraulic calculation
-                        final_power = (flow * final_head * 1000 * 9.81) / (3600 * final_efficiency / 100 * 1000)
+                        # CRITICAL: Use the actual operating head, not the pump's capability
+                        actual_operating_head = head  # The head we're actually operating at
+                        final_power = (flow * actual_operating_head * 1000 * 9.81) / (3600 * final_efficiency / 100 * 1000)
                 
                 # NPSH calculation with affinity laws
                 interpolated_npshr = None
