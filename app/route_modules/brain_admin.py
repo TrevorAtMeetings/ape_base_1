@@ -11,6 +11,7 @@ from flask import Blueprint, render_template, request, jsonify, flash, redirect,
 from datetime import datetime
 from ..brain_data_service import BrainDataService, BrainDataAccessor
 from ..pump_repository import PumpRepository
+from ..manufacturer_comparison_engine import ManufacturerComparisonEngine
 
 logger = logging.getLogger(__name__)
 
@@ -1152,67 +1153,68 @@ def find_pump_fuzzy(pump_code, pump_models):
     
     return None
 
-@brain_admin_bp.route('/admin/pump-calibration/<path:pump_code>')
+@brain_admin_bp.route('/admin/pump-calibration/<path:pump_code>', methods=['GET', 'POST'])
 def pump_calibration_workbench(pump_code):
-    """Display the calibration workbench for a specific pump with fuzzy matching"""
-    import re
-    import secrets
-    from flask import session
+    """Rebuild: Simplified pump calibration workbench with single table and chart"""
+    from ..pump_brain import get_pump_brain
     
-    try:
-        # Validate and sanitize pump_code (allow spaces and slashes for pump codes like "10/12 BLE")
-        if not re.match(r'^[a-zA-Z0-9_\-\s/]+$', pump_code):
-            logger.warning(f"Invalid pump code format attempted: {pump_code}")
-            flash('Invalid pump code format', 'error')
-            return redirect(url_for('brain_admin.brain_dashboard'))
-        
-        # Build breadcrumbs
-        breadcrumbs = [
-            {'text': 'Home', 'url': url_for('main_flow.index'), 'icon': 'home'},
-            {'text': 'Brain Dashboard', 'url': url_for('brain_admin.brain_dashboard'), 'icon': 'psychology'},
-            {'text': 'Pump Calibration', 'url': '', 'icon': 'tune'}
-        ]
-        
-        # Get pump details using singleton pattern
-        from ..pump_repository import get_pump_repository
-        pump_repo = get_pump_repository()
-        pump_models = pump_repo.get_pump_models()
-        
-        # Try fuzzy matching to find the pump
-        actual_pump_code = find_pump_fuzzy(pump_code, pump_models)
-        
-        if not actual_pump_code:
-            # Try some common variations
-            logger.info(f"Pump '{pump_code}' not found, tried fuzzy matching")
-            flash(f'Pump {pump_code} not found. Please check the pump code.', 'error')
-            return redirect(url_for('brain_admin.brain_dashboard'))
-        
-        # Get the pump data with the actual code
-        pump_dict = {pump['pump_code']: pump for pump in pump_models}
-        pump_data = pump_dict[actual_pump_code]
-        
-        # Log if fuzzy match was used
-        if actual_pump_code != pump_code:
-            logger.info(f"Fuzzy matched '{pump_code}' to '{actual_pump_code}'")
-            flash(f'Found pump {actual_pump_code} (searched for {pump_code})', 'info')
-        
-        # Generate CSRF token for the session
-        if 'csrf_token' not in session:
-            session['csrf_token'] = secrets.token_hex(16)
-            
-        return render_template('admin/pump_calibration.html',
-                             pump_code=actual_pump_code,  # Use the actual pump code from database
-                             pump_data=pump_data,
-                             breadcrumbs=breadcrumbs,
-                             csrf_token=session.get('csrf_token'))
-                             
-    except Exception as e:
-        logger.error(f"Error loading pump calibration workbench: {e}")
-        flash(f'Error loading calibration workbench: {str(e)}', 'error')
+    brain = get_pump_brain()
+    pump_data = brain.repository.get_pump_by_code(pump_code)
+    
+    if not pump_data:
+        flash(f"Pump {pump_code} not found.", "error")
         return redirect(url_for('brain_admin.brain_dashboard'))
 
-@brain_admin_bp.route('/admin/pump-calibration/<path:pump_code>/analyze', methods=['POST'])
-def analyze_pump_calibration(pump_code):
+    analysis_results = None
+    if request.method == 'POST':
+        try:
+            # Parse multiple performance points from form
+            ground_truth_points = []
+            point_count = 1
+            
+            # Count how many data points were submitted
+            while f'flow_{point_count}' in request.form:
+                try:
+                    flow = float(request.form.get(f'flow_{point_count}', 0))
+                    head = float(request.form.get(f'head_{point_count}', 0))
+                    efficiency = float(request.form.get(f'efficiency_{point_count}', 0))
+                    power = float(request.form.get(f'power_{point_count}', 0))
+                    diameter = float(request.form.get(f'diameter_{point_count}', 0))
+                    
+                    if flow > 0 and head > 0:  # Basic validation
+                        ground_truth_points.append({
+                            'flow': flow,
+                            'head': head,
+                            'efficiency': efficiency,
+                            'power': power,
+                            'diameter': diameter
+                        })
+                except ValueError:
+                    pass  # Skip invalid points
+                    
+                point_count += 1
+            
+            if ground_truth_points:
+                # Initialize comparison engine
+                comparison_engine = ManufacturerComparisonEngine()
+                
+                # Run the complete analysis
+                analysis_results = comparison_engine.run_full_calibration(
+                    pump_data=pump_data,
+                    ground_truth_points=ground_truth_points
+                )
+                
+        except Exception as e:
+            logger.error(f"Error processing calibration: {e}")
+            flash(f"Error processing calibration: {str(e)}", "error")
+
+    return render_template(
+        'admin/pump_calibration_new.html', 
+        pump=pump_data,
+        analysis_results=analysis_results
+    )
+
+# DELETED - old broken analyze route - functionality moved to main workbench route
     """Process multiple ground truth points and return comparison data with fuzzy matching"""
     import re
     from flask import session

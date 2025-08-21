@@ -1,0 +1,236 @@
+{% extends "admin/base.html" %}
+{% block title %}Pump Calibration: {{ pump.pump_code }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>Pump Calibration Workbench</h1>
+    <h4>{{ pump.pump_code }}</h4>
+
+    <!-- Section 1: Manufacturer Data Entry -->
+    <div class="card">
+        <div class="card-content">
+            <span class="card-title">1. Enter Manufacturer Performance Points</span>
+            <form method="POST" id="calibration-form">
+                <div id="data-points-container">
+                    <!-- Dynamic rows will be added here -->
+                    <div class="row data-point-row" id="row-1">
+                        <div class="col s2">
+                            <div class="input-field">
+                                <input type="number" step="0.1" name="flow_1" id="flow_1" required>
+                                <label for="flow_1">Flow (m³/hr)</label>
+                            </div>
+                        </div>
+                        <div class="col s2">
+                            <div class="input-field">
+                                <input type="number" step="0.01" name="head_1" id="head_1" required>
+                                <label for="head_1">Head (m)</label>
+                            </div>
+                        </div>
+                        <div class="col s2">
+                            <div class="input-field">
+                                <input type="number" step="0.1" name="efficiency_1" id="efficiency_1" required>
+                                <label for="efficiency_1">Efficiency (%)</label>
+                            </div>
+                        </div>
+                        <div class="col s2">
+                            <div class="input-field">
+                                <input type="number" step="0.01" name="power_1" id="power_1" required>
+                                <label for="power_1">Power (kW)</label>
+                            </div>
+                        </div>
+                        <div class="col s2">
+                            <div class="input-field">
+                                <input type="number" step="1" name="diameter_1" id="diameter_1" required>
+                                <label for="diameter_1">Diameter (mm)</label>
+                            </div>
+                        </div>
+                        <div class="col s2">
+                            <button type="button" class="btn-small red" onclick="removeRow(1)">
+                                <i class="material-icons">delete</i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col s6">
+                        <button type="button" class="btn blue" onclick="addDataPoint()">
+                            <i class="material-icons left">add</i>Add Point
+                        </button>
+                    </div>
+                    <div class="col s6 right-align">
+                        <button type="submit" class="btn green">
+                            <i class="material-icons left">analytics</i>Analyze Deltas
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Section 2: Analysis Results (only shows after form submission) -->
+    {% if analysis_results %}
+    <div class="card mt-4">
+        <div class="card-content">
+            <span class="card-title">2. Analysis Results</span>
+            
+            <!-- The ONE and ONLY comparison table -->
+            <table class="striped responsive-table">
+                <thead>
+                    <tr>
+                        <th>Flow (m³/hr)</th>
+                        <th>Truth Head (m)</th>
+                        <th>Brain Head (m)</th>
+                        <th class="center-align">Head Delta (%)</th>
+                        <th>Truth Efficiency (%)</th>
+                        <th>Brain Efficiency (%)</th>
+                        <th class="center-align">Efficiency Delta (%)</th>
+                        <th>Truth Power (kW)</th>
+                        <th>Brain Power (kW)</th>
+                        <th class="center-align">Power Delta (%)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for point in analysis_results.comparison_points %}
+                    <tr>
+                        <td>{{ "%.1f"|format(point.flow) }}</td>
+                        <td>{{ "%.2f"|format(point.truth_head) }}</td>
+                        <td>{{ "%.2f"|format(point.brain_head) if point.brain_head else 'N/A' }}</td>
+                        <td class="center-align {% if point.brain_head %}{% if point.head_delta|abs > 10 %}red-text{% elif point.head_delta|abs > 5 %}orange-text{% else %}green-text{% endif %}{% endif %}">
+                            {% if point.head_delta %}{{ "%+.1f"|format(point.head_delta) }}%{% else %}N/A{% endif %}
+                        </td>
+                        <td>{{ "%.1f"|format(point.truth_efficiency) }}</td>
+                        <td>{{ "%.1f"|format(point.brain_efficiency) if point.brain_efficiency else 'N/A' }}</td>
+                        <td class="center-align {% if point.brain_efficiency %}{% if point.efficiency_delta|abs > 5 %}red-text{% elif point.efficiency_delta|abs > 2 %}orange-text{% else %}green-text{% endif %}{% endif %}">
+                            {% if point.efficiency_delta %}{{ "%+.1f"|format(point.efficiency_delta) }}%{% else %}N/A{% endif %}
+                        </td>
+                        <td>{{ "%.2f"|format(point.truth_power) }}</td>
+                        <td>{{ "%.2f"|format(point.brain_power) if point.brain_power else 'N/A' }}</td>
+                        <td class="center-align {% if point.brain_power %}{% if point.power_delta|abs > 10 %}red-text{% elif point.power_delta|abs > 5 %}orange-text{% else %}green-text{% endif %}{% endif %}">
+                            {% if point.power_delta %}{{ "%+.1f"|format(point.power_delta) }}%{% else %}N/A{% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <!-- The ONE and ONLY chart section -->
+            <div id="comparison-chart-container" style="height: 450px; margin-top: 2rem;"></div>
+
+            <!-- The AI Insights Section -->
+            <div class="ai-insights-panel" style="background: #f5f5f5; padding: 20px; margin-top: 2rem; border-radius: 4px;">
+                <h5><i class="material-icons left">psychology</i>AI Analysis</h5>
+                <div style="white-space: pre-line;">{{ analysis_results.ai_summary }}</div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Script block for Plotly chart and dynamic form -->
+<script>
+let rowCounter = 1;
+
+function addDataPoint() {
+    rowCounter++;
+    const container = document.getElementById('data-points-container');
+    const newRow = document.createElement('div');
+    newRow.className = 'row data-point-row';
+    newRow.id = `row-${rowCounter}`;
+    newRow.innerHTML = `
+        <div class="col s2">
+            <div class="input-field">
+                <input type="number" step="0.1" name="flow_${rowCounter}" id="flow_${rowCounter}" required>
+                <label for="flow_${rowCounter}">Flow (m³/hr)</label>
+            </div>
+        </div>
+        <div class="col s2">
+            <div class="input-field">
+                <input type="number" step="0.01" name="head_${rowCounter}" id="head_${rowCounter}" required>
+                <label for="head_${rowCounter}">Head (m)</label>
+            </div>
+        </div>
+        <div class="col s2">
+            <div class="input-field">
+                <input type="number" step="0.1" name="efficiency_${rowCounter}" id="efficiency_${rowCounter}" required>
+                <label for="efficiency_${rowCounter}">Efficiency (%)</label>
+            </div>
+        </div>
+        <div class="col s2">
+            <div class="input-field">
+                <input type="number" step="0.01" name="power_${rowCounter}" id="power_${rowCounter}" required>
+                <label for="power_${rowCounter}">Power (kW)</label>
+            </div>
+        </div>
+        <div class="col s2">
+            <div class="input-field">
+                <input type="number" step="1" name="diameter_${rowCounter}" id="diameter_${rowCounter}" required>
+                <label for="diameter_${rowCounter}">Diameter (mm)</label>
+            </div>
+        </div>
+        <div class="col s2">
+            <button type="button" class="btn-small red" onclick="removeRow(${rowCounter})">
+                <i class="material-icons">delete</i>
+            </button>
+        </div>
+    `;
+    container.appendChild(newRow);
+    
+    // Initialize Materialize components for new inputs
+    M.updateTextFields();
+}
+
+function removeRow(rowId) {
+    const row = document.getElementById(`row-${rowId}`);
+    if (row) {
+        row.remove();
+    }
+    
+    // Ensure we always have at least one row
+    const remainingRows = document.querySelectorAll('.data-point-row');
+    if (remainingRows.length === 0) {
+        addDataPoint();
+    }
+}
+
+// Initialize chart if analysis results exist
+{% if analysis_results and analysis_results.chart_data %}
+document.addEventListener('DOMContentLoaded', function() {
+    const chartData = {{ analysis_results.chart_data|tojson }};
+    
+    const traces = [
+        {
+            x: chartData.flows,
+            y: chartData.truth_heads,
+            mode: 'markers',
+            name: 'Ground Truth',
+            marker: { color: 'blue', size: 10 },
+            type: 'scatter'
+        },
+        {
+            x: chartData.flows,
+            y: chartData.brain_heads,
+            mode: 'markers',
+            name: 'Brain Prediction',
+            marker: { color: 'red', size: 10 },
+            type: 'scatter'
+        }
+    ];
+
+    const layout = {
+        title: 'Performance Comparison',
+        xaxis: { title: 'Flow (m³/hr)' },
+        yaxis: { title: 'Head (m)' },
+        hovermode: 'closest'
+    };
+
+    Plotly.newPlot('comparison-chart-container', traces, layout, {responsive: true});
+});
+{% endif %}
+
+// Initialize Materialize components
+document.addEventListener('DOMContentLoaded', function() {
+    M.updateTextFields();
+});
+</script>
+{% endblock %}
