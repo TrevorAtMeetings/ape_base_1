@@ -296,6 +296,7 @@ class SelectionIntelligence:
                             flow: float, head: float) -> Dict[str, Any]:
         """
         Evaluate a single pump at operating conditions.
+        Implements Three-Path Selection Logic based on variable_speed and variable_diameter flags.
         
         Args:
             pump_data: Pump data dictionary
@@ -317,6 +318,81 @@ class SelectionIntelligence:
         try:
             # Get pump specifications
             specs = pump_data.get('specifications', {})
+            
+            # ========================================================================
+            # THREE-PATH SELECTION LOGIC IMPLEMENTATION
+            # ========================================================================
+            # Extract variable_speed and variable_diameter flags
+            variable_speed = specs.get('variable_speed', False)  # Default to False if missing
+            variable_diameter = specs.get('variable_diameter', True)  # Default to True if missing (traditional)
+            
+            # Determine the pump operation mode and selection path
+            if variable_speed and variable_diameter:
+                # PATH A: FLEXIBLE PUMPS (Both = True)
+                # These pumps can use EITHER method - defaulting to impeller trimming for now
+                operation_mode = 'FLEXIBLE'
+                selection_method = 'IMPELLER_TRIM'  # Default choice for flexible pumps
+                evaluation['operation_mode'] = operation_mode
+                evaluation['selection_method'] = selection_method
+                evaluation['pump_flexibility'] = 'Can use either impeller trimming or VFD'
+                
+                logger.debug(f"[THREE-PATH] {pump_data.get('pump_code')}: FLEXIBLE pump - defaulting to impeller trimming")
+                
+            elif not variable_speed and variable_diameter:
+                # PATH B: TRIM-ONLY PUMPS (Traditional fixed-speed)
+                operation_mode = 'TRIM_ONLY'
+                selection_method = 'IMPELLER_TRIM'
+                evaluation['operation_mode'] = operation_mode
+                evaluation['selection_method'] = selection_method
+                evaluation['pump_flexibility'] = 'Fixed-speed pump with impeller trimming only'
+                
+                logger.debug(f"[THREE-PATH] {pump_data.get('pump_code')}: TRIM-ONLY pump - using impeller trimming")
+                
+            elif variable_speed and not variable_diameter:
+                # PATH C: VFD-ONLY PUMPS (Modern variable-speed)
+                operation_mode = 'VFD_ONLY'
+                selection_method = 'SPEED_VARIATION'
+                evaluation['operation_mode'] = operation_mode
+                evaluation['selection_method'] = selection_method
+                evaluation['pump_flexibility'] = 'Variable-speed pump (VFD required)'
+                
+                # For now, exclude VFD-only pumps with a clear message
+                evaluation['feasible'] = False
+                evaluation['exclusion_reasons'].append('VFD-only pump: Speed variation calculation not yet implemented')
+                evaluation['vfd_required'] = True
+                
+                logger.info(f"[THREE-PATH] {pump_data.get('pump_code')}: VFD-ONLY pump - excluded (VFD calculation pending)")
+                
+                # Return early for VFD-only pumps until we implement the calculation
+                return evaluation
+                
+            else:
+                # EDGE CASE: Both FALSE (Fixed configuration)
+                operation_mode = 'FIXED'
+                selection_method = 'NONE'
+                evaluation['operation_mode'] = operation_mode
+                evaluation['selection_method'] = selection_method
+                evaluation['pump_flexibility'] = 'Fixed configuration pump (no adjustment possible)'
+                
+                # These pumps cannot be adjusted - evaluate at fixed configuration only
+                logger.warning(f"[THREE-PATH] {pump_data.get('pump_code')}: FIXED pump - no adjustment possible")
+            
+            # Log the decision for important pumps
+            pump_code = pump_data.get('pump_code', '')
+            if any(keyword in str(pump_code) for keyword in ['HC', 'WLN', 'MC', 'LC']):
+                logger.info(f"[THREE-PATH DECISION] {pump_code}: Mode={operation_mode}, Method={selection_method}")
+                logger.info(f"[THREE-PATH DECISION] {pump_code}: variable_speed={variable_speed}, variable_diameter={variable_diameter}")
+            # ========================================================================
+            # END OF THREE-PATH SELECTION LOGIC
+            # ========================================================================
+            
+            # Store the selection method in the evaluation for later use in reporting
+            evaluation['selection_path'] = {
+                'operation_mode': operation_mode,
+                'selection_method': selection_method,
+                'variable_speed': variable_speed,
+                'variable_diameter': variable_diameter
+            }
             
             # Get BEP data from specifications (authentic manufacturer data)
             bep_flow = specs.get('bep_flow_m3hr', 0)
@@ -403,8 +479,15 @@ class SelectionIntelligence:
                 evaluation['tier'] = 4
                 logger.info(f"[SELECTION] {pump_data.get('pump_code')}: Physical capability limited - applying penalty but keeping in results")
 
-            # Get performance at operating point
-            performance = self.brain.performance.calculate_at_point(pump_data, flow, head)
+            # Get performance at operating point based on selection method
+            # For IMPELLER_TRIM and FIXED modes, use existing calculation
+            # For SPEED_VARIATION (VFD), we'll add new calculation later
+            if selection_method in ['IMPELLER_TRIM', 'NONE']:
+                performance = self.brain.performance.calculate_at_point(pump_data, flow, head)
+            else:
+                # This branch won't be reached yet due to early return for VFD pumps
+                performance = None
+                logger.warning(f"[THREE-PATH] No performance calculation for method: {selection_method}")
             
             # Validate performance data contract
             if performance:

@@ -18,6 +18,10 @@ The core system, referred to as the "Brain System," centralizes all intelligence
 
 Key technical decisions include:
 - **Data Integrity**: Prioritizes authentic manufacturer specifications with a strict no-fallback policy for missing data. A "Brain Overlay Schema" protects immutable manufacturer data while enabling enterprise-grade data corrections.
+- **Three-Path Selection Logic** (Implemented 2025-08-21): Intelligent pump routing based on variable_speed and variable_diameter flags:
+  - **FLEXIBLE Pumps** (64.25% of catalog): Both capabilities enabled - defaults to impeller trimming but can use either method
+  - **TRIM-ONLY Pumps** (23.58% of catalog): Traditional fixed-speed pumps using impeller adjustment only
+  - **VFD-ONLY Pumps** (11.66% of catalog): Modern variable-speed pumps requiring VFD (pending speed variation physics implementation)
 - **Performance Analysis**: Comprehensive Best Efficiency Point (BEP)-centered envelope testing with statistical analysis and clear status legends (Match, Minor, Major). Includes a critical head oversizing penalty system.
 - **Physics Engine**: Implements a tunable, configuration-driven physics model for BEP migration calculations and polymorphic physics models with pump-type-specific affinity law exponents.
 - **Diameter Trimming**: Uses a direct affinity law formula for precise and efficient diameter calculations with strict validation and 15% maximum trim limits.

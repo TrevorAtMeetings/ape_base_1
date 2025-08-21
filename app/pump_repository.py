@@ -373,7 +373,10 @@ class PumpRepository:
                                 # CRITICAL: Add BEP data from database specifications (authentic manufacturer data)
                                 'bep_flow_m3hr': float(pump_row_dict.get('bep_flow_m3hr')) if pump_row_dict.get('bep_flow_m3hr') is not None else None,
                                 'bep_head_m': float(pump_row_dict.get('bep_head_m')) if pump_row_dict.get('bep_head_m') is not None else None,
-                                'npshr_at_bep': float(pump_row_dict.get('npshr_at_bep')) if pump_row_dict.get('npshr_at_bep') is not None else None
+                                'npshr_at_bep': float(pump_row_dict.get('npshr_at_bep')) if pump_row_dict.get('npshr_at_bep') is not None else None,
+                                # THREE-PATH SELECTION LOGIC FLAGS: Variable speed and diameter capabilities
+                                'variable_speed': bool(pump_row_dict.get('variable_speed', False)),
+                                'variable_diameter': bool(pump_row_dict.get('variable_diameter', True))
                             },
                             'curves': curves,
                             # Use aggregated statistics from SQL
