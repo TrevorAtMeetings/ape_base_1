@@ -1,0 +1,504 @@
+{% extends "admin/base.html" %}
+
+{% block admin_title %}Pump Calibration Workbench - {{ pump_code }}{% endblock %}
+
+{% block additional_styles %}
+<style>
+    .calibration-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+    
+    .data-entry-table {
+        margin-top: 20px;
+    }
+    
+    .data-entry-table th {
+        background-color: #f5f5f5;
+        font-weight: 600;
+    }
+    
+    .delta-positive {
+        color: #f44336;
+        font-weight: 600;
+    }
+    
+    .delta-negative {
+        color: #2196F3;
+        font-weight: 600;
+    }
+    
+    .delta-neutral {
+        color: #4CAF50;
+        font-weight: 600;
+    }
+    
+    .remove-row-btn {
+        cursor: pointer;
+        color: #f44336;
+    }
+    
+    .remove-row-btn:hover {
+        color: #d32f2f;
+    }
+    
+    .validation-error {
+        border-bottom: 2px solid #f44336 !important;
+    }
+    
+    .validation-warning {
+        border-bottom: 2px solid #ff9800 !important;
+    }
+    
+    #comparison-chart {
+        min-height: 400px;
+    }
+    
+    .metrics-card {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+    
+    .metric-value {
+        font-size: 1.2em;
+        font-weight: 600;
+    }
+    
+    .insight-item {
+        padding: 10px;
+        margin: 5px 0;
+        border-left: 4px solid #667eea;
+        background: #f5f5f5;
+    }
+</style>
+{% endblock %}
+
+{% block additional_scripts %}
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<script>
+// Track row count for unique IDs
+let rowCount = 0;
+let performanceData = [];
+
+// Add a new data row to the table
+function addDataRow() {
+    const tbody = document.getElementById('data-rows');
+    const row = document.createElement('tr');
+    row.id = `row-${rowCount}`;
+    
+    row.innerHTML = `
+        <td>
+            <input type="number" step="0.01" min="0" name="flow_${rowCount}" 
+                   id="flow_${rowCount}" class="validate" required 
+                   onchange="validatePoint(${rowCount})">
+        </td>
+        <td>
+            <input type="number" step="0.01" min="0" name="head_${rowCount}" 
+                   id="head_${rowCount}" class="validate" required 
+                   onchange="validatePoint(${rowCount})">
+        </td>
+        <td>
+            <input type="number" step="0.01" min="0" max="100" name="efficiency_${rowCount}" 
+                   id="efficiency_${rowCount}" class="validate" required 
+                   onchange="validatePoint(${rowCount})">
+        </td>
+        <td>
+            <input type="number" step="0.01" min="0" name="power_${rowCount}" 
+                   id="power_${rowCount}" class="validate" required 
+                   onchange="validatePoint(${rowCount})">
+        </td>
+        <td>
+            <a class="remove-row-btn" onclick="removeRow(${rowCount})">
+                <i class="material-icons">delete</i>
+            </a>
+        </td>
+    `;
+    
+    tbody.appendChild(row);
+    rowCount++;
+    updateRowCount();
+    
+    // Auto-sort rows by flow rate
+    sortRowsByFlow();
+}
+
+// Remove a data row
+function removeRow(id) {
+    const row = document.getElementById(`row-${id}`);
+    if (row) {
+        row.remove();
+        updateRowCount();
+    }
+}
+
+// Update hidden field with row count
+function updateRowCount() {
+    const pointCountField = document.getElementById('point_count');
+    const tbody = document.getElementById('data-rows');
+    pointCountField.value = tbody.children.length;
+}
+
+// Sort rows by flow rate
+function sortRowsByFlow() {
+    const tbody = document.getElementById('data-rows');
+    const rows = Array.from(tbody.children);
+    
+    rows.sort((a, b) => {
+        const flowA = parseFloat(a.querySelector('input[id^="flow_"]').value) || 0;
+        const flowB = parseFloat(b.querySelector('input[id^="flow_"]').value) || 0;
+        return flowA - flowB;
+    });
+    
+    // Re-append sorted rows
+    rows.forEach(row => tbody.appendChild(row));
+}
+
+// Validate a performance point
+async function validatePoint(rowId) {
+    const flow = parseFloat(document.getElementById(`flow_${rowId}`).value);
+    const head = parseFloat(document.getElementById(`head_${rowId}`).value);
+    const efficiency = parseFloat(document.getElementById(`efficiency_${rowId}`).value);
+    const power = parseFloat(document.getElementById(`power_${rowId}`).value);
+    
+    // Clear previous validation classes
+    const inputs = document.querySelectorAll(`#row-${rowId} input`);
+    inputs.forEach(input => {
+        input.classList.remove('validation-error', 'validation-warning');
+    });
+    
+    // Skip if any field is empty
+    if (!flow || !head || !efficiency || !power) {
+        return;
+    }
+    
+    // Call validation API
+    try {
+        const response = await fetch('/api/pump-calibration/validate-point', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ flow, head, efficiency, power })
+        });
+        
+        const result = await response.json();
+        
+        // Apply validation feedback
+        if (result.errors && result.errors.length > 0) {
+            inputs.forEach(input => input.classList.add('validation-error'));
+            M.toast({html: result.errors.join(', '), classes: 'red'});
+        } else if (result.warnings && result.warnings.length > 0) {
+            inputs.forEach(input => input.classList.add('validation-warning'));
+            M.toast({html: result.warnings.join(', '), classes: 'orange'});
+        }
+    } catch (error) {
+        console.error('Validation error:', error);
+    }
+}
+
+// Submit calibration form
+async function submitCalibration() {
+    const form = document.getElementById('calibration-form');
+    const formData = new FormData(form);
+    
+    // Show loading state
+    const submitBtn = document.getElementById('submit-btn');
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="material-icons left">hourglass_empty</i>Analyzing...';
+    
+    try {
+        const response = await fetch(form.action, {
+            method: 'POST',
+            body: formData
+        });
+        
+        if (response.ok) {
+            // For now, reload the page with results
+            // In production, we'd update the DOM dynamically
+            window.location.reload();
+        } else {
+            const error = await response.text();
+            M.toast({html: `Error: ${error}`, classes: 'red'});
+        }
+    } catch (error) {
+        M.toast({html: `Error: ${error.message}`, classes: 'red'});
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="material-icons left">analytics</i>Analyze Calibration';
+    }
+}
+
+// Render comparison chart
+function renderComparisonChart(comparisonData) {
+    if (!comparisonData || comparisonData.length === 0) return;
+    
+    // Extract data for plotting
+    const flows = comparisonData.map(d => d.flow);
+    const truthHead = comparisonData.map(d => d.truth_head);
+    const brainHead = comparisonData.map(d => d.brain_head);
+    const truthEfficiency = comparisonData.map(d => d.truth_efficiency);
+    const brainEfficiency = comparisonData.map(d => d.brain_efficiency);
+    
+    // Head curve comparison
+    const headTrace1 = {
+        x: flows,
+        y: truthHead,
+        mode: 'lines+markers',
+        name: 'Manufacturer Data',
+        line: { color: 'blue', width: 3 },
+        marker: { size: 8 }
+    };
+    
+    const headTrace2 = {
+        x: flows,
+        y: brainHead,
+        mode: 'lines+markers',
+        name: 'Brain Prediction',
+        line: { color: 'red', width: 2, dash: 'dash' },
+        marker: { size: 6 }
+    };
+    
+    const headLayout = {
+        title: 'Head Curve Comparison',
+        xaxis: { title: 'Flow (m³/hr)' },
+        yaxis: { title: 'Head (m)' },
+        showlegend: true,
+        hovermode: 'x unified'
+    };
+    
+    Plotly.newPlot('head-comparison-chart', [headTrace1, headTrace2], headLayout);
+    
+    // Efficiency curve comparison
+    const effTrace1 = {
+        x: flows,
+        y: truthEfficiency,
+        mode: 'lines+markers',
+        name: 'Manufacturer Data',
+        line: { color: 'green', width: 3 },
+        marker: { size: 8 }
+    };
+    
+    const effTrace2 = {
+        x: flows,
+        y: brainEfficiency,
+        mode: 'lines+markers',
+        name: 'Brain Prediction',
+        line: { color: 'orange', width: 2, dash: 'dash' },
+        marker: { size: 6 }
+    };
+    
+    const effLayout = {
+        title: 'Efficiency Curve Comparison',
+        xaxis: { title: 'Flow (m³/hr)' },
+        yaxis: { title: 'Efficiency (%)' },
+        showlegend: true,
+        hovermode: 'x unified'
+    };
+    
+    Plotly.newPlot('efficiency-comparison-chart', [effTrace1, effTrace2], effLayout);
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    // Add initial rows
+    for (let i = 0; i < 3; i++) {
+        addDataRow();
+    }
+    
+    // Initialize Materialize components
+    M.updateTextFields();
+    
+    // If we have calibration results, render the charts
+    {% if calibration_results %}
+    const comparisonData = {{ calibration_results.comparison_points | tojson }};
+    renderComparisonChart(comparisonData);
+    {% endif %}
+});
+</script>
+{% endblock %}
+
+{% block admin_content %}
+<div class="container" style="margin-top: 20px;">
+    
+    <!-- Header Section -->
+    <div class="calibration-header">
+        <h4>
+            <i class="material-icons">tune</i>
+            Pump Calibration Workbench
+        </h4>
+        <div class="row">
+            <div class="col s12 m4">
+                <p><strong>Pump Code:</strong> {{ pump_code }}</p>
+            </div>
+            <div class="col s12 m4">
+                <p><strong>Model:</strong> {{ pump_data.model|default('N/A') }}</p>
+            </div>
+            <div class="col s12 m4">
+                <p><strong>Manufacturer:</strong> {{ pump_data.manufacturer|default('APE Pumps') }}</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Data Entry Section -->
+    <div class="card">
+        <div class="card-content">
+            <span class="card-title">
+                <i class="material-icons left">edit</i>
+                Performance Data Entry
+            </span>
+            <p class="grey-text">Enter manufacturer datasheet performance points for comparison</p>
+            
+            <form id="calibration-form" action="/admin/pump-calibration/{{ pump_code }}/analyze" method="POST">
+                <input type="hidden" id="point_count" name="point_count" value="0">
+                
+                <table class="striped responsive-table data-entry-table">
+                    <thead>
+                        <tr>
+                            <th>Flow (m³/hr)</th>
+                            <th>Head (m)</th>
+                            <th>Efficiency (%)</th>
+                            <th>Power (kW)</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="data-rows">
+                        <!-- Dynamic rows added here -->
+                    </tbody>
+                </table>
+                
+                <div class="card-action">
+                    <button type="button" onclick="addDataRow()" class="btn waves-effect waves-light">
+                        <i class="material-icons left">add</i>
+                        Add Performance Point
+                    </button>
+                    <button type="submit" id="submit-btn" class="btn waves-effect waves-light purple darken-1" style="margin-left: 10px;">
+                        <i class="material-icons left">analytics</i>
+                        Analyze Calibration
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    {% if calibration_results %}
+    <!-- Results Section -->
+    <div class="card">
+        <div class="card-content">
+            <span class="card-title">
+                <i class="material-icons left">assessment</i>
+                Calibration Analysis Results
+            </span>
+            
+            <!-- Metrics Summary -->
+            <div class="metrics-card">
+                <div class="row">
+                    <div class="col s12 m3">
+                        <p class="grey-text">Overall Accuracy</p>
+                        <p class="metric-value {% if calibration_results.metrics.overall_accuracy >= 98 %}green-text{% elif calibration_results.metrics.overall_accuracy >= 95 %}orange-text{% else %}red-text{% endif %}">
+                            {{ calibration_results.metrics.overall_accuracy|round(1) }}%
+                        </p>
+                    </div>
+                    <div class="col s12 m3">
+                        <p class="grey-text">Efficiency RMSE</p>
+                        <p class="metric-value">{{ calibration_results.metrics.efficiency.rmse|round(2) }}%</p>
+                    </div>
+                    <div class="col s12 m3">
+                        <p class="grey-text">Power RMSE</p>
+                        <p class="metric-value">{{ calibration_results.metrics.power.rmse|round(2) }}%</p>
+                    </div>
+                    <div class="col s12 m3">
+                        <p class="grey-text">Data Points</p>
+                        <p class="metric-value">{{ calibration_results.metrics.point_count }}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Comparison Table -->
+            <h5>Detailed Comparison</h5>
+            <table class="striped highlight responsive-table">
+                <thead>
+                    <tr>
+                        <th rowspan="2">Flow<br>(m³/hr)</th>
+                        <th colspan="3" class="center-align">Manufacturer Data</th>
+                        <th colspan="3" class="center-align">Brain Prediction</th>
+                        <th colspan="2" class="center-align">Delta (%)</th>
+                    </tr>
+                    <tr>
+                        <th>Head (m)</th>
+                        <th>Eff (%)</th>
+                        <th>Power (kW)</th>
+                        <th>Head (m)</th>
+                        <th>Eff (%)</th>
+                        <th>Power (kW)</th>
+                        <th>ΔEff</th>
+                        <th>ΔPwr</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for point in calibration_results.comparison_points %}
+                    <tr>
+                        <td>{{ point.flow|round(2) }}</td>
+                        <td>{{ point.truth_head|round(2) }}</td>
+                        <td>{{ point.truth_efficiency|round(1) }}</td>
+                        <td>{{ point.truth_power|round(2) }}</td>
+                        <td>{{ point.brain_head|round(2) }}</td>
+                        <td>{{ point.brain_efficiency|round(1) }}</td>
+                        <td>{{ point.brain_power|round(2) }}</td>
+                        <td>
+                            <span class="badge {% if point.delta_efficiency|abs < 2 %}green{% elif point.delta_efficiency|abs < 5 %}orange{% else %}red{% endif %} white-text">
+                                {{ point.delta_efficiency|round(1) }}%
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge {% if point.delta_power|abs < 2 %}green{% elif point.delta_power|abs < 5 %}orange{% else %}red{% endif %} white-text">
+                                {{ point.delta_power|round(1) }}%
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            
+            <!-- Visual Charts -->
+            <div class="row" style="margin-top: 30px;">
+                <div class="col s12 l6">
+                    <div id="head-comparison-chart"></div>
+                </div>
+                <div class="col s12 l6">
+                    <div id="efficiency-comparison-chart"></div>
+                </div>
+            </div>
+            
+            <!-- AI Insights -->
+            <div class="card" style="margin-top: 20px;">
+                <div class="card-content">
+                    <span class="card-title">
+                        <i class="material-icons left">psychology</i>
+                        Analysis Insights
+                    </span>
+                    {% for insight in calibration_results.insights %}
+                    <div class="insight-item">
+                        <i class="material-icons tiny">arrow_right</i> {{ insight }}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <!-- Export Options -->
+            <div class="card-action">
+                <a href="/api/pump-calibration/export/{{ pump_code }}" class="btn waves-effect waves-light grey">
+                    <i class="material-icons left">download</i>
+                    Export CSV
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+</div>
+{% endblock %}

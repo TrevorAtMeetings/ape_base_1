@@ -539,6 +539,345 @@ def run_ground_truth_calibration():
         return redirect(url_for('brain_admin.brain_workbench'))
 
 # ============================================================================
+# ENHANCED MANUFACTURER COMPARISON - PUMP CALIBRATION WORKBENCH
+# ============================================================================
+
+class ManufacturerComparisonEngine:
+    """
+    Core engine for multi-point calibration analysis
+    Compares manufacturer ground truth data with Brain predictions
+    """
+    
+    def __init__(self):
+        self.logger = logging.getLogger(__name__)
+        
+    def process_calibration_data(self, pump_code, ground_truth_points):
+        """
+        Main processing flow for multi-point calibration
+        
+        Args:
+            pump_code: Pump identifier
+            ground_truth_points: List of dicts with flow, head, efficiency, power
+            
+        Returns:
+            Dict with comparison results, metrics, and insights
+        """
+        from ..pump_brain import PumpBrain
+        from ..pump_repository import PumpRepository
+        import numpy as np
+        
+        # Get pump data
+        pump_repo = PumpRepository()
+        pump_repo.load_catalog()
+        pump_models = pump_repo.get_pump_models()
+        pump_data = None
+        for pump in pump_models:
+            if pump['pump_code'] == pump_code:
+                pump_data = pump
+                break
+                
+        if not pump_data:
+            raise ValueError(f"Pump {pump_code} not found in repository")
+            
+        # Initialize Brain
+        brain = PumpBrain()
+        
+        # Process each ground truth point
+        comparison_results = []
+        for point in ground_truth_points:
+            try:
+                # Get Brain prediction
+                brain_result = brain.performance.calculate_at_point_industry_standard(
+                    pump_data, 
+                    point['flow'], 
+                    point['head']
+                )
+                
+                if brain_result:
+                    # Calculate deltas
+                    comparison = {
+                        'flow': point['flow'],
+                        'truth_head': point['head'],
+                        'truth_efficiency': point['efficiency'],
+                        'truth_power': point['power'],
+                        'brain_head': point['head'],  # Brain calculates for exact head
+                        'brain_efficiency': brain_result.get('efficiency_pct', 0),
+                        'brain_power': brain_result.get('power_kw', 0),
+                        'brain_diameter': brain_result.get('impeller_diameter_mm', 0),
+                        'delta_efficiency': self._calculate_delta(point['efficiency'], brain_result.get('efficiency_pct', 0)),
+                        'delta_power': self._calculate_delta(point['power'], brain_result.get('power_kw', 0))
+                    }
+                    comparison_results.append(comparison)
+                else:
+                    self.logger.warning(f"No Brain result for {pump_code} at {point['flow']} m³/hr @ {point['head']}m")
+                    
+            except Exception as e:
+                self.logger.error(f"Error processing point {point}: {e}")
+                
+        # Calculate curve deviation metrics
+        metrics = self.calculate_curve_deviation_metrics(comparison_results)
+        
+        # Generate AI insights
+        insights = self.generate_ai_insights(comparison_results, metrics)
+        
+        return {
+            'pump_code': pump_code,
+            'pump_data': pump_data,
+            'comparison_points': comparison_results,
+            'metrics': metrics,
+            'insights': insights
+        }
+        
+    def _calculate_delta(self, truth, prediction):
+        """Calculate percentage difference"""
+        if truth == 0:
+            return 0
+        return ((prediction - truth) / truth) * 100
+        
+    def calculate_curve_deviation_metrics(self, comparison_results):
+        """
+        Calculate advanced statistical metrics for curve comparison
+        """
+        import numpy as np
+        
+        if not comparison_results:
+            return {}
+            
+        # Extract deltas
+        efficiency_deltas = [r['delta_efficiency'] for r in comparison_results]
+        power_deltas = [r['delta_power'] for r in comparison_results]
+        
+        metrics = {
+            'efficiency': {
+                'rmse': np.sqrt(np.mean(np.square(efficiency_deltas))) if efficiency_deltas else 0,
+                'mean_delta': np.mean(efficiency_deltas) if efficiency_deltas else 0,
+                'max_delta': max(efficiency_deltas, key=abs) if efficiency_deltas else 0,
+                'std_dev': np.std(efficiency_deltas) if efficiency_deltas else 0
+            },
+            'power': {
+                'rmse': np.sqrt(np.mean(np.square(power_deltas))) if power_deltas else 0,
+                'mean_delta': np.mean(power_deltas) if power_deltas else 0,
+                'max_delta': max(power_deltas, key=abs) if power_deltas else 0,
+                'std_dev': np.std(power_deltas) if power_deltas else 0
+            },
+            'overall_accuracy': 100 - (abs(np.mean(efficiency_deltas + power_deltas)) if (efficiency_deltas + power_deltas) else 0),
+            'point_count': len(comparison_results)
+        }
+        
+        return metrics
+        
+    def generate_ai_insights(self, comparison_results, metrics):
+        """
+        Generate human-readable insights about the calibration results
+        """
+        insights = []
+        
+        if not comparison_results:
+            return ["No comparison data available"]
+            
+        # Overall accuracy assessment
+        overall_acc = metrics.get('overall_accuracy', 0)
+        if overall_acc >= 98:
+            insights.append("Excellent accuracy: Brain predictions are highly reliable")
+        elif overall_acc >= 95:
+            insights.append("Good accuracy: Minor calibration may improve predictions")
+        else:
+            insights.append("Significant deviations detected: Calibration recommended")
+            
+        # Efficiency analysis
+        eff_mean = metrics['efficiency']['mean_delta']
+        if abs(eff_mean) > 2:
+            direction = "over-predicting" if eff_mean > 0 else "under-predicting"
+            insights.append(f"Brain consistently {direction} efficiency by {abs(eff_mean):.1f}%")
+            
+        # Power analysis
+        power_mean = metrics['power']['mean_delta']
+        if abs(power_mean) > 2:
+            direction = "over-predicting" if power_mean > 0 else "under-predicting"
+            insights.append(f"Brain consistently {direction} power by {abs(power_mean):.1f}%")
+            
+        # Flow-specific patterns
+        if len(comparison_results) >= 3:
+            # Check for trends at different flow ranges
+            sorted_results = sorted(comparison_results, key=lambda x: x['flow'])
+            low_flow = sorted_results[:len(sorted_results)//3]
+            high_flow = sorted_results[-len(sorted_results)//3:]
+            
+            low_flow_eff_delta = np.mean([r['delta_efficiency'] for r in low_flow])
+            high_flow_eff_delta = np.mean([r['delta_efficiency'] for r in high_flow])
+            
+            if abs(low_flow_eff_delta - high_flow_eff_delta) > 3:
+                insights.append(f"Accuracy varies with flow: Better at {'high' if abs(high_flow_eff_delta) < abs(low_flow_eff_delta) else 'low'} flows")
+                
+        return insights
+
+@brain_admin_bp.route('/admin/pump-calibration/<pump_code>')
+def pump_calibration_workbench(pump_code):
+    """Display the calibration workbench for a specific pump"""
+    try:
+        # Build breadcrumbs
+        breadcrumbs = [
+            {'text': 'Home', 'url': url_for('main_flow.index'), 'icon': 'home'},
+            {'text': 'Brain Dashboard', 'url': url_for('brain_admin.brain_dashboard'), 'icon': 'psychology'},
+            {'text': 'Pump Calibration', 'url': '', 'icon': 'tune'}
+        ]
+        
+        # Get pump details
+        pump_repo = PumpRepository()
+        pump_repo.load_catalog()
+        pump_models = pump_repo.get_pump_models()
+        pump_data = None
+        for pump in pump_models:
+            if pump['pump_code'] == pump_code:
+                pump_data = pump
+                break
+                
+        if not pump_data:
+            flash(f'Pump {pump_code} not found', 'error')
+            return redirect(url_for('brain_admin.brain_dashboard'))
+            
+        return render_template('admin/pump_calibration.html',
+                             pump_code=pump_code,
+                             pump_data=pump_data,
+                             breadcrumbs=breadcrumbs)
+                             
+    except Exception as e:
+        logger.error(f"Error loading pump calibration workbench: {e}")
+        flash(f'Error loading calibration workbench: {str(e)}', 'error')
+        return redirect(url_for('brain_admin.brain_dashboard'))
+
+@brain_admin_bp.route('/admin/pump-calibration/<pump_code>/analyze', methods=['POST'])
+def analyze_pump_calibration(pump_code):
+    """Process multiple ground truth points and return comparison data"""
+    try:
+        # Parse the performance data points
+        data = request.get_json() if request.is_json else request.form
+        
+        # Extract performance points from form data
+        ground_truth_points = []
+        point_count = int(data.get('point_count', 0))
+        
+        for i in range(point_count):
+            flow = data.get(f'flow_{i}')
+            head = data.get(f'head_{i}')
+            efficiency = data.get(f'efficiency_{i}')
+            power = data.get(f'power_{i}')
+            
+            if flow and head and efficiency and power:
+                ground_truth_points.append({
+                    'flow': float(flow),
+                    'head': float(head),
+                    'efficiency': float(efficiency),
+                    'power': float(power)
+                })
+                
+        if not ground_truth_points:
+            return jsonify({'error': 'No valid performance points provided'}), 400
+            
+        # Process calibration data
+        engine = ManufacturerComparisonEngine()
+        results = engine.process_calibration_data(pump_code, ground_truth_points)
+        
+        # For AJAX requests, return JSON
+        if request.is_json:
+            return jsonify(results)
+            
+        # For form submissions, render template with results
+        breadcrumbs = [
+            {'text': 'Home', 'url': url_for('main_flow.index'), 'icon': 'home'},
+            {'text': 'Brain Dashboard', 'url': url_for('brain_admin.brain_dashboard'), 'icon': 'psychology'},
+            {'text': 'Pump Calibration', 'url': '', 'icon': 'tune'}
+        ]
+        
+        return render_template('admin/pump_calibration.html',
+                             pump_code=pump_code,
+                             pump_data=results['pump_data'],
+                             calibration_results=results,
+                             breadcrumbs=breadcrumbs)
+                             
+    except Exception as e:
+        logger.error(f"Error analyzing calibration data: {e}")
+        if request.is_json:
+            return jsonify({'error': str(e)}), 500
+        flash(f'Error analyzing calibration: {str(e)}', 'error')
+        return redirect(url_for('brain_admin.pump_calibration_workbench', pump_code=pump_code))
+
+@brain_admin_bp.route('/api/pump-calibration/validate-point', methods=['POST'])
+def validate_calibration_point():
+    """AJAX endpoint to validate individual performance points"""
+    try:
+        data = request.get_json()
+        flow = float(data.get('flow', 0))
+        head = float(data.get('head', 0))
+        efficiency = float(data.get('efficiency', 0))
+        power = float(data.get('power', 0))
+        
+        # Validation rules
+        warnings = []
+        errors = []
+        
+        # Basic range checks
+        if flow <= 0:
+            errors.append("Flow must be positive")
+        if head <= 0:
+            errors.append("Head must be positive")
+        if efficiency <= 0 or efficiency > 100:
+            errors.append("Efficiency must be between 0 and 100%")
+        if power <= 0:
+            errors.append("Power must be positive")
+            
+        # Physics checks
+        if flow > 0 and head > 0 and power > 0:
+            # Theoretical minimum power (assuming water)
+            theoretical_min_power = (9.81 * 1000 * flow/3600 * head) / 1000  # kW
+            if power < theoretical_min_power * 0.5:  # Allow some margin
+                warnings.append("Power seems unusually low for given flow and head")
+                
+            # Efficiency sanity check
+            if efficiency > 0:
+                calculated_efficiency = (theoretical_min_power / power) * 100
+                if abs(calculated_efficiency - efficiency) > 10:
+                    warnings.append("Efficiency value doesn't match power calculation")
+                    
+        return jsonify({
+            'valid': len(errors) == 0,
+            'errors': errors,
+            'warnings': warnings
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@brain_admin_bp.route('/api/pump-calibration/export/<pump_code>', methods=['GET'])
+def export_calibration_results(pump_code):
+    """Export calibration results as CSV for documentation"""
+    try:
+        import csv
+        from io import StringIO
+        from flask import make_response
+        
+        # Get the latest calibration data (would normally retrieve from database)
+        # For now, we'll return a template CSV
+        output = StringIO()
+        writer = csv.writer(output)
+        
+        # Write headers
+        writer.writerow(['Pump Code', 'Flow (m³/hr)', 'Head (m)', 
+                        'Truth Efficiency (%)', 'Brain Efficiency (%)', 'Delta Efficiency (%)',
+                        'Truth Power (kW)', 'Brain Power (kW)', 'Delta Power (%)'])
+        
+        # Create response
+        response = make_response(output.getvalue())
+        response.headers['Content-Type'] = 'text/csv'
+        response.headers['Content-Disposition'] = f'attachment; filename=calibration_{pump_code}.csv'
+        
+        return response
+        
+    except Exception as e:
+        logger.error(f"Error exporting calibration data: {e}")
+        return jsonify({'error': str(e)}), 500
+
+# ============================================================================
 # API ENDPOINTS FOR AJAX OPERATIONS
 # ============================================================================
 
