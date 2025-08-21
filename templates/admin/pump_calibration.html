@@ -237,41 +237,15 @@ async function submitCalibration() {
 function renderComparisonChart(comparisonData) {
     if (!comparisonData || comparisonData.length === 0) return;
     
+    // Sort data by flow for smooth curves
+    const sortedData = [...comparisonData].sort((a, b) => a.flow - b.flow);
+    
     // Extract data for plotting
-    const flows = comparisonData.map(d => d.flow);
-    const truthHead = comparisonData.map(d => d.truth_head);
-    const brainHead = comparisonData.map(d => d.brain_head);
-    const truthEfficiency = comparisonData.map(d => d.truth_efficiency);
-    const brainEfficiency = comparisonData.map(d => d.brain_efficiency);
-    
-    // Head curve comparison
-    const headTrace1 = {
-        x: flows,
-        y: truthHead,
-        mode: 'lines+markers',
-        name: 'Manufacturer Data',
-        line: { color: 'blue', width: 3 },
-        marker: { size: 8 }
-    };
-    
-    const headTrace2 = {
-        x: flows,
-        y: brainHead,
-        mode: 'lines+markers',
-        name: 'Brain Prediction',
-        line: { color: 'red', width: 2, dash: 'dash' },
-        marker: { size: 6 }
-    };
-    
-    const headLayout = {
-        title: 'Head Curve Comparison',
-        xaxis: { title: 'Flow (m³/hr)' },
-        yaxis: { title: 'Head (m)' },
-        showlegend: true,
-        hovermode: 'x unified'
-    };
-    
-    Plotly.newPlot('head-comparison-chart', [headTrace1, headTrace2], headLayout);
+    const flows = sortedData.map(d => d.flow);
+    const truthEfficiency = sortedData.map(d => d.truth_efficiency);
+    const brainEfficiency = sortedData.map(d => d.brain_efficiency);
+    const truthPower = sortedData.map(d => d.truth_power);
+    const brainPower = sortedData.map(d => d.brain_power);
     
     // Efficiency curve comparison
     const effTrace1 = {
@@ -279,8 +253,9 @@ function renderComparisonChart(comparisonData) {
         y: truthEfficiency,
         mode: 'lines+markers',
         name: 'Manufacturer Data',
-        line: { color: 'green', width: 3 },
-        marker: { size: 8 }
+        line: { color: '#2196F3', width: 3, shape: 'spline' },
+        marker: { size: 10, symbol: 'circle' },
+        hovertemplate: 'Flow: %{x:.1f} m³/hr<br>Efficiency: %{y:.1f}%<extra></extra>'
     };
     
     const effTrace2 = {
@@ -288,19 +263,91 @@ function renderComparisonChart(comparisonData) {
         y: brainEfficiency,
         mode: 'lines+markers',
         name: 'Brain Prediction',
-        line: { color: 'orange', width: 2, dash: 'dash' },
-        marker: { size: 6 }
+        line: { color: '#f44336', width: 2, dash: 'dash', shape: 'spline' },
+        marker: { size: 8, symbol: 'square' },
+        hovertemplate: 'Flow: %{x:.1f} m³/hr<br>Efficiency: %{y:.1f}%<extra></extra>'
     };
     
     const effLayout = {
-        title: 'Efficiency Curve Comparison',
-        xaxis: { title: 'Flow (m³/hr)' },
-        yaxis: { title: 'Efficiency (%)' },
+        title: {
+            text: 'Efficiency Curve Comparison',
+            font: { size: 18 }
+        },
+        xaxis: { 
+            title: 'Flow (m³/hr)',
+            gridcolor: '#e0e0e0',
+            showgrid: true
+        },
+        yaxis: { 
+            title: 'Efficiency (%)',
+            gridcolor: '#e0e0e0',
+            showgrid: true
+        },
         showlegend: true,
-        hovermode: 'x unified'
+        legend: {
+            x: 0.02,
+            y: 0.98,
+            bgcolor: 'rgba(255,255,255,0.9)',
+            bordercolor: '#333',
+            borderwidth: 1
+        },
+        hovermode: 'x unified',
+        plot_bgcolor: '#fafafa',
+        paper_bgcolor: 'white'
     };
     
-    Plotly.newPlot('efficiency-comparison-chart', [effTrace1, effTrace2], effLayout);
+    Plotly.newPlot('efficiency-comparison-chart', [effTrace1, effTrace2], effLayout, {responsive: true});
+    
+    // Power curve comparison
+    const powerTrace1 = {
+        x: flows,
+        y: truthPower,
+        mode: 'lines+markers',
+        name: 'Manufacturer Data',
+        line: { color: '#4CAF50', width: 3, shape: 'spline' },
+        marker: { size: 10, symbol: 'circle' },
+        hovertemplate: 'Flow: %{x:.1f} m³/hr<br>Power: %{y:.2f} kW<extra></extra>'
+    };
+    
+    const powerTrace2 = {
+        x: flows,
+        y: brainPower,
+        mode: 'lines+markers',
+        name: 'Brain Prediction',
+        line: { color: '#FF9800', width: 2, dash: 'dash', shape: 'spline' },
+        marker: { size: 8, symbol: 'square' },
+        hovertemplate: 'Flow: %{x:.1f} m³/hr<br>Power: %{y:.2f} kW<extra></extra>'
+    };
+    
+    const powerLayout = {
+        title: {
+            text: 'Power Curve Comparison',
+            font: { size: 18 }
+        },
+        xaxis: { 
+            title: 'Flow (m³/hr)',
+            gridcolor: '#e0e0e0',
+            showgrid: true
+        },
+        yaxis: { 
+            title: 'Power (kW)',
+            gridcolor: '#e0e0e0',
+            showgrid: true
+        },
+        showlegend: true,
+        legend: {
+            x: 0.02,
+            y: 0.98,
+            bgcolor: 'rgba(255,255,255,0.9)',
+            bordercolor: '#333',
+            borderwidth: 1
+        },
+        hovermode: 'x unified',
+        plot_bgcolor: '#fafafa',
+        paper_bgcolor: 'white'
+    };
+    
+    Plotly.newPlot('power-comparison-chart', [powerTrace1, powerTrace2], powerLayout, {responsive: true});
 }
 
 // Initialize on page load
@@ -467,10 +514,10 @@ document.addEventListener('DOMContentLoaded', function() {
             <!-- Visual Charts -->
             <div class="row" style="margin-top: 30px;">
                 <div class="col s12 l6">
-                    <div id="head-comparison-chart"></div>
+                    <div id="efficiency-comparison-chart"></div>
                 </div>
                 <div class="col s12 l6">
-                    <div id="efficiency-comparison-chart"></div>
+                    <div id="power-comparison-chart"></div>
                 </div>
             </div>
             

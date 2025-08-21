@@ -49,3 +49,4 @@ scipy
 trafilatura
 weasyprint
 werkzeug
+openai

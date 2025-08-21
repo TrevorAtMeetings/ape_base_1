@@ -617,8 +617,16 @@ class ManufacturerComparisonEngine:
         # Calculate curve deviation metrics
         metrics = self.calculate_curve_deviation_metrics(comparison_results)
         
-        # Generate AI insights
-        insights = self.generate_ai_insights(comparison_results, metrics)
+        # Generate AI insights using the Brain's AI analyst
+        try:
+            brain_insights = brain.ai_analyst.generate_calibration_insights(
+                {'pump_code': pump_code, 'comparison_points': comparison_results},
+                metrics
+            )
+            insights = brain_insights
+        except Exception as e:
+            self.logger.warning(f"AI insights generation failed, using fallback: {e}")
+            insights = self.generate_ai_insights(comparison_results, metrics)
         
         return {
             'pump_code': pump_code,

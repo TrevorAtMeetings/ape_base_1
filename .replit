@@ -2,7 +2,7 @@ modules = ["web", "python-3.11", "postgresql-16"]
 
 [nix]
 channel = "stable-24_05"
-packages = ["poppler_utils", "pkg-config", "pango", "cairo", "gdk-pixbuf", "fontconfig", "harfbuzz"]
+packages = ["cairo", "ffmpeg-full", "fontconfig", "freetype", "gdk-pixbuf", "ghostscript", "glib", "glibcLocales", "gobject-introspection", "gtk3", "harfbuzz", "libxcrypt", "pango", "pkg-config", "poppler_utils", "qhull", "tcl", "tk", "xsimd"]
 
 [deployment]
 deploymentTarget = "autoscale"
@@ -25,4 +25,4 @@ localPort = 5000
 externalPort = 5000
 
 [agent]
-integrations = ["python_database==1.0.0"]
+integrations = ["python_database==1.0.0", "python_openai==1.0.0"]
