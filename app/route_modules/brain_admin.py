@@ -664,10 +664,50 @@ class ManufacturerComparisonEngine:
                         self.logger.info(f"Significant head deviation for {pump_code} at {point['flow']} m³/hr: "
                                        f"Truth={point['head']:.2f}m, Brain={brain_head:.2f}m (Δ={delta_head:.1f}%)")
                 else:
-                    self.logger.warning(f"No Brain prediction for {pump_code} at {point['flow']} m³/hr")
+                    # Brain prediction failed - likely due to diameter out of range
+                    self.logger.warning(f"No Brain prediction for {pump_code} at {actual_flow} m³/hr with diameter {point.get('diameter')}mm")
+                    
+                    # Add an error comparison entry so user knows what failed
+                    comparison = {
+                        'flow': actual_flow,
+                        'qbep_percent': qbep_percent,
+                        'truth_head': point['head'],
+                        'truth_efficiency': point['efficiency'],
+                        'truth_power': point['power'],
+                        'truth_diameter': point.get('diameter'),
+                        'brain_head': None,
+                        'brain_efficiency': None,
+                        'brain_power': None,
+                        'brain_diameter': None,
+                        'delta_head': None,
+                        'delta_efficiency': None,
+                        'delta_power': None,
+                        'delta_diameter': None,
+                        'error_message': f"Diameter {point.get('diameter')}mm is outside valid range for this pump"
+                    }
+                    comparison_results.append(comparison)
                     
             except Exception as e:
                 self.logger.error(f"Error processing point {point}: {e}")
+        
+        # Check if we have diameter range issues
+        diameter_warnings = []
+        if 'curves' in pump_data:
+            available_diameters = [c.get('impeller_diameter_mm', 0) for c in pump_data['curves'] if c.get('impeller_diameter_mm', 0) > 0]
+            if available_diameters:
+                min_available = min(available_diameters)
+                max_available = max(available_diameters)
+                
+                for point in ground_truth_points:
+                    diameter = point.get('diameter')
+                    if diameter:
+                        if diameter < min_available * 0.85 or diameter > max_available * 1.05:
+                            diameter_warnings.append({
+                                'diameter': diameter,
+                                'min_valid': min_available * 0.85,
+                                'max_valid': max_available * 1.05,
+                                'available_curves': available_diameters
+                            })
         
         # Generate curve data for visual comparison
         # This is for the Analytical Workbench - showing the full predicted curve
@@ -701,7 +741,8 @@ class ManufacturerComparisonEngine:
             'comparison_points': comparison_results,
             'curve_comparison_data': curve_comparison_data,  # For visual charts
             'metrics': metrics,
-            'insights': insights
+            'insights': insights,
+            'diameter_warnings': diameter_warnings  # Add warnings about diameter range issues
         }
     
     def _generate_curve_comparison_data(self, pump_data, ground_truth_points, brain):

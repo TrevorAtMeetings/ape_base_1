@@ -1281,6 +1281,21 @@ document.addEventListener('DOMContentLoaded', function() {
                 </table>
                 
                 <div style="margin-top: 20px; padding: 15px; background: #ffebee; border-radius: 4px;">
+                    {% if calibration_results.diameter_warnings %}
+                    <p style="color: #d32f2f; font-weight: 600; margin: 0 0 10px 0;">
+                        <i class="material-icons tiny" style="vertical-align: middle;">warning</i>
+                        Diameter Out of Range Error
+                    </p>
+                    {% for warning in calibration_results.diameter_warnings %}
+                    <p style="color: #c62828; margin: 5px 0;">
+                        The specified diameter {{ warning.diameter|round(0)|int }}mm is outside the valid range for this pump.
+                        <br>
+                        Valid range: {{ warning.min_valid|round(0)|int }}-{{ warning.max_valid|round(0)|int }}mm
+                        <br>
+                        Available curves: {{ warning.available_curves|join(', ') }}mm
+                    </p>
+                    {% endfor %}
+                    {% else %}
                     <p style="color: #c62828; font-weight: 500; margin: 0;">
                         <i class="material-icons tiny" style="vertical-align: middle;">error</i>
                         {% set delta_list = calibration_results.comparison_points | selectattr('delta_head') | map(attribute='delta_head') | list %}
@@ -1295,6 +1310,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         No valid Brain predictions available for comparison.
                         {% endif %}
                     </p>
+                    {% endif %}
                 </div>
             </div>
         </div>

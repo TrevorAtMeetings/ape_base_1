@@ -59,6 +59,21 @@ class PerformanceAnalyzer:
                     logger.error(f"[FORCED CONSTRAINT] {pump_code}: Invalid reference diameter")
                     return None
                 
+                # Get all available diameters for this pump
+                all_diameters = []
+                if 'curves' in pump_data:
+                    all_diameters = [c.get('impeller_diameter_mm', 0) for c in pump_data['curves'] if c.get('impeller_diameter_mm', 0) > 0]
+                    all_diameters.sort()
+                
+                # Check if forced diameter is within reasonable range
+                min_diameter = min(all_diameters) * 0.85 if all_diameters else largest_diameter * 0.85  # Allow 15% trim from smallest
+                max_diameter = max(all_diameters) * 1.05 if all_diameters else largest_diameter * 1.05  # Allow 5% above largest
+                
+                if forced_diameter < min_diameter or forced_diameter > max_diameter:
+                    logger.error(f"[FORCED CONSTRAINT] {pump_code}: Forced diameter {forced_diameter}mm is outside valid range [{min_diameter:.0f}-{max_diameter:.0f}mm]")
+                    logger.error(f"[FORCED CONSTRAINT] {pump_code}: Available curves: {all_diameters}")
+                    return None
+                
                 # Sort points by flow for interpolation
                 sorted_points = sorted(curve_points, key=lambda p: p.get('flow_m3hr', 0))
                 flows = [p['flow_m3hr'] for p in sorted_points if 'flow_m3hr' in p and 'head_m' in p]
