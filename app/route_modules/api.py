@@ -40,8 +40,12 @@ def get_chart_data(pump_code):
     API layer is "dumb" - just passes through Brain intelligence.
     """
     try:
-        flow_rate = request.args.get('flow', type=float, default=100)
-        head = request.args.get('head', type=float, default=50)
+        # NO DEFAULTS - require explicit parameters
+        flow_rate = request.args.get('flow', type=float)
+        head = request.args.get('head', type=float)
+        
+        if flow_rate is None or head is None:
+            return jsonify({'error': 'Missing required parameters: flow and head must be specified'}), 400
 
 
 

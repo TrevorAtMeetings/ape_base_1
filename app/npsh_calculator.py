@@ -76,13 +76,8 @@ class NPSHCalculator:
             
         except Exception as e:
             logger.error(f"Error calculating NPSHa: {e}")
-            # Return conservative fallback
-            return {
-                'npsha_m': 8.0,
-                'breakdown': {'error': 'Calculation failed, using conservative estimate'},
-                'assumptions': {'method': 'Conservative fallback'},
-                'notes': ['Calculation error occurred - using conservative 8.0m value']
-            }
+            # NO FALLBACKS - raise the error to be handled upstream
+            raise ValueError(f"NPSH calculation failed: {str(e)}. Database data or configuration may be incomplete.")
     
     @staticmethod
     def _calculate_atmospheric_pressure_head(elevation_m: float) -> float:

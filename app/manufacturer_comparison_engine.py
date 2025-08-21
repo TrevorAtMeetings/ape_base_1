@@ -255,6 +255,14 @@ class ManufacturerComparisonEngine:
             # Initialize OpenAI client
             client = openai.OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
             
+            # Calculate average errors across all points
+            if analysis_data['test_points']:
+                avg_head_error = sum(abs(p['head_error']) for p in analysis_data['test_points']) / len(analysis_data['test_points'])
+                avg_eff_error = sum(abs(p['efficiency_error']) for p in analysis_data['test_points']) / len(analysis_data['test_points'])
+                avg_power_error = sum(abs(p['power_error']) for p in analysis_data['test_points']) / len(analysis_data['test_points'])
+            else:
+                avg_head_error = avg_eff_error = avg_power_error = 0
+            
             # Create detailed prompt for Brain configuration analysis
             pump_type = "diffuser" if any(x in analysis_data['pump_model'].upper() for x in ['HC', 'XHC', 'TURBINE']) else "volute"
             

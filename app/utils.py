@@ -28,25 +28,23 @@ def monitor_performance(threshold_seconds=3.0):
         return wrapper
     return decorator
 
-def safe_float_conversion(value, default=0.0):
-    """Safely convert value to float with fallback."""
+def safe_float_conversion(value):
+    """Safely convert value to float - NO FALLBACKS."""
     if value is None:
-        return default
+        raise ValueError("Cannot convert None to float - data must be complete from database")
     try:
         return float(value)
-    except (ValueError, TypeError):
-        logger.warning(f"Failed to convert {value} to float, using default {default}")
-        return default
+    except (ValueError, TypeError) as e:
+        raise ValueError(f"Failed to convert {value} to float: {e}")
 
-def safe_int_conversion(value, default=0):
-    """Safely convert value to int with fallback."""
+def safe_int_conversion(value):
+    """Safely convert value to int - NO FALLBACKS."""
     if value is None:
-        return default
+        raise ValueError("Cannot convert None to int - data must be complete from database")
     try:
         return int(value)
-    except (ValueError, TypeError):
-        logger.warning(f"Failed to convert {value} to int, using default {default}")
-        return default
+    except (ValueError, TypeError) as e:
+        raise ValueError(f"Failed to convert {value} to int: {e}")
 
 
 """

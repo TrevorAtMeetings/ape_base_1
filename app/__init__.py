@@ -38,8 +38,11 @@ app.config['DEBUG'] = os.environ.get("FLASK_DEBUG", "False").lower() == "true"
 app.config['HOST'] = os.environ.get("FLASK_HOST", "0.0.0.0")
 app.config['PORT'] = int(os.environ.get("FLASK_PORT", 5000))
 
-# Security configuration
-app.config['SECRET_KEY'] = os.environ.get('SESSION_SECRET', 'change-me-in-production')
+# Security configuration - NO FALLBACKS
+session_secret = os.environ.get('SESSION_SECRET')
+if not session_secret:
+    raise ValueError("SESSION_SECRET environment variable is required. No fallback values allowed.")
+app.config['SECRET_KEY'] = session_secret
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 31536000 if not app.config['DEBUG'] else 1
 

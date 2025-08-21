@@ -172,35 +172,29 @@ class SimpleAIExtractor:
             logger.error(f"[Simple AI Extractor] Exception type: {type(e).__name__}")
             logger.error(f"[Simple AI Extractor] Full traceback: {traceback.format_exc()}")
             
-            # Return fallback data if enabled
-            if self.config.ENABLE_FALLBACK:
-                logger.info("[Simple AI Extractor] Returning fallback data")
-                return self._create_fallback_data()
-            else:
-                raise
+            # NO FALLBACKS - always raise the error
+            logger.error("[Simple AI Extractor] No fallback data allowed per engineering principles")
+            raise
     
     def _validate_and_enhance_data(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """Validate and enhance extracted data"""
         try:
-            # Basic validation
+            # Basic validation - NO FALLBACKS
             required_fields = ['pumpDetails', 'specifications', 'curves']
             for field in required_fields:
                 if field not in data:
-                    logger.warning(f"[Simple AI Extractor] Missing required field: {field}")
-                    data[field] = {}
+                    raise ValueError(f"Missing required field: {field}. Data must be complete from source.")
             
             # Ensure curves is a list
             if not isinstance(data.get('curves', []), list):
                 data['curves'] = []
             
-            # Ensure specifications has required fields
+            # Ensure specifications has required fields - NO DEFAULTS
             specs = data.get('specifications', {})
-            if 'testSpeed' not in specs:
-                specs['testSpeed'] = 0
-            if 'maxFlow' not in specs:
-                specs['maxFlow'] = 0
-            if 'maxHead' not in specs:
-                specs['maxHead'] = 0
+            required_specs = ['testSpeed', 'maxFlow', 'maxHead']
+            for spec in required_specs:
+                if spec not in specs:
+                    raise ValueError(f"Missing required specification: {spec}. Data must be complete from source.")
             
             data['specifications'] = specs
             
@@ -211,42 +205,8 @@ class SimpleAIExtractor:
             logger.error(f"[Simple AI Extractor] Data validation failed: {e}")
             return data
     
-    def _create_fallback_data(self) -> Dict[str, Any]:
-        """Create fallback data structure when extraction fails"""
-        return {
-            "pumpDetails": {
-                "pumpModel": "Unknown",
-                "manufacturer": "Unknown",
-                "pumpType": "Unknown",
-                "pumpRange": "Unknown",
-                "application": "Unknown",
-                "constructionStandard": "Unknown"
-            },
-            "technicalDetails": {
-                "impellerType": "Unknown"
-            },
-            "specifications": {
-                "testSpeed": 0,
-                "maxFlow": 0,
-                "maxHead": 0,
-                "bepFlow": 0,
-                "bepHead": 0,
-                "npshrAtBep": 0,
-                "minImpeller": 0,
-                "maxImpeller": 0,
-                "variableDiameter": False,
-                "bepMarkers": []
-            },
-            "axisDefinitions": {
-                "xAxis": {"min": 0, "max": 0, "unit": "m3/hr", "label": "Flow Rate"},
-                "leftYAxis": {"min": 0, "max": 0, "unit": "m", "label": "Head"},
-                "rightYAxis": {"min": 0, "max": 0, "unit": "%", "label": "Efficiency"},
-                "secondaryRightYAxis": {"min": 0, "max": 0, "unit": "m", "label": "NPSH"}
-            },
-            "curves": [],
-            "extractionStatus": "fallback",
-            "errorMessage": "AI extraction failed, using fallback data"
-        }
+    # REMOVED: _create_fallback_data method - NO FALLBACKS allowed per engineering principles
+    # All data must come from the database as the golden source
 
 # Convenience function for backward compatibility
 def extract_pump_data_from_pdf(pdf_path: str) -> Dict[str, Any]:
