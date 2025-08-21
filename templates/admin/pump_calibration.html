@@ -638,6 +638,11 @@ function addDataRow() {
                    data-row-id="${newRowId}">
         </td>
         <td>
+            <input type="number" name="diameter_${newRowId}" step="0.1"
+                   class="validate" min="50" max="1000" placeholder="e.g., 305"
+                   data-row-id="${newRowId}">
+        </td>
+        <td>
             <input type="number" name="qbep_${newRowId}" step="0.1" 
                    class="validate" min="0" max="200" placeholder="e.g., 100"
                    data-row-id="${newRowId}">
@@ -1200,6 +1205,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             <th id="head-header">Head (m)</th>
                             <th>Efficiency (%)</th>
                             <th id="power-header">Power (kW)<br><span class="grey-text" style="font-size: 0.8em">(Optional)</span></th>
+                            <th>Diameter (mm)<br><span class="grey-text" style="font-size: 0.8em">(Optional)</span></th>
                             <th>QBep %<br><span class="grey-text" style="font-size: 0.8em">(Optional)</span></th>
                             <th>Actions</th>
                         </tr>
@@ -1263,20 +1269,23 @@ document.addEventListener('DOMContentLoaded', function() {
                     <tr>
                         <th rowspan="2">Flow<br>(m³/hr)</th>
                         <th rowspan="2">QBep%</th>
-                        <th colspan="3" class="center-align">Manufacturer Data</th>
-                        <th colspan="3" class="center-align">Brain Prediction</th>
-                        <th colspan="3" class="center-align">Delta (%)</th>
+                        <th colspan="4" class="center-align">Manufacturer Data</th>
+                        <th colspan="4" class="center-align">Brain Prediction</th>
+                        <th colspan="4" class="center-align">Delta (%)</th>
                     </tr>
                     <tr>
                         <th>Head (m)</th>
                         <th>Eff (%)</th>
                         <th>Power (kW)</th>
+                        <th>Dia (mm)</th>
                         <th>Head (m)</th>
                         <th>Eff (%)</th>
                         <th>Power (kW)</th>
+                        <th>Dia (mm)</th>
                         <th>ΔHead</th>
                         <th>ΔEff</th>
                         <th>ΔPwr</th>
+                        <th>ΔDia</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -1293,9 +1302,17 @@ document.addEventListener('DOMContentLoaded', function() {
                         <td>{{ point.truth_head|round(2) }}</td>
                         <td>{{ point.truth_efficiency|round(1) }}</td>
                         <td>{{ point.truth_power|round(2) }}</td>
+                        <td>
+                            {% if point.truth_diameter %}
+                                {{ point.truth_diameter|round(1) }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
                         <td>{{ point.brain_head|round(2) }}</td>
                         <td>{{ point.brain_efficiency|round(1) }}</td>
                         <td>{{ point.brain_power|round(2) }}</td>
+                        <td>{{ point.brain_diameter|round(1) }}</td>
                         <td>
                             <span class="badge {% if point.delta_head|abs < 2 %}green{% elif point.delta_head|abs < 5 %}orange{% else %}red{% endif %} white-text">
                                 {{ point.delta_head|round(1) }}%
@@ -1310,6 +1327,15 @@ document.addEventListener('DOMContentLoaded', function() {
                             <span class="badge {% if point.delta_power|abs < 2 %}green{% elif point.delta_power|abs < 5 %}orange{% else %}red{% endif %} white-text">
                                 {{ point.delta_power|round(1) }}%
                             </span>
+                        </td>
+                        <td>
+                            {% if point.delta_diameter is not none %}
+                                <span class="badge {% if point.delta_diameter|abs < 2 %}green{% elif point.delta_diameter|abs < 5 %}orange{% else %}red{% endif %} white-text">
+                                    {{ point.delta_diameter|round(1) }}%
+                                </span>
+                            {% else %}
+                                -
+                            {% endif %}
                         </td>
                     </tr>
                     {% endfor %}

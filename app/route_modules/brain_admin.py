@@ -623,19 +623,26 @@ class ManufacturerComparisonEngine:
                     delta_efficiency = self._calculate_delta(point['efficiency'], brain_efficiency)
                     delta_power = self._calculate_delta(point['power'], brain_power)
                     
+                    # Calculate diameter delta if provided
+                    truth_diameter = point.get('diameter')
+                    brain_diameter = brain_prediction.get('diameter_mm', 0)
+                    delta_diameter = self._calculate_delta(truth_diameter, brain_diameter) if truth_diameter else None
+                    
                     comparison = {
                         'flow': actual_flow,
                         'qbep_percent': qbep_percent,
                         'truth_head': point['head'],
                         'truth_efficiency': point['efficiency'],
                         'truth_power': point['power'],
+                        'truth_diameter': truth_diameter,
                         'brain_head': brain_head,  # ACTUAL brain calculated head
                         'brain_efficiency': brain_efficiency,
                         'brain_power': brain_power,
-                        'brain_diameter': brain_prediction.get('diameter_mm', 0),
+                        'brain_diameter': brain_diameter,
                         'delta_head': delta_head,  # Added head comparison
                         'delta_efficiency': delta_efficiency,
-                        'delta_power': delta_power
+                        'delta_power': delta_power,
+                        'delta_diameter': delta_diameter
                     }
                     comparison_results.append(comparison)
                     
@@ -999,6 +1006,7 @@ def analyze_pump_calibration(pump_code):
                 head_str = data.get(f'head_{i}')
                 efficiency_str = data.get(f'efficiency_{i}')
                 power_str = data.get(f'power_{i}')  # Optional
+                diameter_str = data.get(f'diameter_{i}')  # Optional
                 qbep_str = data.get(f'qbep_{i}')  # Optional
                 
                 # Required fields
@@ -1018,6 +1026,14 @@ def analyze_pump_calibration(pump_code):
                     else:
                         # Calculate power from flow, head, and efficiency
                         power = (flow * head * 9.81) / (3600 * efficiency / 100 * 10)
+                    
+                    # Optional diameter
+                    diameter = None
+                    if diameter_str and diameter_str.strip():
+                        diameter = float(diameter_str)
+                        if diameter <= 0 or diameter > 2000:  # Max 2000mm is reasonable
+                            logger.warning(f"Diameter value out of range: {diameter}")
+                            diameter = None
                     
                     # Optional QBep%
                     qbep_percent = None
@@ -1043,6 +1059,7 @@ def analyze_pump_calibration(pump_code):
                         'head': head,
                         'efficiency': efficiency,
                         'power': power,
+                        'diameter': diameter,
                         'qbep_percent': qbep_percent
                     })
                     
