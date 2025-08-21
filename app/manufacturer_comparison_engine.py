@@ -43,6 +43,7 @@ class ManufacturerComparisonEngine:
                 truth_power = truth_point['power']
                 diameter = truth_point.get('diameter')
                 
+                logger.info(f"[DATA DEBUG] Point {i+1}: Flow={flow}, Head={truth_head}, Eff={truth_efficiency}%, Power={truth_power}kW, Diameter={diameter}mm")
                 logger.debug(f"Processing point {i+1}: Flow={flow}, Head={truth_head}, Diameter={diameter}")
                 
                 # Get Brain's prediction at this exact flow
