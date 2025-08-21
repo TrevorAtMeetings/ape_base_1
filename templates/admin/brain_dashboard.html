@@ -857,20 +857,20 @@ body .brain-dashboard .brain-header {
                     <span class="feature-icon">
                         <span class="material-icons-round">compare</span>
                     </span>
-                    <h2 class="feature-title">Manufacturer Analysis</h2>
+                    <h2 class="feature-title">Manufacturer Comparison</h2>
                 </div>
                 <p class="feature-description">
-                    Compare Brain selections against manufacturer recommendations. 
-                    Upload datasheets and identify improvement opportunities.
+                    Compare Brain predictions against manufacturer data. 
+                    Analyze multi-point calibration with AI insights and visual overlays.
                 </p>
                 <div class="feature-actions">
-                    <a href="#" onclick="alert('Coming Soon - Phase 2')" class="btn btn-primary">
-                        <span class="material-icons-round">analytics</span>
-                        <span>Compare Data</span>
+                    <a href="{{ url_for('brain_admin.brain_workbench') }}" class="btn btn-primary">
+                        <span class="material-icons-round">science</span>
+                        <span>Open Workbench</span>
                     </a>
-                    <a href="#" onclick="alert('Coming Soon')" class="btn btn-secondary">
-                        <span class="material-icons-round">upload_file</span>
-                        <span>Upload Sheet</span>
+                    <a href="#" onclick="showPumpSelector()" class="btn btn-secondary">
+                        <span class="material-icons-round">tune</span>
+                        <span>Calibrate Pump</span>
                     </a>
                 </div>
             </div>
@@ -1190,6 +1190,60 @@ function createProfile() {
 
 function generateReport() {
     alert('Report generation feature coming soon');
+}
+
+function showPumpSelector() {
+    // Create a modal for pump selection
+    const modalHtml = `
+        <div id="pump-selector-modal" class="modal">
+            <div class="modal-content">
+                <h4>Select Pump for Calibration</h4>
+                <p>Enter the pump code to open its calibration workbench:</p>
+                <div class="input-field">
+                    <input type="text" id="pump-code-input" placeholder="e.g., 4503-44648">
+                    <label for="pump-code-input">Pump Code</label>
+                </div>
+                <div class="row">
+                    <div class="col s12">
+                        <p class="grey-text">Or select from recent pumps:</p>
+                        <div class="collection">
+                            <a href="/admin/pump-calibration/4503-44648" class="collection-item">4503-44648 - 6x8x10 WL</a>
+                            <a href="/admin/pump-calibration/4502-42848" class="collection-item">4502-42848 - 6x8x10 WLN</a>
+                            <a href="/admin/pump-calibration/2502-55" class="collection-item">2502-55 - 10 WLN 32A</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <a href="#!" class="modal-close waves-effect waves-red btn-flat">Cancel</a>
+                <a href="#!" onclick="navigateToCalibration()" class="waves-effect waves-green btn-flat">Open Calibration</a>
+            </div>
+        </div>
+    `;
+    
+    // Add modal to page if not exists
+    if (!document.getElementById('pump-selector-modal')) {
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+    }
+    
+    // Initialize and open modal
+    const modal = document.getElementById('pump-selector-modal');
+    const instance = M.Modal.init(modal);
+    instance.open();
+    
+    // Focus on input
+    setTimeout(() => {
+        document.getElementById('pump-code-input').focus();
+    }, 100);
+}
+
+function navigateToCalibration() {
+    const pumpCode = document.getElementById('pump-code-input').value.trim();
+    if (pumpCode) {
+        window.location.href = `/admin/pump-calibration/${pumpCode}`;
+    } else {
+        M.toast({html: 'Please enter a pump code', classes: 'red'});
+    }
 }
 
 // Initialize algorithm cards with interactive functionality
