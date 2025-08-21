@@ -193,38 +193,121 @@ function removeRow(rowId) {
     }
 }
 
-// Initialize chart if analysis results exist
+// Initialize comprehensive comparison chart if analysis results exist
 {% if analysis_results and analysis_results.chart_data %}
 document.addEventListener('DOMContentLoaded', function() {
     const chartData = {{ analysis_results.chart_data|tojson }};
     
-    const traces = [
-        {
-            x: chartData.flows,
-            y: chartData.truth_heads,
-            mode: 'markers',
-            name: 'Ground Truth',
-            marker: { color: 'blue', size: 10 },
-            type: 'scatter'
-        },
-        {
-            x: chartData.flows,
-            y: chartData.brain_heads,
-            mode: 'markers',
-            name: 'Brain Prediction',
-            marker: { color: 'red', size: 10 },
-            type: 'scatter'
-        }
-    ];
+    // Create subplots for Head, Efficiency, and Power comparisons
+    const traces = [];
+    
+    // Head comparison bars
+    traces.push({
+        x: chartData.point_labels,
+        y: chartData.truth_heads,
+        name: 'Truth Head (m)',
+        type: 'bar',
+        marker: { color: 'rgba(54, 162, 235, 0.8)' },
+        yaxis: 'y',
+        offsetgroup: 1
+    });
+    
+    traces.push({
+        x: chartData.point_labels,
+        y: chartData.brain_heads,
+        name: 'Brain Head (m)',
+        type: 'bar',
+        marker: { color: 'rgba(255, 99, 132, 0.8)' },
+        yaxis: 'y',
+        offsetgroup: 2
+    });
+    
+    // Efficiency comparison bars (scaled for visualization)
+    traces.push({
+        x: chartData.point_labels,
+        y: chartData.truth_efficiencies,
+        name: 'Truth Efficiency (%)',
+        type: 'bar',
+        marker: { color: 'rgba(75, 192, 192, 0.8)' },
+        yaxis: 'y2',
+        offsetgroup: 3
+    });
+    
+    traces.push({
+        x: chartData.point_labels,
+        y: chartData.brain_efficiencies,
+        name: 'Brain Efficiency (%)',
+        type: 'bar',
+        marker: { color: 'rgba(255, 159, 64, 0.8)' },
+        yaxis: 'y2',
+        offsetgroup: 4
+    });
+    
+    // Power comparison bars (scaled for visualization)
+    traces.push({
+        x: chartData.point_labels,
+        y: chartData.truth_powers,
+        name: 'Truth Power (kW)',
+        type: 'bar',
+        marker: { color: 'rgba(153, 102, 255, 0.8)' },
+        yaxis: 'y3',
+        offsetgroup: 5
+    });
+    
+    traces.push({
+        x: chartData.point_labels,
+        y: chartData.brain_powers,
+        name: 'Brain Power (kW)',
+        type: 'bar',
+        marker: { color: 'rgba(255, 205, 86, 0.8)' },
+        yaxis: 'y3',
+        offsetgroup: 6
+    });
 
     const layout = {
-        title: 'Performance Comparison',
-        xaxis: { title: 'Flow (m³/hr)' },
-        yaxis: { title: 'Head (m)' },
-        hovermode: 'closest'
+        title: {
+            text: 'Comprehensive Performance Comparison: Truth vs Brain Predictions',
+            font: { size: 16, color: '#2c3e50' }
+        },
+        xaxis: { 
+            title: 'Performance Points',
+            tickangle: -45
+        },
+        yaxis: {
+            title: 'Head (m)',
+            side: 'left',
+            position: 0
+        },
+        yaxis2: {
+            title: 'Efficiency (%)',
+            side: 'right',
+            overlaying: 'y',
+            position: 1
+        },
+        yaxis3: {
+            title: 'Power (kW)',
+            side: 'right',
+            overlaying: 'y',
+            position: 0.85
+        },
+        barmode: 'group',
+        bargap: 0.15,
+        bargroupgap: 0.1,
+        hovermode: 'x unified',
+        legend: {
+            orientation: 'h',
+            x: 0,
+            y: -0.2,
+            bgcolor: 'rgba(255,255,255,0.8)'
+        },
+        margin: { l: 80, r: 80, t: 80, b: 100 }
     };
 
-    Plotly.newPlot('comparison-chart-container', traces, layout, {responsive: true});
+    Plotly.newPlot('comparison-chart-container', traces, layout, {
+        responsive: true,
+        displayModeBar: true,
+        modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d']
+    });
 });
 {% endif %}
 

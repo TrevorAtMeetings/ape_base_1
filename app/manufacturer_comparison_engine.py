@@ -170,22 +170,35 @@ class ManufacturerComparisonEngine:
             }
     
     def _generate_chart_data(self, comparison_points: List[Dict]) -> Dict:
-        """Generate data structure for Plotly chart overlay"""
+        """Generate comprehensive bar chart data for all performance metrics"""
         
-        flows = []
+        # Prepare data for grouped bar chart
+        point_labels = []
         truth_heads = []
         brain_heads = []
+        truth_efficiencies = []
+        brain_efficiencies = []
+        truth_powers = []
+        brain_powers = []
         
-        for point in comparison_points:
-            if point.get('flow') and point.get('truth_head'):
-                flows.append(point['flow'])
-                truth_heads.append(point['truth_head'])
-                brain_heads.append(point.get('brain_head') or 0)  # Use 0 for missing values
+        for i, point in enumerate(comparison_points):
+            if point.get('flow'):
+                point_labels.append(f"Point {i+1}<br>{point['flow']:.1f} m³/hr")
+                truth_heads.append(point.get('truth_head', 0))
+                brain_heads.append(point.get('brain_head', 0))
+                truth_efficiencies.append(point.get('truth_efficiency', 0))
+                brain_efficiencies.append(point.get('brain_efficiency', 0))
+                truth_powers.append(point.get('truth_power', 0))
+                brain_powers.append(point.get('brain_power', 0))
         
         return {
-            'flows': flows,
+            'point_labels': point_labels,
             'truth_heads': truth_heads,
-            'brain_heads': brain_heads
+            'brain_heads': brain_heads,
+            'truth_efficiencies': truth_efficiencies,
+            'brain_efficiencies': brain_efficiencies,
+            'truth_powers': truth_powers,
+            'brain_powers': brain_powers
         }
     
     def _generate_ai_summary(self, comparison_points: List[Dict], pump_data: Dict) -> str:
