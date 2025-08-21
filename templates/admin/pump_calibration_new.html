@@ -193,110 +193,146 @@ function removeRow(rowId) {
     }
 }
 
-// Initialize side-by-side comparison chart if analysis results exist
+// Initialize normalized comparison chart with separate subplots if analysis results exist
 {% if analysis_results and analysis_results.chart_data %}
 document.addEventListener('DOMContentLoaded', function() {
     const chartData = {{ analysis_results.chart_data|tojson }};
     
-    // Prepare x-axis labels for grouped comparison
-    const categories = ['Head (m)', 'Efficiency (%)', 'Power (kW)'];
+    // Extract values for the single point
+    const truthHead = chartData.truth_heads[0] || 0;
+    const brainHead = chartData.brain_heads[0] || 0;
+    const truthEff = chartData.truth_efficiencies[0] || 0;
+    const brainEff = chartData.brain_efficiencies[0] || 0;
+    const truthPower = chartData.truth_powers[0] || 0;
+    const brainPower = chartData.brain_powers[0] || 0;
     
-    // Extract values for the single point (expand as needed for multiple points)
-    const truthValues = [
-        chartData.truth_heads[0] || 0,
-        chartData.truth_efficiencies[0] || 0, 
-        chartData.truth_powers[0] || 0
-    ];
-    
-    const brainValues = [
-        chartData.brain_heads[0] || 0,
-        chartData.brain_efficiencies[0] || 0,
-        chartData.brain_powers[0] || 0
-    ];
-    
-    // Create grouped bar traces
-    const truthTrace = {
-        x: categories,
-        y: truthValues,
-        name: 'Ground Truth',
-        type: 'bar',
-        marker: { 
-            color: 'rgba(54, 162, 235, 0.8)',
-            line: { color: 'rgba(54, 162, 235, 1.0)', width: 1 }
-        },
-        text: truthValues.map((val, i) => {
-            if (i === 0) return val.toFixed(2) + ' m';
-            if (i === 1) return val.toFixed(1) + '%';
-            return val.toFixed(1) + ' kW';
-        }),
-        textposition: 'auto'
-    };
-    
-    const brainTrace = {
-        x: categories,
-        y: brainValues,
-        name: 'Brain Prediction',
-        type: 'bar',
-        marker: { 
-            color: 'rgba(255, 99, 132, 0.8)',
-            line: { color: 'rgba(255, 99, 132, 1.0)', width: 1 }
-        },
-        text: brainValues.map((val, i) => {
-            if (i === 0) return val.toFixed(2) + ' m';
-            if (i === 1) return val.toFixed(1) + '%';
-            return val.toFixed(1) + ' kW';
-        }),
-        textposition: 'auto'
-    };
-    
-    const traces = [truthTrace, brainTrace];
-
-    const layout = {
-        title: {
-            text: `Performance Calibration: ${chartData.point_labels[0] || 'Comparison'}`,
-            font: { size: 18, color: '#2c3e50' }
-        },
-        xaxis: { 
-            title: 'Performance Metrics',
-            titlefont: { size: 14 }
-        },
-        yaxis: { 
-            title: 'Values (Mixed Units)',
-            titlefont: { size: 14 }
-        },
-        barmode: 'group',
-        bargap: 0.3,
-        bargroupgap: 0.1,
-        showlegend: true,
-        legend: {
-            orientation: 'h',
-            x: 0.25,
-            y: -0.15,
-            bgcolor: 'rgba(255,255,255,0.8)',
-            bordercolor: 'rgba(0,0,0,0.1)',
-            borderwidth: 1
-        },
-        margin: { l: 80, r: 60, t: 80, b: 100 },
-        hovermode: 'x unified',
-        annotations: [
+    // Create three separate subplots to avoid scale confusion
+    const fig = {
+        data: [
+            // Head comparison subplot
             {
-                text: 'Note: Different metrics use different units and scales',
-                showarrow: false,
-                x: 0.5,
-                y: -0.25,
-                xref: 'paper',
-                yref: 'paper',
-                xanchor: 'center',
-                yanchor: 'top',
-                font: { size: 11, color: '#666' }
+                x: ['Ground Truth', 'Brain Prediction'],
+                y: [truthHead, brainHead],
+                type: 'bar',
+                name: 'Head (m)',
+                marker: { 
+                    color: ['rgba(54, 162, 235, 0.8)', 'rgba(255, 99, 132, 0.8)'],
+                    line: { color: ['rgba(54, 162, 235, 1.0)', 'rgba(255, 99, 132, 1.0)'], width: 1 }
+                },
+                text: [truthHead.toFixed(2) + ' m', brainHead.toFixed(2) + ' m'],
+                textposition: 'auto',
+                xaxis: 'x',
+                yaxis: 'y',
+                showlegend: false
+            },
+            // Efficiency comparison subplot  
+            {
+                x: ['Ground Truth', 'Brain Prediction'],
+                y: [truthEff, brainEff],
+                type: 'bar',
+                name: 'Efficiency (%)',
+                marker: { 
+                    color: ['rgba(75, 192, 192, 0.8)', 'rgba(255, 159, 64, 0.8)'],
+                    line: { color: ['rgba(75, 192, 192, 1.0)', 'rgba(255, 159, 64, 1.0)'], width: 1 }
+                },
+                text: [truthEff.toFixed(1) + '%', brainEff.toFixed(1) + '%'],
+                textposition: 'auto',
+                xaxis: 'x2',
+                yaxis: 'y2',
+                showlegend: false
+            },
+            // Power comparison subplot
+            {
+                x: ['Ground Truth', 'Brain Prediction'],
+                y: [truthPower, brainPower],
+                type: 'bar',
+                name: 'Power (kW)',
+                marker: { 
+                    color: ['rgba(153, 102, 255, 0.8)', 'rgba(255, 205, 86, 0.8)'],
+                    line: { color: ['rgba(153, 102, 255, 1.0)', 'rgba(255, 205, 86, 1.0)'], width: 1 }
+                },
+                text: [truthPower.toFixed(1) + ' kW', brainPower.toFixed(1) + ' kW'],
+                textposition: 'auto',
+                xaxis: 'x3',
+                yaxis: 'y3',
+                showlegend: false
             }
-        ]
+        ],
+        layout: {
+            title: {
+                text: `Performance Calibration: ${chartData.point_labels[0] || 'Truth vs Brain Comparison'}`,
+                font: { size: 18, color: '#2c3e50' }
+            },
+            // Define three subplots side by side
+            xaxis: { 
+                domain: [0, 0.3], 
+                anchor: 'y',
+                title: 'Head Comparison'
+            },
+            xaxis2: { 
+                domain: [0.35, 0.65], 
+                anchor: 'y2',
+                title: 'Efficiency Comparison'
+            },
+            xaxis3: { 
+                domain: [0.7, 1.0], 
+                anchor: 'y3',
+                title: 'Power Comparison'
+            },
+            yaxis: { 
+                domain: [0, 1], 
+                anchor: 'x',
+                title: 'Head (m)'
+            },
+            yaxis2: { 
+                domain: [0, 1], 
+                anchor: 'x2',
+                title: 'Efficiency (%)'
+            },
+            yaxis3: { 
+                domain: [0, 1], 
+                anchor: 'x3',
+                title: 'Power (kW)'
+            },
+            showlegend: false,
+            margin: { l: 60, r: 60, t: 100, b: 80 },
+            annotations: [
+                // Calculate delta percentages for display
+                {
+                    text: `Δ: ${((brainHead - truthHead) / truthHead * 100).toFixed(1)}%`,
+                    x: 0.15,
+                    y: 0.95,
+                    xref: 'paper',
+                    yref: 'paper',
+                    showarrow: false,
+                    font: { size: 12, color: brainHead > truthHead ? '#d32f2f' : '#388e3c' }
+                },
+                {
+                    text: `Δ: ${((brainEff - truthEff) / truthEff * 100).toFixed(1)}%`,
+                    x: 0.5,
+                    y: 0.95,
+                    xref: 'paper',
+                    yref: 'paper',
+                    showarrow: false,
+                    font: { size: 12, color: brainEff > truthEff ? '#d32f2f' : '#388e3c' }
+                },
+                {
+                    text: `Δ: ${((brainPower - truthPower) / truthPower * 100).toFixed(1)}%`,
+                    x: 0.85,
+                    y: 0.95,
+                    xref: 'paper',
+                    yref: 'paper',
+                    showarrow: false,
+                    font: { size: 12, color: brainPower > truthPower ? '#d32f2f' : '#388e3c' }
+                }
+            ]
+        }
     };
 
-    Plotly.newPlot('comparison-chart-container', traces, layout, {
+    Plotly.newPlot('comparison-chart-container', fig.data, fig.layout, {
         responsive: true,
         displayModeBar: true,
-        modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d', 'autoScale2d']
+        modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d']
     });
 });
 {% endif %}
