@@ -1,0 +1,25 @@
+INFO:app.pump_repository:Repository: Total points: 6273
+INFO:app.pump_repository:Repository: NPSH curves: 612
+INFO:app.pump_repository:Repository: Tables used: ['ai_prompts', 'engineering_constants', 'extras', 'processed_files', 'pump_bep_markers', 'pump_curves', 'pump_diameters', 'pump_eff_iso', 'pump_names', 'pump_performance_points', 'pump_specifications', 'pump_speeds', 'pumps']
+INFO:app.pump_brain:Brain: Generated pump list with 386 pumps
+WARNING:app.pump_brain:Brain.get_all_pump_codes took 1273.49ms
+INFO:werkzeug:10.83.1.13 - - [21/Aug/2025 15:42:22] "GET /api/pump_list HTTP/1.1" 200 -
+INFO:werkzeug:10.83.7.238 - - [21/Aug/2025 15:44:24] "GET /admin/pump-calibration/10%2F12%20BLE HTTP/1.1" 404 -
+INFO:werkzeug:10.83.7.238 - - [21/Aug/2025 15:44:39] "GET /admin/brain HTTP/1.1" 200 -
+INFO:werkzeug:10.83.9.154 - - [21/Aug/2025 15:44:40] "GET /admin/brain HTTP/1.1" 200 -
+INFO:werkzeug:10.83.9.154 - - [21/Aug/2025 15:44:40] "GET /admin/brain HTTP/1.1" 200 -
+INFO:werkzeug:10.83.9.154 - - [21/Aug/2025 15:44:41] "GET /static/css/style.css?v=2308 HTTP/1.1" 200 -
+INFO:werkzeug:10.83.7.238 - - [21/Aug/2025 15:44:41] "GET /static/css/professional-theme.css?v=9109 HTTP/1.1" 200 -
+INFO:werkzeug:10.83.9.154 - - [21/Aug/2025 15:44:41] "GET /static/css/floating-ai-chat.css?v=7453 HTTP/1.1" 200 -
+INFO:werkzeug:10.83.0.114 - - [21/Aug/2025 15:44:41] "GET /static/css/responsive-fixes.css?v=9405 HTTP/1.1" 200 -
+INFO:werkzeug:10.83.0.114 - - [21/Aug/2025 15:44:41] "GET /static/css/admin_executive_theme.css?v=2741 HTTP/1.1" 200 -
+INFO:werkzeug:10.83.5.158 - - [21/Aug/2025 15:44:41] "GET /static/css/admin_theme.css?v=1950 HTTP/1.1" 200 -
+INFO:werkzeug:10.83.5.158 - - [21/Aug/2025 15:44:42] "GET /static/js/admin.js?v=8599 HTTP/1.1" 200 -
+INFO:werkzeug:10.83.7.238 - - [21/Aug/2025 15:44:42] "GET /static/js/main.js HTTP/1.1" 304 -
+INFO:werkzeug:10.83.0.114 - - [21/Aug/2025 15:44:42] "GET /static/js/icon-loader.js HTTP/1.1" 304 -
+INFO:werkzeug:10.83.9.154 - - [21/Aug/2025 15:44:42] "GET /static/js/force-icon-refresh.js HTTP/1.1" 304 -
+INFO:werkzeug:10.83.0.114 - - [21/Aug/2025 15:44:42] "GET /static/js/micro-interactions.js HTTP/1.1" 304 -
+INFO:werkzeug:10.83.0.114 - - [21/Aug/2025 15:44:42] "GET /static/js/floating-ai-chat.js HTTP/1.1" 304 -
+INFO:werkzeug:10.83.9.154 - - [21/Aug/2025 15:44:43] "GET /api/features/status HTTP/1.1" 200 -
+INFO:werkzeug:10.83.0.114 - - [21/Aug/2025 15:44:43] "GET /api/pump_list HTTP/1.1" 200 -
+INFO:werkzeug:10.83.9.154 - - [21/Aug/2025 15:44:55] "GET /admin/pump-calibration/10%2F12%20BLE HTTP/1.1" 404 -

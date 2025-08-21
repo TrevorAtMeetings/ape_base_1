@@ -794,7 +794,7 @@ class ManufacturerComparisonEngine:
                 
         return insights
 
-@brain_admin_bp.route('/admin/pump-calibration/<pump_code>')
+@brain_admin_bp.route('/admin/pump-calibration/<path:pump_code>')
 def pump_calibration_workbench(pump_code):
     """Display the calibration workbench for a specific pump"""
     import re
@@ -802,8 +802,8 @@ def pump_calibration_workbench(pump_code):
     from flask import session
     
     try:
-        # Validate and sanitize pump_code (allow spaces for pump codes like "100-200 2F")
-        if not re.match(r'^[a-zA-Z0-9_\-\s]+$', pump_code):
+        # Validate and sanitize pump_code (allow spaces and slashes for pump codes like "10/12 BLE")
+        if not re.match(r'^[a-zA-Z0-9_\-\s/]+$', pump_code):
             logger.warning(f"Invalid pump code format attempted: {pump_code}")
             flash('Invalid pump code format', 'error')
             return redirect(url_for('brain_admin.brain_dashboard'))
@@ -843,15 +843,15 @@ def pump_calibration_workbench(pump_code):
         flash(f'Error loading calibration workbench: {str(e)}', 'error')
         return redirect(url_for('brain_admin.brain_dashboard'))
 
-@brain_admin_bp.route('/admin/pump-calibration/<pump_code>/analyze', methods=['POST'])
+@brain_admin_bp.route('/admin/pump-calibration/<path:pump_code>/analyze', methods=['POST'])
 def analyze_pump_calibration(pump_code):
     """Process multiple ground truth points and return comparison data"""
     import re
     from flask import session
     
     try:
-        # Validate and sanitize pump_code to prevent injection attacks (allow spaces)
-        if not re.match(r'^[a-zA-Z0-9_\-\s]+$', pump_code):
+        # Validate and sanitize pump_code to prevent injection attacks (allow spaces and slashes)
+        if not re.match(r'^[a-zA-Z0-9_\-\s/]+$', pump_code):
             logger.warning(f"Invalid pump code format attempted: {pump_code}")
             return jsonify({'error': 'Invalid pump code format'}), 400
         
@@ -992,7 +992,7 @@ def validate_calibration_point():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@brain_admin_bp.route('/api/pump-calibration/export/<pump_code>', methods=['GET'])
+@brain_admin_bp.route('/api/pump-calibration/export/<path:pump_code>', methods=['GET'])
 def export_calibration_results(pump_code):
     """Export calibration results as CSV for documentation"""
     try:
