@@ -551,31 +551,32 @@ class ManufacturerComparisonEngine:
     def __init__(self):
         self.logger = logging.getLogger(__name__)
         
-    def process_calibration_data(self, pump_code, ground_truth_points):
+    def process_calibration_data(self, pump_code, ground_truth_points, pump_repo=None):
         """
         Main processing flow for multi-point calibration
         
         Args:
             pump_code: Pump identifier
             ground_truth_points: List of dicts with flow, head, efficiency, power
+            pump_repo: Optional PumpRepository instance (will use singleton if not provided)
             
         Returns:
             Dict with comparison results, metrics, and insights
         """
         from ..pump_brain import PumpBrain
-        from ..pump_repository import PumpRepository
+        from ..pump_repository import get_pump_repository
         import numpy as np
         
-        # Get pump data
-        pump_repo = PumpRepository()
-        pump_repo.load_catalog()
+        # Use singleton pattern for repository
+        if pump_repo is None:
+            pump_repo = get_pump_repository()
+            self.logger.info("Using singleton pump repository instance")
+        
+        # Efficient pump lookup using dictionary
         pump_models = pump_repo.get_pump_models()
-        pump_data = None
-        for pump in pump_models:
-            if pump['pump_code'] == pump_code:
-                pump_data = pump
-                break
-                
+        pump_dict = {pump['pump_code']: pump for pump in pump_models}
+        pump_data = pump_dict.get(pump_code)
+        
         if not pump_data:
             raise ValueError(f"Pump {pump_code} not found in repository")
             
@@ -668,7 +669,7 @@ class ManufacturerComparisonEngine:
                 'max_delta': max(power_deltas, key=abs) if power_deltas else 0,
                 'std_dev': np.std(power_deltas) if power_deltas else 0
             },
-            'overall_accuracy': 100 - (abs(np.mean(efficiency_deltas + power_deltas)) if (efficiency_deltas + power_deltas) else 0),
+            'overall_accuracy': 100 - np.mean([abs(d) for d in efficiency_deltas + power_deltas]) if (efficiency_deltas + power_deltas) else 100,
             'point_count': len(comparison_results)
         }
         
@@ -722,7 +723,17 @@ class ManufacturerComparisonEngine:
 @brain_admin_bp.route('/admin/pump-calibration/<pump_code>')
 def pump_calibration_workbench(pump_code):
     """Display the calibration workbench for a specific pump"""
+    import re
+    import secrets
+    from flask import session
+    
     try:
+        # Validate and sanitize pump_code
+        if not re.match(r'^[a-zA-Z0-9_\-]+$', pump_code):
+            logger.warning(f"Invalid pump code format attempted: {pump_code}")
+            flash('Invalid pump code format', 'error')
+            return redirect(url_for('brain_admin.brain_dashboard'))
+        
         # Build breadcrumbs
         breadcrumbs = [
             {'text': 'Home', 'url': url_for('main_flow.index'), 'icon': 'home'},
@@ -730,24 +741,28 @@ def pump_calibration_workbench(pump_code):
             {'text': 'Pump Calibration', 'url': '', 'icon': 'tune'}
         ]
         
-        # Get pump details
-        pump_repo = PumpRepository()
-        pump_repo.load_catalog()
+        # Get pump details using singleton pattern
+        from ..pump_repository import get_pump_repository
+        pump_repo = get_pump_repository()
         pump_models = pump_repo.get_pump_models()
-        pump_data = None
-        for pump in pump_models:
-            if pump['pump_code'] == pump_code:
-                pump_data = pump
-                break
-                
+        
+        # Efficient pump lookup using dictionary
+        pump_dict = {pump['pump_code']: pump for pump in pump_models}
+        pump_data = pump_dict.get(pump_code)
+        
         if not pump_data:
             flash(f'Pump {pump_code} not found', 'error')
             return redirect(url_for('brain_admin.brain_dashboard'))
+        
+        # Generate CSRF token for the session
+        if 'csrf_token' not in session:
+            session['csrf_token'] = secrets.token_hex(16)
             
         return render_template('admin/pump_calibration.html',
                              pump_code=pump_code,
                              pump_data=pump_data,
-                             breadcrumbs=breadcrumbs)
+                             breadcrumbs=breadcrumbs,
+                             csrf_token=session.get('csrf_token'))
                              
     except Exception as e:
         logger.error(f"Error loading pump calibration workbench: {e}")
@@ -757,27 +772,74 @@ def pump_calibration_workbench(pump_code):
 @brain_admin_bp.route('/admin/pump-calibration/<pump_code>/analyze', methods=['POST'])
 def analyze_pump_calibration(pump_code):
     """Process multiple ground truth points and return comparison data"""
+    import re
+    from flask import session
+    
     try:
+        # Validate and sanitize pump_code to prevent injection attacks
+        if not re.match(r'^[a-zA-Z0-9_\-]+$', pump_code):
+            logger.warning(f"Invalid pump code format attempted: {pump_code}")
+            return jsonify({'error': 'Invalid pump code format'}), 400
+        
         # Parse the performance data points
         data = request.get_json() if request.is_json else request.form
         
-        # Extract performance points from form data
+        # CSRF Protection: Validate token for non-JSON requests
+        if not request.is_json:
+            csrf_token = data.get('csrf_token')
+            if not csrf_token or csrf_token != session.get('csrf_token'):
+                logger.warning(f"CSRF token validation failed for pump calibration")
+                return jsonify({'error': 'Invalid CSRF token'}), 403
+        
+        # Extract performance points from form data with robust validation
         ground_truth_points = []
-        point_count = int(data.get('point_count', 0))
+        
+        try:
+            point_count = int(data.get('point_count', 0))
+            if point_count < 0 or point_count > 100:  # Reasonable limit
+                return jsonify({'error': 'Invalid point count'}), 400
+        except (ValueError, TypeError):
+            return jsonify({'error': 'Invalid point count format'}), 400
         
         for i in range(point_count):
-            flow = data.get(f'flow_{i}')
-            head = data.get(f'head_{i}')
-            efficiency = data.get(f'efficiency_{i}')
-            power = data.get(f'power_{i}')
-            
-            if flow and head and efficiency and power:
-                ground_truth_points.append({
-                    'flow': float(flow),
-                    'head': float(head),
-                    'efficiency': float(efficiency),
-                    'power': float(power)
-                })
+            try:
+                # Safely extract and validate each parameter
+                flow_str = data.get(f'flow_{i}')
+                head_str = data.get(f'head_{i}')
+                efficiency_str = data.get(f'efficiency_{i}')
+                power_str = data.get(f'power_{i}')
+                
+                if flow_str and head_str and efficiency_str and power_str:
+                    # Safe conversion with validation
+                    flow = float(flow_str)
+                    head = float(head_str)
+                    efficiency = float(efficiency_str)
+                    power = float(power_str)
+                    
+                    # Validate ranges
+                    if flow <= 0 or flow > 50000:  # Max 50,000 m³/hr is reasonable
+                        logger.warning(f"Flow value out of range: {flow}")
+                        continue
+                    if head <= 0 or head > 5000:  # Max 5,000m head is reasonable
+                        logger.warning(f"Head value out of range: {head}")
+                        continue
+                    if efficiency <= 0 or efficiency > 100:
+                        logger.warning(f"Efficiency value out of range: {efficiency}")
+                        continue
+                    if power <= 0 or power > 100000:  # Max 100MW is reasonable
+                        logger.warning(f"Power value out of range: {power}")
+                        continue
+                    
+                    ground_truth_points.append({
+                        'flow': flow,
+                        'head': head,
+                        'efficiency': efficiency,
+                        'power': power
+                    })
+                    
+            except (ValueError, TypeError) as e:
+                logger.warning(f"Invalid input data at point {i}: {e}")
+                continue  # Skip invalid points
                 
         if not ground_truth_points:
             return jsonify({'error': 'No valid performance points provided'}), 400

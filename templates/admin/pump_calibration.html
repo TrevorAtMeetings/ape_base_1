@@ -401,6 +401,8 @@ document.addEventListener('DOMContentLoaded', function() {
             <p class="grey-text">Enter manufacturer datasheet performance points for comparison</p>
             
             <form id="calibration-form" action="/admin/pump-calibration/{{ pump_code }}/analyze" method="POST">
+                <!-- CSRF Protection -->
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                 <input type="hidden" id="point_count" name="point_count" value="0">
                 
                 <table class="striped responsive-table data-entry-table">
