@@ -179,11 +179,11 @@
                     <p>Compare Brain selections against manufacturer recommendations. Upload datasheets, analyze differences, and identify opportunities for improvement.</p>
                 </div>
                 <div class="card-action">
-                    <a href="{{ url_for('brain_admin.brain_workbench') }}" class="btn blue">
+                    <a href="#" onclick="showPumpSelector()" class="btn blue">
                         Comparison Tool
                     </a>
-                    <a href="#" onclick="showPumpSelector()" class="btn-flat blue-text">
-                        Calibrate Pump
+                    <a href="{{ url_for('brain_admin.brain_workbench') }}" class="btn-flat blue-text">
+                        Logic Workbench
                     </a>
                 </div>
             </div>
@@ -218,35 +218,103 @@
 {% block scripts %}
 {{ super() }}
 <script>
+// Fix dropdown initialization
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Initializing Brain Dashboard dropdowns...');
+    
+    // Initialize all dropdowns with proper options
+    setTimeout(function() {
+        var dropdownElems = document.querySelectorAll('.dropdown-button');
+        dropdownElems.forEach(function(elem) {
+            if (!elem.M_Dropdown) {
+                M.Dropdown.init(elem, {
+                    constrainWidth: false,
+                    coverTrigger: false,
+                    alignment: 'left',
+                    hover: false
+                });
+            }
+        });
+        console.log('Initialized', dropdownElems.length, 'dropdown buttons');
+    }, 100);
+});
+
 function runQuickCalibration() {
     alert('Quick calibration test will be implemented soon');
 }
 
 function showPumpSelector() {
-    // Create a modal for pump selection
+    // Create a modal for pump selection with more pumps
     const modalHtml = `
-        <div id="pump-selector-modal" class="modal">
+        <div id="pump-selector-modal" class="modal modal-fixed-footer" style="max-height: 85%; height: 600px;">
             <div class="modal-content">
-                <h4>Select Pump for Calibration</h4>
-                <p>Enter the pump code to open its calibration workbench:</p>
-                <div class="input-field">
-                    <input type="text" id="pump-code-input" placeholder="e.g., 4503-44648">
-                    <label for="pump-code-input">Pump Code</label>
-                </div>
+                <h4>Select Pump for Manufacturer Comparison</h4>
+                <p>This tool allows you to compare Brain predictions against manufacturer data, perform multi-point calibration, and analyze performance curves.</p>
+                
                 <div class="row">
                     <div class="col s12">
-                        <p class="grey-text">Or select from recent pumps:</p>
-                        <div class="collection">
-                            <a href="/admin/pump-calibration/4503-44648" class="collection-item">4503-44648 - 6x8x10 WL</a>
-                            <a href="/admin/pump-calibration/4502-42848" class="collection-item">4502-42848 - 6x8x10 WLN</a>
-                            <a href="/admin/pump-calibration/2502-55" class="collection-item">2502-55 - 10 WLN 32A</a>
+                        <div class="input-field">
+                            <i class="material-icons prefix">search</i>
+                            <input type="text" id="pump-code-input" placeholder="e.g., 4503-44648" onkeyup="filterPumpList()" autocomplete="off">
+                            <label for="pump-code-input">Search or Enter Pump Code</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col s12">
+                        <h6 class="grey-text">Available Pumps for Calibration:</h6>
+                        <div class="collection" id="pump-list" style="max-height: 350px; overflow-y: auto;">
+                            <a href="/admin/pump-calibration/4503-44648" class="collection-item">
+                                <span class="badge blue white-text">WL Series</span>
+                                <strong>4503-44648</strong> - 6x8x10 WL
+                            </a>
+                            <a href="/admin/pump-calibration/4502-42848" class="collection-item">
+                                <span class="badge blue white-text">WLN Series</span>
+                                <strong>4502-42848</strong> - 6x8x10 WLN
+                            </a>
+                            <a href="/admin/pump-calibration/2502-55" class="collection-item">
+                                <span class="badge blue white-text">WLN Series</span>
+                                <strong>2502-55</strong> - 10 WLN 32A
+                            </a>
+                            <a href="/admin/pump-calibration/2502-51" class="collection-item">
+                                <span class="badge blue white-text">WLN Series</span>
+                                <strong>2502-51</strong> - 10 WLN 26A
+                            </a>
+                            <a href="/admin/pump-calibration/502-62" class="collection-item">
+                                <span class="badge green white-text">HC Series</span>
+                                <strong>502-62</strong> - 28 HC 6P
+                            </a>
+                            <a href="/admin/pump-calibration/502-66" class="collection-item">
+                                <span class="badge green white-text">HC Series</span>
+                                <strong>502-66</strong> - 30 HC 6P
+                            </a>
+                            <a href="/admin/pump-calibration/502-67" class="collection-item">
+                                <span class="badge green white-text">HC Series</span>
+                                <strong>502-67</strong> - 32 HC 6P
+                            </a>
+                            <a href="/admin/pump-calibration/505-7" class="collection-item">
+                                <span class="badge orange white-text">NHTB Series</span>
+                                <strong>505-7</strong> - 10 NHTB
+                            </a>
+                            <a href="/admin/pump-calibration/503-85" class="collection-item">
+                                <span class="badge purple white-text">V Series</span>
+                                <strong>503-85</strong> - 8V 5S
+                            </a>
+                            <a href="/admin/pump-calibration/503-86" class="collection-item">
+                                <span class="badge purple white-text">V Series</span>
+                                <strong>503-86</strong> - 10V 5S
+                            </a>
                         </div>
                     </div>
                 </div>
             </div>
             <div class="modal-footer">
                 <a href="#!" class="modal-close waves-effect waves-red btn-flat">Cancel</a>
-                <a href="#!" onclick="navigateToCalibration()" class="waves-effect waves-green btn-flat">Open Calibration</a>
+                <a href="#!" onclick="navigateToCalibration()" class="waves-effect waves-green btn blue">
+                    <i class="material-icons left">compare_arrows</i>
+                    Open Calibration Workbench
+                </a>
             </div>
         </div>
     `;
@@ -258,7 +326,7 @@ function showPumpSelector() {
     
     // Initialize and open modal
     const modal = document.getElementById('pump-selector-modal');
-    const instance = M.Modal.init(modal);
+    const instance = M.Modal.init(modal, {dismissible: true});
     instance.open();
     
     // Focus on input
@@ -267,13 +335,38 @@ function showPumpSelector() {
     }, 100);
 }
 
+function filterPumpList() {
+    const input = document.getElementById('pump-code-input');
+    const filter = input.value.toUpperCase();
+    const pumpList = document.getElementById('pump-list');
+    const items = pumpList.getElementsByClassName('collection-item');
+    
+    for (let i = 0; i < items.length; i++) {
+        const txtValue = items[i].textContent || items[i].innerText;
+        if (txtValue.toUpperCase().indexOf(filter) > -1) {
+            items[i].style.display = "";
+        } else {
+            items[i].style.display = "none";
+        }
+    }
+}
+
 function navigateToCalibration() {
     const pumpCode = document.getElementById('pump-code-input').value.trim();
     if (pumpCode) {
         window.location.href = `/admin/pump-calibration/${pumpCode}`;
     } else {
-        M.toast({html: 'Please enter a pump code', classes: 'red'});
+        M.toast({html: 'Please enter a pump code or select from the list', classes: 'red'});
     }
 }
+
+// Allow Enter key to navigate
+document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('keypress', function(e) {
+        if (e.target && e.target.id === 'pump-code-input' && e.key === 'Enter') {
+            navigateToCalibration();
+        }
+    });
+});
 </script>
 {% endblock %}
