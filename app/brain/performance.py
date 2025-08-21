@@ -556,6 +556,145 @@ class PerformanceAnalyzer:
             logger.error(f"[CURVE CALC ERROR] {pump_code}: {e}")
             return None
     
+    def calculate_at_diameter(self, pump_data: Dict[str, Any], flow: float, 
+                             diameter_mm: float) -> Optional[Dict[str, Any]]:
+        """
+        PURE VALIDATION: Calculate pump performance at a specific diameter WITHOUT optimization.
+        
+        This method is specifically for validation/calibration purposes where we need to
+        predict what the pump would deliver at an exact, user-specified diameter.
+        NO trimming optimization is performed - we use exactly the diameter provided.
+        
+        Args:
+            pump_data: Pump data with curves
+            flow: Operating flow rate (m³/hr)
+            diameter_mm: EXACT impeller diameter to use (mm) - no optimization
+            
+        Returns:
+            Performance data at the specified flow and diameter, including:
+            - head_m: Predicted head at this flow/diameter combination
+            - efficiency_pct: Efficiency at this operating point
+            - power_kw: Power consumption
+            - diameter_mm: The exact diameter used (same as input)
+        """
+        try:
+            pump_code = pump_data.get('pump_code', 'Unknown')
+            logger.info(f"[VALIDATION] {pump_code}: Calculating at exact diameter {diameter_mm}mm for {flow} m³/hr")
+            
+            curves = pump_data.get('curves', [])
+            if not curves:
+                logger.warning(f"[VALIDATION] {pump_code}: No curves available")
+                return None
+            
+            # Find the largest available curve as our reference
+            largest_curve = None
+            largest_diameter = 0
+            
+            for curve in curves:
+                curve_diameter = curve.get('impeller_diameter_mm', 0)
+                if curve_diameter > largest_diameter:
+                    largest_diameter = curve_diameter
+                    largest_curve = curve
+            
+            if not largest_curve or largest_diameter <= 0:
+                logger.warning(f"[VALIDATION] {pump_code}: No valid reference curve found")
+                return None
+            
+            # Get performance points from the largest curve
+            curve_points = largest_curve.get('performance_points', [])
+            if not curve_points or len(curve_points) < 2:
+                logger.warning(f"[VALIDATION] {pump_code}: Insufficient points in reference curve")
+                return None
+            
+            # Extract flow-head data from the reference curve
+            flows = []
+            heads = []
+            efficiencies = []
+            for point in curve_points:
+                if 'flow_m3hr' in point and 'head_m' in point:
+                    flows.append(point['flow_m3hr'])
+                    heads.append(point['head_m'])
+                    if 'efficiency_pct' in point:
+                        efficiencies.append(point['efficiency_pct'])
+            
+            if len(flows) < 2:
+                logger.warning(f"[VALIDATION] {pump_code}: Insufficient valid points")
+                return None
+            
+            # Sort for interpolation
+            sorted_points = sorted(zip(flows, heads), key=lambda p: p[0])
+            flows_sorted, heads_sorted = zip(*sorted_points)
+            
+            # Check if flow is within reasonable range
+            min_flow = min(flows_sorted) * 0.5
+            max_flow = max(flows_sorted) * 1.5
+            if flow < min_flow or flow > max_flow:
+                logger.warning(f"[VALIDATION] {pump_code}: Flow {flow} outside reasonable range [{min_flow:.1f}, {max_flow:.1f}]")
+                # Continue anyway for validation purposes
+            
+            # Interpolate head at the reference diameter and flow
+            from scipy import interpolate
+            head_interp = interpolate.interp1d(flows_sorted, heads_sorted, 
+                                             kind='linear', fill_value='extrapolate', 
+                                             bounds_error=False)
+            reference_head = float(head_interp(flow))
+            
+            if np.isnan(reference_head) or reference_head <= 0:
+                logger.error(f"[VALIDATION] {pump_code}: Invalid interpolated head")
+                return None
+            
+            # Apply affinity laws to scale from reference diameter to target diameter
+            # Head varies with square of diameter ratio: H2 = H1 * (D2/D1)^2
+            diameter_ratio = diameter_mm / largest_diameter
+            predicted_head = reference_head * (diameter_ratio ** 2)
+            
+            logger.info(f"[VALIDATION] {pump_code}: Reference {largest_diameter}mm @ {flow} m³/hr = {reference_head:.2f}m")
+            logger.info(f"[VALIDATION] {pump_code}: Scaled to {diameter_mm}mm = {predicted_head:.2f}m (ratio: {diameter_ratio:.3f})")
+            
+            # Calculate efficiency (simplified - would degrade slightly with trim)
+            base_efficiency = 75.0  # Default
+            if efficiencies and len(efficiencies) == len(flows):
+                sorted_eff = sorted(zip(flows, efficiencies), key=lambda p: p[0])
+                flows_eff, effs_sorted = zip(*sorted_eff)
+                eff_interp = interpolate.interp1d(flows_eff, effs_sorted, 
+                                                kind='linear', fill_value='extrapolate',
+                                                bounds_error=False)
+                base_efficiency = float(eff_interp(flow))
+                if np.isnan(base_efficiency):
+                    base_efficiency = 75.0
+            
+            # Efficiency degrades slightly with excessive trimming
+            if diameter_ratio < 0.85:  # More than 15% trim
+                efficiency_penalty = (0.85 - diameter_ratio) * 20  # 20% penalty per 15% extra trim
+                efficiency = max(base_efficiency - efficiency_penalty, 40)
+            else:
+                efficiency = base_efficiency
+            
+            # Calculate power using affinity laws
+            # Power varies with cube of diameter ratio: P2 = P1 * (D2/D1)^3
+            reference_power = (flow * reference_head * 9.81) / (3600 * base_efficiency / 100 * 10)
+            predicted_power = reference_power * (diameter_ratio ** 3)
+            
+            # Calculate trim percentage for reference
+            trim_percent = (1 - diameter_ratio) * 100
+            
+            return {
+                'flow_m3hr': flow,
+                'head_m': predicted_head,
+                'efficiency_pct': efficiency,
+                'power_kw': predicted_power,
+                'diameter_mm': diameter_mm,  # Return the exact diameter used
+                'trim_percent': trim_percent,
+                'reference_diameter_mm': largest_diameter,
+                'diameter_ratio': diameter_ratio,
+                'calculation_method': 'pure_validation',
+                'note': f'Validation at {diameter_mm}mm (no optimization)'
+            }
+            
+        except Exception as e:
+            logger.error(f"[VALIDATION ERROR] Error calculating at diameter: {e}")
+            return None
+    
     def calculate_at_point_industry_standard(self, pump_data: Dict[str, Any], flow: float, 
                           head: float, impeller_trim: Optional[float] = None) -> Optional[Dict[str, Any]]:
         """

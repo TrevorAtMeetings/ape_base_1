@@ -603,16 +603,26 @@ class ManufacturerComparisonEngine:
                     actual_flow = bep_flow * (qbep_percent / 100.0)
                     self.logger.info(f"Using QBep% {qbep_percent}% -> Flow = {actual_flow:.1f} m³/hr (BEP = {bep_flow:.1f})")
                 
-                # CRITICAL: Use calculate_performance_at_flow to get Brain's actual prediction
-                # This gives us what the brain thinks the pump would deliver at this flow
-                brain_prediction = brain.performance.calculate_performance_at_flow(
-                    pump_data, 
-                    actual_flow,
-                    allow_excessive_trim=True  # Allow comparison even at extreme flows
-                )
+                # PURE VALIDATION: Use calculate_at_diameter to get Brain's prediction at EXACT diameter
+                # This is the core of the validation interface - no optimization, just pure comparison
+                if point.get('diameter'):
+                    # User provided diameter - this is MANDATORY for validation
+                    brain_prediction = brain.performance.calculate_at_diameter(
+                        pump_data, 
+                        actual_flow,
+                        point['diameter']  # Use EXACT diameter specified by user
+                    )
+                    
+                    if brain_prediction:
+                        self.logger.info(f"[PURE VALIDATION] {pump_code}: Brain prediction at {actual_flow} m³/hr with {point['diameter']}mm diameter")
+                else:
+                    # NO DIAMETER PROVIDED - This should be an error in pure validation mode
+                    self.logger.error(f"[VALIDATION ERROR] {pump_code}: No diameter provided for validation point")
+                    # Skip this point - diameter is mandatory
+                    continue
                 
                 if brain_prediction:
-                    # Now we have the brain's prediction at this flow point
+                    # Now we have the brain's prediction at the EXACT diameter specified
                     # Compare it to the manufacturer's actual data
                     brain_head = brain_prediction.get('head_m', 0)
                     brain_efficiency = brain_prediction.get('efficiency_pct', 0)
@@ -1143,6 +1153,75 @@ def validate_calibration_point():
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+@brain_admin_bp.route('/admin/pump-calibration/<path:pump_code>/flag-review', methods=['POST'])
+def flag_calibration_for_review(pump_code):
+    """
+    Flag a calibration discrepancy for engineering review.
+    This is triggered when the user is certain their data is correct,
+    indicating a potential fundamental error in the pump database.
+    """
+    import json
+    from flask import session
+    
+    try:
+        # Validate CSRF token
+        csrf_token = request.form.get('csrf_token')
+        if not csrf_token or csrf_token != session.get('csrf_token'):
+            logger.warning(f"CSRF token validation failed for flag review")
+            flash('Security validation failed. Please try again.', 'error')
+            return redirect(url_for('brain_admin.pump_calibration', pump_code=pump_code))
+        
+        # Get the calibration data
+        calibration_data = request.form.get('calibration_data')
+        if calibration_data:
+            try:
+                calibration_results = json.loads(calibration_data)
+            except json.JSONDecodeError:
+                calibration_results = {}
+        else:
+            calibration_results = {}
+        
+        # Create a high-priority engineering ticket
+        # In a real system, this would integrate with Jira, GitHub Issues, etc.
+        ticket_data = {
+            'priority': 'CRITICAL',
+            'type': 'DATA_INTEGRITY_ISSUE',
+            'pump_code': pump_code,
+            'reported_by': session.get('user_id', 'unknown_user'),
+            'timestamp': datetime.now().isoformat(),
+            'calibration_data': calibration_results,
+            'description': f'Critical discrepancy detected for pump {pump_code}. User confirmed their ground truth data is correct, indicating potential database errors.'
+        }
+        
+        # Log the critical issue
+        logger.critical(f"[DATA INTEGRITY] Pump {pump_code} flagged for engineering review")
+        logger.critical(f"[DATA INTEGRITY] Ticket data: {json.dumps(ticket_data, indent=2)}")
+        
+        # In production, this would create an actual ticket in the tracking system
+        # For now, we'll store it in a tracking file
+        import os
+        tickets_dir = os.path.join(os.path.dirname(__file__), '..', '..', 'data_integrity_tickets')
+        os.makedirs(tickets_dir, exist_ok=True)
+        
+        ticket_filename = f"{pump_code.replace('/', '_')}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        ticket_path = os.path.join(tickets_dir, ticket_filename)
+        
+        with open(ticket_path, 'w') as f:
+            json.dump(ticket_data, f, indent=2)
+        
+        # Flash success message
+        flash(f'Thank you. This discrepancy has been flagged for review by our engineering team. '
+              f'Pump model {pump_code} cannot be calibrated until the source data is verified. '
+              f'Ticket ID: {ticket_filename}', 'warning')
+        
+        # Redirect back to the brain dashboard
+        return redirect(url_for('brain_admin.brain_dashboard'))
+        
+    except Exception as e:
+        logger.error(f"Error flagging calibration for review: {e}")
+        flash('Error creating engineering review ticket. Please contact support.', 'error')
+        return redirect(url_for('brain_admin.pump_calibration', pump_code=pump_code))
 
 @brain_admin_bp.route('/api/pump-calibration/export/<path:pump_code>', methods=['GET'])
 def export_calibration_results(pump_code):

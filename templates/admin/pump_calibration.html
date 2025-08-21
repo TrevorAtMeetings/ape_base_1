@@ -638,8 +638,8 @@ function addDataRow() {
                    data-row-id="${newRowId}">
         </td>
         <td>
-            <input type="number" name="diameter_${newRowId}" step="0.1"
-                   class="validate" min="50" max="1000" placeholder="e.g., 305"
+            <input type="number" name="diameter_${newRowId}" step="0.1" required
+                   class="validate" min="50" max="1000" placeholder="REQUIRED (e.g., 390)"
                    data-row-id="${newRowId}">
         </td>
         <td>
@@ -1205,7 +1205,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             <th id="head-header">Head (m)</th>
                             <th>Efficiency (%)</th>
                             <th id="power-header">Power (kW)<br><span class="grey-text" style="font-size: 0.8em">(Optional)</span></th>
-                            <th>Diameter (mm)<br><span class="grey-text" style="font-size: 0.8em">(Optional)</span></th>
+                            <th>Diameter (mm)<br><span class="red-text" style="font-size: 0.8em; font-weight: bold">*REQUIRED</span></th>
                             <th>QBep %<br><span class="grey-text" style="font-size: 0.8em">(Optional)</span></th>
                             <th>Actions</th>
                         </tr>
@@ -1230,151 +1230,121 @@ document.addEventListener('DOMContentLoaded', function() {
     </div>
     
     {% if calibration_results %}
-    <!-- Results Section -->
+    <!-- PURE VALIDATION INTERFACE -->
     <div class="card">
         <div class="card-content">
             <span class="card-title">
-                <i class="material-icons left">assessment</i>
-                Calibration Analysis Results
+                <i class="material-icons left">warning</i>
+                Validation Results - Critical Discrepancy Detected
             </span>
             
-            <!-- Metrics Summary -->
-            <div class="metrics-card">
+            <!-- Stark Comparison Display -->
+            <div style="background: #fff3e0; border: 2px solid #ff9800; border-radius: 8px; padding: 20px; margin: 20px 0;">
+                <h5 style="color: #e65100; margin-bottom: 20px;">
+                    <i class="material-icons left">compare_arrows</i>
+                    Direct Comparison at Specified Diameter
+                </h5>
+                
+                <!-- Pure Validation Comparison Table -->
+                <table class="striped highlight">
+                    <thead>
+                        <tr style="background: #f5f5f5;">
+                            <th>Test Point</th>
+                            <th>Your Ground Truth</th>
+                            <th>Brain's Prediction</th>
+                            <th>Discrepancy</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for point in calibration_results.comparison_points %}
+                        <tr>
+                            <td>
+                                <strong>{{ point.flow|round(1) }} m³/hr @ {{ point.truth_diameter|round(0)|int }} mm</strong>
+                            </td>
+                            <td>
+                                <span style="font-size: 1.2em; font-weight: 500;">{{ point.truth_head|round(2) }} m</span>
+                            </td>
+                            <td>
+                                <span style="font-size: 1.2em; font-weight: 500;">{{ point.brain_head|round(2) }} m</span>
+                            </td>
+                            <td>
+                                {% set discrepancy = point.delta_head %}
+                                <span style="font-size: 1.3em; font-weight: bold; color: {% if discrepancy|abs > 10 %}#d32f2f{% elif discrepancy|abs > 5 %}#f57c00{% else %}#388e3c{% endif %};">
+                                    {% if discrepancy > 0 %}+{% endif %}{{ discrepancy|round(1) }}%
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                
+                <div style="margin-top: 20px; padding: 15px; background: #ffebee; border-radius: 4px;">
+                    <p style="color: #c62828; font-weight: 500; margin: 0;">
+                        <i class="material-icons tiny" style="vertical-align: middle;">error</i>
+                        The Brain's prediction differs significantly from your provided ground truth data.
+                    </p>
+                </div>
+            </div>
+            
+            <!-- DECISION INTERFACE -->
+            <div style="margin-top: 30px; padding: 20px; background: #e8f5e9; border: 2px solid #4caf50; border-radius: 8px;">
+                <h5 style="color: #1b5e20; margin-bottom: 15px;">
+                    <i class="material-icons left">help_outline</i>
+                    Decision Required
+                </h5>
+                <p style="font-size: 1.1em; margin-bottom: 20px;">
+                    This discrepancy indicates one of two possibilities:
+                </p>
+                <ol style="margin-bottom: 25px;">
+                    <li style="margin-bottom: 10px;"><strong>Your input data may be incorrect</strong> (most likely)</li>
+                    <li style="margin-bottom: 10px;"><strong>The pump database may have fundamental errors</strong> (critical issue requiring engineering review)</li>
+                </ol>
+                
                 <div class="row">
-                    <div class="col s12 m3">
-                        <p class="grey-text">Overall Accuracy</p>
-                        <p class="metric-value {% if calibration_results.metrics.overall_accuracy >= 98 %}green-text{% elif calibration_results.metrics.overall_accuracy >= 95 %}orange-text{% else %}red-text{% endif %}">
-                            {{ calibration_results.metrics.overall_accuracy|round(1) }}%
+                    <div class="col s12 m6">
+                        <button onclick="discardCalibration()" class="btn-large waves-effect waves-light grey darken-1" style="width: 100%;">
+                            <i class="material-icons left">cancel</i>
+                            Discard - My Input Data is Incorrect
+                        </button>
+                        <p class="grey-text" style="margin-top: 10px; font-size: 0.9em;">
+                            Acknowledges that your ground truth data was flawed. No changes will be made to the system.
                         </p>
                     </div>
-                    <div class="col s12 m3">
-                        <p class="grey-text">Head RMSE</p>
-                        <p class="metric-value">{{ calibration_results.metrics.head.rmse|round(2) }}%</p>
-                    </div>
-                    <div class="col s12 m3">
-                        <p class="grey-text">Efficiency RMSE</p>
-                        <p class="metric-value">{{ calibration_results.metrics.efficiency.rmse|round(2) }}%</p>
-                    </div>
-                    <div class="col s12 m3">
-                        <p class="grey-text">Power RMSE</p>
-                        <p class="metric-value">{{ calibration_results.metrics.power.rmse|round(2) }}%</p>
+                    <div class="col s12 m6">
+                        <button onclick="flagForReview()" class="btn-large waves-effect waves-light red darken-2" style="width: 100%;">
+                            <i class="material-icons left">flag</i>
+                            Flag for Engineering Review
+                        </button>
+                        <p class="grey-text" style="margin-top: 10px; font-size: 0.9em;">
+                            If you are absolutely certain your data is correct, this will create a high-priority ticket for engineering review.
+                        </p>
                     </div>
                 </div>
             </div>
             
-            <!-- Comparison Table -->
-            <h5>Detailed Comparison</h5>
-            <table class="striped highlight responsive-table">
-                <thead>
-                    <tr>
-                        <th rowspan="2">Flow<br>(m³/hr)</th>
-                        <th rowspan="2">QBep%</th>
-                        <th colspan="4" class="center-align">Manufacturer Data</th>
-                        <th colspan="4" class="center-align">Brain Prediction</th>
-                        <th colspan="4" class="center-align">Delta (%)</th>
-                    </tr>
-                    <tr>
-                        <th>Head (m)</th>
-                        <th>Eff (%)</th>
-                        <th>Power (kW)</th>
-                        <th>Dia (mm)</th>
-                        <th>Head (m)</th>
-                        <th>Eff (%)</th>
-                        <th>Power (kW)</th>
-                        <th>Dia (mm)</th>
-                        <th>ΔHead</th>
-                        <th>ΔEff</th>
-                        <th>ΔPwr</th>
-                        <th>ΔDia</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for point in calibration_results.comparison_points %}
-                    <tr>
-                        <td>{{ point.flow|round(2) }}</td>
-                        <td>
-                            {% if point.qbep_percent %}
-                                {{ point.qbep_percent|round(0) }}%
-                            {% else %}
-                                -
-                            {% endif %}
-                        </td>
-                        <td>{{ point.truth_head|round(2) }}</td>
-                        <td>{{ point.truth_efficiency|round(1) }}</td>
-                        <td>{{ point.truth_power|round(2) }}</td>
-                        <td>
-                            {% if point.truth_diameter %}
-                                {{ point.truth_diameter|round(1) }}
-                            {% else %}
-                                -
-                            {% endif %}
-                        </td>
-                        <td>{{ point.brain_head|round(2) }}</td>
-                        <td>{{ point.brain_efficiency|round(1) }}</td>
-                        <td>{{ point.brain_power|round(2) }}</td>
-                        <td>{{ point.brain_diameter|round(1) }}</td>
-                        <td>
-                            <span class="badge {% if point.delta_head|abs < 2 %}green{% elif point.delta_head|abs < 5 %}orange{% else %}red{% endif %} white-text">
-                                {{ point.delta_head|round(1) }}%
-                            </span>
-                        </td>
-                        <td>
-                            <span class="badge {% if point.delta_efficiency|abs < 2 %}green{% elif point.delta_efficiency|abs < 5 %}orange{% else %}red{% endif %} white-text">
-                                {{ point.delta_efficiency|round(1) }}%
-                            </span>
-                        </td>
-                        <td>
-                            <span class="badge {% if point.delta_power|abs < 2 %}green{% elif point.delta_power|abs < 5 %}orange{% else %}red{% endif %} white-text">
-                                {{ point.delta_power|round(1) }}%
-                            </span>
-                        </td>
-                        <td>
-                            {% if point.delta_diameter is not none %}
-                                <span class="badge {% if point.delta_diameter|abs < 2 %}green{% elif point.delta_diameter|abs < 5 %}orange{% else %}red{% endif %} white-text">
-                                    {{ point.delta_diameter|round(1) }}%
-                                </span>
-                            {% else %}
-                                -
-                            {% endif %}
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+            <!-- Hidden form for flagging -->
+            <form id="flag-form" action="/admin/pump-calibration/{{ pump_code }}/flag-review" method="POST" style="display: none;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <input type="hidden" name="calibration_data" value="{{ calibration_results|tojson|e }}">
+            </form>
             
-            <!-- Visual Performance Charts -->
-            <h5 style="margin-top: 30px; margin-bottom: 20px;">
-                <i class="material-icons left">show_chart</i>
-                Performance Curve Comparisons
-            </h5>
+            <script>
+            function discardCalibration() {
+                if (confirm('Are you sure you want to discard this calibration data? This acknowledges that your input data was incorrect.')) {
+                    M.toast({html: '<i class="material-icons left">info</i>Calibration data discarded. No changes made.', classes: 'blue'});
+                    // Clear the form and reload
+                    setTimeout(() => {
+                        window.location.href = '/admin/pump-calibration/{{ pump_code }}';
+                    }, 2000);
+                }
+            }
             
-            <!-- Combined chart for comprehensive comparison -->
-            <div class="chart-container" style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px;">
-                <div id="combined-comparison-chart" style="height: 900px;"></div>
-            </div>
-            
-            <!-- AI Insights -->
-            <div class="card" style="margin-top: 20px;">
-                <div class="card-content">
-                    <span class="card-title">
-                        <i class="material-icons left">psychology</i>
-                        Analysis Insights
-                    </span>
-                    {% for insight in calibration_results.insights %}
-                    <div class="insight-item">
-                        <i class="material-icons tiny">arrow_right</i> {{ insight }}
-                    </div>
-                    {% endfor %}
-                </div>
-            </div>
-            
-            <!-- Export Options -->
-            <div class="card-action">
-                <a href="/api/pump-calibration/export/{{ pump_code }}" class="btn waves-effect waves-light grey">
-                    <i class="material-icons left">download</i>
-                    Export CSV
-                </a>
-            </div>
+            function flagForReview() {
+                if (confirm('Are you ABSOLUTELY CERTAIN your data is correct?\n\nThis will create a high-priority engineering ticket indicating that the pump database may have fundamental errors.')) {
+                    document.getElementById('flag-form').submit();
+                }
+            }
+            </script>
         </div>
     </div>
     {% endif %}
