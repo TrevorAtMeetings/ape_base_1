@@ -193,120 +193,110 @@ function removeRow(rowId) {
     }
 }
 
-// Initialize comprehensive comparison chart if analysis results exist
+// Initialize side-by-side comparison chart if analysis results exist
 {% if analysis_results and analysis_results.chart_data %}
 document.addEventListener('DOMContentLoaded', function() {
     const chartData = {{ analysis_results.chart_data|tojson }};
     
-    // Create subplots for Head, Efficiency, and Power comparisons
-    const traces = [];
+    // Prepare x-axis labels for grouped comparison
+    const categories = ['Head (m)', 'Efficiency (%)', 'Power (kW)'];
     
-    // Head comparison bars
-    traces.push({
-        x: chartData.point_labels,
-        y: chartData.truth_heads,
-        name: 'Truth Head (m)',
-        type: 'bar',
-        marker: { color: 'rgba(54, 162, 235, 0.8)' },
-        yaxis: 'y',
-        offsetgroup: 1
-    });
+    // Extract values for the single point (expand as needed for multiple points)
+    const truthValues = [
+        chartData.truth_heads[0] || 0,
+        chartData.truth_efficiencies[0] || 0, 
+        chartData.truth_powers[0] || 0
+    ];
     
-    traces.push({
-        x: chartData.point_labels,
-        y: chartData.brain_heads,
-        name: 'Brain Head (m)',
-        type: 'bar',
-        marker: { color: 'rgba(255, 99, 132, 0.8)' },
-        yaxis: 'y',
-        offsetgroup: 2
-    });
+    const brainValues = [
+        chartData.brain_heads[0] || 0,
+        chartData.brain_efficiencies[0] || 0,
+        chartData.brain_powers[0] || 0
+    ];
     
-    // Efficiency comparison bars (scaled for visualization)
-    traces.push({
-        x: chartData.point_labels,
-        y: chartData.truth_efficiencies,
-        name: 'Truth Efficiency (%)',
+    // Create grouped bar traces
+    const truthTrace = {
+        x: categories,
+        y: truthValues,
+        name: 'Ground Truth',
         type: 'bar',
-        marker: { color: 'rgba(75, 192, 192, 0.8)' },
-        yaxis: 'y2',
-        offsetgroup: 3
-    });
+        marker: { 
+            color: 'rgba(54, 162, 235, 0.8)',
+            line: { color: 'rgba(54, 162, 235, 1.0)', width: 1 }
+        },
+        text: truthValues.map((val, i) => {
+            if (i === 0) return val.toFixed(2) + ' m';
+            if (i === 1) return val.toFixed(1) + '%';
+            return val.toFixed(1) + ' kW';
+        }),
+        textposition: 'auto'
+    };
     
-    traces.push({
-        x: chartData.point_labels,
-        y: chartData.brain_efficiencies,
-        name: 'Brain Efficiency (%)',
+    const brainTrace = {
+        x: categories,
+        y: brainValues,
+        name: 'Brain Prediction',
         type: 'bar',
-        marker: { color: 'rgba(255, 159, 64, 0.8)' },
-        yaxis: 'y2',
-        offsetgroup: 4
-    });
+        marker: { 
+            color: 'rgba(255, 99, 132, 0.8)',
+            line: { color: 'rgba(255, 99, 132, 1.0)', width: 1 }
+        },
+        text: brainValues.map((val, i) => {
+            if (i === 0) return val.toFixed(2) + ' m';
+            if (i === 1) return val.toFixed(1) + '%';
+            return val.toFixed(1) + ' kW';
+        }),
+        textposition: 'auto'
+    };
     
-    // Power comparison bars (scaled for visualization)
-    traces.push({
-        x: chartData.point_labels,
-        y: chartData.truth_powers,
-        name: 'Truth Power (kW)',
-        type: 'bar',
-        marker: { color: 'rgba(153, 102, 255, 0.8)' },
-        yaxis: 'y3',
-        offsetgroup: 5
-    });
-    
-    traces.push({
-        x: chartData.point_labels,
-        y: chartData.brain_powers,
-        name: 'Brain Power (kW)',
-        type: 'bar',
-        marker: { color: 'rgba(255, 205, 86, 0.8)' },
-        yaxis: 'y3',
-        offsetgroup: 6
-    });
+    const traces = [truthTrace, brainTrace];
 
     const layout = {
         title: {
-            text: 'Comprehensive Performance Comparison: Truth vs Brain Predictions',
-            font: { size: 16, color: '#2c3e50' }
+            text: `Performance Calibration: ${chartData.point_labels[0] || 'Comparison'}`,
+            font: { size: 18, color: '#2c3e50' }
         },
         xaxis: { 
-            title: 'Performance Points',
-            tickangle: -45
+            title: 'Performance Metrics',
+            titlefont: { size: 14 }
         },
-        yaxis: {
-            title: 'Head (m)',
-            side: 'left',
-            position: 0
-        },
-        yaxis2: {
-            title: 'Efficiency (%)',
-            side: 'right',
-            overlaying: 'y',
-            position: 1
-        },
-        yaxis3: {
-            title: 'Power (kW)',
-            side: 'right',
-            overlaying: 'y',
-            position: 0.85
+        yaxis: { 
+            title: 'Values (Mixed Units)',
+            titlefont: { size: 14 }
         },
         barmode: 'group',
-        bargap: 0.15,
+        bargap: 0.3,
         bargroupgap: 0.1,
-        hovermode: 'x unified',
+        showlegend: true,
         legend: {
             orientation: 'h',
-            x: 0,
-            y: -0.2,
-            bgcolor: 'rgba(255,255,255,0.8)'
+            x: 0.25,
+            y: -0.15,
+            bgcolor: 'rgba(255,255,255,0.8)',
+            bordercolor: 'rgba(0,0,0,0.1)',
+            borderwidth: 1
         },
-        margin: { l: 80, r: 80, t: 80, b: 100 }
+        margin: { l: 80, r: 60, t: 80, b: 100 },
+        hovermode: 'x unified',
+        annotations: [
+            {
+                text: 'Note: Different metrics use different units and scales',
+                showarrow: false,
+                x: 0.5,
+                y: -0.25,
+                xref: 'paper',
+                yref: 'paper',
+                xanchor: 'center',
+                yanchor: 'top',
+                font: { size: 11, color: '#666' }
+            }
+        ]
     };
 
     Plotly.newPlot('comparison-chart-container', traces, layout, {
         responsive: true,
         displayModeBar: true,
-        modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d']
+        modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d', 'autoScale2d']
     });
 });
 {% endif %}
