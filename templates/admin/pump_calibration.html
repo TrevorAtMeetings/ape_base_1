@@ -918,169 +918,181 @@ document.addEventListener('keydown', function(e) {
 
 {% if calibration_results %}
 <script>
-// Render comparison charts using Plotly
+// Render combined comparison chart using Plotly subplots
 document.addEventListener('DOMContentLoaded', function() {
-    // Extract data for efficiency comparison
+    // Extract all data
+    const flowData = {{ calibration_results.comparison_points|map(attribute='flow')|list|tojson }};
+    const headData = {
+        manufacturer: {{ calibration_results.comparison_points|map(attribute='truth_head')|list|tojson }},
+        brain: {{ calibration_results.comparison_points|map(attribute='brain_head')|list|tojson }}
+    };
     const efficiencyData = {
         manufacturer: {{ calibration_results.comparison_points|map(attribute='truth_efficiency')|list|tojson }},
-        brain: {{ calibration_results.comparison_points|map(attribute='brain_efficiency')|list|tojson }},
-        flow: {{ calibration_results.comparison_points|map(attribute='flow')|list|tojson }}
+        brain: {{ calibration_results.comparison_points|map(attribute='brain_efficiency')|list|tojson }}
+    };
+    const powerData = {
+        manufacturer: {{ calibration_results.comparison_points|map(attribute='truth_power')|list|tojson }},
+        brain: {{ calibration_results.comparison_points|map(attribute='brain_power')|list|tojson }}
     };
     
-    // Calculate appropriate Y-axis range for efficiency
+    // Calculate Y-axis ranges
+    const headMin = Math.min(...headData.manufacturer, ...headData.brain);
+    const headMax = Math.max(...headData.manufacturer, ...headData.brain);
+    const headPadding = (headMax - headMin) * 0.1 || 2;
+    
     const effMin = Math.min(...efficiencyData.manufacturer, ...efficiencyData.brain);
     const effMax = Math.max(...efficiencyData.manufacturer, ...efficiencyData.brain);
     const effPadding = (effMax - effMin) * 0.1 || 5;
     
-    const efficiencyTrace1 = {
-        x: efficiencyData.flow,
-        y: efficiencyData.manufacturer,
-        mode: 'lines+markers',
-        name: 'Manufacturer Data',
-        line: { 
-            color: '#4CAF50', 
-            width: 3,
-            shape: 'spline',
-            smoothing: 0.3
-        },
-        marker: { 
-            size: 10,
-            color: '#4CAF50',
-            line: { width: 2, color: '#fff' }
-        },
-        hovertemplate: 'Flow: %{x:.1f} m³/hr<br>Efficiency: %{y:.1f}%<extra></extra>'
-    };
-    
-    const efficiencyTrace2 = {
-        x: efficiencyData.flow,
-        y: efficiencyData.brain,
-        mode: 'lines+markers',
-        name: 'Brain Prediction',
-        line: { 
-            color: '#2196F3', 
-            width: 3, 
-            dash: 'dot',
-            shape: 'spline',
-            smoothing: 0.3
-        },
-        marker: { 
-            size: 8,
-            symbol: 'diamond',
-            color: '#2196F3',
-            line: { width: 2, color: '#fff' }
-        },
-        hovertemplate: 'Flow: %{x:.1f} m³/hr<br>Efficiency: %{y:.1f}%<extra></extra>'
-    };
-    
-    const efficiencyLayout = {
-        title: {
-            text: 'Efficiency Comparison',
-            font: { size: 18, color: '#333' }
-        },
-        xaxis: { 
-            title: 'Flow (m³/hr)',
-            gridcolor: '#E0E0E0',
-            showgrid: true,
-            zeroline: false
-        },
-        yaxis: { 
-            title: 'Efficiency (%)',
-            gridcolor: '#E0E0E0',
-            showgrid: true,
-            zeroline: false,
-            range: [Math.max(0, effMin - effPadding), Math.min(100, effMax + effPadding)]
-        },
-        showlegend: true,
-        legend: {
-            x: 0.02,
-            y: 0.98,
-            bgcolor: 'rgba(255,255,255,0.9)',
-            bordercolor: '#ccc',
-            borderwidth: 1
-        },
-        height: 450,
-        margin: { t: 50, b: 60, l: 70, r: 40 },
-        plot_bgcolor: '#FAFAFA',
-        paper_bgcolor: '#FFFFFF',
-        hovermode: 'closest'
-    };
-    
-    Plotly.newPlot('efficiency-comparison-chart', [efficiencyTrace1, efficiencyTrace2], efficiencyLayout, {
-        responsive: true,
-        displayModeBar: true,
-        modeBarButtonsToRemove: ['pan2d', 'select2d', 'lasso2d', 'resetScale2d'],
-        displaylogo: false
-    });
-    
-    // Extract data for power comparison
-    const powerData = {
-        manufacturer: {{ calibration_results.comparison_points|map(attribute='truth_power')|list|tojson }},
-        brain: {{ calibration_results.comparison_points|map(attribute='brain_power')|list|tojson }},
-        flow: {{ calibration_results.comparison_points|map(attribute='flow')|list|tojson }}
-    };
-    
-    // Calculate appropriate Y-axis range for power
     const pwrMin = Math.min(...powerData.manufacturer, ...powerData.brain);
     const pwrMax = Math.max(...powerData.manufacturer, ...powerData.brain);
     const pwrPadding = (pwrMax - pwrMin) * 0.1 || 1;
     
-    const powerTrace1 = {
-        x: powerData.flow,
-        y: powerData.manufacturer,
-        mode: 'lines+markers',
-        name: 'Manufacturer Data',
-        line: { 
-            color: '#FF9800', 
-            width: 3,
-            shape: 'spline',
-            smoothing: 0.3
+    // Create traces for each subplot
+    const traces = [
+        // Head traces (subplot 1)
+        {
+            x: flowData,
+            y: headData.manufacturer,
+            mode: 'lines+markers',
+            name: 'Manufacturer Head',
+            legendgroup: 'manufacturer',
+            line: { color: '#4CAF50', width: 3, shape: 'spline', smoothing: 0.3 },
+            marker: { size: 10, color: '#4CAF50', line: { width: 2, color: '#fff' } },
+            hovertemplate: 'Flow: %{x:.1f} m³/hr<br>Head: %{y:.1f} m<extra></extra>',
+            xaxis: 'x',
+            yaxis: 'y'
         },
-        marker: { 
-            size: 10,
-            color: '#FF9800',
-            line: { width: 2, color: '#fff' }
+        {
+            x: flowData,
+            y: headData.brain,
+            mode: 'lines+markers',
+            name: 'Brain Head',
+            legendgroup: 'brain',
+            line: { color: '#2196F3', width: 3, dash: 'dot', shape: 'spline', smoothing: 0.3 },
+            marker: { size: 8, symbol: 'diamond', color: '#2196F3', line: { width: 2, color: '#fff' } },
+            hovertemplate: 'Flow: %{x:.1f} m³/hr<br>Head: %{y:.1f} m<extra></extra>',
+            xaxis: 'x',
+            yaxis: 'y'
         },
-        hovertemplate: 'Flow: %{x:.1f} m³/hr<br>Power: %{y:.2f} kW<extra></extra>'
-    };
+        // Efficiency traces (subplot 2)
+        {
+            x: flowData,
+            y: efficiencyData.manufacturer,
+            mode: 'lines+markers',
+            name: 'Manufacturer Efficiency',
+            legendgroup: 'manufacturer',
+            showlegend: false,
+            line: { color: '#4CAF50', width: 3, shape: 'spline', smoothing: 0.3 },
+            marker: { size: 10, color: '#4CAF50', line: { width: 2, color: '#fff' } },
+            hovertemplate: 'Flow: %{x:.1f} m³/hr<br>Efficiency: %{y:.1f}%<extra></extra>',
+            xaxis: 'x2',
+            yaxis: 'y2'
+        },
+        {
+            x: flowData,
+            y: efficiencyData.brain,
+            mode: 'lines+markers',
+            name: 'Brain Efficiency',
+            legendgroup: 'brain',
+            showlegend: false,
+            line: { color: '#2196F3', width: 3, dash: 'dot', shape: 'spline', smoothing: 0.3 },
+            marker: { size: 8, symbol: 'diamond', color: '#2196F3', line: { width: 2, color: '#fff' } },
+            hovertemplate: 'Flow: %{x:.1f} m³/hr<br>Efficiency: %{y:.1f}%<extra></extra>',
+            xaxis: 'x2',
+            yaxis: 'y2'
+        },
+        // Power traces (subplot 3)
+        {
+            x: flowData,
+            y: powerData.manufacturer,
+            mode: 'lines+markers',
+            name: 'Manufacturer Power',
+            legendgroup: 'manufacturer',
+            showlegend: false,
+            line: { color: '#4CAF50', width: 3, shape: 'spline', smoothing: 0.3 },
+            marker: { size: 10, color: '#4CAF50', line: { width: 2, color: '#fff' } },
+            hovertemplate: 'Flow: %{x:.1f} m³/hr<br>Power: %{y:.2f} kW<extra></extra>',
+            xaxis: 'x3',
+            yaxis: 'y3'
+        },
+        {
+            x: flowData,
+            y: powerData.brain,
+            mode: 'lines+markers',
+            name: 'Brain Power',
+            legendgroup: 'brain',
+            showlegend: false,
+            line: { color: '#2196F3', width: 3, dash: 'dot', shape: 'spline', smoothing: 0.3 },
+            marker: { size: 8, symbol: 'diamond', color: '#2196F3', line: { width: 2, color: '#fff' } },
+            hovertemplate: 'Flow: %{x:.1f} m³/hr<br>Power: %{y:.2f} kW<extra></extra>',
+            xaxis: 'x3',
+            yaxis: 'y3'
+        }
+    ];
     
-    const powerTrace2 = {
-        x: powerData.flow,
-        y: powerData.brain,
-        mode: 'lines+markers',
-        name: 'Brain Prediction',
-        line: { 
-            color: '#9C27B0', 
-            width: 3, 
-            dash: 'dot',
-            shape: 'spline',
-            smoothing: 0.3
-        },
-        marker: { 
-            size: 8,
-            symbol: 'diamond',
-            color: '#9C27B0',
-            line: { width: 2, color: '#fff' }
-        },
-        hovertemplate: 'Flow: %{x:.1f} m³/hr<br>Power: %{y:.2f} kW<extra></extra>'
-    };
-    
-    const powerLayout = {
+    const layout = {
         title: {
-            text: 'Power Comparison',
-            font: { size: 18, color: '#333' }
+            text: 'Pump Performance Calibration Analysis',
+            font: { size: 20, color: '#333' },
+            y: 0.99
         },
-        xaxis: { 
+        grid: {
+            rows: 3,
+            columns: 1,
+            pattern: 'independent',
+            roworder: 'top to bottom'
+        },
+        xaxis: {
+            title: '',
+            gridcolor: '#E0E0E0',
+            showgrid: true,
+            zeroline: false,
+            domain: [0, 1],
+            anchor: 'y'
+        },
+        yaxis: {
+            title: 'Head (m)',
+            gridcolor: '#E0E0E0',
+            showgrid: true,
+            zeroline: false,
+            range: [Math.max(0, headMin - headPadding), headMax + headPadding],
+            domain: [0.7, 1],
+            anchor: 'x'
+        },
+        xaxis2: {
+            title: '',
+            gridcolor: '#E0E0E0',
+            showgrid: true,
+            zeroline: false,
+            domain: [0, 1],
+            anchor: 'y2'
+        },
+        yaxis2: {
+            title: 'Efficiency (%)',
+            gridcolor: '#E0E0E0',
+            showgrid: true,
+            zeroline: false,
+            range: [Math.max(0, effMin - effPadding), Math.min(100, effMax + effPadding)],
+            domain: [0.35, 0.65],
+            anchor: 'x2'
+        },
+        xaxis3: {
             title: 'Flow (m³/hr)',
             gridcolor: '#E0E0E0',
             showgrid: true,
-            zeroline: false
+            zeroline: false,
+            domain: [0, 1],
+            anchor: 'y3'
         },
-        yaxis: { 
+        yaxis3: {
             title: 'Power (kW)',
             gridcolor: '#E0E0E0',
             showgrid: true,
             zeroline: false,
-            range: [Math.max(0, pwrMin - pwrPadding), pwrMax + pwrPadding]
+            range: [Math.max(0, pwrMin - pwrPadding), pwrMax + pwrPadding],
+            domain: [0, 0.3],
+            anchor: 'x3'
         },
         showlegend: true,
         legend: {
@@ -1088,40 +1100,31 @@ document.addEventListener('DOMContentLoaded', function() {
             y: 0.98,
             bgcolor: 'rgba(255,255,255,0.9)',
             bordercolor: '#ccc',
-            borderwidth: 1
+            borderwidth: 1,
+            font: { size: 12 }
         },
-        height: 450,
-        margin: { t: 50, b: 60, l: 70, r: 40 },
+        height: 900,
+        margin: { t: 60, b: 60, l: 80, r: 40 },
         plot_bgcolor: '#FAFAFA',
         paper_bgcolor: '#FFFFFF',
-        hovermode: 'closest'
+        hovermode: 'x unified'
     };
     
-    Plotly.newPlot('power-comparison-chart', [powerTrace1, powerTrace2], powerLayout, {
+    const config = {
         responsive: true,
         displayModeBar: true,
-        modeBarButtonsToRemove: ['pan2d', 'select2d', 'lasso2d', 'resetScale2d'],
-        displaylogo: false
-    });
+        modeBarButtonsToRemove: ['pan2d', 'select2d', 'lasso2d', 'resetScale2d', 'autoScale2d'],
+        displaylogo: false,
+        toImageButtonOptions: {
+            format: 'png',
+            filename: 'pump_calibration_comparison',
+            height: 900,
+            width: 1200,
+            scale: 1
+        }
+    };
     
-    // Add animation on hover
-    document.getElementById('efficiency-comparison-chart').on('plotly_hover', function(data) {
-        const point = data.points[0];
-        const update = {
-            'marker.size': [Array(efficiencyData.flow.length).fill(8)],
-        };
-        update['marker.size'][0][point.pointNumber] = 14;
-        Plotly.restyle('efficiency-comparison-chart', update, [point.curveNumber]);
-    });
-    
-    document.getElementById('power-comparison-chart').on('plotly_hover', function(data) {
-        const point = data.points[0];
-        const update = {
-            'marker.size': [Array(powerData.flow.length).fill(8)],
-        };
-        update['marker.size'][0][point.pointNumber] = 14;
-        Plotly.restyle('power-comparison-chart', update, [point.curveNumber]);
-    });
+    Plotly.newPlot('combined-comparison-chart', traces, layout, config);
 });
 </script>
 {% endif %}
@@ -1319,23 +1322,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 Performance Curve Comparisons
             </h5>
             
-            <!-- Three-chart layout for comprehensive comparison -->
-            <div class="row">
-                <div class="col s12 xl4">
-                    <div class="chart-container" style="background: white; padding: 10px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                        <div id="head-comparison-chart" style="height: 400px;"></div>
-                    </div>
-                </div>
-                <div class="col s12 xl4">
-                    <div class="chart-container" style="background: white; padding: 10px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                        <div id="efficiency-comparison-chart" style="height: 400px;"></div>
-                    </div>
-                </div>
-                <div class="col s12 xl4">
-                    <div class="chart-container" style="background: white; padding: 10px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                        <div id="power-comparison-chart" style="height: 400px;"></div>
-                    </div>
-                </div>
+            <!-- Combined chart for comprehensive comparison -->
+            <div class="chart-container" style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px;">
+                <div id="combined-comparison-chart" style="height: 900px;"></div>
             </div>
             
             <!-- AI Insights -->
