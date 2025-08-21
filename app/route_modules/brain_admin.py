@@ -5,6 +5,8 @@ Implements the two-schema architecture with golden source protection
 
 import logging
 import json
+import re
+import numpy as np
 from flask import Blueprint, render_template, request, jsonify, flash, redirect, url_for
 from datetime import datetime
 from ..brain_data_service import BrainDataService, BrainDataAccessor
@@ -835,11 +837,118 @@ class ManufacturerComparisonEngine:
             
         return expanded_points
         
+    def _calculate_deltas(self, truth, prediction):
+        """
+        Robust helper method to calculate percentage difference between two values.
+        Handles None, non-numeric types, and jinja2.Undefined objects.
+        
+        Args:
+            truth: The ground truth value (expected/actual)
+            prediction: The predicted value
+            
+        Returns:
+            float or None: Percentage difference if both values are valid, None otherwise
+        """
+        try:
+            # Check for jinja2.Undefined objects first
+            from jinja2 import Undefined
+            if isinstance(truth, Undefined) or isinstance(prediction, Undefined):
+                self.logger.debug(f"Undefined value detected: truth={type(truth).__name__}, prediction={type(prediction).__name__}")
+                return None
+            
+            # Check for None values
+            if truth is None or prediction is None:
+                self.logger.debug(f"None value detected: truth={truth}, prediction={prediction}")
+                return None
+            
+            # Try to convert to float (handles strings, integers, etc.)
+            try:
+                truth_float = float(truth)
+                prediction_float = float(prediction)
+            except (TypeError, ValueError):
+                self.logger.debug(f"Non-numeric value detected: truth={truth} ({type(truth).__name__}), prediction={prediction} ({type(prediction).__name__})")
+                return None
+            
+            # Check for invalid numeric values (NaN, inf)
+            import math
+            if math.isnan(truth_float) or math.isnan(prediction_float):
+                self.logger.debug(f"NaN value detected: truth={truth_float}, prediction={prediction_float}")
+                return None
+            if math.isinf(truth_float) or math.isinf(prediction_float):
+                self.logger.debug(f"Infinite value detected: truth={truth_float}, prediction={prediction_float}")
+                return None
+            
+            # Handle division by zero
+            if truth_float == 0:
+                if prediction_float == 0:
+                    return 0.0  # Both are zero, no difference
+                else:
+                    # Truth is zero but prediction is not - this is undefined percentage
+                    self.logger.debug(f"Cannot calculate percentage when truth=0 and prediction={prediction_float}")
+                    return None
+            
+            # Calculate percentage difference
+            delta = ((prediction_float - truth_float) / abs(truth_float)) * 100
+            return delta
+            
+        except Exception as e:
+            self.logger.warning(f"Unexpected error in _calculate_deltas: {e}, truth={truth}, prediction={prediction}")
+            return None
+    
     def _calculate_delta(self, truth, prediction):
-        """Calculate percentage difference"""
-        if truth == 0:
-            return 0
-        return ((prediction - truth) / truth) * 100
+        """Legacy method for backward compatibility - delegates to robust version"""
+        result = self._calculate_deltas(truth, prediction)
+        return result if result is not None else 0
+    
+    def _calculate_overall_accuracy(self, head_deltas, efficiency_deltas, power_deltas):
+        """
+        Calculate overall accuracy from delta lists, handling empty lists gracefully.
+        
+        Args:
+            head_deltas: List of head delta percentages
+            efficiency_deltas: List of efficiency delta percentages
+            power_deltas: List of power delta percentages
+            
+        Returns:
+            float: Overall accuracy percentage (0-100)
+        """
+        import numpy as np
+        
+        try:
+            # Combine all valid deltas
+            all_deltas = []
+            
+            # Add valid deltas from each list
+            if head_deltas and isinstance(head_deltas, list):
+                all_deltas.extend(head_deltas)
+            if efficiency_deltas and isinstance(efficiency_deltas, list):
+                all_deltas.extend(efficiency_deltas)
+            if power_deltas and isinstance(power_deltas, list):
+                all_deltas.extend(power_deltas)
+            
+            # If no valid deltas, return 100% (no data means no error)
+            if not all_deltas:
+                self.logger.info("No valid deltas for overall accuracy calculation, returning 100%")
+                return 100.0
+            
+            # Calculate mean absolute error
+            absolute_deltas = [abs(d) for d in all_deltas if d is not None]
+            
+            if not absolute_deltas:
+                return 100.0
+            
+            mean_absolute_error = np.mean(absolute_deltas)
+            
+            # Convert to accuracy (100% - error%)
+            # Clamp between 0 and 100
+            accuracy = max(0.0, min(100.0, 100.0 - mean_absolute_error))
+            
+            self.logger.debug(f"Overall accuracy calculated: {accuracy:.2f}% from {len(absolute_deltas)} deltas")
+            return accuracy
+            
+        except Exception as e:
+            self.logger.warning(f"Error calculating overall accuracy: {e}, returning 0%")
+            return 0.0
         
     def calculate_curve_deviation_metrics(self, comparison_results):
         """
@@ -850,10 +959,35 @@ class ManufacturerComparisonEngine:
         if not comparison_results:
             return {}
             
-        # Extract deltas
-        head_deltas = [r['delta_head'] for r in comparison_results if 'delta_head' in r]
-        efficiency_deltas = [r['delta_efficiency'] for r in comparison_results]
-        power_deltas = [r['delta_power'] for r in comparison_results]
+        # Extract deltas and filter out None/invalid values using a helper function
+        def extract_valid_deltas(results, key):
+            """Extract valid numeric delta values from results"""
+            valid_deltas = []
+            for r in results:
+                if key in r:
+                    value = r[key]
+                    # Skip None values and jinja2.Undefined objects
+                    if value is None:
+                        continue
+                    # Try to convert to float
+                    try:
+                        from jinja2 import Undefined
+                        if isinstance(value, Undefined):
+                            continue
+                        delta_float = float(value)
+                        # Skip NaN and infinity
+                        import math
+                        if not math.isnan(delta_float) and not math.isinf(delta_float):
+                            valid_deltas.append(delta_float)
+                    except (TypeError, ValueError):
+                        # Skip non-numeric values
+                        continue
+            return valid_deltas
+        
+        # Extract valid deltas for each metric
+        head_deltas = extract_valid_deltas(comparison_results, 'delta_head')
+        efficiency_deltas = extract_valid_deltas(comparison_results, 'delta_efficiency')
+        power_deltas = extract_valid_deltas(comparison_results, 'delta_power')
         
         metrics = {
             'head': {
@@ -874,7 +1008,8 @@ class ManufacturerComparisonEngine:
                 'max_delta': max(power_deltas, key=abs) if power_deltas else 0,
                 'std_dev': np.std(power_deltas) if power_deltas else 0
             },
-            'overall_accuracy': 100 - np.mean([abs(d) for d in head_deltas + efficiency_deltas + power_deltas]) if (head_deltas + efficiency_deltas + power_deltas) else 100,
+            # Calculate overall accuracy safely
+            'overall_accuracy': self._calculate_overall_accuracy(head_deltas, efficiency_deltas, power_deltas),
             'point_count': len(comparison_results)
         }
         
