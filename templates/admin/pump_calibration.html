@@ -1283,11 +1283,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div style="margin-top: 20px; padding: 15px; background: #ffebee; border-radius: 4px;">
                     <p style="color: #c62828; font-weight: 500; margin: 0;">
                         <i class="material-icons tiny" style="vertical-align: middle;">error</i>
-                        {% set max_discrepancy = calibration_results.comparison_points | selectattr('delta_head') | map(attribute='delta_head') | list | max | default(0) %}
-                        {% if (max_discrepancy|default(0))|abs > 10 %}
-                        Significant discrepancy detected. The Brain's prediction differs from your ground truth data by up to {{ (max_discrepancy|default(0))|abs|round(1) }}%.
+                        {% set delta_list = calibration_results.comparison_points | selectattr('delta_head') | map(attribute='delta_head') | list %}
+                        {% if delta_list and delta_list|length > 0 %}
+                            {% set max_discrepancy = delta_list | max %}
+                            {% if (max_discrepancy|default(0))|abs > 10 %}
+                            Significant discrepancy detected. The Brain's prediction differs from your ground truth data by up to {{ (max_discrepancy|default(0))|abs|round(1) }}%.
+                            {% else %}
+                            Minor discrepancy detected. Review the detailed analysis below.
+                            {% endif %}
                         {% else %}
-                        Minor discrepancy detected. Review the detailed analysis below.
+                        No valid Brain predictions available for comparison.
                         {% endif %}
                     </p>
                 </div>
@@ -1320,7 +1325,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             <th>Your Efficiency (%)</th>
                             <th>Brain's Efficiency (%)</th>
                             <th>Efficiency Delta (%)</th>
-                            {% if calibration_results.comparison_points[0].truth_power %}
+                            {% if calibration_results.comparison_points and calibration_results.comparison_points|length > 0 and calibration_results.comparison_points[0].truth_power %}
                             <th>Your Power (kW)</th>
                             <th>Brain's Power (kW)</th>
                             <th>Power Delta (%)</th>

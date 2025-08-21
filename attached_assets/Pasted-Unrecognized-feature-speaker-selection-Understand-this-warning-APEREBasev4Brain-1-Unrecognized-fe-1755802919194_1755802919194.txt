@@ -1,0 +1,52 @@
+Unrecognized feature: 'speaker-selection'.Understand this warning
+APEREBasev4Brain:1 Unrecognized feature: 'unoptimized-images'.Understand this warning
+APEREBasev4Brain:1 Unrecognized feature: 'unsized-media'.Understand this warning
+APEREBasev4Brain:1 Unrecognized feature: 'pointer-lock'.Understand this warning
+APEREBasev4Brain:1 Allow attribute will take precedence over 'allowfullscreen'.Understand this warning
+APEREBasev4Brain:1 Allow attribute will take precedence over 'allowpaymentrequest'.Understand this warning
+24Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.Understand this error
+35The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.Understand this error
+35The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?Understand this error
+35The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.Understand this error
+11WARNING: Too many active WebGL contexts. Oldest context will be lost.Understand this warning
+_app-a5f1ca30285b1ec0.js:13 webglcontextlost event received
+_app-a5f1ca30285b1ec0.js:13 webgl context not restored; firing onContextLoss
+(anonymous) @ _app-a5f1ca30285b1ec0.js:13Understand this warning
+296_app-a5f1ca30285b1ec0.js:13 row is invalid. Race condition?
+(anonymous) @ _app-a5f1ca30285b1ec0.js:13Understand this warning
+_app-a5f1ca30285b1ec0.js:13 webglcontextlost event received
+_app-a5f1ca30285b1ec0.js:13 webglcontextrestored event received
+(anonymous) @ _app-a5f1ca30285b1ec0.js:13Understand this warning
+24WebGL: INVALID_OPERATION: delete: object does not belong to this contextUnderstand this warning
+workspace_iframe.html?initialPath=%2Fadmin%2Fpump-calibration%2F100-200%25202F&id=%3Ar3v8%3A:32 Unrecognized feature: 'ambient-light-sensor'.Understand this warning
+workspace_iframe.html?initialPath=%2Fadmin%2Fpump-calibration%2F100-200%25202F&id=%3Ar3v8%3A:32 Unrecognized feature: 'battery'.Understand this warning
+workspace_iframe.html?initialPath=%2Fadmin%2Fpump-calibration%2F100-200%25202F&id=%3Ar3v8%3A:32 Unrecognized feature: 'execution-while-not-rendered'.Understand this warning
+workspace_iframe.html?initialPath=%2Fadmin%2Fpump-calibration%2F100-200%25202F&id=%3Ar3v8%3A:32 Unrecognized feature: 'execution-while-out-of-viewport'.Understand this warning
+workspace_iframe.html?initialPath=%2Fadmin%2Fpump-calibration%2F100-200%25202F&id=%3Ar3v8%3A:32 Unrecognized feature: 'layout-animations'.Understand this warning
+workspace_iframe.html?initialPath=%2Fadmin%2Fpump-calibration%2F100-200%25202F&id=%3Ar3v8%3A:32 Unrecognized feature: 'legacy-image-formats'.Understand this warning
+workspace_iframe.html?initialPath=%2Fadmin%2Fpump-calibration%2F100-200%25202F&id=%3Ar3v8%3A:32 Unrecognized feature: 'navigation-override'.Understand this warning
+workspace_iframe.html?initialPath=%2Fadmin%2Fpump-calibration%2F100-200%25202F&id=%3Ar3v8%3A:32 Unrecognized feature: 'oversized-images'.Understand this warning
+workspace_iframe.html?initialPath=%2Fadmin%2Fpump-calibration%2F100-200%25202F&id=%3Ar3v8%3A:32 Unrecognized feature: 'publickey-credentials'.Understand this warning
+workspace_iframe.html?initialPath=%2Fadmin%2Fpump-calibration%2F100-200%25202F&id=%3Ar3v8%3A:32 Unrecognized feature: 'speaker-selection'.Understand this warning
+workspace_iframe.html?initialPath=%2Fadmin%2Fpump-calibration%2F100-200%25202F&id=%3Ar3v8%3A:32 Unrecognized feature: 'unoptimized-images'.Understand this warning
+workspace_iframe.html?initialPath=%2Fadmin%2Fpump-calibration%2F100-200%25202F&id=%3Ar3v8%3A:32 Unrecognized feature: 'unsized-media'.Understand this warning
+workspace_iframe.html?initialPath=%2Fadmin%2Fpump-calibration%2F100-200%25202F&id=%3Ar3v8%3A:32 Allow attribute will take precedence over 'allowfullscreen'.Understand this warning
+workspace_iframe.html?initialPath=%2Fadmin%2Fpump-calibration%2F100-200%25202F&id=%3Ar3v8%3A:32 Allow attribute will take precedence over 'allowpaymentrequest'.Understand this warning
+Console.js:61 MathJax is loaded and ready
+Console.js:61 Initializing navigation dropdowns...
+Console.js:61 Found 4 dropdown buttons
+Console.js:61 Base template: Initializing Materialize components
+Console.js:61 Initialized 2 modals
+Console.js:61 Initialized 0 sidenavs
+Console.js:61 Form components initialized - enhanced autocomplete ready
+Console.js:61 Pump calibration form initialized
+Console.js:61 AI Chatbot feature is disabled
+Console.js:61 MathJax is loaded and ready
+Console.js:61 Initializing navigation dropdowns...
+Console.js:61 Found 4 dropdown buttons
+Console.js:61 Base template: Initializing Materialize components
+Console.js:61 Initialized 2 modals
+Console.js:61 Initialized 0 sidenavs
+Console.js:61 Form components initialized - enhanced autocomplete ready
+Console.js:61 Pump calibration form initialized
+Console.js:61 AI Chatbot feature is disabled
