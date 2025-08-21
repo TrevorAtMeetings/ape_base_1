@@ -291,7 +291,9 @@ Focus on actionable insights for pump engineers, not just statistics. Consider i
                 temperature=0.3  # Lower temperature for more focused technical analysis
             )
             
-            return response.choices[0].message.content
+            # Handle potential None response from OpenAI
+            ai_content = response.choices[0].message.content
+            return ai_content if ai_content is not None else "AI analysis unavailable - empty response received"
             
         except Exception as e:
             logger.error(f"OpenAI analysis failed: {e}")

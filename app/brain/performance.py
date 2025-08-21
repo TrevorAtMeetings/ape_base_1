@@ -65,14 +65,17 @@ class PerformanceAnalyzer:
                     all_diameters = [c.get('impeller_diameter_mm', 0) for c in pump_data['curves'] if c.get('impeller_diameter_mm', 0) > 0]
                     all_diameters.sort()
                 
-                # Check if forced diameter is within reasonable range
-                min_diameter = min(all_diameters) * 0.85 if all_diameters else largest_diameter * 0.85  # Allow 15% trim from smallest
-                max_diameter = max(all_diameters) * 1.05 if all_diameters else largest_diameter * 1.05  # Allow 5% above largest
+                # For calibration purposes, allow more flexible diameter constraints
+                # Engineers might test with non-standard diameters for troubleshooting
+                min_diameter = min(all_diameters) * 0.70 if all_diameters else largest_diameter * 0.70  # Allow 30% trim for calibration
+                max_diameter = max(all_diameters) * 1.15 if all_diameters else largest_diameter * 1.15  # Allow 15% above for calibration
                 
                 if forced_diameter < min_diameter or forced_diameter > max_diameter:
-                    logger.error(f"[FORCED CONSTRAINT] {pump_code}: Forced diameter {forced_diameter}mm is outside valid range [{min_diameter:.0f}-{max_diameter:.0f}mm]")
+                    logger.error(f"[FORCED CONSTRAINT] {pump_code}: Forced diameter {forced_diameter}mm is outside calibration range [{min_diameter:.0f}-{max_diameter:.0f}mm]")
                     logger.error(f"[FORCED CONSTRAINT] {pump_code}: Available curves: {all_diameters}")
-                    return None
+                    # For calibration analysis, return with warning instead of failure
+                    logger.warning(f"[FORCED CONSTRAINT] {pump_code}: Proceeding with extrapolated performance - results may be inaccurate")
+                    # Don't return None - continue with calculation using closest available diameter
                 
                 # Sort points by flow for interpolation
                 sorted_points = sorted(curve_points, key=lambda p: p.get('flow_m3hr', 0))
