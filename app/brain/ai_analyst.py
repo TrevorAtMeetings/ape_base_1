@@ -84,7 +84,12 @@ class AIAnalyst:
             )
             
             # Parse the response
-            result = json.loads(response.choices[0].message.content)
+            content = response.choices[0].message.content
+            if not content:
+                self.logger.warning("Empty response from AI model")
+                return self._generate_fallback_insights(metrics)
+                
+            result = json.loads(content)
             insights = result.get('insights', [])
             
             # Add calibration factor recommendations if significant deviations exist
@@ -125,11 +130,11 @@ class AIAnalyst:
         
         STATISTICAL METRICS:
         - Overall Accuracy: {metrics.get('overall_accuracy', 0):.1f}%
-        - Efficiency RMSE: {metrics['efficiency']['rmse']:.2f}%
-        - Efficiency Mean Delta: {metrics['efficiency']['mean_delta']:.2f}%
-        - Power RMSE: {metrics['power']['rmse']:.2f}%
-        - Power Mean Delta: {metrics['power']['mean_delta']:.2f}%
-        - Number of Points: {metrics['point_count']}
+        - Efficiency RMSE: {metrics.get('efficiency', {}).get('rmse', 0):.2f}%
+        - Efficiency Mean Delta: {metrics.get('efficiency', {}).get('mean_delta', 0):.2f}%
+        - Power RMSE: {metrics.get('power', {}).get('rmse', 0):.2f}%
+        - Power Mean Delta: {metrics.get('power', {}).get('mean_delta', 0):.2f}%
+        - Number of Points: {metrics.get('point_count', 0)}
         
         Please provide specific insights about:
         1. The pattern of deviations (systematic over/under prediction?)
@@ -144,8 +149,8 @@ class AIAnalyst:
     def _suggest_calibration_factors(self, metrics: Dict) -> str:
         """Suggest specific calibration factor adjustments based on metrics"""
         
-        eff_delta = metrics['efficiency']['mean_delta']
-        power_delta = metrics['power']['mean_delta']
+        eff_delta = metrics.get('efficiency', {}).get('mean_delta', 0)
+        power_delta = metrics.get('power', {}).get('mean_delta', 0)
         
         suggestions = []
         
