@@ -29,10 +29,62 @@
         </div>
     </div>
 
-    <!-- Section 1: Manufacturer Data Entry -->
+    <!-- Analysis Mode Selection -->
     <div class="card">
         <div class="card-content">
-            <span class="card-title">1. Enter Manufacturer Performance Points</span>
+            <span class="card-title">Analysis Mode</span>
+            <div class="row">
+                <div class="col s12">
+                    <label>
+                        <input type="radio" name="analysis_mode" value="datasheet" checked />
+                        <span><strong>Datasheet Validation:</strong> Test Brain accuracy against manufacturer curve points</span>
+                    </label>
+                </div>
+                <div class="col s12">
+                    <label>
+                        <input type="radio" name="analysis_mode" value="site_requirements" />
+                        <span><strong>Site Requirements Analysis:</strong> Analyze pump performance at your specific duty point</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Site Requirements Mode -->
+    <div class="card" id="site-requirements-mode" style="display: none;">
+        <div class="card-content">
+            <span class="card-title">1. Enter Your Site Requirements</span>
+            <div class="row">
+                <div class="col s6">
+                    <div class="input-field">
+                        <input type="number" step="0.1" id="site_flow" name="site_flow" required>
+                        <label for="site_flow">Required Flow (m³/hr)</label>
+                        <span class="helper-text">Your actual site requirement</span>
+                    </div>
+                </div>
+                <div class="col s6">
+                    <div class="input-field">
+                        <input type="number" step="0.01" id="site_head" name="site_head" required>
+                        <label for="site_head">Required Head (m)</label>
+                        <span class="helper-text">Your actual site requirement</span>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col s12 right-align">
+                    <button type="button" class="btn green" onclick="analyzeSiteRequirements()">
+                        <i class="material-icons left">engineering</i>Analyze Site Performance
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Datasheet Validation Mode -->
+    <div class="card" id="datasheet-validation-mode">
+        <div class="card-content">
+            <span class="card-title">1. Enter Manufacturer Datasheet Points</span>
+            <p class="grey-text">Enter specific points from the manufacturer's performance curve to test Brain accuracy.</p>
             <form method="POST" id="calibration-form">
                 <div id="data-points-container">
                     <!-- Dynamic rows will be added here -->
@@ -95,7 +147,57 @@
     {% if analysis_results %}
     <div class="card mt-4">
         <div class="card-content">
-            <span class="card-title">2. Analysis Results</span>
+            {% if analysis_results.mode == 'site_requirements' %}
+            <span class="card-title">2. Site Requirements Analysis</span>
+            
+            <!-- Site Requirements Results -->
+            <div class="row">
+                <div class="col s12">
+                    <h5>Your Requirements: {{ analysis_results.site_flow }} m³/hr @ {{ analysis_results.site_head }} m</h5>
+                    <h6>Pump: {{ analysis_results.pump_code }}</h6>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col s3">
+                    <div class="card-panel {% if analysis_results.brain_analysis.feasible %}green lighten-4{% else %}red lighten-4{% endif %}">
+                        <h6>Feasibility</h6>
+                        <h4>{% if analysis_results.brain_analysis.feasible %}✓{% else %}✗{% endif %}</h4>
+                        <p>{% if analysis_results.brain_analysis.feasible %}Suitable{% else %}Not Suitable{% endif %}</p>
+                    </div>
+                </div>
+                <div class="col s3">
+                    <div class="card-panel blue lighten-4">
+                        <h6>Required Diameter</h6>
+                        <h4>{{ "%.0f"|format(analysis_results.brain_analysis.impeller_diameter_mm or 0) }}mm</h4>
+                        <p>Impeller Size</p>
+                    </div>
+                </div>
+                <div class="col s3">
+                    <div class="card-panel orange lighten-4">
+                        <h6>Expected Efficiency</h6>
+                        <h4>{{ "%.1f"|format(analysis_results.brain_analysis.efficiency_pct or 0) }}%</h4>
+                        <p>At Duty Point</p>
+                    </div>
+                </div>
+                <div class="col s3">
+                    <div class="card-panel purple lighten-4">
+                        <h6>Power Required</h6>
+                        <h4>{{ "%.1f"|format(analysis_results.brain_analysis.power_kw or 0) }}kW</h4>
+                        <p>Motor Rating</p>
+                    </div>
+                </div>
+            </div>
+            
+            {% if analysis_results.brain_analysis.analysis_details %}
+            <div class="ai-insights-panel" style="background: #f5f5f5; padding: 20px; margin-top: 2rem; border-radius: 4px;">
+                <h5><i class="material-icons left">engineering</i>Engineering Analysis</h5>
+                <pre style="white-space: pre-wrap; font-family: inherit;">{{ analysis_results.brain_analysis.analysis_details }}</pre>
+            </div>
+            {% endif %}
+            
+            {% else %}
+            <span class="card-title">2. Datasheet Validation Results</span>
             
             <!-- The ONE and ONLY comparison table -->
             <table class="striped responsive-table">
@@ -145,6 +247,7 @@
                 <h5><i class="material-icons left">psychology</i>AI Analysis</h5>
                 <div style="white-space: pre-line;">{{ analysis_results.ai_summary }}</div>
             </div>
+            {% endif %}
         </div>
     </div>
     {% endif %}
@@ -490,5 +593,64 @@ document.addEventListener('keydown', function(e) {
         suggestionsDiv.style.display = 'none';
     }
 });
+
+// Analysis mode switching
+document.addEventListener('DOMContentLoaded', function() {
+    const analysisMode = document.querySelectorAll('input[name="analysis_mode"]');
+    const siteMode = document.getElementById('site-requirements-mode');
+    const datasheetMode = document.getElementById('datasheet-validation-mode');
+    
+    analysisMode.forEach(radio => {
+        radio.addEventListener('change', function() {
+            if (this.value === 'site_requirements') {
+                siteMode.style.display = 'block';
+                datasheetMode.style.display = 'none';
+            } else {
+                siteMode.style.display = 'none';
+                datasheetMode.style.display = 'block';
+            }
+        });
+    });
+});
+
+function analyzeSiteRequirements() {
+    const flow = document.getElementById('site_flow').value;
+    const head = document.getElementById('site_head').value;
+    
+    if (!flow || !head) {
+        if (typeof M !== 'undefined') {
+            M.toast({html: 'Please enter both flow and head requirements', classes: 'red'});
+        }
+        return;
+    }
+    
+    // Show loading state
+    if (typeof M !== 'undefined') {
+        M.toast({html: 'Analyzing pump performance at your site requirements...', classes: 'blue'});
+    }
+    
+    // Submit the site requirements analysis
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.style.display = 'none';
+    
+    const modeInput = document.createElement('input');
+    modeInput.name = 'analysis_mode';
+    modeInput.value = 'site_requirements';
+    form.appendChild(modeInput);
+    
+    const flowInput = document.createElement('input');
+    flowInput.name = 'site_flow';
+    flowInput.value = flow;
+    form.appendChild(flowInput);
+    
+    const headInput = document.createElement('input');
+    headInput.name = 'site_head';
+    headInput.value = head;
+    form.appendChild(headInput);
+    
+    document.body.appendChild(form);
+    form.submit();
+}
 </script>
 {% endblock %}

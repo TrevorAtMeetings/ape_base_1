@@ -1168,44 +1168,76 @@ def pump_calibration_workbench(pump_code):
     analysis_results = None
     if request.method == 'POST':
         try:
-            # Parse multiple performance points from form
-            ground_truth_points = []
-            point_count = 1
+            analysis_mode = request.form.get('analysis_mode', 'datasheet')
             
-            # Count how many data points were submitted
-            while f'flow_{point_count}' in request.form:
-                try:
-                    flow = float(request.form.get(f'flow_{point_count}', 0))
-                    head = float(request.form.get(f'head_{point_count}', 0))
-                    efficiency = float(request.form.get(f'efficiency_{point_count}', 0))
-                    power = float(request.form.get(f'power_{point_count}', 0))
-                    diameter = float(request.form.get(f'diameter_{point_count}', 0))
-                    
-                    if flow > 0 and head > 0:  # Basic validation
-                        ground_truth_points.append({
-                            'flow': flow,
-                            'head': head,
-                            'efficiency': efficiency,
-                            'power': power,
-                            'diameter': diameter
-                        })
-                except ValueError:
-                    pass  # Skip invalid points
-                    
-                point_count += 1
-            
-            if ground_truth_points:
-                # Initialize comparison engine - force module reload
-                import importlib
-                import app.manufacturer_comparison_engine
-                importlib.reload(app.manufacturer_comparison_engine)
-                comparison_engine = app.manufacturer_comparison_engine.ManufacturerComparisonEngine()
+            if analysis_mode == 'site_requirements':
+                # Site Requirements Analysis Mode
+                site_flow = float(request.form.get('site_flow', 0))
+                site_head = float(request.form.get('site_head', 0))
                 
-                # Run the complete analysis
-                analysis_results = comparison_engine.run_full_calibration(
-                    pump_data=pump_data,
-                    ground_truth_points=ground_truth_points
-                )
+                if site_flow > 0 and site_head > 0:
+                    logger.info(f"Site Requirements Analysis for {pump_code} at {site_flow} m³/hr @ {site_head}m")
+                    
+                    # Calculate pump performance at the specified duty point
+                    brain_result = brain.performance.calculate_at_point_industry_standard(
+                        pump_data, site_flow, site_head
+                    )
+                    
+                    if brain_result:
+                        analysis_results = {
+                            'mode': 'site_requirements',
+                            'site_flow': site_flow,
+                            'site_head': site_head,
+                            'brain_analysis': brain_result,
+                            'pump_code': pump_code,
+                            'feasible': brain_result.get('feasible', False),
+                            'analysis_summary': f"Analysis for {pump_code} at {site_flow:.1f} m³/hr @ {site_head:.2f}m duty point"
+                        }
+                    else:
+                        flash(f"Cannot analyze pump performance at {site_flow} m³/hr @ {site_head}m", "error")
+                else:
+                    flash("Please provide valid flow and head requirements", "error")
+            
+            else:
+                # Datasheet Validation Mode (existing functionality)
+                ground_truth_points = []
+                point_count = 1
+                
+                # Count how many data points were submitted
+                while f'flow_{point_count}' in request.form:
+                    try:
+                        flow = float(request.form.get(f'flow_{point_count}', 0))
+                        head = float(request.form.get(f'head_{point_count}', 0))
+                        efficiency = float(request.form.get(f'efficiency_{point_count}', 0))
+                        power = float(request.form.get(f'power_{point_count}', 0))
+                        diameter = float(request.form.get(f'diameter_{point_count}', 0))
+                        
+                        if flow > 0 and head > 0:  # Basic validation
+                            ground_truth_points.append({
+                                'flow': flow,
+                                'head': head,
+                                'efficiency': efficiency,
+                                'power': power,
+                                'diameter': diameter
+                            })
+                    except ValueError:
+                        pass  # Skip invalid points
+                        
+                    point_count += 1
+                
+                if ground_truth_points:
+                    # Initialize comparison engine - force module reload
+                    import importlib
+                    import app.manufacturer_comparison_engine
+                    importlib.reload(app.manufacturer_comparison_engine)
+                    comparison_engine = app.manufacturer_comparison_engine.ManufacturerComparisonEngine()
+                    
+                    # Run the complete analysis
+                    analysis_results = comparison_engine.run_full_calibration(
+                        pump_data=pump_data,
+                        ground_truth_points=ground_truth_points
+                    )
+                    analysis_results['mode'] = 'datasheet_validation'
                 
         except Exception as e:
             logger.error(f"Error processing calibration: {e}")
