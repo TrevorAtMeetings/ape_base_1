@@ -1,0 +1,83 @@
+INFO:werkzeug:Press CTRL+C to quit
+INFO:werkzeug: * Restarting with stat
+INFO:app:Flask app instance created with ProxyFix for Replit.
+INFO:app:App configured. Upload folder: /home/runner/workspace/app/static/temp
+INFO:app:Session manager initialized.
+INFO:app:Repository cache retained for performance - will auto-initialize with correct DATABASE_URL.
+INFO:app.route_modules.pump_editor_routes:[Pump Editor] Routes module loaded successfully
+INFO:app:Brain monitoring routes registered
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 248-480-913
+INFO:werkzeug:127.0.0.1 - - [21/Aug/2025 14:27:53] "GET /admin/brain HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [21/Aug/2025 14:27:53] "GET /static/css/responsive-fixes.css?v=2000 HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [21/Aug/2025 14:27:53] "GET /static/css/admin_theme.css?v=9781 HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [21/Aug/2025 14:27:53] "GET /static/css/style.css?v=4456 HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [21/Aug/2025 14:27:53] "GET /static/css/floating-ai-chat.css?v=2505 HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [21/Aug/2025 14:27:53] "GET /static/css/admin_executive_theme.css?v=6584 HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [21/Aug/2025 14:27:53] "GET /static/css/professional-theme.css?v=6738 HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [21/Aug/2025 14:27:53] "GET /static/js/admin.js?v=9248 HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [21/Aug/2025 14:27:53] "GET /static/js/icon-loader.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [21/Aug/2025 14:27:53] "GET /static/js/micro-interactions.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [21/Aug/2025 14:27:53] "GET /static/js/force-icon-refresh.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [21/Aug/2025 14:27:53] "GET /static/js/main.js HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [21/Aug/2025 14:27:53] "GET /static/js/floating-ai-chat.js HTTP/1.1" 200 -
+INFO:werkzeug:10.83.7.238 - - [21/Aug/2025 14:27:53] "GET /admin/brain HTTP/1.1" 200 -
+INFO:app.admin_config_service:Loaded feature toggles from config/features.json
+INFO:werkzeug:127.0.0.1 - - [21/Aug/2025 14:27:54] "GET /api/features/status HTTP/1.1" 200 -
+INFO:werkzeug:10.83.7.238 - - [21/Aug/2025 14:27:54] "GET /static/css/style.css?v=2277 HTTP/1.1" 200 -
+INFO:werkzeug:10.83.3.29 - - [21/Aug/2025 14:27:54] "GET /static/css/professional-theme.css?v=2274 HTTP/1.1" 200 -
+INFO:werkzeug:10.83.3.29 - - [21/Aug/2025 14:27:54] "GET /static/css/admin_executive_theme.css?v=4042 HTTP/1.1" 200 -
+INFO:werkzeug:10.83.3.29 - - [21/Aug/2025 14:27:54] "GET /static/css/responsive-fixes.css?v=7427 HTTP/1.1" 200 -
+INFO:werkzeug:10.83.3.29 - - [21/Aug/2025 14:27:54] "GET /static/css/floating-ai-chat.css?v=8394 HTTP/1.1" 200 -
+INFO:werkzeug:10.83.3.29 - - [21/Aug/2025 14:27:54] "GET /static/css/admin_theme.css?v=9294 HTTP/1.1" 200 -
+INFO:werkzeug:10.83.3.29 - - [21/Aug/2025 14:27:54] "GET /static/js/admin.js?v=3446 HTTP/1.1" 200 -
+INFO:werkzeug:10.83.3.29 - - [21/Aug/2025 14:27:55] "GET /static/js/main.js HTTP/1.1" 304 -
+INFO:werkzeug:10.83.3.29 - - [21/Aug/2025 14:27:55] "GET /static/js/icon-loader.js HTTP/1.1" 304 -
+INFO:werkzeug:10.83.3.29 - - [21/Aug/2025 14:27:55] "GET /static/js/micro-interactions.js HTTP/1.1" 304 -
+INFO:werkzeug:10.83.3.29 - - [21/Aug/2025 14:27:55] "GET /static/js/force-icon-refresh.js HTTP/1.1" 304 -
+INFO:werkzeug:10.83.3.29 - - [21/Aug/2025 14:27:55] "GET /static/js/floating-ai-chat.js HTTP/1.1" 304 -
+INFO:werkzeug:10.83.3.29 - - [21/Aug/2025 14:27:55] "GET /api/features/status HTTP/1.1" 200 -
+INFO:app.pump_repository:Repository: Loading data from PostgreSQL database (optimized)
+INFO:app.pump_repository:Repository: Connecting to PostgreSQL at ep-quiet-voice-afewpwlz.c-2.us-west-2.aws.neon.tech:5432
+INFO:app.pump_repository:Repository: Created connection pool with 1-10 connections
+INFO:app.pump_repository:Repository: Found tables: ['ai_prompts', 'engineering_constants', 'extras', 'processed_files', 'pump_bep_markers', 'pump_curves', 'pump_diameters', 'pump_eff_iso', 'pump_names', 'pump_performance_points', 'pump_specifications', 'pump_speeds', 'pumps']
+INFO:app.pump_repository:Repository: Found 386 pump records with aggregated statistics
+INFO:app.pump_repository:Repository: Retrieved 7043 performance points
+ERROR:app.pump_repository:🔍 [REPOSITORY] Processing HC pump: 28 HC 6P
+ERROR:app.pump_repository:🔍 [REPOSITORY] HC pump data: BEP 1644.72 m³/hr @ 24.16m
+ERROR:app.pump_repository:🔍 [REPOSITORY] HC pump curves: 2 curves processed
+ERROR:app.pump_repository:✅ [REPOSITORY] HC pump 28 HC 6P ADDED to pump_models list
+ERROR:app.pump_repository:🔍 [REPOSITORY] Processing HC pump: 30 HC 6P
+ERROR:app.pump_repository:🔍 [REPOSITORY] HC pump data: BEP 2182.05 m³/hr @ 29.35m
+ERROR:app.pump_repository:🔍 [REPOSITORY] HC pump curves: 2 curves processed
+ERROR:app.pump_repository:✅ [REPOSITORY] HC pump 30 HC 6P ADDED to pump_models list
+ERROR:app.pump_repository:🔍 [REPOSITORY] Processing HC pump: 32 HC 6P
+ERROR:app.pump_repository:🔍 [REPOSITORY] HC pump data: BEP 2435.99 m³/hr @ 35.83m
+ERROR:app.pump_repository:🔍 [REPOSITORY] HC pump curves: 2 curves processed
+ERROR:app.pump_repository:✅ [REPOSITORY] HC pump 32 HC 6P ADDED to pump_models list
+ERROR:app.pump_repository:Repository: Could not derive min/max impeller for 8312-30 A333T from curves or specifications.
+INFO:app.pump_repository:Repository: Successfully loaded 386 pump models from PostgreSQL
+ERROR:app.pump_repository:🎯 [REPOSITORY FINAL] Found 3 HC pumps in final pump_models list
+ERROR:app.pump_repository:🎯 [REPOSITORY FINAL] 28 HC 6P: BEP 1644.72 m³/hr @ 24.16m
+ERROR:app.pump_repository:🎯 [REPOSITORY FINAL] 30 HC 6P: BEP 2182.05 m³/hr @ 29.35m
+ERROR:app.pump_repository:🎯 [REPOSITORY FINAL] 32 HC 6P: BEP 2435.99 m³/hr @ 35.83m
+INFO:app.pump_repository:Repository: Total curves: 869
+INFO:app.pump_repository:Repository: Total points: 6273
+INFO:app.pump_repository:Repository: NPSH curves: 612
+INFO:app.pump_repository:Repository: Tables used: ['ai_prompts', 'engineering_constants', 'extras', 'processed_files', 'pump_bep_markers', 'pump_curves', 'pump_diameters', 'pump_eff_iso', 'pump_names', 'pump_performance_points', 'pump_specifications', 'pump_speeds', 'pumps']
+INFO:werkzeug:10.83.7.238 - - [21/Aug/2025 14:42:13] "GET /admin/pump-calibration/502-62 HTTP/1.1" 302 -
+INFO:werkzeug:10.83.2.72 - - [21/Aug/2025 14:42:13] "GET /admin/pump-calibration/28 HTTP/1.1" 302 -
+INFO:werkzeug:10.83.2.72 - - [21/Aug/2025 14:42:15] "GET /admin/brain HTTP/1.1" 200 -
+INFO:werkzeug:10.83.2.72 - - [21/Aug/2025 14:42:16] "GET /static/css/style.css?v=3499 HTTP/1.1" 200 -
+INFO:werkzeug:10.83.7.238 - - [21/Aug/2025 14:42:16] "GET /static/css/responsive-fixes.css?v=4817 HTTP/1.1" 200 -
+INFO:werkzeug:10.83.0.114 - - [21/Aug/2025 14:42:16] "GET /static/css/professional-theme.css?v=7368 HTTP/1.1" 200 -
+INFO:werkzeug:10.83.1.13 - - [21/Aug/2025 14:42:16] "GET /static/css/admin_executive_theme.css?v=1325 HTTP/1.1" 200 -
+INFO:werkzeug:10.83.0.114 - - [21/Aug/2025 14:42:16] "GET /static/css/floating-ai-chat.css?v=3198 HTTP/1.1" 200 -
+INFO:werkzeug:10.83.10.142 - - [21/Aug/2025 14:42:16] "GET /static/css/admin_theme.css?v=4608 HTTP/1.1" 200 -
+INFO:werkzeug:10.83.10.142 - - [21/Aug/2025 14:42:16] "GET /static/js/admin.js?v=4918 HTTP/1.1" 200 -
+INFO:werkzeug:10.83.0.114 - - [21/Aug/2025 14:42:17] "GET /static/js/force-icon-refresh.js HTTP/1.1" 304 -
+INFO:werkzeug:10.83.7.238 - - [21/Aug/2025 14:42:17] "GET /static/js/icon-loader.js HTTP/1.1" 304 -
+INFO:werkzeug:10.83.1.13 - - [21/Aug/2025 14:42:17] "GET /static/js/main.js HTTP/1.1" 304 -
+INFO:werkzeug:10.83.0.114 - - [21/Aug/2025 14:42:17] "GET /static/js/micro-interactions.js HTTP/1.1" 304 -
+INFO:werkzeug:10.83.0.114 - - [21/Aug/2025 14:42:17] "GET /static/js/floating-ai-chat.js HTTP/1.1" 304 -
+INFO:werkzeug:10.83.0.114 - - [21/Aug/2025 14:42:17] "GET /api/features/status HTTP/1.1" 200 -

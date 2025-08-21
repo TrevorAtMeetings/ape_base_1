@@ -217,6 +217,120 @@
 
 {% block scripts %}
 {{ super() }}
+<style>
+/* Pump Selector Modal Styles */
+#pump-selector-modal {
+    max-width: 800px;
+    border-radius: 8px;
+}
+
+#pump-selector-modal .modal-content {
+    padding: 24px;
+}
+
+#pump-selector-modal h4 {
+    margin-bottom: 8px;
+    color: #1565c0;
+}
+
+#pump-selector-modal .search-container {
+    background: #f5f5f5;
+    padding: 16px;
+    border-radius: 8px;
+    margin: 20px 0;
+}
+
+#pump-selector-modal .pump-grid {
+    display: grid;
+    gap: 8px;
+    max-height: 400px;
+    overflow-y: auto;
+    padding: 8px;
+}
+
+.pump-category {
+    margin-bottom: 16px;
+}
+
+.pump-category-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 4px 4px 0 0;
+    font-weight: 600;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.pump-items {
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-top: none;
+    border-radius: 0 0 4px 4px;
+}
+
+.pump-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    border-bottom: 1px solid #f0f0f0;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.pump-item:last-child {
+    border-bottom: none;
+}
+
+.pump-item:hover {
+    background: #f8f9fa;
+    padding-left: 20px;
+}
+
+.pump-item.selected {
+    background: #e3f2fd;
+    border-left: 4px solid #2196f3;
+}
+
+.pump-code {
+    font-weight: 600;
+    color: #333;
+    margin-right: 8px;
+}
+
+.pump-type {
+    color: #666;
+    font-size: 14px;
+}
+
+.no-results {
+    text-align: center;
+    padding: 40px;
+    color: #999;
+}
+
+#pump-search {
+    font-size: 16px;
+    padding: 12px 16px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    width: 100%;
+    transition: border-color 0.3s;
+}
+
+#pump-search:focus {
+    border-color: #2196f3;
+    outline: none;
+}
+
+.search-hint {
+    color: #999;
+    font-size: 12px;
+    margin-top: 8px;
+}
+</style>
+
 <script>
 // Fix dropdown initialization
 document.addEventListener('DOMContentLoaded', function() {
@@ -239,134 +353,223 @@ document.addEventListener('DOMContentLoaded', function() {
     }, 100);
 });
 
-function runQuickCalibration() {
-    alert('Quick calibration test will be implemented soon');
-}
+// Global variable to store selected pump
+let selectedPump = null;
+
+// Pump data organized by series
+const pumpData = {
+    '2F Series - End Suction': [
+        { code: '100-200 2F', type: 'END SUCTION' },
+        { code: '100-200 2F 2P', type: 'END SUCTION 2-POLE' },
+        { code: '100-250 2F', type: 'END SUCTION' },
+        { code: '100-315 2F', type: 'END SUCTION' },
+        { code: '125-250 2F', type: 'END SUCTION' },
+        { code: '125-315 2F', type: 'END SUCTION' },
+        { code: '150-200 2F', type: 'END SUCTION' },
+        { code: '150-250 2F', type: 'END SUCTION' },
+        { code: '150-315 2F', type: 'END SUCTION' },
+        { code: '50-160 2F', type: 'END SUCTION' },
+        { code: '50-200 2F', type: 'END SUCTION' },
+        { code: '50-250 2F', type: 'END SUCTION' },
+        { code: '65-160 2F', type: 'END SUCTION' },
+        { code: '65-200 2F', type: 'END SUCTION' },
+        { code: '65-250 2F', type: 'END SUCTION' }
+    ],
+    'WL/WLN Series - Slurry': [
+        { code: '10 WLN 26A', type: 'SLURRY PUMP' },
+        { code: '10 WLN 32A', type: 'SLURRY PUMP' },
+        { code: '12 WL 26A', type: 'SLURRY PUMP' },
+        { code: '14 WL 30A', type: 'SLURRY PUMP' },
+        { code: '6x8x10 WL', type: 'SLURRY PUMP' },
+        { code: '6x8x10 WLN', type: 'SLURRY PUMP' },
+        { code: '8x6x14 WL', type: 'SLURRY PUMP' }
+    ],
+    'HC Series - High Capacity': [
+        { code: '28 HC 6P', type: 'HIGH CAPACITY' },
+        { code: '30 HC 6P', type: 'HIGH CAPACITY' },
+        { code: '32 HC 6P', type: 'HIGH CAPACITY' }
+    ],
+    'V Series - Vertical': [
+        { code: '8V 5S', type: 'VERTICAL PUMP' },
+        { code: '10V 5S', type: 'VERTICAL PUMP' },
+        { code: '12V 6S', type: 'VERTICAL PUMP' }
+    ],
+    'Special Series': [
+        { code: '10 NHTB', type: 'SPECIAL APPLICATION' },
+        { code: '12 NHTB', type: 'SPECIAL APPLICATION' }
+    ]
+};
 
 function showPumpSelector() {
-    // Create a modal for pump selection with more pumps
+    // Build pump categories HTML
+    let categoriesHtml = '';
+    for (const [category, pumps] of Object.entries(pumpData)) {
+        categoriesHtml += `
+            <div class="pump-category">
+                <div class="pump-category-header">${category}</div>
+                <div class="pump-items">
+        `;
+        
+        pumps.forEach(pump => {
+            categoriesHtml += `
+                <div class="pump-item" onclick="selectPump('${pump.code}', '${pump.type}')">
+                    <span class="pump-code">${pump.code}</span>
+                    <span class="pump-type">• ${pump.type}</span>
+                </div>
+            `;
+        });
+        
+        categoriesHtml += `
+                </div>
+            </div>
+        `;
+    }
+    
+    // Create modal HTML
     const modalHtml = `
-        <div id="pump-selector-modal" class="modal modal-fixed-footer" style="max-height: 85%; height: 600px;">
+        <div id="pump-selector-modal" class="modal modal-fixed-footer">
             <div class="modal-content">
-                <h4>Select Pump for Manufacturer Comparison</h4>
-                <p>This tool allows you to compare Brain predictions against manufacturer data, perform multi-point calibration, and analyze performance curves.</p>
+                <h4>
+                    <i class="material-icons left">compare_arrows</i>
+                    Pump Calibration Workbench
+                </h4>
+                <p class="grey-text">Compare Brain predictions against manufacturer data with multi-point calibration and performance analysis.</p>
                 
-                <div class="row">
-                    <div class="col s12">
-                        <div class="input-field">
-                            <i class="material-icons prefix">search</i>
-                            <input type="text" id="pump-code-input" placeholder="e.g., 4503-44648" onkeyup="filterPumpList()" autocomplete="off">
-                            <label for="pump-code-input">Search or Enter Pump Code</label>
-                        </div>
+                <div class="search-container">
+                    <input type="text" 
+                           id="pump-search" 
+                           placeholder="Search by pump code or type..." 
+                           onkeyup="filterPumps(event)" 
+                           autocomplete="off">
+                    <div class="search-hint">
+                        💡 Try searching: "2F", "WL", "100-200", or press Enter to use custom code
                     </div>
                 </div>
                 
-                <div class="row">
-                    <div class="col s12">
-                        <h6 class="grey-text">Available Pumps for Calibration:</h6>
-                        <div class="collection" id="pump-list" style="max-height: 350px; overflow-y: auto;">
-                            <a href="/admin/pump-calibration/4503-44648" class="collection-item">
-                                <span class="badge blue white-text">WL Series</span>
-                                <strong>4503-44648</strong> - 6x8x10 WL
-                            </a>
-                            <a href="/admin/pump-calibration/4502-42848" class="collection-item">
-                                <span class="badge blue white-text">WLN Series</span>
-                                <strong>4502-42848</strong> - 6x8x10 WLN
-                            </a>
-                            <a href="/admin/pump-calibration/2502-55" class="collection-item">
-                                <span class="badge blue white-text">WLN Series</span>
-                                <strong>2502-55</strong> - 10 WLN 32A
-                            </a>
-                            <a href="/admin/pump-calibration/2502-51" class="collection-item">
-                                <span class="badge blue white-text">WLN Series</span>
-                                <strong>2502-51</strong> - 10 WLN 26A
-                            </a>
-                            <a href="/admin/pump-calibration/502-62" class="collection-item">
-                                <span class="badge green white-text">HC Series</span>
-                                <strong>502-62</strong> - 28 HC 6P
-                            </a>
-                            <a href="/admin/pump-calibration/502-66" class="collection-item">
-                                <span class="badge green white-text">HC Series</span>
-                                <strong>502-66</strong> - 30 HC 6P
-                            </a>
-                            <a href="/admin/pump-calibration/502-67" class="collection-item">
-                                <span class="badge green white-text">HC Series</span>
-                                <strong>502-67</strong> - 32 HC 6P
-                            </a>
-                            <a href="/admin/pump-calibration/505-7" class="collection-item">
-                                <span class="badge orange white-text">NHTB Series</span>
-                                <strong>505-7</strong> - 10 NHTB
-                            </a>
-                            <a href="/admin/pump-calibration/503-85" class="collection-item">
-                                <span class="badge purple white-text">V Series</span>
-                                <strong>503-85</strong> - 8V 5S
-                            </a>
-                            <a href="/admin/pump-calibration/503-86" class="collection-item">
-                                <span class="badge purple white-text">V Series</span>
-                                <strong>503-86</strong> - 10V 5S
-                            </a>
-                        </div>
-                    </div>
+                <div id="pump-categories" class="pump-grid">
+                    ${categoriesHtml}
+                </div>
+                
+                <div id="no-results" class="no-results" style="display: none;">
+                    <i class="material-icons large grey-text">search_off</i>
+                    <p>No pumps found matching your search</p>
+                    <p class="grey-text">Press Enter to calibrate a custom pump code</p>
                 </div>
             </div>
             <div class="modal-footer">
                 <a href="#!" class="modal-close waves-effect waves-red btn-flat">Cancel</a>
-                <a href="#!" onclick="navigateToCalibration()" class="waves-effect waves-green btn blue">
-                    <i class="material-icons left">compare_arrows</i>
-                    Open Calibration Workbench
+                <a href="#!" onclick="navigateToCalibration()" class="waves-effect waves-green btn blue disabled" id="calibrate-btn">
+                    <i class="material-icons left">analytics</i>
+                    Select a Pump First
                 </a>
             </div>
         </div>
     `;
     
-    // Add modal to page if not exists
-    if (!document.getElementById('pump-selector-modal')) {
-        document.body.insertAdjacentHTML('beforeend', modalHtml);
+    // Remove existing modal if present
+    const existingModal = document.getElementById('pump-selector-modal');
+    if (existingModal) {
+        const instance = M.Modal.getInstance(existingModal);
+        if (instance) instance.destroy();
+        existingModal.remove();
     }
+    
+    // Add new modal
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
     
     // Initialize and open modal
     const modal = document.getElementById('pump-selector-modal');
-    const instance = M.Modal.init(modal, {dismissible: true});
+    const instance = M.Modal.init(modal, {
+        dismissible: true,
+        onOpenEnd: function() {
+            document.getElementById('pump-search').focus();
+        }
+    });
     instance.open();
-    
-    // Focus on input
-    setTimeout(() => {
-        document.getElementById('pump-code-input').focus();
-    }, 100);
 }
 
-function filterPumpList() {
-    const input = document.getElementById('pump-code-input');
-    const filter = input.value.toUpperCase();
-    const pumpList = document.getElementById('pump-list');
-    const items = pumpList.getElementsByClassName('collection-item');
+function selectPump(code, type) {
+    selectedPump = code;
     
-    for (let i = 0; i < items.length; i++) {
-        const txtValue = items[i].textContent || items[i].innerText;
-        if (txtValue.toUpperCase().indexOf(filter) > -1) {
-            items[i].style.display = "";
-        } else {
-            items[i].style.display = "none";
+    // Update UI to show selection
+    document.querySelectorAll('.pump-item').forEach(item => {
+        item.classList.remove('selected');
+        if (item.querySelector('.pump-code').textContent === code) {
+            item.classList.add('selected');
         }
+    });
+    
+    // Enable calibrate button
+    const btn = document.getElementById('calibrate-btn');
+    btn.classList.remove('disabled');
+    btn.innerHTML = `
+        <i class="material-icons left">analytics</i>
+        Calibrate ${code}
+    `;
+    
+    // Update search field
+    document.getElementById('pump-search').value = code;
+}
+
+function filterPumps(event) {
+    const searchTerm = event.target.value.toUpperCase();
+    const categories = document.querySelectorAll('.pump-category');
+    let hasResults = false;
+    
+    // Handle Enter key for custom pump codes
+    if (event.key === 'Enter' && searchTerm.length > 0) {
+        selectedPump = event.target.value;
+        navigateToCalibration();
+        return;
     }
+    
+    // Filter pumps
+    categories.forEach(category => {
+        const items = category.querySelectorAll('.pump-item');
+        let categoryHasMatch = false;
+        
+        items.forEach(item => {
+            const text = item.textContent.toUpperCase();
+            if (text.includes(searchTerm)) {
+                item.style.display = '';
+                categoryHasMatch = true;
+                hasResults = true;
+            } else {
+                item.style.display = 'none';
+            }
+        });
+        
+        // Hide category if no matches
+        category.style.display = categoryHasMatch ? '' : 'none';
+    });
+    
+    // Show/hide no results message
+    document.getElementById('pump-categories').style.display = hasResults ? '' : 'none';
+    document.getElementById('no-results').style.display = hasResults ? 'none' : 'block';
 }
 
 function navigateToCalibration() {
-    const pumpCode = document.getElementById('pump-code-input').value.trim();
+    const pumpCode = selectedPump || document.getElementById('pump-search').value.trim();
+    
     if (pumpCode) {
-        window.location.href = `/admin/pump-calibration/${pumpCode}`;
+        // Encode the pump code to handle spaces and special characters
+        const encodedCode = encodeURIComponent(pumpCode);
+        window.location.href = `/admin/pump-calibration/${encodedCode}`;
     } else {
-        M.toast({html: 'Please enter a pump code or select from the list', classes: 'red'});
+        M.toast({
+            html: '<i class="material-icons left">warning</i>Please select or enter a pump code',
+            classes: 'orange darken-2',
+            displayLength: 3000
+        });
     }
 }
 
-// Allow Enter key to navigate
-document.addEventListener('DOMContentLoaded', function() {
-    document.addEventListener('keypress', function(e) {
-        if (e.target && e.target.id === 'pump-code-input' && e.key === 'Enter') {
-            navigateToCalibration();
-        }
+function runQuickCalibration() {
+    M.toast({
+        html: '<i class="material-icons left">info</i>Quick calibration will be available soon',
+        classes: 'blue',
+        displayLength: 3000
     });
-});
+}
 </script>
 {% endblock %}
