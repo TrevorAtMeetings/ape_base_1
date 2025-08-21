@@ -202,49 +202,139 @@ class ManufacturerComparisonEngine:
         }
     
     def _generate_ai_summary(self, comparison_points: List[Dict], pump_data: Dict) -> str:
-        """Generate AI analysis summary of calibration results"""
+        """Generate comprehensive engineering analysis using AI for troubleshooting guidance"""
         
         try:
-            # Calculate summary statistics
+            # Calculate detailed statistics for all metrics
             valid_points = [p for p in comparison_points if p.get('head_delta') is not None]
             
             if not valid_points:
                 return "No valid comparison points available for analysis."
             
-            head_deltas = [abs(p['head_delta']) for p in valid_points if p.get('head_delta') is not None]
-            avg_head_error = sum(head_deltas) / len(head_deltas) if head_deltas else 0
-            max_head_error = max(head_deltas) if head_deltas else 0
-            
-            # Count significant discrepancies
-            major_discrepancies = len([d for d in head_deltas if d > 10])  # >10% difference
-            minor_discrepancies = len([d for d in head_deltas if 5 < d <= 10])  # 5-10% difference
-            
-            # Generate summary text
+            # Prepare detailed analysis data for AI
             pump_code = pump_data.get('pump_code', 'Unknown')
-            summary = f"""Calibration Analysis for {pump_code}
-
-Performance Assessment:
-• Analyzed {len(comparison_points)} performance points
-• Average head prediction error: {avg_head_error:.1f}%
-• Maximum head prediction error: {max_head_error:.1f}%
-
-Discrepancy Breakdown:
-• Major discrepancies (>10%): {major_discrepancies} points
-• Minor discrepancies (5-10%): {minor_discrepancies} points
-• Good matches (<5%): {len(valid_points) - major_discrepancies - minor_discrepancies} points
-
-"""
+            bep_flow = pump_data.get('bep_flow_m3hr', 0)
+            bep_head = pump_data.get('bep_head_m', 0)
             
-            # Add recommendations
-            if major_discrepancies > len(valid_points) * 0.5:
-                summary += "\n⚠️  RECOMMENDATION: Significant systematic errors detected. Consider reviewing pump database accuracy or Brain calibration parameters."
-            elif major_discrepancies > 0:
-                summary += "\n📊 RECOMMENDATION: Some points show significant deviation. Review individual operating conditions and impeller diameters."
-            else:
-                summary += "\n✅ ASSESSMENT: Brain predictions show good correlation with ground truth data."
+            analysis_data = {
+                'pump_model': pump_code,
+                'bep_conditions': f"{bep_flow:.0f} m³/hr @ {bep_head:.1f}m",
+                'test_points': []
+            }
             
-            return summary
+            for point in comparison_points:
+                test_point = {
+                    'flow': point.get('flow', 0),
+                    'truth_head': point.get('truth_head', 0),
+                    'brain_head': point.get('brain_head', 0),
+                    'truth_efficiency': point.get('truth_efficiency', 0),
+                    'brain_efficiency': point.get('brain_efficiency', 0),
+                    'truth_power': point.get('truth_power', 0),
+                    'brain_power': point.get('brain_power', 0),
+                    'head_error': point.get('head_delta', 0),
+                    'efficiency_error': point.get('efficiency_delta', 0),
+                    'power_error': point.get('power_delta', 0),
+                    'diameter': point.get('diameter', 0)
+                }
+                analysis_data['test_points'].append(test_point)
+            
+            # Generate AI-powered engineering analysis
+            return self._get_ai_engineering_analysis(analysis_data)
             
         except Exception as e:
-            logger.error(f"Error generating AI summary: {e}")
-            return f"Analysis summary unavailable due to processing error: {str(e)}"
+            logger.error(f"AI summary generation failed: {e}")
+            return f"Analysis generation error: {str(e)}"
+    
+    def _get_ai_engineering_analysis(self, analysis_data: Dict) -> str:
+        """Generate AI-powered engineering analysis using OpenAI"""
+        
+        try:
+            # Import OpenAI
+            import openai
+            import os
+            
+            # Initialize OpenAI client
+            client = openai.OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+            
+            # Create detailed prompt for engineering analysis
+            prompt = f"""As a senior pump engineer, analyze this calibration data and provide actionable troubleshooting guidance.
+
+PUMP: {analysis_data['pump_model']}
+BEP CONDITIONS: {analysis_data['bep_conditions']}
+
+CALIBRATION DATA:"""
+
+            for i, point in enumerate(analysis_data['test_points'], 1):
+                prompt += f"""
+Point {i} @ {point['flow']:.0f} m³/hr, Diameter {point['diameter']:.0f}mm:
+- Head: Truth {point['truth_head']:.1f}m vs Brain {point['brain_head']:.1f}m (Δ{point['head_error']:+.1f}%)
+- Efficiency: Truth {point['truth_efficiency']:.1f}% vs Brain {point['brain_efficiency']:.1f}% (Δ{point['efficiency_error']:+.1f}%)
+- Power: Truth {point['truth_power']:.1f}kW vs Brain {point['brain_power']:.1f}kW (Δ{point['power_error']:+.1f}%)"""
+
+            prompt += """
+
+Provide a comprehensive engineering analysis including:
+1. **Root Cause Analysis**: What physical factors might cause these deviations?
+2. **Performance Assessment**: How do these errors impact pump operation?
+3. **Manufacturing Tolerances**: Are deviations within expected ranges?
+4. **Troubleshooting Actions**: Specific checks engineers should perform
+5. **Operational Recommendations**: Adjustments or settings to optimize performance
+
+Focus on actionable insights for pump engineers, not just statistics. Consider impeller wear, system conditions, calibration drift, and measurement accuracy."""
+
+            # the newest OpenAI model is "gpt-4o" which was released May 13, 2024.
+            # do not change this unless explicitly requested by the user
+            response = client.chat.completions.create(
+                model="gpt-4o",
+                messages=[{"role": "user", "content": prompt}],
+                max_tokens=800,
+                temperature=0.3  # Lower temperature for more focused technical analysis
+            )
+            
+            return response.choices[0].message.content
+            
+        except Exception as e:
+            logger.error(f"OpenAI analysis failed: {e}")
+            # Fallback to enhanced manual analysis
+            return self._generate_enhanced_manual_analysis(analysis_data)
+    
+    def _generate_enhanced_manual_analysis(self, analysis_data: Dict) -> str:
+        """Generate enhanced manual analysis as fallback"""
+        
+        summary = f"🔧 **ENGINEERING ANALYSIS: {analysis_data['pump_model']}**\n"
+        summary += f"BEP Design Point: {analysis_data['bep_conditions']}\n\n"
+        
+        for i, point in enumerate(analysis_data['test_points'], 1):
+            summary += f"**Point {i} Analysis @ {point['flow']:.0f} m³/hr:**\n"
+            
+            # Head analysis
+            if abs(point['head_error']) < 3:
+                summary += f"✅ Head Prediction: Excellent match ({point['head_error']:+.1f}%)\n"
+            elif abs(point['head_error']) < 8:
+                summary += f"⚠️ Head Prediction: Acceptable deviation ({point['head_error']:+.1f}%)\n"
+            else:
+                summary += f"❌ Head Prediction: Significant deviation ({point['head_error']:+.1f}%) - Check impeller wear\n"
+            
+            # Efficiency analysis
+            if abs(point['efficiency_error']) < 5:
+                summary += f"✅ Efficiency Match: Good correlation ({point['efficiency_error']:+.1f}%)\n"
+            elif abs(point['efficiency_error']) < 10:
+                summary += f"⚠️ Efficiency: Moderate deviation ({point['efficiency_error']:+.1f}%) - Check clearances\n"
+            else:
+                summary += f"❌ Efficiency: Poor correlation ({point['efficiency_error']:+.1f}%) - Major wear suspected\n"
+            
+            # Power analysis
+            if abs(point['power_error']) < 5:
+                summary += f"✅ Power Calculation: Accurate prediction ({point['power_error']:+.1f}%)\n"
+            else:
+                summary += f"⚠️ Power Deviation: {point['power_error']:+.1f}% - Verify motor efficiency\n"
+            
+            summary += "\n"
+        
+        summary += "**🔍 RECOMMENDED ACTIONS:**\n"
+        summary += "• Inspect impeller for wear patterns and damage\n"
+        summary += "• Verify system operating conditions match design\n"
+        summary += "• Check measurement instrument calibration\n"
+        summary += "• Review pump installation and alignment\n"
+        
+        return summary
