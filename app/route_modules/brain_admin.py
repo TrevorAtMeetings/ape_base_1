@@ -667,6 +667,12 @@ class ManufacturerComparisonEngine:
             except Exception as e:
                 self.logger.error(f"Error processing point {point}: {e}")
         
+        # Generate curve data for visual comparison
+        # This is for the Analytical Workbench - showing the full predicted curve
+        curve_comparison_data = self._generate_curve_comparison_data(
+            pump_data, ground_truth_points, brain
+        )
+        
         # If we have limited data points, add the expanded points for better visualization
         if len(comparison_results) < 5:
             comparison_results.extend(expanded_points)
@@ -691,9 +697,71 @@ class ManufacturerComparisonEngine:
             'pump_code': pump_code,
             'pump_data': pump_data,
             'comparison_points': comparison_results,
+            'curve_comparison_data': curve_comparison_data,  # For visual charts
             'metrics': metrics,
             'insights': insights
         }
+    
+    def _generate_curve_comparison_data(self, pump_data, ground_truth_points, brain):
+        """
+        Generate full curve data for visual comparison using the forced diameter.
+        This shows what the Brain predicts the full curve should look like for the exact impeller diameter.
+        """
+        import numpy as np
+        
+        curve_data = []
+        
+        try:
+            # Get the forced diameter from the first ground truth point (they should all be the same)
+            forced_diameter = None
+            if ground_truth_points and len(ground_truth_points) > 0:
+                forced_diameter = ground_truth_points[0].get('diameter')
+            
+            if not forced_diameter:
+                self.logger.warning("No diameter specified in ground truth points for curve generation")
+                return curve_data
+            
+            # Get the BEP flow from pump data
+            bep_flow = pump_data.get('bep_flow', 0)
+            
+            if bep_flow <= 0:
+                return curve_data
+            
+            # Calculate the flow range (40% to 140% of BEP for comprehensive view)
+            min_flow = max(bep_flow * 0.4, 10)  # At least 10 m³/hr
+            max_flow = bep_flow * 1.4
+            
+            # Generate 20 evenly spaced points for smooth curves
+            flow_points = np.linspace(min_flow, max_flow, 20)
+            
+            for flow in flow_points:
+                try:
+                    # Get Brain's prediction at this flow with the FORCED diameter
+                    brain_prediction = brain.performance.calculate_performance_at_flow(
+                        pump_data, 
+                        flow,
+                        forced_diameter=forced_diameter,  # Use the forced diameter from ground truth
+                        allow_excessive_trim=True
+                    )
+                    
+                    if brain_prediction:
+                        curve_data.append({
+                            'flow': float(flow),
+                            'brain_head': brain_prediction.get('head_m', 0),
+                            'brain_efficiency': brain_prediction.get('efficiency_pct', 0),
+                            'brain_power': brain_prediction.get('power_kw', 0),
+                            'brain_diameter': forced_diameter  # The forced diameter used
+                        })
+                except Exception as e:
+                    self.logger.debug(f"Could not generate curve point at {flow} m³/hr with diameter {forced_diameter}mm: {e}")
+            
+            # Sort by flow for proper chart rendering
+            curve_data = sorted(curve_data, key=lambda x: x['flow'])
+            
+        except Exception as e:
+            self.logger.warning(f"Error generating curve comparison data: {e}")
+            
+        return curve_data
     
     def _generate_expanded_flow_range(self, pump_data, ground_truth_points, brain):
         """

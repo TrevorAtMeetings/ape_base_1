@@ -14,11 +14,11 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet">
 
     <!-- Custom CSS - Executive-Grade Design System -->
-    <link href="/static/css/style.css?v=8500" rel="stylesheet">
-    <link href="/static/css/professional-theme.css?v=1855" rel="stylesheet">
-    <link href="/static/css/admin_executive_theme.css?v=8236" rel="stylesheet">
-    <link href="/static/css/responsive-fixes.css?v=1456" rel="stylesheet">
-    <link href="/static/css/floating-ai-chat.css?v=3954" rel="stylesheet">
+    <link href="/static/css/style.css?v=2797" rel="stylesheet">
+    <link href="/static/css/professional-theme.css?v=1665" rel="stylesheet">
+    <link href="/static/css/admin_executive_theme.css?v=3881" rel="stylesheet">
+    <link href="/static/css/responsive-fixes.css?v=6605" rel="stylesheet">
+    <link href="/static/css/floating-ai-chat.css?v=2591" rel="stylesheet">
 
 
     <!-- MathJax for LaTeX rendering -->
@@ -717,12 +717,12 @@
     </div>
     
     
-    <!-- PURE VALIDATION INTERFACE -->
+    <!-- SECTION 1: TRUTH GATE - The Stark Comparison -->
     <div class="card">
         <div class="card-content">
             <span class="card-title">
-                <i class="material-icons left">warning</i>
-                Validation Results - Critical Discrepancy Detected
+                <i class="material-icons left">verified_user</i>
+                Section 1: Truth Gate - Validation Results
             </span>
             
             <!-- Stark Comparison Display -->
@@ -744,6 +744,7 @@
                     </thead>
                     <tbody>
                         
+                        
                         <tr>
                             <td>
                                 <strong>828.7 m³/hr @ 390 mm</strong>
@@ -762,25 +763,161 @@
                             </td>
                         </tr>
                         
+                        
                     </tbody>
                 </table>
                 
                 <div style="margin-top: 20px; padding: 15px; background: #ffebee; border-radius: 4px;">
                     <p style="color: #c62828; font-weight: 500; margin: 0;">
                         <i class="material-icons tiny" style="vertical-align: middle;">error</i>
-                        The Brain's prediction differs significantly from your provided ground truth data.
+                        
+                        
+                        Significant discrepancy detected. The Brain's prediction differs from your ground truth data by up to 58.2%.
+                        
                     </p>
                 </div>
             </div>
+        </div>
+    </div>
+    
+    <!-- SECTION 2: ANALYTICAL WORKBENCH - Granular Analysis -->
+    <div class="card">
+        <div class="card-content">
+            <span class="card-title">
+                <i class="material-icons left">analytics</i>
+                Section 2: Analytical Workbench - Discrepancy Analysis
+            </span>
             
-            <!-- DECISION INTERFACE -->
-            <div style="margin-top: 30px; padding: 20px; background: #e8f5e9; border: 2px solid #4caf50; border-radius: 8px;">
-                <h5 style="color: #1b5e20; margin-bottom: 15px;">
-                    <i class="material-icons left">help_outline</i>
-                    Decision Required
+            <!-- Detailed Delta Table -->
+            <div style="margin: 20px 0;">
+                <h5 style="color: #1565C0; margin-bottom: 20px;">
+                    <i class="material-icons left">table_chart</i>
+                    Detailed Performance Comparison
                 </h5>
+                
+                <table class="striped highlight responsive-table">
+                    <thead>
+                        <tr style="background: #e3f2fd;">
+                            <th>Flow (m³/hr)</th>
+                            <th>Your Head (m)</th>
+                            <th>Brain's Head (m)</th>
+                            <th>Head Delta (%)</th>
+                            <th>Your Efficiency (%)</th>
+                            <th>Brain's Efficiency (%)</th>
+                            <th>Efficiency Delta (%)</th>
+                            
+                            <th>Your Power (kW)</th>
+                            <th>Brain's Power (kW)</th>
+                            <th>Power Delta (%)</th>
+                            
+                        </tr>
+                    </thead>
+                    <tbody>
+                        
+                        
+                        <tr>
+                            <td><strong>828.7</strong></td>
+                            <td>27.8</td>
+                            <td>43.99</td>
+                            <td>
+                                <span style="color: #d32f2f;">
+                                    +58.2%
+                                </span>
+                            </td>
+                            <td>75.0</td>
+                            <td>84.3</td>
+                            <td>
+                                <span style="color: #d32f2f;">
+                                    +12.4%
+                                </span>
+                            </td>
+                            
+                            <td>8.37</td>
+                            <td>11.79</td>
+                            <td>
+                                <span style="color: #d32f2f;">
+                                    +40.8%
+                                </span>
+                            </td>
+                            
+                        </tr>
+                        
+                        
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Visual Comparison Charts -->
+            <div style="margin: 30px 0;">
+                <h5 style="color: #1565C0; margin-bottom: 20px;">
+                    <i class="material-icons left">show_chart</i>
+                    Visual Performance Curves
+                </h5>
+                
+                <div class="row">
+                    <!-- Head vs Flow Chart -->
+                    <div class="col s12">
+                        <div id="head-curve-comparison" style="width: 100%; height: 400px;"></div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <!-- Efficiency vs Flow Chart -->
+                    <div class="col s12 m6">
+                        <div id="efficiency-curve-comparison" style="width: 100%; height: 350px;"></div>
+                    </div>
+                    <!-- Power vs Flow Chart -->
+                    <div class="col s12 m6">
+                        <div id="power-curve-comparison" style="width: 100%; height: 350px;"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Statistical Metrics -->
+            
+            <div style="margin: 20px 0; padding: 15px; background: #f5f5f5; border-radius: 4px;">
+                <h6 style="margin-bottom: 15px;"><strong>Statistical Analysis</strong></h6>
+                <div class="row">
+                    <div class="col s12 m4">
+                        <p><strong>Head Accuracy:</strong></p>
+                        <ul style="margin-left: 20px;">
+                            <li>Mean Delta: 58.2%</li>
+                            <li>RMSE: 58.24%</li>
+                            <li>Max Delta: 58.2%</li>
+                        </ul>
+                    </div>
+                    <div class="col s12 m4">
+                        <p><strong>Efficiency Accuracy:</strong></p>
+                        <ul style="margin-left: 20px;">
+                            <li>Mean Delta: 12.4%</li>
+                            <li>RMSE: 12.38%</li>
+                            <li>Max Delta: 12.4%</li>
+                        </ul>
+                    </div>
+                    <div class="col s12 m4">
+                        <p><strong>Overall:</strong></p>
+                        <ul style="margin-left: 20px;">
+                            <li>Overall Accuracy: 62.9%</li>
+                            <li>Data Points: 1</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+    
+    <!-- SECTION 3: INFORMED DECISION - Empowered User Action -->
+    <div class="card">
+        <div class="card-content">
+            <span class="card-title">
+                <i class="material-icons left">assignment_turned_in</i>
+                Section 3: Decision Required
+            </span>
+            
+            <div style="margin-top: 20px; padding: 20px; background: #e8f5e9; border: 2px solid #4caf50; border-radius: 8px;">
                 <p style="font-size: 1.1em; margin-bottom: 20px;">
-                    This discrepancy indicates one of two possibilities:
+                    Based on the comprehensive analysis above, this discrepancy indicates one of two possibilities:
                 </p>
                 <ol style="margin-bottom: 25px;">
                     <li style="margin-bottom: 10px;"><strong>Your input data may be incorrect</strong> (most likely)</li>
@@ -812,7 +949,7 @@
             <!-- Hidden form for flagging -->
             <form id="flag-form" action="/admin/pump-calibration/10/12 BLE/flag-review" method="POST" style="display: none;">
                 <input type="hidden" name="csrf_token" value="">
-                <input type="hidden" name="calibration_data" value="{"comparison_points": [{"brain_diameter": 390.0, "brain_efficiency": 84.286576, "brain_head": 43.991747999999994, "brain_power": 11.786277244398917, "delta_diameter": 0.0, "delta_efficiency": 12.382101333333328, "delta_head": 58.24369784172659, "delta_power": 40.80863052414769, "flow": 828.7, "qbep_percent": null, "truth_diameter": 390.0, "truth_efficiency": 75.0, "truth_head": 27.8, "truth_power": 8.370422466666668}], "insights": ["The Brain prediction system consistently overestimates both efficiency and power, as indicated by the positive deltas of 12.4% and 40.8%, respectively. This suggests a systematic over-prediction pattern.", "The data provided is limited to a single flow point, hence no flow-dependent accuracy variations can be assessed. Additional data points across a range of flows are necessary to identify any potential flow-dependent trends.", "The significant overestimation in power suggests that the model\u0027s parameters related to hydraulic losses or mechanical efficiency might need recalibration. Specifically, friction loss coefficients or motor efficiency assumptions could be adjusted.", "The Brain\u0027s predictive quality is currently suboptimal, with an overall accuracy of 62.9%. The high RMSE values for both efficiency (12.38%) and power (40.81%) indicate substantial deviations from the manufacturer\u0027s data.", "To improve accuracy, recalibrate the model by adjusting the efficiency curve to better align with the manufacturer\u0027s data. Additionally, refine the power prediction model by reassessing the assumptions regarding system losses and motor efficiency.", "Calibration Adjustment: Consider decrease in efficiency_correction_exponent by ~1.238; Consider decrease in power calculation factors"], "metrics": {"efficiency": {"max_delta": 12.382101333333328, "mean_delta": 12.382101333333328, "rmse": 12.382101333333328, "std_dev": 0.0}, "head": {"max_delta": 58.24369784172659, "mean_delta": 58.24369784172659, "rmse": 58.24369784172659, "std_dev": 0.0}, "overall_accuracy": 62.85519010026413, "point_count": 1, "power": {"max_delta": 40.80863052414769, "mean_delta": 40.80863052414769, "rmse": 40.80863052414769, "std_dev": 0.0}}, "pump_code": "10/12 BLE", "pump_data": {"connection_size": "Standard", "curve_count": 1, "curves": [{"curve_id": "10/12 BLE_C1_390mm", "curve_index": 0, "efficiency_range_pct": "40.08-88.48", "flow_range_m3hr": "250.0-1250.0", "has_npsh_data": true, "has_power_data": false, "head_range_m": "32.92-51.82", "impeller_diameter_mm": 390.0, "npsh_range_m": "4.88-7.92", "performance_points": [{"efficiency_pct": 40.08, "flow_m3hr": 250.0, "head_m": 51.82, "npshr_m": 0.0, "power_kw": null}, {"efficiency_pct": 66.28, "flow_m3hr": 500.0, "head_m": 49.38, "npshr_m": 4.88, "power_kw": null}, {"efficiency_pct": 82.36, "flow_m3hr": 750.0, "head_m": 45.72, "npshr_m": 5.49, "power_kw": null}, {"efficiency_pct": 88.48, "flow_m3hr": 1000.0, "head_m": 40.23, "npshr_m": 6.4, "power_kw": null}, {"efficiency_pct": 82.55, "flow_m3hr": 1250.0, "head_m": 32.92, "npshr_m": 7.92, "power_kw": null}], "point_count": 5, "test_speed_rpm": 1480}], "description": "10/12 BLE - MATHER AND PLATT", "manufacturer": "APE PUMPS", "materials": "Cast Iron", "max_efficiency": 88.48, "max_flow_m3hr": 1500.0, "max_head_m": 60.0, "max_power_kw": 0.0, "min_efficiency": 0.0, "model_series": "MATHER AND PLATT", "npsh_curves": 1, "power_curves": 0, "pump_code": "10/12 BLE", "pump_id": 10, "pump_type": "HSC", "specifications": {"bep_flow_m3hr": 998.19, "bep_head_m": 40.35, "max_flow_m3hr": 1500.0, "max_head_m": 60.0, "max_impeller_diameter_mm": 390.0, "max_speed_rpm": 2010, "min_impeller_diameter_mm": 390.0, "min_speed_rpm": 700, "npshr_at_bep": 0.0, "test_speed_rpm": 1480, "variable_diameter": true, "variable_speed": false}, "total_points": 6}}">
+                <input type="hidden" name="calibration_data" value="{"comparison_points": [{"brain_diameter": 390.0, "brain_efficiency": 84.286576, "brain_head": 43.991747999999994, "brain_power": 11.786277244398917, "delta_diameter": 0.0, "delta_efficiency": 12.382101333333328, "delta_head": 58.24369784172659, "delta_power": 40.80863052414769, "flow": 828.7, "qbep_percent": null, "truth_diameter": 390.0, "truth_efficiency": 75.0, "truth_head": 27.8, "truth_power": 8.370422466666668}], "curve_comparison_data": [], "insights": ["1. The Brain prediction system shows a systematic over-prediction in both efficiency and power metrics, with significant deviations of 12.4% and 40.8% respectively.", "2. Given the data provided is for a single flow point, it is difficult to assess flow-dependent accuracy variations. Additional data points across different flow rates are needed for a comprehensive analysis.", "3. The significant over-prediction in power suggests that the model\u0027s power consumption parameters, such as friction losses or motor efficiency, may need recalibration.", "4. The overall accuracy of 62.9% indicates a moderate predictive quality, but the high RMSE values for both efficiency and power highlight substantial room for improvement.", "5. Calibration recommendations include: refining the model\u0027s efficiency curve to better align with manufacturer specifications, adjusting power consumption parameters to reduce the overestimation, and collecting more data points across varying flow rates to enhance model robustness.", "Calibration Adjustment: Consider decrease in efficiency_correction_exponent by ~1.238; Consider decrease in power calculation factors"], "metrics": {"efficiency": {"max_delta": 12.382101333333328, "mean_delta": 12.382101333333328, "rmse": 12.382101333333328, "std_dev": 0.0}, "head": {"max_delta": 58.24369784172659, "mean_delta": 58.24369784172659, "rmse": 58.24369784172659, "std_dev": 0.0}, "overall_accuracy": 62.85519010026413, "point_count": 1, "power": {"max_delta": 40.80863052414769, "mean_delta": 40.80863052414769, "rmse": 40.80863052414769, "std_dev": 0.0}}, "pump_code": "10/12 BLE", "pump_data": {"connection_size": "Standard", "curve_count": 1, "curves": [{"curve_id": "10/12 BLE_C1_390mm", "curve_index": 0, "efficiency_range_pct": "40.08-88.48", "flow_range_m3hr": "250.0-1250.0", "has_npsh_data": true, "has_power_data": false, "head_range_m": "32.92-51.82", "impeller_diameter_mm": 390.0, "npsh_range_m": "4.88-7.92", "performance_points": [{"efficiency_pct": 40.08, "flow_m3hr": 250.0, "head_m": 51.82, "npshr_m": 0.0, "power_kw": null}, {"efficiency_pct": 66.28, "flow_m3hr": 500.0, "head_m": 49.38, "npshr_m": 4.88, "power_kw": null}, {"efficiency_pct": 82.36, "flow_m3hr": 750.0, "head_m": 45.72, "npshr_m": 5.49, "power_kw": null}, {"efficiency_pct": 88.48, "flow_m3hr": 1000.0, "head_m": 40.23, "npshr_m": 6.4, "power_kw": null}, {"efficiency_pct": 82.55, "flow_m3hr": 1250.0, "head_m": 32.92, "npshr_m": 7.92, "power_kw": null}], "point_count": 5, "test_speed_rpm": 1480}], "description": "10/12 BLE - MATHER AND PLATT", "manufacturer": "APE PUMPS", "materials": "Cast Iron", "max_efficiency": 88.48, "max_flow_m3hr": 1500.0, "max_head_m": 60.0, "max_power_kw": 0.0, "min_efficiency": 0.0, "model_series": "MATHER AND PLATT", "npsh_curves": 1, "power_curves": 0, "pump_code": "10/12 BLE", "pump_id": 10, "pump_type": "HSC", "specifications": {"bep_flow_m3hr": 998.19, "bep_head_m": 40.35, "max_flow_m3hr": 1500.0, "max_head_m": 60.0, "max_impeller_diameter_mm": 390.0, "max_speed_rpm": 2010, "min_impeller_diameter_mm": 390.0, "min_speed_rpm": 700, "npshr_at_bep": 0.0, "test_speed_rpm": 1480, "variable_diameter": true, "variable_speed": false}, "total_points": 6}}">
             </form>
             
             <script>
@@ -831,6 +968,231 @@
                     document.getElementById('flag-form').submit();
                 }
             }
+            
+            // Render the visual comparison charts
+            document.addEventListener('DOMContentLoaded', function() {
+                
+            });
+            
+            function renderAnalyticalCharts() {
+                // Get the data from the server
+                const groundTruthPoints = [{"brain_diameter": 390.0, "brain_efficiency": 84.286576, "brain_head": 43.991747999999994, "brain_power": 11.786277244398917, "delta_diameter": 0.0, "delta_efficiency": 12.382101333333328, "delta_head": 58.24369784172659, "delta_power": 40.80863052414769, "flow": 828.7, "qbep_percent": null, "truth_diameter": 390.0, "truth_efficiency": 75.0, "truth_head": 27.8, "truth_power": 8.370422466666668}];
+                const curveData = [];
+                
+                // Filter out expanded points for ground truth
+                const actualGroundTruth = groundTruthPoints.filter(p => !p.is_expanded);
+                
+                // Professional color scheme
+                const colors = {
+                    groundTruth: '#1976D2',  // Professional blue
+                    brain: '#D32F2F',         // Professional red
+                    grid: '#E0E0E0',
+                    background: '#FAFAFA'
+                };
+                
+                // Common chart configuration
+                const chartConfig = {
+                    responsive: true,
+                    displayModeBar: true,
+                    displaylogo: false,
+                    modeBarButtonsToRemove: ['select2d', 'lasso2d']
+                };
+                
+                // 1. HEAD VS FLOW CURVE
+                const groundTruthHeadTrace = {
+                    x: actualGroundTruth.map(p => p.flow),
+                    y: actualGroundTruth.map(p => p.truth_head),
+                    mode: 'markers',
+                    name: 'Your Ground Truth',
+                    marker: { 
+                        size: 12, 
+                        symbol: 'circle',
+                        color: colors.groundTruth,
+                        line: { color: 'white', width: 2 }
+                    },
+                    hovertemplate: '<b>Ground Truth</b><br>Flow: %{x:.1f} m³/hr<br>Head: %{y:.2f} m<extra></extra>'
+                };
+                
+                const brainCurveHeadTrace = {
+                    x: curveData.map(p => p.flow),
+                    y: curveData.map(p => p.brain_head),
+                    mode: 'lines',
+                    name: "Brain's Predicted Curve",
+                    line: { 
+                        color: colors.brain, 
+                        width: 3, 
+                        shape: 'spline' 
+                    },
+                    hovertemplate: '<b>Brain Prediction</b><br>Flow: %{x:.1f} m³/hr<br>Head: %{y:.2f} m<extra></extra>'
+                };
+                
+                const headLayout = {
+                    title: {
+                        text: '<b>Head Performance - Ground Truth vs Brain Prediction</b>',
+                        font: { size: 18, family: 'Arial, sans-serif' },
+                        x: 0.5,
+                        xanchor: 'center'
+                    },
+                    xaxis: { 
+                        title: '<b>Flow (m³/hr)</b>',
+                        gridcolor: colors.grid,
+                        showgrid: true,
+                        zeroline: true,
+                        zerolinecolor: colors.grid,
+                        tickfont: { size: 11 }
+                    },
+                    yaxis: { 
+                        title: '<b>Head (m)</b>',
+                        gridcolor: colors.grid,
+                        showgrid: true,
+                        zeroline: false,
+                        tickfont: { size: 11 }
+                    },
+                    showlegend: true,
+                    legend: {
+                        x: 0.02,
+                        y: 0.98,
+                        bgcolor: 'rgba(255,255,255,0.95)',
+                        bordercolor: '#666',
+                        borderwidth: 1,
+                        font: { size: 12 }
+                    },
+                    hovermode: 'closest',
+                    plot_bgcolor: colors.background,
+                    paper_bgcolor: 'white',
+                    margin: { t: 60, r: 40, b: 60, l: 60 }
+                };
+                
+                // 2. EFFICIENCY VS FLOW CURVE
+                const groundTruthEffTrace = {
+                    x: actualGroundTruth.map(p => p.flow),
+                    y: actualGroundTruth.map(p => p.truth_efficiency),
+                    mode: 'markers',
+                    name: 'Your Ground Truth',
+                    marker: { 
+                        size: 10, 
+                        symbol: 'circle',
+                        color: colors.groundTruth,
+                        line: { color: 'white', width: 2 }
+                    },
+                    hovertemplate: '<b>Ground Truth</b><br>Flow: %{x:.1f} m³/hr<br>Efficiency: %{y:.1f}%<extra></extra>'
+                };
+                
+                const brainCurveEffTrace = {
+                    x: curveData.map(p => p.flow),
+                    y: curveData.map(p => p.brain_efficiency),
+                    mode: 'lines',
+                    name: "Brain's Predicted Curve",
+                    line: { 
+                        color: colors.brain, 
+                        width: 2.5, 
+                        shape: 'spline' 
+                    },
+                    hovertemplate: '<b>Brain Prediction</b><br>Flow: %{x:.1f} m³/hr<br>Efficiency: %{y:.1f}%<extra></extra>'
+                };
+                
+                const effLayout = {
+                    title: {
+                        text: '<b>Efficiency Performance</b>',
+                        font: { size: 16, family: 'Arial, sans-serif' },
+                        x: 0.5,
+                        xanchor: 'center'
+                    },
+                    xaxis: { 
+                        title: '<b>Flow (m³/hr)</b>',
+                        gridcolor: colors.grid,
+                        showgrid: true,
+                        tickfont: { size: 10 }
+                    },
+                    yaxis: { 
+                        title: '<b>Efficiency (%)</b>',
+                        gridcolor: colors.grid,
+                        showgrid: true,
+                        range: [0, 100],
+                        tickfont: { size: 10 }
+                    },
+                    showlegend: true,
+                    legend: {
+                        x: 0.02,
+                        y: 0.98,
+                        bgcolor: 'rgba(255,255,255,0.9)',
+                        bordercolor: '#666',
+                        borderwidth: 1,
+                        font: { size: 10 }
+                    },
+                    hovermode: 'closest',
+                    plot_bgcolor: colors.background,
+                    paper_bgcolor: 'white',
+                    margin: { t: 50, r: 30, b: 50, l: 50 }
+                };
+                
+                // 3. POWER VS FLOW CURVE
+                const groundTruthPowerTrace = {
+                    x: actualGroundTruth.map(p => p.flow),
+                    y: actualGroundTruth.map(p => p.truth_power),
+                    mode: 'markers',
+                    name: 'Your Ground Truth',
+                    marker: { 
+                        size: 10, 
+                        symbol: 'circle',
+                        color: colors.groundTruth,
+                        line: { color: 'white', width: 2 }
+                    },
+                    hovertemplate: '<b>Ground Truth</b><br>Flow: %{x:.1f} m³/hr<br>Power: %{y:.2f} kW<extra></extra>'
+                };
+                
+                const brainCurvePowerTrace = {
+                    x: curveData.map(p => p.flow),
+                    y: curveData.map(p => p.brain_power),
+                    mode: 'lines',
+                    name: "Brain's Predicted Curve",
+                    line: { 
+                        color: colors.brain, 
+                        width: 2.5, 
+                        shape: 'spline' 
+                    },
+                    hovertemplate: '<b>Brain Prediction</b><br>Flow: %{x:.1f} m³/hr<br>Power: %{y:.2f} kW<extra></extra>'
+                };
+                
+                const powerLayout = {
+                    title: {
+                        text: '<b>Power Performance</b>',
+                        font: { size: 16, family: 'Arial, sans-serif' },
+                        x: 0.5,
+                        xanchor: 'center'
+                    },
+                    xaxis: { 
+                        title: '<b>Flow (m³/hr)</b>',
+                        gridcolor: colors.grid,
+                        showgrid: true,
+                        tickfont: { size: 10 }
+                    },
+                    yaxis: { 
+                        title: '<b>Power (kW)</b>',
+                        gridcolor: colors.grid,
+                        showgrid: true,
+                        tickfont: { size: 10 }
+                    },
+                    showlegend: true,
+                    legend: {
+                        x: 0.02,
+                        y: 0.98,
+                        bgcolor: 'rgba(255,255,255,0.9)',
+                        bordercolor: '#666',
+                        borderwidth: 1,
+                        font: { size: 10 }
+                    },
+                    hovermode: 'closest',
+                    plot_bgcolor: colors.background,
+                    paper_bgcolor: 'white',
+                    margin: { t: 50, r: 30, b: 50, l: 50 }
+                };
+                
+                // Render the charts
+                Plotly.newPlot('head-curve-comparison', [groundTruthHeadTrace, brainCurveHeadTrace], headLayout, chartConfig);
+                Plotly.newPlot('efficiency-curve-comparison', [groundTruthEffTrace, brainCurveEffTrace], effLayout, chartConfig);
+                Plotly.newPlot('power-curve-comparison', [groundTruthPowerTrace, brainCurvePowerTrace], powerLayout, chartConfig);
+            }
             </script>
         </div>
     </div>
@@ -842,10 +1204,10 @@
 </div>
 
 <!-- Admin-specific CSS -->
-<link href="/static/css/admin_theme.css?v=4182" rel="stylesheet">
+<link href="/static/css/admin_theme.css?v=6824" rel="stylesheet">
 
 <!-- Admin-specific JavaScript -->
-<script src="/static/js/admin.js?v=6416"></script>
+<script src="/static/js/admin.js?v=9035"></script>
 
     </main>
 

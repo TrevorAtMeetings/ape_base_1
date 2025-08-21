@@ -1230,12 +1230,12 @@ document.addEventListener('DOMContentLoaded', function() {
     </div>
     
     {% if calibration_results %}
-    <!-- PURE VALIDATION INTERFACE -->
+    <!-- SECTION 1: TRUTH GATE - The Stark Comparison -->
     <div class="card">
         <div class="card-content">
             <span class="card-title">
-                <i class="material-icons left">warning</i>
-                Validation Results - Critical Discrepancy Detected
+                <i class="material-icons left">verified_user</i>
+                Section 1: Truth Gate - Validation Results
             </span>
             
             <!-- Stark Comparison Display -->
@@ -1257,6 +1257,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     </thead>
                     <tbody>
                         {% for point in calibration_results.comparison_points %}
+                        {% if not point.is_expanded %}
                         <tr>
                             <td>
                                 <strong>{{ point.flow|round(1) }} m³/hr @ {{ point.truth_diameter|round(0)|int }} mm</strong>
@@ -1274,6 +1275,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 </span>
                             </td>
                         </tr>
+                        {% endif %}
                         {% endfor %}
                     </tbody>
                 </table>
@@ -1281,19 +1283,156 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div style="margin-top: 20px; padding: 15px; background: #ffebee; border-radius: 4px;">
                     <p style="color: #c62828; font-weight: 500; margin: 0;">
                         <i class="material-icons tiny" style="vertical-align: middle;">error</i>
-                        The Brain's prediction differs significantly from your provided ground truth data.
+                        {% set max_discrepancy = calibration_results.comparison_points | selectattr('delta_head') | map(attribute='delta_head') | list | max %}
+                        {% if max_discrepancy|abs > 10 %}
+                        Significant discrepancy detected. The Brain's prediction differs from your ground truth data by up to {{ max_discrepancy|abs|round(1) }}%.
+                        {% else %}
+                        Minor discrepancy detected. Review the detailed analysis below.
+                        {% endif %}
                     </p>
                 </div>
             </div>
+        </div>
+    </div>
+    
+    <!-- SECTION 2: ANALYTICAL WORKBENCH - Granular Analysis -->
+    <div class="card">
+        <div class="card-content">
+            <span class="card-title">
+                <i class="material-icons left">analytics</i>
+                Section 2: Analytical Workbench - Discrepancy Analysis
+            </span>
             
-            <!-- DECISION INTERFACE -->
-            <div style="margin-top: 30px; padding: 20px; background: #e8f5e9; border: 2px solid #4caf50; border-radius: 8px;">
-                <h5 style="color: #1b5e20; margin-bottom: 15px;">
-                    <i class="material-icons left">help_outline</i>
-                    Decision Required
+            <!-- Detailed Delta Table -->
+            <div style="margin: 20px 0;">
+                <h5 style="color: #1565C0; margin-bottom: 20px;">
+                    <i class="material-icons left">table_chart</i>
+                    Detailed Performance Comparison
                 </h5>
+                
+                <table class="striped highlight responsive-table">
+                    <thead>
+                        <tr style="background: #e3f2fd;">
+                            <th>Flow (m³/hr)</th>
+                            <th>Your Head (m)</th>
+                            <th>Brain's Head (m)</th>
+                            <th>Head Delta (%)</th>
+                            <th>Your Efficiency (%)</th>
+                            <th>Brain's Efficiency (%)</th>
+                            <th>Efficiency Delta (%)</th>
+                            {% if calibration_results.comparison_points[0].truth_power %}
+                            <th>Your Power (kW)</th>
+                            <th>Brain's Power (kW)</th>
+                            <th>Power Delta (%)</th>
+                            {% endif %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for point in calibration_results.comparison_points %}
+                        {% if not point.is_expanded %}
+                        <tr>
+                            <td><strong>{{ point.flow|round(1) }}</strong></td>
+                            <td>{{ point.truth_head|round(2) }}</td>
+                            <td>{{ point.brain_head|round(2) }}</td>
+                            <td>
+                                <span style="color: {% if point.delta_head|abs > 10 %}#d32f2f{% elif point.delta_head|abs > 5 %}#f57c00{% else %}#388e3c{% endif %};">
+                                    {% if point.delta_head > 0 %}+{% endif %}{{ point.delta_head|round(1) }}%
+                                </span>
+                            </td>
+                            <td>{{ point.truth_efficiency|round(1) }}</td>
+                            <td>{{ point.brain_efficiency|round(1) }}</td>
+                            <td>
+                                <span style="color: {% if point.delta_efficiency|abs > 5 %}#d32f2f{% elif point.delta_efficiency|abs > 2 %}#f57c00{% else %}#388e3c{% endif %};">
+                                    {% if point.delta_efficiency > 0 %}+{% endif %}{{ point.delta_efficiency|round(1) }}%
+                                </span>
+                            </td>
+                            {% if point.truth_power %}
+                            <td>{{ point.truth_power|round(2) }}</td>
+                            <td>{{ point.brain_power|round(2) }}</td>
+                            <td>
+                                <span style="color: {% if point.delta_power|abs > 10 %}#d32f2f{% elif point.delta_power|abs > 5 %}#f57c00{% else %}#388e3c{% endif %};">
+                                    {% if point.delta_power > 0 %}+{% endif %}{{ point.delta_power|round(1) }}%
+                                </span>
+                            </td>
+                            {% endif %}
+                        </tr>
+                        {% endif %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Visual Comparison Charts -->
+            <div style="margin: 30px 0;">
+                <h5 style="color: #1565C0; margin-bottom: 20px;">
+                    <i class="material-icons left">show_chart</i>
+                    Visual Performance Curves
+                </h5>
+                
+                <div class="row">
+                    <!-- Head vs Flow Chart -->
+                    <div class="col s12">
+                        <div id="head-curve-comparison" style="width: 100%; height: 400px;"></div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <!-- Efficiency vs Flow Chart -->
+                    <div class="col s12 m6">
+                        <div id="efficiency-curve-comparison" style="width: 100%; height: 350px;"></div>
+                    </div>
+                    <!-- Power vs Flow Chart -->
+                    <div class="col s12 m6">
+                        <div id="power-curve-comparison" style="width: 100%; height: 350px;"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Statistical Metrics -->
+            {% if calibration_results.metrics %}
+            <div style="margin: 20px 0; padding: 15px; background: #f5f5f5; border-radius: 4px;">
+                <h6 style="margin-bottom: 15px;"><strong>Statistical Analysis</strong></h6>
+                <div class="row">
+                    <div class="col s12 m4">
+                        <p><strong>Head Accuracy:</strong></p>
+                        <ul style="margin-left: 20px;">
+                            <li>Mean Delta: {{ calibration_results.metrics.head.mean_delta|round(1) }}%</li>
+                            <li>RMSE: {{ calibration_results.metrics.head.rmse|round(2) }}%</li>
+                            <li>Max Delta: {{ calibration_results.metrics.head.max_delta|round(1) }}%</li>
+                        </ul>
+                    </div>
+                    <div class="col s12 m4">
+                        <p><strong>Efficiency Accuracy:</strong></p>
+                        <ul style="margin-left: 20px;">
+                            <li>Mean Delta: {{ calibration_results.metrics.efficiency.mean_delta|round(1) }}%</li>
+                            <li>RMSE: {{ calibration_results.metrics.efficiency.rmse|round(2) }}%</li>
+                            <li>Max Delta: {{ calibration_results.metrics.efficiency.max_delta|round(1) }}%</li>
+                        </ul>
+                    </div>
+                    <div class="col s12 m4">
+                        <p><strong>Overall:</strong></p>
+                        <ul style="margin-left: 20px;">
+                            <li>Overall Accuracy: {{ calibration_results.metrics.overall_accuracy|round(1) }}%</li>
+                            <li>Data Points: {{ calibration_results.metrics.point_count }}</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- SECTION 3: INFORMED DECISION - Empowered User Action -->
+    <div class="card">
+        <div class="card-content">
+            <span class="card-title">
+                <i class="material-icons left">assignment_turned_in</i>
+                Section 3: Decision Required
+            </span>
+            
+            <div style="margin-top: 20px; padding: 20px; background: #e8f5e9; border: 2px solid #4caf50; border-radius: 8px;">
                 <p style="font-size: 1.1em; margin-bottom: 20px;">
-                    This discrepancy indicates one of two possibilities:
+                    Based on the comprehensive analysis above, this discrepancy indicates one of two possibilities:
                 </p>
                 <ol style="margin-bottom: 25px;">
                     <li style="margin-bottom: 10px;"><strong>Your input data may be incorrect</strong> (most likely)</li>
@@ -1343,6 +1482,233 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (confirm('Are you ABSOLUTELY CERTAIN your data is correct?\n\nThis will create a high-priority engineering ticket indicating that the pump database may have fundamental errors.')) {
                     document.getElementById('flag-form').submit();
                 }
+            }
+            
+            // Render the visual comparison charts
+            document.addEventListener('DOMContentLoaded', function() {
+                {% if calibration_results and calibration_results.curve_comparison_data %}
+                renderAnalyticalCharts();
+                {% endif %}
+            });
+            
+            function renderAnalyticalCharts() {
+                // Get the data from the server
+                const groundTruthPoints = {{ calibration_results.comparison_points | tojson }};
+                const curveData = {{ calibration_results.curve_comparison_data | tojson }};
+                
+                // Filter out expanded points for ground truth
+                const actualGroundTruth = groundTruthPoints.filter(p => !p.is_expanded);
+                
+                // Professional color scheme
+                const colors = {
+                    groundTruth: '#1976D2',  // Professional blue
+                    brain: '#D32F2F',         // Professional red
+                    grid: '#E0E0E0',
+                    background: '#FAFAFA'
+                };
+                
+                // Common chart configuration
+                const chartConfig = {
+                    responsive: true,
+                    displayModeBar: true,
+                    displaylogo: false,
+                    modeBarButtonsToRemove: ['select2d', 'lasso2d']
+                };
+                
+                // 1. HEAD VS FLOW CURVE
+                const groundTruthHeadTrace = {
+                    x: actualGroundTruth.map(p => p.flow),
+                    y: actualGroundTruth.map(p => p.truth_head),
+                    mode: 'markers',
+                    name: 'Your Ground Truth',
+                    marker: { 
+                        size: 12, 
+                        symbol: 'circle',
+                        color: colors.groundTruth,
+                        line: { color: 'white', width: 2 }
+                    },
+                    hovertemplate: '<b>Ground Truth</b><br>Flow: %{x:.1f} m³/hr<br>Head: %{y:.2f} m<extra></extra>'
+                };
+                
+                const brainCurveHeadTrace = {
+                    x: curveData.map(p => p.flow),
+                    y: curveData.map(p => p.brain_head),
+                    mode: 'lines',
+                    name: "Brain's Predicted Curve",
+                    line: { 
+                        color: colors.brain, 
+                        width: 3, 
+                        shape: 'spline' 
+                    },
+                    hovertemplate: '<b>Brain Prediction</b><br>Flow: %{x:.1f} m³/hr<br>Head: %{y:.2f} m<extra></extra>'
+                };
+                
+                const headLayout = {
+                    title: {
+                        text: '<b>Head Performance - Ground Truth vs Brain Prediction</b>',
+                        font: { size: 18, family: 'Arial, sans-serif' },
+                        x: 0.5,
+                        xanchor: 'center'
+                    },
+                    xaxis: { 
+                        title: '<b>Flow (m³/hr)</b>',
+                        gridcolor: colors.grid,
+                        showgrid: true,
+                        zeroline: true,
+                        zerolinecolor: colors.grid,
+                        tickfont: { size: 11 }
+                    },
+                    yaxis: { 
+                        title: '<b>Head (m)</b>',
+                        gridcolor: colors.grid,
+                        showgrid: true,
+                        zeroline: false,
+                        tickfont: { size: 11 }
+                    },
+                    showlegend: true,
+                    legend: {
+                        x: 0.02,
+                        y: 0.98,
+                        bgcolor: 'rgba(255,255,255,0.95)',
+                        bordercolor: '#666',
+                        borderwidth: 1,
+                        font: { size: 12 }
+                    },
+                    hovermode: 'closest',
+                    plot_bgcolor: colors.background,
+                    paper_bgcolor: 'white',
+                    margin: { t: 60, r: 40, b: 60, l: 60 }
+                };
+                
+                // 2. EFFICIENCY VS FLOW CURVE
+                const groundTruthEffTrace = {
+                    x: actualGroundTruth.map(p => p.flow),
+                    y: actualGroundTruth.map(p => p.truth_efficiency),
+                    mode: 'markers',
+                    name: 'Your Ground Truth',
+                    marker: { 
+                        size: 10, 
+                        symbol: 'circle',
+                        color: colors.groundTruth,
+                        line: { color: 'white', width: 2 }
+                    },
+                    hovertemplate: '<b>Ground Truth</b><br>Flow: %{x:.1f} m³/hr<br>Efficiency: %{y:.1f}%<extra></extra>'
+                };
+                
+                const brainCurveEffTrace = {
+                    x: curveData.map(p => p.flow),
+                    y: curveData.map(p => p.brain_efficiency),
+                    mode: 'lines',
+                    name: "Brain's Predicted Curve",
+                    line: { 
+                        color: colors.brain, 
+                        width: 2.5, 
+                        shape: 'spline' 
+                    },
+                    hovertemplate: '<b>Brain Prediction</b><br>Flow: %{x:.1f} m³/hr<br>Efficiency: %{y:.1f}%<extra></extra>'
+                };
+                
+                const effLayout = {
+                    title: {
+                        text: '<b>Efficiency Performance</b>',
+                        font: { size: 16, family: 'Arial, sans-serif' },
+                        x: 0.5,
+                        xanchor: 'center'
+                    },
+                    xaxis: { 
+                        title: '<b>Flow (m³/hr)</b>',
+                        gridcolor: colors.grid,
+                        showgrid: true,
+                        tickfont: { size: 10 }
+                    },
+                    yaxis: { 
+                        title: '<b>Efficiency (%)</b>',
+                        gridcolor: colors.grid,
+                        showgrid: true,
+                        range: [0, 100],
+                        tickfont: { size: 10 }
+                    },
+                    showlegend: true,
+                    legend: {
+                        x: 0.02,
+                        y: 0.98,
+                        bgcolor: 'rgba(255,255,255,0.9)',
+                        bordercolor: '#666',
+                        borderwidth: 1,
+                        font: { size: 10 }
+                    },
+                    hovermode: 'closest',
+                    plot_bgcolor: colors.background,
+                    paper_bgcolor: 'white',
+                    margin: { t: 50, r: 30, b: 50, l: 50 }
+                };
+                
+                // 3. POWER VS FLOW CURVE
+                const groundTruthPowerTrace = {
+                    x: actualGroundTruth.map(p => p.flow),
+                    y: actualGroundTruth.map(p => p.truth_power),
+                    mode: 'markers',
+                    name: 'Your Ground Truth',
+                    marker: { 
+                        size: 10, 
+                        symbol: 'circle',
+                        color: colors.groundTruth,
+                        line: { color: 'white', width: 2 }
+                    },
+                    hovertemplate: '<b>Ground Truth</b><br>Flow: %{x:.1f} m³/hr<br>Power: %{y:.2f} kW<extra></extra>'
+                };
+                
+                const brainCurvePowerTrace = {
+                    x: curveData.map(p => p.flow),
+                    y: curveData.map(p => p.brain_power),
+                    mode: 'lines',
+                    name: "Brain's Predicted Curve",
+                    line: { 
+                        color: colors.brain, 
+                        width: 2.5, 
+                        shape: 'spline' 
+                    },
+                    hovertemplate: '<b>Brain Prediction</b><br>Flow: %{x:.1f} m³/hr<br>Power: %{y:.2f} kW<extra></extra>'
+                };
+                
+                const powerLayout = {
+                    title: {
+                        text: '<b>Power Performance</b>',
+                        font: { size: 16, family: 'Arial, sans-serif' },
+                        x: 0.5,
+                        xanchor: 'center'
+                    },
+                    xaxis: { 
+                        title: '<b>Flow (m³/hr)</b>',
+                        gridcolor: colors.grid,
+                        showgrid: true,
+                        tickfont: { size: 10 }
+                    },
+                    yaxis: { 
+                        title: '<b>Power (kW)</b>',
+                        gridcolor: colors.grid,
+                        showgrid: true,
+                        tickfont: { size: 10 }
+                    },
+                    showlegend: true,
+                    legend: {
+                        x: 0.02,
+                        y: 0.98,
+                        bgcolor: 'rgba(255,255,255,0.9)',
+                        bordercolor: '#666',
+                        borderwidth: 1,
+                        font: { size: 10 }
+                    },
+                    hovermode: 'closest',
+                    plot_bgcolor: colors.background,
+                    paper_bgcolor: 'white',
+                    margin: { t: 50, r: 30, b: 50, l: 50 }
+                };
+                
+                // Render the charts
+                Plotly.newPlot('head-curve-comparison', [groundTruthHeadTrace, brainCurveHeadTrace], headLayout, chartConfig);
+                Plotly.newPlot('efficiency-curve-comparison', [groundTruthEffTrace, brainCurveEffTrace], effLayout, chartConfig);
+                Plotly.newPlot('power-curve-comparison', [groundTruthPowerTrace, brainCurvePowerTrace], powerLayout, chartConfig);
             }
             </script>
         </div>
