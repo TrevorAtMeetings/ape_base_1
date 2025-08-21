@@ -794,9 +794,60 @@ class ManufacturerComparisonEngine:
                 
         return insights
 
+def normalize_pump_code(pump_code):
+    """
+    Normalize pump code for fuzzy matching
+    Examples:
+    - "10/12 BLE" -> "10/12 BLE"
+    - "10-12 BLE" -> "10/12 BLE"
+    - "10 12 BLE" -> "10/12 BLE"
+    - "10_12_BLE" -> "10/12 BLE"
+    """
+    import re
+    # Replace common separators with forward slash
+    normalized = re.sub(r'[-_\s]+', '/', pump_code.strip())
+    # Clean up multiple slashes
+    normalized = re.sub(r'/+', '/', normalized)
+    # Handle patterns like "10 12" -> "10/12"
+    normalized = re.sub(r'(\d+)\s+(\d+)', r'\1/\2', normalized)
+    return normalized.upper()  # Standardize to uppercase
+
+def find_pump_fuzzy(pump_code, pump_models):
+    """
+    Find pump using fuzzy matching
+    Returns the actual pump code from database or None if not found
+    """
+    # First try exact match
+    pump_dict = {pump['pump_code']: pump for pump in pump_models}
+    if pump_code in pump_dict:
+        return pump_code
+    
+    # Normalize the search code
+    normalized_search = normalize_pump_code(pump_code)
+    
+    # Create normalized lookup dictionary
+    normalized_dict = {}
+    for pump in pump_models:
+        normalized_key = normalize_pump_code(pump['pump_code'])
+        normalized_dict[normalized_key] = pump['pump_code']
+    
+    # Try to find normalized match
+    if normalized_search in normalized_dict:
+        return normalized_dict[normalized_search]
+    
+    # Try partial matching for very fuzzy cases
+    # Remove all separators and spaces for ultra-fuzzy matching
+    ultra_fuzzy_search = re.sub(r'[^A-Z0-9]', '', normalized_search)
+    for pump in pump_models:
+        ultra_fuzzy_pump = re.sub(r'[^A-Z0-9]', '', pump['pump_code'].upper())
+        if ultra_fuzzy_search == ultra_fuzzy_pump:
+            return pump['pump_code']
+    
+    return None
+
 @brain_admin_bp.route('/admin/pump-calibration/<path:pump_code>')
 def pump_calibration_workbench(pump_code):
-    """Display the calibration workbench for a specific pump"""
+    """Display the calibration workbench for a specific pump with fuzzy matching"""
     import re
     import secrets
     from flask import session
@@ -820,20 +871,30 @@ def pump_calibration_workbench(pump_code):
         pump_repo = get_pump_repository()
         pump_models = pump_repo.get_pump_models()
         
-        # Efficient pump lookup using dictionary
-        pump_dict = {pump['pump_code']: pump for pump in pump_models}
-        pump_data = pump_dict.get(pump_code)
+        # Try fuzzy matching to find the pump
+        actual_pump_code = find_pump_fuzzy(pump_code, pump_models)
         
-        if not pump_data:
-            flash(f'Pump {pump_code} not found', 'error')
+        if not actual_pump_code:
+            # Try some common variations
+            logger.info(f"Pump '{pump_code}' not found, tried fuzzy matching")
+            flash(f'Pump {pump_code} not found. Please check the pump code.', 'error')
             return redirect(url_for('brain_admin.brain_dashboard'))
+        
+        # Get the pump data with the actual code
+        pump_dict = {pump['pump_code']: pump for pump in pump_models}
+        pump_data = pump_dict[actual_pump_code]
+        
+        # Log if fuzzy match was used
+        if actual_pump_code != pump_code:
+            logger.info(f"Fuzzy matched '{pump_code}' to '{actual_pump_code}'")
+            flash(f'Found pump {actual_pump_code} (searched for {pump_code})', 'info')
         
         # Generate CSRF token for the session
         if 'csrf_token' not in session:
             session['csrf_token'] = secrets.token_hex(16)
             
         return render_template('admin/pump_calibration.html',
-                             pump_code=pump_code,
+                             pump_code=actual_pump_code,  # Use the actual pump code from database
                              pump_data=pump_data,
                              breadcrumbs=breadcrumbs,
                              csrf_token=session.get('csrf_token'))
@@ -845,7 +906,7 @@ def pump_calibration_workbench(pump_code):
 
 @brain_admin_bp.route('/admin/pump-calibration/<path:pump_code>/analyze', methods=['POST'])
 def analyze_pump_calibration(pump_code):
-    """Process multiple ground truth points and return comparison data"""
+    """Process multiple ground truth points and return comparison data with fuzzy matching"""
     import re
     from flask import session
     
@@ -854,6 +915,20 @@ def analyze_pump_calibration(pump_code):
         if not re.match(r'^[a-zA-Z0-9_\-\s/]+$', pump_code):
             logger.warning(f"Invalid pump code format attempted: {pump_code}")
             return jsonify({'error': 'Invalid pump code format'}), 400
+        
+        # Get pump models and use fuzzy matching to find the actual pump code
+        from ..pump_repository import get_pump_repository
+        pump_repo = get_pump_repository()
+        pump_models = pump_repo.get_pump_models()
+        
+        actual_pump_code = find_pump_fuzzy(pump_code, pump_models)
+        if not actual_pump_code:
+            logger.warning(f"Pump '{pump_code}' not found with fuzzy matching")
+            return jsonify({'error': f'Pump {pump_code} not found'}), 404
+        
+        # Log if fuzzy match was used
+        if actual_pump_code != pump_code:
+            logger.info(f"Fuzzy matched '{pump_code}' to '{actual_pump_code}' for analysis")
         
         # Parse the performance data points
         data = request.get_json() if request.is_json else request.form
@@ -918,9 +993,9 @@ def analyze_pump_calibration(pump_code):
         if not ground_truth_points:
             return jsonify({'error': 'No valid performance points provided'}), 400
             
-        # Process calibration data
+        # Process calibration data with actual pump code
         engine = ManufacturerComparisonEngine()
-        results = engine.process_calibration_data(pump_code, ground_truth_points)
+        results = engine.process_calibration_data(actual_pump_code, ground_truth_points)
         
         # For AJAX requests, return JSON
         if request.is_json:
@@ -934,7 +1009,7 @@ def analyze_pump_calibration(pump_code):
         ]
         
         return render_template('admin/pump_calibration.html',
-                             pump_code=pump_code,
+                             pump_code=actual_pump_code,  # Use actual code after fuzzy match
                              pump_data=results['pump_data'],
                              calibration_results=results,
                              breadcrumbs=breadcrumbs)
