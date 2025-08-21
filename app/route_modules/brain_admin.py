@@ -716,9 +716,11 @@ class ManufacturerComparisonEngine:
             forced_diameter = None
             if ground_truth_points and len(ground_truth_points) > 0:
                 forced_diameter = ground_truth_points[0].get('diameter')
+                self.logger.info(f"[CURVE GEN] Found diameter {forced_diameter} in ground truth points")
             
             if not forced_diameter:
                 self.logger.warning("No diameter specified in ground truth points for curve generation")
+                self.logger.warning(f"Ground truth points: {ground_truth_points}")
                 return curve_data
             
             # Get the BEP flow from pump data
@@ -757,6 +759,7 @@ class ManufacturerComparisonEngine:
             
             # Sort by flow for proper chart rendering
             curve_data = sorted(curve_data, key=lambda x: x['flow'])
+            self.logger.info(f"[CURVE GEN] Generated {len(curve_data)} curve points for diameter {forced_diameter}mm")
             
         except Exception as e:
             self.logger.warning(f"Error generating curve comparison data: {e}")
@@ -1078,15 +1081,17 @@ def analyze_pump_calibration(pump_code):
         except (ValueError, TypeError):
             return jsonify({'error': 'Invalid point count format'}), 400
         
+        # Try both indexing conventions (starting from 0 and from 1)
         for i in range(point_count):
             try:
-                # Safely extract and validate each parameter
-                flow_str = data.get(f'flow_{i}')
-                head_str = data.get(f'head_{i}')
-                efficiency_str = data.get(f'efficiency_{i}')
-                power_str = data.get(f'power_{i}')  # Optional
-                diameter_str = data.get(f'diameter_{i}')  # Optional
-                qbep_str = data.get(f'qbep_{i}')  # Optional
+                # Try index starting from 1 first (JavaScript convention)
+                idx = i + 1
+                flow_str = data.get(f'flow_{idx}') or data.get(f'flow_{i}')
+                head_str = data.get(f'head_{idx}') or data.get(f'head_{i}')
+                efficiency_str = data.get(f'efficiency_{idx}') or data.get(f'efficiency_{i}')
+                power_str = data.get(f'power_{idx}') or data.get(f'power_{i}')  # Optional
+                diameter_str = data.get(f'diameter_{idx}') or data.get(f'diameter_{i}')  # Optional
+                qbep_str = data.get(f'qbep_{idx}') or data.get(f'qbep_{i}')  # Optional
                 
                 # Required fields
                 if flow_str and head_str and efficiency_str:
