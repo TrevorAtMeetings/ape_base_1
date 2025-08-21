@@ -99,7 +99,7 @@ class PerformanceAnalyzer:
                 import numpy as np
                 
                 head_interp = interpolate.interp1d(flows, heads, kind='linear',
-                                                 bounds_error=False, fill_value='extrapolate')
+                                                 bounds_error=False, fill_value=0.0)
                 reference_head = float(head_interp(flow))
                 
                 if np.isnan(reference_head) or reference_head <= 0:
@@ -117,7 +117,7 @@ class PerformanceAnalyzer:
                 efficiencies = [p.get('efficiency_pct', 0) for p in sorted_points if 'efficiency_pct' in p]
                 if efficiencies and len(efficiencies) == len(flows):
                     eff_interp = interpolate.interp1d(flows, efficiencies, kind='linear',
-                                                     bounds_error=False, fill_value='extrapolate')
+                                                     bounds_error=False, fill_value=0.0)
                     base_efficiency = float(eff_interp(flow))
                 else:
                     base_efficiency = 75.0  # Default

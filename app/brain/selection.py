@@ -282,13 +282,14 @@ class SelectionIntelligence:
             # Sort excluded pumps by best score components to show "almost suitable" pumps first
             excluded_pumps.sort(key=lambda x: sum(x.get('score_components', {}).values()), reverse=True)
             
-            result['exclusion_details'] = {
+            exclusion_details = {
                 'excluded_pumps': excluded_pumps[:20],  # Top 20 excluded for analysis
                 'exclusion_summary': exclusion_summary,
                 'total_evaluated': len(all_pumps),
                 'feasible_count': len(feasible_pumps),
                 'excluded_count': len(excluded_pumps)
             }
+            result['exclusion_details'] = exclusion_details
         
         return result
     

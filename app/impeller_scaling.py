@@ -216,7 +216,8 @@ class ImpellerScalingEngine:
             return None
             
     def find_optimal_sizing(self, pump_curves: List[Dict[str, Any]], 
-                          target_flow: float, target_head: float) -> Optional[Dict[str, Any]]:
+                          target_flow: float, target_head: float,
+                          available_diameters: List[float] = None) -> Optional[Dict[str, Any]]:
         """
         Find optimal impeller sizing across all available curves for a pump
         Enhanced to support continuous diameter trimming between min and max sizes
@@ -232,15 +233,20 @@ class ImpellerScalingEngine:
         best_option = None
         best_score = float('inf')
         
-        # Find diameter range across all curves
-        diameters = [curve.get('impeller_diameter_mm', 0) for curve in pump_curves if curve.get('impeller_diameter_mm', 0) > 0]
-        if not diameters:
-            return None
-            
-        min_diameter = min(diameters)
-        max_diameter = max(diameters)
-        
-        logger.debug(f"Pump diameter range: {min_diameter}mm - {max_diameter}mm")
+        # Use actual available diameters if provided, otherwise fall back to curve diameters
+        if available_diameters and len(available_diameters) > 0:
+            min_diameter = min(available_diameters)
+            max_diameter = max(available_diameters)
+            logger.debug(f"Using actual available diameters: {min_diameter}mm - {max_diameter}mm from database")
+        else:
+            # Fallback: Find diameter range across all curves
+            diameters = [curve.get('impeller_diameter_mm', 0) for curve in pump_curves if curve.get('impeller_diameter_mm', 0) > 0]
+            if not diameters:
+                return None
+                
+            min_diameter = min(diameters)
+            max_diameter = max(diameters)
+            logger.debug(f"Using curve-derived diameters: {min_diameter}mm - {max_diameter}mm")
         
         for curve in pump_curves:
             base_diameter = curve.get('impeller_diameter_mm', 0)
