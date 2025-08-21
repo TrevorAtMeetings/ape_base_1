@@ -276,7 +276,7 @@ async function submitCalibration() {
     }
 }
 
-// Render comparison chart
+// Render comprehensive performance comparison charts
 function renderComparisonChart(comparisonData) {
     if (!comparisonData || comparisonData.length === 0) return;
     
@@ -285,20 +285,124 @@ function renderComparisonChart(comparisonData) {
     
     // Extract data for plotting
     const flows = sortedData.map(d => d.flow);
+    const truthHead = sortedData.map(d => d.truth_head);
+    const brainHead = sortedData.map(d => d.brain_head);
     const truthEfficiency = sortedData.map(d => d.truth_efficiency);
     const brainEfficiency = sortedData.map(d => d.brain_efficiency);
     const truthPower = sortedData.map(d => d.truth_power);
     const brainPower = sortedData.map(d => d.brain_power);
     
-    // Efficiency curve comparison
+    // Common chart configuration
+    const chartConfig = {
+        responsive: true,
+        displayModeBar: true,
+        displaylogo: false,
+        modeBarButtonsToRemove: ['select2d', 'lasso2d']
+    };
+    
+    // Professional color scheme
+    const colors = {
+        manufacturer: '#1976D2',  // Professional blue
+        brain: '#D32F2F',         // Professional red
+        grid: '#E0E0E0',
+        background: '#FAFAFA'
+    };
+    
+    // 1. HEAD VS FLOW CURVE
+    const headTrace1 = {
+        x: flows,
+        y: truthHead,
+        mode: 'lines+markers',
+        name: 'Manufacturer Data',
+        line: { 
+            color: colors.manufacturer, 
+            width: 3, 
+            shape: 'spline' 
+        },
+        marker: { 
+            size: 8, 
+            symbol: 'circle',
+            color: colors.manufacturer,
+            line: { color: 'white', width: 1 }
+        },
+        hovertemplate: '<b>Manufacturer</b><br>Flow: %{x:.1f} m³/hr<br>Head: %{y:.2f} m<extra></extra>'
+    };
+    
+    const headTrace2 = {
+        x: flows,
+        y: brainHead,
+        mode: 'lines+markers',
+        name: 'Brain Prediction',
+        line: { 
+            color: colors.brain, 
+            width: 2.5, 
+            dash: 'dot',
+            shape: 'spline' 
+        },
+        marker: { 
+            size: 7, 
+            symbol: 'diamond',
+            color: colors.brain,
+            line: { color: 'white', width: 1 }
+        },
+        hovertemplate: '<b>Brain</b><br>Flow: %{x:.1f} m³/hr<br>Head: %{y:.2f} m<extra></extra>'
+    };
+    
+    const headLayout = {
+        title: {
+            text: '<b>Head Performance Comparison</b>',
+            font: { size: 20, family: 'Arial, sans-serif' },
+            x: 0.5,
+            xanchor: 'center'
+        },
+        xaxis: { 
+            title: '<b>Flow (m³/hr)</b>',
+            gridcolor: colors.grid,
+            showgrid: true,
+            zeroline: true,
+            zerolinecolor: colors.grid,
+            tickfont: { size: 11 }
+        },
+        yaxis: { 
+            title: '<b>Head (m)</b>',
+            gridcolor: colors.grid,
+            showgrid: true,
+            zeroline: false,
+            tickfont: { size: 11 }
+        },
+        showlegend: true,
+        legend: {
+            x: 0.02,
+            y: 0.98,
+            bgcolor: 'rgba(255,255,255,0.95)',
+            bordercolor: '#666',
+            borderwidth: 1,
+            font: { size: 12 }
+        },
+        hovermode: 'x unified',
+        plot_bgcolor: colors.background,
+        paper_bgcolor: 'white',
+        margin: { t: 60, r: 40, b: 60, l: 60 }
+    };
+    
+    // 2. EFFICIENCY VS FLOW CURVE
     const effTrace1 = {
         x: flows,
         y: truthEfficiency,
         mode: 'lines+markers',
         name: 'Manufacturer Data',
-        line: { color: '#2196F3', width: 3, shape: 'spline' },
-        marker: { size: 10, symbol: 'circle' },
-        hovertemplate: 'Flow: %{x:.1f} m³/hr<br>Efficiency: %{y:.1f}%<extra></extra>'
+        line: { 
+            color: colors.manufacturer, 
+            width: 3, 
+            shape: 'spline' 
+        },
+        marker: { 
+            size: 8, 
+            symbol: 'circle',
+            color: colors.manufacturer,
+            line: { color: 'white', width: 1 }
+        },
+        hovertemplate: '<b>Manufacturer</b><br>Flow: %{x:.1f} m³/hr<br>Efficiency: %{y:.1f}%<extra></extra>'
     };
     
     const effTrace2 = {
@@ -306,50 +410,77 @@ function renderComparisonChart(comparisonData) {
         y: brainEfficiency,
         mode: 'lines+markers',
         name: 'Brain Prediction',
-        line: { color: '#f44336', width: 2, dash: 'dash', shape: 'spline' },
-        marker: { size: 8, symbol: 'square' },
-        hovertemplate: 'Flow: %{x:.1f} m³/hr<br>Efficiency: %{y:.1f}%<extra></extra>'
+        line: { 
+            color: colors.brain, 
+            width: 2.5, 
+            dash: 'dot',
+            shape: 'spline' 
+        },
+        marker: { 
+            size: 7, 
+            symbol: 'diamond',
+            color: colors.brain,
+            line: { color: 'white', width: 1 }
+        },
+        hovertemplate: '<b>Brain</b><br>Flow: %{x:.1f} m³/hr<br>Efficiency: %{y:.1f}%<extra></extra>'
     };
     
     const effLayout = {
         title: {
-            text: 'Efficiency Curve Comparison',
-            font: { size: 18 }
+            text: '<b>Efficiency Performance Comparison</b>',
+            font: { size: 20, family: 'Arial, sans-serif' },
+            x: 0.5,
+            xanchor: 'center'
         },
         xaxis: { 
-            title: 'Flow (m³/hr)',
-            gridcolor: '#e0e0e0',
-            showgrid: true
+            title: '<b>Flow (m³/hr)</b>',
+            gridcolor: colors.grid,
+            showgrid: true,
+            zeroline: true,
+            zerolinecolor: colors.grid,
+            tickfont: { size: 11 }
         },
         yaxis: { 
-            title: 'Efficiency (%)',
-            gridcolor: '#e0e0e0',
-            showgrid: true
+            title: '<b>Efficiency (%)</b>',
+            gridcolor: colors.grid,
+            showgrid: true,
+            zeroline: false,
+            range: [0, Math.max(...truthEfficiency, ...brainEfficiency) * 1.1],
+            tickfont: { size: 11 }
         },
         showlegend: true,
         legend: {
             x: 0.02,
             y: 0.98,
-            bgcolor: 'rgba(255,255,255,0.9)',
-            bordercolor: '#333',
-            borderwidth: 1
+            bgcolor: 'rgba(255,255,255,0.95)',
+            bordercolor: '#666',
+            borderwidth: 1,
+            font: { size: 12 }
         },
         hovermode: 'x unified',
-        plot_bgcolor: '#fafafa',
-        paper_bgcolor: 'white'
+        plot_bgcolor: colors.background,
+        paper_bgcolor: 'white',
+        margin: { t: 60, r: 40, b: 60, l: 60 }
     };
     
-    Plotly.newPlot('efficiency-comparison-chart', [effTrace1, effTrace2], effLayout, {responsive: true});
-    
-    // Power curve comparison
+    // 3. POWER VS FLOW CURVE
     const powerTrace1 = {
         x: flows,
         y: truthPower,
         mode: 'lines+markers',
         name: 'Manufacturer Data',
-        line: { color: '#4CAF50', width: 3, shape: 'spline' },
-        marker: { size: 10, symbol: 'circle' },
-        hovertemplate: 'Flow: %{x:.1f} m³/hr<br>Power: %{y:.2f} kW<extra></extra>'
+        line: { 
+            color: colors.manufacturer, 
+            width: 3, 
+            shape: 'spline' 
+        },
+        marker: { 
+            size: 8, 
+            symbol: 'circle',
+            color: colors.manufacturer,
+            line: { color: 'white', width: 1 }
+        },
+        hovertemplate: '<b>Manufacturer</b><br>Flow: %{x:.1f} m³/hr<br>Power: %{y:.2f} kW<extra></extra>'
     };
     
     const powerTrace2 = {
@@ -357,40 +488,78 @@ function renderComparisonChart(comparisonData) {
         y: brainPower,
         mode: 'lines+markers',
         name: 'Brain Prediction',
-        line: { color: '#FF9800', width: 2, dash: 'dash', shape: 'spline' },
-        marker: { size: 8, symbol: 'square' },
-        hovertemplate: 'Flow: %{x:.1f} m³/hr<br>Power: %{y:.2f} kW<extra></extra>'
+        line: { 
+            color: colors.brain, 
+            width: 2.5, 
+            dash: 'dot',
+            shape: 'spline' 
+        },
+        marker: { 
+            size: 7, 
+            symbol: 'diamond',
+            color: colors.brain,
+            line: { color: 'white', width: 1 }
+        },
+        hovertemplate: '<b>Brain</b><br>Flow: %{x:.1f} m³/hr<br>Power: %{y:.2f} kW<extra></extra>'
     };
     
     const powerLayout = {
         title: {
-            text: 'Power Curve Comparison',
-            font: { size: 18 }
+            text: '<b>Power Performance Comparison</b>',
+            font: { size: 20, family: 'Arial, sans-serif' },
+            x: 0.5,
+            xanchor: 'center'
         },
         xaxis: { 
-            title: 'Flow (m³/hr)',
-            gridcolor: '#e0e0e0',
-            showgrid: true
+            title: '<b>Flow (m³/hr)</b>',
+            gridcolor: colors.grid,
+            showgrid: true,
+            zeroline: true,
+            zerolinecolor: colors.grid,
+            tickfont: { size: 11 }
         },
         yaxis: { 
-            title: 'Power (kW)',
-            gridcolor: '#e0e0e0',
-            showgrid: true
+            title: '<b>Power (kW)</b>',
+            gridcolor: colors.grid,
+            showgrid: true,
+            zeroline: false,
+            tickfont: { size: 11 }
         },
         showlegend: true,
         legend: {
             x: 0.02,
             y: 0.98,
-            bgcolor: 'rgba(255,255,255,0.9)',
-            bordercolor: '#333',
-            borderwidth: 1
+            bgcolor: 'rgba(255,255,255,0.95)',
+            bordercolor: '#666',
+            borderwidth: 1,
+            font: { size: 12 }
         },
         hovermode: 'x unified',
-        plot_bgcolor: '#fafafa',
-        paper_bgcolor: 'white'
+        plot_bgcolor: colors.background,
+        paper_bgcolor: 'white',
+        margin: { t: 60, r: 40, b: 60, l: 60 }
     };
     
-    Plotly.newPlot('power-comparison-chart', [powerTrace1, powerTrace2], powerLayout, {responsive: true});
+    // Render all three charts
+    Plotly.newPlot('head-comparison-chart', [headTrace1, headTrace2], headLayout, chartConfig);
+    Plotly.newPlot('efficiency-comparison-chart', [effTrace1, effTrace2], effLayout, chartConfig);
+    Plotly.newPlot('power-comparison-chart', [powerTrace1, powerTrace2], powerLayout, chartConfig);
+    
+    // Add click-to-zoom functionality
+    ['head-comparison-chart', 'efficiency-comparison-chart', 'power-comparison-chart'].forEach(chartId => {
+        const chart = document.getElementById(chartId);
+        if (chart) {
+            chart.on('plotly_click', function(data) {
+                // Show data point details on click
+                const point = data.points[0];
+                const message = `${point.data.name}<br>Flow: ${point.x.toFixed(1)} m³/hr<br>` +
+                               `${chartId.includes('head') ? 'Head: ' + point.y.toFixed(2) + ' m' : 
+                                 chartId.includes('efficiency') ? 'Efficiency: ' + point.y.toFixed(1) + '%' :
+                                 'Power: ' + point.y.toFixed(2) + ' kW'}`;
+                M.toast({html: message, classes: 'blue darken-2', displayLength: 3000});
+            });
+        }
+    });
 }
 
 // Initialize on page load
@@ -1124,13 +1293,28 @@ document.addEventListener('DOMContentLoaded', function() {
                 </tbody>
             </table>
             
-            <!-- Visual Charts -->
-            <div class="row" style="margin-top: 30px;">
-                <div class="col s12 l6">
-                    <div id="efficiency-comparison-chart"></div>
+            <!-- Visual Performance Charts -->
+            <h5 style="margin-top: 30px; margin-bottom: 20px;">
+                <i class="material-icons left">show_chart</i>
+                Performance Curve Comparisons
+            </h5>
+            
+            <!-- Three-chart layout for comprehensive comparison -->
+            <div class="row">
+                <div class="col s12 xl4">
+                    <div class="chart-container" style="background: white; padding: 10px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                        <div id="head-comparison-chart" style="height: 400px;"></div>
+                    </div>
                 </div>
-                <div class="col s12 l6">
-                    <div id="power-comparison-chart"></div>
+                <div class="col s12 xl4">
+                    <div class="chart-container" style="background: white; padding: 10px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                        <div id="efficiency-comparison-chart" style="height: 400px;"></div>
+                    </div>
+                </div>
+                <div class="col s12 xl4">
+                    <div class="chart-container" style="background: white; padding: 10px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                        <div id="power-comparison-chart" style="height: 400px;"></div>
+                    </div>
                 </div>
             </div>
             
