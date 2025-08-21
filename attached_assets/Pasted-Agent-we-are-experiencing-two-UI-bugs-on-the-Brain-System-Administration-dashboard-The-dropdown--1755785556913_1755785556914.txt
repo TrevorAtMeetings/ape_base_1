@@ -1,0 +1,22 @@
+Agent, we are experiencing two UI bugs on the "Brain System Administration" dashboard:
+The dropdown menus in the main navigation are not opening when clicked.
+On the "Manufacturer Comparison" card, the "Upload Datasheet" button is inactive/disabled, and the "Comparison Tool" button may also be unresponsive.
+These issues point to a problem with our client-side JavaScript. Please perform the following systematic debugging process to find and fix the root cause.
+Step 1: Check the Browser Developer Console
+Action: Load the /admin/brain dashboard page in the browser. Open the Developer Tools and go to the Console tab.
+Report: Are there any red JavaScript error messages? If so, provide the full error message and the name of the JavaScript file and line number where the error is occurring. This is our most important clue.
+Step 2: Inspect the JavaScript Initialization Code
+Action: Based on the console output, I need you to review the JavaScript that is supposed to initialize the interactive components on this page.
+Files to review:
+app/templates/admin/brain_admin.html (for any page-specific <script> blocks).
+static/js/main.js or any other global JavaScript file that is loaded on this page.
+Check the following:
+Is there a document.addEventListener('DOMContentLoaded', ...) block that is supposed to run on this page?
+Inside that block, is there a call to initialize the Materialize dropdowns, like M.Dropdown.init(document.querySelectorAll('.dropdown-trigger'))?
+Is there any code that is supposed to enable the "Upload Datasheet" button (e.g., by removing a disabled class)?
+Step 3: Verify HTML and CSS Selectors
+Action: Compare the JavaScript code with the HTML structure in app/templates/admin/brain_admin.html.
+Check the following:
+Do the dropdown trigger elements in the navigation have the class="dropdown-trigger" that the Materialize JavaScript is looking for?
+Does the "Upload Datasheet" button have a specific id or class that the JavaScript can use to target it? Is it possible it has a disabled attribute in the HTML that needs to be removed?
+Please proceed with this three-step debugging process. Start by reporting the contents of the browser's developer console. This will guide the rest of our investigation.

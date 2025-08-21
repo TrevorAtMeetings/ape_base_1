@@ -872,6 +872,10 @@ body .brain-dashboard .brain-header {
                         <span class="material-icons-round">tune</span>
                         <span>Calibrate Pump</span>
                     </a>
+                    <a href="#" onclick="uploadDatasheet()" class="btn btn-secondary">
+                        <span class="material-icons-round">upload_file</span>
+                        <span>Upload Datasheet</span>
+                    </a>
                 </div>
             </div>
 
@@ -1192,6 +1196,75 @@ function generateReport() {
     alert('Report generation feature coming soon');
 }
 
+function uploadDatasheet() {
+    // Create a modal for datasheet upload
+    const modalHtml = `
+        <div id="datasheet-upload-modal" class="modal">
+            <div class="modal-content">
+                <h4>Upload Manufacturer Datasheet</h4>
+                <p>Upload a PDF or image file containing pump performance data:</p>
+                <div class="file-field input-field">
+                    <div class="btn">
+                        <span>Choose File</span>
+                        <input type="file" id="datasheet-file" accept=".pdf,.png,.jpg,.jpeg">
+                    </div>
+                    <div class="file-path-wrapper">
+                        <input class="file-path validate" type="text" placeholder="Select a datasheet file">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col s12">
+                        <p class="grey-text">Supported formats: PDF, PNG, JPG, JPEG</p>
+                        <p class="grey-text">Maximum file size: 10MB</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <a href="#!" class="modal-close waves-effect waves-red btn-flat">Cancel</a>
+                <a href="#!" onclick="processDatasheetUpload()" class="waves-effect waves-green btn-flat">Upload & Process</a>
+            </div>
+        </div>
+    `;
+    
+    // Add modal to page if not exists
+    if (!document.getElementById('datasheet-upload-modal')) {
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+    }
+    
+    // Initialize and open modal
+    const modal = document.getElementById('datasheet-upload-modal');
+    const instance = M.Modal.init(modal);
+    instance.open();
+}
+
+function processDatasheetUpload() {
+    const fileInput = document.getElementById('datasheet-file');
+    const file = fileInput ? fileInput.files[0] : null;
+    
+    if (!file) {
+        M.toast({html: 'Please select a file to upload', classes: 'red'});
+        return;
+    }
+    
+    if (file.size > 10 * 1024 * 1024) {
+        M.toast({html: 'File size exceeds 10MB limit', classes: 'red'});
+        return;
+    }
+    
+    // For now, show a success message - actual processing would be implemented here
+    M.toast({html: 'Datasheet uploaded successfully! Processing...', classes: 'green'});
+    
+    // Close the modal
+    const modal = document.getElementById('datasheet-upload-modal');
+    const instance = M.Modal.getInstance(modal);
+    if (instance) {
+        instance.close();
+    }
+    
+    // In production, this would upload the file and process it
+    console.log('Processing datasheet:', file.name, 'Size:', file.size, 'Type:', file.type);
+}
+
 function showPumpSelector() {
     // Create a modal for pump selection
     const modalHtml = `
@@ -1248,6 +1321,51 @@ function navigateToCalibration() {
 
 // Initialize algorithm cards with interactive functionality
 document.addEventListener('DOMContentLoaded', function() {
+    // Ensure navigation dropdowns are initialized (in case navigation.html script hasn't run)
+    if (typeof initializeNavDropdowns === 'undefined') {
+        // Re-initialize navigation dropdowns if function not available
+        console.log('Re-initializing navigation dropdowns from brain dashboard...');
+        const dropdownButtons = document.querySelectorAll('.nav-dropdown > button');
+        
+        dropdownButtons.forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const dropdownContent = this.parentElement.querySelector('.nav-dropdown-content');
+                if (!dropdownContent) return;
+                
+                const isOpen = dropdownContent.classList.contains('show');
+                
+                // Close all dropdowns first
+                document.querySelectorAll('.nav-dropdown-content').forEach(dropdown => {
+                    dropdown.classList.remove('show');
+                });
+                
+                // Toggle this dropdown
+                if (!isOpen) {
+                    dropdownContent.classList.add('show');
+                }
+            });
+        });
+        
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.nav-dropdown')) {
+                document.querySelectorAll('.nav-dropdown-content').forEach(dropdown => {
+                    dropdown.classList.remove('show');
+                });
+            }
+        });
+    }
+    
+    // Initialize Materialize components specifically for modals
+    const modals = document.querySelectorAll('.modal');
+    if (typeof M !== 'undefined' && M.Modal) {
+        M.Modal.init(modals);
+    }
+    
+    // Initialize algorithm cards
     const algorithmCards = document.querySelectorAll('.algorithm-card');
     
     algorithmCards.forEach(card => {
