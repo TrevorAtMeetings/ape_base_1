@@ -251,32 +251,55 @@ class ManufacturerComparisonEngine:
             # Initialize OpenAI client
             client = openai.OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
             
-            # Create detailed prompt for Brain logic analysis
-            prompt = f"""As a pump selection algorithm expert, analyze the Brain's calculation accuracy compared to manufacturer datasheet values.
+            # Create detailed prompt for Brain configuration analysis
+            pump_type = "diffuser" if any(x in analysis_data['pump_model'].upper() for x in ['HC', 'XHC', 'TURBINE']) else "volute"
+            
+            prompt = f"""As a pump physics model calibration expert, analyze the Brain's accuracy and provide SPECIFIC configuration parameter adjustments.
 
-PUMP MODEL: {analysis_data['pump_model']}
+PUMP MODEL: {analysis_data['pump_model']} (Type: {pump_type.upper()})
 PUMP BEP: {analysis_data['bep_conditions']}
 
 CALIBRATION DATA (Manufacturer Truth vs Brain Predictions):"""
 
             for i, point in enumerate(analysis_data['test_points'], 1):
+                trim_ratio = point['diameter'] / 362.0 if pump_type == 'diffuser' else point['diameter'] / 500.0  # Approximate
                 prompt += f"""
-Point {i} @ {point['flow']:.0f} m³/hr, Impeller {point['diameter']:.0f}mm:
+Point {i} @ {point['flow']:.0f} m³/hr, Impeller {point['diameter']:.0f}mm (Trim: {trim_ratio:.1%}):
 - Head: Truth {point['truth_head']:.1f}m vs Brain {point['brain_head']:.1f}m (Δ{point['head_error']:+.1f}%)
 - Efficiency: Truth {point['truth_efficiency']:.1f}% vs Brain {point['brain_efficiency']:.1f}% (Δ{point['efficiency_error']:+.1f}%)
 - Power: Truth {point['truth_power']:.1f}kW vs Brain {point['brain_power']:.1f}kW (Δ{point['power_error']:+.1f}%)"""
 
-            prompt += """
+            prompt += f"""
 
-Analyze the Brain's calculation logic and identify potential algorithm improvements:
+Analyze the deltas and provide SPECIFIC Brain configuration adjustments:
 
-1. **Calculation Accuracy**: Which Brain calculations (head, efficiency, power) show the largest deviations and why?
-2. **Physics Model Analysis**: Could the affinity law exponents need adjustment? Is the efficiency penalty formula appropriate for this pump type?
-3. **Trim Logic Review**: Is the Brain correctly applying impeller trim calculations? Are the trim penalties too aggressive or too conservative?
-4. **Calibration Factors**: Which tunable parameters (efficiency_penalty_diffuser, efficiency_penalty_volute, trim limits, etc.) might need adjustment?
-5. **Algorithm Recommendations**: Specific improvements to the Brain's calculation methods to better match manufacturer data.
+1. **TUNABLE PHYSICS ENGINE PARAMETERS** (in engineering_constants table):
+   - bep_shift_flow_exponent: 1.0 (controls Q scaling) → Recommend adjustment?
+   - bep_shift_head_exponent: 2.0 (controls H scaling) → Recommend adjustment?
+   - efficiency_correction_exponent: 0.1 → Recommend adjustment?
 
-Focus ONLY on the Brain's algorithmic logic - DO NOT mention physical pump conditions, wear, damage, or maintenance. This is purely about improving the Brain's mathematical models."""
+2. **EFFICIENCY PENALTY FACTORS** (Current for {pump_type}):
+   - efficiency_penalty_{pump_type}: {0.45 if pump_type == 'diffuser' else 0.20} → Based on errors, recommend new value?
+   - trim_dependent_small_exponent: 2.9 → For minor trims (<10%)
+   - trim_dependent_large_exponent: 2.1 → For major trims (>10%)
+
+3. **CONFIGURATION MANAGEMENT ACTIONS**:
+   Provide exact SQL commands for the engineering_constants table:
+   Example: UPDATE engineering_constants SET value = '0.38' WHERE name = 'efficiency_penalty_diffuser';
+
+4. **BRAIN LOGIC WORKBENCH SETTINGS**:
+   - Navigate to: Admin → Brain Logic Workbench
+   - Identify which pump family needs specific tuning
+   - Consider creating pump-type-specific overrides
+
+5. **EXPECTED OUTCOMES**:
+   For each adjustment, specify:
+   - Current error: {avg_eff_error:.1f}% efficiency, {avg_power_error:.1f}% power
+   - Target accuracy: ±3% efficiency, ±5% power
+   - Estimated improvement after configuration change
+
+Provide ACTIONABLE configuration updates with exact values and SQL commands.
+DO NOT mention physical pump conditions, wear, or maintenance - focus ONLY on Brain algorithm configuration."""
 
             # the newest OpenAI model is "gpt-4o" which was released May 13, 2024.
             # do not change this unless explicitly requested by the user
@@ -297,66 +320,79 @@ Focus ONLY on the Brain's algorithmic logic - DO NOT mention physical pump condi
             return self._generate_enhanced_manual_analysis(analysis_data)
     
     def _generate_enhanced_manual_analysis(self, analysis_data: Dict) -> str:
-        """Generate enhanced manual analysis as fallback"""
+        """Generate enhanced manual analysis as fallback with specific configuration recommendations"""
         
-        summary = f"**BRAIN ALGORITHM ANALYSIS: {analysis_data['pump_model']}**\n"
+        summary = f"**BRAIN CONFIGURATION ANALYSIS: {analysis_data['pump_model']}**\n"
         summary += f"Pump BEP: {analysis_data['bep_conditions']}\n\n"
         
         # Check if this is a diffuser or volute pump
         pump_type = "diffuser" if any(x in analysis_data['pump_model'].upper() for x in ['HC', 'XHC', 'TURBINE']) else "volute"
+        current_eff_penalty = 0.45 if pump_type == "diffuser" else 0.20
         
-        for i, point in enumerate(analysis_data['test_points'], 1):
-            summary += f"**Point {i} @ {point['flow']:.0f} m³/hr (Impeller {point['diameter']:.0f}mm):**\n"
+        # Calculate average errors across all points
+        if analysis_data['test_points']:
+            avg_head_error = sum(abs(p['head_error']) for p in analysis_data['test_points']) / len(analysis_data['test_points'])
+            avg_eff_error = sum(abs(p['efficiency_error']) for p in analysis_data['test_points']) / len(analysis_data['test_points'])
+            avg_power_error = sum(abs(p['power_error']) for p in analysis_data['test_points']) / len(analysis_data['test_points'])
+            max_eff_error = max(abs(p['efficiency_error']) for p in analysis_data['test_points'])
+        else:
+            avg_head_error = avg_eff_error = avg_power_error = max_eff_error = 0
+        
+        summary += f"**CALIBRATION SUMMARY ({pump_type.upper()} pump):**\n"
+        summary += f"• Average Head Error: {avg_head_error:+.1f}%\n"
+        summary += f"• Average Efficiency Error: {avg_eff_error:+.1f}%\n"  
+        summary += f"• Average Power Error: {avg_power_error:+.1f}%\n\n"
+        
+        summary += "**🔧 SPECIFIC CONFIGURATION ADJUSTMENTS REQUIRED:**\n\n"
+        
+        # 1. Efficiency Penalty Adjustments
+        summary += "**1. EFFICIENCY PENALTY FACTORS:**\n"
+        if avg_eff_error > 3:
+            # Calculate recommended adjustment
+            adjustment_factor = avg_eff_error / 100
+            new_penalty = current_eff_penalty - (adjustment_factor * 0.5)  # Conservative adjustment
+            new_penalty = max(0.1, min(0.6, new_penalty))  # Keep within reasonable bounds
             
-            # Head calculation analysis
-            if abs(point['head_error']) < 1:
-                summary += f"✅ Head Calculation: Perfect match ({point['head_error']:+.1f}%)\n"
-            elif abs(point['head_error']) < 5:
-                summary += f"⚠️ Head Calculation: Minor deviation ({point['head_error']:+.1f}%) - Affinity law exponents may need tuning\n"
-            else:
-                summary += f"❌ Head Calculation: Large error ({point['head_error']:+.1f}%) - Review head affinity law calculations\n"
-            
-            # Efficiency calculation analysis
-            if abs(point['efficiency_error']) < 3:
-                summary += f"✅ Efficiency Model: Excellent accuracy ({point['efficiency_error']:+.1f}%)\n"
-            elif abs(point['efficiency_error']) < 10:
-                summary += f"⚠️ Efficiency Model: Acceptable ({point['efficiency_error']:+.1f}%) - "
-                if pump_type == "diffuser":
-                    summary += f"Diffuser penalty factor (0.45) may need adjustment\n"
-                else:
-                    summary += f"Volute penalty factor (0.20) may need adjustment\n"
-            else:
-                summary += f"❌ Efficiency Model: Poor accuracy ({point['efficiency_error']:+.1f}%) - "
-                summary += f"Review trim penalty calculations for {pump_type} pumps\n"
-            
-            # Power calculation analysis
-            if abs(point['power_error']) < 5:
-                summary += f"✅ Power Formula: Accurate ({point['power_error']:+.1f}%)\n"
-            elif abs(point['power_error']) < 15:
-                summary += f"⚠️ Power Formula: Moderate error ({point['power_error']:+.1f}%) - Check power affinity law exponent\n"
-            else:
-                summary += f"❌ Power Formula: Large error ({point['power_error']:+.1f}%) - Review power calculation method\n"
-            
-            summary += "\n"
+            summary += f"• CURRENT: efficiency_penalty_{pump_type} = {current_eff_penalty:.2f}\n"
+            summary += f"• RECOMMENDED: efficiency_penalty_{pump_type} = {new_penalty:.2f}\n"
+            summary += f"• SQL UPDATE: UPDATE engineering_constants SET value = '{new_penalty:.2f}' WHERE name = 'efficiency_penalty_{pump_type}';\n"
+            summary += f"• EXPECTED IMPACT: Reduce efficiency error from {avg_eff_error:.1f}% to <3%\n\n"
+        else:
+            summary += f"• efficiency_penalty_{pump_type} = {current_eff_penalty:.2f} ✅ (No adjustment needed)\n\n"
         
-        summary += "**🔍 BRAIN ALGORITHM TUNING RECOMMENDATIONS:**\n"
+        # 2. Affinity Law Exponents
+        summary += "**2. AFFINITY LAW EXPONENTS:**\n"
+        if avg_head_error > 2:
+            # Recommend head exponent adjustment
+            head_adjustment = 2.0 + (avg_head_error / 50)  # Small adjustment
+            summary += f"• CURRENT: bep_shift_head_exponent = 2.0\n"
+            summary += f"• RECOMMENDED: bep_shift_head_exponent = {head_adjustment:.2f}\n"
+            summary += f"• SQL UPDATE: UPDATE engineering_constants SET value = '{head_adjustment:.2f}' WHERE name = 'bep_shift_head_exponent';\n\n"
+        else:
+            summary += "• bep_shift_head_exponent = 2.0 ✅ (No adjustment needed)\n\n"
         
-        # Analyze overall patterns
-        avg_eff_error = sum(abs(p['efficiency_error']) for p in analysis_data['test_points']) / len(analysis_data['test_points'])
-        avg_power_error = sum(abs(p['power_error']) for p in analysis_data['test_points']) / len(analysis_data['test_points'])
+        # 3. Power Calculation Review
+        if avg_power_error > 5:
+            summary += "**3. POWER CALCULATION ADJUSTMENTS:**\n"
+            summary += "• ISSUE: Power calculation shows significant error\n"
+            summary += "• VERIFY: Brain must use actual operating head, not pump capability\n"
+            summary += "• CHECK: Power formula = (Flow × Head × 9.81) / (3600 × Efficiency × 0.97)\n"
+            summary += "• RECOMMENDATION: Review power_affinity_exponent (should be 3.0)\n\n"
         
-        if avg_eff_error > 5:
-            if pump_type == "diffuser":
-                summary += f"• Adjust efficiency_penalty_diffuser factor (currently 0.45) - try {0.45 - avg_eff_error/100:.2f}\n"
-            else:
-                summary += f"• Adjust efficiency_penalty_volute factor (currently 0.20) - try {0.20 - avg_eff_error/100:.2f}\n"
+        # 4. Trim-Specific Adjustments
+        summary += "**4. TRIM-DEPENDENT PARAMETERS:**\n"
+        for point in analysis_data['test_points']:
+            trim_pct = (1 - point['diameter'] / 362.0) * 100 if pump_type == 'diffuser' else (1 - point['diameter'] / 500.0) * 100
+            if trim_pct > 10:  # Heavy trim
+                summary += f"• Point @ {point['flow']:.0f} m³/hr has {trim_pct:.1f}% trim\n"
+                if abs(point['efficiency_error']) > 5:
+                    summary += f"  → Adjust trim_dependent_large_exponent (current: 2.1)\n"
+                    summary += f"  → Consider pump-specific trim factor for {pump_type} pumps\n"
         
-        if avg_power_error > 10:
-            summary += "• Review power calculation: Ensure using actual operating head, not pump capability\n"
-            summary += "• Verify power affinity law exponent (typically 3.0 for centrifugal pumps)\n"
-        
-        summary += "• Consider pump-specific physics model exponents for this pump type\n"
-        summary += "• Review BEP migration calculations for trimmed impellers\n"
-        summary += "• Validate interpolation methods used for curve data\n"
+        summary += "\n**5. CONFIGURATION MANAGEMENT ACTIONS:**\n"
+        summary += "• Navigate to: Admin → Brain Logic Workbench\n"
+        summary += "• Update parameters in engineering_constants table\n"
+        summary += "• Re-run calibration after adjustments\n"
+        summary += "• Target accuracy: Head ±2%, Efficiency ±3%, Power ±5%\n"
         
         return summary
