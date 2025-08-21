@@ -1216,3 +1216,42 @@ def pump_calibration_workbench(pump_code):
         pump=pump_data,
         analysis_results=analysis_results
     )
+
+@brain_admin_bp.route('/api/pumps/search')
+def search_pumps_api():
+    """API endpoint for pump search in calibration workbench"""
+    try:
+        query = request.args.get('q', '').strip()
+        limit = min(int(request.args.get('limit', 10)), 50)  # Max 50 results
+        
+        if len(query) < 2:
+            return jsonify({'pumps': []})
+        
+        from ..pump_brain import get_pump_brain
+        brain = get_pump_brain()
+        all_pumps = brain.repository.get_pump_models()
+        
+        # Search pump codes and descriptions
+        query_upper = query.upper()
+        matched_pumps = []
+        
+        for pump in all_pumps:
+            pump_code = pump.get('pump_code', '')
+            description = pump.get('description', '')
+            
+            # Check if query matches pump code or description
+            if (query_upper in pump_code.upper() or 
+                query_upper in description.upper()):
+                matched_pumps.append({
+                    'pump_code': pump_code,
+                    'description': description
+                })
+                
+                if len(matched_pumps) >= limit:
+                    break
+        
+        return jsonify({'pumps': matched_pumps})
+        
+    except Exception as e:
+        logger.error(f"Error searching pumps: {e}")
+        return jsonify({'error': str(e)}), 500

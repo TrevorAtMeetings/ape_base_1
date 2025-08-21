@@ -4,7 +4,30 @@
 {% block content %}
 <div class="container">
     <h1>Pump Calibration Workbench</h1>
-    <h4>{{ pump.pump_code }}</h4>
+    
+    <!-- Pump Selection/Reset Panel -->
+    <div class="card blue-grey lighten-5" style="margin-bottom: 2rem;">
+        <div class="card-content">
+            <span class="card-title">
+                <i class="material-icons left">settings</i>Current Pump: {{ pump.pump_code }}
+            </span>
+            <div class="row">
+                <div class="col s8">
+                    <div class="input-field">
+                        <input type="text" id="pump_search" placeholder="Search for a different pump (e.g., '20 HC 6P', '18 XHC 2185 4P')...">
+                        <label for="pump_search">Change Pump</label>
+                    </div>
+                    <div id="pump-suggestions" class="collection" style="display: none; max-height: 200px; overflow-y: auto;"></div>
+                </div>
+                <div class="col s4">
+                    <br>
+                    <button type="button" class="btn orange" onclick="resetCalibration()">
+                        <i class="material-icons left">refresh</i>Reset Session
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Section 1: Manufacturer Data Entry -->
     <div class="card">
@@ -340,6 +363,132 @@ document.addEventListener('DOMContentLoaded', function() {
 // Initialize Materialize components
 document.addEventListener('DOMContentLoaded', function() {
     M.updateTextFields();
+});
+
+// Pump search functionality
+let searchTimeout;
+const pumpSearchInput = document.getElementById('pump_search');
+const suggestionsDiv = document.getElementById('pump-suggestions');
+
+if (pumpSearchInput) {
+    pumpSearchInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        const query = this.value.trim();
+        
+        if (query.length < 2) {
+            suggestionsDiv.style.display = 'none';
+            return;
+        }
+        
+        searchTimeout = setTimeout(() => {
+            searchPumps(query);
+        }, 300);
+    });
+}
+
+async function searchPumps(query) {
+    try {
+        const response = await fetch(`/api/pumps/search?q=${encodeURIComponent(query)}&limit=10`);
+        if (!response.ok) throw new Error('Search failed');
+        
+        const results = await response.json();
+        displayPumpSuggestions(results.pumps || []);
+        
+    } catch (error) {
+        console.error('Pump search error:', error);
+        suggestionsDiv.innerHTML = '<a href="#!" class="collection-item red-text">Search failed</a>';
+        suggestionsDiv.style.display = 'block';
+    }
+}
+
+function displayPumpSuggestions(pumps) {
+    if (pumps.length === 0) {
+        suggestionsDiv.innerHTML = '<a href="#!" class="collection-item grey-text">No pumps found</a>';
+    } else {
+        const suggestionsHtml = pumps.map(pump => 
+            `<a href="#!" class="collection-item" onclick="selectPump('${pump.pump_code}')">
+                <span class="title">${pump.pump_code}</span>
+                <p class="grey-text">${pump.description || ''}</p>
+            </a>`
+        ).join('');
+        suggestionsDiv.innerHTML = suggestionsHtml;
+    }
+    suggestionsDiv.style.display = 'block';
+}
+
+function selectPump(pumpCode) {
+    // Navigate to the calibration workbench for the selected pump
+    window.location.href = `/admin/pump-calibration/${encodeURIComponent(pumpCode)}`;
+}
+
+function resetCalibration() {
+    if (confirm('Are you sure you want to reset this calibration session? All entered data will be lost.')) {
+        // Clear all form inputs
+        document.querySelectorAll('#calibration-form input[type="number"]').forEach(input => {
+            input.value = '';
+        });
+        
+        // Reset form validation
+        document.querySelectorAll('#calibration-form .input-field').forEach(field => {
+            field.classList.remove('valid', 'invalid');
+        });
+        
+        // Hide any analysis results if they exist
+        const analysisResults = document.querySelector('.card:has(.card-title:contains("Analysis Results"))');
+        if (analysisResults) {
+            analysisResults.style.display = 'none';
+        }
+        
+        // Reset to first row only
+        const container = document.getElementById('data-points-container');
+        const firstRow = container.querySelector('.data-point-row');
+        if (container && firstRow) {
+            const newFirstRow = firstRow.cloneNode(true);
+            container.innerHTML = '';
+            container.appendChild(newFirstRow);
+            
+            // Clear first row inputs and reset IDs
+            newFirstRow.querySelectorAll('input').forEach((input, index) => {
+                input.value = '';
+                input.classList.remove('valid', 'invalid');
+                // Reset input IDs to match the first row pattern
+                const fieldName = input.name.split('_')[0];
+                input.id = fieldName + '_1';
+                input.name = fieldName + '_1';
+            });
+            
+            // Reset button onclick
+            const deleteBtn = newFirstRow.querySelector('button');
+            if (deleteBtn) {
+                deleteBtn.setAttribute('onclick', 'removeRow(1)');
+            }
+        }
+        
+        // Update Materialize labels
+        if (typeof M !== 'undefined') {
+            M.updateTextFields();
+        }
+        
+        // Show success message
+        if (typeof M !== 'undefined') {
+            M.toast({html: 'Calibration session reset successfully', classes: 'green'});
+        }
+    }
+}
+
+// Hide suggestions when clicking outside
+document.addEventListener('click', function(e) {
+    if (pumpSearchInput && suggestionsDiv && 
+        !pumpSearchInput.contains(e.target) && !suggestionsDiv.contains(e.target)) {
+        suggestionsDiv.style.display = 'none';
+    }
+});
+
+// Hide suggestions on escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && suggestionsDiv) {
+        suggestionsDiv.style.display = 'none';
+    }
 });
 </script>
 {% endblock %}

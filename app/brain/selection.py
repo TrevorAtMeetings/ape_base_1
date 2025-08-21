@@ -289,7 +289,7 @@ class SelectionIntelligence:
                 'feasible_count': len(feasible_pumps),
                 'excluded_count': len(excluded_pumps)
             }
-            result['exclusion_details'] = exclusion_details
+            result.update({'exclusion_details': exclusion_details})
         
         return result
     
