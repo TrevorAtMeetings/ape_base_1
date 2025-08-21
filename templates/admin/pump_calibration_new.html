@@ -245,7 +245,7 @@
             <!-- The AI Insights Section -->
             <div class="ai-insights-panel" style="background: #f5f5f5; padding: 20px; margin-top: 2rem; border-radius: 4px;">
                 <h5><i class="material-icons left">psychology</i>AI Analysis</h5>
-                <div style="white-space: pre-line;">{{ analysis_results.ai_summary }}</div>
+                <div class="ai-content">{{ analysis_results.ai_summary|safe }}</div>
             </div>
             {% endif %}
         </div>

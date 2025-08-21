@@ -4,6 +4,7 @@ Handles calibration analysis and comparison between ground truth data and Brain 
 """
 
 import logging
+import markdown2
 from typing import Dict, List, Optional, Any
 try:
     from .pump_brain import get_pump_brain
@@ -101,14 +102,17 @@ class ManufacturerComparisonEngine:
         chart_data = self._generate_chart_data(comparison_points)
         
         # Generate AI summary
-        ai_summary = self._generate_ai_summary(comparison_points, pump_data)
+        ai_summary_markdown = self._generate_ai_summary(comparison_points, pump_data)
+        
+        # Convert markdown to HTML for proper display
+        ai_summary_html = markdown2.markdown(ai_summary_markdown, extras=['break-on-newline', 'fenced-code-blocks'])
         
         logger.info(f"Calibration complete: {len(comparison_points)} points processed")
         
         return {
             "comparison_points": comparison_points,
             "chart_data": chart_data,
-            "ai_summary": ai_summary
+            "ai_summary": ai_summary_html
         }
     
     def _get_brain_prediction(self, pump_data: Dict, flow: float, head: float, diameter: Optional[float] = None) -> Dict:
@@ -322,7 +326,7 @@ DO NOT mention physical pump conditions, wear, or maintenance - focus ONLY on Br
     def _generate_enhanced_manual_analysis(self, analysis_data: Dict) -> str:
         """Generate enhanced manual analysis as fallback with specific configuration recommendations"""
         
-        summary = f"**BRAIN CONFIGURATION ANALYSIS: {analysis_data['pump_model']}**\n"
+        summary = f"BRAIN CONFIGURATION ANALYSIS: {analysis_data['pump_model']}\n"
         summary += f"Pump BEP: {analysis_data['bep_conditions']}\n\n"
         
         # Check if this is a diffuser or volute pump
@@ -338,15 +342,15 @@ DO NOT mention physical pump conditions, wear, or maintenance - focus ONLY on Br
         else:
             avg_head_error = avg_eff_error = avg_power_error = max_eff_error = 0
         
-        summary += f"**CALIBRATION SUMMARY ({pump_type.upper()} pump):**\n"
+        summary += f"CALIBRATION SUMMARY ({pump_type.upper()} pump):\n"
         summary += f"• Average Head Error: {avg_head_error:+.1f}%\n"
         summary += f"• Average Efficiency Error: {avg_eff_error:+.1f}%\n"  
         summary += f"• Average Power Error: {avg_power_error:+.1f}%\n\n"
         
-        summary += "**🔧 SPECIFIC CONFIGURATION ADJUSTMENTS REQUIRED:**\n\n"
+        summary += "🔧 SPECIFIC CONFIGURATION ADJUSTMENTS REQUIRED:\n\n"
         
         # 1. Efficiency Penalty Adjustments
-        summary += "**1. EFFICIENCY PENALTY FACTORS:**\n"
+        summary += "1. EFFICIENCY PENALTY FACTORS:\n"
         if avg_eff_error > 3:
             # Calculate recommended adjustment
             adjustment_factor = avg_eff_error / 100
@@ -361,7 +365,7 @@ DO NOT mention physical pump conditions, wear, or maintenance - focus ONLY on Br
             summary += f"• efficiency_penalty_{pump_type} = {current_eff_penalty:.2f} ✅ (No adjustment needed)\n\n"
         
         # 2. Affinity Law Exponents
-        summary += "**2. AFFINITY LAW EXPONENTS:**\n"
+        summary += "2. AFFINITY LAW EXPONENTS:\n"
         if avg_head_error > 2:
             # Recommend head exponent adjustment
             head_adjustment = 2.0 + (avg_head_error / 50)  # Small adjustment
@@ -373,14 +377,14 @@ DO NOT mention physical pump conditions, wear, or maintenance - focus ONLY on Br
         
         # 3. Power Calculation Review
         if avg_power_error > 5:
-            summary += "**3. POWER CALCULATION ADJUSTMENTS:**\n"
+            summary += "3. POWER CALCULATION ADJUSTMENTS:\n"
             summary += "• ISSUE: Power calculation shows significant error\n"
             summary += "• VERIFY: Brain must use actual operating head, not pump capability\n"
             summary += "• CHECK: Power formula = (Flow × Head × 9.81) / (3600 × Efficiency × 0.97)\n"
             summary += "• RECOMMENDATION: Review power_affinity_exponent (should be 3.0)\n\n"
         
         # 4. Trim-Specific Adjustments
-        summary += "**4. TRIM-DEPENDENT PARAMETERS:**\n"
+        summary += "4. TRIM-DEPENDENT PARAMETERS:\n"
         for point in analysis_data['test_points']:
             trim_pct = (1 - point['diameter'] / 362.0) * 100 if pump_type == 'diffuser' else (1 - point['diameter'] / 500.0) * 100
             if trim_pct > 10:  # Heavy trim
@@ -389,7 +393,7 @@ DO NOT mention physical pump conditions, wear, or maintenance - focus ONLY on Br
                     summary += f"  → Adjust trim_dependent_large_exponent (current: 2.1)\n"
                     summary += f"  → Consider pump-specific trim factor for {pump_type} pumps\n"
         
-        summary += "\n**5. CONFIGURATION MANAGEMENT ACTIONS:**\n"
+        summary += "\n5. CONFIGURATION MANAGEMENT ACTIONS:\n"
         summary += "• Navigate to: Admin → Brain Logic Workbench\n"
         summary += "• Update parameters in engineering_constants table\n"
         summary += "• Re-run calibration after adjustments\n"
