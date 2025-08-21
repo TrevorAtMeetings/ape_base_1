@@ -322,15 +322,16 @@ function removeRow(rowId) {
 // Initialize normalized comparison chart with separate subplots if analysis results exist
 {% if analysis_results and analysis_results.chart_data %}
 document.addEventListener('DOMContentLoaded', function() {
-    const chartData = {{ analysis_results.chart_data|tojson }};
+    try {
+        const chartData = {{ analysis_results.chart_data|tojson|safe }};
     
     // Extract values for the single point
-    const truthHead = chartData.truth_heads[0] || 0;
-    const brainHead = chartData.brain_heads[0] || 0;
-    const truthEff = chartData.truth_efficiencies[0] || 0;
-    const brainEff = chartData.brain_efficiencies[0] || 0;
-    const truthPower = chartData.truth_powers[0] || 0;
-    const brainPower = chartData.brain_powers[0] || 0;
+    const truthHead = (chartData && chartData.truth_heads && chartData.truth_heads[0]) || 0;
+    const brainHead = (chartData && chartData.brain_heads && chartData.brain_heads[0]) || 0;
+    const truthEff = (chartData && chartData.truth_efficiencies && chartData.truth_efficiencies[0]) || 0;
+    const brainEff = (chartData && chartData.brain_efficiencies && chartData.brain_efficiencies[0]) || 0;
+    const truthPower = (chartData && chartData.truth_powers && chartData.truth_powers[0]) || 0;
+    const brainPower = (chartData && chartData.brain_powers && chartData.brain_powers[0]) || 0;
     
     // Create three separate subplots to avoid scale confusion
     const fig = {
@@ -345,7 +346,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     color: ['rgba(54, 162, 235, 0.8)', 'rgba(255, 99, 132, 0.8)'],
                     line: { color: ['rgba(54, 162, 235, 1.0)', 'rgba(255, 99, 132, 1.0)'], width: 1 }
                 },
-                text: [truthHead.toFixed(2) + ' m', brainHead.toFixed(2) + ' m'],
+                text: [String(truthHead.toFixed(2)) + ' m', String(brainHead.toFixed(2)) + ' m'],
                 textposition: 'auto',
                 xaxis: 'x',
                 yaxis: 'y',
@@ -361,7 +362,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     color: ['rgba(75, 192, 192, 0.8)', 'rgba(255, 159, 64, 0.8)'],
                     line: { color: ['rgba(75, 192, 192, 1.0)', 'rgba(255, 159, 64, 1.0)'], width: 1 }
                 },
-                text: [truthEff.toFixed(1) + '%', brainEff.toFixed(1) + '%'],
+                text: [String(truthEff.toFixed(1)) + '%', String(brainEff.toFixed(1)) + '%'],
                 textposition: 'auto',
                 xaxis: 'x2',
                 yaxis: 'y2',
@@ -377,7 +378,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     color: ['rgba(153, 102, 255, 0.8)', 'rgba(255, 205, 86, 0.8)'],
                     line: { color: ['rgba(153, 102, 255, 1.0)', 'rgba(255, 205, 86, 1.0)'], width: 1 }
                 },
-                text: [truthPower.toFixed(1) + ' kW', brainPower.toFixed(1) + ' kW'],
+                text: [String(truthPower.toFixed(1)) + ' kW', String(brainPower.toFixed(1)) + ' kW'],
                 textposition: 'auto',
                 xaxis: 'x3',
                 yaxis: 'y3',
@@ -460,6 +461,9 @@ document.addEventListener('DOMContentLoaded', function() {
         displayModeBar: true,
         modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d']
     });
+    } catch (error) {
+        console.error('Error initializing comparison chart:', error);
+    }
 });
 {% endif %}
 

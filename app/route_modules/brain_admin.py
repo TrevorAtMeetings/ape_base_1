@@ -11,7 +11,7 @@ from flask import Blueprint, render_template, request, jsonify, flash, redirect,
 from datetime import datetime
 from ..brain_data_service import BrainDataService, BrainDataAccessor
 from ..pump_repository import PumpRepository
-from ..manufacturer_comparison_engine import ManufacturerComparisonEngine
+# ManufacturerComparisonEngine is imported dynamically when needed to avoid circular imports
 
 logger = logging.getLogger(__name__)
 
@@ -288,8 +288,7 @@ def update_calibration_factors():
         from ..pump_brain import get_pump_brain
         brain = get_pump_brain()
         # Clear any performance analyzer instances that might have cached factors
-        if hasattr(brain, '_performance_analyzer'):
-            brain._performance_analyzer = None
+        # Note: _performance_analyzer is a dynamic attribute that may not exist
         
         logger.info(f"Calibration factors updated by {user_id}: {factors}")
         
@@ -451,11 +450,11 @@ def run_ground_truth_calibration():
     try:
         # Get form data
         pump_code = request.form.get('pump_code')
-        duty_flow = float(request.form.get('duty_flow'))
-        duty_head = float(request.form.get('duty_head'))
-        truth_diameter = float(request.form.get('truth_diameter'))
-        truth_efficiency = float(request.form.get('truth_efficiency'))
-        truth_power = float(request.form.get('truth_power'))
+        duty_flow = float(request.form.get('duty_flow') or 0)
+        duty_head = float(request.form.get('duty_head') or 0)
+        truth_diameter = float(request.form.get('truth_diameter') or 0)
+        truth_efficiency = float(request.form.get('truth_efficiency') or 0)
+        truth_power = float(request.form.get('truth_power') or 0)
         
         logger.info(f"Running calibration for {pump_code} at {duty_flow} m³/hr @ {duty_head}m")
         logger.info(f"Ground truth values - Diameter: {truth_diameter}mm, Efficiency: {truth_efficiency}%, Power: {truth_power}kW")
@@ -983,7 +982,7 @@ class ManufacturerComparisonEngine:
             
             # Convert to accuracy (100% - error%)
             # Clamp between 0 and 100
-            accuracy = max(0.0, min(100.0, 100.0 - mean_absolute_error))
+            accuracy = max(0.0, min(100.0, 100.0 - float(mean_absolute_error)))
             
             self.logger.debug(f"Overall accuracy calculated: {accuracy:.2f}% from {len(absolute_deltas)} deltas")
             return accuracy
