@@ -1,0 +1,43 @@
+ROR:app.pump_repository:🎯 [REPOSITORY FINAL] 32 HC 6P: BEP 2435.99 m³/hr @ 35.83m
+INFO:app.pump_repository:Repository: Total curves: 869
+INFO:app.pump_repository:Repository: Total points: 6273
+INFO:app.pump_repository:Repository: NPSH curves: 612
+INFO:app.pump_repository:Repository: Tables used: ['ai_prompts', 'engineering_constants', 'extras', 'processed_files', 'pump_bep_markers', 'pump_curves', 'pump_diameters', 'pump_eff_iso', 'pump_names', 'pump_performance_points', 'pump_specifications', 'pump_speeds', 'pumps']
+INFO:werkzeug:10.83.2.72 - - [21/Aug/2025 19:55:07] "GET /admin/pump-calibration/PJ%20250%20H HTTP/1.1" 200 -
+INFO:werkzeug:10.83.2.72 - - [21/Aug/2025 19:55:08] "GET /static/css/style.css?v=6016 HTTP/1.1" 200 -
+INFO:werkzeug:10.83.2.72 - - [21/Aug/2025 19:55:08] "GET /static/css/professional-theme.css?v=6643 HTTP/1.1" 200 -
+INFO:werkzeug:10.83.7.238 - - [21/Aug/2025 19:55:08] "GET /static/css/admin_executive_theme.css?v=1034 HTTP/1.1" 200 -
+INFO:werkzeug:10.83.7.238 - - [21/Aug/2025 19:55:08] "GET /static/css/responsive-fixes.css?v=9939 HTTP/1.1" 200 -
+INFO:werkzeug:10.83.7.238 - - [21/Aug/2025 19:55:08] "GET /static/css/floating-ai-chat.css?v=2554 HTTP/1.1" 200 -
+INFO:werkzeug:10.83.2.72 - - [21/Aug/2025 19:55:09] "GET /static/js/icon-loader.js HTTP/1.1" 304 -
+INFO:werkzeug:10.83.7.238 - - [21/Aug/2025 19:55:09] "GET /static/js/main.js HTTP/1.1" 304 -
+INFO:werkzeug:10.83.3.29 - - [21/Aug/2025 19:55:09] "GET /static/js/force-icon-refresh.js HTTP/1.1" 304 -
+INFO:werkzeug:10.83.7.238 - - [21/Aug/2025 19:55:09] "GET /static/js/micro-interactions.js HTTP/1.1" 304 -
+INFO:werkzeug:10.83.7.238 - - [21/Aug/2025 19:55:09] "GET /static/js/floating-ai-chat.js HTTP/1.1" 304 -
+INFO:werkzeug:127.0.0.1 - - [21/Aug/2025 19:55:10] "GET /admin/pump-calibration/PJ%20250%20H HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [21/Aug/2025 19:55:10] "GET /static/css/admin_executive_theme.css?v=7980 HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [21/Aug/2025 19:55:10] "GET /static/css/style.css?v=8856 HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [21/Aug/2025 19:55:10] "GET /static/css/professional-theme.css?v=4805 HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [21/Aug/2025 19:55:10] "GET /static/css/responsive-fixes.css?v=3855 HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [21/Aug/2025 19:55:10] "GET /static/js/icon-loader.js HTTP/1.1" 304 -
+INFO:werkzeug:127.0.0.1 - - [21/Aug/2025 19:55:10] "GET /static/css/floating-ai-chat.css?v=3574 HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [21/Aug/2025 19:55:10] "GET /static/js/main.js HTTP/1.1" 304 -
+INFO:werkzeug:127.0.0.1 - - [21/Aug/2025 19:55:10] "GET /static/js/micro-interactions.js HTTP/1.1" 304 -
+INFO:werkzeug:127.0.0.1 - - [21/Aug/2025 19:55:10] "GET /static/js/force-icon-refresh.js HTTP/1.1" 304 -
+INFO:werkzeug:127.0.0.1 - - [21/Aug/2025 19:55:10] "GET /static/js/floating-ai-chat.js HTTP/1.1" 304 -
+INFO:app.admin_config_service:Loaded feature toggles from config/features.json
+INFO:werkzeug:10.83.0.114 - - [21/Aug/2025 19:55:10] "GET /api/features/status HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [21/Aug/2025 19:55:11] "GET /api/features/status HTTP/1.1" 200 -
+ERROR:app.route_modules.brain_admin:Error processing calibration: 'ManufacturerComparisonEngine' object has no attribute 'run_full_calibration'
+INFO:werkzeug:10.83.1.13 - - [21/Aug/2025 19:56:41] "POST /admin/pump-calibration/PJ%20250%20H HTTP/1.1" 200 -
+INFO:werkzeug:10.83.1.13 - - [21/Aug/2025 19:56:41] "GET /static/css/style.css?v=8844 HTTP/1.1" 200 -
+INFO:werkzeug:10.83.1.13 - - [21/Aug/2025 19:56:42] "GET /static/css/professional-theme.css?v=3605 HTTP/1.1" 200 -
+INFO:werkzeug:10.83.0.114 - - [21/Aug/2025 19:56:42] "GET /static/css/responsive-fixes.css?v=2901 HTTP/1.1" 200 -
+INFO:werkzeug:10.83.0.114 - - [21/Aug/2025 19:56:42] "GET /static/css/admin_executive_theme.css?v=9877 HTTP/1.1" 200 -
+INFO:werkzeug:10.83.2.72 - - [21/Aug/2025 19:56:42] "GET /static/css/floating-ai-chat.css?v=9094 HTTP/1.1" 200 -
+INFO:werkzeug:10.83.1.13 - - [21/Aug/2025 19:56:42] "GET /static/js/icon-loader.js HTTP/1.1" 304 -
+INFO:werkzeug:10.83.0.114 - - [21/Aug/2025 19:56:42] "GET /static/js/main.js HTTP/1.1" 304 -
+INFO:werkzeug:10.83.3.29 - - [21/Aug/2025 19:56:42] "GET /static/js/force-icon-refresh.js HTTP/1.1" 304 -
+INFO:werkzeug:10.83.1.13 - - [21/Aug/2025 19:56:42] "GET /static/js/micro-interactions.js HTTP/1.1" 304 -
+INFO:werkzeug:10.83.1.13 - - [21/Aug/2025 19:56:42] "GET /static/js/floating-ai-chat.js HTTP/1.1" 304 -
+INFO:werkzeug:10.83.10.142 - - [21/Aug/2025 19:56:45] "GET /api/features/status HTTP/1.1" 200 -

@@ -5,7 +5,11 @@ Handles calibration analysis and comparison between ground truth data and Brain 
 
 import logging
 from typing import Dict, List, Optional, Any
-from .pump_brain import get_pump_brain
+try:
+    from .pump_brain import get_pump_brain
+except ImportError:
+    # Fallback for direct imports
+    from pump_brain import get_pump_brain
 
 logger = logging.getLogger(__name__)
 
