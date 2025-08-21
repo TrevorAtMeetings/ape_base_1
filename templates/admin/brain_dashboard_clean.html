@@ -175,6 +175,7 @@
                     <span class="card-title">
                         <i class="material-icons left">compare_arrows</i>
                         Manufacturer Comparison
+                        <span id="pump-count-display" class="right chip blue white-text" style="font-size: 14px;">Loading pumps...</span>
                     </span>
                     <p>Compare Brain selections against manufacturer recommendations. Upload datasheets, analyze differences, and identify opportunities for improvement.</p>
                 </div>
@@ -353,63 +354,144 @@ document.addEventListener('DOMContentLoaded', function() {
     }, 100);
 });
 
-// Global variable to store selected pump
+// Global variables
 let selectedPump = null;
+let allPumpsData = {};  // Will store all 386 pumps from database
 
-// Pump data organized by series
-const pumpData = {
-    '2F Series - End Suction': [
-        { code: '100-200 2F', type: 'END SUCTION' },
-        { code: '100-200 2F 2P', type: 'END SUCTION 2-POLE' },
-        { code: '100-250 2F', type: 'END SUCTION' },
-        { code: '100-315 2F', type: 'END SUCTION' },
-        { code: '125-250 2F', type: 'END SUCTION' },
-        { code: '125-315 2F', type: 'END SUCTION' },
-        { code: '150-200 2F', type: 'END SUCTION' },
-        { code: '150-250 2F', type: 'END SUCTION' },
-        { code: '150-315 2F', type: 'END SUCTION' },
-        { code: '50-160 2F', type: 'END SUCTION' },
-        { code: '50-200 2F', type: 'END SUCTION' },
-        { code: '50-250 2F', type: 'END SUCTION' },
-        { code: '65-160 2F', type: 'END SUCTION' },
-        { code: '65-200 2F', type: 'END SUCTION' },
-        { code: '65-250 2F', type: 'END SUCTION' }
-    ],
-    'WL/WLN Series - Slurry': [
-        { code: '10 WLN 26A', type: 'SLURRY PUMP' },
-        { code: '10 WLN 32A', type: 'SLURRY PUMP' },
-        { code: '12 WL 26A', type: 'SLURRY PUMP' },
-        { code: '14 WL 30A', type: 'SLURRY PUMP' },
-        { code: '6x8x10 WL', type: 'SLURRY PUMP' },
-        { code: '6x8x10 WLN', type: 'SLURRY PUMP' },
-        { code: '8x6x14 WL', type: 'SLURRY PUMP' }
-    ],
-    'HC Series - High Capacity': [
-        { code: '28 HC 6P', type: 'HIGH CAPACITY' },
-        { code: '30 HC 6P', type: 'HIGH CAPACITY' },
-        { code: '32 HC 6P', type: 'HIGH CAPACITY' }
-    ],
-    'V Series - Vertical': [
-        { code: '8V 5S', type: 'VERTICAL PUMP' },
-        { code: '10V 5S', type: 'VERTICAL PUMP' },
-        { code: '12V 6S', type: 'VERTICAL PUMP' }
-    ],
-    'Special Series': [
-        { code: '10 NHTB', type: 'SPECIAL APPLICATION' },
-        { code: '12 NHTB', type: 'SPECIAL APPLICATION' }
-    ]
-};
+// Load all pumps from database on page load
+async function loadPumpsFromDatabase() {
+    try {
+        console.log('Loading all pumps from database...');
+        const response = await fetch('/api/pump_list');
+        const data = await response.json();
+        
+        if (data.pumps && data.pumps.length > 0) {
+            console.log(`Loaded ${data.pumps.length} pumps from database`);
+            
+            // Organize pumps by type/series
+            allPumpsData = organizePumpsByType(data.pumps);
+            
+            // Display pump count in UI
+            const pumpCountElement = document.getElementById('pump-count-display');
+            if (pumpCountElement) {
+                pumpCountElement.textContent = `${data.pumps.length} pumps available`;
+            }
+            
+            return true;
+        } else {
+            console.error('No pumps received from database');
+            return false;
+        }
+    } catch (error) {
+        console.error('Failed to load pumps from database:', error);
+        M.toast({
+            html: '<i class="material-icons left">error</i>Failed to load pump database',
+            classes: 'red',
+            displayLength: 4000
+        });
+        return false;
+    }
+}
 
-function showPumpSelector() {
+// Organize pumps by type/series for display
+function organizePumpsByType(pumps) {
+    const organized = {};
+    
+    pumps.forEach(pump => {
+        const code = pump.pump_code || pump;
+        let category = 'Other Pumps';
+        
+        // Categorize based on pump code patterns
+        if (code.includes('2F')) {
+            category = '2F Series - End Suction';
+        } else if (code.includes('WL') || code.includes('WLN')) {
+            category = 'WL/WLN Series - Slurry';
+        } else if (code.includes('HC')) {
+            category = 'HC Series - High Capacity';
+        } else if (code.includes('V ') || code.match(/\dV\s/)) {
+            category = 'V Series - Vertical';
+        } else if (code.includes('NHTB')) {
+            category = 'NHTB Series - Special';
+        } else if (code.includes('AE') || code.includes('AEF')) {
+            category = 'AE/AEF Series';
+        } else if (code.includes('CR')) {
+            category = 'CR Series';
+        } else if (code.includes('HC')) {
+            category = 'HC Series';
+        } else if (code.includes('NM')) {
+            category = 'NM Series';
+        } else if (code.includes('SP')) {
+            category = 'SP Series';
+        } else if (code.includes('SV')) {
+            category = 'SV Series';
+        } else if (code.includes('TPE')) {
+            category = 'TPE Series';
+        } else if (code.includes('CRNE')) {
+            category = 'CRNE Series';
+        }
+        
+        if (!organized[category]) {
+            organized[category] = [];
+        }
+        
+        organized[category].push({
+            code: code,
+            type: pump.pump_type || category.split(' - ')[1] || 'PUMP'
+        });
+    });
+    
+    // Sort pumps within each category
+    for (const category in organized) {
+        organized[category].sort((a, b) => a.code.localeCompare(b.code));
+    }
+    
+    return organized;
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', async function() {
+    await loadPumpsFromDatabase();
+});
+
+async function showPumpSelector() {
     try {
         console.log('Opening pump selector modal...');
         
-        // Build pump categories HTML
+        // Ensure pumps are loaded from database
+        if (!allPumpsData || Object.keys(allPumpsData).length === 0) {
+            console.log('Pumps not loaded, fetching from database...');
+            const loaded = await loadPumpsFromDatabase();
+            if (!loaded) {
+                M.toast({
+                    html: '<i class="material-icons left">error</i>Unable to load pump database',
+                    classes: 'red',
+                    displayLength: 4000
+                });
+                return;
+            }
+        }
+        
+        // Count total pumps
+        let totalPumps = 0;
+        for (const category in allPumpsData) {
+            totalPumps += allPumpsData[category].length;
+        }
+        
+        console.log(`Building modal with ${totalPumps} pumps from database`);
+        
+        // Build pump categories HTML from actual database data
         let categoriesHtml = '';
-        for (const [category, pumps] of Object.entries(pumpData)) {
+        
+        // Sort categories for consistent display
+        const sortedCategories = Object.keys(allPumpsData).sort();
+        
+        for (const category of sortedCategories) {
+            const pumps = allPumpsData[category];
+            if (pumps.length === 0) continue;
+            
             categoriesHtml += `
                 <div class="pump-category">
-                    <div class="pump-category-header">${category}</div>
+                    <div class="pump-category-header">${category} (${pumps.length} pumps)</div>
                     <div class="pump-items">
             `;
             
@@ -431,7 +513,7 @@ function showPumpSelector() {
             `;
         }
         
-        // Create modal HTML
+        // Create modal HTML with actual pump count
         const modalHtml = `
             <div id="pump-selector-modal" class="modal modal-fixed-footer">
                 <div class="modal-content">
@@ -439,20 +521,20 @@ function showPumpSelector() {
                         <i class="material-icons left">compare_arrows</i>
                         Pump Calibration Workbench
                     </h4>
-                    <p class="grey-text">Compare Brain predictions against manufacturer data with multi-point calibration and performance analysis.</p>
+                    <p class="grey-text">Compare Brain predictions against manufacturer data • <strong>${totalPumps} pumps</strong> available from database</p>
                     
                     <div class="search-container">
                         <input type="text" 
                                id="pump-search" 
-                               placeholder="Search by pump code or type..." 
+                               placeholder="Search among ${totalPumps} pumps by code or type..." 
                                onkeyup="filterPumps(event)" 
                                autocomplete="off">
                         <div class="search-hint">
-                            💡 Try searching: "2F", "WL", "100-200", or press Enter to use custom code
+                            💡 Search examples: "2F", "WL", "100-200", or press Enter to calibrate any pump code
                         </div>
                     </div>
                     
-                    <div id="pump-categories" class="pump-grid">
+                    <div id="pump-categories" class="pump-grid" style="max-height: 450px; overflow-y: auto;">
                         ${categoriesHtml}
                     </div>
                     
