@@ -315,14 +315,27 @@
                         </div>
                         
                         <div class="metric-item">
-                            <span class="metric-label-inline">TRIM</span>
-                            <span class="metric-value-inline">
-                                {% if pump.get('trim_percent') %}
-                                    {{ (100 - pump['trim_percent'])|round|int }}%
-                                {% else %}
-                                    0%
-                                {% endif %}
-                            </span>
+                            {% if pump.get('sizing_method') == 'Speed Variation' or pump.get('vfd_required') %}
+                                <span class="metric-label-inline">VFD</span>
+                                <span class="metric-value-inline">
+                                    {% if pump.get('speed_ratio') %}
+                                        {{ pump['speed_ratio']|round|int }}%
+                                    {% elif pump.get('required_speed_rpm') %}
+                                        {{ pump['required_speed_rpm']|round|int }}rpm
+                                    {% else %}
+                                        Req'd
+                                    {% endif %}
+                                </span>
+                            {% else %}
+                                <span class="metric-label-inline">TRIM</span>
+                                <span class="metric-value-inline">
+                                    {% if pump.get('trim_percent') %}
+                                        {{ (100 - pump['trim_percent'])|round|int }}%
+                                    {% else %}
+                                        0%
+                                    {% endif %}
+                                </span>
+                            {% endif %}
                         </div>
                         
                         <div class="metric-item">
@@ -423,14 +436,27 @@
                         </div>
                         
                         <div class="metric-item">
-                            <span class="metric-label-inline">TRIM</span>
-                            <span class="metric-value-inline">
-                                {% if pump.get('trim_percent') %}
-                                    {{ (100 - pump['trim_percent'])|round|int }}%
-                                {% else %}
-                                    0%
-                                {% endif %}
-                            </span>
+                            {% if pump.get('sizing_method') == 'Speed Variation' or pump.get('vfd_required') %}
+                                <span class="metric-label-inline">VFD</span>
+                                <span class="metric-value-inline">
+                                    {% if pump.get('speed_ratio') %}
+                                        {{ pump['speed_ratio']|round|int }}%
+                                    {% elif pump.get('required_speed_rpm') %}
+                                        {{ pump['required_speed_rpm']|round|int }}rpm
+                                    {% else %}
+                                        Req'd
+                                    {% endif %}
+                                </span>
+                            {% else %}
+                                <span class="metric-label-inline">TRIM</span>
+                                <span class="metric-value-inline">
+                                    {% if pump.get('trim_percent') %}
+                                        {{ (100 - pump['trim_percent'])|round|int }}%
+                                    {% else %}
+                                        0%
+                                    {% endif %}
+                                </span>
+                            {% endif %}
                         </div>
                         
                         <div class="metric-item">
@@ -531,14 +557,27 @@
                         </div>
                         
                         <div class="metric-item">
-                            <span class="metric-label-inline">TRIM</span>
-                            <span class="metric-value-inline">
-                                {% if pump.get('trim_percent') %}
-                                    {{ (100 - pump['trim_percent'])|round|int }}%
-                                {% else %}
-                                    0%
-                                {% endif %}
-                            </span>
+                            {% if pump.get('sizing_method') == 'Speed Variation' or pump.get('vfd_required') %}
+                                <span class="metric-label-inline">VFD</span>
+                                <span class="metric-value-inline">
+                                    {% if pump.get('speed_ratio') %}
+                                        {{ pump['speed_ratio']|round|int }}%
+                                    {% elif pump.get('required_speed_rpm') %}
+                                        {{ pump['required_speed_rpm']|round|int }}rpm
+                                    {% else %}
+                                        Req'd
+                                    {% endif %}
+                                </span>
+                            {% else %}
+                                <span class="metric-label-inline">TRIM</span>
+                                <span class="metric-value-inline">
+                                    {% if pump.get('trim_percent') %}
+                                        {{ (100 - pump['trim_percent'])|round|int }}%
+                                    {% else %}
+                                        0%
+                                    {% endif %}
+                                </span>
+                            {% endif %}
                         </div>
                         
                         <div class="metric-item">

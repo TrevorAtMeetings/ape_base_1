@@ -783,14 +783,28 @@
                             </div>
                         </div>
                         <div class="col s6 m2">
-                            <div class="metric-label">Trim</div>
-                            <div class="metric-value" style="font-size: 1.2rem;">
-                                {% if selected_pump.get('trim_percent') %}
-                                    {{ selected_pump.get('trim_percent', 100)|round(1) }}%
-                                {% else %}
-                                    100%
-                                {% endif %}
-                            </div>
+                            {% if selected_pump.get('sizing_method') == 'Speed Variation' or selected_pump.get('vfd_required') %}
+                                <div class="metric-label">VFD Speed</div>
+                                <div class="metric-value" style="font-size: 1.2rem;">
+                                    {% if selected_pump.get('speed_ratio') %}
+                                        {{ selected_pump.get('speed_ratio', 100)|round(1) }}%
+                                    {% elif selected_pump.get('required_speed_rpm') %}
+                                        {{ selected_pump.get('required_speed_rpm')|round(0)|int }}
+                                        <span class="metric-unit">rpm</span>
+                                    {% else %}
+                                        Req'd
+                                    {% endif %}
+                                </div>
+                            {% else %}
+                                <div class="metric-label">Trim</div>
+                                <div class="metric-value" style="font-size: 1.2rem;">
+                                    {% if selected_pump.get('trim_percent') %}
+                                        {{ selected_pump.get('trim_percent', 100)|round(1) }}%
+                                    {% else %}
+                                        100%
+                                    {% endif %}
+                                </div>
+                            {% endif %}
                         </div>
                         <div class="col s6 m2">
                             <div class="metric-label">Stages</div>

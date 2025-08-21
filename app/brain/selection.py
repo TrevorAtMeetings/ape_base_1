@@ -355,16 +355,9 @@ class SelectionIntelligence:
                 evaluation['operation_mode'] = operation_mode
                 evaluation['selection_method'] = selection_method
                 evaluation['pump_flexibility'] = 'Variable-speed pump (VFD required)'
-                
-                # For now, exclude VFD-only pumps with a clear message
-                evaluation['feasible'] = False
-                evaluation['exclusion_reasons'].append('VFD-only pump: Speed variation calculation not yet implemented')
                 evaluation['vfd_required'] = True
                 
-                logger.info(f"[THREE-PATH] {pump_data.get('pump_code')}: VFD-ONLY pump - excluded (VFD calculation pending)")
-                
-                # Return early for VFD-only pumps until we implement the calculation
-                return evaluation
+                logger.info(f"[THREE-PATH] {pump_data.get('pump_code')}: VFD-ONLY pump - calculating speed variation")
                 
             else:
                 # EDGE CASE: Both FALSE (Fixed configuration)
@@ -480,14 +473,97 @@ class SelectionIntelligence:
                 logger.info(f"[SELECTION] {pump_data.get('pump_code')}: Physical capability limited - applying penalty but keeping in results")
 
             # Get performance at operating point based on selection method
-            # For IMPELLER_TRIM and FIXED modes, use existing calculation
-            # For SPEED_VARIATION (VFD), we'll add new calculation later
-            if selection_method in ['IMPELLER_TRIM', 'NONE']:
+            if selection_method == 'IMPELLER_TRIM':
+                # Use existing impeller trimming calculation
                 performance = self.brain.performance.calculate_at_point(pump_data, flow, head)
+                
+            elif selection_method == 'SPEED_VARIATION':
+                # Use VFD calculation for speed variation
+                performance = self.brain.performance.calculate_performance_with_speed_variation(pump_data, flow, head)
+                if performance:
+                    # Add VFD-specific information to evaluation
+                    evaluation['sizing_method'] = 'Speed Variation'
+                    evaluation['required_speed_rpm'] = performance.get('required_speed_rpm')
+                    evaluation['speed_ratio'] = performance.get('speed_ratio')
+                    evaluation['operating_frequency_hz'] = performance.get('operating_frequency_hz')
+                    evaluation['vfd_details'] = {
+                        'required_speed_rpm': performance.get('required_speed_rpm'),
+                        'reference_speed_rpm': performance.get('reference_speed_rpm'),
+                        'speed_ratio': performance.get('speed_ratio'),
+                        'operating_frequency_hz': performance.get('operating_frequency_hz'),
+                        'reference_point': performance.get('reference_point'),
+                        'system_curve_k': performance.get('system_curve_k'),
+                        'h_static': performance.get('h_static')
+                    }
+                    logger.info(f"[VFD] {pump_data.get('pump_code')}: VFD calculation successful - {performance.get('required_speed_rpm')} RPM ({performance.get('speed_ratio')}% speed)")
+                else:
+                    # VFD not feasible (speed out of range)
+                    logger.warning(f"[VFD] {pump_data.get('pump_code')}: VFD not feasible - likely speed out of range")
+                    evaluation['feasible'] = False
+                    evaluation['exclusion_reasons'].append('VFD speed required is outside pump operational range')
+                    return evaluation
+                    
+            elif selection_method == 'NONE':
+                # Fixed configuration pump - evaluate at nominal conditions
+                performance = self.brain.performance.calculate_at_point(pump_data, flow, head)
+                
             else:
-                # This branch won't be reached yet due to early return for VFD pumps
-                performance = None
-                logger.warning(f"[THREE-PATH] No performance calculation for method: {selection_method}")
+                # For FLEXIBLE pumps, try both methods and select the best
+                # First try impeller trimming
+                trim_performance = self.brain.performance.calculate_at_point(pump_data, flow, head)
+                
+                # Then try VFD
+                vfd_performance = self.brain.performance.calculate_performance_with_speed_variation(pump_data, flow, head)
+                
+                # Select the better option based on efficiency or feasibility
+                if trim_performance and vfd_performance:
+                    # Both methods work - choose based on efficiency
+                    if vfd_performance.get('efficiency_pct', 0) > trim_performance.get('efficiency_pct', 0):
+                        performance = vfd_performance
+                        evaluation['sizing_method'] = 'Speed Variation'
+                        evaluation['required_speed_rpm'] = vfd_performance.get('required_speed_rpm')
+                        evaluation['speed_ratio'] = vfd_performance.get('speed_ratio')
+                        evaluation['operating_frequency_hz'] = vfd_performance.get('operating_frequency_hz')
+                        evaluation['vfd_details'] = {
+                            'required_speed_rpm': vfd_performance.get('required_speed_rpm'),
+                            'reference_speed_rpm': vfd_performance.get('reference_speed_rpm'),
+                            'speed_ratio': vfd_performance.get('speed_ratio'),
+                            'operating_frequency_hz': vfd_performance.get('operating_frequency_hz'),
+                            'reference_point': vfd_performance.get('reference_point'),
+                            'system_curve_k': vfd_performance.get('system_curve_k'),
+                            'h_static': vfd_performance.get('h_static')
+                        }
+                        logger.info(f"[FLEXIBLE] {pump_data.get('pump_code')}: Selected VFD over trimming (better efficiency)")
+                    else:
+                        performance = trim_performance
+                        evaluation['sizing_method'] = 'Impeller Trim'
+                        logger.info(f"[FLEXIBLE] {pump_data.get('pump_code')}: Selected trimming over VFD (better efficiency)")
+                elif trim_performance:
+                    # Only trimming works
+                    performance = trim_performance
+                    evaluation['sizing_method'] = 'Impeller Trim'
+                    logger.info(f"[FLEXIBLE] {pump_data.get('pump_code')}: Using trimming (VFD not feasible)")
+                elif vfd_performance:
+                    # Only VFD works
+                    performance = vfd_performance
+                    evaluation['sizing_method'] = 'Speed Variation'
+                    evaluation['required_speed_rpm'] = vfd_performance.get('required_speed_rpm')
+                    evaluation['speed_ratio'] = vfd_performance.get('speed_ratio')
+                    evaluation['operating_frequency_hz'] = vfd_performance.get('operating_frequency_hz')
+                    evaluation['vfd_details'] = {
+                        'required_speed_rpm': vfd_performance.get('required_speed_rpm'),
+                        'reference_speed_rpm': vfd_performance.get('reference_speed_rpm'),
+                        'speed_ratio': vfd_performance.get('speed_ratio'),
+                        'operating_frequency_hz': vfd_performance.get('operating_frequency_hz'),
+                        'reference_point': vfd_performance.get('reference_point'),
+                        'system_curve_k': vfd_performance.get('system_curve_k'),
+                        'h_static': vfd_performance.get('h_static')
+                    }
+                    logger.info(f"[FLEXIBLE] {pump_data.get('pump_code')}: Using VFD (trimming not feasible)")
+                else:
+                    # Neither method works
+                    performance = None
+                    logger.warning(f"[FLEXIBLE] {pump_data.get('pump_code')}: Neither trimming nor VFD feasible")
             
             # Validate performance data contract
             if performance:
