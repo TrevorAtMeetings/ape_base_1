@@ -222,17 +222,17 @@
                         <td>{{ "%.2f"|format(point.truth_head) }}</td>
                         <td>{{ "%.2f"|format(point.brain_head) if point.brain_head else 'N/A' }}</td>
                         <td class="center-align {% if point.brain_head %}{% if point.head_delta|abs > 10 %}red-text{% elif point.head_delta|abs > 5 %}orange-text{% else %}green-text{% endif %}{% endif %}">
-                            {% if point.head_delta %}{{ "%+.1f"|format(point.head_delta) }}%{% else %}N/A{% endif %}
+                            {% if point.head_delta is not none %}{{ "%+.1f"|format(point.head_delta) }}%{% else %}N/A{% endif %}
                         </td>
                         <td>{{ "%.1f"|format(point.truth_efficiency) }}</td>
                         <td>{{ "%.1f"|format(point.brain_efficiency) if point.brain_efficiency else 'N/A' }}</td>
                         <td class="center-align {% if point.brain_efficiency %}{% if point.efficiency_delta|abs > 5 %}red-text{% elif point.efficiency_delta|abs > 2 %}orange-text{% else %}green-text{% endif %}{% endif %}">
-                            {% if point.efficiency_delta %}{{ "%+.1f"|format(point.efficiency_delta) }}%{% else %}N/A{% endif %}
+                            {% if point.efficiency_delta is not none %}{{ "%+.1f"|format(point.efficiency_delta) }}%{% else %}N/A{% endif %}
                         </td>
                         <td>{{ "%.2f"|format(point.truth_power) }}</td>
                         <td>{{ "%.2f"|format(point.brain_power) if point.brain_power else 'N/A' }}</td>
                         <td class="center-align {% if point.brain_power %}{% if point.power_delta|abs > 10 %}red-text{% elif point.power_delta|abs > 5 %}orange-text{% else %}green-text{% endif %}{% endif %}">
-                            {% if point.power_delta %}{{ "%+.1f"|format(point.power_delta) }}%{% else %}N/A{% endif %}
+                            {% if point.power_delta is not none %}{{ "%+.1f"|format(point.power_delta) }}%{% else %}N/A{% endif %}
                         </td>
                     </tr>
                     {% endfor %}
