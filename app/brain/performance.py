@@ -119,7 +119,9 @@ class PerformanceAnalyzer:
                 
                 # Calculate power using affinity laws
                 if efficiency > 0:
-                    power_kw = (flow * delivered_head * 9.81) / (3600 * efficiency / 100 * 10)
+                    # Correct power calculation: P = ρ × g × Q × H / η
+                    # Units: (kg/m³) × (m/s²) × (m³/hr) × (m) / efficiency / conversion = kW
+                    power_kw = (flow * delivered_head * 1000 * 9.81) / (3600 * efficiency / 100 * 1000)
                 else:
                     power_kw = 0
                 
@@ -187,7 +189,8 @@ class PerformanceAnalyzer:
             
             # Calculate power
             if efficiency > 0:
-                power_kw = (flow * delivered_head * 9.81) / (3600 * efficiency / 100 * 10)
+                # Correct power calculation: P = ρ × g × Q × H / η
+                power_kw = (flow * delivered_head * 1000 * 9.81) / (3600 * efficiency / 100 * 1000)
             else:
                 power_kw = 0
             
@@ -1885,9 +1888,9 @@ class PerformanceAnalyzer:
                     logger.debug(f"[VFD CALC] {pump_code}: Using default efficiency {efficiency}%")
             
             # Calculate power using affinity laws
-            # First get power at reference point
+            # First get power at reference point using correct formula: P = ρ × g × Q × H / η
             if efficiency > 0:
-                power_ref = (q1 * h1 * 9.81) / (3600 * efficiency / 100 * 10)
+                power_ref = (q1 * h1 * 1000 * 9.81) / (3600 * efficiency / 100 * 1000)
                 # Power scales with speed cubed: P₂ = P₁ * (n₂/n₁)³
                 operating_power = power_ref * (speed_ratio ** 3)
             else:
