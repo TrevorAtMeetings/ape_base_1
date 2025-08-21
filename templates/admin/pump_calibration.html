@@ -1270,8 +1270,8 @@ document.addEventListener('DOMContentLoaded', function() {
                             </td>
                             <td>
                                 {% set discrepancy = point.delta_head %}
-                                <span style="font-size: 1.3em; font-weight: bold; color: {% if discrepancy|abs > 10 %}#d32f2f{% elif discrepancy|abs > 5 %}#f57c00{% else %}#388e3c{% endif %};">
-                                    {% if discrepancy > 0 %}+{% endif %}{{ discrepancy|round(1) }}%
+                                <span style="font-size: 1.3em; font-weight: bold; color: {% if (discrepancy|default(0))|abs > 10 %}#d32f2f{% elif (discrepancy|default(0))|abs > 5 %}#f57c00{% else %}#388e3c{% endif %};">
+                                    {% if discrepancy|default(0) > 0 %}+{% endif %}{{ discrepancy|default(0)|round(1) }}%
                                 </span>
                             </td>
                         </tr>
@@ -1283,9 +1283,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div style="margin-top: 20px; padding: 15px; background: #ffebee; border-radius: 4px;">
                     <p style="color: #c62828; font-weight: 500; margin: 0;">
                         <i class="material-icons tiny" style="vertical-align: middle;">error</i>
-                        {% set max_discrepancy = calibration_results.comparison_points | selectattr('delta_head') | map(attribute='delta_head') | list | max %}
-                        {% if max_discrepancy|abs > 10 %}
-                        Significant discrepancy detected. The Brain's prediction differs from your ground truth data by up to {{ max_discrepancy|abs|round(1) }}%.
+                        {% set max_discrepancy = calibration_results.comparison_points | selectattr('delta_head') | map(attribute='delta_head') | list | max | default(0) %}
+                        {% if (max_discrepancy|default(0))|abs > 10 %}
+                        Significant discrepancy detected. The Brain's prediction differs from your ground truth data by up to {{ (max_discrepancy|default(0))|abs|round(1) }}%.
                         {% else %}
                         Minor discrepancy detected. Review the detailed analysis below.
                         {% endif %}
@@ -1335,23 +1335,23 @@ document.addEventListener('DOMContentLoaded', function() {
                             <td>{{ point.truth_head|round(2) }}</td>
                             <td>{{ point.brain_head|round(2) }}</td>
                             <td>
-                                <span style="color: {% if point.delta_head|abs > 10 %}#d32f2f{% elif point.delta_head|abs > 5 %}#f57c00{% else %}#388e3c{% endif %};">
-                                    {% if point.delta_head > 0 %}+{% endif %}{{ point.delta_head|round(1) }}%
+                                <span style="color: {% if (point.delta_head|default(0))|abs > 10 %}#d32f2f{% elif (point.delta_head|default(0))|abs > 5 %}#f57c00{% else %}#388e3c{% endif %};">
+                                    {% if point.delta_head|default(0) > 0 %}+{% endif %}{{ point.delta_head|default(0)|round(1) }}%
                                 </span>
                             </td>
                             <td>{{ point.truth_efficiency|round(1) }}</td>
                             <td>{{ point.brain_efficiency|round(1) }}</td>
                             <td>
-                                <span style="color: {% if point.delta_efficiency|abs > 5 %}#d32f2f{% elif point.delta_efficiency|abs > 2 %}#f57c00{% else %}#388e3c{% endif %};">
-                                    {% if point.delta_efficiency > 0 %}+{% endif %}{{ point.delta_efficiency|round(1) }}%
+                                <span style="color: {% if (point.delta_efficiency|default(0))|abs > 5 %}#d32f2f{% elif (point.delta_efficiency|default(0))|abs > 2 %}#f57c00{% else %}#388e3c{% endif %};">
+                                    {% if point.delta_efficiency|default(0) > 0 %}+{% endif %}{{ point.delta_efficiency|default(0)|round(1) }}%
                                 </span>
                             </td>
                             {% if point.truth_power %}
                             <td>{{ point.truth_power|round(2) }}</td>
                             <td>{{ point.brain_power|round(2) }}</td>
                             <td>
-                                <span style="color: {% if point.delta_power|abs > 10 %}#d32f2f{% elif point.delta_power|abs > 5 %}#f57c00{% else %}#388e3c{% endif %};">
-                                    {% if point.delta_power > 0 %}+{% endif %}{{ point.delta_power|round(1) }}%
+                                <span style="color: {% if (point.delta_power|default(0))|abs > 10 %}#d32f2f{% elif (point.delta_power|default(0))|abs > 5 %}#f57c00{% else %}#388e3c{% endif %};">
+                                    {% if point.delta_power|default(0) > 0 %}+{% endif %}{{ point.delta_power|default(0)|round(1) }}%
                                 </span>
                             </td>
                             {% endif %}
