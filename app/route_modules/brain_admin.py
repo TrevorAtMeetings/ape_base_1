@@ -1195,8 +1195,11 @@ def pump_calibration_workbench(pump_code):
                 point_count += 1
             
             if ground_truth_points:
-                # Initialize comparison engine
-                comparison_engine = ManufacturerComparisonEngine()
+                # Initialize comparison engine - force module reload
+                import importlib
+                import app.manufacturer_comparison_engine
+                importlib.reload(app.manufacturer_comparison_engine)
+                comparison_engine = app.manufacturer_comparison_engine.ManufacturerComparisonEngine()
                 
                 # Run the complete analysis
                 analysis_results = comparison_engine.run_full_calibration(
