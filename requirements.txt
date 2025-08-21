@@ -50,3 +50,4 @@ trafilatura
 weasyprint
 werkzeug
 openai
+beautifulsoup4
