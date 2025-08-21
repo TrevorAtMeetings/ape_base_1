@@ -539,20 +539,35 @@ document.addEventListener('keydown', function(e) {
 <script>
 // Render comparison charts using Plotly
 document.addEventListener('DOMContentLoaded', function() {
-    // Efficiency comparison chart
+    // Extract data for efficiency comparison
     const efficiencyData = {
         manufacturer: {{ calibration_results.comparison_points|map(attribute='truth_efficiency')|list|tojson }},
         brain: {{ calibration_results.comparison_points|map(attribute='brain_efficiency')|list|tojson }},
         flow: {{ calibration_results.comparison_points|map(attribute='flow')|list|tojson }}
     };
     
+    // Calculate appropriate Y-axis range for efficiency
+    const effMin = Math.min(...efficiencyData.manufacturer, ...efficiencyData.brain);
+    const effMax = Math.max(...efficiencyData.manufacturer, ...efficiencyData.brain);
+    const effPadding = (effMax - effMin) * 0.1 || 5;
+    
     const efficiencyTrace1 = {
         x: efficiencyData.flow,
         y: efficiencyData.manufacturer,
         mode: 'lines+markers',
-        name: 'Manufacturer',
-        line: { color: '#4CAF50', width: 2 },
-        marker: { size: 8 }
+        name: 'Manufacturer Data',
+        line: { 
+            color: '#4CAF50', 
+            width: 3,
+            shape: 'spline',
+            smoothing: 0.3
+        },
+        marker: { 
+            size: 10,
+            color: '#4CAF50',
+            line: { width: 2, color: '#fff' }
+        },
+        hovertemplate: 'Flow: %{x:.1f} m³/hr<br>Efficiency: %{y:.1f}%<extra></extra>'
     };
     
     const efficiencyTrace2 = {
@@ -560,34 +575,91 @@ document.addEventListener('DOMContentLoaded', function() {
         y: efficiencyData.brain,
         mode: 'lines+markers',
         name: 'Brain Prediction',
-        line: { color: '#2196F3', width: 2, dash: 'dash' },
-        marker: { size: 8 }
+        line: { 
+            color: '#2196F3', 
+            width: 3, 
+            dash: 'dot',
+            shape: 'spline',
+            smoothing: 0.3
+        },
+        marker: { 
+            size: 8,
+            symbol: 'diamond',
+            color: '#2196F3',
+            line: { width: 2, color: '#fff' }
+        },
+        hovertemplate: 'Flow: %{x:.1f} m³/hr<br>Efficiency: %{y:.1f}%<extra></extra>'
     };
     
     const efficiencyLayout = {
-        title: 'Efficiency Comparison',
-        xaxis: { title: 'Flow (m³/hr)' },
-        yaxis: { title: 'Efficiency (%)' },
+        title: {
+            text: 'Efficiency Comparison',
+            font: { size: 18, color: '#333' }
+        },
+        xaxis: { 
+            title: 'Flow (m³/hr)',
+            gridcolor: '#E0E0E0',
+            showgrid: true,
+            zeroline: false
+        },
+        yaxis: { 
+            title: 'Efficiency (%)',
+            gridcolor: '#E0E0E0',
+            showgrid: true,
+            zeroline: false,
+            range: [Math.max(0, effMin - effPadding), Math.min(100, effMax + effPadding)]
+        },
         showlegend: true,
-        height: 400
+        legend: {
+            x: 0.02,
+            y: 0.98,
+            bgcolor: 'rgba(255,255,255,0.9)',
+            bordercolor: '#ccc',
+            borderwidth: 1
+        },
+        height: 450,
+        margin: { t: 50, b: 60, l: 70, r: 40 },
+        plot_bgcolor: '#FAFAFA',
+        paper_bgcolor: '#FFFFFF',
+        hovermode: 'closest'
     };
     
-    Plotly.newPlot('efficiency-comparison-chart', [efficiencyTrace1, efficiencyTrace2], efficiencyLayout);
+    Plotly.newPlot('efficiency-comparison-chart', [efficiencyTrace1, efficiencyTrace2], efficiencyLayout, {
+        responsive: true,
+        displayModeBar: true,
+        modeBarButtonsToRemove: ['pan2d', 'select2d', 'lasso2d', 'resetScale2d'],
+        displaylogo: false
+    });
     
-    // Power comparison chart
+    // Extract data for power comparison
     const powerData = {
         manufacturer: {{ calibration_results.comparison_points|map(attribute='truth_power')|list|tojson }},
         brain: {{ calibration_results.comparison_points|map(attribute='brain_power')|list|tojson }},
         flow: {{ calibration_results.comparison_points|map(attribute='flow')|list|tojson }}
     };
     
+    // Calculate appropriate Y-axis range for power
+    const pwrMin = Math.min(...powerData.manufacturer, ...powerData.brain);
+    const pwrMax = Math.max(...powerData.manufacturer, ...powerData.brain);
+    const pwrPadding = (pwrMax - pwrMin) * 0.1 || 1;
+    
     const powerTrace1 = {
         x: powerData.flow,
         y: powerData.manufacturer,
         mode: 'lines+markers',
-        name: 'Manufacturer',
-        line: { color: '#FF9800', width: 2 },
-        marker: { size: 8 }
+        name: 'Manufacturer Data',
+        line: { 
+            color: '#FF9800', 
+            width: 3,
+            shape: 'spline',
+            smoothing: 0.3
+        },
+        marker: { 
+            size: 10,
+            color: '#FF9800',
+            line: { width: 2, color: '#fff' }
+        },
+        hovertemplate: 'Flow: %{x:.1f} m³/hr<br>Power: %{y:.2f} kW<extra></extra>'
     };
     
     const powerTrace2 = {
@@ -595,19 +667,80 @@ document.addEventListener('DOMContentLoaded', function() {
         y: powerData.brain,
         mode: 'lines+markers',
         name: 'Brain Prediction',
-        line: { color: '#9C27B0', width: 2, dash: 'dash' },
-        marker: { size: 8 }
+        line: { 
+            color: '#9C27B0', 
+            width: 3, 
+            dash: 'dot',
+            shape: 'spline',
+            smoothing: 0.3
+        },
+        marker: { 
+            size: 8,
+            symbol: 'diamond',
+            color: '#9C27B0',
+            line: { width: 2, color: '#fff' }
+        },
+        hovertemplate: 'Flow: %{x:.1f} m³/hr<br>Power: %{y:.2f} kW<extra></extra>'
     };
     
     const powerLayout = {
-        title: 'Power Comparison',
-        xaxis: { title: 'Flow (m³/hr)' },
-        yaxis: { title: 'Power (kW)' },
+        title: {
+            text: 'Power Comparison',
+            font: { size: 18, color: '#333' }
+        },
+        xaxis: { 
+            title: 'Flow (m³/hr)',
+            gridcolor: '#E0E0E0',
+            showgrid: true,
+            zeroline: false
+        },
+        yaxis: { 
+            title: 'Power (kW)',
+            gridcolor: '#E0E0E0',
+            showgrid: true,
+            zeroline: false,
+            range: [Math.max(0, pwrMin - pwrPadding), pwrMax + pwrPadding]
+        },
         showlegend: true,
-        height: 400
+        legend: {
+            x: 0.02,
+            y: 0.98,
+            bgcolor: 'rgba(255,255,255,0.9)',
+            bordercolor: '#ccc',
+            borderwidth: 1
+        },
+        height: 450,
+        margin: { t: 50, b: 60, l: 70, r: 40 },
+        plot_bgcolor: '#FAFAFA',
+        paper_bgcolor: '#FFFFFF',
+        hovermode: 'closest'
     };
     
-    Plotly.newPlot('power-comparison-chart', [powerTrace1, powerTrace2], powerLayout);
+    Plotly.newPlot('power-comparison-chart', [powerTrace1, powerTrace2], powerLayout, {
+        responsive: true,
+        displayModeBar: true,
+        modeBarButtonsToRemove: ['pan2d', 'select2d', 'lasso2d', 'resetScale2d'],
+        displaylogo: false
+    });
+    
+    // Add animation on hover
+    document.getElementById('efficiency-comparison-chart').on('plotly_hover', function(data) {
+        const point = data.points[0];
+        const update = {
+            'marker.size': [Array(efficiencyData.flow.length).fill(8)],
+        };
+        update['marker.size'][0][point.pointNumber] = 14;
+        Plotly.restyle('efficiency-comparison-chart', update, [point.curveNumber]);
+    });
+    
+    document.getElementById('power-comparison-chart').on('plotly_hover', function(data) {
+        const point = data.points[0];
+        const update = {
+            'marker.size': [Array(powerData.flow.length).fill(8)],
+        };
+        update['marker.size'][0][point.pointNumber] = 14;
+        Plotly.restyle('power-comparison-chart', update, [point.curveNumber]);
+    });
 });
 </script>
 {% endif %}

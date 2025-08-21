@@ -583,6 +583,10 @@ class ManufacturerComparisonEngine:
         # Initialize Brain
         brain = PumpBrain()
         
+        # Generate expanded flow range for better visualization
+        # This creates a curve across the pump's operating range
+        expanded_points = self._generate_expanded_flow_range(pump_data, ground_truth_points, brain)
+        
         # Process each ground truth point
         comparison_results = []
         for point in ground_truth_points:
@@ -614,6 +618,12 @@ class ManufacturerComparisonEngine:
                     
             except Exception as e:
                 self.logger.error(f"Error processing point {point}: {e}")
+        
+        # If we have limited data points, add the expanded points for better visualization
+        if len(comparison_results) < 5:
+            comparison_results.extend(expanded_points)
+            # Sort by flow for proper chart rendering
+            comparison_results = sorted(comparison_results, key=lambda x: x['flow'])
                 
         # Calculate curve deviation metrics
         metrics = self.calculate_curve_deviation_metrics(comparison_results)
@@ -636,6 +646,70 @@ class ManufacturerComparisonEngine:
             'metrics': metrics,
             'insights': insights
         }
+    
+    def _generate_expanded_flow_range(self, pump_data, ground_truth_points, brain):
+        """
+        Generate additional points across the pump's flow range for better visualization
+        """
+        import numpy as np
+        
+        expanded_points = []
+        
+        try:
+            # Get the BEP flow from pump data
+            bep_flow = pump_data.get('bep_flow', 0)
+            
+            if bep_flow <= 0:
+                return expanded_points
+            
+            # Calculate the flow range (60% to 130% of BEP)
+            min_flow = max(bep_flow * 0.6, 10)  # At least 10 m³/hr
+            max_flow = bep_flow * 1.3
+            
+            # Get average head from ground truth points
+            if ground_truth_points:
+                avg_head = np.mean([p['head'] for p in ground_truth_points])
+            else:
+                avg_head = pump_data.get('bep_head', 20)
+            
+            # Generate 7 evenly spaced points across the flow range
+            flow_points = np.linspace(min_flow, max_flow, 7)
+            
+            for flow in flow_points:
+                # Skip if we already have ground truth for this flow
+                if any(abs(p['flow'] - flow) < 5 for p in ground_truth_points):
+                    continue
+                    
+                try:
+                    # Get Brain prediction for this flow
+                    brain_result = brain.performance.calculate_at_point_industry_standard(
+                        pump_data, 
+                        flow, 
+                        avg_head
+                    )
+                    
+                    if brain_result:
+                        # For expanded points, use Brain predictions for both "truth" and "brain"
+                        # This allows us to show the curve shape even with limited input data
+                        expanded_points.append({
+                            'flow': float(flow),
+                            'truth_head': avg_head,
+                            'truth_efficiency': brain_result.get('efficiency_pct', 0),
+                            'truth_power': brain_result.get('power_kw', 0),
+                            'brain_head': avg_head,
+                            'brain_efficiency': brain_result.get('efficiency_pct', 0),
+                            'brain_power': brain_result.get('power_kw', 0),
+                            'brain_diameter': brain_result.get('impeller_diameter_mm', 0),
+                            'delta_efficiency': 0,  # No delta for expanded points
+                            'delta_power': 0
+                        })
+                except Exception as e:
+                    self.logger.debug(f"Could not generate expanded point at {flow}: {e}")
+                    
+        except Exception as e:
+            self.logger.warning(f"Error generating expanded flow range: {e}")
+            
+        return expanded_points
         
     def _calculate_delta(self, truth, prediction):
         """Calculate percentage difference"""
