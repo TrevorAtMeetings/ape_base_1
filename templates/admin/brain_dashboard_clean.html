@@ -401,91 +401,107 @@ const pumpData = {
 };
 
 function showPumpSelector() {
-    // Build pump categories HTML
-    let categoriesHtml = '';
-    for (const [category, pumps] of Object.entries(pumpData)) {
-        categoriesHtml += `
-            <div class="pump-category">
-                <div class="pump-category-header">${category}</div>
-                <div class="pump-items">
-        `;
+    try {
+        console.log('Opening pump selector modal...');
         
-        pumps.forEach(pump => {
+        // Build pump categories HTML
+        let categoriesHtml = '';
+        for (const [category, pumps] of Object.entries(pumpData)) {
             categoriesHtml += `
-                <div class="pump-item" onclick="selectPump('${pump.code}', '${pump.type}')">
-                    <span class="pump-code">${pump.code}</span>
-                    <span class="pump-type">• ${pump.type}</span>
-                </div>
+                <div class="pump-category">
+                    <div class="pump-category-header">${category}</div>
+                    <div class="pump-items">
             `;
-        });
-        
-        categoriesHtml += `
-                </div>
-            </div>
-        `;
-    }
-    
-    // Create modal HTML
-    const modalHtml = `
-        <div id="pump-selector-modal" class="modal modal-fixed-footer">
-            <div class="modal-content">
-                <h4>
-                    <i class="material-icons left">compare_arrows</i>
-                    Pump Calibration Workbench
-                </h4>
-                <p class="grey-text">Compare Brain predictions against manufacturer data with multi-point calibration and performance analysis.</p>
-                
-                <div class="search-container">
-                    <input type="text" 
-                           id="pump-search" 
-                           placeholder="Search by pump code or type..." 
-                           onkeyup="filterPumps(event)" 
-                           autocomplete="off">
-                    <div class="search-hint">
-                        💡 Try searching: "2F", "WL", "100-200", or press Enter to use custom code
+            
+            pumps.forEach(pump => {
+                // Escape quotes in pump code and type for onclick
+                const escapedCode = pump.code.replace(/'/g, "\\'");
+                const escapedType = pump.type.replace(/'/g, "\\'");
+                categoriesHtml += `
+                    <div class="pump-item" onclick="selectPump('${escapedCode}', '${escapedType}')">
+                        <span class="pump-code">${pump.code}</span>
+                        <span class="pump-type">• ${pump.type}</span>
+                    </div>
+                `;
+            });
+            
+            categoriesHtml += `
                     </div>
                 </div>
-                
-                <div id="pump-categories" class="pump-grid">
-                    ${categoriesHtml}
-                </div>
-                
-                <div id="no-results" class="no-results" style="display: none;">
-                    <i class="material-icons large grey-text">search_off</i>
-                    <p>No pumps found matching your search</p>
-                    <p class="grey-text">Press Enter to calibrate a custom pump code</p>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <a href="#!" class="modal-close waves-effect waves-red btn-flat">Cancel</a>
-                <a href="#!" onclick="navigateToCalibration()" class="waves-effect waves-green btn blue disabled" id="calibrate-btn">
-                    <i class="material-icons left">analytics</i>
-                    Select a Pump First
-                </a>
-            </div>
-        </div>
-    `;
-    
-    // Remove existing modal if present
-    const existingModal = document.getElementById('pump-selector-modal');
-    if (existingModal) {
-        const instance = M.Modal.getInstance(existingModal);
-        if (instance) instance.destroy();
-        existingModal.remove();
-    }
-    
-    // Add new modal
-    document.body.insertAdjacentHTML('beforeend', modalHtml);
-    
-    // Initialize and open modal
-    const modal = document.getElementById('pump-selector-modal');
-    const instance = M.Modal.init(modal, {
-        dismissible: true,
-        onOpenEnd: function() {
-            document.getElementById('pump-search').focus();
+            `;
         }
-    });
-    instance.open();
+        
+        // Create modal HTML
+        const modalHtml = `
+            <div id="pump-selector-modal" class="modal modal-fixed-footer">
+                <div class="modal-content">
+                    <h4>
+                        <i class="material-icons left">compare_arrows</i>
+                        Pump Calibration Workbench
+                    </h4>
+                    <p class="grey-text">Compare Brain predictions against manufacturer data with multi-point calibration and performance analysis.</p>
+                    
+                    <div class="search-container">
+                        <input type="text" 
+                               id="pump-search" 
+                               placeholder="Search by pump code or type..." 
+                               onkeyup="filterPumps(event)" 
+                               autocomplete="off">
+                        <div class="search-hint">
+                            💡 Try searching: "2F", "WL", "100-200", or press Enter to use custom code
+                        </div>
+                    </div>
+                    
+                    <div id="pump-categories" class="pump-grid">
+                        ${categoriesHtml}
+                    </div>
+                    
+                    <div id="no-results" class="no-results" style="display: none;">
+                        <i class="material-icons large grey-text">search_off</i>
+                        <p>No pumps found matching your search</p>
+                        <p class="grey-text">Press Enter to calibrate a custom pump code</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <a href="#!" class="modal-close waves-effect waves-red btn-flat">Cancel</a>
+                    <a href="#!" onclick="navigateToCalibration()" class="waves-effect waves-green btn blue disabled" id="calibrate-btn">
+                        <i class="material-icons left">analytics</i>
+                        Select a Pump First
+                    </a>
+                </div>
+            </div>
+        `;
+        
+        // Remove existing modal if present
+        const existingModal = document.getElementById('pump-selector-modal');
+        if (existingModal) {
+            const instance = M.Modal.getInstance(existingModal);
+            if (instance) instance.destroy();
+            existingModal.remove();
+        }
+        
+        // Add new modal
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+        
+        // Initialize and open modal
+        const modal = document.getElementById('pump-selector-modal');
+        const instance = M.Modal.init(modal, {
+            dismissible: true,
+            onOpenEnd: function() {
+                console.log('Modal opened successfully');
+                document.getElementById('pump-search').focus();
+            }
+        });
+        instance.open();
+        
+    } catch (error) {
+        console.error('Error opening pump selector modal:', error);
+        M.toast({
+            html: '<i class="material-icons left">error</i>Failed to open pump selector',
+            classes: 'red',
+            displayLength: 4000
+        });
+    }
 }
 
 function selectPump(code, type) {
@@ -549,17 +565,30 @@ function filterPumps(event) {
 }
 
 function navigateToCalibration() {
-    const pumpCode = selectedPump || document.getElementById('pump-search').value.trim();
-    
-    if (pumpCode) {
-        // Encode the pump code to handle spaces and special characters
-        const encodedCode = encodeURIComponent(pumpCode);
-        window.location.href = `/admin/pump-calibration/${encodedCode}`;
-    } else {
+    try {
+        const pumpCode = selectedPump || document.getElementById('pump-search').value.trim();
+        
+        if (pumpCode) {
+            console.log('Navigating to calibration for pump:', pumpCode);
+            
+            // Encode the pump code to handle spaces and special characters
+            const encodedCode = encodeURIComponent(pumpCode);
+            
+            // Navigate to the calibration page
+            window.location.href = `/admin/pump-calibration/${encodedCode}`;
+        } else {
+            M.toast({
+                html: '<i class="material-icons left">warning</i>Please select or enter a pump code',
+                classes: 'orange darken-2',
+                displayLength: 3000
+            });
+        }
+    } catch (error) {
+        console.error('Error navigating to calibration:', error);
         M.toast({
-            html: '<i class="material-icons left">warning</i>Please select or enter a pump code',
-            classes: 'orange darken-2',
-            displayLength: 3000
+            html: '<i class="material-icons left">error</i>Failed to navigate to calibration',
+            classes: 'red',
+            displayLength: 4000
         });
     }
 }

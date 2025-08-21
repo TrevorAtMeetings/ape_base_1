@@ -728,8 +728,8 @@ def pump_calibration_workbench(pump_code):
     from flask import session
     
     try:
-        # Validate and sanitize pump_code
-        if not re.match(r'^[a-zA-Z0-9_\-]+$', pump_code):
+        # Validate and sanitize pump_code (allow spaces for pump codes like "100-200 2F")
+        if not re.match(r'^[a-zA-Z0-9_\-\s]+$', pump_code):
             logger.warning(f"Invalid pump code format attempted: {pump_code}")
             flash('Invalid pump code format', 'error')
             return redirect(url_for('brain_admin.brain_dashboard'))
@@ -776,8 +776,8 @@ def analyze_pump_calibration(pump_code):
     from flask import session
     
     try:
-        # Validate and sanitize pump_code to prevent injection attacks
-        if not re.match(r'^[a-zA-Z0-9_\-]+$', pump_code):
+        # Validate and sanitize pump_code to prevent injection attacks (allow spaces)
+        if not re.match(r'^[a-zA-Z0-9_\-\s]+$', pump_code):
             logger.warning(f"Invalid pump code format attempted: {pump_code}")
             return jsonify({'error': 'Invalid pump code format'}), 400
         
