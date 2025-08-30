@@ -1,4 +1,4 @@
-modules = ["web", "python-3.11", "nodejs-20"]
+modules = ["web", "python-3.11", "nodejs-20", "postgresql-16"]
 run = "python main.py"
 
 [nix]
@@ -44,4 +44,3 @@ localPort = 5000
 externalPort = 5000
 
 [agent]
-integrations = ["python_database==1.0.0"]
