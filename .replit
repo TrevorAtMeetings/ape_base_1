@@ -1,23 +1,28 @@
-# This tells Replit to use a standard Python environment with a web server
-# and a PostgreSQL database.
 modules = ["web", "python-3.11", "postgresql-16"]
 
-# The [nix] section correctly installs necessary system-level packages.
-# This part is good and requires no changes.
 [nix]
 channel = "stable-24_05"
 packages = ["cairo", "ffmpeg-full", "fontconfig", "freetype", "gdk-pixbuf", "ghostscript", "glib", "glibcLocales", "gobject-introspection", "gtk3", "harfbuzz", "libxcrypt", "pango", "pkg-config", "poppler_utils", "qhull", "tcl", "tk", "xsimd"]
 
-# This is the main command that will be executed when you press the Run button.
-# It uses gunicorn to serve your Flask/Django application, which is standard practice.
-run = "gunicorn --bind 0.0.0.0:8080 main:app"
+[deployment]
+deploymentTarget = "autoscale"
+run = ["gunicorn", "--bind", "0.0.0.0:5000", "main:app"]
 
-# This section ensures that Replit correctly maps the internal port (8080)
-# to the webview.
+[workflows]
+runButton = "Start Application"
+
+[[workflows.workflow]]
+name = "Start Application"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python main.py"
+waitForPort = 5000
+
 [[ports]]
-localPort = 8080
-externalPort = 8080
+localPort = 5000
+externalPort = 5000
 
-# The agent section for integrations remains unchanged.
 [agent]
-integrations = ["python_database==1.0.0", "python_openai==1.0.0"]
+integrations = ["python_openai==1.0.0"]
