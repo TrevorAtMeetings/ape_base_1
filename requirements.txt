@@ -51,3 +51,15 @@ weasyprint
 werkzeug
 openai
 beautifulsoup4
+email_validator
+flask
+flask-sqlalchemy
+gunicorn
+psycopg2-binary
+anthropic
+beautifulsoup4
+pdf2image
+pillow
+python-dotenv
+reportlab
+trafilatura

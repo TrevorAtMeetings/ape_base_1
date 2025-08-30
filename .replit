@@ -1,15 +1,16 @@
-modules = ["web", "python-3.11", "postgresql-16"]
+modules = ["web", "python-3.11", "nodejs-20"]
+run = "python main.py"
 
 [nix]
-channel = "stable-24_05"
-packages = ["cairo", "ffmpeg-full", "fontconfig", "freetype", "gdk-pixbuf", "ghostscript", "glib", "glibcLocales", "gobject-introspection", "gtk3", "harfbuzz", "libxcrypt", "pango", "pkg-config", "poppler_utils", "qhull", "tcl", "tk", "xsimd"]
+channel = "stable-25_05"
+packages = ["cairo", "ffmpeg-full", "fontconfig", "freetype", "gdk-pixbuf", "ghostscript", "glib", "glibcLocales", "gobject-introspection", "gtk3", "harfbuzz", "lcms2", "libimagequant", "libjpeg", "libtiff", "libwebp", "libxcrypt", "openjpeg", "openssl", "pango", "pkg-config", "poppler_utils", "postgresql", "qhull", "tcl", "tk", "xsimd", "zlib"]
 
 [deployment]
 deploymentTarget = "autoscale"
 run = ["gunicorn", "--bind", "0.0.0.0:5000", "main:app"]
 
 [workflows]
-runButton = "Start Application"
+runButton = "Project"
 
 [[workflows.workflow]]
 name = "Start Application"
@@ -20,9 +21,26 @@ task = "shell.exec"
 args = "python main.py"
 waitForPort = 5000
 
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Start application"
+
+[[workflows.workflow]]
+name = "Start application"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "gunicorn --bind 0.0.0.0:5000 --reuse-port --reload main:app"
+waitForPort = 5000
+
 [[ports]]
 localPort = 5000
 externalPort = 5000
 
 [agent]
-integrations = ["python_openai==1.0.0"]
