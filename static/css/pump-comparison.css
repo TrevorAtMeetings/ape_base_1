@@ -1,0 +1,211 @@
+/*
+Pump Comparison Page Styles
+Mobile-optimized styles for pump comparison functionality
+Uses unified design system variables
+*/
+
+/* Desktop comparison layout */
+.comparison-container {
+    padding: var(--spacing-lg) var(--spacing-md);
+}
+
+/* Mobile comparison layout */
+@media only screen and (max-width: 768px) {
+    /* Hero banner mobile */
+    .hero-banner {
+        padding: var(--spacing-lg) var(--spacing-sm) !important;
+        margin: calc(var(--spacing-sm) * -1) calc(var(--spacing-sm) * -1) var(--spacing-lg) calc(var(--spacing-sm) * -1) !important;
+    }
+    
+    .hero-title {
+        font-size: var(--font-size-xl) !important;
+    }
+    
+    .hero-subtitle {
+        font-size: var(--font-size-sm) !important;
+    }
+    
+    .hero-stats {
+        gap: var(--spacing-md) !important;
+    }
+    
+    /* Comparison container mobile */
+    .comparison-container {
+        padding: var(--spacing-sm) !important;
+    }
+    
+    /* Section headers mobile */
+    .section-header {
+        padding: var(--spacing-md) var(--spacing-sm) !important;
+    }
+    
+    .section-title {
+        font-size: var(--font-size-xl) !important;
+    }
+    
+    .section-subtitle {
+        font-size: var(--font-size-sm) !important;
+    }
+    
+    /* Sorting controls for comparison */
+    .card-content > div[style*="display: flex"] {
+        flex-direction: column !important;
+    }
+    
+    .btn-small.sort-btn {
+        width: 100% !important;
+        margin: var(--spacing-xs) 0 !important;
+        height: 40px !important;
+        line-height: 40px !important;
+    }
+    
+    /* Mobile card view for pumps */
+    .pump-comparison-cards {
+        display: block !important;
+    }
+    
+    .pump-card {
+        margin-bottom: var(--spacing-md) !important;
+        padding: var(--spacing-md) !important;
+    }
+    
+    .pump-title {
+        font-size: var(--font-size-lg) !important;
+    }
+    
+    /* Cost visualizations mobile */
+    .cost-visualization {
+        flex-direction: column !important;
+    }
+    
+    .cost-bars {
+        width: 100% !important;
+    }
+    
+    .cost-section {
+        padding: var(--spacing-sm) !important;
+    }
+    
+    /* Action buttons mobile */
+    .center-align .btn-large {
+        width: 100% !important;
+        margin: var(--spacing-sm) 0 !important;
+    }
+    
+    /* Shortlist panel mobile */
+    #shortlist-panel {
+        position: fixed !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        width: 100% !important;
+        max-height: 50vh !important;
+        border-radius: var(--radius-lg) var(--radius-lg) 0 0 !important;
+        box-shadow: var(--elevation-4) !important;
+        z-index: var(--z-modal);
+    }
+    
+    /* Performance metrics grid mobile */
+    .performance-metrics {
+        grid-template-columns: 1fr !important;
+        gap: var(--spacing-sm) !important;
+    }
+    
+    /* Hide certain elements on mobile */
+    .hide-on-mobile {
+        display: none !important;
+    }
+}
+
+/* Extra small screens (phones in portrait) */
+@media only screen and (max-width: 480px) {
+    /* Even more compact styles */
+    .hero-title {
+        font-size: var(--font-size-lg) !important;
+    }
+    
+    .summary-cards {
+        grid-template-columns: 1fr !important;
+    }
+    
+    .metric-column {
+        min-width: 0 !important;
+        padding: var(--spacing-xs) !important;
+    }
+    
+    .metric-icon {
+        font-size: 16px !important;
+    }
+    
+    .btn-small {
+        font-size: var(--font-size-xs) !important;
+        padding: 0 var(--spacing-sm) !important;
+        height: 32px !important;
+        line-height: 32px !important;
+    }
+    
+    /* Stack all comparison data vertically */
+    .comparison-stack {
+        display: flex !important;
+        flex-direction: column !important;
+    }
+    
+    /* Horizontal scrolling indicator */
+    .scroll-indicator {
+        display: block !important;
+        text-align: center !important;
+        color: var(--text-secondary) !important;
+        font-size: var(--font-size-sm) !important;
+        padding: var(--spacing-sm) !important;
+        background: var(--bg-secondary) !important;
+        border-radius: var(--radius-sm) !important;
+        margin: var(--spacing-sm) 0 !important;
+    }
+    
+    .scroll-indicator::after {
+        content: "← Swipe to see more →" !important;
+    }
+}
+
+/* Touch-friendly adjustments */
+@media (hover: none) and (pointer: coarse) {
+    /* Increase touch targets */
+    .btn, .btn-small, .btn-large,
+    button, a.waves-effect {
+        min-height: 44px !important;
+        min-width: 44px !important;
+    }
+    
+    /* Larger checkboxes */
+    input[type="checkbox"] + span {
+        padding-left: 40px !important;
+    }
+    
+    input[type="checkbox"] + span:before,
+    input[type="checkbox"] + span:after {
+        width: 24px !important;
+        height: 24px !important;
+    }
+    
+    /* Better spacing for touch */
+    .clickable-row,
+    .pump-result-row {
+        min-height: 60px !important;
+        padding: var(--spacing-sm) !important;
+    }
+}
+
+/* Landscape orientation adjustments */
+@media only screen and (max-height: 500px) and (orientation: landscape) {
+    .hero-banner {
+        padding: var(--spacing-sm) !important;
+    }
+    
+    .hero-title {
+        font-size: var(--font-size-base) !important;
+    }
+    
+    .summary-cards {
+        display: none !important; /* Hide on landscape to save space */
+    }
+}

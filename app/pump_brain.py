@@ -525,6 +525,66 @@ class PumpBrain:
         """Clear Brain cache."""
         self._cache.clear()
         logger.info("Brain cache cleared")
+    
+    # ==================== V2 ENHANCED METHODS ====================
+    # These methods provide enhanced data structures for V2 template
+    # while maintaining full backward compatibility
+    
+    @measure_performance
+    def evaluate_pump_enhanced(self, pump_id: str, flow: float, head: float) -> Dict[str, Any]:
+        """
+        Enhanced pump evaluation for V2 template with nested data structures.
+        
+        This method extends the original evaluate_pump() to provide additional
+        nested data structures required by the V2 template while maintaining
+        full backward compatibility.
+        
+        Args:
+            pump_id: Pump identifier (code or ID)
+            flow: Operating flow rate in m³/hr
+            head: Operating head in meters
+            
+        Returns:
+            Enhanced evaluation with nested structures for V2 template
+        """
+        logger.debug(f"Enhanced evaluation for pump {pump_id} at {flow}m³/hr, {head}m")
+        
+        # Call existing method first to get base data (zero risk)
+        base_result = self.evaluate_pump(pump_id, flow, head)
+        
+        if not base_result:
+            return base_result
+        
+        # Enhance with nested structures for V2 template
+        enhanced_result = {
+            **base_result,  # All existing flat data preserved
+            
+            # NEW: Nested operating point structure for V2
+            'operating_point': {
+                'efficiency_pct': base_result.get('efficiency_pct'),
+                'power_kw': base_result.get('power_kw'),
+                'flow_m3hr': flow,
+                'head_m': head,
+                'npshr_m': base_result.get('npshr_m'),
+                'impeller_diameter_mm': base_result.get('impeller_diameter_mm'),
+                'test_speed_rpm': base_result.get('test_speed_rpm'),
+                'extrapolated': base_result.get('extrapolated', False),
+                'qbp_percent': base_result.get('qbp_percent'),
+                'trim_percent': base_result.get('trim_percent', 0)
+            },
+            
+            # NEW: Selected curve information for V2
+            'selected_curve': {
+                'impeller_diameter_mm': base_result.get('impeller_diameter_mm'),
+                'test_speed_rpm': base_result.get('test_speed_rpm'),
+                'curve_data': base_result.get('curve_data', {}),
+                'max_impeller_mm': base_result.get('max_impeller_mm'),
+                'min_impeller_mm': base_result.get('min_impeller_mm')
+            }
+        }
+        
+        logger.debug(f"Enhanced evaluation completed for {pump_id}")
+        return enhanced_result
 
 
 # ==================== GLOBAL BRAIN INSTANCE ====================

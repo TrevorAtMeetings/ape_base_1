@@ -3,212 +3,184 @@
 {% block admin_title %}Brain System Administration{% endblock %}
 
 {% block admin_content %}
-<div class="container" style="margin-top: 20px;">
-    <!-- Page Header -->
-    <div class="row">
+<div class="container" style="margin-top: 10px;">
+    <!-- Compact Page Header -->
+    <div class="row" style="margin-bottom: 10px;">
         <div class="col s12">
-            <div class="card-panel">
-                <h4 class="blue-text text-darken-2">
-                    <i class="material-icons left">psychology</i>
-                    Brain System Administration
-                </h4>
-                <p>System Status: <span class="badge green white-text">System operating normally</span></p>
-                <p class="grey-text">Production Configuration: {{ stats.production_config|default('production_default') }}</p>
-            </div>
-        </div>
-    </div>
-
-    <!-- System Status Overview -->
-    <div class="row">
-        <div class="col s12 m4">
-            <div class="card">
-                <div class="card-content">
-                    <span class="card-title">Data Quality Issues</span>
-                    <h3 class="blue-text">{{ stats.total_quality_issues|default(0) }}</h3>
-                    <p class="grey-text">Critical: {{ stats.critical_issues|default(0) }}</p>
-                    <p class="grey-text">Major: {{ stats.major_issues|default(0) }}</p>
-                </div>
-            </div>
-        </div>
-        <div class="col s12 m4">
-            <div class="card">
-                <div class="card-content">
-                    <span class="card-title">Critical Issues</span>
-                    <h3 class="red-text">{{ stats.critical_issues|default(0) }}</h3>
-                    <p class="grey-text">Require immediate attention</p>
-                </div>
-            </div>
-        </div>
-        <div class="col s12 m4">
-            <div class="card">
-                <div class="card-content">
-                    <span class="card-title">Active Corrections</span>
-                    <h3 class="green-text">{{ stats.active_corrections|default(0) }}</h3>
-                    <p class="grey-text">Corrections in overlay system</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Data Quality Management Section -->
-    <div class="row">
-        <div class="col s12">
-            <div class="card">
-                <div class="card-content">
-                    <span class="card-title">
-                        <i class="material-icons left">assessment</i>
-                        Data Quality Management
-                    </span>
-                    <p>Monitor and manage data quality issues across all pump specifications and performance curves. Identify inconsistencies, outliers, and missing data that could affect selection accuracy.</p>
-                </div>
-                <div class="card-action">
-                    <a href="{{ url_for('brain_admin.data_quality_dashboard') }}" class="btn">
-                        View Quality Issues
-                    </a>
-                    <a href="#" class="btn-flat blue-text disabled">
-                        Run Quality Scan
-                    </a>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Data Corrections System Section -->
-    <div class="row">
-        <div class="col s12">
-            <div class="card">
-                <div class="card-content">
-                    <span class="card-title">
-                        <i class="material-icons left">edit</i>
-                        Data Corrections System
-                    </span>
-                    <p>Manage the overlay correction system. Propose, review, and approve corrections to pump data without modifying the golden source database. All changes are auditable and reversible.</p>
-                </div>
-                <div class="card-action">
-                    <a href="{{ url_for('brain_admin.corrections_dashboard') }}" class="btn">
-                        Manage Corrections
-                    </a>
-                    <a href="{{ url_for('brain_admin.corrections_dashboard') }}" class="btn-flat blue-text">
-                        Propose Correction
-                    </a>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Tunable Physics Engine Section -->
-    <div class="row">
-        <div class="col s12">
-            <div class="card">
-                <div class="card-content">
-                    <span class="card-title">
-                        <i class="material-icons left">tune</i>
-                        Tunable Physics Engine
-                    </span>
-                    <p>Calibrate the Brain's physics model for BEP migration calculations. Compare against manufacturer data, analyze accuracy, and tune calibration factors for optimal performance.</p>
-                    <div class="chip orange lighten-4">
-                        <span class="orange-text text-darken-2">NEW</span>
+            <div class="card-panel" style="padding: 12px 20px;">
+                <div style="display: flex; align-items: center; justify-content: space-between;">
+                    <h5 class="blue-text text-darken-2" style="margin: 0;">
+                        <i class="material-icons left">psychology</i>
+                        Brain System Administration
+                    </h5>
+                    <div style="text-align: right;">
+                        <span class="badge green white-text" style="padding: 4px 8px;">System Normal</span>
+                        <span class="grey-text" style="margin-left: 10px; font-size: 0.9rem;">Config: {{ stats.production_config|default('production_default') }}</span>
                     </div>
                 </div>
-                <div class="card-action">
-                    <a href="{{ url_for('brain_admin.calibration_tool') }}" class="btn orange">
-                        <i class="material-icons left">tune</i>
-                        Calibration Tool
-                    </a>
-                    <a href="#" class="btn-flat orange-text" onclick="runQuickCalibration()">
-                        Quick Test
-                    </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Compact System Status Cards -->
+    <div class="row" style="margin-bottom: 10px;">
+        <div class="col s12 m4">
+            <div class="card" style="margin: 0;">
+                <div class="card-content" style="padding: 15px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <span class="card-title" style="font-size: 0.9rem; margin: 0;">Data Quality</span>
+                            <h4 class="blue-text" style="margin: 5px 0;">{{ stats.total_quality_issues|default(0) }}</h4>
+                        </div>
+                        <div style="text-align: right; font-size: 0.85rem;">
+                            <span class="grey-text">Critical: {{ stats.critical_issues|default(0) }}</span><br>
+                            <span class="grey-text">Major: {{ stats.major_issues|default(0) }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col s12 m4">
+            <div class="card" style="margin: 0;">
+                <div class="card-content" style="padding: 15px;">
+                    <span class="card-title" style="font-size: 0.9rem; margin: 0;">Critical Issues</span>
+                    <h4 class="red-text" style="margin: 5px 0;">{{ stats.critical_issues|default(0) }}</h4>
+                    <p class="grey-text" style="margin: 0; font-size: 0.85rem;">Immediate attention</p>
+                </div>
+            </div>
+        </div>
+        <div class="col s12 m4">
+            <div class="card" style="margin: 0;">
+                <div class="card-content" style="padding: 15px;">
+                    <span class="card-title" style="font-size: 0.9rem; margin: 0;">Active Corrections</span>
+                    <h4 class="green-text" style="margin: 5px 0;">{{ stats.active_corrections|default(0) }}</h4>
+                    <p class="grey-text" style="margin: 0; font-size: 0.85rem;">In overlay system</p>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Brain Logic Workbench Section -->
+    <!-- Compact Management Tools Grid -->
+    <div class="row" style="margin-bottom: 10px;">
+        <div class="col s12 m6">
+            <div class="card" style="margin-bottom: 10px;">
+                <div class="card-content" style="padding: 15px;">
+                    <span class="card-title" style="font-size: 1rem; margin: 0;">
+                        <i class="material-icons tiny">assessment</i> Data Quality Management
+                    </span>
+                    <p style="font-size: 0.85rem; margin: 8px 0; line-height: 1.3;">Monitor data quality issues, identify inconsistencies and outliers.</p>
+                </div>
+                <div class="card-action" style="padding: 10px 15px;">
+                    <a href="{{ url_for('brain_admin.data_quality_dashboard') }}" class="btn-small">View Issues</a>
+                    <a href="#" class="btn-flat btn-small blue-text disabled">Scan</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col s12 m6">
+            <div class="card" style="margin-bottom: 10px;">
+                <div class="card-content" style="padding: 15px;">
+                    <span class="card-title" style="font-size: 1rem; margin: 0;">
+                        <i class="material-icons tiny">edit</i> Data Corrections System
+                    </span>
+                    <p style="font-size: 0.85rem; margin: 8px 0; line-height: 1.3;">Manage overlay corrections without modifying source database.</p>
+                </div>
+                <div class="card-action" style="padding: 10px 15px;">
+                    <a href="{{ url_for('brain_admin.corrections_dashboard') }}" class="btn-small">Manage</a>
+                    <a href="{{ url_for('brain_admin.corrections_dashboard') }}" class="btn-flat btn-small blue-text">Propose</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row" style="margin-bottom: 10px;">
+        <div class="col s12 m6">
+            <div class="card" style="margin-bottom: 10px;">
+                <div class="card-content" style="padding: 15px;">
+                    <span class="card-title" style="font-size: 1rem; margin: 0;">
+                        <i class="material-icons tiny">tune</i> Tunable Physics Engine
+                        <span class="chip orange lighten-4" style="height: 20px; line-height: 20px; padding: 0 8px; margin-left: 8px;">
+                            <span class="orange-text text-darken-2" style="font-size: 0.7rem;">NEW</span>
+                        </span>
+                    </span>
+                    <p style="font-size: 0.85rem; margin: 8px 0; line-height: 1.3;">Calibrate physics model and BEP migration calculations.</p>
+                </div>
+                <div class="card-action" style="padding: 10px 15px;">
+                    <a href="{{ url_for('brain_admin.calibration_tool') }}" class="btn-small orange">
+                        <i class="material-icons tiny left">tune</i>Calibrate
+                    </a>
+                    <a href="#" class="btn-flat btn-small orange-text" onclick="runQuickCalibration()">Test</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col s12 m6">
+            <div class="card" style="margin-bottom: 10px;">
+                <div class="card-content" style="padding: 15px;">
+                    <span class="card-title" style="font-size: 1rem; margin: 0;">
+                        <i class="material-icons tiny">science</i> Brain Logic Workbench
+                    </span>
+                    <p style="font-size: 0.85rem; margin: 8px 0; line-height: 1.3;">Test and validate logic changes in safe environment.</p>
+                </div>
+                <div class="card-action" style="padding: 10px 15px;">
+                    <a href="{{ url_for('brain_admin.brain_workbench') }}" class="btn-small">Open</a>
+                    <a href="#" class="btn-flat btn-small blue-text">Test</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Tools Row -->
+    <div class="row" style="margin-bottom: 10px;">
+        <div class="col s12 m6">
+            <div class="card" style="margin-bottom: 10px;">
+                <div class="card-content" style="padding: 15px;">
+                    <span class="card-title" style="font-size: 1rem; margin: 0;">
+                        <i class="material-icons tiny">settings</i> Configuration Management
+                    </span>
+                    <p style="font-size: 0.85rem; margin: 8px 0; line-height: 1.3;">Manage Brain profiles for different use cases and scoring weights.</p>
+                </div>
+                <div class="card-action" style="padding: 10px 15px;">
+                    <a href="/admin/config/" class="btn-small blue">Manager</a>
+                    <a href="/admin/config/profile/new" class="btn-flat btn-small blue-text">New</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col s12 m6">
+            <div class="card" style="margin-bottom: 10px;">
+                <div class="card-content" style="padding: 15px;">
+                    <span class="card-title" style="font-size: 1rem; margin: 0; display: flex; justify-content: space-between; align-items: center;">
+                        <span><i class="material-icons tiny">compare_arrows</i> Manufacturer Comparison</span>
+                        <span id="pump-count-display" class="chip blue white-text" style="height: 20px; line-height: 20px; padding: 0 8px; font-size: 0.75rem;">Loading...</span>
+                    </span>
+                    <p style="font-size: 0.85rem; margin: 8px 0; line-height: 1.3;">Compare Brain selections against manufacturer data.</p>
+                </div>
+                <div class="card-action" style="padding: 10px 15px;">
+                    <a href="#" onclick="showPumpSelector()" class="btn-small blue">Compare</a>
+                    <a href="{{ url_for('brain_admin.brain_workbench') }}" class="btn-flat btn-small blue-text">Workbench</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Decision Analytics - Full Width but Compact -->
     <div class="row">
         <div class="col s12">
-            <div class="card">
-                <div class="card-content">
-                    <span class="card-title">
-                        <i class="material-icons left">science</i>
-                        Brain Logic Workbench
-                    </span>
-                    <p>Test and validate Brain logic changes in a safe environment. Simulate different configurations, test corrections, and analyze the impact before deploying to production.</p>
-                </div>
-                <div class="card-action">
-                    <a href="{{ url_for('brain_admin.brain_workbench') }}" class="btn">
-                        Open Workbench
-                    </a>
-                    <a href="#" class="btn-flat blue-text">
-                        Test Scenario
-                    </a>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Configuration Management Section -->
-    <div class="row">
-        <div class="col s12 m6">
-            <div class="card">
-                <div class="card-content">
-                    <span class="card-title">
-                        <i class="material-icons left">settings</i>
-                        Configuration Management
-                    </span>
-                    <p>Manage Brain configuration profiles for different use cases. Create, test, and deploy configurations with different scoring weights and logic parameters.</p>
-                </div>
-                <div class="card-action">
-                    <a href="/admin/config/" class="btn blue">
-                        Configuration Manager
-                    </a>
-                    <a href="/admin/config/profile/new" class="btn-flat blue-text">
-                        New Profile
-                    </a>
-                </div>
-            </div>
-        </div>
-
-        <!-- Manufacturer Comparison Section -->
-        <div class="col s12 m6">
-            <div class="card">
-                <div class="card-content">
-                    <span class="card-title">
-                        <i class="material-icons left">compare_arrows</i>
-                        Manufacturer Comparison
-                        <span id="pump-count-display" class="right chip blue white-text" style="font-size: 14px;">Loading pumps...</span>
-                    </span>
-                    <p>Compare Brain selections against manufacturer recommendations. Upload datasheets, analyze differences, and identify opportunities for improvement.</p>
-                </div>
-                <div class="card-action">
-                    <a href="#" onclick="showPumpSelector()" class="btn blue">
-                        Comparison Tool
-                    </a>
-                    <a href="{{ url_for('brain_admin.brain_workbench') }}" class="btn-flat blue-text">
-                        Logic Workbench
-                    </a>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Decision Analytics Section -->
-    <div class="row">
-        <div class="col s12">
-            <div class="card">
-                <div class="card-content">
-                    <span class="card-title">
-                        <i class="material-icons left">analytics</i>
-                        Decision Analytics
-                    </span>
-                    <p>Analyze Brain decision patterns, track accuracy improvements over time, and generate reports on system performance and feasibility.</p>
-                </div>
-                <div class="card-action">
-                    <a href="#" class="btn disabled">
-                        View Analytics
-                    </a>
-                    <a href="#" class="btn-flat blue-text disabled">
-                        Generate Report
-                    </a>
+            <div class="card" style="margin-bottom: 10px;">
+                <div class="card-content" style="padding: 15px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <span class="card-title" style="font-size: 1rem; margin: 0;">
+                                <i class="material-icons tiny">analytics</i> Decision Analytics
+                            </span>
+                            <p style="font-size: 0.85rem; margin: 5px 0;">Analyze decision patterns and track system performance over time.</p>
+                        </div>
+                        <div>
+                            <a href="#" class="btn-small disabled">View Analytics</a>
+                            <a href="#" class="btn-flat btn-small blue-text disabled">Generate Report</a>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

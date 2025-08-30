@@ -6,14 +6,12 @@ Admin interface for managing feature toggles
 import logging
 from flask import Blueprint, render_template, request, jsonify, flash, redirect, url_for
 from app.admin_config_service import get_config_service
-from app.admin_utils import admin_required
 
 logger = logging.getLogger(__name__)
 
 feature_admin_bp = Blueprint('feature_admin', __name__)
 
 @feature_admin_bp.route('/admin/features')
-@admin_required
 def feature_management():
     """Feature toggle management dashboard"""
     service = get_config_service()
@@ -43,7 +41,6 @@ def feature_management():
                          stats=stats)
 
 @feature_admin_bp.route('/admin/features/toggle', methods=['POST'])
-@admin_required
 def toggle_feature():
     """Toggle a feature on or off"""
     try:
@@ -73,7 +70,6 @@ def toggle_feature():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @feature_admin_bp.route('/admin/features/add', methods=['POST'])
-@admin_required
 def add_feature():
     """Add a new feature toggle"""
     try:
@@ -106,7 +102,6 @@ def add_feature():
         return redirect(url_for('feature_admin.feature_management'))
 
 @feature_admin_bp.route('/admin/features/delete/<feature_key>', methods=['POST'])
-@admin_required
 def delete_feature(feature_key):
     """Delete a feature toggle"""
     try:

@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(sed:*)",
+      "Bash(mkdir:*)",
+      "Bash(move:*)",
+      "Bash(mv:*)",
+      "Bash(python:*)",
+      "Bash(del test_v2_route.py)",
+      "Bash(timeout:*)",
+      "Bash(curl:*)",
+      "Bash(find:*)"
+    ],
+    "additionalDirectories": [
+      "C:\\c\\repos\\xAI\\app_to_be_rebased"
+    ]
+  }
+}

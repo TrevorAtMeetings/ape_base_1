@@ -1,0 +1,489 @@
+/*
+Enhanced Pump Report Styles - V2 Features with Materialize
+==========================================================
+Enhanced styling for V2 pump reports using existing Materialize framework.
+Provides V2 visual improvements without framework conflicts.
+
+Author: APE Pumps Engineering
+Date: August 2025
+Version: 2.0.0
+*/
+
+/* Material Design 3 Variables with Professional Colors */
+:root {
+    /* Enhanced color palette for V2 reports */
+    --v2-primary: #1e3c72;
+    --v2-primary-variant: #2a5298;
+    --v2-secondary: #4caf50;
+    --v2-surface: #ffffff;
+    --v2-surface-variant: #f8f9fa;
+    --v2-outline: #e0e0e0;
+    --v2-outline-variant: #f0f0f0;
+    --v2-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    --v2-shadow-elevated: 0 4px 16px rgba(0,0,0,0.12);
+    --v2-border-radius: 12px;
+    --v2-border-radius-large: 16px;
+
+    /* Professional Efficiency Color Scheme */
+    --efficiency-excellent: #28a745;
+    --efficiency-good: #17a2b8;
+    --efficiency-acceptable: #ffc107;
+    --efficiency-poor: #dc3545;
+
+    /* Professional gradient backgrounds */
+    --gradient-primary: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    --gradient-success: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    --gradient-info: linear-gradient(135deg, #17a2b8 0%, #6f42c1 100%);
+    --gradient-warning: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+    --gradient-danger: linear-gradient(135deg, #dc3545 0%, #e83e8c 100%);
+}
+
+/* Enhanced Report Header */
+.v2-report-header {
+    background: var(--gradient-primary) !important;
+    color: white !important;
+    padding: 40px 0 !important;
+    margin-bottom: 24px !important;
+    border-radius: var(--v2-border-radius) !important;
+    box-shadow: var(--v2-shadow-elevated) !important;
+}
+
+.v2-report-header .container {
+    max-width: 1400px !important;
+}
+
+.v2-report-header h1 {
+    font-size: 2.5rem !important;
+    font-weight: 300 !important;
+    margin: 0 0 16px 0 !important;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3) !important;
+}
+
+.v2-report-header .subtitle {
+    font-size: 1.2rem !important;
+    opacity: 0.9 !important;
+    font-weight: 300 !important;
+}
+
+/* Direct Selection Warning Banner - Enhanced Materialize */
+.direct-selection-banner {
+    background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%) !important;
+    border-left: 4px solid var(--efficiency-acceptable) !important;
+    padding: 20px !important;
+    margin-bottom: 24px !important;
+    border-radius: var(--v2-border-radius) !important;
+    box-shadow: var(--v2-shadow) !important;
+}
+
+.direct-selection-banner .material-icons {
+    color: var(--efficiency-acceptable) !important;
+    margin-right: 16px !important;
+    font-size: 2rem !important;
+}
+
+.direct-selection-banner h5 {
+    color: #856404 !important;
+    font-weight: 600 !important;
+    margin: 0 0 8px 0 !important;
+}
+
+.direct-selection-banner p {
+    color: #856404 !important;
+    margin: 0 !important;
+    font-size: 1rem !important;
+}
+
+/* Enhanced Pump Cards - Materialize Style */
+.v2-pump-card {
+    background: var(--v2-surface) !important;
+    border: 1px solid var(--v2-outline-variant) !important;
+    border-radius: var(--v2-border-radius-large) !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    margin-bottom: 24px !important;
+    box-shadow: var(--v2-shadow) !important;
+    overflow: hidden !important;
+}
+
+.v2-pump-card.selected {
+    border-color: var(--v2-primary) !important;
+    box-shadow: var(--v2-shadow-elevated) !important;
+    transform: translateY(-2px) !important;
+}
+
+.v2-pump-card:hover {
+    box-shadow: var(--v2-shadow-elevated) !important;
+    transform: translateY(-1px) !important;
+}
+
+/* Professional Efficiency Indicators - Enhanced Chips */
+.efficiency-indicator {
+    display: inline-flex !important;
+    align-items: center !important;
+    padding: 8px 16px !important;
+    border-radius: 20px !important;
+    font-weight: 600 !important;
+    font-size: 0.9rem !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    margin: 4px !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+    transition: all 0.3s ease !important;
+}
+
+.efficiency-indicator:hover {
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15) !important;
+}
+
+.efficiency-excellent {
+    background: var(--gradient-success) !important;
+    color: white !important;
+}
+
+.efficiency-good {
+    background: var(--gradient-info) !important;
+    color: white !important;
+}
+
+.efficiency-acceptable {
+    background: var(--gradient-warning) !important;
+    color: #333 !important;
+}
+
+.efficiency-poor {
+    background: var(--gradient-danger) !important;
+    color: white !important;
+}
+
+/* Enhanced Performance Metrics */
+.v2-performance-metric {
+    background: var(--v2-surface-variant) !important;
+    border: 1px solid var(--v2-outline) !important;
+    padding: 20px !important;
+    border-radius: var(--v2-border-radius) !important;
+    margin-bottom: 16px !important;
+    transition: all 0.3s ease !important;
+    position: relative !important;
+    overflow: hidden !important;
+}
+
+.v2-performance-metric:hover {
+    border-color: var(--v2-primary) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: var(--v2-shadow) !important;
+}
+
+.v2-performance-metric::before {
+    content: '' !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 4px !important;
+    height: 100% !important;
+    background: var(--v2-primary) !important;
+    transition: width 0.3s ease !important;
+}
+
+.v2-performance-metric:hover::before {
+    width: 8px !important;
+}
+
+.metric-value {
+    font-size: 2rem !important;
+    font-weight: 300 !important;
+    color: var(--v2-primary) !important;
+    margin: 0 0 8px 0 !important;
+    line-height: 1 !important;
+}
+
+.metric-label {
+    font-size: 0.9rem !important;
+    color: #888 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    margin: 0 !important;
+    font-weight: 500 !important;
+}
+
+/* Enhanced Recommendation Badges */
+.v2-recommendation-badge {
+    display: inline-flex !important;
+    align-items: center !important;
+    padding: 12px 24px !important;
+    border-radius: 25px !important;
+    font-weight: 600 !important;
+    font-size: 1rem !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+    position: relative !important;
+    overflow: hidden !important;
+    transition: all 0.3s ease !important;
+    cursor: pointer !important;
+}
+
+.v2-recommendation-badge:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.2) !important;
+}
+
+.v2-recommendation-badge.recommended {
+    background: var(--gradient-success) !important;
+    color: white !important;
+}
+
+.v2-recommendation-badge.alternative {
+    background: var(--gradient-warning) !important;
+    color: #333 !important;
+}
+
+.v2-recommendation-badge.not-recommended {
+    background: var(--gradient-danger) !important;
+    color: white !important;
+}
+
+/* Shimmer effect for recommendation badges */
+.v2-recommendation-badge::before {
+    content: '' !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: -100% !important;
+    width: 100% !important;
+    height: 100% !important;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent) !important;
+    transition: left 0.5s ease !important;
+}
+
+.v2-recommendation-badge:hover::before {
+    left: 100% !important;
+}
+
+/* Enhanced Collection Items - Alternative to Bootstrap Cards */
+.v2-collection-item {
+    background: var(--v2-surface) !important;
+    border: 1px solid var(--v2-outline-variant) !important;
+    border-radius: var(--v2-border-radius) !important;
+    padding: 20px !important;
+    margin-bottom: 16px !important;
+    transition: all 0.3s ease !important;
+    box-shadow: var(--v2-shadow) !important;
+}
+
+.v2-collection-item:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: var(--v2-shadow-elevated) !important;
+    border-color: var(--v2-primary) !important;
+}
+
+/* Enhanced Buttons - Materialize Style */
+.v2-btn {
+    background: var(--gradient-primary) !important;
+    color: white !important;
+    border: none !important;
+    border-radius: var(--v2-border-radius) !important;
+    padding: 12px 24px !important;
+    font-weight: 500 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    transition: all 0.3s ease !important;
+    box-shadow: var(--v2-shadow) !important;
+    cursor: pointer !important;
+}
+
+.v2-btn:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: var(--v2-shadow-elevated) !important;
+    background: var(--v2-primary-variant) !important;
+}
+
+.v2-btn.secondary {
+    background: var(--v2-surface) !important;
+    color: var(--v2-primary) !important;
+    border: 2px solid var(--v2-primary) !important;
+}
+
+.v2-btn.secondary:hover {
+    background: var(--v2-primary) !important;
+    color: white !important;
+}
+
+/* Enhanced Chart Container */
+.v2-chart-container {
+    background: var(--v2-surface) !important;
+    border: 1px solid var(--v2-outline-variant) !important;
+    border-radius: var(--v2-border-radius) !important;
+    padding: 20px !important;
+    margin-bottom: 24px !important;
+    box-shadow: var(--v2-shadow) !important;
+}
+
+.v2-chart-title {
+    font-size: 1.25rem !important;
+    font-weight: 500 !important;
+    color: var(--v2-primary) !important;
+    margin: 0 0 16px 0 !important;
+    padding-bottom: 8px !important;
+    border-bottom: 2px solid var(--v2-outline-variant) !important;
+}
+
+/* Enhanced AI Analysis Section */
+.v2-ai-analysis {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%) !important;
+    border: 1px solid var(--v2-outline) !important;
+    border-radius: var(--v2-border-radius) !important;
+    padding: 24px !important;
+    margin-bottom: 24px !important;
+    position: relative !important;
+    overflow: hidden !important;
+}
+
+.v2-ai-analysis::before {
+    content: '' !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 4px !important;
+    background: var(--gradient-info) !important;
+}
+
+.v2-ai-analysis h5 {
+    color: var(--v2-primary) !important;
+    font-weight: 600 !important;
+    margin: 0 0 16px 0 !important;
+    display: flex !important;
+    align-items: center !important;
+}
+
+.v2-ai-analysis h5 .material-icons {
+    margin-right: 8px !important;
+    color: var(--efficiency-good) !important;
+}
+
+/* Alternative Pump Cards */
+.v2-alternative-pump {
+    background: var(--v2-surface) !important;
+    border: 1px solid var(--v2-outline) !important;
+    border-radius: var(--v2-border-radius) !important;
+    padding: 16px !important;
+    margin-bottom: 16px !important;
+    transition: all 0.3s ease !important;
+    opacity: 0.9 !important;
+}
+
+.v2-alternative-pump:hover {
+    opacity: 1 !important;
+    transform: translateY(-2px) !important;
+    box-shadow: var(--v2-shadow) !important;
+    border-color: var(--v2-primary) !important;
+}
+
+/* Enhanced Alerts - Materialize Style */
+.v2-alert {
+    padding: 16px 20px !important;
+    border-radius: var(--v2-border-radius) !important;
+    margin-bottom: 16px !important;
+    border-left: 4px solid !important;
+    box-shadow: var(--v2-shadow) !important;
+}
+
+.v2-alert.info {
+    background: rgba(23, 162, 184, 0.1) !important;
+    border-left-color: var(--efficiency-good) !important;
+    color: #0c5460 !important;
+}
+
+.v2-alert.success {
+    background: rgba(40, 167, 69, 0.1) !important;
+    border-left-color: var(--efficiency-excellent) !important;
+    color: #155724 !important;
+}
+
+.v2-alert.warning {
+    background: rgba(255, 193, 7, 0.1) !important;
+    border-left-color: var(--efficiency-acceptable) !important;
+    color: #856404 !important;
+}
+
+.v2-alert.danger {
+    background: rgba(220, 53, 69, 0.1) !important;
+    border-left-color: var(--efficiency-poor) !important;
+    color: #721c24 !important;
+}
+
+/* Enhanced Typography */
+.v2-text-primary { color: var(--v2-primary) !important; }
+.v2-text-secondary { color: #6c757d !important; }
+.v2-text-success { color: var(--efficiency-excellent) !important; }
+.v2-text-warning { color: var(--efficiency-acceptable) !important; }
+.v2-text-danger { color: var(--efficiency-poor) !important; }
+.v2-text-info { color: var(--efficiency-good) !important; }
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .v2-report-header h1 {
+        font-size: 2rem !important;
+    }
+    
+    .v2-report-header .subtitle {
+        font-size: 1rem !important;
+    }
+    
+    .v2-pump-card {
+        margin-bottom: 16px !important;
+    }
+    
+    .v2-performance-metric {
+        padding: 16px !important;
+    }
+    
+    .metric-value {
+        font-size: 1.5rem !important;
+    }
+    
+    .v2-recommendation-badge {
+        padding: 8px 16px !important;
+        font-size: 0.9rem !important;
+    }
+}
+
+/* Print Styles */
+@media print {
+    .v2-pump-card,
+    .v2-performance-metric,
+    .v2-chart-container {
+        break-inside: avoid !important;
+        box-shadow: none !important;
+        border: 1px solid #ccc !important;
+    }
+    
+    .v2-recommendation-badge {
+        box-shadow: none !important;
+    }
+    
+    .direct-selection-banner {
+        box-shadow: none !important;
+    }
+}
+
+/* Animation Classes */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.v2-fade-in-up {
+    animation: fadeInUp 0.6s ease-out !important;
+}
+
+.v2-fade-in-up:nth-child(1) { animation-delay: 0.1s !important; }
+.v2-fade-in-up:nth-child(2) { animation-delay: 0.2s !important; }
+.v2-fade-in-up:nth-child(3) { animation-delay: 0.3s !important; }
+.v2-fade-in-up:nth-child(4) { animation-delay: 0.4s !important; }
+.v2-fade-in-up:nth-child(5) { animation-delay: 0.5s !important; }

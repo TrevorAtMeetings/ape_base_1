@@ -58,6 +58,14 @@ app.config['UPLOAD_FOLDER'] = os.path.join(app.root_path, 'static', 'temp')
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 logger.info(f"App configured. Upload folder: {app.config['UPLOAD_FOLDER']}")
 
+# Set app version for cache busting - can be overridden by environment variable
+app.config['APP_VERSION'] = os.environ.get('APP_VERSION', __version__)
+
+# Make app_version available to all templates
+@app.context_processor
+def inject_app_version():
+    return {'app_version': app.config['APP_VERSION']}
+
 # Initialize session manager
 from .session_manager import init_session_manager
 session_manager = init_session_manager(app)

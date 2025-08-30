@@ -4,7 +4,7 @@
 
 {% block head %}
     <!-- Custom CSS -->
-    <link href="{{ url_for('static', filename='css/mobile-comparison.css') }}?v={{ range(1000, 9999) | random }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/pump-comparison.css') }}?v={{ app_version }}" rel="stylesheet">
     
     <style>
         .comparison-container {
@@ -1018,6 +1018,11 @@
             
             <div class="filter-content" id="filterContent">
                 <div class="filter-grid">
+                    <!-- Filter controls will go here when expanded -->
+                </div>
+            </div>
+        </div>
+        
         <div class="section-divider"></div>
 
         <!-- Enhanced Lifecycle Cost Analysis -->
@@ -1349,8 +1354,16 @@
             document.getElementById('compare-shortlist-btn').addEventListener('click', function() {
                 if (shortlist.length >= 2) {
                     const params = new URLSearchParams(window.location.search);
-                    const flow = params.get('flow');
-                    const head = params.get('head');
+                    let flow = params.get('flow');
+                    let head = params.get('head');
+                    
+                    // Fallback to site_requirements from template if not in URL
+                    if (!flow || !head) {
+                        {% if site_requirements %}
+                            flow = flow || {{ site_requirements.flow_m3hr|default(0) }};
+                            head = head || {{ site_requirements.head_m|default(0) }};
+                        {% endif %}
+                    }
                     
                     if (!flow || !head) {
                         M.toast({html: 'Flow and head parameters required for shortlist comparison', classes: 'red'});

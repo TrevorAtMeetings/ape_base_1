@@ -408,3 +408,169 @@ def pump_report_data_api(pump_code):
     except Exception as e:
         logger.error(f"Error in pump report data API: {str(e)}")
         return jsonify({'error': 'Internal server error'}), 500
+
+# ==================== V2 ENHANCED PUMP REPORT ====================
+# Enhanced pump report with V2 features while maintaining full backward compatibility
+
+@reports_bp.route('/pump_report_v2/<path:pump_code>')
+def pump_report_v2(pump_code):
+    """
+    Enhanced V2 pump report with advanced features and validation.
+    
+    This route provides all V2 enhancements including:
+    - Direct selection validation
+    - Enhanced data structures  
+    - Improved UI/UX
+    - Better alternative recommendations
+    
+    The original pump_report() route remains unchanged for backward compatibility.
+    """
+    pump_code = unquote(pump_code)
+    logger.info(f"=== V2 ROUTE ACCESSED === pump_code: {pump_code}")
+    logger.info(f"V2 Route request args: {dict(request.args)}")
+    logger.info(f"V2 Route URL: {request.url}")
+    
+    # Get definitive duty point
+    site_reqs = safe_session_get('site_requirements', {})
+    flow = request.args.get('flow', type=float) or site_reqs.get('flow_m3hr')
+    head = request.args.get('head', type=float) or site_reqs.get('head_m')
+    pump_type = request.args.get('pump_type') or site_reqs.get('pump_type', 'GENERAL')
+    application_type = request.args.get('application_type') or site_reqs.get('application_type', 'water')
+    
+    # Clean breadcrumbs for navigation
+    breadcrumbs = [
+        {'label': 'Home', 'url': url_for('main_flow.index'), 'icon': 'home'},
+        {'label': 'Results', 'url': url_for('main_flow.pump_options', flow=flow, head=head) if flow and head else '#'},
+        {'label': f'{pump_code} - Enhanced Report', 'url': '#', 'icon': 'description'}
+    ]
+
+    if not (flow and head):
+        safe_flash("Flow and head are required to view a report.", "error")
+        return redirect(url_for('main_flow.index'))
+
+    try:
+        logger.info("V2: Starting import phase...")
+        # Import V2 enhanced services (zero risk - new modules only)
+        from ..pump_brain import get_pump_brain
+        logger.info("V2: Successfully imported get_pump_brain")
+        
+        from ..services.selection_validator import SelectionValidator
+        logger.info("V2: Successfully imported SelectionValidator")
+        
+        from ..adapters.template_data_adapter import TemplateDataAdapter
+        logger.info("V2: Successfully imported TemplateDataAdapter")
+        
+        # THE BRAIN IS THE SINGLE SOURCE OF TRUTH
+        brain = get_pump_brain()
+        logger.info("V2: Successfully initialized brain")
+        
+        validator = SelectionValidator(brain)
+        logger.info("V2: Successfully initialized validator")
+        
+        adapter = TemplateDataAdapter()
+        logger.info("V2: Successfully initialized adapter")
+        
+        # Use ENHANCED evaluation method (calls original method internally)
+        logger.info(f"V2: About to call evaluate_pump_enhanced for {pump_code}")
+        evaluation_result = brain.evaluate_pump_enhanced(pump_code, flow, head)
+        logger.info(f"V2: Enhanced evaluation completed, feasible: {evaluation_result.get('feasible') if evaluation_result else 'None'}")
+        
+        if not evaluation_result:
+            logger.error(f"V2: evaluation_result is None for {pump_code}")
+            safe_flash(f"Pump {pump_code} not found.", "warning")
+            return redirect(url_for('main_flow.index'))
+            
+        if not evaluation_result.get('feasible'):
+            logger.error(f"V2: Pump not feasible - redirecting. Result keys: {list(evaluation_result.keys())}")
+            safe_flash(f"Pump {pump_code} is not suitable for the duty point {flow}m³/hr @ {head}m.", "warning")
+            return redirect(url_for('reports.pump_report', pump_code=pump_code, flow=flow, head=head))
+        
+        # Generate direct selection validation (NEW V2 feature)
+        logger.info(f"V2: About to generate direct selection validation")
+        direct_selection_validation = validator.generate_direct_selection_validation(
+            pump_code=pump_code,
+            flow=flow,
+            head=head,
+            evaluation_result=evaluation_result
+        )
+        logger.info(f"V2: Direct selection validation completed: {bool(direct_selection_validation)}")
+        
+        # Get enhanced alternatives (NEW V2 feature)
+        logger.info(f"V2: About to get alternative recommendations")
+        alternatives = validator.get_alternative_recommendations(
+            pump_code=pump_code,
+            flow=flow,
+            head=head,
+            limit=5
+        )
+        logger.info(f"V2: Alternative recommendations completed: {len(alternatives) if alternatives else 0} alternatives")
+        
+        # Adapt alternatives for V2 compatibility
+        alternatives = adapter.adapt_alternatives_list(alternatives)
+        
+        # Get AI analysis if available (existing feature)
+        ai_analysis = None
+        try:
+            ai_analyst = brain.ai_analyst
+            if ai_analyst:
+                analysis_result = ai_analyst.generate_pump_analysis(
+                    evaluation_result, {'flow_m3hr': flow, 'head_m': head}
+                )
+                if analysis_result and analysis_result.get('success'):
+                    ai_analysis = analysis_result
+                    logger.info(f"AI analysis generated for V2 report: {pump_code}")
+        except Exception as e:
+            logger.warning(f"AI analysis not available for V2 report: {e}")
+        
+        # Enhanced template data structure
+        template_data = {
+            'selected_pump': evaluation_result,  # Enhanced data structure with nested objects
+            'direct_selection_validation': direct_selection_validation,  # NEW V2 feature
+            'site_requirements': {
+                'flow_m3hr': flow, 
+                'head_m': head, 
+                'pump_type': pump_type,
+                'application_type': application_type
+            },
+            'alternatives': alternatives,  # Enhanced alternatives
+            'alternative_pumps': alternatives,  # Legacy compatibility
+            'ai_analysis': ai_analysis,  # Enhanced AI analysis
+            'current_date': datetime.now().strftime("%d %B %Y"),
+            'current_view': 'enhanced_presentation',
+            'show_view_toggle': True,
+            'breadcrumbs': breadcrumbs
+        }
+        
+        # Ensure V2 compatibility for all data structures
+        template_data = adapter.ensure_v2_compatibility(template_data)
+        
+        logger.info(f"V2: About to render template for {pump_code}")
+        logger.info(f"V2: Template data keys: {list(template_data.keys())}")
+        
+        result = render_template('professional_pump_report_v2.html', **template_data)
+        logger.info(f"V2: Successfully rendered template for {pump_code}")
+        return result
+        
+    except ImportError as e:
+        logger.error(f"V2 IMPORT ERROR - redirecting to standard report: {e}")
+        safe_flash("Enhanced report features not available. Using standard report.", "warning")
+        # Fallback to original route (zero risk)
+        return redirect(url_for('reports.pump_report', pump_code=pump_code, flow=flow, head=head))
+        
+    except Exception as e:
+        logger.error(f"V2 EXCEPTION ERROR: {str(e)}")
+        logger.error(f"V2 EXCEPTION TYPE: {type(e).__name__}")
+        import traceback
+        logger.error(f"V2 TRACEBACK: {traceback.format_exc()}")
+        
+        # Try to identify specific issues
+        if 'TemplateNotFound' in str(type(e).__name__):
+            logger.error("V2 ERROR: Template file not found")
+        elif 'UndefinedError' in str(type(e).__name__):
+            logger.error(f"V2 ERROR: Template variable undefined - {str(e)}")
+        else:
+            logger.error(f"V2 ERROR: General exception - {str(e)}")
+            
+        safe_flash("Error generating enhanced report. Using standard report.", "error")
+        # Fallback to original route (zero risk)
+        return redirect(url_for('reports.pump_report', pump_code=pump_code, flow=flow, head=head))

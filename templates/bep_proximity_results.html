@@ -4,7 +4,7 @@
 
 {% block head %}
 <!-- Use the same CSS as pump results for consistency -->
-<link href="{{ url_for('static', filename='css/pump-results-fix.css') }}?v={{ range(1000, 9999) | random }}" rel="stylesheet">
+<link href="{{ url_for('static', filename='css/pump-results.css') }}?v={{ app_version }}" rel="stylesheet">
 
 <!-- Enhanced BEP Proximity Styling -->
 <style>

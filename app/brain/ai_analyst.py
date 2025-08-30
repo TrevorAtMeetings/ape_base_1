@@ -240,3 +240,112 @@ class AIAnalyst:
             trend['assessment'] = "Calibration quality is stable"
             
         return trend
+    
+    def generate_pump_analysis(self, evaluation_result: Dict[str, Any], site_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Generate AI-powered analysis for pump performance reports.
+        
+        Args:
+            evaluation_result: Pump evaluation data
+            site_data: Site requirements and conditions
+            
+        Returns:
+            Dict containing analysis results and success status
+        """
+        try:
+            if not self.client:
+                self.logger.warning("OpenAI client not available - generating fallback analysis")
+                return self._generate_fallback_pump_analysis(evaluation_result, site_data)
+            
+            # Build analysis prompt
+            prompt = self._build_pump_analysis_prompt(evaluation_result, site_data)
+            
+            # Get AI analysis
+            response = self.client.chat.completions.create(
+                model=self.model,
+                messages=[
+                    {"role": "system", "content": "You are an expert pump engineer providing technical analysis for pump selection reports. Provide clear, actionable insights."},
+                    {"role": "user", "content": prompt}
+                ],
+                max_tokens=800,
+                temperature=0.3
+            )
+            
+            analysis_text = response.choices[0].message.content.strip()
+            
+            return {
+                'success': True,
+                'analysis': analysis_text,
+                'method': 'ai_generated'
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Failed to generate AI pump analysis: {e}")
+            return self._generate_fallback_pump_analysis(evaluation_result, site_data)
+    
+    def _build_pump_analysis_prompt(self, evaluation_result: Dict[str, Any], site_data: Dict[str, Any]) -> str:
+        """Build prompt for pump analysis AI request"""
+        
+        flow = site_data.get('flow_m3hr', 0)
+        head = site_data.get('head_m', 0)
+        efficiency = evaluation_result.get('efficiency_pct', 0)
+        power = evaluation_result.get('power_kw', 0)
+        qbp = evaluation_result.get('qbp_pct', 0)
+        
+        prompt = f"""Analyze this pump performance for a technical report:
+
+Site Requirements:
+- Flow Rate: {flow} m³/hr  
+- Head: {head} m
+- Application: Water pumping
+
+Pump Performance:
+- Efficiency: {efficiency}%
+- Power Consumption: {power} kW
+- QBP (Distance from BEP): {qbp}%
+
+Please provide:
+1. Performance Assessment (2-3 sentences)
+2. Operating Characteristics (efficiency, power, BEP proximity)
+3. Technical Recommendations for optimization
+
+Keep response concise and engineering-focused."""
+
+        return prompt
+    
+    def _generate_fallback_pump_analysis(self, evaluation_result: Dict[str, Any], site_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Generate fallback analysis when AI is not available"""
+        
+        flow = site_data.get('flow_m3hr', 0)
+        head = site_data.get('head_m', 0)  
+        efficiency = evaluation_result.get('efficiency_pct', 0)
+        qbp = evaluation_result.get('qbp_pct', 0)
+        
+        # Generate basic assessment
+        if efficiency > 75:
+            eff_assessment = "excellent efficiency"
+        elif efficiency > 65:
+            eff_assessment = "good efficiency"  
+        elif efficiency > 55:
+            eff_assessment = "acceptable efficiency"
+        else:
+            eff_assessment = "low efficiency"
+            
+        if qbp <= 110:
+            bep_assessment = "operating close to Best Efficiency Point"
+        elif qbp <= 130:
+            bep_assessment = "operating reasonably close to BEP"
+        else:
+            bep_assessment = "operating away from optimal BEP"
+            
+        analysis = f"""Performance Assessment: This pump demonstrates {eff_assessment} ({efficiency}%) for the specified duty point of {flow} m³/hr at {head}m head.
+
+Operating Characteristics: The pump is {bep_assessment} (QBP: {qbp}%), indicating {'optimal' if qbp <= 110 else 'acceptable' if qbp <= 130 else 'suboptimal'} hydraulic matching for this application.
+
+Technical Recommendations: {'Continue with current selection - performance is well-suited for the application.' if efficiency > 65 and qbp <= 130 else 'Consider alternative pump sizes or impeller adjustments to improve efficiency and reduce operating costs.'}"""
+
+        return {
+            'success': True,
+            'analysis': analysis,
+            'method': 'fallback_generated'
+        }

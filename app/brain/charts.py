@@ -69,6 +69,7 @@ class ChartIntelligence:
             all_heads = []
             all_effs = []
             all_powers = []
+            all_npshrs = []
             
             for curve in curves:
                 points = curve.get('performance_points', [])
@@ -78,6 +79,8 @@ class ChartIntelligence:
                     all_effs.append(point.get('efficiency_pct', 0))
                     if point.get('power_kw'):
                         all_powers.append(point['power_kw'])
+                    if point.get('npshr_m'):
+                        all_npshrs.append(point['npshr_m'])
             
             if all_flows and all_heads:
                 # Calculate optimal ranges with margin
@@ -85,24 +88,26 @@ class ChartIntelligence:
                 
                 config['axis_ranges'] = {
                     'flow': {
-                        'min': 0,  # Always start at 0 for flow
+                        'min': min(all_flows) * 0.9 if all_flows else 0,  # Start below minimum data
                         'max': max(all_flows) * (1 + margin)
                     },
                     'head': {
-                        'min': 0,  # Always start at 0 for head
+                        'min': min(all_heads) * 0.9 if all_heads else 0,  # Start below minimum data
                         'max': max(all_heads) * (1 + margin)
                     },
                     'efficiency': {
-                        'min': 0,
-                        'max': min(100, max(all_effs) * (1 + margin * 0.5))
+                        'min': max(0, min(all_effs) - 5) if all_effs else 0,  # Start 5% below minimum
+                        'max': min(100, max(all_effs) + 5) if all_effs else 100  # End 5% above maximum
+                    },
+                    'power': {
+                        'min': min(all_powers) * 0.9 if all_powers else 0,
+                        'max': max(all_powers) * (1 + margin) if all_powers else 200
+                    },
+                    'npshr': {
+                        'min': 0,  # NPSHr always starts from 0 for safety visualization
+                        'max': max(all_npshrs) * 1.2 if all_npshrs else 20  # 20% margin above max
                     }
                 }
-                
-                if all_powers:
-                    config['axis_ranges']['power'] = {
-                        'min': 0,
-                        'max': max(all_powers) * (1 + margin)
-                    }
             
             # Configure display options based on context
             if context == 'web':
@@ -282,12 +287,12 @@ class ChartIntelligence:
                 flow_max = max(all_flows)
                 # Round up to nice number
                 flow_max_rounded = self._round_up_nice(flow_max * 1.1)
-                ranges['flow'] = {'min': 0, 'max': int(flow_max_rounded)}
+                ranges['flow'] = {'min': int(min(all_flows) * 0.9), 'max': int(flow_max_rounded)}
             
             if all_heads:
                 head_max = max(all_heads)
                 head_max_rounded = self._round_up_nice(head_max * 1.1)
-                ranges['head'] = {'min': 0, 'max': int(head_max_rounded)}
+                ranges['head'] = {'min': int(min(all_heads) * 0.9), 'max': int(head_max_rounded)}
             
             if all_effs:
                 eff_max = min(100, max(all_effs) * 1.05)
@@ -351,6 +356,9 @@ class ChartIntelligence:
                 logger.warning(f"No curves available for pump {pump_code}")
                 return {}
             
+            # Get optimal configuration with calculated axis ranges - BRAIN INTELLIGENCE
+            optimal_config = self.get_optimal_config(pump, 'web')
+            
             # Build complete chart data structure - BRAIN INTELLIGENCE
             chart_data = {
                 'pump_code': pump_code,
@@ -376,9 +384,9 @@ class ChartIntelligence:
                 },
                 'brain_config': {
                     'context': 'web',
-                    'annotations': [],
-                    'axis_ranges': {'flow': {'min': 0, 'max': 600}, 'head': {'min': 0, 'max': 100}},
-                    'display_options': {'interactive': True, 'show_hover': True}
+                    'annotations': optimal_config.get('annotations', []),
+                    'axis_ranges': optimal_config.get('axis_ranges', {'flow': {'min': 0, 'max': 600}, 'head': {'min': 0, 'max': 100}}),
+                    'display_options': optimal_config.get('display_options', {'interactive': True, 'show_hover': True})
                 },
                 'metadata': {
                     'flow_units': 'm³/hr', 'head_units': 'm', 'efficiency_units': '%',
@@ -491,6 +499,54 @@ class ChartIntelligence:
                     'npshr_data': npshr_data,
                     'is_selected': is_selected
                 })
+            
+            # Calculate power and NPSHr axis ranges from generated curve data
+            all_power_values = []
+            all_npshr_values = []
+            for curve in chart_data['curves']:
+                power_data = curve.get('power_data', [])
+                npshr_data = curve.get('npshr_data', [])
+                all_power_values.extend([p for p in power_data if p and p > 0])
+                all_npshr_values.extend([n for n in npshr_data if n and n > 0])
+            
+            if all_power_values:
+                margin = 0.1  # 10% margin
+                power_min = min(all_power_values) * 0.9
+                power_max = max(all_power_values) * (1 + margin)
+                chart_data['brain_config']['axis_ranges']['power'] = {
+                    'min': power_min,
+                    'max': power_max
+                }
+                logger.info(f"Generated power axis range from curve data: min={power_min:.2f}, max={power_max:.2f}")
+            
+            if all_npshr_values:
+                npshr_max = max(all_npshr_values) * 1.2  # 20% margin
+                chart_data['brain_config']['axis_ranges']['npshr'] = {
+                    'min': 0,  # NPSHr always starts from 0
+                    'max': npshr_max
+                }
+                logger.info(f"Generated NPSHr axis range from curve data: min=0, max={npshr_max:.2f}")
+            
+            # FORCE efficiency axis ranges from generated curve data - OVERRIDE initial calculation
+            all_efficiency_values = []
+            for curve in chart_data['curves']:
+                efficiency_data = curve.get('efficiency_data', [])
+                all_efficiency_values.extend([e for e in efficiency_data if e and e > 0])
+            
+            # ALWAYS update efficiency ranges with curve data (more accurate than initial calculation)
+            if all_efficiency_values:
+                efficiency_min = max(0, min(all_efficiency_values) - 5)  # Start 5% below minimum, but not below 0
+                efficiency_max = min(100, max(all_efficiency_values) + 5)  # End 5% above maximum, but not above 100
+                # FORCE override the axis ranges
+                if 'axis_ranges' not in chart_data['brain_config']:
+                    chart_data['brain_config']['axis_ranges'] = {}
+                chart_data['brain_config']['axis_ranges']['efficiency'] = {
+                    'min': efficiency_min,
+                    'max': efficiency_max
+                }
+                logger.info(f"OVERRIDE: Generated efficiency axis range from curve data: min={efficiency_min:.2f}, max={efficiency_max:.2f} (min_data={min(all_efficiency_values)}, max_data={max(all_efficiency_values)})")
+            else:
+                logger.warning("OVERRIDE: No efficiency values found in curve data for axis range calculation")
             
             logger.info(f"Brain generated chart payload for {pump_code} with {len(chart_data['curves'])} curves")
             return chart_data

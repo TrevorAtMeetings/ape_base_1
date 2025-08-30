@@ -37,8 +37,8 @@
 </div>
 
 <!-- Admin-specific CSS -->
-<link href="{{ url_for('static', filename='css/admin_theme.css') }}?v={{ range(1000, 9999) | random }}" rel="stylesheet">
+<link href="{{ url_for('static', filename='css/admin_theme.css') }}?v={{ app_version }}" rel="stylesheet">
 
 <!-- Admin-specific JavaScript -->
-<script src="{{ url_for('static', filename='js/admin.js') }}?v={{ range(1000, 9999) | random }}"></script>
+<script src="{{ url_for('static', filename='js/admin.js') }}?v={{ app_version }}"></script>
 {% endblock %}

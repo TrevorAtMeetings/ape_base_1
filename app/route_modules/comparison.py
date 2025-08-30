@@ -21,13 +21,88 @@ comparison_bp = Blueprint('comparison', __name__)
 def pump_comparison():
     """Brain-only pump comparison - evaluates fresh on every page load."""
     try:
+        # Check if we have URL parameters (new direct access method)
+        flow = request.args.get('flow', type=float)
+        head = request.args.get('head', type=float)
+        pump_type = request.args.get('pump_type', default='GENERAL')
+        
         # Get pump identifiers from session - minimal data only
         comparison_identifiers = session.get('comparison_list', [])
         
-        logger.info(f"Comparison page - Found {len(comparison_identifiers)} pumps in session")
+        logger.info(f"Comparison page - Found {len(comparison_identifiers)} pumps in session, URL params: flow={flow}, head={head}, pump_type={pump_type}")
         
-        # If no pumps to compare, redirect to home with message
-        if not comparison_identifiers:
+        # If we have URL parameters but no session pumps, auto-select pumps for comparison
+        if not comparison_identifiers and flow and head:
+            logger.info("No pumps in session but have URL params - auto-selecting pumps for comparison")
+            
+            # Get Brain for pump selection
+            brain = get_pump_brain()
+            if not brain:
+                safe_flash('Brain system unavailable for comparison.', 'error')
+                return redirect(url_for('main_flow.index'))
+            
+            # Use Brain to find best pumps
+            site_requirements = {
+                'flow_m3hr': flow,
+                'head_m': head,
+                'pump_type': pump_type
+            }
+            
+            pump_result = brain.find_best_pumps(
+                site_requirements=site_requirements
+            )
+            
+            # Extract pumps from the result - returns {'ranked_pumps': [...], 'exclusion_details': ...}
+            pump_selections = []
+            if pump_result and isinstance(pump_result, dict):
+                # The method returns a dict with 'ranked_pumps' key
+                if 'ranked_pumps' in pump_result:
+                    pump_selections = pump_result['ranked_pumps'][:5]  # Take top 5
+                    logger.info(f"Found {len(pump_selections)} pumps from ranked_pumps")
+                    if pump_selections:
+                        first_pump = pump_selections[0]
+                        if isinstance(first_pump, dict):
+                            logger.info(f"First pump structure (dict): keys = {list(first_pump.keys())[:10]}")
+                        else:
+                            logger.info(f"First pump structure (object): type = {type(first_pump)}, attrs = {dir(first_pump)[:10]}")
+                else:
+                    logger.warning(f"No 'ranked_pumps' key found. Keys available: {list(pump_result.keys())}")
+            
+            if not pump_selections:
+                safe_flash('No pumps found matching the requirements.', 'info')
+                return redirect(url_for('main_flow.index'))
+            
+            # Convert to comparison identifiers format
+            comparison_identifiers = []
+            for pump in pump_selections:
+                # Handle different possible pump object structures
+                if isinstance(pump, dict):
+                    pump_code = pump.get('pump_code') or pump.get('pump', {}).get('pump_code') or pump.get('id')
+                elif hasattr(pump, 'pump_code'):
+                    pump_code = pump.pump_code
+                elif hasattr(pump, 'pump') and hasattr(pump.pump, 'pump_code'):
+                    pump_code = pump.pump.pump_code
+                else:
+                    logger.warning(f"Unable to extract pump_code from: {pump}")
+                    continue
+                    
+                comparison_identifiers.append({
+                    'pump_code': pump_code,
+                    'flow_m3hr': flow,
+                    'head_m': head,
+                    'pump_type': pump_type
+                })
+            
+            # Store in session for future use
+            session['comparison_list'] = comparison_identifiers
+            
+            logger.info(f"Auto-selected {len(comparison_identifiers)} pumps for comparison")
+            
+            # Important: Continue with the comparison rather than redirect
+            # This preserves the flow/head parameters in the URL
+        
+        # If still no pumps to compare, redirect to home with message
+        elif not comparison_identifiers:
             safe_flash('Please add pumps to compare from the selection results page.', 'info')
             return redirect(url_for('main_flow.index'))
         
@@ -42,8 +117,9 @@ def pump_comparison():
         for identifier in comparison_identifiers:
             try:
                 pump_code = identifier['pump_code']
-                flow = identifier['flow']
-                head = identifier['head']
+                # Handle both old format (flow/head) and new format (flow_m3hr/head_m)
+                flow = identifier.get('flow_m3hr') or identifier.get('flow', 0)
+                head = identifier.get('head_m') or identifier.get('head', 0)
                 
                 logger.info(f"Evaluating {pump_code} at {flow} m³/hr, {head} m")
                 
@@ -141,13 +217,26 @@ def pump_comparison():
             }
             pump_comparisons.append(pump_comparison)
         
+        # Convert dictionaries to objects with attribute access for template compatibility
+        class PumpComparison:
+            def __init__(self, data):
+                self.__dict__.update(data)
+            
+            def get(self, key, default=None):
+                """Support dictionary-like get method for template compatibility"""
+                return getattr(self, key, default)
+        
+        pump_comparison_objects = [PumpComparison(pump) for pump in pump_comparisons]
+        
         return render_template('pump_comparison.html',
-                             pump_comparisons=pump_comparisons,
+                             pump_comparisons=pump_comparison_objects,
                              site_requirements=site_requirements,
                              breadcrumbs=[])
     except Exception as e:
+        import traceback
         logger.error(f"Error in pump_comparison: {str(e)}")
-        safe_flash('Error loading comparison data.', 'error')
+        logger.error(f"Traceback: {traceback.format_exc()}")
+        safe_flash(f'Error loading comparison data: {str(e)}', 'error')
         return redirect(url_for('main_flow.index'))
 
 @comparison_bp.route('/pump_comparison')
@@ -224,30 +313,46 @@ def shortlist_comparison():
             safe_flash('Brain system unavailable for shortlist comparison', 'error')
             return redirect(url_for('comparison.pump_comparison'))
         
+        # Create object class for template compatibility
+        class ShortlistPump:
+            def __init__(self, pump_code, evaluation):
+                self.pump_code = pump_code
+                self.evaluation = evaluation
+                self.performance = evaluation  # Alias for template compatibility
+                # Add any nested attributes the template expects
+                self.pump = type('obj', (object,), {
+                    'pump_code': pump_code,
+                    'max_flow_m3hr': evaluation.get('max_flow_m3hr', 0),
+                    'max_head_m': evaluation.get('max_head_m', 0)
+                })()
+            
+            def get(self, key, default=None):
+                """Support dictionary-like get method"""
+                return getattr(self, key, default)
+        
         shortlist_pumps = []
         for pump_code in pump_codes:
             evaluation = brain.evaluate_pump(pump_code, flow, head)
             if evaluation and not evaluation.get('excluded'):
-                shortlist_pumps.append({
-                    'pump_code': pump_code,
-                    'evaluation': evaluation,
-                    'performance': evaluation  # Alias for template compatibility
-                })
+                shortlist_pumps.append(ShortlistPump(pump_code, evaluation))
         
-        site_requirements = validate_site_requirements({
+        # Create simple site requirements object
+        site_requirements = {
             'flow_m3hr': flow,
             'head_m': head,
             'application_type': request.args.get('application_type', 'water_supply'),
             'liquid_type': request.args.get('liquid_type', 'clean_water')
-        })
+        }
         
         return render_template('shortlist_comparison.html',
                              shortlist_pumps=shortlist_pumps,
-                             site_requirements=site_requirements.__dict__)
+                             site_requirements=site_requirements)
                              
     except Exception as e:
+        import traceback
         logger.error(f"Error in shortlist comparison: {str(e)}")
-        safe_flash('Error loading shortlist comparison', 'error')
+        logger.error(f"Traceback: {traceback.format_exc()}")
+        safe_flash(f'Error loading shortlist comparison: {str(e)}', 'error')
         return redirect(url_for('comparison.pump_comparison'))
 
 @comparison_bp.route('/generate_comparison_pdf')
@@ -337,4 +442,145 @@ def generate_comparison_pdf():
     except Exception as e:
         logger.error(f"Error generating comparison PDF: {str(e)}")
         safe_flash('Error generating comparison PDF.', 'error')
-        return redirect(url_for('comparison.pump_comparison')) 
+        return redirect(url_for('comparison.pump_comparison'))
+
+
+@comparison_bp.route('/api/comparison/add', methods=['POST'])
+def add_to_comparison():
+    """API endpoint to add a pump to the comparison session."""
+    try:
+        data = request.get_json()
+        
+        if not data or 'pump_code' not in data:
+            return jsonify({
+                'success': False,
+                'error': 'Pump code is required'
+            }), 400
+        
+        # Get current comparison list from session
+        comparison_list = session.get('comparison_list', [])
+        
+        # Create pump identifier object
+        pump_identifier = {
+            'pump_code': data['pump_code'],
+            'flow_m3hr': data.get('flow_m3hr', 0),
+            'head_m': data.get('head_m', 0),
+            'pump_type': data.get('pump_type', 'GENERAL')
+        }
+        
+        # Check if pump is already in comparison list
+        existing_codes = [p['pump_code'] for p in comparison_list]
+        if pump_identifier['pump_code'] in existing_codes:
+            return jsonify({
+                'success': False,
+                'error': f'Pump {pump_identifier["pump_code"]} is already in comparison list'
+            }), 400
+        
+        # Add pump to comparison list
+        comparison_list.append(pump_identifier)
+        
+        # Limit comparison list to 5 pumps max
+        if len(comparison_list) > 5:
+            comparison_list = comparison_list[-5:]
+        
+        # Update session
+        session['comparison_list'] = comparison_list
+        
+        logger.info(f"Added pump {pump_identifier['pump_code']} to comparison. Total: {len(comparison_list)} pumps")
+        
+        return jsonify({
+            'success': True,
+            'message': f'Pump {pump_identifier["pump_code"]} added to comparison',
+            'count': len(comparison_list),
+            'pumps': [p['pump_code'] for p in comparison_list]
+        })
+        
+    except Exception as e:
+        logger.error(f"Error adding pump to comparison: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': 'An error occurred while adding pump to comparison'
+        }), 500
+
+
+@comparison_bp.route('/api/comparison/remove', methods=['POST'])
+def remove_from_comparison():
+    """API endpoint to remove a pump from the comparison session."""
+    try:
+        data = request.get_json()
+        
+        if not data or 'pump_code' not in data:
+            return jsonify({
+                'success': False,
+                'error': 'Pump code is required'
+            }), 400
+        
+        # Get current comparison list from session
+        comparison_list = session.get('comparison_list', [])
+        
+        # Remove pump from comparison list
+        pump_code = data['pump_code']
+        comparison_list = [p for p in comparison_list if p['pump_code'] != pump_code]
+        
+        # Update session
+        session['comparison_list'] = comparison_list
+        
+        logger.info(f"Removed pump {pump_code} from comparison. Remaining: {len(comparison_list)} pumps")
+        
+        return jsonify({
+            'success': True,
+            'message': f'Pump {pump_code} removed from comparison',
+            'count': len(comparison_list),
+            'pumps': [p['pump_code'] for p in comparison_list]
+        })
+        
+    except Exception as e:
+        logger.error(f"Error removing pump from comparison: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': 'An error occurred while removing pump from comparison'
+        }), 500
+
+
+@comparison_bp.route('/api/comparison/clear', methods=['POST'])
+def clear_comparison():
+    """API endpoint to clear all pumps from the comparison session."""
+    try:
+        session['comparison_list'] = []
+        
+        logger.info("Cleared comparison list")
+        
+        return jsonify({
+            'success': True,
+            'message': 'Comparison list cleared',
+            'count': 0,
+            'pumps': []
+        })
+        
+    except Exception as e:
+        logger.error(f"Error clearing comparison: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': 'An error occurred while clearing comparison'
+        }), 500
+
+
+@comparison_bp.route('/api/comparison/status')
+def comparison_status():
+    """API endpoint to get current comparison status."""
+    try:
+        comparison_list = session.get('comparison_list', [])
+        
+        return jsonify({
+            'success': True,
+            'count': len(comparison_list),
+            'pumps': [p['pump_code'] for p in comparison_list],
+            'full_list': comparison_list
+        })
+        
+    except Exception as e:
+        logger.error(f"Error getting comparison status: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': 'An error occurred while getting comparison status'
+        }), 500 

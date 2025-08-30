@@ -12,13 +12,22 @@
     --nav-transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* CRITICAL FIX: Force overflow visible on all parent elements */
+body {
+    overflow-x: visible !important;
+}
+
+main {
+    overflow: visible !important;
+}
+
 .unified-nav {
     background: var(--nav-surface);
     box-shadow: var(--nav-shadow);
     border-bottom: 1px solid var(--nav-border);
     position: sticky;
     top: 0;
-    z-index: 1000;
+    z-index: 1100;
     font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
 }
 
@@ -30,8 +39,8 @@
     align-items: center;
     justify-content: space-between;
     min-height: 64px;
-    overflow-x: auto;
-    overflow-y: hidden;
+    overflow: visible !important;
+    position: relative;
 }
 
 .nav-brand {
@@ -47,13 +56,6 @@
     transform: translateX(2px);
 }
 
-.nav-actions {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-shrink: 0;
-    min-width: 0;
-}
 
 .nav-dropdown {
     position: relative;
@@ -98,6 +100,14 @@
     transform: translateY(-1px);
 }
 
+/* Ensure link nav-btns behave consistently */
+a.nav-btn:hover {
+    background: rgba(21, 101, 192, 0.08);
+    color: var(--nav-primary);
+    transform: translateY(-1px);
+    text-decoration: none;
+}
+
 .nav-btn.primary {
     background: linear-gradient(135deg, var(--nav-primary) 0%, var(--nav-primary-hover) 100%);
     color: white;
@@ -110,24 +120,6 @@
     box-shadow: 0 4px 16px rgba(21, 101, 192, 0.4);
 }
 
-.nav-dropdown-content {
-    position: absolute;
-    top: calc(100% + 4px);
-    left: 0;
-    min-width: 180px;
-    background: white;
-    border-radius: 8px;
-    box-shadow: var(--nav-dropdown-shadow);
-    border: 1px solid var(--nav-border);
-    opacity: 0;
-    visibility: hidden;
-    transform: translateY(-4px);
-    transition: var(--nav-transition);
-    z-index: 1001;
-    overflow: hidden;
-    max-height: 300px;
-    padding: 4px 0;
-}
 
 /* Fix dropdown positioning for right-aligned items */
 .nav-actions > .nav-dropdown:last-child .nav-dropdown-content,
@@ -174,6 +166,86 @@
 
 .nav-dropdown-content a:hover .material-icons-round {
     opacity: 1;
+}
+
+/* Breadcrumb Styles */
+.breadcrumb-bar {
+    background: #fafafa;
+    border-bottom: 1px solid var(--nav-border);
+    padding: 8px 0;
+    position: relative;
+    z-index: 500;
+}
+
+.breadcrumb-list {
+    display: flex;
+    align-items: center;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    flex-wrap: wrap;
+}
+
+.breadcrumb-item {
+    display: flex;
+    align-items: center;
+}
+
+.breadcrumb-link {
+    color: var(--nav-on-surface);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    transition: color 0.3s;
+}
+
+.breadcrumb-link:hover {
+    color: var(--nav-primary);
+}
+
+.breadcrumb-current {
+    color: var(--nav-primary);
+    font-weight: 500;
+}
+
+/* Nav Spacer */
+.nav-spacer {
+    height: 20px;
+}
+
+/* Fix for dropdown positioning */
+.nav-dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+    min-width: 0;
+    position: relative;
+    z-index: 1002;
+}
+
+/* Ensure dropdowns appear above everything */
+.nav-dropdown-content {
+    position: fixed !important;
+    min-width: 180px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: var(--nav-dropdown-shadow);
+    border: 1px solid var(--nav-border);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-4px);
+    transition: var(--nav-transition);
+    z-index: 99999 !important;
+    overflow-y: auto !important;
+    overflow-x: visible !important;
+    max-height: 400px !important;
+    padding: 4px 0;
 }
 
 /* Responsive Design */
@@ -267,13 +339,53 @@
             button.setAttribute('aria-haspopup', 'true');
             button.setAttribute('aria-expanded', 'false');
             
-            // Click handler
+            const dropdown = button.parentElement;
+            const dropdownContent = dropdown.querySelector('.nav-dropdown-content');
+            
+            if (!dropdownContent) return;
+            
+            let hoverTimeout;
+            
+            // Hover functionality
+            dropdown.addEventListener('mouseenter', function() {
+                clearTimeout(hoverTimeout);
+                
+                // Close all other dropdowns first
+                closeAllDropdowns();
+                
+                // Position the dropdown relative to the button (for fixed positioning)
+                const rect = button.getBoundingClientRect();
+                dropdownContent.style.top = (rect.bottom + 4) + 'px';
+                dropdownContent.style.left = rect.left + 'px';
+                
+                // Show this dropdown
+                dropdownContent.classList.add('show');
+                button.setAttribute('aria-expanded', 'true');
+            });
+            
+            dropdown.addEventListener('mouseleave', function() {
+                hoverTimeout = setTimeout(() => {
+                    dropdownContent.classList.remove('show');
+                    button.setAttribute('aria-expanded', 'false');
+                }, 150); // Small delay to prevent flickering
+            });
+            
+            // Keep dropdown open when hovering over the dropdown content
+            dropdownContent.addEventListener('mouseenter', function() {
+                clearTimeout(hoverTimeout);
+            });
+            
+            dropdownContent.addEventListener('mouseleave', function() {
+                hoverTimeout = setTimeout(() => {
+                    dropdownContent.classList.remove('show');
+                    button.setAttribute('aria-expanded', 'false');
+                }, 150);
+            });
+            
+            // Click handler (still works for touch devices)
             button.addEventListener('click', function(e) {
                 e.preventDefault();
                 e.stopPropagation();
-                
-                const dropdownContent = this.parentElement.querySelector('.nav-dropdown-content');
-                if (!dropdownContent) return;
                 
                 const isOpen = dropdownContent.classList.contains('show');
                 
@@ -282,6 +394,11 @@
                 
                 // Toggle this dropdown
                 if (!isOpen) {
+                    // Position the dropdown relative to the button (for fixed positioning)
+                    const rect = this.getBoundingClientRect();
+                    dropdownContent.style.top = (rect.bottom + 4) + 'px';
+                    dropdownContent.style.left = rect.left + 'px';
+                    
                     dropdownContent.classList.add('show');
                     this.setAttribute('aria-expanded', 'true');
                     
@@ -329,7 +446,7 @@
             });
         });
         
-        // Close dropdowns when clicking outside
+        // Close dropdowns when clicking outside (but not on hover)
         document.addEventListener('click', function(e) {
             if (!e.target.closest('.nav-dropdown')) {
                 closeAllDropdowns();

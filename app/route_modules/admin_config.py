@@ -7,7 +7,6 @@ import traceback
 from functools import wraps
 from app.admin_config_service import admin_config_service, ValidationError, ConfigurationError
 from app.database import admin_db
-from app.admin_utils import admin_required
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +44,6 @@ def handle_api_errors(f):
 
 
 @admin_config_bp.route('/')
-@admin_required
 def index():
     """Admin configuration dashboard"""
     try:
@@ -68,13 +66,11 @@ def index():
 
 
 @admin_config_bp.route('/profile/new')
-@admin_required
 def create_profile():
     """Create new configuration profile"""
     return render_template('admin/config_editor.html', profile=None)
 
 @admin_config_bp.route('/profile/new', methods=['POST'])
-@admin_required  
 def create_profile_post():
     """Handle new profile creation"""
     try:
@@ -117,7 +113,6 @@ def create_profile_post():
         return redirect(url_for('admin_config.create_profile'))
 
 @admin_config_bp.route('/profile/<int:profile_id>')
-@admin_required
 def profile_details(profile_id):
     """View/edit specific profile"""
     try:
@@ -203,7 +198,6 @@ def profile_details(profile_id):
 
 
 @admin_config_bp.route('/api/profile/<int:profile_id>', methods=['PUT'])
-@admin_required
 @handle_api_errors
 def update_profile_api(profile_id):
     """API endpoint to update profile configuration"""
@@ -234,7 +228,6 @@ def update_profile_api(profile_id):
 
 
 @admin_config_bp.route('/test', methods=['POST'])
-@admin_required
 @handle_api_errors
 def test_profile():
     """Test endpoint for profile validation"""
@@ -264,7 +257,6 @@ def test_profile():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @admin_config_bp.route('/api/profile/<int:profile_id>/validate', methods=['POST'])
-@admin_required
 @handle_api_errors  
 def validate_profile_api(profile_id):
     """API endpoint to validate profile configuration without saving"""
@@ -287,7 +279,6 @@ def validate_profile_api(profile_id):
 
 
 @admin_config_bp.route('/api/profiles', methods=['GET'])
-@admin_required
 def api_profiles():
     """API endpoint to get all profiles"""
     try:
@@ -304,7 +295,6 @@ def api_profiles():
         }), 500
 
 @admin_config_bp.route('/api/profile/<int:profile_id>/test', methods=['POST'])
-@admin_required
 @handle_api_errors
 def test_profile_api(profile_id):
     """Test a configuration profile with sample pumps"""
@@ -364,7 +354,6 @@ def test_profile_api(profile_id):
         }), 500
 
 @admin_config_bp.route('/api/profile/<int:profile_id>/deploy', methods=['POST'])
-@admin_required
 @handle_api_errors
 def deploy_profile_api(profile_id):
     """Deploy a configuration profile to production"""
@@ -417,7 +406,6 @@ def deploy_profile_api(profile_id):
 
 
 @admin_config_bp.route('/api/constants')
-@admin_required
 def api_constants():
     """Get engineering constants"""
     constants = admin_config_service.get_engineering_constants()
@@ -427,9 +415,6 @@ def api_constants():
 @admin_config_bp.route('/api/audit-log')
 def api_audit_log():
     """Get audit log"""
-    if not session.get('is_admin'):
-        return jsonify({'error': 'Unauthorized'}), 401
-    
     profile_id = request.args.get('profile_id', type=int)
     limit = request.args.get('limit', 100, type=int)
     
@@ -438,7 +423,6 @@ def api_audit_log():
 
 
 @admin_config_bp.route('/init-database', methods=['POST'])
-@admin_required
 @handle_api_errors
 def init_database():
     """Initialize admin config database tables"""

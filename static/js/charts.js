@@ -298,30 +298,57 @@ class ChartManager {
     }
 
     createLayout(config, traces) {
-        // Calculate data ranges from traces - only show actual pump curve data
-        const allX = traces.flatMap(t => t.x || []).filter(x => !isNaN(x));
-        const allY = traces.flatMap(t => t.y || []).filter(y => !isNaN(y));
-        
-        // For pump curves, only show the actual data range with minimal padding
-        // Don't extend beyond the valid pump curve data
+        // Check if backend provided optimal axis ranges via brain_config
         let xRange, yRange;
         
-        if (allX.length > 0) {
-            const minX = Math.min(...allX);
-            const maxX = Math.max(...allX);
-            const xPadding = (maxX - minX) * 0.02; // Only 2% padding for visibility
-            xRange = [Math.max(0, minX - xPadding), maxX + xPadding];
-        } else {
-            xRange = [0, 100];
+        const brainConfig = this.currentChartData?.brain_config;
+        const axisRanges = brainConfig?.axis_ranges;
+        
+        if (axisRanges) {
+            // Use backend-calculated axis ranges (data-driven, not starting from 0)
+            const chartTypeToAxis = {
+                'head_data': { x: 'flow', y: 'head' },
+                'efficiency_data': { x: 'flow', y: 'efficiency' },
+                'power_data': { x: 'flow', y: 'power' }, // Will fall back to calculated if not available
+                'npshr_data': { x: 'flow', y: 'npshr' } // Use dedicated NPSHr range
+            };
+            
+            const axisMapping = chartTypeToAxis[config.dataKey] || { x: 'flow', y: 'head' };
+            const xAxisRange = axisRanges[axisMapping.x];
+            const yAxisRange = axisRanges[axisMapping.y];
+            
+            // Only use backend ranges if they exist, otherwise fall back to calculated
+            xRange = xAxisRange ? [xAxisRange.min, xAxisRange.max] : null;
+            yRange = yAxisRange ? [yAxisRange.min, yAxisRange.max] : null;
+            
+            console.log(`[AXIS DEBUG] Backend axis mapping for ${config.dataKey}: x=${axisMapping.x}, y=${axisMapping.y}`);
+            console.log(`[AXIS DEBUG] Backend ranges available: x=${xAxisRange ? 'YES' : 'NO'}, y=${yAxisRange ? 'YES' : 'NO'}`);
+            console.log(`[AXIS DEBUG] Using ranges: x=${JSON.stringify(xRange)}, y=${JSON.stringify(yRange)}`);
         }
         
-        if (allY.length > 0) {
-            const minY = Math.min(...allY);
-            const maxY = Math.max(...allY);
-            const yPadding = (maxY - minY) * 0.05; // 5% padding for y-axis
-            yRange = [Math.max(0, minY - yPadding), maxY + yPadding];
-        } else {
-            yRange = [0, 100];
+        // Fallback to calculated ranges if backend ranges not available
+        if (!xRange || !yRange) {
+            console.log(`[AXIS DEBUG] Backend ranges not available, calculating from trace data`);
+            const allX = traces.flatMap(t => t.x || []).filter(x => !isNaN(x));
+            const allY = traces.flatMap(t => t.y || []).filter(y => !isNaN(y));
+            
+            if (!xRange && allX.length > 0) {
+                const minX = Math.min(...allX);
+                const maxX = Math.max(...allX);
+                const xPadding = (maxX - minX) * 0.02;
+                xRange = [Math.max(0, minX - xPadding), maxX + xPadding];
+            } else if (!xRange) {
+                xRange = [0, 100];
+            }
+            
+            if (!yRange && allY.length > 0) {
+                const minY = Math.min(...allY);
+                const maxY = Math.max(...allY);
+                const yPadding = (maxY - minY) * 0.05;
+                yRange = [Math.max(0, minY - yPadding), maxY + yPadding];
+            } else if (!yRange) {
+                yRange = [0, 100];
+            }
         }
 
         return {

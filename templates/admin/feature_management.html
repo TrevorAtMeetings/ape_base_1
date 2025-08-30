@@ -11,8 +11,8 @@
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
     
     <!-- Custom Admin CSS -->
-    <link href="{{ url_for('static', filename='css/admin_executive_theme.css') }}?v={{ range(1000, 9999) | random }}" rel="stylesheet">
-    <link href="{{ url_for('static', filename='css/responsive-fixes.css') }}?v={{ range(1000, 9999) | random }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/admin_executive_theme.css') }}?v={{ app_version }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/responsive-fixes.css') }}?v={{ app_version }}" rel="stylesheet">
     
     <style>
         :root {

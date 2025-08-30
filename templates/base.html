@@ -13,12 +13,16 @@
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet">
 
-    <!-- Custom CSS - Executive-Grade Design System -->
-    <link href="{{ url_for('static', filename='css/style.css') }}?v={{ range(1000, 9999) | random }}" rel="stylesheet">
-    <link href="{{ url_for('static', filename='css/professional-theme.css') }}?v={{ range(1000, 9999) | random }}" rel="stylesheet">
-    <link href="{{ url_for('static', filename='css/admin_executive_theme.css') }}?v={{ range(1000, 9999) | random }}" rel="stylesheet">
-    <link href="{{ url_for('static', filename='css/responsive-fixes.css') }}?v={{ range(1000, 9999) | random }}" rel="stylesheet">
-    <link href="{{ url_for('static', filename='css/floating-ai-chat.css') }}?v={{ range(1000, 9999) | random }}" rel="stylesheet">
+    <!-- Unified Design System -->
+    <link href="{{ url_for('static', filename='css/design-system.css') }}?v={{ app_version }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/components.css') }}?v={{ app_version }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/utilities.css') }}?v={{ app_version }}" rel="stylesheet">
+    
+    <!-- Feature-specific CSS (will be consolidated later) -->
+    <link href="{{ url_for('static', filename='css/floating-ai-chat.css') }}?v={{ app_version }}" rel="stylesheet">
+    
+    <!-- Page-specific CSS -->
+    {% block head %}{% endblock %}
 
 
     <!-- MathJax for LaTeX rendering -->
