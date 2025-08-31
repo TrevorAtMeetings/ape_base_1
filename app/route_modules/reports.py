@@ -508,19 +508,8 @@ def pump_report_v2(pump_code):
         # Adapt alternatives for V2 compatibility
         alternatives = adapter.adapt_alternatives_list(alternatives)
         
-        # Get AI analysis if available (existing feature)
+        # Skip AI analysis - will be loaded via AJAX for better performance
         ai_analysis = None
-        try:
-            ai_analyst = brain.ai_analyst
-            if ai_analyst:
-                analysis_result = ai_analyst.generate_pump_analysis(
-                    evaluation_result, {'flow_m3hr': flow, 'head_m': head}
-                )
-                if analysis_result and analysis_result.get('success'):
-                    ai_analysis = analysis_result
-                    logger.info(f"AI analysis generated for V2 report: {pump_code}")
-        except Exception as e:
-            logger.warning(f"AI analysis not available for V2 report: {e}")
         
         # Enhanced template data structure
         template_data = {
@@ -556,6 +545,46 @@ def pump_report_v2(pump_code):
         safe_flash("Enhanced report features not available. Using standard report.", "warning")
         # Fallback to original route (zero risk)
         return redirect(url_for('reports.pump_report', pump_code=pump_code, flow=flow, head=head))
+
+@reports_bp.route('/api/ai_analysis/<path:pump_code>')
+def ai_analysis_ajax(pump_code):
+    """AJAX endpoint for AI analysis to improve page load performance"""
+    pump_code = unquote(pump_code)
+    
+    # Get parameters
+    flow = request.args.get('flow', type=float)
+    head = request.args.get('head', type=float)
+    
+    if not (flow and head):
+        return jsonify({'success': False, 'error': 'Flow and head parameters required'})
+    
+    try:
+        from ..pump_brain import get_pump_brain
+        brain = get_pump_brain()
+        
+        # Get pump evaluation for AI analysis
+        evaluation_result = brain.evaluate_pump_enhanced(pump_code, flow, head)
+        if not evaluation_result or not evaluation_result.get('feasible'):
+            return jsonify({'success': False, 'error': 'Pump evaluation failed'})
+        
+        # Generate AI analysis
+        ai_analysis = None
+        ai_analyst = brain.ai_analyst
+        if ai_analyst:
+            analysis_result = ai_analyst.generate_pump_analysis(
+                evaluation_result, {'flow_m3hr': flow, 'head_m': head}
+            )
+            if analysis_result and analysis_result.get('success'):
+                ai_analysis = analysis_result
+        
+        if ai_analysis:
+            return jsonify({'success': True, 'ai_analysis': ai_analysis})
+        else:
+            return jsonify({'success': False, 'error': 'AI analysis not available'})
+            
+    except Exception as e:
+        logger.error(f"AI Analysis AJAX error: {str(e)}")
+        return jsonify({'success': False, 'error': 'AI analysis failed'})
         
     except Exception as e:
         logger.error(f"V2 EXCEPTION ERROR: {str(e)}")
