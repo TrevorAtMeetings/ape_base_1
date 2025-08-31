@@ -415,6 +415,16 @@
                 <div class="eng-title">PUMP DATA SHEET - {{ selected_pump.get('pump_code', 'N/A') }}</div>
                 <div class="eng-subtitle">APE PUMPS | Generated: {{ current_date }}</div>
             </div>
+            
+            <!-- View Report Button -->
+            <div>
+                <a href="{{ url_for('reports.pump_report_v2', pump_code=selected_pump.get('pump_code', ''), flow=site_requirements.get('flow_m3hr', 0), head=site_requirements.get('head_m', 0), pump_type=site_requirements.get('pump_type', 'GENERAL')) }}" 
+                   class="btn waves-effect waves-light" 
+                   style="background: #1976d2; color: white; padding: 12px 24px; border: none; border-radius: 4px; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600;">
+                    <i class="material-icons" style="font-size: 16px;">description</i>
+                    View Report
+                </a>
+            </div>
         </div>
 
         <!-- Engineering Analysis Controls - Perfect Bottom Alignment -->

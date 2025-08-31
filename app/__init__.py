@@ -46,6 +46,10 @@ app.config['SECRET_KEY'] = session_secret
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 31536000 if not app.config['DEBUG'] else 1
 
+# Simple cache control
+from .config.simple_cache import setup_caching
+setup_caching(app)
+
 # Production logging
 if not app.config['DEBUG']:
     logging.basicConfig(
