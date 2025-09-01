@@ -73,7 +73,7 @@ class ProcessLogger:
         logger.handlers = []
         
         # File handler with detailed formatting
-        handler = logging.FileHandler(log_file, encoding='utf-8')
+        handler = logging.FileHandler(log_file, mode='w', encoding='utf-8')
         formatter = logging.Formatter(
             '%(asctime)s | %(levelname)-8s | %(message)s',
             datefmt='%Y-%m-%d %H:%M:%S'
@@ -304,8 +304,8 @@ class ProcessLogger:
                     efficiency = pump.get('efficiency_pct', 0)
                     
                     # Log individual pump with both overall and tier ranking
-                    self.log(f"  {pump_code}: "
-                           f"Overall Rank #{overall_rank} | Tier Rank #{tier_rank} | "
+                    self.log(f"  Rank #{overall_rank}: {pump_code} | "
+                           f"Tier Rank #{tier_rank} | "
                            f"Score={score:.1f} | QBP={qbp:.1f}% | Eff={efficiency:.1f}%")
                     
                     overall_rank += 1
@@ -350,10 +350,20 @@ class ProcessLogger:
         if not self.enabled:
             return
             
-        # Close existing handlers
-        for handler in self.logger.handlers[:]:
-            handler.close()
-            self.logger.removeHandler(handler)
+        # Safe handler cleanup - handle already-closed handlers gracefully
+        if self.logger:
+            for handler in self.logger.handlers[:]:
+                try:
+                    handler.close()
+                except Exception:
+                    pass  # Handler already closed, ignore
+                try:
+                    self.logger.removeHandler(handler)
+                except Exception:
+                    pass  # Handler already removed, ignore
+            
+            # Clear handlers list to ensure clean state
+            self.logger.handlers = []
         
         # Reinitialize logger with flow/head in filename
         self.logger = self._setup_logger(flow, head)

@@ -273,7 +273,7 @@ class PumpBrain:
             raise ValueError(f"Pump {pump_id} not found")
         
         # Perform evaluation
-        evaluation = self.selection.evaluate_single_pump(pump_data, flow, head)
+        evaluation = self.selection.evaluate_single_pump(pump_data, flow, head, pump_id)
         
         return evaluation
     

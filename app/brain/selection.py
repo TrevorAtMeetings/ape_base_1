@@ -171,6 +171,7 @@ class SelectionIntelligence:
             pump_type = pump.get('pump_type', 'Unknown')
             
             # Comprehensive pre-filtering decision logging for ALL pumps
+            process_logger.log_separator()
             process_logger.log(f"PRE-FILTER ANALYSIS: {pump_code}")
             
             # Flow compatibility check
@@ -409,19 +410,6 @@ class SelectionIntelligence:
             }
             result.update({'exclusion_details': exclusion_details})
         
-        # Log final summary
-        process_logger.log_selection_summary(
-            total_pumps=len(all_pumps),
-            filtered_pumps=len(pump_models),
-            feasible_pumps=len(feasible_pumps),
-            exclusion_summary=exclusion_summary,
-            tiered_results={
-                'preferred': [p for p in feasible_pumps if p.get('operating_zone') == 'preferred'],
-                'allowable': [p for p in feasible_pumps if p.get('operating_zone') == 'allowable'],
-                'acceptable': [p for p in feasible_pumps if p.get('operating_zone') == 'acceptable'],
-                'marginal': [p for p in feasible_pumps if p.get('operating_zone') == 'marginal']
-            }
-        )
         
         # Log final rankings
         process_logger.log_final_rankings(feasible_pumps, excluded_pumps)
