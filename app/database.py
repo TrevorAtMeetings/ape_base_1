@@ -149,6 +149,9 @@ class AdminConfigDB:
                 
                 conn.commit()
                 logger.info("Admin configuration tables initialized successfully")
+                
+                # Ensure performance indexes are created
+                self.ensure_performance_indexes()
     
     def seed_engineering_constants(self):
         """Seed the locked engineering constants"""
@@ -434,6 +437,169 @@ class AdminConfigDB:
                 
                 conn.commit()
                 logger.info("Default application profiles seeded successfully")
+
+    def ensure_performance_indexes(self):
+        """Create performance indexes if they don't exist"""
+        
+        # Define critical performance indexes
+        indexes = [
+            # Primary pump data indexes
+            {
+                'name': 'idx_pump_specifications_pump_id',
+                'table': 'pump_specifications',
+                'columns': '(pump_id)',
+                'description': 'Speed up pump specification lookups'
+            },
+            {
+                'name': 'idx_pump_curves_pump_id',
+                'table': 'pump_curves', 
+                'columns': '(pump_id)',
+                'description': 'Speed up pump curve lookups'
+            },
+            {
+                'name': 'idx_pump_performance_points_curve_id',
+                'table': 'pump_performance_points',
+                'columns': '(curve_id)',
+                'description': 'Speed up performance point lookups'
+            },
+            {
+                'name': 'idx_pumps_pump_code',
+                'table': 'pumps',
+                'columns': '(pump_code)',
+                'description': 'Speed up pump code searches'
+            },
+            # Additional optimization indexes
+            {
+                'name': 'idx_pump_performance_points_flow_head',
+                'table': 'pump_performance_points',
+                'columns': '(flow_rate, head)',
+                'description': 'Speed up flow/head range queries'
+            },
+            # Admin config indexes
+            {
+                'name': 'idx_application_profiles_name_active',
+                'table': 'admin_config.application_profiles',
+                'columns': '(name, is_active)',
+                'where': 'WHERE is_active = TRUE',
+                'description': 'Speed up active profile lookups'
+            },
+            {
+                'name': 'idx_configuration_audits_profile_timestamp',
+                'table': 'admin_config.configuration_audits',
+                'columns': '(profile_id, timestamp DESC)',
+                'description': 'Speed up audit log retrieval'
+            }
+        ]
+        
+        created_count = 0
+        existed_count = 0
+        
+        # Check and create indexes one by one (CONCURRENTLY requires separate connections)
+        for index in indexes:
+            try:
+                # Use separate connection for each index to avoid transaction issues
+                conn = psycopg2.connect(self.database_url)
+                conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
+                cursor = conn.cursor()
+                
+                # Check if index exists
+                schema = 'admin_config' if 'admin_config.' in index['table'] else 'public'
+                
+                cursor.execute("""
+                    SELECT EXISTS (
+                        SELECT 1 FROM pg_indexes 
+                        WHERE schemaname = %s 
+                        AND indexname = %s
+                    )
+                """, (schema, index['name']))
+                
+                exists = cursor.fetchone()[0]
+                
+                if not exists:
+                    # Build index creation query (without CONCURRENTLY for transaction compatibility)
+                    where_clause = index.get('where', '')
+                    # Use regular CREATE INDEX when inside a transaction context
+                    query = f"""
+                        CREATE INDEX IF NOT EXISTS {index['name']}
+                        ON {index['table']} {index['columns']}
+                        {where_clause}
+                    """
+                    
+                    logger.info(f"Creating index: {index['name']} - {index['description']}")
+                    cursor.execute(query)
+                    created_count += 1
+                    logger.info(f"Successfully created index: {index['name']}")
+                else:
+                    existed_count += 1
+                    logger.debug(f"Index already exists: {index['name']}")
+                
+                cursor.close()
+                conn.close()
+                
+            except Exception as e:
+                logger.warning(f"Could not create index {index['name']}: {str(e)}")
+                if cursor:
+                    cursor.close()
+                if conn:
+                    conn.close()
+        
+        # Update table statistics after creating indexes
+        if created_count > 0:
+            try:
+                with self.get_connection() as conn:
+                    with conn.cursor() as cursor:
+                        logger.info("Updating table statistics after index creation...")
+                        tables_to_analyze = [
+                            'pumps',
+                            'pump_specifications',
+                            'pump_curves',
+                            'pump_performance_points',
+                            'admin_config.application_profiles',
+                            'admin_config.configuration_audits'
+                        ]
+                        
+                        for table in tables_to_analyze:
+                            try:
+                                cursor.execute(f"ANALYZE {table}")
+                                logger.debug(f"Analyzed table: {table}")
+                            except Exception as e:
+                                logger.warning(f"Could not analyze table {table}: {str(e)}")
+                        
+                        conn.commit()
+                        
+                        # Verify index usage
+                        if created_count > 0:
+                            self._verify_index_usage(cursor)
+                            
+            except Exception as e:
+                logger.error(f"Error updating statistics: {str(e)}")
+        
+        # Log summary
+        logger.info(f"Performance index check complete: {created_count} created, {existed_count} already existed")
+    
+    def _verify_index_usage(self, cursor):
+        """Verify that newly created indexes can be used"""
+        try:
+            # Test query that should use the new indexes
+            cursor.execute("""
+                EXPLAIN (FORMAT JSON, BUFFERS FALSE, ANALYZE FALSE)
+                SELECT p.pump_code, ps.max_flow_m3hr, ps.max_head_m
+                FROM pumps p
+                JOIN pump_specifications ps ON p.id = ps.pump_id
+                WHERE p.pump_code = 'TEST'
+                LIMIT 1
+            """)
+            
+            plan = cursor.fetchone()[0]
+            # Check if indexes are mentioned in the plan
+            plan_text = str(plan)
+            if 'Index Scan' in plan_text or 'Bitmap Index Scan' in plan_text:
+                logger.info("Index usage verified: Query optimizer will use new indexes")
+            else:
+                logger.warning("Indexes created but may not be used immediately (statistics may need time to update)")
+                
+        except Exception as e:
+            logger.debug(f"Could not verify index usage: {str(e)}")
 
 
 # Initialize database on module load
