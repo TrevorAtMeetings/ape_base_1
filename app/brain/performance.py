@@ -324,8 +324,6 @@ class PerformanceAnalyzer:
         
         # Log which physics model is being used
         model_type = exponents.get('description', 'Unknown model')
-                    f"Head: {exponents['head_exponent_y']}, Power: {exponents['power_exponent_z']}, "
-                    f"NPSH: {exponents['npshr_exponent_alpha']}")
         
         return exponents
     
