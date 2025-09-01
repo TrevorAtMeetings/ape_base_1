@@ -8,6 +8,7 @@ import logging
 from typing import Dict, List, Any, Optional
 import numpy as np
 from ..data_models import SiteRequirements, PumpEvaluation, ExclusionReason
+from ..process_logger import process_logger
 
 logger = logging.getLogger(__name__)
 
@@ -72,11 +73,30 @@ class SelectionIntelligence:
         logger.error(f"🎯 [BRAIN ENTRY] find_best_pumps called: flow={flow}, head={head}")
         logger.error(f"🎯 [BRAIN ENTRY] Constraints: {constraints}")
         
+        # Set pump selection context for descriptive log filename
+        process_logger.set_pump_selection_context(flow, head)
+        
+        process_logger.log_section("BRAIN SELECTION INTELLIGENCE")
+        process_logger.log(f"Target Operating Point: {flow:.2f} m³/hr @ {head:.2f} m")
+        process_logger.log_data("Constraints", constraints)
+        
         # Get all pumps from repository
         all_pumps = self.brain.repository.get_pump_models()
         if not all_pumps:
             logger.warning("No pump models available in repository")
+            process_logger.log("ERROR: No pump models in repository!", "ERROR")
             return {'ranked_pumps': [], 'exclusion_details': None}
+        
+        # Log all pumps loaded from repository
+        process_logger.log_separator()
+        process_logger.log(f"REPOSITORY: Loaded {len(all_pumps)} pumps")
+        for pump in all_pumps[:10]:  # Log first 10 pumps as sample
+            specs = pump.get('specifications', {})
+            process_logger.log(f"  - {pump.get('pump_code', 'N/A')}: "
+                             f"BEP={specs.get('bep_flow_m3hr', 0):.1f}@{specs.get('bep_head_m', 0):.1f}m, "
+                             f"Type={pump.get('pump_type', 'N/A')}")
+        if len(all_pumps) > 10:
+            process_logger.log(f"  ... and {len(all_pumps) - 10} more pumps")
         
         # COMPREHENSIVE HC PUMP PIPELINE ANALYSIS
         logger.error(f"🔍 [PIPELINE STEP 1] Repository loaded {len(all_pumps)} total pumps")
@@ -131,34 +151,78 @@ class SelectionIntelligence:
         min_head_threshold = head * 0.3   # Minimum 30% of required head (was 80% - too restrictive!)
         max_head_threshold = head * 2.0   # Maximum 200% of required head (increased from 160%)
         
+        process_logger.log_separator()
+        process_logger.log("PRE-FILTERING STAGE")
+        process_logger.log(f"Flow Range: [{min_flow_threshold:.1f} - {max_flow_threshold:.1f}] m³/hr")
+        process_logger.log(f"Head Range: [{min_head_threshold:.1f} - {max_head_threshold:.1f}] m")
+        
         pump_models = []
         pre_filtered_count = 0
         flow_filtered_count = 0
         head_filtered_count = 0
+        flow_excluded_list = []
+        head_excluded_list = []
         
         for pump in all_pumps:
             specs = pump.get('specifications', {})
             bep_flow = specs.get('bep_flow_m3hr', 0)
             bep_head = specs.get('bep_head_m', 0)
-            
-            # Pre-filter by flow range
             pump_code = pump.get('pump_code', 'Unknown')
-            if not (bep_flow > 0 and min_flow_threshold <= bep_flow <= max_flow_threshold):
+            pump_type = pump.get('pump_type', 'Unknown')
+            
+            # Comprehensive pre-filtering decision logging for ALL pumps
+            process_logger.log(f"PRE-FILTER ANALYSIS: {pump_code}")
+            
+            # Flow compatibility check
+            flow_ok = bep_flow > 0 and min_flow_threshold <= bep_flow <= max_flow_threshold
+            process_logger.log(f"  BEP Flow Check: {bep_flow:.1f} vs [{min_flow_threshold:.1f}-{max_flow_threshold:.1f}] → {'PASS' if flow_ok else 'FAIL'}")
+            
+            if not flow_ok:
                 if pump_code in ['32 HC 6P', '30 HC 6P', '28 HC 6P', '32 HC 8P']:
                     logger.error(f"🚨 [FLOW PRE-FILTER] {pump_code} EXCLUDED: BEP {bep_flow} not in range {min_flow_threshold:.1f}-{max_flow_threshold:.1f}")
+                
+                if bep_flow <= 0:
+                    process_logger.log(f"  → EXCLUSION REASON: Invalid BEP flow data (≤0)")
+                elif bep_flow < min_flow_threshold:
+                    process_logger.log(f"  → EXCLUSION REASON: Pump too small - BEP flow {bep_flow:.1f} < {min_flow_threshold:.1f} m³/hr (40% of target)")
+                else:
+                    process_logger.log(f"  → EXCLUSION REASON: Pump too large - BEP flow {bep_flow:.1f} > {max_flow_threshold:.1f} m³/hr (300% of target)")
+                
                 flow_filtered_count += 1
+                flow_excluded_list.append(f"{pump_code}: BEP={bep_flow:.1f} m³/hr")
                 continue
             
-            # Head compatibility check with trimming consideration
-            # Allow pumps with lower BEP heads since trimming can increase head output
-            if bep_head > 0 and not (min_head_threshold <= bep_head <= max_head_threshold):
+            # Head compatibility check
+            head_ok = not (bep_head > 0 and not (min_head_threshold <= bep_head <= max_head_threshold))
+            process_logger.log(f"  BEP Head Check: {bep_head:.1f} vs [{min_head_threshold:.1f}-{max_head_threshold:.1f}] → {'PASS' if head_ok else 'FAIL'}")
+            
+            if not head_ok:
                 if pump_code in ['32 HC 6P', '30 HC 6P', '28 HC 6P', '32 HC 8P']:
                     logger.error(f"🚨 [HEAD PRE-FILTER] {pump_code} EXCLUDED: BEP {bep_head:.1f}m not in range {min_head_threshold:.1f}-{max_head_threshold:.1f}m")
                     logger.error(f"🚨 [HEAD PRE-FILTER] {pump_code}: Required head {head}m, thresholds: {min_head_threshold:.1f}-{max_head_threshold:.1f}m")
+                
+                if bep_head < min_head_threshold:
+                    process_logger.log(f"  → EXCLUSION REASON: Insufficient head - BEP head {bep_head:.1f} < {min_head_threshold:.1f} m (30% of target)")
+                else:
+                    process_logger.log(f"  → EXCLUSION REASON: Excessive head - BEP head {bep_head:.1f} > {max_head_threshold:.1f} m (200% of target)")
+                
                 head_filtered_count += 1
+                head_excluded_list.append(f"{pump_code}: BEP={bep_head:.1f} m")
                 continue
             
-            # HC pump passed pre-filtering
+            # Pump type filtering (if constraint applied)
+            type_constraint = constraints.get('pump_type', 'GENERAL')
+            if type_constraint != 'GENERAL':
+                type_ok = pump_type.upper() == type_constraint.upper()
+                process_logger.log(f"  Type Filter: {pump_type} vs {type_constraint} → {'PASS' if type_ok else 'FAIL'}")
+                if not type_ok:
+                    process_logger.log(f"  → EXCLUSION REASON: Pump type mismatch - required {type_constraint}, got {pump_type}")
+                    # Note: Type filtering handled elsewhere in code, this is just for logging visibility
+            
+            # Pump passed all pre-filters
+            process_logger.log(f"  → RESULT: ✅ PASSED PRE-FILTERING - proceeding to evaluation")
+            
+            # Keep original debug logging for specific pump series
             if pump_code in ['32 HC 6P', '30 HC 6P', '28 HC 6P', '32 HC 8P']:
                 logger.error(f"✅ [PRE-FILTER] {pump_code} PASSED PRE-FILTERING!")
                 
@@ -168,16 +232,49 @@ class SelectionIntelligence:
         logger.info(f"Smart pre-filtering: {len(pump_models)} pumps selected from {len(all_pumps)} total")
         logger.info(f"Filtered out: {flow_filtered_count} flow-incompatible + {head_filtered_count} head-incompatible = {pre_filtered_count} total")
         
+        # Log pre-filtering results
+        process_logger.log_separator()
+        process_logger.log("PRE-FILTERING RESULTS:")
+        process_logger.log(f"  Total Repository Pumps: {len(all_pumps)}")
+        process_logger.log(f"  Flow Range Excluded: {flow_filtered_count} pumps")
+        if flow_excluded_list and len(flow_excluded_list) <= 10:
+            for pump_info in flow_excluded_list:
+                process_logger.log(f"    - {pump_info}")
+        elif flow_excluded_list:
+            for pump_info in flow_excluded_list[:5]:
+                process_logger.log(f"    - {pump_info}")
+            process_logger.log(f"    ... and {len(flow_excluded_list) - 5} more")
+        
+        process_logger.log(f"  Head Range Excluded: {head_filtered_count} pumps")
+        if head_excluded_list and len(head_excluded_list) <= 10:
+            for pump_info in head_excluded_list:
+                process_logger.log(f"    - {pump_info}")
+        elif head_excluded_list:
+            for pump_info in head_excluded_list[:5]:
+                process_logger.log(f"    - {pump_info}")
+            process_logger.log(f"    ... and {len(head_excluded_list) - 5} more")
+        
+        process_logger.log(f"  Pumps Remaining for Evaluation: {len(pump_models)}")
+        
         logger.info(f"Smart pre-filtering: {len(pump_models)} pumps selected from {len(all_pumps)} total (filtered out {pre_filtered_count} inappropriate pumps)")
         
         feasible_pumps = []
         excluded_pumps = []
         exclusion_summary = {}
         
+        process_logger.log_separator()
+        process_logger.log("INDIVIDUAL PUMP EVALUATION")
+        process_logger.log(f"Evaluating {len(pump_models)} pumps...")
+        
+        # PASS 1: Evaluate all pumps without detailed logging to determine rankings
+        pump_evaluations = []  # Store all evaluations for ranking calculation
+        
         for pump_data in pump_models:
             try:
-                # Apply pump type constraint early
+                # Extract pump code for this iteration
                 pump_code = pump_data.get('pump_code', 'Unknown')
+                
+                # Apply pump type constraint early
                 if constraints.get('pump_type') and constraints['pump_type'] != 'GENERAL':
                     pump_type = pump_data.get('pump_type', '').upper()
                     constraint_type = constraints['pump_type'].upper()
@@ -207,8 +304,6 @@ class SelectionIntelligence:
                         logger.error(f"✅ [PUMP TYPE FILTER] {pump_code}: BYPASSED pump type filter (constraint='{constraint_value}')")
                 
                 # CRITICAL: Evaluate physical capability at specific operating point
-                pump_code = pump_data.get('pump_code', 'Unknown')
-                
                 # Add debugging for HC pumps that manufacturer found viable
                 if pump_code and any(hc in str(pump_code) for hc in ['32 HC', '30 HC', '28 HC']):
                     logger.error(f"[HC SELECTION DEBUG] {pump_code}: Starting evaluation for {flow} m³/hr @ {head}m")
@@ -217,43 +312,24 @@ class SelectionIntelligence:
                     logger.error(f"[HC SELECTION DEBUG] {pump_code}: BEP {specs.get('bep_flow_m3hr', 0)} m³/hr @ {specs.get('bep_head_m', 0)}m")
                     logger.error(f"[HC SELECTION DEBUG] {pump_code}: Max impeller: {specs.get('max_impeller_diameter_mm', 0)}mm")
                 
-                evaluation = self.evaluate_single_pump(pump_data, flow, head)
+                # PASS 1: Evaluate pump without detailed logging
+                evaluation = self.evaluate_single_pump(pump_data, flow, head, pump_code)
                 
-                # Check if HC pump was excluded and why
-                if pump_code in ['32 HC 6P', '30 HC 6P', '28 HC 6P']:
-                    if evaluation.get('feasible', False):
-                        logger.error(f"✅ [PIPELINE STEP 4] {pump_code}: PASSED evaluation - feasible with score {evaluation.get('total_score', 0):.1f}!")
-                    else:
-                        logger.error(f"🚨 [PIPELINE STEP 4] {pump_code}: FAILED evaluation")
-                        logger.error(f"🚨 [PIPELINE STEP 4] {pump_code}: Exclusion reasons: {evaluation.get('exclusion_reasons', [])}")
-                        logger.error(f"🚨 [PIPELINE STEP 4] {pump_code}: Score components: {evaluation.get('score_components', {})}")
-                        logger.error(f"🚨 [PIPELINE STEP 4] {pump_code}: Performance data: {evaluation.get('performance', 'None')}")
+                # Store evaluation with pump data for ranking calculation
+                pump_evaluations.append({
+                    'pump_data': pump_data,
+                    'pump_code': pump_code,
+                    'evaluation': evaluation,
+                    'flow': flow,
+                    'head': head
+                })
                 
                 # Apply additional constraints
-                # NPSH constraint removed - data is collected for display but not used as hard gate
-                
                 if constraints.get('max_power_kw'):
                     max_power = constraints['max_power_kw']
                     if evaluation.get('power_kw', 0) > max_power:
                         evaluation['feasible'] = False
                         evaluation['exclusion_reasons'].append('Power exceeds limit')
-                
-                if evaluation.get('feasible', False):
-                    feasible_pumps.append(evaluation)
-                else:
-                    # Track exclusions with authentic Brain reasons
-                    if include_exclusions:
-                        exclusion_info = {
-                            'pump_code': pump_data.get('pump_code'),
-                            'pump_name': pump_data.get('pump_name', ''),
-                            'exclusion_reasons': evaluation.get('exclusion_reasons', []),
-                            'score_components': evaluation.get('score_components', {})
-                        }
-                        excluded_pumps.append(exclusion_info)
-                        
-                        # Build authentic exclusion summary
-                        for reason in evaluation.get('exclusion_reasons', []):
-                            exclusion_summary[reason] = exclusion_summary.get(reason, 0) + 1
                 
             except Exception as e:
                 logger.error(f"Error evaluating pump {pump_data.get('pump_code')}: {str(e)}")
@@ -266,6 +342,49 @@ class SelectionIntelligence:
                     })
                     exclusion_summary['Evaluation error'] = exclusion_summary.get('Evaluation error', 0) + 1
                 continue
+        
+        # Separate feasible and excluded pumps
+        for pump_eval in pump_evaluations:
+            evaluation = pump_eval['evaluation']
+            pump_data = pump_eval['pump_data']
+            pump_code = pump_eval['pump_code']
+            
+            # Check if HC pump was excluded and why
+            if pump_code in ['32 HC 6P', '30 HC 6P', '28 HC 6P']:
+                if evaluation.get('feasible', False):
+                    logger.error(f"✅ [PIPELINE STEP 4] {pump_code}: PASSED evaluation - feasible with score {evaluation.get('total_score', 0):.1f}!")
+                else:
+                    logger.error(f"🚨 [PIPELINE STEP 4] {pump_code}: FAILED evaluation")
+                    logger.error(f"🚨 [PIPELINE STEP 4] {pump_code}: Exclusion reasons: {evaluation.get('exclusion_reasons', [])}")
+                    logger.error(f"🚨 [PIPELINE STEP 4] {pump_code}: Score components: {evaluation.get('score_components', {})}")
+                    logger.error(f"🚨 [PIPELINE STEP 4] {pump_code}: Performance data: {evaluation.get('performance', 'None')}")
+            
+            if evaluation.get('feasible', False):
+                feasible_pumps.append(evaluation)
+                
+                # Log feasible pump evaluation with detailed logging
+                process_logger.log_pump_evaluation(pump_code, pump_data, flow, head, evaluation)
+                # Add separator after each pump evaluation
+                process_logger.log("." * 80)
+            else:
+                # Track exclusions with authentic Brain reasons
+                if include_exclusions:
+                    exclusion_info = {
+                        'pump_code': pump_data.get('pump_code'),
+                        'pump_name': pump_data.get('pump_name', ''),
+                        'exclusion_reasons': evaluation.get('exclusion_reasons', []),
+                        'score_components': evaluation.get('score_components', {})
+                    }
+                    excluded_pumps.append(exclusion_info)
+                    
+                    # Build authentic exclusion summary
+                    for reason in evaluation.get('exclusion_reasons', []):
+                        exclusion_summary[reason] = exclusion_summary.get(reason, 0) + 1
+                
+                # Log excluded pump evaluation with detailed logging
+                process_logger.log_pump_evaluation(pump_code, pump_data, flow, head, evaluation)
+                # Add separator after each pump evaluation
+                process_logger.log("." * 80)
         
         # Sort by score (descending)
         feasible_pumps.sort(key=lambda x: x.get('total_score', 0), reverse=True)
@@ -290,10 +409,27 @@ class SelectionIntelligence:
             }
             result.update({'exclusion_details': exclusion_details})
         
+        # Log final summary
+        process_logger.log_selection_summary(
+            total_pumps=len(all_pumps),
+            filtered_pumps=len(pump_models),
+            feasible_pumps=len(feasible_pumps),
+            exclusion_summary=exclusion_summary,
+            tiered_results={
+                'preferred': [p for p in feasible_pumps if p.get('operating_zone') == 'preferred'],
+                'allowable': [p for p in feasible_pumps if p.get('operating_zone') == 'allowable'],
+                'acceptable': [p for p in feasible_pumps if p.get('operating_zone') == 'acceptable'],
+                'marginal': [p for p in feasible_pumps if p.get('operating_zone') == 'marginal']
+            }
+        )
+        
+        # Log final rankings
+        process_logger.log_final_rankings(feasible_pumps, excluded_pumps)
+        
         return result
     
     def evaluate_single_pump(self, pump_data: Dict[str, Any], 
-                            flow: float, head: float) -> Dict[str, Any]:
+                            flow: float, head: float, pump_code: str) -> Dict[str, Any]:
         """
         Evaluate a single pump at operating conditions.
         Implements Three-Path Selection Logic based on variable_speed and variable_diameter flags.
@@ -371,7 +507,16 @@ class SelectionIntelligence:
                 logger.warning(f"[THREE-PATH] {pump_data.get('pump_code')}: FIXED pump - no adjustment possible")
             
             # Log the decision for important pumps
-            pump_code = pump_data.get('pump_code', '')
+            # Log the decision for ALL pumps - COMPREHENSIVE DECISION TRACKING
+            process_logger.log("=" * 80)
+            process_logger.log(f"PATH DECISION: {pump_code}")
+            process_logger.log("=" * 80)
+            process_logger.log(f"  Variable Speed: {variable_speed}")
+            process_logger.log(f"  Variable Diameter: {variable_diameter}")
+            process_logger.log(f"  → SELECTED PATH: {operation_mode} ({selection_method})")
+            process_logger.log(f"  → Pump Flexibility: {evaluation.get('pump_flexibility', 'Not specified')}")
+            
+            # Keep original debug logging for specific pump series
             if any(keyword in str(pump_code) for keyword in ['HC', 'WLN', 'MC', 'LC']):
                 logger.info(f"[THREE-PATH DECISION] {pump_code}: Mode={operation_mode}, Method={selection_method}")
                 logger.info(f"[THREE-PATH DECISION] {pump_code}: variable_speed={variable_speed}, variable_diameter={variable_diameter}")
@@ -407,18 +552,40 @@ class SelectionIntelligence:
                 if 80 <= qbp <= 110:
                     operating_zone = 'preferred'  # Optimal operating range
                     tier = 1
+                    qbp_reasoning = "Sweet spot - optimal pump efficiency and performance"
                 elif 60 <= qbp < 80 or 110 < qbp <= 140:
                     operating_zone = 'allowable'  # Good operating range
                     tier = 2
+                    if qbp < 80:
+                        qbp_reasoning = "Light loading - pump runs below optimal but efficient"
+                    else:
+                        qbp_reasoning = "Moderate overload - pump handles higher flow acceptably"
                 elif 50 <= qbp < 60 or 140 < qbp <= 200:
                     operating_zone = 'acceptable'  # Acceptable for industrial use
                     tier = 3
+                    if qbp < 60:
+                        qbp_reasoning = "Significant under-loading - consider smaller pump"
+                    else:
+                        qbp_reasoning = "Heavy overload - monitor for cavitation and efficiency drop"
                 else:
                     operating_zone = 'marginal'  # Outside typical range but still usable
                     tier = 4
+                    if qbp < 50:
+                        qbp_reasoning = "Severe under-loading - pump running far below design point"
+                    else:
+                        qbp_reasoning = "Extreme overload - high risk of cavitation and mechanical stress"
+                
+                # Log Operating Zone Classification decision
+                process_logger.log(f"OPERATING ZONE ANALYSIS: {pump_code}")
+                process_logger.log(f"  BEP Flow: {bep_flow:.1f} m³/hr")
+                process_logger.log(f"  Target Flow: {flow:.1f} m³/hr") 
+                process_logger.log(f"  QBP: {qbp:.1f}% of BEP")
+                process_logger.log(f"  → ZONE DECISION: {operating_zone} (Tier {tier})")
+                process_logger.log(f"  → REASONING: {qbp_reasoning}")
                 
                 evaluation['operating_zone'] = operating_zone
                 evaluation['tier'] = tier
+                evaluation['qbp_reasoning'] = qbp_reasoning
                 
                 # LOG but DO NOT REJECT - show all pumps in tiered results
                 if tier > 2:
@@ -464,12 +631,13 @@ class SelectionIntelligence:
                     evaluation['score_components']['head_oversizing_penalty'] = 0
             
             # Physical capability check - CONVERT TO SCORING PENALTY (no rejection)
-            physical_capable = self._validate_physical_capability_at_point(pump_data, flow, head)
+            physical_capable, capability_reason = self._validate_physical_capability_at_point(pump_data, flow, head)
             if not physical_capable:
                 # Apply severe scoring penalty but keep pump in results
                 evaluation['score_components']['physical_limitation_penalty'] = -50
                 evaluation['operating_zone'] = 'marginal'  # Force to marginal tier
                 evaluation['tier'] = 4
+                evaluation['physical_limitation_detail'] = capability_reason
                 logger.info(f"[SELECTION] {pump_data.get('pump_code')}: Physical capability limited - applying penalty but keeping in results")
 
             # Get performance at operating point based on selection method
@@ -711,22 +879,73 @@ class SelectionIntelligence:
                         evaluation['score_components']['trim_penalty'] = trim_penalty
                 
             else:
-                # When performance analyzer returns None, it could be due to:
-                # 1. Missing data (keep with penalty)  
-                # 2. Physical impossibility (exclude entirely)
+                # Performance analyzer returned None - determine specific reason
+                # Get more specific failure reason by checking pump data
+                specs = pump_data.get('specifications', {})
+                curves = pump_data.get('curves', [])
                 
-                # Check if this pump was rejected for physical reasons by looking at recent log messages
-                pump_code = pump_data.get('pump_code', 'Unknown')
+                failure_reasons = []
                 
-                # If the performance analyzer rejected this pump for physical reasons, exclude it entirely
-                # This is indicated by the performance data being None after analyzer evaluation
-                logger.warning(f"[SELECTION] {pump_code}: Excluded due to physical impossibility or missing critical data")
+                # Check for missing critical specifications
+                if not specs.get('bep_flow_m3hr') or specs.get('bep_flow_m3hr', 0) <= 0:
+                    failure_reasons.append("Missing BEP flow specification")
+                
+                if not specs.get('bep_head_m') or specs.get('bep_head_m', 0) <= 0:
+                    failure_reasons.append("Missing BEP head specification")
+                
+                if not specs.get('max_impeller_diameter_mm') or specs.get('max_impeller_diameter_mm', 0) <= 0:
+                    failure_reasons.append("Missing maximum impeller diameter")
+                
+                # Check for curve data issues
+                if not curves:
+                    failure_reasons.append("No performance curves available")
+                else:
+                    valid_curves = 0
+                    for curve in curves:
+                        if curve.get('performance_points') and len(curve.get('performance_points', [])) >= 2:
+                            valid_curves += 1
+                    
+                    if valid_curves == 0:
+                        failure_reasons.append(f"All {len(curves)} curves have insufficient data points")
+                    elif valid_curves < len(curves):
+                        failure_reasons.append(f"Only {valid_curves}/{len(curves)} curves have valid data")
+                
+                # Check if affinity law calculation failed due to physical impossibility
+                if physical_capable:
+                    # Physical capability OK but performance calc failed - likely affinity law issue
+                    failure_reasons.append("Affinity law calculation failed - cannot achieve target with impeller trimming")
+                else:
+                    # Add the physical capability failure detail
+                    failure_reasons.append(f"Physical limitation: {capability_reason}")
+                
+                # Build comprehensive exclusion reason
+                if failure_reasons:
+                    detailed_reason = " | ".join(failure_reasons)
+                else:
+                    detailed_reason = "Performance calculation failed - unknown reason"
+                
+                process_logger.log(f"    {pump_code}: PERFORMANCE CALC FAILED - {detailed_reason}")
+                logger.warning(f"[SELECTION] {pump_code}: Excluded - {detailed_reason}")
                 evaluation['feasible'] = False
-                evaluation['exclusion_reasons'].append('Physical capability exceeded or critical data missing')
+                evaluation['exclusion_reasons'].append(detailed_reason)
                 return evaluation  # Return early - don't include in results
             
+            # Log comprehensive scoring breakdown for ALL pumps
+            process_logger.log(f"SCORING BREAKDOWN: {pump_code}")
+            score_components = evaluation.get('score_components', {})
+            total_score = 0
+            
+            for component, score in score_components.items():
+                total_score += score
+                # Add reasoning for each score component
+                reasoning = self._get_scoring_reason(component, score, evaluation)
+                process_logger.log(f"  {component}: {score:.1f} pts ({reasoning})")
+            
+            process_logger.log(f"  → TOTAL SCORE: {total_score:.1f} pts")
+            process_logger.log(f"  → FINAL TIER: {evaluation.get('operating_zone', 'unknown')} (Tier {evaluation.get('tier', '?')})")
+            
             # Calculate total score
-            evaluation['total_score'] = sum(evaluation['score_components'].values())
+            evaluation['total_score'] = total_score
             
         except Exception as e:
             logger.error(f"Error in pump evaluation: {str(e)}")
@@ -764,7 +983,7 @@ class SelectionIntelligence:
                     continue
                 
                 # Evaluate pump
-                evaluation = self.evaluate_single_pump(pump_data, flow, head)
+                evaluation = self.evaluate_single_pump(pump_data, flow, head, pump_code)
                 evaluations.append(evaluation)
                 
             except Exception as e:
@@ -776,23 +995,111 @@ class SelectionIntelligence:
         
         return evaluations
     
+    def _get_scoring_reason(self, component: str, score: float, evaluation: dict) -> str:
+        """
+        Provide detailed reasoning for each scoring component.
+        """
+        try:
+            if component == 'bep_proximity':
+                qbp = evaluation.get('qbp_percent', 0)
+                if score >= 45:
+                    return f"Perfect BEP match: {qbp:.1f}% (95-105% optimal)"
+                elif score >= 40:
+                    return f"Excellent BEP match: {qbp:.1f}% (90-110% range)"
+                elif score >= 30:
+                    return f"Good BEP match: {qbp:.1f}% (80-120% range)"
+                elif score >= 20:
+                    return f"Acceptable BEP match: {qbp:.1f}% (70-130% range)"
+                else:
+                    return f"Poor BEP match: {qbp:.1f}% (outside optimal ranges)"
+            
+            elif component == 'efficiency':
+                efficiency = evaluation.get('efficiency_pct', 0)
+                if score >= 35:
+                    return f"Excellent efficiency: {efficiency:.1f}% (≥85%)"
+                elif score >= 30:
+                    return f"Very good efficiency: {efficiency:.1f}% (75-85%)"
+                elif score >= 25:
+                    return f"Good efficiency: {efficiency:.1f}% (65-75%)"
+                elif score >= 10:
+                    return f"Acceptable efficiency: {efficiency:.1f}% (45-65%)"
+                else:
+                    return f"Low efficiency: {efficiency:.1f}% (<45%)"
+            
+            elif component == 'head_margin':
+                margin_pct = evaluation.get('head_margin_pct', 0)
+                if score >= 20:
+                    return f"Perfect head margin: {margin_pct:.1f}% (≤5%)"
+                elif score >= 15:
+                    return f"Good head margin: {margin_pct:.1f}% (5-10%)"
+                elif score >= 5:
+                    return f"Acceptable head margin: {margin_pct:.1f}% (10-15%)"
+                else:
+                    return f"High head margin: {margin_pct:.1f}% (>15%)"
+            
+            elif component == 'head_oversizing_penalty':
+                oversizing_pct = evaluation.get('bep_head_oversizing_pct', 0)
+                if score == 0:
+                    return f"No oversizing penalty: BEP head appropriately sized ({oversizing_pct:.1f}%)"
+                elif score >= -15:
+                    return f"Moderate oversizing penalty: BEP head {oversizing_pct:.1f}% above requirement"
+                else:
+                    return f"Severe oversizing penalty: BEP head {oversizing_pct:.1f}% above requirement"
+            
+            elif component == 'physical_limitation_penalty':
+                if score == -50:
+                    detail = evaluation.get('physical_limitation_detail', 'Unknown limitation')
+                    return f"Cannot achieve required performance: {detail}"
+                else:
+                    return "Physical capability verified"
+            
+            elif component == 'trim_penalty':
+                trim_pct = evaluation.get('trim_percent', 100)
+                if score == -2:
+                    return f"Small trim penalty: {trim_pct:.1f}% impeller (90-95%)"
+                elif score == -5:
+                    return f"Moderate trim penalty: {trim_pct:.1f}% impeller (85-90%)"
+                elif score == -10:
+                    return f"Large trim penalty: {trim_pct:.1f}% impeller (<85%)"
+                else:
+                    return f"Full impeller: {trim_pct:.1f}%"
+            
+            else:
+                return f"Score: {score:.1f} pts"
+                
+        except Exception:
+            return f"Score: {score:.1f} pts"
+
     def _validate_physical_capability_at_point(self, pump_data: Dict[str, Any], 
-                                             flow_m3hr: float, head_m: float) -> bool:
+                                             flow_m3hr: float, head_m: float) -> tuple[bool, str]:
         """
         CRITICAL: Validate pump can physically deliver required head at specific flow rate.
         This is the core validation that was missing in the catalog engine.
+        
+        Returns:
+            tuple: (is_capable: bool, failure_reason: str)
         """
+        pump_code = pump_data.get('pump_code', 'Unknown')
         curves = pump_data.get('curves', [])
+        
         if not curves:
-            logger.debug(f"Pump {pump_data.get('pump_code')}: No curves available")
-            return False
+            reason = f"No performance curves available"
+            process_logger.log(f"    {pump_code}: EXCLUDED - {reason}")
+            logger.debug(f"Pump {pump_code}: {reason}")
+            return False, reason
         
         # Check curves starting with maximum impeller diameter first (authentic manufacturer design)
         sorted_curves = sorted(curves, key=lambda x: x.get('impeller_diameter_mm', 0), reverse=True)
         
+        # Track specific failure reasons
+        no_valid_curves = 0
+        flow_range_failures = []
+        head_insufficient_details = []
+        
         for curve in sorted_curves:
             curve_points = curve.get('performance_points', [])
             if not curve_points or len(curve_points) < 2:
+                no_valid_curves += 1
                 continue
                 
             # Extract curve data
@@ -804,6 +1111,7 @@ class SelectionIntelligence:
             max_flow = max(curve_flows)
             
             if not (min_flow * 0.9 <= flow_m3hr <= max_flow * 1.1):
+                flow_range_failures.append(f"{curve.get('impeller_diameter_mm', 0):.0f}mm impeller: flow range {min_flow:.1f}-{max_flow:.1f} m³/hr")
                 continue  # Flow outside this curve's range
             
             try:
@@ -825,17 +1133,36 @@ class SelectionIntelligence:
                 
                 # Check if pump can deliver AT LEAST the required head (2% tolerance)
                 if delivered_head >= head_m * 0.98:
-                    logger.debug(f"Pump {pump_data.get('pump_code')}: Can deliver {delivered_head:.1f}m at {flow_m3hr} m³/hr (required: {head_m}m) - VALID")
-                    return True
+                    process_logger.log(f"    {pump_code}: PHYSICALLY CAPABLE - Can deliver {delivered_head:.1f}m at {flow_m3hr} m³/hr")
+                    logger.debug(f"Pump {pump_code}: Can deliver {delivered_head:.1f}m at {flow_m3hr} m³/hr (required: {head_m}m) - VALID")
+                    return True, "Physically capable"
                 else:
-                    logger.debug(f"Pump {pump_data.get('pump_code')}: Can only deliver {delivered_head:.1f}m at {flow_m3hr} m³/hr (required: {head_m}m) - INSUFFICIENT")
+                    head_insufficient_details.append(f"{curve.get('impeller_diameter_mm', 0):.0f}mm impeller: delivers {delivered_head:.1f}m (need {head_m:.1f}m)")
+                    logger.debug(f"Pump {pump_code}: Can only deliver {delivered_head:.1f}m at {flow_m3hr} m³/hr (required: {head_m}m) - INSUFFICIENT")
                     
             except Exception as e:
                 logger.debug(f"Error interpolating curve for {pump_data.get('pump_code')}: {e}")
                 continue
         
-        logger.debug(f"Pump {pump_data.get('pump_code')}: Cannot deliver required head {head_m}m at flow {flow_m3hr} m³/hr")
-        return False
+        # Build detailed failure reason
+        failure_parts = []
+        
+        if no_valid_curves > 0:
+            failure_parts.append(f"{no_valid_curves} curves have insufficient data points")
+        
+        if flow_range_failures:
+            failure_parts.append(f"Flow {flow_m3hr:.1f} m³/hr outside all curve ranges: " + "; ".join(flow_range_failures[:2]))
+        
+        if head_insufficient_details:
+            failure_parts.append(f"Insufficient head delivery: " + "; ".join(head_insufficient_details[:2]))
+        
+        if not failure_parts:
+            failure_parts.append(f"Cannot deliver {head_m:.1f}m at {flow_m3hr:.1f} m³/hr")
+        
+        reason = " | ".join(failure_parts)
+        process_logger.log(f"    {pump_code}: EXCLUDED - {reason}")
+        logger.debug(f"Pump {pump_code}: {reason}")
+        return False, reason
     
     def _calculate_bep_from_curves(self, pump_data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """

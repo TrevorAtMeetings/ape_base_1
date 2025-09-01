@@ -9,6 +9,7 @@ import numpy as np
 from typing import Dict, List, Any, Optional, Tuple
 from scipy import interpolate
 from .physics_models import get_exponents_for_pump_type
+from ..process_logger import process_logger
 
 logger = logging.getLogger(__name__)
 
@@ -342,8 +343,52 @@ class PerformanceAnalyzer:
         Returns:
             Performance calculations using industry-standard methodology
         """
+        pump_code = pump_data.get('pump_code', 'Unknown')
+        
+        # Get pump type and physics model for detailed logging
+        pump_type = pump_data.get('pump_type', 'Unknown')
+        physics_exponents = get_exponents_for_pump_type(pump_type)
+        
+        # Log performance calculation entry with detailed formulas
+        process_logger.log(f"PERFORMANCE CALCULATION: {pump_code}")
+        process_logger.log(f"  Method: Industry Standard Affinity Laws")
+        process_logger.log(f"  Target: {flow:.2f} m³/hr @ {head:.2f} m")
+        process_logger.log(f"  Pump Type: {pump_type}")
+        
+        # Log physics model and formulas being used
+        if physics_exponents:
+            process_logger.log(f"  Physics Model: {physics_exponents.get('description', 'Unknown')}")
+            process_logger.log(f"  Affinity Law Formulas:")
+            process_logger.log(f"    Flow: Q₂ = Q₁ × (D₂/D₁)^{physics_exponents.get('flow_exponent_x', 1.0)}")
+            process_logger.log(f"    Head: H₂ = H₁ × (D₂/D₁)^{physics_exponents.get('head_exponent_y', 2.0)}")
+            process_logger.log(f"    Power: P₂ = P₁ × (D₂/D₁)^{physics_exponents.get('power_exponent_z', 3.0)}")
+            process_logger.log(f"    NPSH: NPSH₂ = NPSH₁ × (D₂/D₁)^{physics_exponents.get('npshr_exponent_alpha', 2.0)}")
+            process_logger.log(f"  Calculation: D₂ = D₁ × (H₂/H₁)^(1/{physics_exponents.get('head_exponent_y', 2.0)})")
+        
+        # Log calibration factors if available
+        if hasattr(self, 'calibration_factors'):
+            process_logger.log(f"  Calibration Factors:")
+            for factor_name, factor_value in self.calibration_factors.items():
+                process_logger.log(f"    {factor_name}: {factor_value}")
+        
+        if impeller_trim:
+            process_logger.log(f"  Requested Trim: {impeller_trim:.1f}%")
+        
         # Use new industry-standard method
-        return self.calculate_at_point_industry_standard(pump_data, flow, head, impeller_trim)
+        result = self.calculate_at_point_industry_standard(pump_data, flow, head, impeller_trim)
+        
+        # Log results
+        if result:
+            process_logger.log(f"  Results:")
+            process_logger.log(f"    Efficiency: {result.get('efficiency_pct', 0):.1f}%")
+            process_logger.log(f"    Power: {result.get('power_kw', 0):.1f} kW")
+            process_logger.log(f"    NPSH: {result.get('npshr_m', 0):.1f} m")
+            process_logger.log(f"    Impeller: {result.get('impeller_diameter_mm', 0):.1f} mm")
+            process_logger.log(f"    Trim: {result.get('trim_percent', 100):.1f}%")
+        else:
+            process_logger.log(f"  Result: FAILED - Unable to calculate performance", "WARNING")
+        
+        return result
 
     def _calculate_required_diameter_direct(self, flows_sorted, heads_sorted, 
                                           largest_diameter, target_flow, target_head, pump_code, physics_exponents=None):
@@ -415,6 +460,7 @@ class PerformanceAnalyzer:
             # Use pump-type-specific head exponent from physics model
             if physics_exponents and 'head_exponent_y' in physics_exponents:
                 head_exponent = physics_exponents['head_exponent_y']
+                process_logger.log(f"    Using physics model exponent: {head_exponent}")
             else:
                 # Fallback to trim-dependent exponents if physics model not provided
                 estimated_trim_pct = (1.0 - (target_head / base_head_at_flow) ** 0.5) * 100
@@ -422,9 +468,11 @@ class PerformanceAnalyzer:
                 if estimated_trim_pct < 5.0:
                     # Small trim: Use higher exponent (research: 2.8-3.0)
                     head_exponent = self.get_calibration_factor('trim_dependent_small_exponent', 2.9)
+                    process_logger.log(f"    Small trim (~{estimated_trim_pct:.1f}%): Using exponent {head_exponent}")
                 else:
                     # Larger trim: Use standard exponent (research: 2.0-2.2)
                     head_exponent = self.get_calibration_factor('trim_dependent_large_exponent', 2.1)
+                    process_logger.log(f"    Large trim (~{estimated_trim_pct:.1f}%): Using exponent {head_exponent}")
             
             # H₂/H₁ = (D₂/D₁)^head_exp  →  D₂ = D₁ × (H₂/H₁)^(1/head_exp)
             # FIXED: Ensure all values are float to avoid decimal/float mixing in power operations
@@ -433,9 +481,20 @@ class PerformanceAnalyzer:
             largest_diameter_float = float(largest_diameter)
             head_exponent_float = float(head_exponent)
             
+            # Log the actual formula calculation with real values
+            process_logger.log(f"    Affinity Law Calculation:")
+            process_logger.log(f"      D₁ (largest): {largest_diameter_float:.1f} mm")
+            process_logger.log(f"      H₁ (at target flow): {base_head_float:.2f} m")
+            process_logger.log(f"      H₂ (target): {target_head_float:.2f} m")
+            process_logger.log(f"      Head exponent: {head_exponent_float}")
+            process_logger.log(f"      Formula: D₂ = {largest_diameter_float:.1f} × ({target_head_float:.2f}/{base_head_float:.2f})^(1/{head_exponent_float})")
+            
             diameter_ratio = np.power(target_head_float / base_head_float, 1.0 / head_exponent_float)
             required_diameter = largest_diameter_float * diameter_ratio
             trim_percent = diameter_ratio * 100
+            
+            process_logger.log(f"      Result: D₂ = {largest_diameter_float:.1f} × {diameter_ratio:.4f} = {required_diameter:.1f} mm")
+            process_logger.log(f"      Trim: {trim_percent:.2f}%")
             
             logger.info(f"[TUNABLE AFFINITY] {pump_code}: Using head exponent {head_exponent} (vs standard 2.0)")
             

@@ -10,6 +10,7 @@ from ..session_manager import safe_flash, safe_session_get, safe_session_set, sa
 from ..data_models import SiteRequirements
 from ..pump_repository import get_pump_repository
 from ..utils import validate_site_requirements
+from ..process_logger import process_logger
 
 logger = logging.getLogger(__name__)
 
@@ -133,30 +134,42 @@ def pump_selection():
         return render_template('input_form.html')
 
     try:
+        # Log start of selection process
+        process_logger.log_section("PUMP SELECTION PROCESS START")
+        process_logger.log_data("Form Data", dict(request.form))
+        
         # Validate required fields - support both old and new field names
         flow_m3hr = request.form.get('flow_m3hr') or request.form.get('flow_rate')
         head_m = request.form.get('head_m') or request.form.get('total_head')
+        
+        process_logger.log(f"Raw Input: flow='{flow_m3hr}', head='{head_m}'")
 
         if not flow_m3hr or not head_m:
+            process_logger.log("ERROR: Missing required fields", "ERROR")
             safe_flash('Flow rate and head are required fields.', 'error')
             return render_template('input_form.html'), 400
 
         try:
             flow_val = float(flow_m3hr)
             head_val = float(head_m)
+            process_logger.log(f"Validated Input: flow={flow_val:.2f} m³/hr, head={head_val:.2f} m")
 
             # Enhanced validation with realistic ranges
             if flow_val <= 0 or head_val <= 0:
+                process_logger.log("ERROR: Non-positive values", "ERROR")
                 safe_flash('Flow rate and head must be positive values.', 'error')
                 return render_template('input_form.html'), 400
 
             if flow_val > 10000:  # Reasonable upper limit
+                process_logger.log(f"WARNING: High flow rate {flow_val} m³/hr", "WARNING")
                 safe_flash('Flow rate seems unusually high. Please verify your input.', 'warning')
 
             if head_val > 1000:  # Reasonable upper limit  
+                process_logger.log(f"WARNING: High head {head_val} m", "WARNING")
                 safe_flash('Head seems unusually high. Please verify your input.', 'warning')
 
-        except ValueError:
+        except ValueError as e:
+            process_logger.log(f"ERROR: Invalid numerical values - {str(e)}", "ERROR")
             safe_flash('Invalid numerical values for flow rate or head.', 'error')
             return render_template('input_form.html'), 400
 
@@ -164,6 +177,7 @@ def pump_selection():
         direct_pump_search = request.form.get('direct_pump_search', '').strip()
         
         if direct_pump_search:
+            process_logger.log(f"Direct pump search: '{direct_pump_search}'")
             logger.info(f"Direct pump search requested for: '{direct_pump_search}' with flow={flow_val}, head={head_val}")
             # Redirect directly to pump report with the searched pump
             return redirect(url_for('reports.pump_report',
@@ -174,6 +188,14 @@ def pump_selection():
         
         # Get pump type from form
         selected_pump_type = request.form.get('pump_type', 'GENERAL')
+        application_type = request.form.get('application', 'water')
+        
+        process_logger.log(f"Selection Parameters:")
+        process_logger.log(f"  Flow: {flow_val:.2f} m³/hr")
+        process_logger.log(f"  Head: {head_val:.2f} m")
+        process_logger.log(f"  Pump Type: {selected_pump_type}")
+        process_logger.log(f"  Application: {application_type}")
+        
         logger.info(f"Form submitted with pump type: '{selected_pump_type}'")
         
         # Process the selection - redirect to pump options
@@ -197,32 +219,46 @@ def select():
 def pump_options():
     """Show pump selection options page."""
     try:
+        process_logger.log_section("PUMP OPTIONS PROCESSING")
+        process_logger.log_data("Request Args", dict(request.args))
+        
         # Get form data with NaN protection
         flow_str = request.args.get('flow', '0')
         head_str = request.args.get('head', '0')
+        
+        process_logger.log(f"Input Strings: flow='{flow_str}', head='{head_str}'")
 
         # Reject NaN inputs
         if flow_str.lower() in ('nan', 'inf', '-inf'):
+            process_logger.log(f"WARNING: Invalid flow string '{flow_str}', setting to 0", "WARNING")
             flow = 0
         else:
             try:
                 flow = float(flow_str)
                 if not (flow == flow):  # NaN check (NaN != NaN)
+                    process_logger.log("WARNING: Flow is NaN, setting to 0", "WARNING")
                     flow = 0
             except (ValueError, TypeError):
+                process_logger.log(f"ERROR: Cannot convert flow '{flow_str}' to float", "ERROR")
                 flow = 0
 
         if head_str.lower() in ('nan', 'inf', '-inf'):
+            process_logger.log(f"WARNING: Invalid head string '{head_str}', setting to 0", "WARNING")
             head = 0
         else:
             try:
                 head = float(head_str)
                 if not (head == head):  # NaN check (NaN != NaN)
+                    process_logger.log("WARNING: Head is NaN, setting to 0", "WARNING")
                     head = 0
             except (ValueError, TypeError):
+                process_logger.log(f"ERROR: Cannot convert head '{head_str}' to float", "ERROR")
                 head = 0
 
+        process_logger.log(f"Sanitized Values: flow={flow:.2f} m³/hr, head={head:.2f} m")
+
         if flow <= 0 or head <= 0:
+            process_logger.log("ERROR: Invalid flow or head after sanitization", "ERROR")
             safe_flash('Please enter valid flow rate and head values.', 'error')
             return redirect(url_for('main_flow.index'))
 
@@ -231,6 +267,10 @@ def pump_options():
         # Get additional form parameters
         pump_type = request.args.get('pump_type', 'GENERAL')
         application_type = request.args.get('application_type', 'general')
+        
+        process_logger.log(f"Additional Parameters:")
+        process_logger.log(f"  Pump Type: {pump_type}")
+        process_logger.log(f"  Application: {application_type}")
         
         # Log pump type filtering for debugging
         logger.info(f"Pump type filter requested: '{pump_type}'")
@@ -253,6 +293,9 @@ def pump_options():
         from ..pump_brain import get_pump_brain
         brain = get_pump_brain()
         logger.info("Using Brain system for pump selection - authentic validation only")
+        
+        process_logger.log_separator()
+        process_logger.log("BRAIN SYSTEM INITIALIZATION")
 
         # Prepare constraints for Brain system
         constraints = {
@@ -260,6 +303,8 @@ def pump_options():
             'max_results': 10,
             'application_type': application_type
         }
+        
+        process_logger.log_data("Constraints", constraints)
 
         # Evaluate pumps using Brain system with authentic exclusion tracking
         pump_selections = []
@@ -267,11 +312,15 @@ def pump_options():
         try:
             # CRITICAL: Brain system validates with authentic exclusion reasons
             site_reqs = {'flow_m3hr': flow, 'head_m': head}
+            
+            process_logger.log("Calling Brain.find_best_pumps()...")
             brain_result = brain.find_best_pumps(site_reqs, constraints, include_exclusions=True)
             
             # Extract ranked pumps and authentic exclusion data
             pump_selections = brain_result.get('ranked_pumps', [])
             brain_exclusions = brain_result.get('exclusion_details')
+            
+            process_logger.log(f"Brain Results: {len(pump_selections)} feasible pumps found")
             
             if brain_exclusions:
                 # Use AUTHENTIC exclusion data from Brain - NO GUESSING
