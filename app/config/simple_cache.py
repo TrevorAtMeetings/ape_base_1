@@ -13,7 +13,6 @@ def setup_caching(app: Flask):
     disable_caching = os.getenv('DISABLE_ALL_CACHING', 'false').lower() == 'true'
     
     if disable_caching:
-        print("🚫 ALL CACHING DISABLED")
         
         # Disable template caching
         app.config['TEMPLATES_AUTO_RELOAD'] = True
@@ -34,7 +33,6 @@ def setup_caching(app: Flask):
             return response
             
     else:
-        print("✅ Normal caching enabled")
         
         # Production-like caching
         app.config['TEMPLATES_AUTO_RELOAD'] = False

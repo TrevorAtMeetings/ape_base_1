@@ -12,7 +12,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // Hide any persistent progress bars after page load
     hidePersistentProgressBars();
     
-    console.log('Form components initialized - enhanced autocomplete ready');
 });
 
 /**

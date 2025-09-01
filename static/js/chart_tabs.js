@@ -1,4 +1,3 @@
-console.log('chart_tabs.js loaded');
 
 function hideAllCharts(chartContainers) {
     chartContainers.forEach(container => {
@@ -11,13 +10,10 @@ function showChart(container) {
 }
 
 document.addEventListener('DOMContentLoaded', function () {
-    console.log('Starting tab logic...');
 
     const tabButtons = document.querySelectorAll('[data-chart]');
-    console.log('Found tab buttons:', tabButtons.length);
 
     const chartContainers = document.querySelectorAll('[id*="-chart"]');
-    console.log('Found chart containers:', chartContainers.length);
 
     // Hide all charts initially
     hideAllCharts(chartContainers);
@@ -30,7 +26,6 @@ document.addEventListener('DOMContentLoaded', function () {
     // Add click handlers
     tabButtons.forEach((button, idx) => {
         button.addEventListener('click', function() {
-            console.log('Tab clicked:', this.getAttribute('data-chart'));
 
             // Hide all charts
             hideAllCharts(chartContainers);
@@ -40,7 +35,6 @@ document.addEventListener('DOMContentLoaded', function () {
             const targetChart = document.getElementById(chartId);
             if (targetChart) {
                 showChart(targetChart);
-                console.log('Showing chart:', chartId);
             }
 
             // Update button styles

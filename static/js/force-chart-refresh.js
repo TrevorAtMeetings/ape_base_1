@@ -1,5 +1,4 @@
 // Force refresh of chart styling - cache buster for red dot update
-console.log('Force chart refresh script loaded - clearing chart cache');
 
 // Clear any cached chart data and force reload
 if (window.pumpChartsManager) {
@@ -8,7 +7,6 @@ if (window.pumpChartsManager) {
 
 // Force browser to invalidate script cache
 const timestamp = new Date().getTime();
-console.log('Chart cache timestamp:', timestamp);
 
 // Add cache-busting to any existing chart elements
 document.addEventListener('DOMContentLoaded', function() {
@@ -18,7 +16,6 @@ document.addEventListener('DOMContentLoaded', function() {
         chartContainers.forEach(containerId => {
         const container = document.getElementById(containerId);
         if (container && container.innerHTML.trim()) {
-            console.log('Clearing cached chart:', containerId);
             container.innerHTML = '';
         }
     });

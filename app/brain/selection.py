@@ -156,7 +156,6 @@ class SelectionIntelligence:
                     logger.error(f"🚨 [HEAD PRE-FILTER] {pump_code} EXCLUDED: BEP {bep_head:.1f}m not in range {min_head_threshold:.1f}-{max_head_threshold:.1f}m")
                     logger.error(f"🚨 [HEAD PRE-FILTER] {pump_code}: Required head {head}m, thresholds: {min_head_threshold:.1f}-{max_head_threshold:.1f}m")
                 head_filtered_count += 1
-                logger.debug(f"[PRE-FILTER] {pump_code}: Head incompatible - BEP {bep_head:.1f}m outside range {min_head_threshold:.1f}-{max_head_threshold:.1f}m")
                 continue
             
             # HC pump passed pre-filtering

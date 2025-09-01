@@ -4,7 +4,6 @@
  */
 
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('Pump sorting script loaded');
     
     // Initialize sorting functionality
     initializeSorting();
@@ -16,11 +15,9 @@ function initializeSorting() {
     const allowableList = document.getElementById('allowable-pump-list');
     
     if (sortButtons.length === 0) {
-        console.log('No sort buttons found');
         return;
     }
     
-    console.log(`Found ${sortButtons.length} sort buttons`);
     
     // Add click handlers to all sort buttons
     sortButtons.forEach(button => {
@@ -30,7 +27,6 @@ function initializeSorting() {
             const sortKey = this.getAttribute('data-sort');
             const sortOrder = this.getAttribute('data-order');
             
-            console.log(`Sorting by ${sortKey} in ${sortOrder} order`);
             
             // Update active state
             sortButtons.forEach(btn => btn.classList.remove('active'));
@@ -51,11 +47,9 @@ function sortPumpList(listElement, sortKey, sortOrder) {
     const pumpRows = Array.from(listElement.querySelectorAll('.pump-result-row'));
     
     if (pumpRows.length === 0) {
-        console.log('No pump rows found to sort');
         return;
     }
     
-    console.log(`Sorting ${pumpRows.length} pump rows by ${sortKey}`);
     
     // Sort the array of pump rows
     pumpRows.sort((a, b) => {
@@ -90,7 +84,6 @@ function sortPumpList(listElement, sortKey, sortOrder) {
         listElement.appendChild(row);
     });
     
-    console.log(`Sorted pump list by ${sortKey} (${sortOrder})`);
 }
 
 function getSortValue(element, sortKey) {

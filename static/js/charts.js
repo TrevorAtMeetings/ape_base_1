@@ -43,13 +43,11 @@ class ChartManager {
 
     async loadChartData(pumpCode, flowRate, head) {
         try {
-            console.log('Charts.js: loadChartData called with:', { pumpCode, flowRate, head });
             
             const safePumpCode = encodeURIComponent(pumpCode);
             const url = `/api/chart_data/${safePumpCode}?flow=${flowRate}&head=${head}`;
             
             const response = await fetch(url);
-            console.log('Charts.js: Response status:', response.status);
             
             const data = await response.json();
             
@@ -58,7 +56,6 @@ class ChartManager {
             }
             
             this.currentChartData = data;
-            console.log('Charts.js: Chart data loaded and stored');
             return data;
         } catch (error) {
             console.error('Charts.js: Error loading chart data:', error);
@@ -71,7 +68,6 @@ class ChartManager {
      * Uses Brain API data directly with zero client-side transformations
      */
     renderChart(containerId, chartType) {
-        console.log(`Charts.js: Rendering ${chartType} chart...`);
         
         if (!this.currentChartData || !this.currentChartData.curves) {
             console.error(`No chart data available for ${chartType} chart`);
@@ -89,11 +85,6 @@ class ChartManager {
         const traces = [];
         const opPoint = this.currentChartData.operating_point;
         
-        // DEBUG: Log operating point data for BEP troubleshooting
-        console.log(`[CHART DEBUG] Chart type: ${chartType}, Operating point:`, opPoint);
-        if (opPoint) {
-            console.log(`[CHART DEBUG] BEP data check - flow: ${opPoint.bep_flow_m3hr}, head: ${opPoint.bep_head_m}`);
-        }
 
         // BRAIN SYSTEM: Use API data directly - NO CLIENT-SIDE TRANSFORMATIONS
         if (Array.isArray(this.currentChartData.curves)) {
@@ -124,7 +115,6 @@ class ChartManager {
 
         // Add authentic BEP marker for head-flow charts (enhanced feature)
         if (chartType === 'head_flow' && opPoint && opPoint.bep_flow_m3hr && opPoint.bep_head_m) {
-            console.log(`[BEP DEBUG] Adding BEP marker: ${opPoint.bep_flow_m3hr} m³/hr @ ${opPoint.bep_head_m} m`);
             
             // Blue BEP marker with enhanced information
             traces.push({
@@ -155,12 +145,6 @@ class ChartManager {
                 showlegend: true
             });
         } else if (chartType === 'head_flow') {
-            console.log(`[BEP DEBUG] No BEP marker - missing data:`, {
-                chartType,
-                hasOpPoint: !!opPoint,
-                bep_flow: opPoint?.bep_flow_m3hr,
-                bep_head: opPoint?.bep_head_m
-            });
         }
 
         // Add enhanced operating point marker with BEP percentage for head-flow charts
@@ -220,13 +204,8 @@ class ChartManager {
         };
 
         try {
-            console.log(`[CHART DEBUG] Rendering ${chartType} with ${traces.length} traces`);
-            traces.forEach((trace, i) => {
-                console.log(`[TRACE ${i}] ${trace.name}: ${trace.x?.length || 0} points`);
-            });
             
             Plotly.newPlot(containerId, traces, layout, plotConfig);
-            console.log(`Charts.js: ${chartType} chart rendered successfully`);
             this.removeLoadingSpinner(containerId);
         } catch (error) {
             console.error(`Error rendering ${chartType} chart:`, error);
@@ -321,14 +300,10 @@ class ChartManager {
             xRange = xAxisRange ? [xAxisRange.min, xAxisRange.max] : null;
             yRange = yAxisRange ? [yAxisRange.min, yAxisRange.max] : null;
             
-            console.log(`[AXIS DEBUG] Backend axis mapping for ${config.dataKey}: x=${axisMapping.x}, y=${axisMapping.y}`);
-            console.log(`[AXIS DEBUG] Backend ranges available: x=${xAxisRange ? 'YES' : 'NO'}, y=${yAxisRange ? 'YES' : 'NO'}`);
-            console.log(`[AXIS DEBUG] Using ranges: x=${JSON.stringify(xRange)}, y=${JSON.stringify(yRange)}`);
         }
         
         // Fallback to calculated ranges if backend ranges not available
         if (!xRange || !yRange) {
-            console.log(`[AXIS DEBUG] Backend ranges not available, calculating from trace data`);
             const allX = traces.flatMap(t => t.x || []).filter(x => !isNaN(x));
             const allY = traces.flatMap(t => t.y || []).filter(y => !isNaN(y));
             
@@ -567,7 +542,6 @@ class ChartManager {
             this.renderPowerFlowChart('power-flow-chart');
             this.renderNPSHrFlowChart('npshr-flow-chart');
             
-            console.log('Charts.js: All charts initialized successfully');
         } catch (error) {
             console.error('Charts.js: Failed to initialize charts:', error);
         }
@@ -578,7 +552,6 @@ class ChartManager {
 let chartManager;
 
 // Create global instance that templates expect  
-console.log('Charts.js: Script is executing...');
 
 // Mark that this script has executed
 if (typeof window !== 'undefined') {
@@ -588,10 +561,7 @@ if (typeof window !== 'undefined') {
 // Robust initialization with error handling
 if (typeof window !== 'undefined') {
     try {
-        console.log('Charts.js: Creating ChartManager...');
         window.pumpChartsManager = new ChartManager();
-        console.log('Charts.js: Global pumpChartsManager instance created successfully');
-        console.log('Charts.js: pumpChartsManager methods:', Object.getOwnPropertyNames(Object.getPrototypeOf(window.pumpChartsManager)));
     } catch (error) {
         console.error('Charts.js: Failed to create ChartManager:', error);
         console.error('Charts.js: Error stack:', error.stack);
@@ -599,7 +569,6 @@ if (typeof window !== 'undefined') {
         // Create a fallback minimal manager
         window.pumpChartsManager = {
             initializeCharts: function(pumpCode, flowRate, head) {
-                console.log('Fallback pumpChartsManager: Charts would initialize with', { pumpCode, flowRate, head });
                 // Create placeholder content
                 ['head-flow-chart', 'efficiency-flow-chart', 'power-flow-chart', 'npshr-flow-chart'].forEach(id => {
                     const container = document.getElementById(id);
@@ -613,10 +582,8 @@ if (typeof window !== 'undefined') {
                 });
             }
         };
-        console.log('Charts.js: Fallback pumpChartsManager created');
     }
 } else {
-    console.log('Charts.js: Window object not available');
 }
 
 // Global functions for compatibility with existing code

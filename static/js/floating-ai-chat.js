@@ -29,7 +29,6 @@ async function checkAIChatFeatureEnabled() {
         const data = await response.json();
         return data.success && data.features && data.features.ai_chatbot;
     } catch (error) {
-        console.log('Feature status check failed, defaulting to enabled:', error);
         return true; // Default to enabled if check fails
     }
 }
@@ -44,7 +43,6 @@ function initializeFloatingAIChat() {
     // Check if AI chatbot feature is enabled
     checkAIChatFeatureEnabled().then(enabled => {
         if (!enabled) {
-            console.log('AI Chatbot feature is disabled');
             window.aiChatInitialized = false; // Reset if feature is disabled
             return;
         }
@@ -302,7 +300,6 @@ function addAIMessage(sender, content, processingTime = null, confidence = null,
     if (sender === 'assistant' && window.MathJax && MathJax.typesetPromise) {
         setTimeout(() => {
             MathJax.typesetPromise([messageDiv]).then(() => {
-                console.log('LaTeX rendering completed for AI message');
             }).catch((err) => console.warn('MathJax rendering error in AI chat:', err));
         }, 100);
     }

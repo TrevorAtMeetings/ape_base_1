@@ -273,7 +273,6 @@ class PerformanceAnalyzer:
             PerformanceAnalyzer._cached_factors = self.calibration_factors
             PerformanceAnalyzer._cache_time = datetime.now()
             
-            logger.debug(f"[TUNABLE PHYSICS] Loaded calibration factors: {self.calibration_factors}")
         except Exception as e:
             logger.warning(f"[TUNABLE PHYSICS] Failed to load calibration factors, using defaults: {e}")
             # Safe defaults if config service is unavailable - Research-based values
@@ -325,9 +324,6 @@ class PerformanceAnalyzer:
         
         # Log which physics model is being used
         model_type = exponents.get('description', 'Unknown model')
-        logger.debug(f"[PHYSICS MODEL] {pump_code}: Using {pump_type or 'DEFAULT'} physics model")
-        logger.debug(f"[PHYSICS MODEL] {pump_code}: {model_type}")
-        logger.debug(f"[PHYSICS MODEL] {pump_code}: Exponents - Flow: {exponents['flow_exponent_x']}, "
                     f"Head: {exponents['head_exponent_y']}, Power: {exponents['power_exponent_z']}, "
                     f"NPSH: {exponents['npshr_exponent_alpha']}")
         
@@ -375,7 +371,6 @@ class PerformanceAnalyzer:
             
             # STEP 1: Interpolate head at target flow on largest curve (H₁)
             if len(flows_sorted) < 2 or len(heads_sorted) < 2:
-                logger.debug(f"[DIRECT AFFINITY] {pump_code}: Insufficient data points")
                 return None, None
                 
             head_interp = interpolate.interp1d(flows_sorted, heads_sorted, 
@@ -384,7 +379,6 @@ class PerformanceAnalyzer:
             # Check flow range coverage
             min_flow, max_flow = min(flows_sorted), max(flows_sorted)
             if not (min_flow * 0.9 <= target_flow <= max_flow * 1.1):
-                logger.debug(f"[DIRECT AFFINITY] {pump_code}: Flow {target_flow} outside range {min_flow*0.9:.1f}-{max_flow*1.1:.1f}")
                 return None, None
             
             # Get head delivered by largest impeller at target flow (H₁)
@@ -394,12 +388,10 @@ class PerformanceAnalyzer:
                 logger.error(f"[8/8 DME AFFINITY] Interpolated head at {target_flow} m³/hr: {base_head_at_flow}m")
             
             if np.isnan(base_head_at_flow) or base_head_at_flow <= 0:
-                logger.debug(f"[DIRECT AFFINITY] {pump_code}: Invalid interpolated head: {base_head_at_flow}")
                 if pump_code and "8/8 DME" in str(pump_code):
                     logger.error(f"[8/8 DME AFFINITY] Returning None due to invalid head")
                 return None, None
             
-            logger.debug(f"[DIRECT AFFINITY] {pump_code}: Base curve delivers {base_head_at_flow:.2f}m at {target_flow} m³/hr")
             
             # STEP 2: Apply Direct Affinity Law Formula
             # H₂ = H₁ × (D₂/D₁)²  →  D₂ = D₁ × sqrt(H₂/H₁)
@@ -409,7 +401,6 @@ class PerformanceAnalyzer:
             # Special tolerance for BEP testing - allow small precision differences
             tolerance = 1.05  # 5% tolerance for BEP precision issues
             if target_head > base_head_at_flow * tolerance:
-                logger.debug(f"[DIRECT AFFINITY] {pump_code}: Cannot achieve target - need {target_head:.2f}m but max available is {base_head_at_flow:.2f}m")
                 if pump_code and "8/8 DME" in str(pump_code):
                     logger.error(f"[8/8 DME AFFINITY] Target {target_head:.2f}m > max {base_head_at_flow * tolerance:.2f}m - returning None")
                 return None, None
@@ -426,7 +417,6 @@ class PerformanceAnalyzer:
             # Use pump-type-specific head exponent from physics model
             if physics_exponents and 'head_exponent_y' in physics_exponents:
                 head_exponent = physics_exponents['head_exponent_y']
-                logger.debug(f"[TRIM PHYSICS] {pump_code}: Using pump-type-specific head exponent {head_exponent}")
             else:
                 # Fallback to trim-dependent exponents if physics model not provided
                 estimated_trim_pct = (1.0 - (target_head / base_head_at_flow) ** 0.5) * 100
@@ -434,11 +424,9 @@ class PerformanceAnalyzer:
                 if estimated_trim_pct < 5.0:
                     # Small trim: Use higher exponent (research: 2.8-3.0)
                     head_exponent = self.get_calibration_factor('trim_dependent_small_exponent', 2.9)
-                    logger.debug(f"[TRIM PHYSICS] {pump_code}: Small trim (~{estimated_trim_pct:.1f}%) - using exponent {head_exponent}")
                 else:
                     # Larger trim: Use standard exponent (research: 2.0-2.2)
                     head_exponent = self.get_calibration_factor('trim_dependent_large_exponent', 2.1)
-                    logger.debug(f"[TRIM PHYSICS] {pump_code}: Large trim (~{estimated_trim_pct:.1f}%) - using exponent {head_exponent}")
             
             # H₂/H₁ = (D₂/D₁)^head_exp  →  D₂ = D₁ × (H₂/H₁)^(1/head_exp)
             # FIXED: Ensure all values are float to avoid decimal/float mixing in power operations
@@ -462,13 +450,11 @@ class PerformanceAnalyzer:
                 logger.error(f"[8/8 DME AFFINITY] Checking trim limits: {trim_percent:.2f}% vs [{self.min_trim_percent}, {self.max_trim_percent}]")
             
             if trim_percent < self.min_trim_percent:
-                logger.debug(f"[DIRECT AFFINITY] {pump_code}: Excessive trim required - {trim_percent:.1f}% < minimum {self.min_trim_percent}%")
                 if pump_code and "8/8 DME" in str(pump_code):
                     logger.error(f"[8/8 DME AFFINITY] Trim too small: {trim_percent:.1f}% < {self.min_trim_percent}%")
                 return None, None
             
             if trim_percent > self.max_trim_percent:
-                logger.debug(f"[DIRECT AFFINITY] {pump_code}: Invalid trim - {trim_percent:.1f}% > maximum {self.max_trim_percent}%")
                 if pump_code and "8/8 DME" in str(pump_code):
                     logger.error(f"[8/8 DME AFFINITY] Trim too large: {trim_percent:.1f}% > {self.max_trim_percent}%")
                 return None, None
@@ -478,7 +464,6 @@ class PerformanceAnalyzer:
             verification_head = base_head_at_flow * (diameter_ratio ** head_exponent)
             error_percent = abs(verification_head - target_head) / target_head * 100
             
-            logger.debug(f"[DIRECT AFFINITY] {pump_code}: Verification - calculated diameter delivers {verification_head:.3f}m vs target {target_head:.3f}m (error: {error_percent:.2f}%)")
             
             if error_percent > 1.0:  # Should be essentially zero for direct calculation
                 logger.warning(f"[DIRECT AFFINITY] {pump_code}: Unexpected calculation error: {error_percent:.2f}%")
@@ -573,7 +558,6 @@ class PerformanceAnalyzer:
                 min_achievable_head = delivered_head * (0.85 ** 2)  # 85% trim = 72.25% head
                 
                 if min_achievable_head <= head <= max_achievable_head:
-                    logger.debug(f"[INDUSTRY] {pump_code}: Found suitable {diameter}mm curve delivering {delivered_head:.2f}m")
                     
                     if pump_code and "8/8 DME" in str(pump_code):
                         logger.error(f"[8/8 DME DEBUG] Selected {diameter}mm curve as best match")
@@ -689,7 +673,6 @@ class PerformanceAnalyzer:
         """
         try:
             pump_code = pump_data.get('pump_code')
-            logger.debug(f"[INDUSTRY] Starting industry-standard calculation for {pump_code} at {flow} m³/hr @ {head}m")
             
             # Get pump-type-specific physics model exponents
             physics_exponents = self._get_exponents_for_pump(pump_data)
@@ -702,7 +685,6 @@ class PerformanceAnalyzer:
                 logger.error(f"[DEBUG] Using physics model - Flow exp: {physics_exponents['flow_exponent_x']}, Head exp: {physics_exponents['head_exponent_y']}")
             
             curves = pump_data.get('curves', [])
-            logger.debug(f"[INDUSTRY] {pump_code}: Found {len(curves)} curves")
             
             if pump_code and ("HC" in str(pump_code) or "8/8 DME" in str(pump_code)):
                 logger.error(f"[DEBUG] Found {len(curves)} curves")
@@ -711,7 +693,6 @@ class PerformanceAnalyzer:
                         logger.error(f"[DEBUG] Curve {i}: diameter={curve.get('impeller_diameter_mm')}, points={len(curve.get('performance_points', []))}")
             
             if not curves:
-                logger.debug(f"[INDUSTRY] {pump_code}: No curves found - returning None")
                 if pump_code and "HC" in str(pump_code):
                     logger.error(f"[DEBUG] {pump_code}: NO CURVES FOUND - This is why calculation fails!")
                 return None
@@ -727,7 +708,6 @@ class PerformanceAnalyzer:
                     largest_curve = curve
             
             if not largest_curve or largest_diameter <= 0:
-                logger.debug(f"[INDUSTRY] {pump_code}: No valid curves with impeller diameter found")
                 if pump_code and ("HC" in str(pump_code) or "8/8 DME" in str(pump_code)):
                     logger.error(f"[DEBUG] No valid curves found - largest_diameter: {largest_diameter}")
                     logger.error(f"[DEBUG] {pump_code}: INVALID CURVES - This is why calculation fails!")
