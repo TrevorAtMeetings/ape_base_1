@@ -6,114 +6,110 @@
 <div class="container">
     <div class="row">
         <div class="col s12">
-            <h3 class="blue-text text-darken-2">
-                <i class="material-icons left">storage</i>
+            <h4 class="blue-text text-darken-2" style="margin: 10px 0;">
+                <i class="material-icons left" style="font-size: 24px;">storage</i>
                 Pump Database Management
-            </h3>
+            </h4>
             
-            <!-- Summary Cards -->
-            <div class="row">
-                <div class="col s12 m3">
-                    <div class="card blue darken-2 white-text center">
-                        <div class="card-content">
-                            <h4>{{ total }}</h4>
-                            <p>Total Pumps</p>
+            <!-- Summary Cards - Compact -->
+            <div class="row" style="margin-bottom: 10px;">
+                <div class="col s6 m3">
+                    <div class="card blue darken-2 white-text center" style="margin: 5px 0;">
+                        <div class="card-content" style="padding: 15px;">
+                            <h5 style="margin: 0;">{{ total }}</h5>
+                            <p style="margin: 5px 0 0 0; font-size: 12px;">Total Pumps</p>
                         </div>
                     </div>
                 </div>
-                <div class="col s12 m3">
-                    <div class="card green darken-2 white-text center">
-                        <div class="card-content">
-                            <h4>870</h4>
-                            <p>Performance Curves</p>
+                <div class="col s6 m3">
+                    <div class="card green darken-2 white-text center" style="margin: 5px 0;">
+                        <div class="card-content" style="padding: 15px;">
+                            <h5 style="margin: 0;">870</h5>
+                            <p style="margin: 5px 0 0 0; font-size: 12px;">Curves</p>
                         </div>
                     </div>
                 </div>
-                <div class="col s12 m3">
-                    <div class="card orange darken-2 white-text center">
-                        <div class="card-content">
-                            <h4>90.0</h4>
-                            <p>Quality Score</p>
+                <div class="col s6 m3">
+                    <div class="card orange darken-2 white-text center" style="margin: 5px 0;">
+                        <div class="card-content" style="padding: 15px;">
+                            <h5 style="margin: 0;">90.0</h5>
+                            <p style="margin: 5px 0 0 0; font-size: 12px;">Quality</p>
                         </div>
                     </div>
                 </div>
-                <div class="col s12 m3">
-                    <div class="card red darken-2 white-text center">
-                        <div class="card-content">
-                            <h4>100%</h4>
-                            <p>Parse Success</p>
+                <div class="col s6 m3">
+                    <div class="card red darken-2 white-text center" style="margin: 5px 0;">
+                        <div class="card-content" style="padding: 15px;">
+                            <h5 style="margin: 0;">100%</h5>
+                            <p style="margin: 5px 0 0 0; font-size: 12px;">Parse Success</p>
                         </div>
                     </div>
                 </div>
             </div>
             
-            <!-- Data Quality Alert -->
-            <div class="card orange lighten-4">
-                <div class="card-content">
-                    <div class="row">
+            <!-- Data Quality Alert - Compact -->
+            <div class="card orange lighten-4" style="margin: 10px 0;">
+                <div class="card-content" style="padding: 15px;">
+                    <div class="row" style="margin: 0;">
                         <div class="col s1">
-                            <i class="material-icons medium orange-text text-darken-2">warning</i>
+                            <i class="material-icons orange-text text-darken-2" style="font-size: 20px;">warning</i>
                         </div>
                         <div class="col s11">
-                            <h6 class="orange-text text-darken-2">NPSH Data Availability Notice</h6>
-                            <p class="grey-text text-darken-2">
-                                <strong>Excellent:</strong> 612 of 869 curves (70.4%) contain authentic NPSH data from APE testing. 
-                                This represents comprehensive cavitation performance data across most pump models.
-                                NPSH data correlates precisely with flow, head, and efficiency at each operating point.
-                                Engineers should calculate NPSH requirements independently or contact APE for specific NPSH values.
+                            <h6 class="orange-text text-darken-2" style="margin: 0 0 5px 0; font-size: 14px;">NPSH Data: 70.4% Coverage</h6>
+                            <p class="grey-text text-darken-2" style="margin: 0; font-size: 11px;">
+                                612 of 869 curves contain authentic NPSH data from APE testing.
                             </p>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Control Panel -->
-            <div class="card">
-                <div class="card-content">
-                    <div class="row">
+            <!-- Control Panel - Compact -->
+            <div class="card" style="margin: 10px 0;">
+                <div class="card-content" style="padding: 15px;">
+                    <div class="row" style="margin: 0;">
                         <!-- Search and Filter -->
                         <div class="col s12 m8">
                             <form method="GET" action="{{ url_for('data_management.data_management') }}">
-                                <div class="row">
-                                    <div class="col s12 m6">
-                                        <div class="input-field">
-                                            <i class="material-icons prefix">search</i>
-                                            <input type="text" id="search" name="search" value="{{ search }}">
-                                            <label for="search">Search Pump Code</label>
+                                <div class="row" style="margin: 0;">
+                                    <div class="col s12 m5">
+                                        <div class="input-field" style="margin: 0;">
+                                            <i class="material-icons prefix" style="font-size: 18px;">search</i>
+                                            <input type="text" id="search" name="search" value="{{ search }}" style="font-size: 14px; height: 2.5rem;">
+                                            <label for="search" style="font-size: 12px;">Search Pump Code</label>
                                         </div>
                                     </div>
-                                    <div class="col s12 m4">
-                                        <div class="input-field">
-                                            <select name="category" id="category">
+                                    <div class="col s12 m5">
+                                        <div class="input-field" style="margin: 0;">
+                                            <select name="category" id="category" style="font-size: 14px;">
                                                 <option value="all" {% if category == 'all' %}selected{% endif %}>All Categories</option>
                                                 <option value="END_SUCTION" {% if category == 'END_SUCTION' %}selected{% endif %}>End Suction</option>
                                                 <option value="MULTI_STAGE" {% if category == 'MULTI_STAGE' %}selected{% endif %}>Multi-Stage</option>
                                                 <option value="AXIAL_FLOW" {% if category == 'AXIAL_FLOW' %}selected{% endif %}>Axial Flow</option>
-                                                <option value="HSC" {% if category == 'HSC' %}selected{% endif %}>High Speed Centrifugal</option>
+                                                <option value="HSC" {% if category == 'HSC' %}selected{% endif %}>HSC</option>
                                             </select>
-                                            <label>Category Filter</label>
+                                            <label style="font-size: 12px;">Category</label>
                                         </div>
                                     </div>
                                     <div class="col s12 m2">
-                                        <button class="btn blue darken-2" type="submit" style="margin-top: 25px;">
-                                            <i class="material-icons">filter_list</i>
+                                        <button class="btn blue darken-2" type="submit" style="margin-top: 10px; padding: 0 16px; height: 2.5rem;">
+                                            <i class="material-icons" style="font-size: 18px;">filter_list</i>
                                         </button>
                                     </div>
                                 </div>
                             </form>
                         </div>
                         
-                        <!-- Export and Upload -->
+                        <!-- Export and Upload - Compact -->
                         <div class="col s12 m4">
-                            <div class="right-align">
-                                <a href="{{ url_for('data_management.export_csv') }}" class="btn green darken-2 waves-effect">
-                                    <i class="material-icons left">download</i>
-                                    Export CSV
+                            <div class="right-align" style="margin-top: 10px;">
+                                <a href="{{ url_for('data_management.export_csv') }}" class="btn-small green darken-2 waves-effect" style="margin-right: 5px;">
+                                    <i class="material-icons left" style="font-size: 16px;">download</i>
+                                    Export
                                 </a>
-                                <br><br>
-                                <a href="#upload-modal" class="btn orange darken-2 waves-effect modal-trigger">
-                                    <i class="material-icons left">upload</i>
-                                    Upload Data
+                                <a href="#upload-modal" class="btn-small orange darken-2 waves-effect modal-trigger">
+                                    <i class="material-icons left" style="font-size: 16px;">upload</i>
+                                    Upload
                                 </a>
                             </div>
                         </div>
@@ -121,75 +117,67 @@
                 </div>
             </div>
             
-            <!-- Data Table -->
-            <div class="card">
-                <div class="card-content">
+            <!-- Data Table - Compact -->
+            <div class="card" style="margin: 10px 0;">
+                <div class="card-content" style="padding: 10px;">
                     <div class="table-container" style="overflow-x: auto;">
-                        <table class="striped responsive-table">
-                            <thead>
-                                <tr>
-                                    <th>Pump Code</th>
-                                    <th>Manufacturer</th>
-                                    <th>Model</th>
-                                    <th>Max Flow (m³/hr)</th>
-                                    <th>Max Head (m)</th>
-                                    <th>Max Efficiency (%)</th>
-                                    <th>Performance Curves</th>
-                                    <th>NPSH Data</th>
-                                    <th>Actions</th>
+                        <table style="background: white; border: 1px solid #e0e0e0; width: 100%; min-width: 1000px; border-collapse: collapse; display: table !important; font-size: 13px;">
+                            <thead style="background: #f8f9fa; display: table-header-group !important;">
+                                <tr style="border-bottom: 2px solid #dee2e6; display: table-row !important;">
+                                    <th style="padding: 8px; text-align: left; border-right: 1px solid #dee2e6; display: table-cell !important; width: 15%; min-width: 120px;">Pump Code</th>
+                                    <th style="padding: 8px; text-align: left; border-right: 1px solid #dee2e6; display: table-cell !important; width: 12%; min-width: 100px;">Manufacturer</th>
+                                    <th style="padding: 8px; text-align: left; border-right: 1px solid #dee2e6; display: table-cell !important; width: 10%; min-width: 80px;">Model</th>
+                                    <th style="padding: 8px; text-align: center; border-right: 1px solid #dee2e6; display: table-cell !important; width: 12%; min-width: 90px; font-size: 11px;">Max Flow<br>(m³/hr)</th>
+                                    <th style="padding: 8px; text-align: center; border-right: 1px solid #dee2e6; display: table-cell !important; width: 12%; min-width: 85px; font-size: 11px;">Max Head<br>(m)</th>
+                                    <th style="padding: 8px; text-align: center; border-right: 1px solid #dee2e6; display: table-cell !important; width: 12%; min-width: 85px; font-size: 11px;">Max<br>Efficiency<br>(%)</th>
+                                    <th style="padding: 8px; text-align: center; border-right: 1px solid #dee2e6; display: table-cell !important; width: 10%; min-width: 80px; font-size: 11px;">Performance<br>Curves</th>
+                                    <th style="padding: 8px; text-align: center; border-right: 1px solid #dee2e6; display: table-cell !important; width: 8%; min-width: 65px; font-size: 11px;">NPSH<br>Data</th>
+                                    <th style="padding: 8px; text-align: center; display: table-cell !important; width: 9%; min-width: 70px;">Actions</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody style="display: table-row-group !important;">
                                 {% for pump in pumps %}
-                                <tr>
-                                    <td>
+                                <tr style="border-bottom: 1px solid #dee2e6; display: table-row !important;">
+                                    <td style="padding: 8px; border-right: 1px solid #dee2e6; display: table-cell !important;">
                                         <strong class="blue-text">{{ pump.pump_code }}</strong>
                                     </td>
-                                    <td>{{ pump.manufacturer }}</td>
-                                    <td>{{ pump.model or 'N/A' }}</td>
-                                    <td>
+                                    <td style="padding: 8px; border-right: 1px solid #dee2e6; display: table-cell !important;">{{ pump.manufacturer }}</td>
+                                    <td style="padding: 8px; border-right: 1px solid #dee2e6; display: table-cell !important;">{{ pump.model or 'N/A' }}</td>
+                                    <td style="padding: 8px; text-align: center; border-right: 1px solid #dee2e6; display: table-cell !important;">
                                         {% if pump.max_flow > 0 %}
-                                            <span class="chip green white-text">{{ "%.1f"|format(pump.max_flow) }}</span>
+                                            {{ "%.1f"|format(pump.max_flow) }}
                                         {% else %}
-                                            <span class="chip red white-text">N/A</span>
+                                            N/A
                                         {% endif %}
                                     </td>
-                                    <td>
+                                    <td style="padding: 8px; text-align: center; border-right: 1px solid #dee2e6; display: table-cell !important;">
                                         {% if pump.max_head > 0 %}
-                                            <span class="chip blue white-text">{{ "%.1f"|format(pump.max_head) }}</span>
+                                            {{ "%.1f"|format(pump.max_head) }}
                                         {% else %}
-                                            <span class="chip red white-text">N/A</span>
+                                            N/A
                                         {% endif %}
                                     </td>
-                                    <td>
+                                    <td style="padding: 8px; text-align: center; border-right: 1px solid #dee2e6; display: table-cell !important;">
                                         {% if pump.max_efficiency > 0 %}
-                                            {% if pump.max_efficiency >= 80 %}
-                                                <span class="chip green white-text">{{ "%.1f"|format(pump.max_efficiency) }}%</span>
-                                            {% elif pump.max_efficiency >= 60 %}
-                                                <span class="chip orange white-text">{{ "%.1f"|format(pump.max_efficiency) }}%</span>
-                                            {% else %}
-                                                <span class="chip red white-text">{{ "%.1f"|format(pump.max_efficiency) }}%</span>
-                                            {% endif %}
+                                            {{ "%.1f"|format(pump.max_efficiency) }}%
                                         {% else %}
-                                            <span class="chip red white-text">N/A</span>
+                                            N/A
                                         {% endif %}
                                     </td>
-                                    <td>
-                                        <span class="chip {% if pump.curve_count > 0 %}green{% else %}red{% endif %} white-text">
-                                            {{ pump.curve_count }}
-                                        </span>
+                                    <td style="padding: 8px; text-align: center; border-right: 1px solid #dee2e6; display: table-cell !important;">
+                                        {{ pump.curve_count }}
                                     </td>
-                                    <td>
+                                    <td style="padding: 8px; text-align: center; border-right: 1px solid #dee2e6; display: table-cell !important;">
                                         {% if pump.has_npsh %}
-                                            <i class="material-icons green-text">check</i>
+                                            <span class="green-text" style="font-size: 16px;">✓</span>
                                         {% else %}
-                                            <i class="material-icons red-text">close</i>
+                                            <span class="red-text" style="font-size: 16px;">✗</span>
                                         {% endif %}
                                     </td>
-                                    <td>
+                                    <td style="padding: 8px; text-align: center; display: table-cell !important;">
                                         <a href="{{ url_for('reports.pump_report', pump_code=pump.pump_code) }}?flow={{ pump.max_flow }}&head={{ pump.max_head }}" 
-                                           class="btn-small blue darken-2 waves-effect" title="View Report">
-                                            <i class="material-icons">description</i>
+                                           class="btn-small blue darken-2 waves-effect" title="View Report" style="background: #2c3e50; padding: 0 8px; height: 28px; line-height: 28px;">
+                                            <i class="material-icons" style="font-size: 16px;">description</i>
                                         </a>
                                     </td>
                                 </tr>

@@ -52,26 +52,8 @@
                         </div>
                     </div>
 
-                </div>
-                <div class="card-action" style="padding: 10px 15px;">
-                    <a href="#edit-factors-modal" class="btn blue modal-trigger">
-                        <i class="material-icons left">edit</i>
-                        Edit Factors
-                    </a>
-                    <a href="#" class="btn-flat blue-text" onclick="resetToDefaults()">
-                        Reset Defaults
-                    </a>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Advanced Physics Parameters Section -->
-    <div class="row" style="margin-bottom: 15px;">
-        <div class="col s12">
-            <div class="card">
-                <div class="card-content" style="padding: 15px;">
-                    <span class="card-title" style="font-size: 1.3rem; margin-bottom: 15px;">
+                    <!-- Advanced Physics Parameters - moved into same card -->
+                    <span class="card-title" style="font-size: 1.3rem; margin-bottom: 15px; margin-top: 25px;">
                         <i class="material-icons left">science</i>
                         Advanced Physics Parameters
                     </span>
@@ -85,14 +67,14 @@
                         <div class="col s6">
                             <div class="card-panel cyan lighten-5 center-align" style="padding: 10px; margin: 5px 0;">
                                 <h6 style="margin: 0 0 5px 0; font-size: 0.9rem;">Small Trim Exponent</h6>
-                                <h4 class="cyan-text text-darken-2" style="margin: 0 0 5px 0;">{{ calibration_factors.trim_dependent_small_exponent }}</h4>
+                                <h4 class="cyan-text text-darken-2" data-factor="trim_small" style="margin: 0 0 5px 0;">{{ calibration_factors.trim_dependent_small_exponent }}</h4>
                                 <small class="grey-text">For trims &lt;5% (Research: 2.8-3.0)</small>
                             </div>
                         </div>
                         <div class="col s6">
                             <div class="card-panel indigo lighten-4 center-align" style="padding: 10px; margin: 5px 0;">
                                 <h6 style="margin: 0 0 5px 0; font-size: 0.9rem;">Large Trim Exponent</h6>
-                                <h4 class="indigo-text text-darken-2" style="margin: 0 0 5px 0;">{{ calibration_factors.trim_dependent_large_exponent }}</h4>
+                                <h4 class="indigo-text text-darken-2" data-factor="trim_large" style="margin: 0 0 5px 0;">{{ calibration_factors.trim_dependent_large_exponent }}</h4>
                                 <small class="grey-text">For trims 5-15% (Research: 2.0-2.2)</small>
                             </div>
                         </div>
@@ -107,14 +89,14 @@
                         <div class="col s6">
                             <div class="card-panel teal lighten-5 center-align" style="padding: 10px; margin: 5px 0;">
                                 <h6 style="margin: 0 0 5px 0; font-size: 0.9rem;">Volute Factor</h6>
-                                <h4 class="teal-text text-darken-2" style="margin: 0 0 5px 0;">{{ calibration_factors.efficiency_penalty_volute }}</h4>
+                                <h4 class="teal-text text-darken-2" data-factor="volute" style="margin: 0 0 5px 0;">{{ calibration_factors.efficiency_penalty_volute }}</h4>
                                 <small class="grey-text">Volute pump penalty (0.15-0.25)</small>
                             </div>
                         </div>
                         <div class="col s6">
                             <div class="card-panel pink lighten-4 center-align" style="padding: 10px; margin: 5px 0;">
                                 <h6 style="margin: 0 0 5px 0; font-size: 0.9rem;">Diffuser Factor</h6>
-                                <h4 class="pink-text text-darken-2" style="margin: 0 0 5px 0;">{{ calibration_factors.efficiency_penalty_diffuser }}</h4>
+                                <h4 class="pink-text text-darken-2" data-factor="diffuser" style="margin: 0 0 5px 0;">{{ calibration_factors.efficiency_penalty_diffuser }}</h4>
                                 <small class="grey-text">Diffuser pump penalty (0.4-0.5)</small>
                             </div>
                         </div>
@@ -129,14 +111,14 @@
                         <div class="col s6">
                             <div class="card-panel orange lighten-4 center-align" style="padding: 10px; margin: 5px 0;">
                                 <h6 style="margin: 0 0 5px 0; font-size: 0.9rem;">Degradation Threshold</h6>
-                                <h4 class="orange-text text-darken-3" style="margin: 0 0 5px 0;">{{ calibration_factors.npsh_degradation_threshold }}%</h4>
+                                <h4 class="orange-text text-darken-3" data-factor="npsh_threshold" style="margin: 0 0 5px 0;">{{ calibration_factors.npsh_degradation_threshold }}%</h4>
                                 <small class="grey-text">Heavy trim detection (>10%)</small>
                             </div>
                         </div>
                         <div class="col s6">
                             <div class="card-panel deep-orange lighten-4 center-align" style="padding: 10px; margin: 5px 0;">
                                 <h6 style="margin: 0 0 5px 0; font-size: 0.9rem;">Degradation Factor</h6>
-                                <h4 class="deep-orange-text text-darken-3" style="margin: 0 0 5px 0;">{{ calibration_factors.npsh_degradation_factor }}×</h4>
+                                <h4 class="deep-orange-text text-darken-3" data-factor="npsh_factor" style="margin: 0 0 5px 0;">{{ calibration_factors.npsh_degradation_factor }}×</h4>
                                 <small class="grey-text">Safety penalty multiplier</small>
                             </div>
                         </div>
@@ -412,9 +394,18 @@ function updateFactors() {
 }
 
 function updateDisplayedFactors(factors) {
+    // Core factors
     document.querySelector('[data-factor="flow"]').textContent = factors.bep_shift_flow_exponent;
     document.querySelector('[data-factor="head"]').textContent = factors.bep_shift_head_exponent;
     document.querySelector('[data-factor="efficiency"]').textContent = factors.efficiency_correction_exponent;
+    
+    // Advanced physics parameters
+    document.querySelector('[data-factor="trim_small"]').textContent = factors.trim_dependent_small_exponent;
+    document.querySelector('[data-factor="trim_large"]').textContent = factors.trim_dependent_large_exponent;
+    document.querySelector('[data-factor="volute"]').textContent = factors.efficiency_penalty_volute;
+    document.querySelector('[data-factor="diffuser"]').textContent = factors.efficiency_penalty_diffuser;
+    document.querySelector('[data-factor="npsh_threshold"]').textContent = factors.npsh_degradation_threshold + '%';
+    document.querySelector('[data-factor="npsh_factor"]').textContent = factors.npsh_degradation_factor + '×';
 }
 
 function validateCurrentSettings() {

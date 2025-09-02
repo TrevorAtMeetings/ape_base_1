@@ -487,31 +487,17 @@ a.nav-btn:hover {
         </a>
         
         <div class="nav-actions">
-            <!-- Tools Dropdown -->
-            <div class="nav-dropdown">
-                <button class="nav-btn">
-                    <span>Tools ▾</span>
-                </button>
-                <div class="nav-dropdown-content">
-                    <a href="{{ url_for('comparison.pump_comparison') }}">Pump Comparison</a>
-                    <a href="{{ url_for('comparison.shortlist_comparison') }}">Shortlist Compare</a>
-                    <a href="{{ url_for('pump_editor.pump_editor') }}">Pump Editor</a>
-                    <a href="{{ url_for('ai_extract.ai_extract_page') }}">AI Data Extract</a>
-                    <a href="{{ url_for('data_management.data_management') }}">Database Manager</a>
-                </div>
-            </div>
-            
-            <!-- Admin Dropdown -->
+            <!-- Admin Dropdown (with added AI Data Extract and Database Manager) -->
             <div class="nav-dropdown">
                 <button class="nav-btn">
                     <span>Admin ▾</span>
                 </button>
                 <div class="nav-dropdown-content">
-                    <a href="{{ url_for('admin_config.index') }}">Configuration</a>
                     <a href="{{ url_for('admin.ai_admin') }}">AI Admin</a>
                     <a href="/admin/brain">Brain System</a>
                     <a href="{{ url_for('admin.testing_interface') }}">Performance Testing</a>
-                    <a href="{{ url_for('admin.admin_landing') }}">Documents</a>
+                    <a href="{{ url_for('ai_extract.ai_extract_page') }}">AI Data Extract</a>
+                    <a href="{{ url_for('data_management.data_management') }}">Database Manager</a>
                 </div>
             </div>
             

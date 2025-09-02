@@ -21,13 +21,9 @@ class ProcessLogger:
     def __init__(self):
         self.session_id = datetime.now().strftime("%Y%m%d_%H%M%S")
         self.enabled = self._check_enabled()
-        self.logger = self._setup_logger() if self.enabled else self._null_logger()
+        self.logger = self._null_logger()  # Start with null logger - only create real logger when needed
         self.flow_head_suffix = ""  # Will be set when pump selection starts
-        
-        if self.enabled:
-            self.log("="*80)
-            self.log(f"PROCESS LOGGING INITIALIZED - Session: {self.session_id}")
-            self.log("="*80)
+        self._logger_initialized = False  # Track if we've created a real logger yet
     
     def _check_enabled(self) -> bool:
         """Check if logging is enabled from multiple sources."""
@@ -338,40 +334,53 @@ class ProcessLogger:
         
         # Reinitialize logger if state changed
         if self.enabled:
-            self.logger = self._setup_logger()
-            self.log("Process logging ENABLED at runtime")
+            # Don't create logger immediately - wait for set_pump_selection_context()
+            self._logger_initialized = False
+            self.logger = self._null_logger()
         else:
             self.logger = self._null_logger()
+            self._logger_initialized = False
         
         return self.enabled
     
     def set_pump_selection_context(self, flow: float, head: float):
-        """Set flow and head context and reinitialize logger with descriptive filename."""
+        """Set flow and head context and initialize logger with descriptive filename."""
         if not self.enabled:
             return
             
-        # Safe handler cleanup - handle already-closed handlers gracefully
-        if self.logger:
-            for handler in self.logger.handlers[:]:
-                try:
-                    handler.close()
-                except Exception:
-                    pass  # Handler already closed, ignore
-                try:
-                    self.logger.removeHandler(handler)
-                except Exception:
-                    pass  # Handler already removed, ignore
+        # If this is the first time we're creating a real logger, initialize it
+        if not self._logger_initialized:
+            self.logger = self._setup_logger(flow, head)
+            self._logger_initialized = True
             
-            # Clear handlers list to ensure clean state
-            self.logger.handlers = []
-        
-        # Reinitialize logger with flow/head in filename
-        self.logger = self._setup_logger(flow, head)
-        
-        # Log the context switch
-        self.log("="*80)
-        self.log(f"PUMP SELECTION CONTEXT SET - Flow: {flow} m³/hr, Head: {head} m")
-        self.log("="*80)
+            # Log initialization with context
+            self.log("="*80)
+            self.log(f"PROCESS LOGGING INITIALIZED - Session: {self.session_id}")
+            self.log(f"PUMP SELECTION CONTEXT SET - Flow: {flow} m³/hr, Head: {head} m")
+            self.log("="*80)
+        else:
+            # Safe handler cleanup for existing logger - handle already-closed handlers gracefully
+            if self.logger:
+                for handler in self.logger.handlers[:]:
+                    try:
+                        handler.close()
+                    except Exception:
+                        pass  # Handler already closed, ignore
+                    try:
+                        self.logger.removeHandler(handler)
+                    except Exception:
+                        pass  # Handler already removed, ignore
+                
+                # Clear handlers list to ensure clean state
+                self.logger.handlers = []
+            
+            # Reinitialize logger with new flow/head filename
+            self.logger = self._setup_logger(flow, head)
+            
+            # Log the context switch
+            self.log("="*80)
+            self.log(f"PUMP SELECTION CONTEXT SET - Flow: {flow} m³/hr, Head: {head} m")
+            self.log("="*80)
     
     def get_log_file_path(self) -> Optional[str]:
         """Get the current log file path if logging is enabled."""

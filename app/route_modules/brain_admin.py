@@ -260,16 +260,16 @@ def update_calibration_factors():
                 for factor_name, value in factors.items():
                     cursor.execute("""
                         UPDATE admin_config.engineering_constants 
-                        SET value = %s, updated_at = NOW()
+                        SET value = %s
                         WHERE name = %s AND category = 'BEP Migration'
                     """, (str(value), factor_name))
                 
                 # Log the change for audit
                 cursor.execute("""
-                    INSERT INTO admin_config.audit_log (
-                        profile_id, action, user_id, changes, timestamp
-                    ) VALUES (1, 'calibration_update', %s, %s, NOW())
-                """, (user_id, f"Updated calibration factors: {factors}"))
+                    INSERT INTO admin_config.configuration_audits (
+                        profile_id, changed_by, change_type, reason
+                    ) VALUES (%s, %s, %s, %s)
+                """, (1, user_id, 'calibration_update', f"Updated calibration factors: {factors}"))
                 
                 conn.commit()
         
