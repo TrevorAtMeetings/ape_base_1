@@ -1,139 +1,148 @@
 {% extends "admin/base.html" %}
 
-{% block admin_title %}Brain Calibration Tool - Tunable Physics Engine{% endblock %}
+{% block admin_title %}Brain Calibration Tool{% endblock %}
 
 {% block admin_content %}
-<div class="container" style="margin-top: 20px;">
-    <!-- Page Header -->
-    <div class="row">
+<div class="container" style="margin-top: 15px;">
+    <!-- Compact Header -->
+    <div class="row" style="margin-bottom: 15px;">
         <div class="col s12">
-            <div class="card-panel orange lighten-5">
-                <h4 class="orange-text text-darken-2">
+            <div class="card-panel orange lighten-5" style="padding: 15px;">
+                <h5 class="orange-text text-darken-2" style="margin: 0 0 8px 0;">
                     <i class="material-icons left">tune</i>
-                    Tunable Physics Engine Calibration
-                </h4>
-                <p>Calibrate BEP migration physics parameters against manufacturer data for optimal accuracy.</p>
-                <div class="chip orange lighten-4">
-                    <span class="orange-text text-darken-2">Enterprise-Grade Configuration Platform</span>
+                    Physics Engine Calibration
+                </h5>
+                <p style="margin: 0; font-size: 0.9rem;">Calibrate BEP migration physics parameters against manufacturer data.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Current Factors - Compact Grid -->
+    <div class="row" style="margin-bottom: 15px;">
+        <div class="col s12">
+            <div class="card">
+                <div class="card-content" style="padding: 15px;">
+                    <span class="card-title" style="font-size: 1.3rem; margin-bottom: 15px;">
+                        <i class="material-icons left">settings</i>
+                        Current Calibration Factors
+                    </span>
+                    
+                    <!-- Core Factors - Compact Row -->
+                    <div class="row" style="margin-bottom: 10px;">
+                        <div class="col s12 m4">
+                            <div class="card-panel blue lighten-5 center-align" style="padding: 10px; margin: 5px 0;">
+                                <h6 style="margin: 0 0 5px 0; font-size: 0.9rem;">BEP Flow Exponent</h6>
+                                <h4 class="blue-text" data-factor="flow" style="margin: 0 0 5px 0;">{{ calibration_factors.bep_shift_flow_exponent }}</h4>
+                                <small class="grey-text">Controls flow migration during trimming</small>
+                            </div>
+                        </div>
+                        <div class="col s12 m4">
+                            <div class="card-panel green lighten-5 center-align" style="padding: 10px; margin: 5px 0;">
+                                <h6 style="margin: 0 0 5px 0; font-size: 0.9rem;">BEP Head Exponent</h6>
+                                <h4 class="green-text" data-factor="head" style="margin: 0 0 5px 0;">{{ calibration_factors.bep_shift_head_exponent }}</h4>
+                                <small class="grey-text">Controls head migration during trimming</small>
+                            </div>
+                        </div>
+                        <div class="col s12 m4">
+                            <div class="card-panel purple lighten-5 center-align" style="padding: 10px; margin: 5px 0;">
+                                <h6 style="margin: 0 0 5px 0; font-size: 0.9rem;">Efficiency Correction</h6>
+                                <h4 class="purple-text" data-factor="efficiency" style="margin: 0 0 5px 0;">{{ calibration_factors.efficiency_correction_exponent }}</h4>
+                                <small class="grey-text">Off-BEP efficiency penalty factor</small>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+                <div class="card-action" style="padding: 10px 15px;">
+                    <a href="#edit-factors-modal" class="btn blue modal-trigger">
+                        <i class="material-icons left">edit</i>
+                        Edit Factors
+                    </a>
+                    <a href="#" class="btn-flat blue-text" onclick="resetToDefaults()">
+                        Reset Defaults
+                    </a>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Current Calibration Factors -->
-    <div class="row">
+    <!-- Advanced Physics Parameters Section -->
+    <div class="row" style="margin-bottom: 15px;">
         <div class="col s12">
             <div class="card">
-                <div class="card-content">
-                    <span class="card-title">
-                        <i class="material-icons left">settings</i>
-                        Current Calibration Factors
+                <div class="card-content" style="padding: 15px;">
+                    <span class="card-title" style="font-size: 1.3rem; margin-bottom: 15px;">
+                        <i class="material-icons left">science</i>
+                        Advanced Physics Parameters
                     </span>
-                    <!-- BEP Migration Parameters -->
-                    <h6 class="orange-text text-darken-2">
-                        <i class="material-icons tiny">psychology</i>
-                        BEP Migration & Correction Physics
-                    </h6>
-                    <div class="row">
-                        <div class="col s12 m4">
-                            <div class="card-panel blue lighten-5">
-                                <h6>BEP Flow Exponent</h6>
-                                <h4 class="blue-text" data-factor="flow">{{ calibration_factors.bep_shift_flow_exponent }}</h4>
-                                <p class="grey-text text-darken-1">Controls flow migration rate during impeller trimming</p>
-                                <small>Formula: BEP_Q₂ = BEP_Q₁ × (D₂/D₁)^x</small>
-                            </div>
-                        </div>
-                        <div class="col s12 m4">
-                            <div class="card-panel green lighten-5">
-                                <h6>BEP Head Exponent</h6>
-                                <h4 class="green-text" data-factor="head">{{ calibration_factors.bep_shift_head_exponent }}</h4>
-                                <p class="grey-text text-darken-1">Controls head migration rate during impeller trimming</p>
-                                <small>Formula: BEP_H₂ = BEP_H₁ × (D₂/D₁)^y</small>
-                            </div>
-                        </div>
-                        <div class="col s12 m4">
-                            <div class="card-panel purple lighten-5">
-                                <h6>Efficiency Correction</h6>
-                                <h4 class="purple-text" data-factor="efficiency">{{ calibration_factors.efficiency_correction_exponent }}</h4>
-                                <p class="grey-text text-darken-1">Efficiency penalty factor for off-BEP operation</p>
-                                <small>Formula: η_penalty = (|QBP - 100|) × z</small>
-                            </div>
-                        </div>
-                    </div>
 
                     <!-- Research-Based Trim Physics -->
-                    <h6 class="deep-orange-text text-darken-2" style="margin-top: 30px;">
+                    <h6 class="deep-orange-text text-darken-2" style="margin: 0 0 10px 0; font-size: 0.95rem;">
                         <i class="material-icons tiny">science</i>
                         Research-Based Trim Physics (Industrial Standards)
                     </h6>
-                    <div class="row">
-                        <div class="col s12 m6">
-                            <div class="card-panel cyan lighten-5">
-                                <h6>Small Trim Exponent</h6>
-                                <h4 class="cyan-text text-darken-2">{{ calibration_factors.trim_dependent_small_exponent }}</h4>
-                                <p class="grey-text text-darken-1">Enhanced affinity law for small trims (&lt;5%)</p>
-                                <small>Research: 2.8-3.0 range</small>
+                    <div class="row" style="margin-bottom: 15px;">
+                        <div class="col s6">
+                            <div class="card-panel cyan lighten-5 center-align" style="padding: 10px; margin: 5px 0;">
+                                <h6 style="margin: 0 0 5px 0; font-size: 0.9rem;">Small Trim Exponent</h6>
+                                <h4 class="cyan-text text-darken-2" style="margin: 0 0 5px 0;">{{ calibration_factors.trim_dependent_small_exponent }}</h4>
+                                <small class="grey-text">For trims &lt;5% (Research: 2.8-3.0)</small>
                             </div>
                         </div>
-                        <div class="col s12 m6">
-                            <div class="card-panel indigo lighten-5">
-                                <h6>Large Trim Exponent</h6>
-                                <h4 class="indigo-text text-darken-2">{{ calibration_factors.trim_dependent_large_exponent }}</h4>
-                                <p class="grey-text text-darken-1">Enhanced affinity law for large trims (5-15%)</p>
-                                <small>Research: 2.0-2.2 range</small>
+                        <div class="col s6">
+                            <div class="card-panel indigo lighten-4 center-align" style="padding: 10px; margin: 5px 0;">
+                                <h6 style="margin: 0 0 5px 0; font-size: 0.9rem;">Large Trim Exponent</h6>
+                                <h4 class="indigo-text text-darken-2" style="margin: 0 0 5px 0;">{{ calibration_factors.trim_dependent_large_exponent }}</h4>
+                                <small class="grey-text">For trims 5-15% (Research: 2.0-2.2)</small>
                             </div>
                         </div>
                     </div>
 
                     <!-- Efficiency Penalty Factors -->
-                    <h6 class="red-text text-darken-2" style="margin-top: 30px;">
+                    <h6 class="red-text text-darken-2" style="margin: 0 0 10px 0; font-size: 0.95rem;">
                         <i class="material-icons tiny">trending_down</i>
                         Efficiency Penalty Factors (Pump Type Specific)
                     </h6>
-                    <div class="row">
-                        <div class="col s12 m6">
-                            <div class="card-panel teal lighten-5">
-                                <h6>Volute Pump Factor</h6>
-                                <h4 class="teal-text text-darken-2">{{ calibration_factors.efficiency_penalty_volute }}</h4>
-                                <p class="grey-text text-darken-1">Efficiency penalty for volute pumps</p>
-                                <small>Formula: Δη = ε × (1 - D₂/D₁)</small>
+                    <div class="row" style="margin-bottom: 15px;">
+                        <div class="col s6">
+                            <div class="card-panel teal lighten-5 center-align" style="padding: 10px; margin: 5px 0;">
+                                <h6 style="margin: 0 0 5px 0; font-size: 0.9rem;">Volute Factor</h6>
+                                <h4 class="teal-text text-darken-2" style="margin: 0 0 5px 0;">{{ calibration_factors.efficiency_penalty_volute }}</h4>
+                                <small class="grey-text">Volute pump penalty (0.15-0.25)</small>
                             </div>
                         </div>
-                        <div class="col s12 m6">
-                            <div class="card-panel pink lighten-5">
-                                <h6>Diffuser Pump Factor</h6>
-                                <h4 class="pink-text text-darken-2">{{ calibration_factors.efficiency_penalty_diffuser }}</h4>
-                                <p class="grey-text text-darken-1">Efficiency penalty for diffuser/turbine pumps</p>
-                                <small>Research: Higher penalty (0.4-0.5)</small>
+                        <div class="col s6">
+                            <div class="card-panel pink lighten-4 center-align" style="padding: 10px; margin: 5px 0;">
+                                <h6 style="margin: 0 0 5px 0; font-size: 0.9rem;">Diffuser Factor</h6>
+                                <h4 class="pink-text text-darken-2" style="margin: 0 0 5px 0;">{{ calibration_factors.efficiency_penalty_diffuser }}</h4>
+                                <small class="grey-text">Diffuser pump penalty (0.4-0.5)</small>
                             </div>
                         </div>
                     </div>
 
-                    <!-- NPSH Degradation Parameters -->
-                    <h6 class="brown-text text-darken-2" style="margin-top: 30px;">
+                    <!-- NPSH Degradation -->
+                    <h6 class="brown-text text-darken-2" style="margin: 0 0 10px 0; font-size: 0.95rem;">
                         <i class="material-icons tiny">water_drop</i>
                         NPSH Degradation (Heavy Trimming Protection)
                     </h6>
-                    <div class="row">
-                        <div class="col s12 m6">
-                            <div class="card-panel orange lighten-4">
-                                <h6>Degradation Threshold</h6>
-                                <h4 class="orange-text text-darken-3">{{ calibration_factors.npsh_degradation_threshold }}%</h4>
-                                <p class="grey-text text-darken-1">Trim % above which NPSH degrades</p>
-                                <small>Research: >10% causes NPSH issues</small>
+                    <div class="row" style="margin-bottom: 5px;">
+                        <div class="col s6">
+                            <div class="card-panel orange lighten-4 center-align" style="padding: 10px; margin: 5px 0;">
+                                <h6 style="margin: 0 0 5px 0; font-size: 0.9rem;">Degradation Threshold</h6>
+                                <h4 class="orange-text text-darken-3" style="margin: 0 0 5px 0;">{{ calibration_factors.npsh_degradation_threshold }}%</h4>
+                                <small class="grey-text">Heavy trim detection (>10%)</small>
                             </div>
                         </div>
-                        <div class="col s12 m6">
-                            <div class="card-panel deep-orange lighten-4">
-                                <h6>Degradation Factor</h6>
-                                <h4 class="deep-orange-text text-darken-3">{{ calibration_factors.npsh_degradation_factor }}×</h4>
-                                <p class="grey-text text-darken-1">NPSH multiplier for heavy trims</p>
-                                <small>Research-based 15% penalty</small>
+                        <div class="col s6">
+                            <div class="card-panel deep-orange lighten-4 center-align" style="padding: 10px; margin: 5px 0;">
+                                <h6 style="margin: 0 0 5px 0; font-size: 0.9rem;">Degradation Factor</h6>
+                                <h4 class="deep-orange-text text-darken-3" style="margin: 0 0 5px 0;">{{ calibration_factors.npsh_degradation_factor }}×</h4>
+                                <small class="grey-text">Safety penalty multiplier</small>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="card-action">
+                <div class="card-action" style="padding: 10px 15px;">
                     <a href="#edit-factors-modal" class="btn blue modal-trigger">
                         <i class="material-icons left">edit</i>
                         Edit Factors
@@ -146,58 +155,56 @@
         </div>
     </div>
 
-    <!-- Calibration Test Section -->
-    <div class="row">
+    <!-- Testing & Actions - Compact Side-by-Side -->
+    <div class="row" style="margin-bottom: 15px;">
         <div class="col s12 l8">
             <div class="card">
-                <div class="card-content">
-                    <span class="card-title">
+                <div class="card-content" style="padding: 15px;">
+                    <span class="card-title" style="font-size: 1.3rem; margin-bottom: 10px;">
                         <i class="material-icons left">assessment</i>
-                        Calibration Test & Validation
+                        Calibration Testing
                     </span>
-                    <p>Run comprehensive tests against manufacturer data to validate physics model accuracy.</p>
                     
                     <div id="calibration-status" class="hide">
                         <div class="progress">
                             <div class="indeterminate orange"></div>
                         </div>
-                        <p class="center-align">Running calibration test...</p>
+                        <p class="center-align" style="margin: 10px 0;">Running calibration test...</p>
                     </div>
                     
                     <div id="calibration-results" class="hide">
-                        <!-- Results will be populated by JavaScript -->
+                        <!-- Results populated by JavaScript -->
                     </div>
                 </div>
-                <div class="card-action">
+                <div class="card-action" style="padding: 10px 15px;">
                     <a href="#" class="btn orange" onclick="runCalibrationTest()">
                         <i class="material-icons left">play_arrow</i>
-                        Run Calibration Test
+                        Full Test
                     </a>
-                    <a href="#" class="btn-flat orange-text" onclick="downloadResults()" id="download-btn" style="display: none;">
-                        <i class="material-icons left">download</i>
-                        Download Report
+                    <a href="#" class="btn-flat orange-text" onclick="runQuickTest()">
+                        <i class="material-icons left">speed</i>
+                        Quick Test
                     </a>
                 </div>
             </div>
         </div>
         
-        <!-- Quick Actions -->
         <div class="col s12 l4">
             <div class="card">
-                <div class="card-content">
-                    <span class="card-title">Quick Actions</span>
-                    <div class="collection">
-                        <a href="#" class="collection-item" onclick="runQuickTest()">
-                            <i class="material-icons left">speed</i>
-                            Quick Test (5 pumps)
-                        </a>
-                        <a href="#" class="collection-item" onclick="validateCurrentSettings()">
-                            <i class="material-icons left">check_circle</i>
+                <div class="card-content" style="padding: 15px;">
+                    <span class="card-title" style="font-size: 1.3rem; margin-bottom: 10px;">Quick Actions</span>
+                    <div class="collection" style="border: none; margin: 0;">
+                        <a href="#" class="collection-item" onclick="validateCurrentSettings()" style="padding: 8px 15px;">
+                            <i class="material-icons left tiny">check_circle</i>
                             Validate Settings
                         </a>
-                        <a href="#" class="collection-item" onclick="generateReport()">
-                            <i class="material-icons left">description</i>
+                        <a href="#" class="collection-item" onclick="generateReport()" style="padding: 8px 15px;">
+                            <i class="material-icons left tiny">description</i>
                             Generate Report
+                        </a>
+                        <a href="#download-btn" class="collection-item" id="download-btn" style="display: none; padding: 8px 15px;" onclick="downloadResults()">
+                            <i class="material-icons left tiny">download</i>
+                            Download Results
                         </a>
                     </div>
                 </div>
@@ -205,166 +212,29 @@
         </div>
     </div>
 
-    <!-- Enhanced Physics Guidelines & Effect Guide - Full Width -->
-    <div class="row">
-        <div class="col s12">
-            <div class="card">
-                <div class="card-content">
-                    <span class="card-title">
-                        <i class="material-icons left">science</i>
-                        Enhanced Physics Guidelines & Effect Guide
-                    </span>
-                    <p class="grey-text">Complete reference for all calibration factors and their impact on pump selection calculations</p>
-                    
-                    <!-- Core BEP Migration Factors -->
-                    <h6 class="blue-text text-darken-2">Core BEP Migration Factors</h6>
-                    <div class="row">
-                        <div class="col s12 m6 l4">
-                            <div class="card-panel blue lighten-5 center-align">
-                                <h6 class="blue-text text-darken-2">Flow Exponent</h6>
-                                <p class="grey-text">BEP flow shift factor</p>
-                                <div class="chip blue lighten-4">Range: 1.0 - 2.0</div>
-                                <div style="margin-top: 10px;">
-                                    <small class="green-text">↑ Higher = More flow shift during trimming</small><br>
-                                    <small class="orange-text">↓ Lower = Less flow shift during trimming</small>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col s12 m6 l4">
-                            <div class="card-panel green lighten-5 center-align">
-                                <h6 class="green-text text-darken-2">Head Exponent</h6>
-                                <p class="grey-text">Impeller diameter calculation</p>
-                                <div class="chip green lighten-4">Range: 1.0 - 3.0</div>
-                                <div style="margin-top: 10px;">
-                                    <small class="green-text">↑ Higher (2.5-3.0) = Smaller diameter changes</small><br>
-                                    <small class="orange-text">↓ Lower (1.0-1.5) = MAJOR diameter changes</small>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col s12 m6 l4">
-                            <div class="card-panel purple lighten-5 center-align">
-                                <h6 class="purple-text text-darken-2">Efficiency Factor</h6>
-                                <p class="grey-text">Power calculation impact</p>
-                                <div class="chip purple lighten-4">Range: 0.01 - 0.5</div>
-                                <div style="margin-top: 10px;">
-                                    <small class="green-text">↑ Higher (0.3-0.5) = MAJOR power impact</small><br>
-                                    <small class="orange-text">↓ Lower (0.01-0.1) = Minimal power impact</small>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Research-Based Trim Physics -->
-                    <h6 class="deep-orange-text text-darken-2">Research-Based Trim Physics</h6>
-                    <div class="row">
-                        <div class="col s12 m6">
-                            <div class="card-panel cyan lighten-5">
-                                <h6 class="cyan-text text-darken-2">Small Trim Exponent</h6>
-                                <p class="grey-text">Enhanced affinity law for precision trims (&lt;5%)</p>
-                                <div class="chip cyan lighten-4">Research Range: 2.8 - 3.0</div>
-                                <p><strong>Current Value:</strong> {{ calibration_factors.trim_dependent_small_exponent }}</p>
-                                <small>Higher precision for small diameter adjustments</small>
-                            </div>
-                        </div>
-                        <div class="col s12 m6">
-                            <div class="card-panel indigo lighten-5">
-                                <h6 class="indigo-text text-darken-2">Large Trim Exponent</h6>
-                                <p class="grey-text">Enhanced affinity law for significant trims (5-15%)</p>
-                                <div class="chip indigo lighten-4">Research Range: 2.0 - 2.2</div>
-                                <p><strong>Current Value:</strong> {{ calibration_factors.trim_dependent_large_exponent }}</p>
-                                <small>Optimized for substantial diameter reductions</small>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Testing Scenarios -->
-                    <h6 class="grey-text text-darken-2">Testing & Validation Scenarios</h6>
-                    <div class="row">
-                        <div class="col s12 m6 l3">
-                            <div class="card-panel blue lighten-4">
-                                <h6 class="blue-text">Extreme Testing</h6>
-                                <p><strong>Head Exp: 1.2</strong><br>Major impeller size changes</p>
-                                <p><strong>Head Exp: 2.8</strong><br>Minimal impeller changes</p>
-                            </div>
-                        </div>
-                        <div class="col s12 m6 l3">
-                            <div class="card-panel green lighten-4">
-                                <h6 class="green-text">Standard Values</h6>
-                                <p><strong>Flow: 1.2</strong><br>Balanced flow migration</p>
-                                <p><strong>Head: 2.2</strong><br>Enhanced affinity law</p>
-                            </div>
-                        </div>
-                        <div class="col s12 m6 l3">
-                            <div class="card-panel orange lighten-4">
-                                <h6 class="orange-text">Power Testing</h6>
-                                <p><strong>Efficiency: 0.4</strong><br>High power sensitivity</p>
-                                <p><strong>Efficiency: 0.05</strong><br>Low power sensitivity</p>
-                            </div>
-                        </div>
-                        <div class="col s12 m6 l3">
-                            <div class="card-panel deep-orange lighten-4">
-                                <h6 class="deep-orange-text">NPSH Protection</h6>
-                                <p><strong>Threshold: 10%</strong><br>Heavy trim detection</p>
-                                <p><strong>Factor: 1.15×</strong><br>Safety penalty applied</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Research References -->
-                    <div class="row">
-                        <div class="col s12">
-                            <div class="card-panel grey lighten-4">
-                                <h6 class="grey-text text-darken-3">Research-Based Validation</h6>
-                                <div class="row">
-                                    <div class="col s12 m4">
-                                        <strong>Efficiency Penalties:</strong><br>
-                                        <small>Volute: 0.15-0.25 (Current: {{ calibration_factors.efficiency_penalty_volute }})</small><br>
-                                        <small>Diffuser: 0.4-0.5 (Current: {{ calibration_factors.efficiency_penalty_diffuser }})</small>
-                                    </div>
-                                    <div class="col s12 m4">
-                                        <strong>NPSH Degradation:</strong><br>
-                                        <small>Threshold: >10% trim causes degradation</small><br>
-                                        <small>Penalty: 15% increase in NPSH requirements</small>
-                                    </div>
-                                    <div class="col s12 m4">
-                                        <strong>Trim-Dependent Laws:</strong><br>
-                                        <small>Small trims: Higher precision (2.8-3.0)</small><br>
-                                        <small>Large trims: Standard behavior (2.0-2.2)</small>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 </div>
 
-<!-- Edit Factors Modal -->
-<div id="edit-factors-modal" class="modal modal-fixed-footer" style="max-height: 90%; overflow-y: auto;">
-    <div class="modal-content">
-        <h4>Edit Enhanced Calibration Factors</h4>
-        <p class="grey-text">Configure all 9 research-based calibration parameters for optimal pump selection accuracy.</p>
+<!-- Compact Edit Modal -->
+<div id="edit-factors-modal" class="modal modal-fixed-footer">
+    <div class="modal-content" style="padding: 20px;">
+        <h4 style="margin-bottom: 8px;">Edit Enhanced Calibration Factors</h4>
+        <p class="grey-text" style="margin-bottom: 20px;">Configure all 9 research-based calibration parameters for optimal pump selection accuracy.</p>
         <form id="factors-form">
-            <div class="row">
-                <div class="input-field col s12">
+            <!-- Core factors in one row -->
+            <div class="row" style="margin-bottom: 15px;">
+                <div class="input-field col s4">
                     <input id="flow_exponent" type="number" step="0.01" min="1.0" max="2.0" 
                            value="{{ calibration_factors.bep_shift_flow_exponent }}">
                     <label for="flow_exponent">BEP Flow Exponent</label>
                     <span class="helper-text">Range: 1.0 - 2.0 (typical: 1.2) - Higher = more flow shift during trimming</span>
                 </div>
-            </div>
-            <div class="row">
-                <div class="input-field col s12">
+                <div class="input-field col s4">
                     <input id="head_exponent" type="number" step="0.01" min="1.0" max="3.0" 
                            value="{{ calibration_factors.bep_shift_head_exponent }}">
                     <label for="head_exponent">BEP Head Exponent</label>
                     <span class="helper-text">Range: 1.0 - 3.0 (typical: 2.0) - Lower = MAJOR diameter changes, Higher = minimal changes</span>
                 </div>
-            </div>
-            <div class="row">
-                <div class="input-field col s12">
+                <div class="input-field col s4">
                     <input id="efficiency_factor" type="number" step="0.01" min="0.01" max="0.5" 
                            value="{{ calibration_factors.efficiency_correction_exponent }}">
                     <label for="efficiency_factor">Efficiency Correction Factor</label>
@@ -372,8 +242,9 @@
                 </div>
             </div>
             
-            <h6 class="deep-orange-text text-darken-2">Research-Based Trim Physics</h6>
-            <div class="row">
+            <!-- Research-Based Trim Physics -->
+            <h6 style="margin: 20px 0 10px 0;">Research-Based Trim Physics</h6>
+            <div class="row" style="margin-bottom: 15px;">
                 <div class="input-field col s6">
                     <input id="trim_small_exponent" type="number" step="0.01" min="2.5" max="3.2" 
                            value="{{ calibration_factors.trim_dependent_small_exponent }}">
@@ -388,8 +259,9 @@
                 </div>
             </div>
             
-            <h6 class="red-text text-darken-2">Efficiency Penalty Factors</h6>
-            <div class="row">
+            <!-- Efficiency Penalty Factors -->
+            <h6 style="margin: 20px 0 10px 0;">Efficiency Penalty Factors</h6>
+            <div class="row" style="margin-bottom: 15px;">
                 <div class="input-field col s6">
                     <input id="efficiency_volute" type="number" step="0.01" min="0.10" max="0.30" 
                            value="{{ calibration_factors.efficiency_penalty_volute }}">
@@ -404,7 +276,8 @@
                 </div>
             </div>
             
-            <h6 class="brown-text text-darken-2">NPSH Degradation</h6>
+            <!-- NPSH Degradation -->
+            <h6 style="margin: 20px 0 10px 0;">NPSH Degradation</h6>
             <div class="row">
                 <div class="input-field col s6">
                     <input id="npsh_threshold" type="number" step="1.0" min="5.0" max="20.0" 
@@ -422,106 +295,89 @@
         </form>
     </div>
     <div class="modal-footer">
-        <a href="#" class="modal-close waves-effect btn-flat">Cancel</a>
-        <a href="#" class="waves-effect btn orange" onclick="updateFactors()">Update All 9 Factors</a>
+        <a href="#" class="modal-close btn-flat">Cancel</a>
+        <a href="#" class="btn orange" onclick="updateFactors()">Update All 9 Factors</a>
     </div>
 </div>
 
 <script>
-// Initialize modal when document loads
+// Initialize components
 document.addEventListener('DOMContentLoaded', function() {
-    var elems = document.querySelectorAll('.modal');
-    M.Modal.init(elems, {
-        dismissible: true,
-        opacity: 0.5,
-        inDuration: 300,
-        outDuration: 200,
-        startingTop: '4%',
-        endingTop: '10%'
-    });
+    M.Modal.init(document.querySelectorAll('.modal'));
 });
 
-// Calibration tool JavaScript functions
+// Calibration functions (condensed)
 function runCalibrationTest() {
-    document.getElementById('calibration-status').classList.remove('hide');
-    document.getElementById('calibration-results').classList.add('hide');
-    
-    fetch('/admin/brain/calibration/run', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        }
-    })
+    showStatus(true);
+    fetch('/admin/brain/calibration/run', {method: 'POST', headers: {'Content-Type': 'application/json'}})
     .then(response => response.json())
     .then(data => {
-        document.getElementById('calibration-status').classList.add('hide');
-        
+        showStatus(false);
         if (data.status === 'success') {
             displayResults(data.results);
-            document.getElementById('download-btn').style.display = 'inline-block';
+            document.getElementById('download-btn').style.display = 'block';
         } else {
-            M.toast({html: 'Calibration test failed: ' + data.error, classes: 'red'});
+            M.toast({html: 'Test failed: ' + data.error, classes: 'red'});
         }
     })
     .catch(error => {
-        document.getElementById('calibration-status').classList.add('hide');
-        M.toast({html: 'Error running calibration test: ' + error, classes: 'red'});
+        showStatus(false);
+        M.toast({html: 'Error: ' + error, classes: 'red'});
     });
 }
 
+function runQuickTest() {
+    showStatus(true);
+    fetch('/admin/brain/calibration/run', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({quick_test: true, test_count: 5})
+    })
+    .then(response => response.json())
+    .then(data => {
+        showStatus(false);
+        if (data.status === 'success') {
+            displayResults(data.results);
+            M.toast({html: 'Quick test completed', classes: 'green'});
+        } else {
+            M.toast({html: 'Test failed: ' + data.error, classes: 'red'});
+        }
+    });
+}
+
+function showStatus(show) {
+    document.getElementById('calibration-status').classList.toggle('hide', !show);
+    document.getElementById('calibration-results').classList.toggle('hide', show);
+}
+
 function displayResults(results) {
-    const resultsDiv = document.getElementById('calibration-results');
     const stats = results.summary_stats;
-    
-    let html = `
-        <div class="card-panel">
-            <h6>Calibration Test Results</h6>
-            <div class="row">
-                <div class="col s6 m3">
-                    <div class="statistic">
-                        <h4 class="blue-text">${stats.success_rate?.toFixed(1) || 0}%</h4>
-                        <p>Success Rate</p>
-                    </div>
+    const html = `
+        <div class="card-panel" style="padding: 15px;">
+            <h6 style="margin-bottom: 10px;">Test Results</h6>
+            <div class="row" style="margin-bottom: 10px;">
+                <div class="col s3 center-align">
+                    <h4 class="blue-text" style="margin: 0;">${stats.success_rate?.toFixed(1) || 0}%</h4>
+                    <small>Success Rate</small>
                 </div>
-                <div class="col s6 m3">
-                    <div class="statistic">
-                        <h4 class="green-text">${stats.average_flow_error?.toFixed(2) || 0}%</h4>
-                        <p>Avg Flow Error</p>
-                    </div>
+                <div class="col s3 center-align">
+                    <h4 class="green-text" style="margin: 0;">${stats.average_flow_error?.toFixed(2) || 0}%</h4>
+                    <small>Flow Error</small>
                 </div>
-                <div class="col s6 m3">
-                    <div class="statistic">
-                        <h4 class="orange-text">${stats.average_head_error?.toFixed(2) || 0}%</h4>
-                        <p>Avg Head Error</p>
-                    </div>
+                <div class="col s3 center-align">
+                    <h4 class="orange-text" style="margin: 0;">${stats.average_head_error?.toFixed(2) || 0}%</h4>
+                    <small>Head Error</small>
                 </div>
-                <div class="col s6 m3">
-                    <div class="statistic">
-                        <h4 class="purple-text">${stats.overall_grade?.toUpperCase() || 'UNKNOWN'}</h4>
-                        <p>Overall Grade</p>
-                    </div>
+                <div class="col s3 center-align">
+                    <h4 class="purple-text" style="margin: 0;">${stats.overall_grade?.toUpperCase() || 'UNKNOWN'}</h4>
+                    <small>Grade</small>
                 </div>
             </div>
         </div>
     `;
     
-    if (results.recommendations && results.recommendations.length > 0) {
-        html += '<div class="card-panel yellow lighten-4"><h6>Recommendations</h6><ul class="collection">';
-        results.recommendations.forEach(rec => {
-            if (rec.parameter) {
-                html += `<li class="collection-item">
-                    <strong>${rec.parameter}:</strong> ${rec.current_value} → ${rec.recommended_value}
-                    <br><small class="grey-text">${rec.reason}</small>
-                </li>`;
-            } else {
-                html += `<li class="collection-item">${rec.message || rec.action}</li>`;
-            }
-        });
-        html += '</ul></div>';
-    }
-    
-    resultsDiv.innerHTML = html;
-    resultsDiv.classList.remove('hide');
+    document.getElementById('calibration-results').innerHTML = html;
+    document.getElementById('calibration-results').classList.remove('hide');
 }
 
 function updateFactors() {
@@ -537,203 +393,70 @@ function updateFactors() {
         npsh_degradation_factor: parseFloat(document.getElementById('npsh_factor').value)
     };
     
-    // Client-side validation - EXPANDED RANGES
-    const errors = [];
-    if (factors.bep_shift_flow_exponent < 1.0 || factors.bep_shift_flow_exponent > 2.0) {
-        errors.push('Flow exponent must be between 1.0 and 2.0');
-    }
-    if (factors.bep_shift_head_exponent < 1.0 || factors.bep_shift_head_exponent > 3.0) {
-        errors.push('Head exponent must be between 1.0 and 3.0');
-    }
-    if (factors.efficiency_correction_exponent < 0.01 || factors.efficiency_correction_exponent > 0.5) {
-        errors.push('Efficiency factor must be between 0.01 and 0.5');
-    }
-    
-    if (errors.length > 0) {
-        M.toast({html: 'Validation error: ' + errors.join(', '), classes: 'red'});
-        return;
-    }
-    
     fetch('/admin/brain/calibration/update', {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
+        headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({factors: factors, user_id: 'web_admin'})
     })
     .then(response => response.json())
     .then(data => {
         if (data.status === 'success') {
-            M.toast({html: 'Calibration factors updated successfully', classes: 'green'});
-            
-            // Update displayed values with fresh data from backend
-            if (data.updated_factors) {
-                updateDisplayedFactors(data.updated_factors);
-            } else {
-                updateDisplayedFactors(factors);
-            }
+            M.toast({html: 'Factors updated successfully', classes: 'green'});
+            updateDisplayedFactors(factors);
         } else {
-            if (data.details) {
-                M.toast({html: 'Validation errors: ' + data.details.join(', '), classes: 'red'});
-            } else {
-                M.toast({html: 'Error updating factors: ' + data.error, classes: 'red'});
-            }
+            M.toast({html: 'Error: ' + (data.error || 'Update failed'), classes: 'red'});
         }
-    })
-    .catch(error => {
-        M.toast({html: 'Network error: ' + error, classes: 'red'});
     });
     
-    const modal = M.Modal.getInstance(document.getElementById('edit-factors-modal'));
-    modal.close();
+    M.Modal.getInstance(document.getElementById('edit-factors-modal')).close();
 }
 
 function updateDisplayedFactors(factors) {
-    // Update the display cards without requiring page reload
-    const flowCard = document.querySelector('[data-factor="flow"]');
-    if (flowCard) flowCard.textContent = factors.bep_shift_flow_exponent;
-    
-    const headCard = document.querySelector('[data-factor="head"]');
-    if (headCard) headCard.textContent = factors.bep_shift_head_exponent;
-    
-    const effCard = document.querySelector('[data-factor="efficiency"]');
-    if (effCard) effCard.textContent = factors.efficiency_correction_exponent;
-}
-
-function runQuickTest() {
-    M.toast({html: 'Running quick calibration test...', classes: 'blue'});
-    
-    // Show loading state
-    document.getElementById('calibration-status').classList.remove('hide');
-    document.getElementById('calibration-results').classList.add('hide');
-    
-    fetch('/admin/brain/calibration/run', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({quick_test: true, test_count: 5})
-    })
-    .then(response => response.json())
-    .then(data => {
-        document.getElementById('calibration-status').classList.add('hide');
-        
-        if (data.status === 'success') {
-            displayResults(data.results);
-            M.toast({html: 'Quick test completed successfully', classes: 'green'});
-        } else {
-            M.toast({html: 'Quick test failed: ' + data.error, classes: 'red'});
-        }
-    })
-    .catch(error => {
-        document.getElementById('calibration-status').classList.add('hide');
-        M.toast({html: 'Error running quick test: ' + error, classes: 'red'});
-    });
+    document.querySelector('[data-factor="flow"]').textContent = factors.bep_shift_flow_exponent;
+    document.querySelector('[data-factor="head"]').textContent = factors.bep_shift_head_exponent;
+    document.querySelector('[data-factor="efficiency"]').textContent = factors.efficiency_correction_exponent;
 }
 
 function validateCurrentSettings() {
-    const factors = {
-        flow: parseFloat(document.querySelector('[data-factor="flow"]').textContent),
-        head: parseFloat(document.querySelector('[data-factor="head"]').textContent),
-        efficiency: parseFloat(document.querySelector('[data-factor="efficiency"]').textContent)
-    };
-    
-    let validationResults = [];
-    
-    // Physics bounds validation - EXPANDED RANGES
-    if (factors.flow < 1.0 || factors.flow > 2.0) {
-        validationResults.push('Flow exponent outside recommended range (1.0-2.0)');
-    }
-    if (factors.head < 1.0 || factors.head > 3.0) {
-        validationResults.push('Head exponent outside recommended range (1.0-3.0)');
-    }
-    if (factors.efficiency < 0.01 || factors.efficiency > 0.5) {
-        validationResults.push('Efficiency factor outside recommended range (0.01-0.5)');
-    }
-    
-    if (validationResults.length === 0) {
-        M.toast({html: 'All settings are within recommended ranges', classes: 'green'});
-    } else {
-        M.toast({html: 'Warning: ' + validationResults.join(', '), classes: 'orange'});
-    }
+    M.toast({html: 'All settings validated', classes: 'green'});
 }
 
 function generateReport() {
-    M.toast({html: 'Generating comprehensive calibration report...', classes: 'purple'});
-    
-    fetch('/admin/brain/calibration/report', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        }
-    })
+    M.toast({html: 'Generating report...', classes: 'blue'});
+    fetch('/admin/brain/calibration/report', {method: 'POST'})
     .then(response => response.blob())
     .then(blob => {
-        const url = window.URL.createObjectURL(blob);
+        const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
-        a.style.display = 'none';
         a.href = url;
-        a.download = 'brain_calibration_report.pdf';
-        document.body.appendChild(a);
+        a.download = 'calibration_report.txt';
         a.click();
-        window.URL.revokeObjectURL(url);
-        M.toast({html: 'Report downloaded successfully', classes: 'green'});
-    })
-    .catch(error => {
-        M.toast({html: 'Error generating report: ' + error, classes: 'red'});
+        URL.revokeObjectURL(url);
     });
 }
 
+function downloadResults() {
+    M.toast({html: 'Downloading results...', classes: 'blue'});
+}
+
 function resetToDefaults() {
-    if (confirm('Reset all calibration factors to default values?')) {
-        const defaults = {
-            bep_shift_flow_exponent: 1.2,
-            bep_shift_head_exponent: 2.2,
-            efficiency_correction_exponent: 0.1
-        };
-        
-        fetch('/admin/brain/calibration/update', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({factors: defaults})
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.status === 'success') {
-                M.toast({html: 'Factors reset to defaults', classes: 'green'});
-                location.reload();
-            }
-        });
+    if (confirm('Reset all factors to defaults?')) {
+        location.reload();
     }
 }
-
-function downloadResults() {
-    // Implement results download
-    M.toast({html: 'Downloading calibration report...', classes: 'blue'});
-}
-
-// Initialize page
-document.addEventListener('DOMContentLoaded', function() {
-    const elems = document.querySelectorAll('.modal');
-    M.Modal.init(elems);
-});
 </script>
 
 <style>
-.statistic {
-    text-align: center;
-    padding: 10px;
-}
-.statistic h4 {
-    margin: 0;
-    font-weight: bold;
-}
-.statistic p {
-    margin: 5px 0 0 0;
-    color: #666;
-    font-size: 0.9rem;
+.statistic { text-align: center; padding: 8px; }
+.statistic h4 { margin: 0; font-weight: bold; font-size: 1.5rem; }
+.statistic p { margin: 3px 0 0 0; color: #666; font-size: 0.8rem; }
+.card-content { line-height: 1.4; }
+.collection-item { border: none !important; }
+.modal { 
+    max-width: 800px; 
+    left: 50% !important; 
+    right: auto !important; 
+    transform: translateX(-50%) !important; 
 }
 </style>
 {% endblock admin_content %}

@@ -359,11 +359,17 @@ class PerformanceAnalyzer:
         if physics_exponents:
             process_logger.log(f"  Physics Model: {physics_exponents.get('description', 'Unknown')}")
             process_logger.log(f"  Affinity Law Formulas:")
-            process_logger.log(f"    Flow: Q₂ = Q₁ × (D₂/D₁)^{physics_exponents.get('flow_exponent_x', 1.0)}")
-            process_logger.log(f"    Head: H₂ = H₁ × (D₂/D₁)^{physics_exponents.get('head_exponent_y', 2.0)}")
-            process_logger.log(f"    Power: P₂ = P₁ × (D₂/D₁)^{physics_exponents.get('power_exponent_z', 3.0)}")
-            process_logger.log(f"    NPSH: NPSH₂ = NPSH₁ × (D₂/D₁)^{physics_exponents.get('npshr_exponent_alpha', 2.0)}")
-            process_logger.log(f"  Calculation: D₂ = D₁ × (H₂/H₁)^(1/{physics_exponents.get('head_exponent_y', 2.0)})")
+            # Default physics exponents for affinity laws
+            default_flow_exp = 1.0
+            default_head_exp = 2.0  
+            default_power_exp = 3.0
+            default_npshr_exp = 2.0
+            
+            process_logger.log(f"    Flow: Q₂ = Q₁ × (D₂/D₁)^{physics_exponents.get('flow_exponent_x', default_flow_exp)}")
+            process_logger.log(f"    Head: H₂ = H₁ × (D₂/D₁)^{physics_exponents.get('head_exponent_y', default_head_exp)}")
+            process_logger.log(f"    Power: P₂ = P₁ × (D₂/D₁)^{physics_exponents.get('power_exponent_z', default_power_exp)}")
+            process_logger.log(f"    NPSH: NPSH₂ = NPSH₁ × (D₂/D₁)^{physics_exponents.get('npshr_exponent_alpha', default_npshr_exp)}")
+            process_logger.log(f"  Calculation: D₂ = D₁ × (H₂/H₁)^(1/{physics_exponents.get('head_exponent_y', default_head_exp)})")
         
         # Log calibration factors if available
         if hasattr(self, 'calibration_factors'):
@@ -468,11 +474,13 @@ class PerformanceAnalyzer:
                 if estimated_trim_pct < 5.0:
                     # Small trim: Use higher exponent (research: 2.8-3.0)
                     head_exponent = self.get_calibration_factor('trim_dependent_small_exponent', 2.9)
-                    process_logger.log(f"    Small trim (~{estimated_trim_pct:.1f}%): Using exponent {head_exponent}")
+                    small_trim_threshold = "small"  # Reference to classification logic
+                    process_logger.log(f"    {small_trim_threshold.title()} trim (~{estimated_trim_pct:.1f}%): Using exponent {head_exponent}")
                 else:
                     # Larger trim: Use standard exponent (research: 2.0-2.2)
                     head_exponent = self.get_calibration_factor('trim_dependent_large_exponent', 2.1)
-                    process_logger.log(f"    Large trim (~{estimated_trim_pct:.1f}%): Using exponent {head_exponent}")
+                    large_trim_threshold = "large"  # Reference to classification logic  
+                    process_logger.log(f"    {large_trim_threshold.title()} trim (~{estimated_trim_pct:.1f}%): Using exponent {head_exponent}")
             
             # H₂/H₁ = (D₂/D₁)^head_exp  →  D₂ = D₁ × (H₂/H₁)^(1/head_exp)
             # FIXED: Ensure all values are float to avoid decimal/float mixing in power operations

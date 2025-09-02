@@ -160,12 +160,14 @@ def pump_selection():
                 safe_flash('Flow rate and head must be positive values.', 'error')
                 return render_template('input_form.html'), 400
 
-            if flow_val > 10000:  # Reasonable upper limit
-                process_logger.log(f"WARNING: High flow rate {flow_val} m³/hr", "WARNING")
+            max_flow_limit = 10000  # Reasonable upper limit
+            if flow_val > max_flow_limit:
+                process_logger.log(f"WARNING: High flow rate {flow_val} m³/hr (>{max_flow_limit:,} limit)", "WARNING")
                 safe_flash('Flow rate seems unusually high. Please verify your input.', 'warning')
 
-            if head_val > 1000:  # Reasonable upper limit  
-                process_logger.log(f"WARNING: High head {head_val} m", "WARNING")
+            max_head_limit = 1000  # Reasonable upper limit
+            if head_val > max_head_limit:
+                process_logger.log(f"WARNING: High head {head_val} m (>{max_head_limit:,} limit)", "WARNING")
                 safe_flash('Head seems unusually high. Please verify your input.', 'warning')
 
         except ValueError as e:

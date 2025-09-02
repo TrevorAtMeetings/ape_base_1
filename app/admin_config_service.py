@@ -498,7 +498,7 @@ class AdminConfigService:
         with self.db.get_connection() as conn:
             with conn.cursor(cursor_factory=RealDictCursor) as cursor:
                 cursor.execute("""
-                    SELECT name, value FROM engineering_constants
+                    SELECT name, value FROM admin_config.engineering_constants
                     WHERE category = 'BEP Migration' 
                     ORDER BY name
                 """)

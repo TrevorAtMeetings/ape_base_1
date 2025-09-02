@@ -101,43 +101,25 @@ class SelectionIntelligence:
         # COMPREHENSIVE HC PUMP PIPELINE ANALYSIS
         logger.error(f"🔍 [PIPELINE STEP 1] Repository loaded {len(all_pumps)} total pumps")
         
-        # Check if HC pumps are in repository - INCLUDING 8P models
-        target_hc_pumps = [p for p in all_pumps if p.get('pump_code') in ['32 HC 6P', '30 HC 6P', '28 HC 6P', '32 HC 8P']]
-        logger.error(f"🔍 [PIPELINE STEP 1] Found {len(target_hc_pumps)} target HC pumps in repository")
+        # Log repository pump analysis
+        logger.debug(f"[PIPELINE] Repository loaded {len(all_pumps)} total pumps")
         
-        # Check specifically for 32 HC 8P which user says should handle 2000 m³/hr @ 100m
-        hc_8p_pump = [p for p in all_pumps if p.get('pump_code') == '32 HC 8P']
-        if hc_8p_pump:
-            specs = hc_8p_pump[0].get('specifications', {})
-            logger.error(f"🎯 [32 HC 8P CHECK] Found 32 HC 8P in database:")
-            logger.error(f"🎯 [32 HC 8P CHECK] BEP: {specs.get('bep_flow_m3hr', 0)} m³/hr @ {specs.get('bep_head_m', 0)}m")
-            logger.error(f"🎯 [32 HC 8P CHECK] Max impeller: {specs.get('max_impeller_diameter_mm', 0)}mm")
-            logger.error(f"🎯 [32 HC 8P CHECK] Pump type: {hc_8p_pump[0].get('pump_type', 'Unknown')}")
-        else:
-            logger.error(f"🚨 [32 HC 8P CHECK] 32 HC 8P NOT FOUND in repository!")
+        # Sample pump analysis - show first 10 for debugging
+        sample_pumps = all_pumps[:10]
+        for pump in sample_pumps:
+            specs = pump.get('specifications', {})
+            curves = pump.get('curves', [])
+            logger.debug(f"[PIPELINE] {pump.get('pump_code', 'Unknown')}: BEP {specs.get('bep_flow_m3hr', 0)} m³/hr @ {specs.get('bep_head_m', 0)}m, {len(curves)} curves")
         
-        if not target_hc_pumps:
-            all_hc = [p for p in all_pumps if 'HC' in str(p.get('pump_code', ''))]
-            logger.error(f"🚨 [PIPELINE STEP 1] NO target HC pumps! Found {len(all_hc)} other HC pumps: {[p.get('pump_code') for p in all_hc[:5]]}")
-            return {'ranked_pumps': [], 'exclusion_details': None}
+        # Debug: Log pump series analysis
+        pump_series_count = {}
+        for pump in all_pumps:
+            pump_code = str(pump.get('pump_code', 'Unknown'))
+            # Extract pump series (first part before space or number)
+            series = pump_code.split()[0] if pump_code.split() else 'Unknown'
+            pump_series_count[series] = pump_series_count.get(series, 0) + 1
         
-        # Log HC pump details
-        for target_pump in target_hc_pumps:
-            specs = target_pump.get('specifications', {})
-            curves = target_pump.get('curves', [])
-            logger.error(f"🔍 [PIPELINE STEP 1] {target_pump.get('pump_code')}: BEP {specs.get('bep_flow_m3hr', 0)} m³/hr @ {specs.get('bep_head_m', 0)}m, {len(curves)} curves")
-        
-        # Debug: Check if 6 WLN 18A is in loaded pumps
-        wln_pumps = [p for p in all_pumps if "6 WLN 18A" in str(p.get('pump_code', ''))]
-        logger.error(f"[DEBUG] Found {len(wln_pumps)} 6 WLN 18A pumps in {len(all_pumps)} total loaded pumps")
-        for pump in wln_pumps:
-            logger.error(f"[DEBUG] 6 WLN 18A found: code='{pump.get('pump_code')}' name='{pump.get('pump_name')}'")
-        
-        # Also check variations
-        wln_variations = [p for p in all_pumps if "WLN" in str(p.get('pump_code', '')).upper()]
-        logger.error(f"[DEBUG] Found {len(wln_variations)} WLN pumps total")
-        for pump in wln_variations[:5]:  # Show first 5
-            logger.error(f"[DEBUG] WLN variant: '{pump.get('pump_code')}'")  
+        logger.debug(f"[DEBUG] Pump series breakdown: {dict(list(pump_series_count.items())[:10])}")
         
         # INTELLIGENT PRE-FILTERING: Only evaluate pumps in reasonable flow AND head range
         # This prevents evaluating 0.1 m³/hr pumps for 350 m³/hr applications
@@ -179,15 +161,14 @@ class SelectionIntelligence:
             process_logger.log(f"  BEP Flow Check: {bep_flow:.1f} vs [{min_flow_threshold:.1f}-{max_flow_threshold:.1f}] → {'PASS' if flow_ok else 'FAIL'}")
             
             if not flow_ok:
-                if pump_code in ['32 HC 6P', '30 HC 6P', '28 HC 6P', '32 HC 8P']:
-                    logger.error(f"🚨 [FLOW PRE-FILTER] {pump_code} EXCLUDED: BEP {bep_flow} not in range {min_flow_threshold:.1f}-{max_flow_threshold:.1f}")
+                logger.debug(f"[FLOW PRE-FILTER] {pump_code} EXCLUDED: BEP {bep_flow} not in range {min_flow_threshold:.1f}-{max_flow_threshold:.1f}")
                 
                 if bep_flow <= 0:
                     process_logger.log(f"  → EXCLUSION REASON: Invalid BEP flow data (≤0)")
                 elif bep_flow < min_flow_threshold:
-                    process_logger.log(f"  → EXCLUSION REASON: Pump too small - BEP flow {bep_flow:.1f} < {min_flow_threshold:.1f} m³/hr (40% of target)")
+                    process_logger.log(f"  → EXCLUSION REASON: Pump too small - BEP flow {bep_flow:.1f} < {min_flow_threshold:.1f} m³/hr ({0.4*100:.0f}% of target)")
                 else:
-                    process_logger.log(f"  → EXCLUSION REASON: Pump too large - BEP flow {bep_flow:.1f} > {max_flow_threshold:.1f} m³/hr (300% of target)")
+                    process_logger.log(f"  → EXCLUSION REASON: Pump too large - BEP flow {bep_flow:.1f} > {max_flow_threshold:.1f} m³/hr ({3.0*100:.0f}% of target)")
                 
                 flow_filtered_count += 1
                 flow_excluded_list.append(f"{pump_code}: BEP={bep_flow:.1f} m³/hr")
@@ -198,14 +179,13 @@ class SelectionIntelligence:
             process_logger.log(f"  BEP Head Check: {bep_head:.1f} vs [{min_head_threshold:.1f}-{max_head_threshold:.1f}] → {'PASS' if head_ok else 'FAIL'}")
             
             if not head_ok:
-                if pump_code in ['32 HC 6P', '30 HC 6P', '28 HC 6P', '32 HC 8P']:
-                    logger.error(f"🚨 [HEAD PRE-FILTER] {pump_code} EXCLUDED: BEP {bep_head:.1f}m not in range {min_head_threshold:.1f}-{max_head_threshold:.1f}m")
-                    logger.error(f"🚨 [HEAD PRE-FILTER] {pump_code}: Required head {head}m, thresholds: {min_head_threshold:.1f}-{max_head_threshold:.1f}m")
+                logger.debug(f"[HEAD PRE-FILTER] {pump_code} EXCLUDED: BEP {bep_head:.1f}m not in range {min_head_threshold:.1f}-{max_head_threshold:.1f}m")
+                logger.debug(f"[HEAD PRE-FILTER] {pump_code}: Required head {head}m, thresholds: {min_head_threshold:.1f}-{max_head_threshold:.1f}m")
                 
                 if bep_head < min_head_threshold:
-                    process_logger.log(f"  → EXCLUSION REASON: Insufficient head - BEP head {bep_head:.1f} < {min_head_threshold:.1f} m (30% of target)")
+                    process_logger.log(f"  → EXCLUSION REASON: Insufficient head - BEP head {bep_head:.1f} < {min_head_threshold:.1f} m ({0.3*100:.0f}% of target)")
                 else:
-                    process_logger.log(f"  → EXCLUSION REASON: Excessive head - BEP head {bep_head:.1f} > {max_head_threshold:.1f} m (200% of target)")
+                    process_logger.log(f"  → EXCLUSION REASON: Excessive head - BEP head {bep_head:.1f} > {max_head_threshold:.1f} m ({2.0*100:.0f}% of target)")
                 
                 head_filtered_count += 1
                 head_excluded_list.append(f"{pump_code}: BEP={bep_head:.1f} m")
@@ -223,9 +203,8 @@ class SelectionIntelligence:
             # Pump passed all pre-filters
             process_logger.log(f"  → RESULT: ✅ PASSED PRE-FILTERING - proceeding to evaluation")
             
-            # Keep original debug logging for specific pump series
-            if pump_code in ['32 HC 6P', '30 HC 6P', '28 HC 6P', '32 HC 8P']:
-                logger.error(f"✅ [PRE-FILTER] {pump_code} PASSED PRE-FILTERING!")
+            # Log successful pre-filtering
+            logger.debug(f"[PRE-FILTER] {pump_code} PASSED PRE-FILTERING")
                 
             pump_models.append(pump)
         
@@ -280,14 +259,12 @@ class SelectionIntelligence:
                     pump_type = pump_data.get('pump_type', '').upper()
                     constraint_type = constraints['pump_type'].upper()
                     
-                    # DEBUG: Log pump type filtering for HC pumps
-                    if pump_code in ['32 HC 6P', '30 HC 6P', '28 HC 6P']:
-                        logger.error(f"🔍 [PUMP TYPE FILTER] {pump_code}: pump_type='{pump_type}', constraint='{constraint_type}'")
+                    # DEBUG: Log pump type filtering 
+                    logger.debug(f"[PUMP TYPE FILTER] {pump_code}: pump_type='{pump_type}', constraint='{constraint_type}'")
                     
                     if pump_type != constraint_type:
-                        # DEBUG: Log HC pump exclusions due to pump type
-                        if pump_code in ['32 HC 6P', '30 HC 6P', '28 HC 6P']:
-                            logger.error(f"🚨 [PUMP TYPE FILTER] {pump_code}: EXCLUDED - type '{pump_type}' != constraint '{constraint_type}'")
+                        # DEBUG: Log pump exclusions due to pump type
+                        logger.debug(f"[PUMP TYPE FILTER] {pump_code}: EXCLUDED - type '{pump_type}' != constraint '{constraint_type}'")
                         
                         if include_exclusions:
                             excluded_pumps.append({
@@ -300,18 +277,14 @@ class SelectionIntelligence:
                         continue
                 else:
                     # DEBUG: Log when pump type constraint is bypassed
-                    if pump_code in ['32 HC 6P', '30 HC 6P', '28 HC 6P']:
-                        constraint_value = constraints.get('pump_type', 'None')
-                        logger.error(f"✅ [PUMP TYPE FILTER] {pump_code}: BYPASSED pump type filter (constraint='{constraint_value}')")
+                    constraint_value = constraints.get('pump_type', 'None')
+                    logger.debug(f"[PUMP TYPE FILTER] {pump_code}: BYPASSED pump type filter (constraint='{constraint_value}')")
                 
                 # CRITICAL: Evaluate physical capability at specific operating point
-                # Add debugging for HC pumps that manufacturer found viable
-                if pump_code and any(hc in str(pump_code) for hc in ['32 HC', '30 HC', '28 HC']):
-                    logger.error(f"[HC SELECTION DEBUG] {pump_code}: Starting evaluation for {flow} m³/hr @ {head}m")
-                    logger.error(f"[HC SELECTION DEBUG] {pump_code}: Pump data keys: {list(pump_data.keys())}")
-                    specs = pump_data.get('specifications', {})
-                    logger.error(f"[HC SELECTION DEBUG] {pump_code}: BEP {specs.get('bep_flow_m3hr', 0)} m³/hr @ {specs.get('bep_head_m', 0)}m")
-                    logger.error(f"[HC SELECTION DEBUG] {pump_code}: Max impeller: {specs.get('max_impeller_diameter_mm', 0)}mm")
+                logger.debug(f"[SELECTION DEBUG] {pump_code}: Starting evaluation for {flow} m³/hr @ {head}m")
+                specs = pump_data.get('specifications', {})
+                logger.debug(f"[SELECTION DEBUG] {pump_code}: BEP {specs.get('bep_flow_m3hr', 0)} m³/hr @ {specs.get('bep_head_m', 0)}m")
+                logger.debug(f"[SELECTION DEBUG] {pump_code}: Max impeller: {specs.get('max_impeller_diameter_mm', 0)}mm")
                 
                 # PASS 1: Evaluate pump without detailed logging
                 evaluation = self.evaluate_single_pump(pump_data, flow, head, pump_code)
@@ -350,15 +323,12 @@ class SelectionIntelligence:
             pump_data = pump_eval['pump_data']
             pump_code = pump_eval['pump_code']
             
-            # Check if HC pump was excluded and why
-            if pump_code in ['32 HC 6P', '30 HC 6P', '28 HC 6P']:
-                if evaluation.get('feasible', False):
-                    logger.error(f"✅ [PIPELINE STEP 4] {pump_code}: PASSED evaluation - feasible with score {evaluation.get('total_score', 0):.1f}!")
-                else:
-                    logger.error(f"🚨 [PIPELINE STEP 4] {pump_code}: FAILED evaluation")
-                    logger.error(f"🚨 [PIPELINE STEP 4] {pump_code}: Exclusion reasons: {evaluation.get('exclusion_reasons', [])}")
-                    logger.error(f"🚨 [PIPELINE STEP 4] {pump_code}: Score components: {evaluation.get('score_components', {})}")
-                    logger.error(f"🚨 [PIPELINE STEP 4] {pump_code}: Performance data: {evaluation.get('performance', 'None')}")
+            # Log evaluation results
+            if evaluation.get('feasible', False):
+                logger.debug(f"[EVALUATION] {pump_code}: PASSED - feasible with score {evaluation.get('total_score', 0):.1f}")
+            else:
+                logger.debug(f"[EVALUATION] {pump_code}: FAILED - exclusion reasons: {evaluation.get('exclusion_reasons', [])}")
+                logger.debug(f"[EVALUATION] {pump_code}: Score components: {evaluation.get('score_components', {})}")
             
             if evaluation.get('feasible', False):
                 feasible_pumps.append(evaluation)
@@ -494,8 +464,7 @@ class SelectionIntelligence:
                 # These pumps cannot be adjusted - evaluate at fixed configuration only
                 logger.warning(f"[THREE-PATH] {pump_data.get('pump_code')}: FIXED pump - no adjustment possible")
             
-            # Log the decision for important pumps
-            # Log the decision for ALL pumps - COMPREHENSIVE DECISION TRACKING
+            # Log the path decision for ALL pumps - COMPREHENSIVE DECISION TRACKING
             process_logger.log("=" * 80)
             process_logger.log(f"PATH DECISION: {pump_code}")
             process_logger.log("=" * 80)
@@ -504,10 +473,9 @@ class SelectionIntelligence:
             process_logger.log(f"  → SELECTED PATH: {operation_mode} ({selection_method})")
             process_logger.log(f"  → Pump Flexibility: {evaluation.get('pump_flexibility', 'Not specified')}")
             
-            # Keep original debug logging for specific pump series
-            if any(keyword in str(pump_code) for keyword in ['HC', 'WLN', 'MC', 'LC']):
-                logger.info(f"[THREE-PATH DECISION] {pump_code}: Mode={operation_mode}, Method={selection_method}")
-                logger.info(f"[THREE-PATH DECISION] {pump_code}: variable_speed={variable_speed}, variable_diameter={variable_diameter}")
+            # Debug logging for path decisions
+            logger.debug(f"[THREE-PATH DECISION] {pump_code}: Mode={operation_mode}, Method={selection_method}")
+            logger.debug(f"[THREE-PATH DECISION] {pump_code}: variable_speed={variable_speed}, variable_diameter={variable_diameter}")
             # ========================================================================
             # END OF THREE-PATH SELECTION LOGIC
             # ========================================================================
@@ -526,11 +494,8 @@ class SelectionIntelligence:
             
             logger.debug(f"[SCORE] {pump_data.get('pump_code')}: BEP from specs - flow: {bep_flow:.1f} m³/hr, head: {bep_head:.1f}m")
             
-            # Special debug for 6 WLN 18A
-            if "6 WLN 18A" in str(pump_data.get('pump_code', '')):
-                logger.error(f"[DEBUG 6WLN QBP] Found pump: {pump_data.get('pump_code')}")
-                logger.error(f"[DEBUG 6WLN QBP] BEP Flow: {bep_flow} m³/hr, BEP Head: {bep_head} m")
-                logger.error(f"[DEBUG 6WLN QBP] Required Flow: {flow} m³/hr")
+            # Debug QBP calculation for all pumps
+            logger.debug(f"[QBP DEBUG] {pump_data.get('pump_code', 'Unknown')}: BEP Flow: {bep_flow} m³/hr, Required: {flow} m³/hr")
             
             if bep_flow > 0 and bep_head > 0:
                 # Calculate QBP (% of BEP flow)
@@ -607,11 +572,11 @@ class SelectionIntelligence:
                     if head_ratio_pct > self.severe_oversizing_threshold:
                         # Severe oversizing (>300% above requirement) - massive penalty
                         oversizing_penalty = -30  # Heavy penalty but not elimination
-                        logger.info(f"Pump {pump_data.get('pump_code')}: SEVERE head oversizing {head_ratio_pct:.1f}% - BEP {bep_head}m vs required {head}m")
+                        logger.info(f"Pump {pump_data.get('pump_code')}: SEVERE head oversizing {head_ratio_pct:.1f}% (>{self.severe_oversizing_threshold:.0f}%) - BEP {bep_head}m vs required {head}m")
                     else:
                         # Moderate oversizing (150-300% above requirement) - moderate penalty
                         oversizing_penalty = -15 - (head_ratio_pct - self.head_oversizing_threshold) * 0.1
-                        logger.info(f"Pump {pump_data.get('pump_code')}: Head oversizing {head_ratio_pct:.1f}% - BEP {bep_head}m vs required {head}m")
+                        logger.info(f"Pump {pump_data.get('pump_code')}: Head oversizing {head_ratio_pct:.1f}% ({self.head_oversizing_threshold:.0f}-{self.severe_oversizing_threshold:.0f}%) - BEP {bep_head}m vs required {head}m")
                     
                     evaluation['score_components']['head_oversizing_penalty'] = oversizing_penalty
                 else:
@@ -993,37 +958,37 @@ class SelectionIntelligence:
                 if score >= 45:
                     return f"Perfect BEP match: {qbp:.1f}% (95-105% optimal)"
                 elif score >= 40:
-                    return f"Excellent BEP match: {qbp:.1f}% (90-110% range)"
+                    return f"Excellent BEP match: {qbp:.1f}% ({0.90*100:.0f}-{1.10*100:.0f}% range)"
                 elif score >= 30:
-                    return f"Good BEP match: {qbp:.1f}% (80-120% range)"
+                    return f"Good BEP match: {qbp:.1f}% ({0.80*100:.0f}-{1.20*100:.0f}% range)"
                 elif score >= 20:
-                    return f"Acceptable BEP match: {qbp:.1f}% (70-130% range)"
+                    return f"Acceptable BEP match: {qbp:.1f}% ({0.70*100:.0f}-{1.30*100:.0f}% range)"
                 else:
                     return f"Poor BEP match: {qbp:.1f}% (outside optimal ranges)"
             
             elif component == 'efficiency':
                 efficiency = evaluation.get('efficiency_pct', 0)
                 if score >= 35:
-                    return f"Excellent efficiency: {efficiency:.1f}% (≥85%)"
+                    return f"Excellent efficiency: {efficiency:.1f}% (≥{85:.0f}%)"
                 elif score >= 30:
-                    return f"Very good efficiency: {efficiency:.1f}% (75-85%)"
+                    return f"Very good efficiency: {efficiency:.1f}% ({75:.0f}-{85:.0f}%)"
                 elif score >= 25:
-                    return f"Good efficiency: {efficiency:.1f}% (65-75%)"
+                    return f"Good efficiency: {efficiency:.1f}% ({65:.0f}-{75:.0f}%)"
                 elif score >= 10:
-                    return f"Acceptable efficiency: {efficiency:.1f}% (45-65%)"
+                    return f"Acceptable efficiency: {efficiency:.1f}% ({45:.0f}-{65:.0f}%)"
                 else:
-                    return f"Low efficiency: {efficiency:.1f}% (<45%)"
+                    return f"Low efficiency: {efficiency:.1f}% (<{45:.0f}%)"
             
             elif component == 'head_margin':
                 margin_pct = evaluation.get('head_margin_pct', 0)
                 if score >= 20:
-                    return f"Perfect head margin: {margin_pct:.1f}% (≤5%)"
+                    return f"Perfect head margin: {margin_pct:.1f}% (≤{5:.0f}%)"
                 elif score >= 15:
-                    return f"Good head margin: {margin_pct:.1f}% (5-10%)"
+                    return f"Good head margin: {margin_pct:.1f}% ({5:.0f}-{10:.0f}%)"
                 elif score >= 5:
-                    return f"Acceptable head margin: {margin_pct:.1f}% (10-15%)"
+                    return f"Acceptable head margin: {margin_pct:.1f}% ({10:.0f}-{15:.0f}%)"
                 else:
-                    return f"High head margin: {margin_pct:.1f}% (>15%)"
+                    return f"High head margin: {margin_pct:.1f}% (>{15:.0f}%)"
             
             elif component == 'head_oversizing_penalty':
                 oversizing_pct = evaluation.get('bep_head_oversizing_pct', 0)
@@ -1098,8 +1063,9 @@ class SelectionIntelligence:
             min_flow = min(curve_flows)
             max_flow = max(curve_flows)
             
-            if not (min_flow * 0.9 <= flow_m3hr <= max_flow * 1.1):
-                flow_range_failures.append(f"{curve.get('impeller_diameter_mm', 0):.0f}mm impeller: flow range {min_flow:.1f}-{max_flow:.1f} m³/hr")
+            flow_tolerance = 0.1
+            if not (min_flow * (1-flow_tolerance) <= flow_m3hr <= max_flow * (1+flow_tolerance)):
+                flow_range_failures.append(f"{curve.get('impeller_diameter_mm', 0):.0f}mm impeller: flow range {min_flow:.1f}-{max_flow:.1f} m³/hr (±{flow_tolerance*100:.0f}% tolerance)")
                 continue  # Flow outside this curve's range
             
             try:
@@ -1119,9 +1085,10 @@ class SelectionIntelligence:
                 
                 delivered_head = float(head_interp(flow_m3hr))
                 
-                # Check if pump can deliver AT LEAST the required head (2% tolerance)
-                if delivered_head >= head_m * 0.98:
-                    process_logger.log(f"    {pump_code}: PHYSICALLY CAPABLE - Can deliver {delivered_head:.1f}m at {flow_m3hr} m³/hr")
+                # Check if pump can deliver AT LEAST the required head
+                head_tolerance = 0.02
+                if delivered_head >= head_m * (1-head_tolerance):
+                    process_logger.log(f"    {pump_code}: PHYSICALLY CAPABLE - Can deliver {delivered_head:.1f}m at {flow_m3hr} m³/hr (±{head_tolerance*100:.0f}% tolerance)")
                     logger.debug(f"Pump {pump_code}: Can deliver {delivered_head:.1f}m at {flow_m3hr} m³/hr (required: {head_m}m) - VALID")
                     return True, "Physically capable"
                 else:
@@ -1430,11 +1397,14 @@ class SelectionIntelligence:
             return []
         
         # Additional safety checks
-        if flow > 20000:  # Unrealistic for centrifugal pumps
-            logger.warning(f"[BEP PROXIMITY] Unusually high flow rate: {flow} m³/hr")
+        max_realistic_flow = 20000  # Unrealistic for centrifugal pumps
+        max_realistic_head = 2000   # Unrealistic for centrifugal pumps
         
-        if head > 2000:  # Unrealistic for centrifugal pumps
-            logger.warning(f"[BEP PROXIMITY] Unusually high head: {head} m")
+        if flow > max_realistic_flow:
+            logger.warning(f"[BEP PROXIMITY] Unusually high flow rate: {flow} m³/hr (>{max_realistic_flow:,} limit)")
+        
+        if head > max_realistic_head:
+            logger.warning(f"[BEP PROXIMITY] Unusually high head: {head} m (>{max_realistic_head:,} limit)")
         
         # Get all pumps from repository
         all_pumps = self.brain.repository.get_pump_models()
@@ -1461,7 +1431,8 @@ class SelectionIntelligence:
                 continue
             
             # Get speed from specifications or use default
-            speed_rpm = specs.get('speed_rpm', 2960)  # Default 2-pole motor at 50Hz
+            default_motor_speed = 2960  # Default 2-pole motor at 50Hz
+            speed_rpm = specs.get('speed_rpm', default_motor_speed)
             
             # Calculate specific speed for pump classification
             specific_speed = self._calculate_specific_speed(bep_flow, bep_head, speed_rpm)
@@ -1524,7 +1495,8 @@ class SelectionIntelligence:
                 # Predict efficiency drop from trimming
                 trim_percent = (1 - trim_ratio) * 100
                 efficiency_drop = trim_percent * hydraulic_type['efficiency_drop_per_trim']
-                predicted_efficiency = max(bep_efficiency - efficiency_drop, 30)  # Floor at 30%
+                min_efficiency_floor = 30.0  # Minimum realistic efficiency floor
+                predicted_efficiency = max(bep_efficiency - efficiency_drop, min_efficiency_floor)
             
             # Calculate operating range score (how well pump can handle flow variations)
             # Wider operating range is better for variable conditions
