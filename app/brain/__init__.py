@@ -4,7 +4,7 @@ Brain System Sub-modules
 Intelligence components for the centralized Brain system.
 """
 
-from .selection import SelectionIntelligence
+from .selection_core import SelectionIntelligence
 from .performance import PerformanceAnalyzer
 from .charts import ChartIntelligence
 from .validation import DataValidator

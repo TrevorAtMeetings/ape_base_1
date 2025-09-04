@@ -18,7 +18,7 @@ from datetime import datetime
 import json
 
 # Import sub-modules
-from .brain.selection import SelectionIntelligence
+from .brain.selection_core import SelectionIntelligence
 from .brain.performance import PerformanceAnalyzer
 from .brain.charts import ChartIntelligence
 from .brain.validation import DataValidator
