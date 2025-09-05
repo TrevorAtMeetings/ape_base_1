@@ -56,7 +56,7 @@ class IndustryStandardCalculator:
             physics_exponents = self.validator.get_exponents_for_pump(pump_data)
             
             # Enhanced debugging for HC pumps and 8/8 DME
-            if pump_code and ("HC" in str(pump_code) or "8/8 DME" in str(pump_code)):
+            if pump_code and ("HC" in str(pump_code)):
                 logger.error(f"[DEBUG] Starting calculation for {pump_code}")
                 logger.error(f"[DEBUG] Requirements: {flow} m³/hr @ {head}m")
                 logger.error(f"[DEBUG] Pump data keys: {list(pump_data.keys())}")
@@ -64,7 +64,7 @@ class IndustryStandardCalculator:
             
             curves = pump_data.get('curves', [])
             
-            if pump_code and ("HC" in str(pump_code) or "8/8 DME" in str(pump_code)):
+            if pump_code and ("HC" in str(pump_code)):
                 logger.error(f"[DEBUG] Found {len(curves)} curves")
                 if curves:
                     for i, curve in enumerate(curves):
@@ -86,15 +86,15 @@ class IndustryStandardCalculator:
                     largest_curve = curve
             
             if not largest_curve or largest_diameter <= 0:
-                if pump_code and ("HC" in str(pump_code) or "8/8 DME" in str(pump_code)):
+                if pump_code and ("HC" in str(pump_code)):
                     logger.error(f"[DEBUG] No valid curves found - largest_diameter: {largest_diameter}")
                     logger.error(f"[DEBUG] {pump_code}: INVALID CURVES - This is why calculation fails!")
                 return None
                 
             logger.debug(f"[INDUSTRY] {pump_code}: Using largest impeller {largest_diameter}mm as base curve")
             
-            if pump_code and "8/8 DME" in str(pump_code):
-                logger.error(f"[8/8 DME DEBUG] Using largest impeller {largest_diameter}mm")
+            if pump_code:
+                logger.error(f"[{pump_code}] Using largest impeller {largest_diameter}mm")
             
             # Get performance points from largest curve
             curve_points = largest_curve.get('performance_points', [])
@@ -113,16 +113,7 @@ class IndustryStandardCalculator:
             if flows:
                 logger.debug(f"[INDUSTRY] {pump_code}: Flow range: {min(flows):.1f} - {max(flows):.1f} m³/hr")
                 
-            # Enhanced debugging for 8/8 DME
-            if pump_code and "8/8 DME" in str(pump_code):
-                logger.error(f"[8/8 DME DEBUG] Performance points: {len(curve_points)}")
-                logger.error(f"[8/8 DME DEBUG] Flows: {len(flows)} points, range: {min(flows) if flows else 'N/A'} - {max(flows) if flows else 'N/A'}")
-                logger.error(f"[8/8 DME DEBUG] Heads: {len(heads)} points, range: {min(heads) if heads else 'N/A'} - {max(heads) if heads else 'N/A'}")
-                if flows:
-                    flow_range_check = min(flows) * 0.9 <= flow <= max(flows) * 1.1
-                    logger.error(f"[8/8 DME DEBUG] Flow range check: {flow} in [{min(flows)*0.9:.1f}, {max(flows)*1.1:.1f}] = {flow_range_check}")
-                
-            # Handle None power values - mark as missing (NO FALLBACKS EVER)
+           # Handle None power values - mark as missing (NO FALLBACKS EVER)
             powers = []
             for p in curve_points:
                 power = p.get('power_kw')
@@ -155,7 +146,7 @@ class IndustryStandardCalculator:
                 logger.debug(f"[INDUSTRY] {pump_code}: Creating interpolation functions with sorted data...")
                 
                 # CRITICAL DEBUG: Show actual performance points for problematic pumps
-                if pump_code and ("VBK 35-22" in str(pump_code) or "PL 200" in str(pump_code)):
+                if pump_code:
                     logger.error(f"[CURVE DEBUG] {pump_code}: Using {largest_diameter}mm diameter curve")
                     logger.error(f"[CURVE DEBUG] {pump_code}: Performance points: {list(zip(flows_sorted, heads_sorted))}")
                 
@@ -193,13 +184,13 @@ class IndustryStandardCalculator:
                 logger.debug(f"[INDUSTRY] {pump_code}: Base curve performance - head: {delivered_head:.2f}m, eff: {base_efficiency:.1f}%")
                 
                 # Special debug for 6 WLN 18A
-                if pump_code and "6 WLN 18A" in str(pump_code):
-                    logger.error(f"[DEBUG 6WLN] Flow: {flow}, Required head: {head}")
-                    logger.error(f"[DEBUG 6WLN] Delivered head: {delivered_head:.2f}m")
-                    logger.error(f"[DEBUG 6WLN] Largest diameter: {largest_diameter}mm")
-                    logger.error(f"[DEBUG 6WLN] Performance points: {len(curve_points)}")
-                    logger.error(f"[DEBUG 6WLN] Flow range: {min(flows)} to {max(flows)} m³/hr")
-                    logger.error(f"[DEBUG 6WLN] Head range: {min(heads)} to {max(heads)} m")
+                if pump_code:
+                    logger.error(f"[{pump_code}] Flow: {flow}, Required head: {head}")
+                    logger.error(f"[DEBUG {pump_code}] Delivered head: {delivered_head:.2f}m")
+                    logger.error(f"[DEBUG {pump_code}] Largest diameter: {largest_diameter}mm")
+                    logger.error(f"[DEBUG {pump_code}] Performance points: {len(curve_points)}")
+                    logger.error(f"[DEBUG {pump_code}] Flow range: {min(flows)} to {max(flows)} m³/hr")
+                    logger.error(f"[DEBUG {pump_code}] Head range: {min(heads)} to {max(heads)} m")
                     
                     # CRITICAL ANALYSIS: Compare with manufacturer expectation
                     # Manufacturer shows 11.65% trim, which means 88.35% diameter
@@ -225,9 +216,9 @@ class IndustryStandardCalculator:
                 if delivered_head > head * 1.15:  # Target head is significantly below largest curve capability
                     logger.debug(f"[INDUSTRY] {pump_code}: Target head {head:.2f}m below largest curve {delivered_head:.2f}m - will trim from largest impeller")
                     
-                    if pump_code and "8/8 DME" in str(pump_code):
-                        logger.error(f"[8/8 DME DEBUG] Target {head:.2f}m below largest curve {delivered_head:.2f}m")
-                        logger.error(f"[8/8 DME DEBUG] Will trim from largest impeller 527mm (industry standard)")
+                    if pump_code:
+                        logger.error(f"[{pump_code} DEBUG] Target {head:.2f}m below largest curve {delivered_head:.2f}m")
+                        logger.error(f"[{pump_code} DEBUG] Will trim from largest impeller 527mm (industry standard)")
                     
                     # REMOVED: Smaller curve selection logic - always use largest impeller
                     # Industry best practice is to use the largest impeller and trim down
@@ -245,25 +236,10 @@ class IndustryStandardCalculator:
                     
                     logger.info(f"[FALLBACK] {pump_code or 'Unknown'}: Capability estimate fallback disabled - pump rejected")
                     return None  # Explicit rejection - no capability estimates allowed
-                
-                # STEP 3: EFFICIENCY-OPTIMIZED TRIMMING METHODOLOGY  
-                # Evaluate multiple trim levels to optimize efficiency and BEP proximity
-                if pump_code and "8/8 DME" in str(pump_code):
-                    logger.error(f"[8/8 DME DEBUG] About to call efficiency-optimized trimming")
-                    logger.error(f"[8/8 DME DEBUG] flows_sorted length: {len(flows_sorted)}")
-                    logger.error(f"[8/8 DME DEBUG] heads_sorted length: {len(heads_sorted)}")
-                    logger.error(f"[8/8 DME DEBUG] largest_diameter: {largest_diameter}mm")
-                
+                            
                 # Get BEP data for efficiency optimization
                 original_bep_flow = specs.get('bep_flow_m3hr', 0)
                 original_bep_head = specs.get('bep_head_m', 0)
-                
-                # Add debugging for HC pumps that manufacturer found viable
-                if pump_code and any(hc in str(pump_code) for hc in ['32 HC', '30 HC', '28 HC']):
-                    logger.error(f"[HC DEBUG] {pump_code}: Starting efficiency optimization - largest diameter: {largest_diameter}mm")
-                    logger.error(f"[HC DEBUG] {pump_code}: Requirements: {flow} m³/hr @ {head}m")
-                    logger.error(f"[HC DEBUG] {pump_code}: BEP data: {original_bep_flow} m³/hr @ {original_bep_head}m")
-                    logger.error(f"[HC DEBUG] {pump_code}: Curve points: {len(curve_points)} points")
                 
                 optimal_trim_result = self.optimizer.calculate_efficiency_optimized_trim(
                     flows_sorted, heads_sorted, largest_diameter, flow, head, 
@@ -291,12 +267,7 @@ class IndustryStandardCalculator:
                     else:
                         logger.warning(f"[STANDARD AFFINITY] {pump_code}: Cannot achieve required head - pump may not be suitable")
                         return None
-                
-                if pump_code and "8/8 DME" in str(pump_code):
-                    logger.error(f"[8/8 DME DEBUG] Efficiency-optimized result: diameter={required_diameter}, trim={trim_percent}")
-                    if optimal_trim_result:
-                        logger.error(f"[8/8 DME DEBUG] Optimization score: {optimal_trim_result.get('optimization_score', 'N/A')}, evaluated {optimal_trim_result.get('evaluation_count', 0)} trim levels")
-                
+          
                 if required_diameter is None or required_diameter <= 0:
                     logger.error(f"[NO FALLBACKS] {pump_code}: Could not determine required diameter using affinity laws - pump rejected")
                     return None  # Explicit rejection - no hydraulic approximations
@@ -451,13 +422,7 @@ class IndustryStandardCalculator:
                         final_efficiency = max(40, final_efficiency - qbp_efficiency_penalty)
                         logger.info(f"[BEP MIGRATION] {pump_code}: Applied {qbp_efficiency_penalty:.1f}% efficiency penalty for QBP {true_qbp_percent:.1f}% (factor: {efficiency_correction_factor})")
                     
-                    # Special logging for 8/8 DME
-                    if pump_code and "8/8 DME" in str(pump_code):
-                        logger.error(f"[8/8 DME BEP MIGRATION] Original BEP: {original_bep_flow:.1f} m³/hr @ {original_bep_head:.1f}m")
-                        logger.error(f"[8/8 DME BEP MIGRATION] Trim: {trim_percent:.1f}% (ratio: {diameter_ratio:.4f})")
-                        logger.error(f"[8/8 DME BEP MIGRATION] Shifted BEP: {shifted_bep_flow:.1f} m³/hr @ {shifted_bep_head:.1f}m")
-                        logger.error(f"[8/8 DME BEP MIGRATION] Operating at {flow} m³/hr = {true_qbp_percent:.1f}% of shifted BEP")
-                    
+                                    
                 else:
                     # No trimming or no BEP data - use original values
                     if original_bep_flow > 0:

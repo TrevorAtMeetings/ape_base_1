@@ -323,12 +323,10 @@ class AffinityCalculator:
             # Get head delivered by largest impeller at target flow (H₁)
             base_head_at_flow = float(head_interp(target_flow))
             
-            if pump_code and "8/8 DME" in str(pump_code):
-                logger.error(f"[8/8 DME AFFINITY] Interpolated head at {target_flow} m³/hr: {base_head_at_flow}m")
+            logger.debug(f"[AFFINITY] Interpolated head at {target_flow} m³/hr: {base_head_at_flow}m")
             
             if np.isnan(base_head_at_flow) or base_head_at_flow <= 0:
-                if pump_code and "8/8 DME" in str(pump_code):
-                    logger.error(f"[8/8 DME AFFINITY] Returning None due to invalid head")
+                logger.debug(f"[AFFINITY] Returning None due to invalid head")
                 return None, None
             
             
@@ -340,14 +338,12 @@ class AffinityCalculator:
             # Special tolerance for BEP testing - allow small precision differences
             tolerance = 1.05  # 5% tolerance for BEP precision issues
             if target_head > base_head_at_flow * tolerance:
-                if pump_code and "8/8 DME" in str(pump_code):
-                    logger.error(f"[8/8 DME AFFINITY] Target {target_head:.2f}m > max {base_head_at_flow * tolerance:.2f}m - returning None")
+                logger.debug(f"[AFFINITY] Target {target_head:.2f}m > max {base_head_at_flow * tolerance:.2f}m - returning None")
                 return None, None
             elif target_head > base_head_at_flow * 1.02:
                 logger.info(f"[BEP TOLERANCE] {pump_code}: Allowing BEP precision difference - target {target_head:.2f}m vs base {base_head_at_flow:.2f}m")
             
-            if pump_code and "8/8 DME" in str(pump_code):
-                logger.error(f"[8/8 DME AFFINITY] Head check passed: {target_head:.2f}m <= {base_head_at_flow * 1.02:.2f}m")
+            logger.debug(f"[AFFINITY] Head check passed: {target_head:.2f}m <= {base_head_at_flow * 1.02:.2f}m")
             
             # Good case: target_head < base_head_at_flow means we can trim to reduce head
             
@@ -401,17 +397,14 @@ class AffinityCalculator:
             logger.info(f"[TUNABLE AFFINITY] {pump_code}: Trim percentage = {trim_percent:.2f}%")
             
             # STEP 3: Validate trim limits (industry standard: 85-100%)
-            if pump_code and "8/8 DME" in str(pump_code):
-                logger.error(f"[8/8 DME AFFINITY] Checking trim limits: {trim_percent:.2f}% vs [{self.min_trim_percent}, {self.max_trim_percent}]")
+            logger.debug(f"[AFFINITY] Checking trim limits: {trim_percent:.2f}% vs [{self.min_trim_percent}, {self.max_trim_percent}]")
             
             if trim_percent < self.min_trim_percent:
-                if pump_code and "8/8 DME" in str(pump_code):
-                    logger.error(f"[8/8 DME AFFINITY] Trim too small: {trim_percent:.1f}% < {self.min_trim_percent}%")
+                logger.debug(f"[AFFINITY] Trim too small: {trim_percent:.1f}% < {self.min_trim_percent}%")
                 return None, None
             
             if trim_percent > self.max_trim_percent:
-                if pump_code and "8/8 DME" in str(pump_code):
-                    logger.error(f"[8/8 DME AFFINITY] Trim too large: {trim_percent:.1f}% > {self.max_trim_percent}%")
+                logger.debug(f"[AFFINITY] Trim too large: {trim_percent:.1f}% > {self.max_trim_percent}%")
                 return None, None
             
             # STEP 4: Enhanced validation - verify result makes physical sense
@@ -423,21 +416,19 @@ class AffinityCalculator:
             if error_percent > 1.0:  # Should be essentially zero for direct calculation
                 logger.warning(f"[DIRECT AFFINITY] {pump_code}: Unexpected calculation error: {error_percent:.2f}%")
             
-            # Enhanced logging for specific pumps
-            if pump_code and ("6 WLN 18A" in str(pump_code) or "8/8 DME" in str(pump_code)):
-                logger.error(f"[ENHANCED TRIM] {pump_code}: Direct calculation complete")
-                logger.error(f"[ENHANCED TRIM] {pump_code}: H₁ = {base_head_at_flow:.2f}m, H₂ = {target_head:.2f}m")
-                logger.error(f"[ENHANCED TRIM] {pump_code}: D₁ = {largest_diameter:.1f}mm, D₂ = {required_diameter:.1f}mm")
-                logger.error(f"[ENHANCED TRIM] {pump_code}: Trim = {trim_percent:.2f}% (vs iterative method)")
+            # Enhanced logging for calculations
+            logger.debug(f"[TRIM] {pump_code}: Direct calculation complete")
+            logger.debug(f"[TRIM] {pump_code}: H₁ = {base_head_at_flow:.2f}m, H₂ = {target_head:.2f}m")
+            logger.debug(f"[TRIM] {pump_code}: D₁ = {largest_diameter:.1f}mm, D₂ = {required_diameter:.1f}mm")
+            logger.debug(f"[TRIM] {pump_code}: Trim = {trim_percent:.2f}% (vs iterative method)")
             
             return required_diameter, trim_percent
             
         except Exception as e:
             logger.error(f"[DIRECT AFFINITY ERROR] {pump_code}: {e}")
-            if pump_code and "8/8 DME" in str(pump_code):
-                logger.error(f"[8/8 DME DEBUG] Exception details: {e}")
-                logger.error(f"[8/8 DME DEBUG] flows_sorted length: {len(flows_sorted) if flows_sorted else 'None'}")
-                logger.error(f"[8/8 DME DEBUG] heads_sorted length: {len(heads_sorted) if heads_sorted else 'None'}")
+            logger.debug(f"[AFFINITY DEBUG] Exception details: {e}")
+            logger.debug(f"[AFFINITY DEBUG] flows_sorted length: {len(flows_sorted) if flows_sorted else 'None'}")
+            logger.debug(f"[AFFINITY DEBUG] heads_sorted length: {len(heads_sorted) if heads_sorted else 'None'}")
             return None, None
 
     def apply_affinity_laws(self, base_curve: Dict[str, Any],

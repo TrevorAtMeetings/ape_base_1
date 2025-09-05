@@ -10,6 +10,11 @@ from typing import Dict, Any
 
 logger = logging.getLogger(__name__)
 
+# Message templates
+SPECIFIC_SPEED_ERROR_MSG = "Error calculating specific speed: {}"
+TRIM_LIMIT_EXCEEDED_MSG = "Trim requirement {:.1f}% exceeds {:.0f}% limit"
+TRIM_CALCULATION_ERROR_MSG = "Error calculating trim requirement: {}"
+
 
 class HydraulicClassifier:
     """Handles pump hydraulic type classification and trimming calculations"""
@@ -41,7 +46,7 @@ class HydraulicClassifier:
             return ns
             
         except Exception as e:
-            logger.debug(f"Error calculating specific speed: {e}")
+            logger.debug(SPECIFIC_SPEED_ERROR_MSG.format(e))
             return 0
     
     @staticmethod
@@ -124,6 +129,8 @@ class HydraulicClassifier:
         Returns:
             Trim ratio (1.0 = no trim, 0.85 = 15% trim)
         """
+        MIN_TRIM_RATIO = 0.85  # 15% maximum trim limit
+        
         try:
             if current_head <= 0 or required_head <= 0:
                 return 1.0
@@ -134,13 +141,13 @@ class HydraulicClassifier:
             # Calculate trim ratio: D2/D1 = (H2/H1)^(1/exp)
             trim_ratio = math.pow(required_head / current_head, 1.0 / trim_head_exp)
             
-            # Enforce 15% maximum trim limit
-            if trim_ratio < 0.85:
-                logger.debug(f"Trim requirement {(1-trim_ratio)*100:.1f}% exceeds 15% limit")
-                return 0.85
+            # Enforce maximum trim limit
+            if trim_ratio < MIN_TRIM_RATIO:
+                logger.debug(TRIM_LIMIT_EXCEEDED_MSG.format((1-trim_ratio)*100, (1-MIN_TRIM_RATIO)*100))
+                return MIN_TRIM_RATIO
             
             return trim_ratio
             
         except Exception as e:
-            logger.debug(f"Error calculating trim requirement: {e}")
+            logger.debug(TRIM_CALCULATION_ERROR_MSG.format(e))
             return 1.0
