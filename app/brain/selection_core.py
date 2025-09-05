@@ -405,6 +405,21 @@ class SelectionIntelligence:
         """
         return self.proximity_searcher.rank_pumps(pump_list, criteria)
     
+    def evaluate_single_pump(self, pump_data: Dict[str, Any], flow: float, head: float, pump_id: str) -> Dict[str, Any]:
+        """
+        Evaluate a single pump for the given operating conditions.
+        
+        Args:
+            pump_data: Pump data dictionary
+            flow: Required flow rate (m³/hr)
+            head: Required head (m) 
+            pump_id: Pump identifier code
+            
+        Returns:
+            Evaluation result with feasibility and performance data
+        """
+        return self.pump_evaluator.evaluate_single_pump(pump_data, flow, head, pump_id)
+    
     def find_pumps_by_bep_proximity(self, flow: float, head: float, 
                                    pump_type: Optional[str] = None) -> List[Dict[str, Any]]:
         """
