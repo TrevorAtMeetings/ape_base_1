@@ -7,6 +7,7 @@ Data integrity validation and unit conversions
 import logging
 from typing import Dict, List, Any, Optional
 import re
+from .config_manager import config
 
 logger = logging.getLogger(__name__)
 
@@ -26,36 +27,36 @@ class DataValidator:
         # Unit conversion factors
         self.conversions = {
             # Flow conversions to m³/hr
-            'gpm_to_m3hr': 0.227124,
-            'lps_to_m3hr': 3.6,
-            'lpm_to_m3hr': 0.06,
-            'mgd_to_m3hr': 157.725,
+            'gpm_to_m3hr': config.get('validation', 'gpm_to_mâ³_hr_conversion_factor'),
+            'lps_to_m3hr': config.get('validation', 'lps_to_mâ³_hr_conversion_factor'),
+            'lpm_to_m3hr': config.get('validation', 'lpm_to_mâ³_hr_conversion_factor'),
+            'mgd_to_m3hr': config.get('validation', 'mgd_to_mâ³_hr_conversion_factor'),
             
             # Head conversions to meters
-            'ft_to_m': 0.3048,
-            'psi_to_m': 0.703070,
-            'bar_to_m': 10.1972,
-            'kpa_to_m': 0.101972,
+            'ft_to_m': config.get('validation', 'feet_to_meters_conversion_factor'),
+            'psi_to_m': config.get('validation', 'psi_to_meters_conversion_factor'),
+            'bar_to_m': config.get('validation', 'bar_to_meters_conversion_factor'),
+            'kpa_to_m': config.get('validation', 'kpa_to_meters_conversion_factor'),
             
             # Power conversions to kW
-            'hp_to_kw': 0.745699872,
-            'w_to_kw': 0.001,
+            'hp_to_kw': config.get('validation', 'horsepower_to_kw_conversion_factor'),
+            'w_to_kw': config.get('validation', 'watts_to_kw_conversion_factor'),
             
             # Diameter conversions to mm
-            'in_to_mm': 25.4,
+            'in_to_mm': config.get('validation', 'inches_to_mm_conversion_factor'),
             'cm_to_mm': 10,
             'm_to_mm': 1000
         }
         
         # Validation rules
         self.validation_rules = {
-            'flow_m3hr': {'min': 0.1, 'max': 50000},
-            'head_m': {'min': 0.1, 'max': 5000},
+            'flow_m3hr': {'min': config.get('validation', 'minimum_valid_flow_rate_mâ³_hr'), 'max': config.get('validation', 'maximum_valid_flow_rate_mâ³_hr')},
+            'head_m': {'min': 0.1, 'max': config.get('validation', 'maximum_valid_head_m')},
             'efficiency_pct': {'min': 0, 'max': 100},
-            'power_kw': {'min': 0, 'max': 10000},
-            'npshr_m': {'min': 0, 'max': 100},
-            'impeller_diameter_mm': {'min': 50, 'max': 5000},
-            'speed_rpm': {'min': 100, 'max': 7200}
+            'power_kw': {'min': 0, 'max': config.get('validation', 'maximum_valid_power_kw')},
+            'npshr_m': {'min': 0, 'max': config.get('validation', 'maximum_valid_npsh_m')},
+            'impeller_diameter_mm': {'min': config.get('validation', 'minimum_impeller_diameter_mm'), 'max': config.get('validation', 'maximum_impeller_diameter_mm')},
+            'speed_rpm': {'min': 100, 'max': config.get('validation', 'maximum_pump_speed_rpm')}
         }
     
     def validate_operating_point(self, flow: float, head: float) -> Dict[str, Any]:
@@ -331,7 +332,7 @@ class DataValidator:
             Specific speed
         """
         # Convert to m³/s
-        flow_m3s = flow_m3hr / 3600
+        flow_m3s = flow_m3hr / config.get('performance_affinity', 'seconds_per_hour_for_flow_conversions')
         
         # Ns = N × √Q / H^(3/4)
         # Where N is rpm, Q is m³/s, H is meters

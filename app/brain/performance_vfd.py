@@ -8,6 +8,7 @@ import logging
 import numpy as np
 from typing import Dict, Any, Optional
 from scipy import interpolate
+from .config_manager import config
 
 logger = logging.getLogger(__name__)
 
@@ -27,11 +28,14 @@ class VFDCalculator:
     def calculate_performance_with_speed_variation(self, pump_data: Dict[str, Any], 
                                                    target_flow: float, 
                                                    target_head: float,
-                                                   h_static_ratio: float = 0.4) -> Optional[Dict[str, Any]]:
+                                                   h_static_ratio: float = None) -> Optional[Dict[str, Any]]:
         """
         Calculate pump performance using Variable Frequency Drive (VFD) speed variation.
         Implements affinity laws for speed change to meet target duty point.
         """
+        if h_static_ratio is None:
+            h_static_ratio = config.get('performance_vfd', 'default_static_head_ratio_for_system_curves')
+        
         try:
             pump_code = pump_data.get('pump_code', 'Unknown')
             logger.info(f"[VFD CALC] {pump_code}: Starting VFD calculation for {target_flow:.1f} m³/hr @ {target_head:.1f}m")
@@ -44,15 +48,18 @@ class VFDCalculator:
             
             # Validate speed range data
             if not test_speed_rpm or test_speed_rpm <= 0:
-                logger.warning(f"[VFD CALC] {pump_code}: No test speed data, using default 1450 RPM")
-                test_speed_rpm = 1450  # Common 4-pole motor speed
+                default_speed = config.get('performance_vfd', 'default_4pole_motor_speed_rpm')
+                logger.warning(f"[VFD CALC] {pump_code}: No test speed data, using default {default_speed} RPM")
+                test_speed_rpm = default_speed  # Common 4-pole motor speed
             
             if not min_speed_rpm or min_speed_rpm <= 0:
-                min_speed_rpm = test_speed_rpm * 0.3  # Default 30% minimum speed
+                min_speed_ratio = config.get('performance_vfd', 'default_minimum_vfd_speed_percentage')
+                min_speed_rpm = test_speed_rpm * min_speed_ratio  # Default minimum speed ratio
                 logger.debug(f"[VFD CALC] {pump_code}: Using default min speed {min_speed_rpm:.0f} RPM")
             
             if not max_speed_rpm or max_speed_rpm <= 0:
-                max_speed_rpm = test_speed_rpm * 1.2  # Default 120% maximum speed
+                max_speed_ratio = config.get('performance_vfd', 'default_maximum_vfd_speed_percentage')
+                max_speed_rpm = test_speed_rpm * max_speed_ratio  # Default maximum speed ratio
                 logger.debug(f"[VFD CALC] {pump_code}: Using default max speed {max_speed_rpm:.0f} RPM")
             
             # Get curves and find the largest impeller diameter curve (reference curve)

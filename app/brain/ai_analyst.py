@@ -9,6 +9,7 @@ import json
 import os
 from typing import Dict, List, Any
 from openai import OpenAI
+from .config_manager import config
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +22,7 @@ class AIAnalyst:
         self.logger = logging.getLogger(__name__)
         # the newest OpenAI model is "gpt-4o" which was released May 13, 2024.
         # do not change this unless explicitly requested by the user
-        self.model = "gpt-4o"
+        self.model = config.get('ai_analyst', 'openai_model_for_calibration_analysis')
         self.client = None
         self._initialize_client()
         
@@ -79,8 +80,8 @@ class AIAnalyst:
                     }
                 ],
                 response_format={"type": "json_object"},
-                temperature=0.3,  # Lower temperature for more consistent technical analysis
-                max_tokens=1000
+                temperature=config.get('ai_analyst', 'lower_temperature_for_consistent_technical_analysis'),  # Lower temperature for more consistent technical analysis
+                max_tokens=config.get('ai_analyst', 'maximum_tokens_for_calibration_insights')
             )
             
             # Parse the response
@@ -267,8 +268,8 @@ class AIAnalyst:
                     {"role": "system", "content": "You are an expert pump engineer providing technical analysis for pump selection reports. Provide clear, actionable insights."},
                     {"role": "user", "content": prompt}
                 ],
-                max_tokens=800,
-                temperature=0.3
+                max_tokens=config.get('ai_analyst', 'maximum_tokens_for_calibration_insights'),
+                temperature=config.get('ai_analyst', 'lower_temperature_for_consistent_technical_analysis')
             )
             
             analysis_text = response.choices[0].message.content.strip()

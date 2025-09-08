@@ -10,6 +10,7 @@ from typing import Dict, List, Any, Optional, Tuple
 from scipy import interpolate
 from .physics_models import get_exponents_for_pump_type
 from ..process_logger import process_logger
+from .config_manager import config
 
 logger = logging.getLogger(__name__)
 
@@ -27,15 +28,15 @@ class AffinityCalculator:
         self.brain = brain
         
         # Performance thresholds
-        self.min_efficiency = 40.0
-        self.min_trim_percent = 85.0  # Industry standard - 15% maximum trim, non-negotiable
-        self.max_trim_percent = 100.0
+        self.min_efficiency = config.get('performance_affinity', 'minimum_acceptable_pump_efficiency_percentage')
+        self.min_trim_percent = config.get('performance_affinity', 'industry_standard_minimum_trim_percentage_15_max_trim')  # Industry standard - 15% maximum trim, non-negotiable
+        self.max_trim_percent = config.get('performance_affinity', 'maximum_trim_percentage_full_impeller')
         
         # Industry standard affinity law exponents
-        self.affinity_flow_exp = 1.0      # Q2/Q1 = (D2/D1)^1
-        self.affinity_head_exp = 2.0      # H2/H1 = (D2/D1)^2  
-        self.affinity_power_exp = 3.0     # P2/P1 = (D2/D1)^3
-        self.affinity_efficiency_exp = 0.8 # η2/η1 ≈ (D2/D1)^0.8 (industry standard)
+        self.affinity_flow_exp = config.get('performance_affinity', 'flow_scaling_exponent_in_affinity_laws_q2_q1__d2_d11')      # Q2/Q1 = (D2/D1)^1
+        self.affinity_head_exp = config.get('performance_affinity', 'head_scaling_exponent_in_affinity_laws_h2_h1__d2_d12')      # H2/H1 = (D2/D1)^2  
+        self.affinity_power_exp = config.get('performance_affinity', 'power_scaling_exponent_in_affinity_laws_p2_p1__d2_d13')     # P2/P1 = (D2/D1)^3
+        self.affinity_efficiency_exp = config.get('performance_affinity', 'efficiency_scaling_exponent_in_affinity_laws') # η2/η1 ≈ (D2/D1)^0.8 (industry standard)
         
         # Load calibration factors
         self._load_calibration_factors()
@@ -58,14 +59,14 @@ class AffinityCalculator:
         
         # Set defaults for critical factors
         default_factors = {
-            'bep_shift_flow_exponent': 1.2,
-            'bep_shift_head_exponent': 2.2,
-            'trim_dependent_small_exponent': 2.9,
-            'trim_dependent_large_exponent': 2.1,
-            'efficiency_penalty_volute': 0.20,
-            'efficiency_penalty_diffuser': 0.45,
-            'npsh_degradation_threshold': 10.0,
-            'npsh_degradation_factor': 1.15
+            'bep_shift_flow_exponent': config.get('performance_affinity', 'bep_shift_flow_exponent_calibration_factor'),
+            'bep_shift_head_exponent': config.get('performance_affinity', 'bep_shift_head_exponent_calibration_factor'),
+            'trim_dependent_small_exponent': config.get('performance_affinity', 'trim_dependent_small_exponent'),
+            'trim_dependent_large_exponent': config.get('performance_affinity', 'trim_dependent_large_exponent'),
+            'efficiency_penalty_volute': config.get('performance_affinity', 'efficiency_penalty_factor_for_volute_pumps'),
+            'efficiency_penalty_diffuser': config.get('performance_affinity', 'efficiency_penalty_factor_for_diffuser_pumps'),
+            'npsh_degradation_threshold': config.get('performance_affinity', 'npsh_degradation_threshold_percentage'),
+            'npsh_degradation_factor': config.get('performance_affinity', 'npsh_degradation_factor_for_heavy_trimming')
         }
         
         for factor, default in default_factors.items():
@@ -196,7 +197,10 @@ class AffinityCalculator:
                 if efficiency > 0:
                     # Correct power calculation: P = ρ × g × Q × H / η
                     # Units: (kg/m³) × (m/s²) × (m³/hr) × (m) / efficiency / conversion = kW
-                    power_kw = (flow * delivered_head * 1000 * 9.81) / (3600 * efficiency / 100 * 1000)
+                    water_density = config.get('performance_affinity', 'water_density_kg_m_')
+                    gravity = config.get('performance_affinity', 'gravitational_acceleration_m_s')
+                    seconds_per_hour = config.get('performance_affinity', 'seconds_per_hour_for_flow_conversions')
+                    power_kw = (flow * delivered_head * water_density * gravity) / (seconds_per_hour * efficiency / 100 * 1000)
                 else:
                     power_kw = 0
                 
@@ -262,7 +266,10 @@ class AffinityCalculator:
             # Calculate power
             if efficiency > 0:
                 # Correct power calculation: P = ρ × g × Q × H / η
-                power_kw = (flow * delivered_head * 1000 * 9.81) / (3600 * efficiency / 100 * 1000)
+                water_density = config.get('performance_affinity', 'water_density_kg_m_')
+                gravity = config.get('performance_affinity', 'gravitational_acceleration_m_s')
+                seconds_per_hour = config.get('performance_affinity', 'seconds_per_hour_for_flow_conversions')
+                power_kw = (flow * delivered_head * water_density * gravity) / (seconds_per_hour * efficiency / 100 * 1000)
             else:
                 power_kw = 0
             
@@ -535,8 +542,11 @@ class AffinityCalculator:
         
         # P = ρ × g × Q × H / η
         # Where: ρ = 1000 kg/m³, g = 9.81 m/s², Q in m³/s, H in m
-        flow_m3s = flow_m3hr / 3600  # Convert to m³/s
-        power_w = (1000 * 9.81 * flow_m3s * head_m) / (efficiency_pct / 100)
+        water_density = config.get('performance_affinity', 'water_density_kg_m_')
+        gravity = config.get('performance_affinity', 'gravitational_acceleration_m_s')
+        seconds_per_hour = config.get('performance_affinity', 'seconds_per_hour_for_flow_conversions')
+        flow_m3s = flow_m3hr / seconds_per_hour  # Convert to m³/s
+        power_w = (water_density * gravity * flow_m3s * head_m) / (efficiency_pct / 100)
         power_kw = power_w / 1000  # Convert to kW
         
         return power_kw

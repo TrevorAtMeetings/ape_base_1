@@ -10,6 +10,7 @@ from typing import Dict, Any, Optional
 from collections import OrderedDict
 import hashlib
 import json
+from .config_manager import config
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +18,7 @@ logger = logging.getLogger(__name__)
 class BrainCache:
     """In-memory cache for Brain calculations"""
     
-    def __init__(self, max_size: int = 1000, default_ttl: int = 300):
+    def __init__(self, max_size: int = None, default_ttl: int = None):
         """
         Initialize cache.
         
@@ -25,8 +26,8 @@ class BrainCache:
             max_size: Maximum number of cache entries
             default_ttl: Default time-to-live in seconds
         """
-        self.max_size = max_size
-        self.default_ttl = default_ttl
+        self.max_size = max_size or config.get('cache', 'maximum_cache_size_entries')
+        self.default_ttl = default_ttl or config.get('cache', 'default_ttl_for_cache_entries_seconds')
         self._cache = OrderedDict()
         self._stats = {
             'hits': 0,

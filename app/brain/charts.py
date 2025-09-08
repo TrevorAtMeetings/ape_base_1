@@ -7,6 +7,7 @@ Intelligent chart configuration and optimization
 import logging
 from typing import Dict, List, Any, Optional, Tuple
 import numpy as np
+from .config_manager import config
 
 logger = logging.getLogger(__name__)
 
@@ -25,9 +26,9 @@ class ChartIntelligence:
         
         # Chart configuration parameters
         self.margin_percent = {
-            'web': 0.1,      # 10% margin for web display
-            'pdf': 0.15,     # 15% margin for PDF reports
-            'report': 0.12   # 12% margin for detailed reports
+            'web': config.get('charts', 'chart_margin_for_web_display_10'),      # 10% margin for web display
+            'pdf': config.get('charts', 'chart_margin_for_pdf_reports_15'),     # 15% margin for PDF reports
+            'report': config.get('charts', 'chart_margin_for_detailed_reports_12')   # 12% margin for detailed reports
         }
         
         # Annotation preferences
@@ -472,8 +473,8 @@ class ChartIntelligence:
                     if power_kw is None and efficiency_pct > 20 and flow_m3hr > 0 and head_m > 0:
                         # Use same hydraulic calculation as Brain performance analysis
                         flow_m3s = flow_m3hr / 3600  # Convert to m³/s
-                        rho = 1000  # kg/m³ for water  
-                        g = 9.81    # m/s²
+                        rho = 1000  # kg/m³ for water (hardcoded for chart display) 
+                        g = 9.81    # m/s² (hardcoded for chart display)
                         power_kw = (rho * g * flow_m3s * head_m) / (efficiency_pct / 100 * 1000)
                         logger.debug(f"Brain hydraulic power for {pump_code} curve {i}: {power_kw:.2f}kW")
                     elif power_kw is None or power_kw <= 0:
@@ -510,7 +511,7 @@ class ChartIntelligence:
                 all_npshr_values.extend([n for n in npshr_data if n and n > 0])
             
             if all_power_values:
-                margin = 0.1  # 10% margin
+                margin = config.get('charts', 'chart_margin_for_web_display_10')  # 10% margin
                 power_min = min(all_power_values) * 0.9
                 power_max = max(all_power_values) * (1 + margin)
                 chart_data['brain_config']['axis_ranges']['power'] = {

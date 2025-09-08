@@ -7,6 +7,7 @@ Pump hydraulic type classification and trimming calculations
 import logging
 import math
 from typing import Dict, Any
+from .config_manager import config
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +21,7 @@ class HydraulicClassifier:
     """Handles pump hydraulic type classification and trimming calculations"""
     
     @staticmethod
-    def calculate_specific_speed(flow_m3hr: float, head_m: float, speed_rpm: float = 2960) -> float:
+    def calculate_specific_speed(flow_m3hr: float, head_m: float, speed_rpm: float = None) -> float:
         """
         Calculate specific speed (Ns) using SI definition: Ns = N√Q / H^(3/4)
         where N is in rpm, Q in m³/s, H in m
@@ -28,7 +29,7 @@ class HydraulicClassifier:
         Args:
             flow_m3hr: Flow rate in m³/hr (will be converted to m³/s)
             head_m: Head in meters
-            speed_rpm: Pump speed in RPM (default 2960 for 2-pole at 50Hz)
+            speed_rpm: Pump speed in RPM (default from config for 2-pole at 50Hz)
         
         Returns:
             Specific speed (dimensionless SI units)
@@ -37,8 +38,13 @@ class HydraulicClassifier:
             if flow_m3hr <= 0 or head_m <= 0:
                 return 0
             
+            # Use default speed from config if not provided
+            if speed_rpm is None:
+                speed_rpm = config.get('hydraulic_classifier', 'default_pump_speed_for_2pole_motor_at_50hz_rpm')
+            
             # Convert flow to m³/s
-            flow_m3s = flow_m3hr / 3600
+            seconds_per_hour = config.get('hydraulic_classifier', 'seconds_per_hour_conversion_constant')
+            flow_m3s = flow_m3hr / seconds_per_hour
             
             # Calculate specific speed: Ns = N√Q / H^(3/4)
             ns = speed_rpm * math.sqrt(flow_m3s) / (head_m ** 0.75)
@@ -73,7 +79,8 @@ class HydraulicClassifier:
             }
         
         # Based on industry standards and provided documentation
-        if specific_speed < 30:
+        low_ns_threshold = config.get('hydraulic_classifier', 'low_specific_speed_threshold_for_radial_pumps')
+        if specific_speed < low_ns_threshold:
             return {
                 'type': 'radial_low',
                 'description': 'Radial - Low Ns (steep H-Q curve)',
@@ -83,7 +90,7 @@ class HydraulicClassifier:
                 'trim_head_exp': 2.0,
                 'efficiency_drop_per_trim': 0.1  # 0.5-1.5% for typical 5-15% trim
             }
-        elif specific_speed < 60:
+        elif specific_speed < config.get('hydraulic_classifier', 'mid_specific_speed_threshold_for_radial_pumps'):
             return {
                 'type': 'radial_mid',
                 'description': 'Radial - Mid Ns (broader curve)',
@@ -93,7 +100,7 @@ class HydraulicClassifier:
                 'trim_head_exp': 1.95,
                 'efficiency_drop_per_trim': 0.15  # 0.8-2.0% for typical trim
             }
-        elif specific_speed < 120:
+        elif specific_speed < config.get('hydraulic_classifier', 'high_specific_speed_threshold_for_mixed_flow_pumps'):
             return {
                 'type': 'mixed_flow',
                 'description': 'Mixed-flow',
@@ -129,7 +136,7 @@ class HydraulicClassifier:
         Returns:
             Trim ratio (1.0 = no trim, 0.85 = 15% trim)
         """
-        MIN_TRIM_RATIO = 0.85  # 15% maximum trim limit
+        MIN_TRIM_RATIO = 0.85  # 15% maximum trim limit (hardcoded constant)
         
         try:
             if current_head <= 0 or required_head <= 0:

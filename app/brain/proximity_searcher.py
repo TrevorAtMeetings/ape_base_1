@@ -10,6 +10,7 @@ from typing import Dict, List, Any, Optional
 
 from .hydraulic_classifier import HydraulicClassifier
 from .bep_calculator import BEPCalculator
+from .config_manager import config
 
 logger = logging.getLogger(__name__)
 
@@ -54,8 +55,8 @@ class ProximitySearcher:
             return []
         
         # Additional safety checks
-        max_realistic_flow = 20000  # Unrealistic for centrifugal pumps
-        max_realistic_head = 2000   # Unrealistic for centrifugal pumps
+        max_realistic_flow = config.get('proximity_searcher', 'maximum_realistic_flow_rate_for_centrifugal_pumps')  # Unrealistic for centrifugal pumps
+        max_realistic_head = config.get('proximity_searcher', 'maximum_realistic_head_for_centrifugal_pumps')   # Unrealistic for centrifugal pumps
         
         if flow > max_realistic_flow:
             logger.warning(f"[BEP PROXIMITY] Unusually high flow rate: {flow} m³/hr (>{max_realistic_flow:,} limit)")
@@ -88,7 +89,7 @@ class ProximitySearcher:
                 continue
             
             # Get speed from specifications or use default
-            default_motor_speed = 2960  # Default 2-pole motor at 50Hz
+            default_motor_speed = 2960  # Default 2-pole motor at 50Hz (hardcoded)
             speed_rpm = specs.get('speed_rpm', default_motor_speed)
             
             # Calculate specific speed for pump classification
@@ -198,8 +199,9 @@ class ProximitySearcher:
             -x['operating_range_score']
         ))
         
-        # Return top 20 pumps
-        top_pumps = candidate_pumps[:20]
+        # Return top N pumps
+        num_top_pumps = config.get('proximity_searcher', 'number_of_top_pumps_to_return_from_proximity_search')
+        top_pumps = candidate_pumps[:num_top_pumps]
         
         logger.info(f"[BEP PROXIMITY] Found {len(candidate_pumps)} pumps with BEP data, returning top 20")
         if top_pumps:

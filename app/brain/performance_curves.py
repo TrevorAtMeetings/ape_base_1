@@ -9,6 +9,7 @@ import numpy as np
 from typing import Dict, List, Any, Optional, Tuple
 from scipy import interpolate
 from .physics_models import get_exponents_for_pump_type
+from .config_manager import config
 
 logger = logging.getLogger(__name__)
 
@@ -26,9 +27,9 @@ class CurveAnalyzer:
         self.brain = brain
         
         # Performance thresholds
-        self.min_efficiency = 40.0
-        self.min_trim_percent = 85.0
-        self.max_trim_percent = 100.0
+        self.min_efficiency = config.get('performance_curves', 'minimum_acceptable_pump_efficiency_percentage')
+        self.min_trim_percent = config.get('performance_curves', 'industry_standard_minimum_trim_percentage_15_max_trim')
+        self.max_trim_percent = config.get('performance_curves', 'maximum_trim_percentage_full_impeller')
 
     def get_exponents_for_pump(self, pump_data: Dict[str, Any]) -> Dict[str, float]:
         """
@@ -106,7 +107,9 @@ class CurveAnalyzer:
                 
                 # Check if flow is within this curve's range (with 10% tolerance)
                 min_flow, max_flow = min(flows), max(flows)
-                if not (min_flow * 0.9 <= flow <= max_flow * 1.1):
+                flow_min_tolerance = config.get('performance_curves', 'flow_range_minimum_tolerance_factor_90')
+                flow_max_tolerance = config.get('performance_curves', 'flow_range_maximum_tolerance_factor_110')
+                if not (min_flow * flow_min_tolerance <= flow <= max_flow * flow_max_tolerance):
                     logger.debug(f"[CURVE FINDER] {pump_code}: Flow {flow} outside curve {diameter}mm range [{min_flow:.1f}, {max_flow:.1f}]")
                     continue
                 
@@ -129,10 +132,13 @@ class CurveAnalyzer:
                     head_match_score = head_difference
                     
                     # Prefer curves that deliver slightly more than target (safety margin)
-                    if delivered_head >= head * 0.98:  # Must meet at least 98% of target
+                    min_head_factor = config.get('performance_curves', 'minimum_head_requirement_factor_98')
+                    if delivered_head >= head * min_head_factor:  # Must meet at least 98% of target
                         # Bonus for delivering close to target (within 10% over)
-                        if head <= delivered_head <= head * 1.10:
-                            head_match_score *= 0.7  # 30% bonus for good match
+                        max_preferred_head_factor = config.get('performance_curves', 'maximum_preferred_head_factor_110')
+                        head_match_bonus = config.get('performance_curves', 'head_match_bonus_factor_30_bonus')
+                        if head <= delivered_head <= head * max_preferred_head_factor:
+                            head_match_score *= head_match_bonus  # 30% bonus for good match
                         
                         logger.debug(f"[CURVE FINDER] {pump_code}: Curve {diameter}mm delivers {delivered_head:.1f}m (score: {head_match_score:.2f})")
                         
@@ -191,9 +197,9 @@ class CurveAnalyzer:
                                                 kind='linear', bounds_error=False)
                 efficiency = float(eff_interp(flow))
                 if np.isnan(efficiency):
-                    efficiency = 70.0  # Conservative fallback
+                    efficiency = config.get('performance_curves', 'conservative_fallback_efficiency_percentage')  # Conservative fallback
             else:
-                efficiency = 70.0  # Conservative fallback when no efficiency data
+                efficiency = config.get('performance_curves', 'conservative_fallback_efficiency_percentage')  # Conservative fallback when no efficiency data
             
             # Get power data
             powers = [p.get('power_kw') for p in curve_points if p.get('power_kw') is not None]
@@ -209,8 +215,11 @@ class CurveAnalyzer:
             # Calculate hydraulic power if needed
             if power is None and efficiency > 0:
                 # P = ρ × g × Q × H / η
-                flow_m3s = flow / 3600  # Convert to m³/s
-                power = (1000 * 9.81 * flow_m3s * head) / (efficiency / 100) / 1000  # kW
+                water_density = config.get('performance_curves', 'water_density_kgm3')
+                gravity = config.get('performance_curves', 'gravitational_acceleration_ms2')
+                seconds_per_hour = config.get('performance_curves', 'seconds_per_hour_for_flow_conversions')
+                flow_m3s = flow / seconds_per_hour  # Convert to m³/s
+                power = (water_density * gravity * flow_m3s * head) / (efficiency / 100) / 1000  # kW
             
             # Get NPSH data
             npsh_values = [p.get('npshr_m') for p in curve_points if p.get('npshr_m') is not None]
@@ -235,7 +244,7 @@ class CurveAnalyzer:
                 'npshr_m': npshr,
                 'impeller_diameter_mm': diameter,
                 'trim_percent': 100.0,  # No trimming - using curve as-is
-                'meets_requirements': delivered_head >= head * 0.98,  # Does it meet 98% of target head?
+                'meets_requirements': delivered_head >= head * config.get('performance_curves', 'minimum_head_requirement_factor_98'),  # Does it meet 98% of target head?
                 'head_margin_m': delivered_head - head,  # Excess head available
                 'curve_match': True  # This is a direct curve match, not trimmed
             }

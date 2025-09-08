@@ -15,20 +15,22 @@ Author: APE Pumps Brain System
 Date: August 18, 2025
 """
 
+from .config_manager import config
+
 # Pump Type Physics Models
 # Each pump type has unique exponents for how performance scales with impeller diameter
 PUMP_TYPE_EXPONENTS = {
     'AXIAL_FLOW': {
-        'flow_exponent_x': 0.95,        # Flow scales slightly less than linear (0.90-1.00)
-        'head_exponent_y': 1.65,        # Head scales less than quadratic (1.50-1.80)
-        'power_exponent_z': 2.60,       # Power scales less than cubic (2.40-2.80)
-        'npshr_exponent_alpha': 1.70,   # NPSH requirement scaling (1.6-1.8)
+        'flow_exponent_x': config.get('physics_models', 'axial_flow_pump_flow_exponent'),        # Flow scales slightly less than linear (0.90-1.00)
+        'head_exponent_y': config.get('physics_models', 'axial_flow_pump_head_exponent'),        # Head scales less than quadratic (1.50-1.80)
+        'power_exponent_z': config.get('physics_models', 'axial_flow_pump_power_exponent'),       # Power scales less than cubic (2.40-2.80)
+        'npshr_exponent_alpha': config.get('physics_models', 'axial_flow_pump_npsh_exponent'),   # NPSH requirement scaling (1.6-1.8)
         'description': 'Axial flow pumps with propeller-type impellers'
     },
     
     'END_SUCTION': {
-        'flow_exponent_x': 1.00,        # Flow scales linearly (0.98-1.02)
-        'head_exponent_y': 1.95,        # Head scales nearly quadratic (1.90-2.00)
+        'flow_exponent_x': config.get('physics_models', 'end_suction_pump_flow_exponent'),        # Flow scales linearly (0.98-1.02)
+        'head_exponent_y': config.get('physics_models', 'end_suction_pump_head_exponent'),        # Head scales nearly quadratic (1.90-2.00)
         'power_exponent_z': 2.93,       # Power scales nearly cubic (2.85-3.00)
         'npshr_exponent_alpha': 1.95,   # NPSH requirement scaling (1.9-2.0)
         'description': 'End suction radial flow centrifugal pumps'

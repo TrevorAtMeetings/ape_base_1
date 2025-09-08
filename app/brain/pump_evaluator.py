@@ -10,6 +10,7 @@ from typing import Dict, Any
 from ..process_logger import process_logger
 from .physical_validator import PhysicalValidator
 from .scoring_utils import ScoringUtils
+from .config_manager import config
 
 logger = logging.getLogger(__name__)
 
@@ -31,9 +32,9 @@ class PumpEvaluator:
         # Brain system selection parameters
         # Legacy uses point-based scoring, not percentage weights
         self.scoring_weights = {
-            'bep_proximity': 45,  # Max points (was 40% weight)
-            'efficiency': 35,     # Max points (was 30% weight)
-            'head_margin': 20,    # Max points (was 15% weight)
+            'bep_proximity': config.get('pump_evaluator', 'maximum_points_for_bep_proximity_scoring'),  # Max points (was 40% weight)
+            'efficiency': config.get('pump_evaluator', 'maximum_points_for_efficiency_scoring'),     # Max points (was 30% weight)
+            'head_margin': config.get('pump_evaluator', 'maximum_points_for_head_margin_scoring'),    # Max points (was 15% weight)
             'npsh_margin': 0      # Removed in v6.0 (informational only, no gates)
         }
         
@@ -48,8 +49,8 @@ class PumpEvaluator:
         self.qbp_max_percent = 200.0  # Allow pumps running at 200% of BEP (more realistic)
         
         # FIXED: Head oversizing constraints - much more realistic thresholds
-        self.head_oversizing_threshold = 150.0  # % above requirement triggers penalty (was 40%)
-        self.severe_oversizing_threshold = 300.0  # % above requirement for severe penalty (was 70%)
+        self.head_oversizing_threshold = config.get('pump_evaluator', 'head_oversizing_threshold_percentage')  # % above requirement triggers penalty (was 40%)
+        self.severe_oversizing_threshold = config.get('pump_evaluator', 'severe_head_oversizing_threshold_percentage')  # % above requirement for severe penalty (was 70%)
     
     def evaluate_single_pump(self, pump_data: Dict[str, Any], 
                             flow: float, head: float, pump_code: str) -> Dict[str, Any]:

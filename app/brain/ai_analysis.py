@@ -13,6 +13,7 @@ import logging
 import os
 from typing import Dict, Any, Optional
 from dataclasses import dataclass
+from .config_manager import config
 
 logger = logging.getLogger(__name__)
 
@@ -118,7 +119,8 @@ class AIAnalysisIntelligence:
             3. Key engineering considerations and potential issues
             4. Operational recommendations and optimization opportunities
             
-            Use professional engineering language, be concise (under 300 words), and focus on actionable insights.
+            Use professional engineering language, be concise (under {} words), and focus on actionable insights.
+            """.format(config.get('ai_analysis', 'word_limit_for_general_analysis_responses'))
             """
             
         elif request.topic == 'efficiency':
@@ -182,13 +184,13 @@ class AIAnalysisIntelligence:
             client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
             
             response = client.chat.completions.create(
-                model="gpt-3.5-turbo",
+                model=config.get('ai_analysis', 'openai_model_for_ai_analysis'),
                 messages=[
                     {"role": "system", "content": "You are a professional pump engineer with extensive experience in centrifugal pump selection and analysis. Provide clear, concise technical analysis using industry-standard terminology."},
                     {"role": "user", "content": prompt}
                 ],
-                max_tokens=500,
-                temperature=0.3
+                max_tokens=config.get('ai_analysis', 'maximum_tokens_for_ai_response'),
+                temperature=config.get('ai_analysis', 'temperature_setting_for_ai_model_consistency')
             )
             
             return response.choices[0].message.content
@@ -202,7 +204,7 @@ class AIAnalysisIntelligence:
         try:
             import google.generativeai as genai
             genai.configure(api_key=os.getenv('GOOGLE_API_KEY'))
-            model = genai.GenerativeModel('gemini-1.5-flash')
+            model = genai.GenerativeModel(config.get('ai_analysis', 'google_gemini_model_for_analysis'))
             
             response = model.generate_content(prompt)
             return response.text
@@ -215,13 +217,13 @@ class AIAnalysisIntelligence:
         """Generate engineering-based analysis when AI is unavailable"""
         
         # Efficiency assessment
-        if request.efficiency_pct >= 80:
+        if request.efficiency_pct >= config.get('ai_analysis', 'excellent_efficiency_threshold'):
             efficiency_rating = "excellent"
             efficiency_note = "Operating at premium efficiency levels"
-        elif request.efficiency_pct >= 75:
+        elif request.efficiency_pct >= config.get('ai_analysis', 'good_efficiency_threshold'):
             efficiency_rating = "good"
             efficiency_note = "Above-average efficiency for this application"
-        elif request.efficiency_pct >= 65:
+        elif request.efficiency_pct >= config.get('ai_analysis', 'adequate_efficiency_threshold'):
             efficiency_rating = "adequate"
             efficiency_note = "Meets minimum efficiency requirements"
         else:
