@@ -1,0 +1,581 @@
+{
+  "hardcoded_values": {
+    "ai_analysis_constants": [
+      {
+        "value": "gpt-3.5-turbo",
+        "source_file": "ai_analysis.py",
+        "description": "OpenAI model for AI analysis",
+        "category": "ai_model_config"
+      },
+      {
+        "value": 500,
+        "source_file": "ai_analysis.py",
+        "description": "Maximum tokens for AI response",
+        "category": "ai_limits"
+      },
+      {
+        "value": 0.3,
+        "source_file": "ai_analysis.py",
+        "description": "Temperature setting for AI model consistency",
+        "category": "ai_parameters"
+      },
+      {
+        "value": 300,
+        "source_file": "ai_analysis.py",
+        "description": "Word limit for general analysis responses",
+        "category": "ai_limits"
+      },
+      {
+        "value": "gemini-1.5-flash",
+        "source_file": "ai_analysis.py",
+        "description": "Google Gemini model for analysis",
+        "category": "ai_model_config"
+      },
+      {
+        "value": 80.0,
+        "source_file": "ai_analysis.py",
+        "description": "Excellent efficiency threshold",
+        "category": "efficiency_rating"
+      },
+      {
+        "value": 75.0,
+        "source_file": "ai_analysis.py",
+        "description": "Good efficiency threshold",
+        "category": "efficiency_rating"
+      },
+      {
+        "value": 65.0,
+        "source_file": "ai_analysis.py",
+        "description": "Adequate efficiency threshold",
+        "category": "efficiency_rating"
+      }
+    ],
+    "ai_analyst_constants": [
+      {
+        "value": "gpt-4o",
+        "source_file": "ai_analyst.py",
+        "description": "OpenAI model for calibration analysis",
+        "category": "ai_model_config"
+      },
+      {
+        "value": 0.3,
+        "source_file": "ai_analyst.py",
+        "description": "Lower temperature for consistent technical analysis",
+        "category": "ai_parameters"
+      },
+      {
+        "value": 1000,
+        "source_file": "ai_analyst.py",
+        "description": "Maximum tokens for calibration insights",
+        "category": "ai_limits"
+      }
+    ],
+    "performance_affinity_constants": [
+      {
+        "value": 40.0,
+        "source_file": "performance_affinity.py",
+        "description": "Minimum acceptable pump efficiency percentage",
+        "category": "performance_limits"
+      },
+      {
+        "value": 85.0,
+        "source_file": "performance_affinity.py",
+        "description": "Industry standard minimum trim percentage (15% max trim)",
+        "category": "performance_limits"
+      },
+      {
+        "value": 100.0,
+        "source_file": "performance_affinity.py",
+        "description": "Maximum trim percentage (full impeller)",
+        "category": "performance_limits"
+      },
+      {
+        "value": 1.0,
+        "source_file": "performance_affinity.py",
+        "description": "Flow scaling exponent in affinity laws (Q2/Q1 = (D2/D1)^1)",
+        "category": "physics_constants"
+      },
+      {
+        "value": 2.0,
+        "source_file": "performance_affinity.py",
+        "description": "Head scaling exponent in affinity laws (H2/H1 = (D2/D1)^2)",
+        "category": "physics_constants"
+      },
+      {
+        "value": 3.0,
+        "source_file": "performance_affinity.py",
+        "description": "Power scaling exponent in affinity laws (P2/P1 = (D2/D1)^3)",
+        "category": "physics_constants"
+      },
+      {
+        "value": 0.8,
+        "source_file": "performance_affinity.py",
+        "description": "Efficiency scaling exponent in affinity laws",
+        "category": "physics_constants"
+      },
+      {
+        "value": 1.2,
+        "source_file": "performance_affinity.py",
+        "description": "BEP shift flow exponent calibration factor",
+        "category": "calibration_factors"
+      },
+      {
+        "value": 2.2,
+        "source_file": "performance_affinity.py",
+        "description": "BEP shift head exponent calibration factor",
+        "category": "calibration_factors"
+      },
+      {
+        "value": 2.9,
+        "source_file": "performance_affinity.py",
+        "description": "Trim dependent small exponent",
+        "category": "calibration_factors"
+      },
+      {
+        "value": 2.1,
+        "source_file": "performance_affinity.py",
+        "description": "Trim dependent large exponent",
+        "category": "calibration_factors"
+      },
+      {
+        "value": 0.20,
+        "source_file": "performance_affinity.py",
+        "description": "Efficiency penalty factor for volute pumps",
+        "category": "calibration_factors"
+      },
+      {
+        "value": 0.45,
+        "source_file": "performance_affinity.py",
+        "description": "Efficiency penalty factor for diffuser pumps",
+        "category": "calibration_factors"
+      },
+      {
+        "value": 10.0,
+        "source_file": "performance_affinity.py",
+        "description": "NPSH degradation threshold percentage",
+        "category": "calibration_factors"
+      },
+      {
+        "value": 1.15,
+        "source_file": "performance_affinity.py",
+        "description": "NPSH degradation factor for heavy trimming",
+        "category": "calibration_factors"
+      },
+      {
+        "value": 1000,
+        "source_file": "performance_affinity.py",
+        "description": "Water density (kg/m³)",
+        "category": "physical_constants"
+      },
+      {
+        "value": 9.81,
+        "source_file": "performance_affinity.py",
+        "description": "Gravitational acceleration (m/s²)",
+        "category": "physical_constants"
+      },
+      {
+        "value": 3600,
+        "source_file": "performance_affinity.py",
+        "description": "Seconds per hour for flow conversions",
+        "category": "physical_constants"
+      }
+    ],
+    "performance_curves_constants": [
+      {
+        "value": 40.0,
+        "source_file": "performance_curves.py",
+        "description": "Minimum acceptable pump efficiency percentage",
+        "category": "performance_limits"
+      },
+      {
+        "value": 85.0,
+        "source_file": "performance_curves.py",
+        "description": "Industry standard minimum trim percentage (15% max trim)",
+        "category": "performance_limits"
+      },
+      {
+        "value": 100.0,
+        "source_file": "performance_curves.py",
+        "description": "Maximum trim percentage (full impeller)",
+        "category": "performance_limits"
+      },
+      {
+        "value": 0.9,
+        "source_file": "performance_curves.py",
+        "description": "Flow range minimum tolerance factor (90%)",
+        "category": "curve_tolerances"
+      },
+      {
+        "value": 1.1,
+        "source_file": "performance_curves.py",
+        "description": "Flow range maximum tolerance factor (110%)",
+        "category": "curve_tolerances"
+      },
+      {
+        "value": 0.98,
+        "source_file": "performance_curves.py",
+        "description": "Minimum head requirement factor (98%)",
+        "category": "curve_tolerances"
+      },
+      {
+        "value": 1.10,
+        "source_file": "performance_curves.py",
+        "description": "Maximum preferred head factor (110%)",
+        "category": "curve_tolerances"
+      },
+      {
+        "value": 0.7,
+        "source_file": "performance_curves.py",
+        "description": "Head match bonus factor (30% bonus)",
+        "category": "curve_scoring"
+      },
+      {
+        "value": 70.0,
+        "source_file": "performance_curves.py",
+        "description": "Conservative fallback efficiency percentage",
+        "category": "fallback_values"
+      },
+      {
+        "value": 1000,
+        "source_file": "performance_curves.py",
+        "description": "Water density (kg/m³)",
+        "category": "physical_constants"
+      },
+      {
+        "value": 9.81,
+        "source_file": "performance_curves.py",
+        "description": "Gravitational acceleration (m/s²)",
+        "category": "physical_constants"
+      },
+      {
+        "value": 3600,
+        "source_file": "performance_curves.py",
+        "description": "Seconds per hour for flow conversions",
+        "category": "physical_constants"
+      }
+    ],
+    "physics_models_constants": [
+      {
+        "value": 0.95,
+        "source_file": "physics_models.py",
+        "description": "Axial flow pump flow exponent",
+        "category": "pump_type_physics"
+      },
+      {
+        "value": 1.65,
+        "source_file": "physics_models.py",
+        "description": "Axial flow pump head exponent",
+        "category": "pump_type_physics"
+      },
+      {
+        "value": 2.60,
+        "source_file": "physics_models.py",
+        "description": "Axial flow pump power exponent",
+        "category": "pump_type_physics"
+      },
+      {
+        "value": 1.70,
+        "source_file": "physics_models.py",
+        "description": "Axial flow pump NPSH exponent",
+        "category": "pump_type_physics"
+      },
+      {
+        "value": 1.00,
+        "source_file": "physics_models.py",
+        "description": "End suction pump flow exponent",
+        "category": "pump_type_physics"
+      },
+      {
+        "value": 1.95,
+        "source_file": "physics_models.py",
+        "description": "End suction pump head exponent",
+        "category": "pump_type_physics"
+      }
+    ],
+    "validation_constants": [
+      {
+        "value": 0.227124,
+        "source_file": "validation.py",
+        "description": "GPM to m³/hr conversion factor",
+        "category": "unit_conversions"
+      },
+      {
+        "value": 3.6,
+        "source_file": "validation.py",
+        "description": "LPS to m³/hr conversion factor",
+        "category": "unit_conversions"
+      },
+      {
+        "value": 0.06,
+        "source_file": "validation.py",
+        "description": "LPM to m³/hr conversion factor",
+        "category": "unit_conversions"
+      },
+      {
+        "value": 157.725,
+        "source_file": "validation.py",
+        "description": "MGD to m³/hr conversion factor",
+        "category": "unit_conversions"
+      },
+      {
+        "value": 0.3048,
+        "source_file": "validation.py",
+        "description": "Feet to meters conversion factor",
+        "category": "unit_conversions"
+      },
+      {
+        "value": 0.703070,
+        "source_file": "validation.py",
+        "description": "PSI to meters conversion factor",
+        "category": "unit_conversions"
+      },
+      {
+        "value": 10.1972,
+        "source_file": "validation.py",
+        "description": "Bar to meters conversion factor",
+        "category": "unit_conversions"
+      },
+      {
+        "value": 0.101972,
+        "source_file": "validation.py",
+        "description": "kPa to meters conversion factor",
+        "category": "unit_conversions"
+      },
+      {
+        "value": 0.745699872,
+        "source_file": "validation.py",
+        "description": "Horsepower to kW conversion factor",
+        "category": "unit_conversions"
+      },
+      {
+        "value": 0.001,
+        "source_file": "validation.py",
+        "description": "Watts to kW conversion factor",
+        "category": "unit_conversions"
+      },
+      {
+        "value": 25.4,
+        "source_file": "validation.py",
+        "description": "Inches to mm conversion factor",
+        "category": "unit_conversions"
+      },
+      {
+        "value": 0.1,
+        "source_file": "validation.py",
+        "description": "Minimum valid flow rate (m³/hr)",
+        "category": "validation_limits"
+      },
+      {
+        "value": 50000,
+        "source_file": "validation.py",
+        "description": "Maximum valid flow rate (m³/hr)",
+        "category": "validation_limits"
+      },
+      {
+        "value": 5000,
+        "source_file": "validation.py",
+        "description": "Maximum valid head (m)",
+        "category": "validation_limits"
+      },
+      {
+        "value": 10000,
+        "source_file": "validation.py",
+        "description": "Maximum valid power (kW)",
+        "category": "validation_limits"
+      },
+      {
+        "value": 100,
+        "source_file": "validation.py",
+        "description": "Maximum valid NPSH (m)",
+        "category": "validation_limits"
+      },
+      {
+        "value": 50,
+        "source_file": "validation.py",
+        "description": "Minimum impeller diameter (mm)",
+        "category": "validation_limits"
+      },
+      {
+        "value": 5000,
+        "source_file": "validation.py",
+        "description": "Maximum impeller diameter (mm)",
+        "category": "validation_limits"
+      },
+      {
+        "value": 7200,
+        "source_file": "validation.py",
+        "description": "Maximum pump speed (RPM)",
+        "category": "validation_limits"
+      }
+    ],
+    "cache_constants": [
+      {
+        "value": 1000,
+        "source_file": "cache.py",
+        "description": "Maximum cache size (entries)",
+        "category": "cache_limits"
+      },
+      {
+        "value": 300,
+        "source_file": "cache.py",
+        "description": "Default TTL for cache entries (seconds)",
+        "category": "cache_limits"
+      }
+    ],
+    "charts_constants": [
+      {
+        "value": 0.1,
+        "source_file": "charts.py",
+        "description": "Chart margin for web display (10%)",
+        "category": "chart_display"
+      },
+      {
+        "value": 0.15,
+        "source_file": "charts.py",
+        "description": "Chart margin for PDF reports (15%)",
+        "category": "chart_display"
+      },
+      {
+        "value": 0.12,
+        "source_file": "charts.py",
+        "description": "Chart margin for detailed reports (12%)",
+        "category": "chart_display"
+      }
+    ],
+    "hydraulic_classifier_constants": [
+      {
+        "value": 2960,
+        "source_file": "hydraulic_classifier.py",
+        "description": "Default pump speed for 2-pole motor at 50Hz (RPM)",
+        "category": "hydraulic_defaults"
+      },
+      {
+        "value": 3600,
+        "source_file": "hydraulic_classifier.py",
+        "description": "Seconds per hour conversion constant",
+        "category": "hydraulic_calculations"
+      },
+      {
+        "value": 30,
+        "source_file": "hydraulic_classifier.py",
+        "description": "Low specific speed threshold for radial pumps",
+        "category": "hydraulic_classification"
+      },
+      {
+        "value": 60,
+        "source_file": "hydraulic_classifier.py",
+        "description": "Mid specific speed threshold for radial pumps",
+        "category": "hydraulic_classification"
+      },
+      {
+        "value": 120,
+        "source_file": "hydraulic_classifier.py",
+        "description": "High specific speed threshold for mixed flow pumps",
+        "category": "hydraulic_classification"
+      }
+    ],
+    "proximity_searcher_constants": [
+      {
+        "value": 20000,
+        "source_file": "proximity_searcher.py",
+        "description": "Maximum realistic flow rate for centrifugal pumps",
+        "category": "search_limits"
+      },
+      {
+        "value": 2000,
+        "source_file": "proximity_searcher.py",
+        "description": "Maximum realistic head for centrifugal pumps",
+        "category": "search_limits"
+      },
+      {
+        "value": 20,
+        "source_file": "proximity_searcher.py",
+        "description": "Number of top pumps to return from proximity search",
+        "category": "search_limits"
+      }
+    ],
+    "pump_evaluator_constants": [
+      {
+        "value": 45,
+        "source_file": "pump_evaluator.py",
+        "description": "Maximum points for BEP proximity scoring",
+        "category": "scoring_weights"
+      },
+      {
+        "value": 35,
+        "source_file": "pump_evaluator.py",
+        "description": "Maximum points for efficiency scoring",
+        "category": "scoring_weights"
+      },
+      {
+        "value": 20,
+        "source_file": "pump_evaluator.py",
+        "description": "Maximum points for head margin scoring",
+        "category": "scoring_weights"
+      },
+      {
+        "value": 150.0,
+        "source_file": "pump_evaluator.py",
+        "description": "Head oversizing threshold percentage",
+        "category": "scoring_thresholds"
+      },
+      {
+        "value": 300.0,
+        "source_file": "pump_evaluator.py",
+        "description": "Severe head oversizing threshold percentage",
+        "category": "scoring_thresholds"
+      }
+    ],
+    "performance_vfd_constants": [
+      {
+        "value": 1450,
+        "source_file": "performance_vfd.py",
+        "description": "Default 4-pole motor speed (RPM)",
+        "category": "vfd_defaults"
+      },
+      {
+        "value": 0.3,
+        "source_file": "performance_vfd.py",
+        "description": "Default minimum VFD speed percentage",
+        "category": "vfd_limits"
+      },
+      {
+        "value": 1.2,
+        "source_file": "performance_vfd.py",
+        "description": "Default maximum VFD speed percentage",
+        "category": "vfd_limits"
+      },
+      {
+        "value": 0.4,
+        "source_file": "performance_vfd.py",
+        "description": "Default static head ratio for system curves",
+        "category": "vfd_system_curves"
+      },
+      {
+        "value": 50,
+        "source_file": "performance_vfd.py",
+        "description": "Base frequency for VFD calculations (Hz)",
+        "category": "vfd_defaults"
+      }
+    ]
+  },
+  "configuration_summary": {
+    "total_constants": 87,
+    "total_files_analyzed": 12,
+    "sections_by_source_file": {
+      "ai_analysis.py": 8,
+      "ai_analyst.py": 3,
+      "performance_affinity.py": 18,
+      "performance_curves.py": 12,
+      "physics_models.py": 6,
+      "validation.py": 19,
+      "cache.py": 2,
+      "charts.py": 3,
+      "hydraulic_classifier.py": 5,
+      "proximity_searcher.py": 3,
+      "pump_evaluator.py": 5,
+      "performance_vfd.py": 5
+    },
+    "usage_pattern": "Each brain module queries its own section using: brain_repo.get_config('[filename]_constants'). Each section contains only the constants used within that specific file."
+  }
+}
