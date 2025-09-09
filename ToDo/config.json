@@ -741,25 +741,25 @@
         "value": 0.227124,
         "source_file": "validation.py",
         "description": "GPM to m³/hr conversion factor",
-        "constant": "gpm_to_mâ³_hr_conversion_factor"
+        "constant": "gpm_to_m³_hr_conversion_factor"
       },
       {
         "value": 3.6,
         "source_file": "validation.py",
         "description": "LPS to m³/hr conversion factor",
-        "constant": "lps_to_mâ³_hr_conversion_factor"
+        "constant": "lps_to_m³_hr_conversion_factor"
       },
       {
         "value": 0.06,
         "source_file": "validation.py",
         "description": "LPM to m³/hr conversion factor",
-        "constant": "lpm_to_mâ³_hr_conversion_factor"
+        "constant": "lpm_to_m³_hr_conversion_factor"
       },
       {
         "value": 157.725,
         "source_file": "validation.py",
         "description": "MGD to m³/hr conversion factor",
-        "constant": "mgd_to_mâ³_hr_conversion_factor"
+        "constant": "mgd_to_m³_hr_conversion_factor"
       },
       {
         "value": 0.3048,
@@ -819,13 +819,13 @@
         "value": 0.1,
         "source_file": "validation.py",
         "description": "Minimum valid flow rate (m³/hr)",
-        "constant": "minimum_valid_flow_rate_mâ³_hr"
+        "constant": "minimum_valid_flow_rate_m³_hr"
       },
       {
         "value": 50000,
         "source_file": "validation.py",
         "description": "Maximum valid flow rate (m³/hr)",
-        "constant": "maximum_valid_flow_rate_mâ³_hr"
+        "constant": "maximum_valid_flow_rate_m³_hr"
       },
       {
         "value": 0.1,
