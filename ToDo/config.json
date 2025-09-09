@@ -741,25 +741,25 @@
         "value": 0.227124,
         "source_file": "validation.py",
         "description": "GPM to m³/hr conversion factor",
-        "constant": "gpm_to_m³_hr_conversion_factor"
+        "constant": "gpm_to_mâ³_hr_conversion_factor"
       },
       {
         "value": 3.6,
         "source_file": "validation.py",
         "description": "LPS to m³/hr conversion factor",
-        "constant": "lps_to_m³_hr_conversion_factor"
+        "constant": "lps_to_mâ³_hr_conversion_factor"
       },
       {
         "value": 0.06,
         "source_file": "validation.py",
         "description": "LPM to m³/hr conversion factor",
-        "constant": "lpm_to_m³_hr_conversion_factor"
+        "constant": "lpm_to_mâ³_hr_conversion_factor"
       },
       {
         "value": 157.725,
         "source_file": "validation.py",
         "description": "MGD to m³/hr conversion factor",
-        "constant": "mgd_to_m³_hr_conversion_factor"
+        "constant": "mgd_to_mâ³_hr_conversion_factor"
       },
       {
         "value": 0.3048,
@@ -819,13 +819,13 @@
         "value": 0.1,
         "source_file": "validation.py",
         "description": "Minimum valid flow rate (m³/hr)",
-        "constant": "minimum_valid_flow_rate_m³_hr"
+        "constant": "minimum_valid_flow_rate_mâ³_hr"
       },
       {
         "value": 50000,
         "source_file": "validation.py",
         "description": "Maximum valid flow rate (m³/hr)",
-        "constant": "maximum_valid_flow_rate_m³_hr"
+        "constant": "maximum_valid_flow_rate_mâ³_hr"
       },
       {
         "value": 0.1,
@@ -1029,211 +1029,211 @@
         "value": 2960,
         "source_file": "hydraulic_classifier.py",
         "description": "Default pump speed for 2-pole motor at 50Hz (RPM)",
-        "category": "hydraulic_defaults"
+        "constant": "default_pump_speed_for_2pole_motor_at_50hz_rpm"
       },
       {
         "value": 3600,
         "source_file": "hydraulic_classifier.py",
         "description": "Seconds per hour conversion constant",
-        "category": "hydraulic_calculations"
+        "constant": "seconds_per_hour_conversion_constant"
       },
       {
         "value": 30,
         "source_file": "hydraulic_classifier.py",
         "description": "Low specific speed threshold for radial pumps",
-        "category": "hydraulic_classification"
+        "constant": "low_specific_speed_threshold_for_radial_pumps"
       },
       {
         "value": 60,
         "source_file": "hydraulic_classifier.py",
         "description": "Mid specific speed threshold for radial pumps",
-        "category": "hydraulic_classification"
+        "constant": "mid_specific_speed_threshold_for_radial_pumps"
       },
       {
         "value": 120,
         "source_file": "hydraulic_classifier.py",
         "description": "High specific speed threshold for mixed flow pumps",
-        "category": "hydraulic_classification"
+        "constant": "high_specific_speed_threshold_for_mixed_flow_pumps"
       },
       {
         "value": 0.85,
         "source_file": "hydraulic_classifier.py",
         "description": "Minimum trim ratio (15% maximum trim limit)",
-        "category": "hydraulic_limits"
+        "constant": "minimum_trim_ratio_15_maximum_trim_limit"
       },
       {
         "value": 0.75,
         "source_file": "hydraulic_classifier.py",
         "description": "Head exponent for specific speed calculation",
-        "category": "specific_speed_calculation"
+        "constant": "head_exponent_for_specific_speed_calculation"
       },
       {
         "value": 0.5,
         "source_file": "hydraulic_classifier.py",
         "description": "Unknown type flow weight",
-        "category": "unknown_type_parameters"
+        "constant": "unknown_type_flow_weight"
       },
       {
         "value": 0.5,
         "source_file": "hydraulic_classifier.py",
         "description": "Unknown type head weight",
-        "category": "unknown_type_parameters"
+        "constant": "unknown_type_head_weight"
       },
       {
         "value": 1.0,
         "source_file": "hydraulic_classifier.py",
         "description": "Unknown type trim flow exponent",
-        "category": "unknown_type_parameters"
+        "constant": "unknown_type_trim_flow_exponent"
       },
       {
         "value": 2.0,
         "source_file": "hydraulic_classifier.py",
         "description": "Unknown type trim head exponent",
-        "category": "unknown_type_parameters"
+        "constant": "unknown_type_trim_head_exponent"
       },
       {
         "value": 0.1,
         "source_file": "hydraulic_classifier.py",
         "description": "Unknown type efficiency drop per percent trim",
-        "category": "unknown_type_parameters"
+        "constant": "unknown_type_efficiency_drop_per_percent_trim"
       },
       {
         "value": 0.4,
         "source_file": "hydraulic_classifier.py",
         "description": "Radial low Ns flow weight",
-        "category": "radial_low_parameters"
+        "constant": "radial_low_ns_flow_weight"
       },
       {
         "value": 0.6,
         "source_file": "hydraulic_classifier.py",
         "description": "Radial low Ns head weight",
-        "category": "radial_low_parameters"
+        "constant": "radial_low_ns_head_weight"
       },
       {
         "value": 1.0,
         "source_file": "hydraulic_classifier.py",
         "description": "Radial low Ns trim flow exponent",
-        "category": "radial_low_parameters"
+        "constant": "radial_low_ns_trim_flow_exponent"
       },
       {
         "value": 2.0,
         "source_file": "hydraulic_classifier.py",
         "description": "Radial low Ns trim head exponent",
-        "category": "radial_low_parameters"
+        "constant": "radial_low_ns_trim_head_exponent"
       },
       {
         "value": 0.1,
         "source_file": "hydraulic_classifier.py",
         "description": "Radial low Ns efficiency drop per percent trim",
-        "category": "radial_low_parameters"
+        "constant": "radial_low_ns_efficiency_drop_per_percent_trim"
       },
       {
         "value": 0.45,
         "source_file": "hydraulic_classifier.py",
         "description": "Radial mid Ns flow weight",
-        "category": "radial_mid_parameters"
+        "constant": "radial_mid_ns_flow_weight"
       },
       {
         "value": 0.55,
         "source_file": "hydraulic_classifier.py",
         "description": "Radial mid Ns head weight",
-        "category": "radial_mid_parameters"
+        "constant": "radial_mid_ns_head_weight"
       },
       {
         "value": 1.0,
         "source_file": "hydraulic_classifier.py",
         "description": "Radial mid Ns trim flow exponent",
-        "category": "radial_mid_parameters"
+        "constant": "radial_mid_ns_trim_flow_exponent"
       },
       {
         "value": 1.95,
         "source_file": "hydraulic_classifier.py",
         "description": "Radial mid Ns trim head exponent",
-        "category": "radial_mid_parameters"
+        "constant": "radial_mid_ns_trim_head_exponent"
       },
       {
         "value": 0.15,
         "source_file": "hydraulic_classifier.py",
         "description": "Radial mid Ns efficiency drop per percent trim",
-        "category": "radial_mid_parameters"
+        "constant": "radial_mid_ns_efficiency_drop_per_percent_trim"
       },
       {
         "value": 0.5,
         "source_file": "hydraulic_classifier.py",
         "description": "Mixed flow flow weight",
-        "category": "mixed_flow_parameters"
+        "constant": "mixed_flow_flow_weight"
       },
       {
         "value": 0.5,
         "source_file": "hydraulic_classifier.py",
         "description": "Mixed flow head weight",
-        "category": "mixed_flow_parameters"
+        "constant": "mixed_flow_head_weight"
       },
       {
         "value": 0.97,
         "source_file": "hydraulic_classifier.py",
         "description": "Mixed flow trim flow exponent",
-        "category": "mixed_flow_parameters"
+        "constant": "mixed_flow_trim_flow_exponent"
       },
       {
         "value": 1.85,
         "source_file": "hydraulic_classifier.py",
         "description": "Mixed flow trim head exponent",
-        "category": "mixed_flow_parameters"
+        "constant": "mixed_flow_trim_head_exponent"
       },
       {
         "value": 0.25,
         "source_file": "hydraulic_classifier.py",
         "description": "Mixed flow efficiency drop per percent trim",
-        "category": "mixed_flow_parameters"
+        "constant": "mixed_flow_efficiency_drop_per_percent_trim"
       },
       {
         "value": 0.55,
         "source_file": "hydraulic_classifier.py",
         "description": "Axial flow flow weight",
-        "category": "axial_flow_parameters"
+        "constant": "axial_flow_flow_weight"
       },
       {
         "value": 0.45,
         "source_file": "hydraulic_classifier.py",
         "description": "Axial flow head weight",
-        "category": "axial_flow_parameters"
+        "constant": "axial_flow_head_weight"
       },
       {
         "value": 0.95,
         "source_file": "hydraulic_classifier.py",
         "description": "Axial flow trim flow exponent",
-        "category": "axial_flow_parameters"
+        "constant": "axial_flow_trim_flow_exponent"
       },
       {
         "value": 1.65,
         "source_file": "hydraulic_classifier.py",
         "description": "Axial flow trim head exponent",
-        "category": "axial_flow_parameters"
+        "constant": "axial_flow_trim_head_exponent"
       },
       {
         "value": 0.35,
         "source_file": "hydraulic_classifier.py",
         "description": "Axial flow efficiency drop per percent trim",
-        "category": "axial_flow_parameters"
+        "constant": "axial_flow_efficiency_drop_per_percent_trim"
       },
       {
         "value": 2.0,
         "source_file": "hydraulic_classifier.py",
         "description": "Default trim head exponent",
-        "category": "trim_calculations"
+        "constant": "default_trim_head_exponent"
       },
       {
         "value": 1.0,
         "source_file": "hydraulic_classifier.py",
         "description": "Default trim ratio (no trim)",
-        "category": "trim_calculations"
+        "constant": "default_trim_ratio_no_trim"
       },
       {
         "value": 100,
         "source_file": "hydraulic_classifier.py",
         "description": "Percentage conversion factor",
-        "category": "conversion_factors"
+        "constant": "percentage_conversion_factor"
       }
     ],
     "proximity_searcher_constants": [
