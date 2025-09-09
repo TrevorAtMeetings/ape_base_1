@@ -6,8 +6,10 @@ Best Efficiency Point (BEP) calculation methods
 
 import logging
 from typing import Dict, Any, Optional
+from ..process_logger import process_logger
 
 logger = logging.getLogger(__name__)
+
 
 
 class BEPCalculator:
@@ -25,19 +27,26 @@ class BEPCalculator:
         Returns:
             BEP dictionary or None if calculation fails
         """
+        pump_code = pump_data.get('pump_code', 'Unknown')
+        process_logger.log(f"Executing: {__name__}.BEPCalculator.calculate_bep_from_curves({pump_code})")
+        
         try:
             curves = pump_data.get('curves', [])
             if not curves:
+                process_logger.log(f"  → BEP CALCULATION: {pump_code} - No curves available")
                 return None
             
             best_bep = None
             highest_efficiency = 0
             
             # Check all curves to find the one with highest efficiency point
+            total_curves = len(curves)
+            valid_curves = 0
             for curve in curves:
                 points = curve.get('performance_points', [])
                 if len(points) < 3:  # Need multiple points to find maximum
                     continue
+                valid_curves += 1
                 
                 # Find maximum efficiency point in this curve
                 for point in points:
@@ -50,14 +59,20 @@ class BEPCalculator:
                             'efficiency_pct': efficiency
                         }
             
+            process_logger.log(f"  BEP CURVE ANALYSIS: {pump_code}")
+            process_logger.log(f"    Total Curves: {total_curves}, Valid Curves: {valid_curves}")
+            
             if best_bep and best_bep['flow_m3hr'] > 0 and best_bep['head_m'] > 0:
-                logger.debug(f"[BEP] {pump_data.get('pump_code')}: Found BEP at {best_bep['flow_m3hr']:.1f} m³/hr, {best_bep['head_m']:.1f}m, {best_bep['efficiency_pct']:.1f}%")
+                process_logger.log(f"    → BEP FOUND: Q={best_bep['flow_m3hr']:.1f} m³/hr, H={best_bep['head_m']:.1f}m, Eff={best_bep['efficiency_pct']:.1f}%")
+                logger.debug(f"[BEP] {pump_code}: Found BEP at {best_bep['flow_m3hr']:.1f} m³/hr, {best_bep['head_m']:.1f}m, {best_bep['efficiency_pct']:.1f}%")
                 return best_bep
             
+            process_logger.log(f"    → BEP CALCULATION: {pump_code} - No valid BEP found in curves")
             return None
             
         except Exception as e:
-            logger.debug(f"Error calculating BEP from curves for {pump_data.get('pump_code')}: {e}")
+            process_logger.log(f"    → BEP CALCULATION ERROR: {pump_code} - {str(e)}", "WARNING")
+            logger.debug(f"Error calculating BEP from curves for {pump_code}: {e}")
             return None
     
     @staticmethod
@@ -75,9 +90,13 @@ class BEPCalculator:
         Returns:
             BEP dictionary or None if calculation fails
         """
+        pump_code = pump_data.get('pump_code', 'Unknown')
+        process_logger.log(f"Executing: {__name__}.BEPCalculator.calculate_bep_from_curves_intelligent({pump_code}, Q={target_flow:.1f}, H={target_head:.1f})")
+        
         try:
             curves = pump_data.get('curves', [])
             if not curves:
+                process_logger.log(f"  → INTELLIGENT BEP: {pump_code} - No curves available")
                 return None
             
             # Score each curve based on how well it matches the target conditions
@@ -125,12 +144,19 @@ class BEPCalculator:
                 })
             
             if not curve_scores:
+                process_logger.log(f"  → INTELLIGENT BEP: {pump_code} - No valid curves for analysis")
                 return None
             
             # Sort by coverage (best coverage first), then by diameter (larger first)
             curve_scores.sort(key=lambda x: (-x['coverage_score'], -x['diameter']))
             best_curve = curve_scores[0]['curve']
             best_points = curve_scores[0]['points']
+            best_diameter = curve_scores[0]['diameter']
+            best_coverage = curve_scores[0]['coverage_score']
+            
+            process_logger.log(f"  INTELLIGENT CURVE SELECTION: {pump_code}")
+            process_logger.log(f"    Evaluated Curves: {len(curve_scores)}")
+            process_logger.log(f"    Selected: {best_diameter:.0f}mm (Coverage: {best_coverage:.3f})")
             
             # Find BEP (maximum efficiency) in the selected curve
             best_bep = None
@@ -148,14 +174,16 @@ class BEPCalculator:
                     }
             
             if best_bep and best_bep['flow_m3hr'] > 0 and best_bep['head_m'] > 0:
-                pump_code = pump_data.get('pump_code', 'Unknown')
+                process_logger.log(f"    → INTELLIGENT BEP FOUND: Q={best_bep['flow_m3hr']:.1f} m³/hr, H={best_bep['head_m']:.1f}m, Eff={best_bep['efficiency_pct']:.1f}% ({best_bep['diameter_mm']:.0f}mm curve)")
                 logger.debug(f"[BEP INTELLIGENT] {pump_code}: Selected {best_bep['diameter_mm']}mm curve - "
                            f"BEP at {best_bep['flow_m3hr']:.1f} m³/hr, {best_bep['head_m']:.1f}m, {best_bep['efficiency_pct']:.1f}%")
                 return best_bep
             
+            process_logger.log(f"    → INTELLIGENT BEP: {pump_code} - No valid BEP found in selected curve")
             return None
             
         except Exception as e:
-            logger.debug(f"Error in intelligent BEP calculation for {pump_data.get('pump_code')}: {e}")
+            process_logger.log(f"    → INTELLIGENT BEP ERROR: {pump_code} - {str(e)}, falling back to simple method", "WARNING")
+            logger.debug(f"Error in intelligent BEP calculation for {pump_code}: {e}")
             # Fallback to simple method
             return BEPCalculator.calculate_bep_from_curves(pump_data)

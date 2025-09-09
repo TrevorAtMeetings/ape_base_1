@@ -8,8 +8,12 @@ Loads configuration from app/brain/brain_config/config.json and provides typed a
 import json
 import os
 import sys
+import logging
 from typing import Dict, Any, Optional
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
+
 
 
 class ConfigManager:

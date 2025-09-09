@@ -25,7 +25,6 @@ class AffinityCalculator:
         Args:
             brain: Parent PumpBrain instance
         """
-        logger.info("Entering performance_affinity.py file")
         self.brain = brain
         
         # Performance thresholds
@@ -98,13 +97,15 @@ class AffinityCalculator:
         
         Args:
             pump_data: Pump data dictionary
-            flow: Target flow rate (m³/hr)
+            flow: Target flow rate (m3/hr)
             allow_excessive_trim: If True, show performance even with excessive trim
             forced_diameter: If provided, calculate at this exact diameter (mm) without optimization
         
         Returns:
             Performance data at the given flow, or None if pump cannot operate at this flow
         """
+        # Log function entry
+        process_logger.log(f"Executing: {__name__}.AffinityCalculator.calculate_performance_at_flow({pump_data.get('pump_code', 'Unknown')})")
         try:
             curves = pump_data.get('curves', [])
             if not curves:
@@ -120,7 +121,7 @@ class AffinityCalculator:
             # FORCED DIAMETER CONSTRAINT: If a specific diameter is provided, use it
             if forced_diameter is not None:
                 pump_code = pump_data.get('pump_code', 'Unknown')
-                logger.info(f"[FORCED CONSTRAINT] {pump_code}: Using forced diameter {forced_diameter}mm for {flow} m³/hr")
+                logger.info(f"[FORCED CONSTRAINT] {pump_code}: Using forced diameter {forced_diameter}mm for {flow} m3/hr")
                 
                 largest_diameter = largest_curve.get('impeller_diameter_mm', 0)
                 if largest_diameter <= 0:
@@ -175,7 +176,7 @@ class AffinityCalculator:
                 diameter_ratio = forced_diameter / largest_diameter
                 delivered_head = reference_head * (diameter_ratio ** 2)  # Head scales with D^2
                 
-                logger.info(f"[FORCED CONSTRAINT] {pump_code}: Reference {largest_diameter}mm @ {flow} m³/hr = {reference_head:.2f}m")
+                logger.info(f"[FORCED CONSTRAINT] {pump_code}: Reference {largest_diameter}mm @ {flow} m3/hr = {reference_head:.2f}m")
                 logger.info(f"[FORCED CONSTRAINT] {pump_code}: Forced to {forced_diameter}mm = {delivered_head:.2f}m (ratio: {diameter_ratio:.3f})")
                 
                 # Get efficiency with trim degradation
@@ -199,8 +200,8 @@ class AffinityCalculator:
                 
                 # Calculate power using affinity laws
                 if efficiency > 0:
-                    # Correct power calculation: P = ρ × g × Q × H / η
-                    # Units: (kg/m³) × (m/s²) × (m³/hr) × (m) / efficiency / conversion = kW
+                    # Correct power calculation: P = ρ * g * Q * H / η
+                    # Units: (kg/m3) * (m/s2) * (m3/hr) * (m) / efficiency / conversion = kW
                     water_density = config.get('performance_affinity', 'water_density_kg_m_')
                     gravity = config.get('performance_affinity', 'gravitational_acceleration_m_s')
                     seconds_per_hour = config.get('performance_affinity', 'seconds_per_hour_for_flow_conversions')
@@ -278,7 +279,7 @@ class AffinityCalculator:
             
             # Calculate power
             if efficiency > 0:
-                # Correct power calculation: P = ρ × g × Q × H / η
+                # Correct power calculation: P = ρ * g * Q * H / η
                 water_density = config.get('performance_affinity', 'water_density_kg_m_')
                 gravity = config.get('performance_affinity', 'gravitational_acceleration_m_s')
                 seconds_per_hour = config.get('performance_affinity', 'seconds_per_hour_for_flow_conversions')
@@ -303,7 +304,7 @@ class AffinityCalculator:
                 'npsh_r': npsh_r,
                 'diameter_mm': largest_curve.get('impeller_diameter_mm', 0),
                 'trim_percent': 0,  # Will be calculated if trimming is needed
-                'note': f'Performance at {flow:.1f} m³/hr'
+                'note': f'Performance at {flow:.1f} m3/hr'
             }
             
         except Exception as e:
@@ -315,14 +316,14 @@ class AffinityCalculator:
         """
         ENHANCED: Calculate required impeller diameter using direct affinity law formula.
         
-        Uses the mathematically precise formula: D₂ = D₁ × sqrt(H₂ / H₁)
-        where H₁ is interpolated head at target flow on largest curve.
+        Uses the mathematically precise formula: D2 = D1 * sqrt(H2 / H1)
+        where H1 is interpolated head at target flow on largest curve.
         
         Args:
             flows_sorted: Sorted flow data from largest curve
             heads_sorted: Sorted head data from largest curve  
             largest_diameter: Diameter of largest available impeller
-            target_flow: Required flow rate (m³/hr)
+            target_flow: Required flow rate (m3/hr)
             target_head: Required head (m)
             pump_code: Pump identifier for logging
             
@@ -330,7 +331,7 @@ class AffinityCalculator:
             Tuple[float, float]: (required_diameter, trim_percent) or (None, None) if failed
         """
         try:
-            # STEP 1: Interpolate head at target flow on largest curve (H₁)
+            # STEP 1: Interpolate head at target flow on largest curve (H1)
             if len(flows_sorted) < 2 or len(heads_sorted) < 2:
                 return None, None
                 
@@ -344,10 +345,10 @@ class AffinityCalculator:
             if not (min_flow * lower_tolerance <= target_flow <= max_flow * upper_tolerance):
                 return None, None
             
-            # Get head delivered by largest impeller at target flow (H₁)
+            # Get head delivered by largest impeller at target flow (H1)
             base_head_at_flow = float(head_interp(target_flow))
             
-            logger.debug(f"[AFFINITY] Interpolated head at {target_flow} m³/hr: {base_head_at_flow}m")
+            logger.debug(f"[AFFINITY] Interpolated head at {target_flow} m3/hr: {base_head_at_flow}m")
             
             if np.isnan(base_head_at_flow) or base_head_at_flow <= 0:
                 logger.debug(f"[AFFINITY] Returning None due to invalid head")
@@ -355,7 +356,7 @@ class AffinityCalculator:
             
             
             # STEP 2: Apply Direct Affinity Law Formula
-            # H₂ = H₁ × (D₂/D₁)²  →  D₂ = D₁ × sqrt(H₂/H₁)
+            # H2 = H1 * (D2/D1)^2  →  D2 = D1 * sqrt(H2/H1)
             
             # FIXED: Trimming REDUCES head, so we can only trim if target < base head
             # We cannot achieve a head higher than what the full-diameter impeller delivers
@@ -398,7 +399,7 @@ class AffinityCalculator:
                     large_trim_threshold = "large"  # Reference to classification logic  
                     process_logger.log(f"    {large_trim_threshold.title()} trim (~{estimated_trim_pct:.1f}%): Using exponent {head_exponent}")
             
-            # H₂/H₁ = (D₂/D₁)^head_exp  →  D₂ = D₁ × (H₂/H₁)^(1/head_exp)
+            # H2/H1 = (D2/D1)^head_exp  →  D2 = D1 * (H2/H1)^(1/head_exp)
             # FIXED: Ensure all values are float to avoid decimal/float mixing in power operations
             target_head_float = float(target_head)
             base_head_float = float(base_head_at_flow)
@@ -407,23 +408,23 @@ class AffinityCalculator:
             
             # Log the actual formula calculation with real values
             process_logger.log(f"    Affinity Law Calculation:")
-            process_logger.log(f"      D₁ (largest): {largest_diameter_float:.1f} mm")
-            process_logger.log(f"      H₁ (at target flow): {base_head_float:.2f} m")
-            process_logger.log(f"      H₂ (target): {target_head_float:.2f} m")
+            process_logger.log(f"      D1 (largest): {largest_diameter_float:.1f} mm")
+            process_logger.log(f"      H1 (at target flow): {base_head_float:.2f} m")
+            process_logger.log(f"      H2 (target): {target_head_float:.2f} m")
             process_logger.log(f"      Head exponent: {head_exponent_float}")
-            process_logger.log(f"      Formula: D₂ = {largest_diameter_float:.1f} × ({target_head_float:.2f}/{base_head_float:.2f})^(1/{head_exponent_float})")
+            process_logger.log(f"      Formula: D2 = {largest_diameter_float:.1f} * ({target_head_float:.2f}/{base_head_float:.2f})^(1/{head_exponent_float})")
             
             diameter_ratio = np.power(target_head_float / base_head_float, 1.0 / head_exponent_float)
             required_diameter = largest_diameter_float * diameter_ratio
             trim_percent = diameter_ratio * config.get('performance_affinity', 'percentage_conversion_factor')
             
-            process_logger.log(f"      Result: D₂ = {largest_diameter_float:.1f} × {diameter_ratio:.4f} = {required_diameter:.1f} mm")
+            process_logger.log(f"      Result: D2 = {largest_diameter_float:.1f} * {diameter_ratio:.4f} = {required_diameter:.1f} mm")
             process_logger.log(f"      Trim: {trim_percent:.2f}%")
             
             logger.info(f"[TUNABLE AFFINITY] {pump_code}: Using head exponent {head_exponent} (vs standard 2.0)")
             
             logger.info(f"[TUNABLE AFFINITY] {pump_code}: Diameter ratio = ({target_head:.2f}/{base_head_at_flow:.2f})^(1/{head_exponent}) = {diameter_ratio:.4f}")
-            logger.info(f"[TUNABLE AFFINITY] {pump_code}: Required diameter = {largest_diameter:.1f} × {diameter_ratio:.4f} = {required_diameter:.1f}mm")
+            logger.info(f"[TUNABLE AFFINITY] {pump_code}: Required diameter = {largest_diameter:.1f} * {diameter_ratio:.4f} = {required_diameter:.1f}mm")
             logger.info(f"[TUNABLE AFFINITY] {pump_code}: Trim percentage = {trim_percent:.2f}%")
             
             # STEP 3: Validate trim limits (industry standard: 85-100%)
@@ -449,8 +450,8 @@ class AffinityCalculator:
             
             # Enhanced logging for calculations
             logger.debug(f"[TRIM] {pump_code}: Direct calculation complete")
-            logger.debug(f"[TRIM] {pump_code}: H₁ = {base_head_at_flow:.2f}m, H₂ = {target_head:.2f}m")
-            logger.debug(f"[TRIM] {pump_code}: D₁ = {largest_diameter:.1f}mm, D₂ = {required_diameter:.1f}mm")
+            logger.debug(f"[TRIM] {pump_code}: H1 = {base_head_at_flow:.2f}m, H2 = {target_head:.2f}m")
+            logger.debug(f"[TRIM] {pump_code}: D1 = {largest_diameter:.1f}mm, D2 = {required_diameter:.1f}mm")
             logger.debug(f"[TRIM] {pump_code}: Trim = {trim_percent:.2f}% (vs iterative method)")
             
             return required_diameter, trim_percent
@@ -471,7 +472,7 @@ class AffinityCalculator:
         Args:
             base_curve: Base impeller curve data
             target_diameter: Target impeller diameter (mm)
-            target_flow: Target flow rate (m³/hr)
+            target_flow: Target flow rate (m3/hr)
             target_head: Target head (m)
             pump_data: Complete pump data for context
             
@@ -555,7 +556,7 @@ class AffinityCalculator:
         Calculate hydraulic power requirement.
         
         Args:
-            flow_m3hr: Flow rate in m³/hr
+            flow_m3hr: Flow rate in m3/hr
             head_m: Head in meters
             efficiency_pct: Pump efficiency percentage
             
@@ -565,12 +566,12 @@ class AffinityCalculator:
         if efficiency_pct <= 0 or flow_m3hr <= 0 or head_m <= 0:
             return 0.0
         
-        # P = ρ × g × Q × H / η
-        # Where: ρ = 1000 kg/m³, g = 9.81 m/s², Q in m³/s, H in m
+        # P = ρ * g * Q * H / η
+        # Where: ρ = 1000 kg/m3, g = 9.81 m/s2, Q in m3/s, H in m
         water_density = config.get('performance_affinity', 'water_density_kg_m_')
         gravity = config.get('performance_affinity', 'gravitational_acceleration_m_s')
         seconds_per_hour = config.get('performance_affinity', 'seconds_per_hour_for_flow_conversions')
-        flow_m3s = flow_m3hr / seconds_per_hour  # Convert to m³/s
+        flow_m3s = flow_m3hr / seconds_per_hour  # Convert to m3/s
         power_w = (water_density * gravity * flow_m3s * head_m) / (efficiency_pct / 100)
         power_kw = power_w / 1000  # Convert to kW
         

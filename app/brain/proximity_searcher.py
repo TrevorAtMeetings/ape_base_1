@@ -11,8 +11,10 @@ from typing import Dict, List, Any, Optional
 from .hydraulic_classifier import HydraulicClassifier
 from .bep_calculator import BEPCalculator
 from .config_manager import config
+from ..process_logger import process_logger
 
 logger = logging.getLogger(__name__)
+
 
 
 class ProximitySearcher:
@@ -43,6 +45,9 @@ class ProximitySearcher:
         Returns:
             List of top 20 pumps with enhanced scoring based on hydraulic type
         """
+        # Log function entry
+        process_logger.log(f"Executing: {__name__}.ProximitySearcher.find_pumps_by_bep_proximity(Q={flow:.1f}, H={head:.1f}, type={pump_type})")
+        process_logger.log(f"BEP PROXIMITY SEARCH: Finding pumps near operating point {flow:.1f} m³/hr @ {head:.1f}m")
         logger.info(f"[BEP PROXIMITY] Finding pumps near flow={flow} m³/hr, head={head}m")
         
         if not self.brain.repository:
@@ -108,6 +113,16 @@ class ProximitySearcher:
             
             # Convert to percentage for display
             proximity_score_pct = weighted_distance * config.get('proximity_searcher', 'percentage_conversion_factor')
+            
+            # Log BEP proximity calculation for key pumps (first few candidates)
+            if len(candidate_pumps) < 3:  # Log detail for first few pumps as examples
+                process_logger.log(f"  BEP PROXIMITY CALC: {pump_code}")
+                process_logger.log(f"    Target: {flow:.1f} m³/hr @ {head:.1f}m")
+                process_logger.log(f"    BEP: {bep_flow:.1f} m³/hr @ {bep_head:.1f}m")
+                process_logger.log(f"    Hydraulic Type: {hydraulic_type['type']} (Ns={specific_speed:.1f})")
+                process_logger.log(f"    Flow Δ: {flow_delta:.3f}, Head Δ: {head_delta:.3f}")
+                process_logger.log(f"    Weights: Flow={hydraulic_type['flow_weight']:.2f}, Head={hydraulic_type['head_weight']:.2f}")
+                process_logger.log(f"    → Distance Score: {proximity_score_pct:.1f}%")
             
             # Enhanced categorization with pump-type consideration
             excellent_threshold = config.get('proximity_searcher', 'excellent_proximity_scoring_threshold')
@@ -210,6 +225,15 @@ class ProximitySearcher:
         # Return top N pumps
         num_top_pumps = config.get('proximity_searcher', 'number_of_top_pumps_to_return_from_proximity_search')
         top_pumps = candidate_pumps[:num_top_pumps]
+        
+        # Log BEP proximity ranking results
+        process_logger.log(f"BEP PROXIMITY RANKING RESULTS:")
+        process_logger.log(f"  Total Candidates Evaluated: {len(candidate_pumps)}")
+        process_logger.log(f"  Top {num_top_pumps} Pumps Selected:")
+        for i, pump in enumerate(top_pumps[:5], 1):  # Show top 5 in log
+            process_logger.log(f"    {i}. {pump['pump_code']}: Score={pump['proximity_score_pct']:.1f}%, "
+                             f"Category={pump['proximity_category']}, Type={pump['hydraulic_type']}, "
+                             f"Eff={pump['predicted_efficiency']:.1f}%")
         
         top_pump_count = config.get('proximity_searcher', 'number_of_top_pumps_to_return_from_proximity_search')
         logger.info(f"[BEP PROXIMITY] Found {len(candidate_pumps)} pumps with BEP data, returning top {top_pump_count}")

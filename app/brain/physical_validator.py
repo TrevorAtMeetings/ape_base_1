@@ -30,6 +30,8 @@ class PhysicalValidator:
         Returns:
             tuple: (is_capable: bool, failure_reason: str)
         """
+        # Log function entry
+        process_logger.log(f"Executing: {PhysicalValidator.__module__}.PhysicalValidator.validate_physical_capability_at_point({pump_data.get('pump_code', 'Unknown')})")
         pump_code = pump_data.get('pump_code', 'Unknown')
         curves = pump_data.get('curves', [])
         

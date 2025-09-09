@@ -114,6 +114,8 @@ class PerformanceCoreCalculator:
         """
         Delegate to affinity calculator for performance at flow calculations.
         """
+        # Log function entry
+        process_logger.log(f"Executing: {__name__}.PerformanceCoreCalculator.calculate_performance_at_flow({pump_data.get('pump_code', 'Unknown')})")
         return self.affinity_calculator.calculate_performance_at_flow(
             pump_data, flow, allow_excessive_trim, forced_diameter
         )

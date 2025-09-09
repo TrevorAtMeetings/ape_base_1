@@ -288,11 +288,6 @@ class PostgreSQLLoader:
                                     min_mm, max_mm = 0.0, 0.0
 
                         # Build pump model object using aggregated statistics
-                        # DEBUG: Check if HC pumps are being processed
-                        if pump_code in ['32 HC 6P', '30 HC 6P', '28 HC 6P']:
-                            logger.error(f"🔍 [REPOSITORY] Processing HC pump: {pump_code}")
-                            logger.error(f"🔍 [REPOSITORY] HC pump data: BEP {pump_row_dict.get('bep_flow_m3hr')} m³/hr @ {pump_row_dict.get('bep_head_m')}m")
-                            logger.error(f"🔍 [REPOSITORY] HC pump curves: {len(curves)} curves processed")
 
                         pump_model = {
                             'pump_code': pump_code,
@@ -336,10 +331,6 @@ class PostgreSQLLoader:
                             'materials': 'Cast Iron'
                         }
                         pump_models.append(pump_model)
-                        
-                        # DEBUG: Confirm HC pumps are added to final list
-                        if pump_code in ['32 HC 6P', '30 HC 6P', '28 HC 6P']:
-                            logger.error(f"✅ [REPOSITORY] HC pump {pump_code} ADDED to pump_models list")
 
                     # Build metadata with both old and new field names for compatibility
                     metadata = {
@@ -368,12 +359,6 @@ class PostgreSQLLoader:
                     self.repository._is_loaded = True
 
                     logger.info(f"Repository: Successfully loaded {len(pump_models)} pump models from PostgreSQL")
-                    
-                    # FINAL CHECK: Verify HC pumps are in final list
-                    hc_pumps_final = [p for p in pump_models if p.get('pump_code') in ['32 HC 6P', '30 HC 6P', '28 HC 6P']]
-                    logger.error(f"🎯 [REPOSITORY FINAL] Found {len(hc_pumps_final)} HC pumps in final pump_models list")
-                    for hc_pump in hc_pumps_final:
-                        logger.error(f"🎯 [REPOSITORY FINAL] {hc_pump.get('pump_code')}: BEP {hc_pump.get('specifications', {}).get('bep_flow_m3hr')} m³/hr @ {hc_pump.get('specifications', {}).get('bep_head_m')}m")
                     logger.info(f"Repository: Total curves: {total_curves}")
                     logger.info(f"Repository: Total points: {total_points}")
                     logger.info(f"Repository: NPSH curves: {npsh_curves}")

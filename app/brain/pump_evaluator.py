@@ -67,6 +67,8 @@ class PumpEvaluator:
         Returns:
             Evaluation results with scoring
         """
+        # Log function entry
+        process_logger.log(f"Executing: {__name__}.PumpEvaluator.evaluate_single_pump({pump_code})")
         evaluation = {
             'pump_code': pump_data.get('pump_code'),
             'pump_name': pump_data.get('pump_name'),

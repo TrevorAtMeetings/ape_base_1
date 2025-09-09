@@ -89,6 +89,8 @@ class SelectionIntelligence:
         Returns:
             Dictionary with 'ranked_pumps' and optionally 'exclusion_details'
         """
+        # Log function entry
+        process_logger.log(f"Executing: {__name__}.SelectionIntelligence.find_best_pumps")
         if not self.brain.repository:
             logger.error("Repository not available for pump selection")
             return {'ranked_pumps': [], 'exclusion_details': None}

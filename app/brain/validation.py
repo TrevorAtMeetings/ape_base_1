@@ -8,8 +8,10 @@ import logging
 from typing import Dict, List, Any, Optional
 import re
 from .config_manager import config
+from ..process_logger import process_logger
 
 logger = logging.getLogger(__name__)
+
 
 
 class DataValidator:
@@ -70,6 +72,8 @@ class DataValidator:
         Returns:
             Validation results
         """
+        # Log function entry
+        process_logger.log(f"Executing: {__name__}.DataValidator.validate_operating_point(Q={flow:.1f}, H={head:.1f})")
         validation = {
             'valid': True,
             'errors': [],
@@ -106,6 +110,14 @@ class DataValidator:
             validation['valid'] = False
             validation['errors'].append(f'Validation error: {str(e)}')
         
+        # Log validation results
+        if validation['errors']:
+            process_logger.log(f"  → VALIDATION FAILED: {validation['errors']}", "WARNING")
+        elif validation['warnings']:
+            process_logger.log(f"  → VALIDATION WARNING: {validation['warnings']}", "WARNING")
+        else:
+            process_logger.log(f"  → VALIDATION PASSED")
+        
         return validation
     
     def validate_pump_data(self, pump_data: Dict[str, Any]) -> Dict[str, Any]:
@@ -118,6 +130,9 @@ class DataValidator:
         Returns:
             Validation results with issues identified
         """
+        # Log function entry
+        pump_code = pump_data.get('pump_code', 'Unknown')
+        process_logger.log(f"Executing: {__name__}.DataValidator.validate_pump_data({pump_code})")
         validation = {
             'valid': True,
             'issues': [],
@@ -191,6 +206,16 @@ class DataValidator:
             validation['valid'] = False
             validation['issues'].append(f'Validation error: {str(e)}')
             validation['data_quality_score'] = 0
+        
+        # Log validation results
+        process_logger.log(f"  DATA QUALITY VALIDATION: {pump_code}")
+        if validation['valid']:
+            process_logger.log(f"    → PASSED (Score: {validation['data_quality_score']}/100)")
+        else:
+            process_logger.log(f"    → FAILED (Score: {validation['data_quality_score']}/100)")
+            process_logger.log(f"    → Issues: {validation['issues']}")
+        if validation['missing_fields']:
+            process_logger.log(f"    → Missing Fields: {validation['missing_fields']}")
         
         return validation
     

@@ -8,8 +8,10 @@ import logging
 import math
 from typing import Dict, Any
 from .config_manager import config
+from ..process_logger import process_logger
 
 logger = logging.getLogger(__name__)
+
 
 # Message templates
 SPECIFIC_SPEED_ERROR_MSG = "Error calculating specific speed: {}"
@@ -34,6 +36,8 @@ class HydraulicClassifier:
         Returns:
             Specific speed (dimensionless SI units)
         """
+        # Log function entry with parameters
+        process_logger.log(f"Executing: {HydraulicClassifier.__module__}.HydraulicClassifier.calculate_specific_speed(Q={flow_m3hr:.1f}, H={head_m:.1f}, N={speed_rpm})")
         try:
             if flow_m3hr <= 0 or head_m <= 0:
                 return 0
@@ -48,6 +52,9 @@ class HydraulicClassifier:
             
             # Calculate specific speed: Ns = N√Q / H^(3/4)
             ns = speed_rpm * math.sqrt(flow_m3s) / (head_m ** config.get('hydraulic_classifier', 'head_exponent_for_specific_speed_calculation'))
+            
+            # Log calculation result
+            process_logger.log(f"  Specific Speed Calculation: Ns = {speed_rpm} × √({flow_m3s:.4f}) / {head_m:.2f}^0.75 = {ns:.2f}")
             
             return ns
             
@@ -67,8 +74,10 @@ class HydraulicClassifier:
         Returns:
             Dictionary with hydraulic type classification and parameters
         """
+        # Log function entry
+        process_logger.log(f"Executing: {HydraulicClassifier.__module__}.HydraulicClassifier.classify_pump_hydraulic_type(Ns={specific_speed:.2f})")
         if specific_speed <= 0:
-            return {
+            classification = {
                 'type': 'unknown',
                 'description': 'Unknown hydraulic type',
                 'flow_weight': config.get('hydraulic_classifier', 'unknown_type_flow_weight'),
@@ -77,11 +86,13 @@ class HydraulicClassifier:
                 'trim_head_exp': config.get('hydraulic_classifier', 'unknown_type_trim_head_exponent'),
                 'efficiency_drop_per_trim': config.get('hydraulic_classifier', 'unknown_type_efficiency_drop_per_percent_trim')  # Per percent of trim
             }
+            process_logger.log(f"  → HYDRAULIC CLASSIFICATION: {classification['type']} - {classification['description']} (Ns={specific_speed:.2f})")
+            return classification
         
         # Based on industry standards and provided documentation
         low_ns_threshold = config.get('hydraulic_classifier', 'low_specific_speed_threshold_for_radial_pumps')
         if specific_speed < low_ns_threshold:
-            return {
+            classification = {
                 'type': 'radial_low',
                 'description': 'Radial - Low Ns (steep H-Q curve)',
                 'flow_weight': config.get('hydraulic_classifier', 'radial_low_ns_flow_weight'),  # Head more important for radial
@@ -90,8 +101,11 @@ class HydraulicClassifier:
                 'trim_head_exp': config.get('hydraulic_classifier', 'radial_low_ns_trim_head_exponent'),
                 'efficiency_drop_per_trim': config.get('hydraulic_classifier', 'radial_low_ns_efficiency_drop_per_percent_trim')  # 0.5-1.5% for typical 5-15% trim
             }
+            process_logger.log(f"  → HYDRAULIC CLASSIFICATION: {classification['type']} - {classification['description']} (Ns={specific_speed:.2f} < {low_ns_threshold})")
+            return classification
         elif specific_speed < config.get('hydraulic_classifier', 'mid_specific_speed_threshold_for_radial_pumps'):
-            return {
+            mid_threshold = config.get('hydraulic_classifier', 'mid_specific_speed_threshold_for_radial_pumps')
+            classification = {
                 'type': 'radial_mid',
                 'description': 'Radial - Mid Ns (broader curve)',
                 'flow_weight': config.get('hydraulic_classifier', 'radial_mid_ns_flow_weight'),
@@ -100,6 +114,8 @@ class HydraulicClassifier:
                 'trim_head_exp': config.get('hydraulic_classifier', 'radial_mid_ns_trim_head_exponent'),
                 'efficiency_drop_per_trim': config.get('hydraulic_classifier', 'radial_mid_ns_efficiency_drop_per_percent_trim')  # 0.8-2.0% for typical trim
             }
+            process_logger.log(f"  → HYDRAULIC CLASSIFICATION: {classification['type']} - {classification['description']} (Ns={specific_speed:.2f} < {mid_threshold})")
+            return classification
         elif specific_speed < config.get('hydraulic_classifier', 'high_specific_speed_threshold_for_mixed_flow_pumps'):
             return {
                 'type': 'mixed_flow',
