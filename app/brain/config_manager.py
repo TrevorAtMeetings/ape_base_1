@@ -130,20 +130,24 @@ class ConfigManager:
         section = self._config.get(section_name, [])
         
         for item in section:
-            # Create key from description (simplified)
-            description = item.get('description', '')
-            key = description.lower().replace(' ', '_').replace('(', '').replace(')', '').replace('/', '_')
-            # Remove special characters
-            key = ''.join(c if c.isalnum() or c == '_' else '' for c in key)
+            # Use the explicit constant name if available, otherwise fall back to description-based key
+            if 'constant' in item:
+                key = item['constant']
+            else:
+                # Fallback for old format - create key from description
+                description = item.get('description', '')
+                key = description.lower().replace(' ', '_').replace('(', '').replace(')', '').replace('/', '_')
+                # Remove special characters
+                key = ''.join(c if c.isalnum() or c == '_' else '' for c in key)
             
             # Store value with metadata
             result[key] = {
                 'value': item.get('value'),
                 'description': item.get('description'),
-                'category': item.get('category')
+                'constant': item.get('constant')
             }
             
-            # Also create direct value access
+            # Also create direct value access (for backward compatibility)
             result[f"{key}_value"] = item.get('value')
         
         return result
@@ -305,15 +309,29 @@ class ConfigManager:
         Raises KeyError if value not found.
         """
         section_data = getattr(self, section, {})
+        
+        # First try the direct key (new format)
+        if key in section_data:
+            value_data = section_data[key]
+            if isinstance(value_data, dict) and 'value' in value_data:
+                return value_data['value']
+            else:
+                return value_data
+        
+        # Then try the old _value suffix format (backward compatibility)
         value_key = f"{key}_value"
+        if value_key in section_data:
+            return section_data[value_key]
         
-        if value_key not in section_data:
-            error_msg = f"Configuration value not found: {section}.{key}"
-            if self._validation_errors:
-                error_msg += "\nNote: Config validation errors were detected. Check logs above."
-            raise KeyError(error_msg)
-        
-        return section_data[value_key]
+        # Debug info for troubleshooting
+        available_keys = list(section_data.keys())[:10]  # Show first 10 keys
+        error_msg = f"Configuration value not found: {section}.{key}"
+        error_msg += f"\nAvailable keys in {section}: {available_keys}"
+        if len(section_data) > 10:
+            error_msg += f" ... and {len(section_data) - 10} more"
+        if self._validation_errors:
+            error_msg += "\nNote: Config validation errors were detected. Check logs above."
+        raise KeyError(error_msg)
     
     def get_safe(self, section: str, key: str, default: Any = None) -> Any:
         """

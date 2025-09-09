@@ -27,10 +27,10 @@ class DataValidator:
         # Unit conversion factors
         self.conversions = {
             # Flow conversions to m³/hr
-            'gpm_to_m3hr': config.get('validation', 'gpm_to_m³_hr_conversion_factor'),
-            'lps_to_m3hr': config.get('validation', 'lps_to_m³_hr_conversion_factor'),
-            'lpm_to_m3hr': config.get('validation', 'lpm_to_m³_hr_conversion_factor'),
-            'mgd_to_m3hr': config.get('validation', 'mgd_to_m³_hr_conversion_factor'),
+            'gpm_to_m3hr': config.get('validation', 'gpm_to_m3_hr_conversion_factor'),
+            'lps_to_m3hr': config.get('validation', 'lps_to_m3_hr_conversion_factor'),
+            'lpm_to_m3hr': config.get('validation', 'lpm_to_m3_hr_conversion_factor'),
+            'mgd_to_m3hr': config.get('validation', 'mgd_to_m3_hr_conversion_factor'),
             
             # Head conversions to meters
             'ft_to_m': config.get('validation', 'feet_to_meters_conversion_factor'),
@@ -50,7 +50,7 @@ class DataValidator:
         
         # Validation rules
         self.validation_rules = {
-            'flow_m3hr': {'min': config.get('validation', 'minimum_valid_flow_rate_m³_hr'), 'max': config.get('validation', 'maximum_valid_flow_rate_m³_hr')},
+            'flow_m3hr': {'min': config.get('validation', 'minimum_valid_flow_rate_m3_hr'), 'max': config.get('validation', 'maximum_valid_flow_rate_m3_hr')},
             'head_m': {'min': config.get('validation', 'minimum_valid_head_m'), 'max': config.get('validation', 'maximum_valid_head_m')},
             'efficiency_pct': {'min': 0, 'max': 100},
             'power_kw': {'min': 0, 'max': config.get('validation', 'maximum_valid_power_kw')},
