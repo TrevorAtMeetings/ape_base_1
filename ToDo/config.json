@@ -5,115 +5,115 @@
         "value": "gpt-3.5-turbo",
         "source_file": "ai_analysis.py",
         "description": "OpenAI model for AI analysis",
-        "category": "ai_model_config"
+        "constant": "openai_model_for_ai_analysis"
       },
       {
         "value": 500,
         "source_file": "ai_analysis.py",
         "description": "Maximum tokens for AI response",
-        "category": "ai_limits"
+        "constant": "maximum_tokens_for_ai_response"
       },
       {
         "value": 0.3,
         "source_file": "ai_analysis.py",
         "description": "Temperature setting for AI model consistency",
-        "category": "ai_parameters"
+        "constant": "temperature_setting_for_ai_model_consistency"
       },
       {
         "value": 300,
         "source_file": "ai_analysis.py",
         "description": "Word limit for general analysis responses",
-        "category": "ai_limits"
+        "constant": "word_limit_for_general_analysis_responses"
       },
       {
         "value": "gemini-1.5-flash",
         "source_file": "ai_analysis.py",
         "description": "Google Gemini model for analysis",
-        "category": "ai_model_config"
+        "constant": "google_gemini_model_for_analysis"
       },
       {
         "value": 80.0,
         "source_file": "ai_analysis.py",
         "description": "Excellent efficiency threshold",
-        "category": "efficiency_rating"
+        "constant": "excellent_efficiency_threshold"
       },
       {
         "value": 75.0,
         "source_file": "ai_analysis.py",
         "description": "Good efficiency threshold",
-        "category": "efficiency_rating"
+        "constant": "good_efficiency_threshold"
       },
       {
         "value": 65.0,
         "source_file": "ai_analysis.py",
         "description": "Adequate efficiency threshold",
-        "category": "efficiency_rating"
+        "constant": "adequate_efficiency_threshold"
       },
       {
         "value": 200,
         "source_file": "ai_analysis.py",
         "description": "Word limit for efficiency analysis responses",
-        "category": "ai_limits"
+        "constant": "word_limit_for_efficiency_analysis_responses"
       },
       {
         "value": 250,
         "source_file": "ai_analysis.py",
         "description": "Word limit for application analysis responses",
-        "category": "ai_limits"
+        "constant": "word_limit_for_application_analysis_responses"
       },
       {
         "value": 200,
         "source_file": "ai_analysis.py",
         "description": "Word limit for other topic analysis responses",
-        "category": "ai_limits"
+        "constant": "word_limit_for_other_topic_analysis_responses"
       },
       {
         "value": 0.5,
         "source_file": "ai_analysis.py",
         "description": "Power density threshold for acceptable ranges (kW per m³/hr)",
-        "category": "power_density_thresholds"
+        "constant": "power_density_threshold_for_acceptable_ranges_kw_per_m3hr"
       },
       {
         "value": 1.0,
         "source_file": "ai_analysis.py",
         "description": "Power density threshold for moderate ranges (kW per m³/hr)",
-        "category": "power_density_thresholds"
+        "constant": "power_density_threshold_for_moderate_ranges_kw_per_m3hr"
       },
       {
         "value": 80.0,
         "source_file": "ai_analysis.py",
         "description": "Efficiency threshold for energy-conscious applications",
-        "category": "application_recommendations"
+        "constant": "efficiency_threshold_for_energy_conscious_applications"
       },
       {
         "value": 70.0,
         "source_file": "ai_analysis.py",
         "description": "Efficiency threshold for standard applications",
-        "category": "application_recommendations"
+        "constant": "efficiency_threshold_for_standard_applications"
       },
       {
         "value": 75.0,
         "source_file": "ai_analysis.py",
         "description": "Efficiency threshold for maintenance recommendations",
-        "category": "maintenance_recommendations"
+        "constant": "efficiency_threshold_for_maintenance_recommendations"
       },
       {
         "value": 0,
         "source_file": "ai_analysis.py",
         "description": "Minimum flow threshold for validation",
-        "category": "validation_thresholds"
+        "constant": "minimum_flow_threshold"
       },
       {
         "value": 0,
         "source_file": "ai_analysis.py",
         "description": "Minimum head threshold for validation",
-        "category": "validation_thresholds"
+        "constant": "minimum_head_threshold"
       },
       {
         "value": 0,
         "source_file": "ai_analysis.py",
         "description": "Default power density fallback value",
-        "category": "fallback_values"
+        "constant": "default_power_density"
       }
     ],
     "ai_analyst_constants": [
@@ -121,91 +121,91 @@
         "value": "gpt-4o",
         "source_file": "ai_analyst.py",
         "description": "OpenAI model for calibration analysis",
-        "category": "ai_model_config"
+        "constant": "openai_model_for_calibration_analysis"
       },
       {
         "value": 0.3,
         "source_file": "ai_analyst.py",
         "description": "Lower temperature for consistent technical analysis",
-        "category": "ai_parameters"
+        "constant": "lower_temperature_for_consistent_technical_analysis"
       },
       {
         "value": 1000,
         "source_file": "ai_analyst.py",
         "description": "Maximum tokens for calibration insights",
-        "category": "ai_limits"
+        "constant": "maximum_tokens_for_calibration_insights"
       },
       {
         "value": 3,
         "source_file": "ai_analyst.py",
         "description": "Significant deviation threshold for calibration adjustment",
-        "category": "calibration_thresholds"
+        "constant": "significant_deviation_threshold_for_calibration_adjustment"
       },
       {
         "value": 10,
         "source_file": "ai_analyst.py",
         "description": "Divisor for efficiency correction exponent calculation",
-        "category": "calibration_factors"
+        "constant": "divisor_for_efficiency_correction_exponent_calculation"
       },
       {
         "value": 98,
         "source_file": "ai_analyst.py",
         "description": "Excellent accuracy threshold percentage",
-        "category": "accuracy_thresholds"
+        "constant": "excellent_accuracy_threshold_percentage"
       },
       {
         "value": 95,
         "source_file": "ai_analyst.py",
         "description": "Good accuracy threshold percentage",
-        "category": "accuracy_thresholds"
+        "constant": "good_accuracy_threshold_percentage"
       },
       {
         "value": 2,
         "source_file": "ai_analyst.py",
         "description": "Consistent prediction deviation threshold",
-        "category": "deviation_thresholds"
+        "constant": "consistent_prediction_deviation_threshold"
       },
       {
         "value": 5,
         "source_file": "ai_analyst.py",
         "description": "High RMSE variation threshold",
-        "category": "deviation_thresholds"
+        "constant": "high_rmse_variation_threshold"
       },
       {
         "value": 5,
         "source_file": "ai_analyst.py",
         "description": "Threshold for recommending physics model review",
-        "category": "deviation_thresholds"
+        "constant": "threshold_for_recommending_physics_model_review"
       },
       {
         "value": 75,
         "source_file": "ai_analyst.py",
         "description": "Excellent pump efficiency threshold for analysis",
-        "category": "pump_efficiency_thresholds"
+        "constant": "excellent_pump_efficiency_threshold_for_analysis"
       },
       {
         "value": 65,
         "source_file": "ai_analyst.py",
         "description": "Good pump efficiency threshold for analysis",
-        "category": "pump_efficiency_thresholds"
+        "constant": "good_pump_efficiency_threshold_for_analysis"
       },
       {
         "value": 55,
         "source_file": "ai_analyst.py",
         "description": "Acceptable pump efficiency threshold for analysis",
-        "category": "pump_efficiency_thresholds"
+        "constant": "acceptable_pump_efficiency_threshold_for_analysis"
       },
       {
         "value": 110,
         "source_file": "ai_analyst.py",
         "description": "QBP threshold for operating close to BEP",
-        "category": "qbp_thresholds"
+        "constant": "qbp_threshold_for_operating_close_to_bep"
       },
       {
         "value": 130,
         "source_file": "ai_analyst.py",
         "description": "QBP threshold for reasonably close to BEP",
-        "category": "qbp_thresholds"
+        "constant": "qbp_threshold_for_reasonably_close_to_bep"
       }
     ],
     "performance_affinity_constants": [
@@ -213,265 +213,265 @@
         "value": 40.0,
         "source_file": "performance_affinity.py",
         "description": "Minimum acceptable pump efficiency percentage",
-        "category": "performance_limits"
+        "constant": "minimum_acceptable_pump_efficiency_percentage"
       },
       {
         "value": 85.0,
         "source_file": "performance_affinity.py",
         "description": "Industry standard minimum trim percentage (15% max trim)",
-        "category": "performance_limits"
+        "constant": "industry_standard_minimum_trim_percentage_15_max_trim"
       },
       {
         "value": 100.0,
         "source_file": "performance_affinity.py",
         "description": "Maximum trim percentage (full impeller)",
-        "category": "performance_limits"
+        "constant": "maximum_trim_percentage_full_impeller"
       },
       {
         "value": 1.0,
         "source_file": "performance_affinity.py",
         "description": "Flow scaling exponent in affinity laws (Q2/Q1 = (D2/D1)^1)",
-        "category": "physics_constants"
+        "constant": "flow_scaling_exponent_in_affinity_laws_q2_q1__d2_d11"
       },
       {
         "value": 2.0,
         "source_file": "performance_affinity.py",
         "description": "Head scaling exponent in affinity laws (H2/H1 = (D2/D1)^2)",
-        "category": "physics_constants"
+        "constant": "head_scaling_exponent_in_affinity_laws_h2_h1__d2_d12"
       },
       {
         "value": 3.0,
         "source_file": "performance_affinity.py",
         "description": "Power scaling exponent in affinity laws (P2/P1 = (D2/D1)^3)",
-        "category": "physics_constants"
+        "constant": "power_scaling_exponent_in_affinity_laws_p2_p1__d2_d13"
       },
       {
         "value": 0.8,
         "source_file": "performance_affinity.py",
         "description": "Efficiency scaling exponent in affinity laws",
-        "category": "physics_constants"
+        "constant": "efficiency_scaling_exponent_in_affinity_laws"
       },
       {
         "value": 1.2,
         "source_file": "performance_affinity.py",
         "description": "BEP shift flow exponent calibration factor",
-        "category": "calibration_factors"
+        "constant": "bep_shift_flow_exponent_calibration_factor"
       },
       {
         "value": 2.2,
         "source_file": "performance_affinity.py",
         "description": "BEP shift head exponent calibration factor",
-        "category": "calibration_factors"
+        "constant": "bep_shift_head_exponent_calibration_factor"
       },
       {
         "value": 2.9,
         "source_file": "performance_affinity.py",
         "description": "Trim dependent small exponent",
-        "category": "calibration_factors"
+        "constant": "trim_dependent_small_exponent"
       },
       {
         "value": 2.1,
         "source_file": "performance_affinity.py",
         "description": "Trim dependent large exponent",
-        "category": "calibration_factors"
+        "constant": "trim_dependent_large_exponent"
       },
       {
         "value": 0.20,
         "source_file": "performance_affinity.py",
         "description": "Efficiency penalty factor for volute pumps",
-        "category": "calibration_factors"
+        "constant": "efficiency_penalty_factor_for_volute_pumps"
       },
       {
         "value": 0.45,
         "source_file": "performance_affinity.py",
         "description": "Efficiency penalty factor for diffuser pumps",
-        "category": "calibration_factors"
+        "constant": "efficiency_penalty_factor_for_diffuser_pumps"
       },
       {
         "value": 10.0,
         "source_file": "performance_affinity.py",
         "description": "NPSH degradation threshold percentage",
-        "category": "calibration_factors"
+        "constant": "npsh_degradation_threshold_percentage"
       },
       {
         "value": 1.15,
         "source_file": "performance_affinity.py",
         "description": "NPSH degradation factor for heavy trimming",
-        "category": "calibration_factors"
+        "constant": "npsh_degradation_factor_for_heavy_trimming"
       },
       {
         "value": 1000,
         "source_file": "performance_affinity.py",
         "description": "Water density (kg/m³)",
-        "category": "physical_constants"
+        "constant": "water_density_kg_m_"
       },
       {
         "value": 9.81,
         "source_file": "performance_affinity.py",
         "description": "Gravitational acceleration (m/s²)",
-        "category": "physical_constants"
+        "constant": "gravitational_acceleration_m_s"
       },
       {
         "value": 3600,
         "source_file": "performance_affinity.py",
         "description": "Seconds per hour for flow conversions",
-        "category": "physical_constants"
+        "constant": "seconds_per_hour_for_flow_conversions"
       },
       {
         "value": 0.70,
         "source_file": "performance_affinity.py",
         "description": "Fallback minimum diameter ratio when no specifications available",
-        "category": "diameter_limits"
+        "constant": "fallback_minimum_diameter_ratio_when_no_specifications_available"
       },
       {
         "value": 1.15,
         "source_file": "performance_affinity.py",
         "description": "Fallback maximum diameter ratio when no specifications available",
-        "category": "diameter_limits"
+        "constant": "fallback_maximum_diameter_ratio_when_no_specifications_available"
       },
       {
         "value": 75.0,
         "source_file": "performance_affinity.py",
         "description": "Default base efficiency when interpolation unavailable",
-        "category": "default_values"
+        "constant": "default_base_efficiency_when_interpolation_unavailable"
       },
       {
         "value": 0.85,
         "source_file": "performance_affinity.py",
         "description": "Trim ratio threshold for efficiency degradation (15% trim)",
-        "category": "trim_thresholds"
+        "constant": "trim_ratio_threshold_for_efficiency_degradation_15_trim"
       },
       {
         "value": 20,
         "source_file": "performance_affinity.py",
         "description": "Efficiency penalty multiplier for excessive trimming",
-        "category": "penalty_factors"
+        "constant": "efficiency_penalty_multiplier_for_excessive_trimming"
       },
       {
         "value": 40,
         "source_file": "performance_affinity.py",
         "description": "Minimum efficiency floor after trim penalty",
-        "category": "efficiency_limits"
+        "constant": "minimum_efficiency_floor_after_trim_penalty"
       },
       {
         "value": 30,
         "source_file": "performance_affinity.py",
         "description": "Absolute minimum efficiency floor",
-        "category": "efficiency_limits"
+        "constant": "absolute_minimum_efficiency_floor"
       },
       {
         "value": 0.5,
         "source_file": "performance_affinity.py",
         "description": "Minimum flow tolerance multiplier (50% below minimum)",
-        "category": "flow_tolerances"
+        "constant": "minimum_flow_tolerance_multiplier_50_below_minimum"
       },
       {
         "value": 1.5,
         "source_file": "performance_affinity.py",
         "description": "Maximum flow tolerance multiplier (50% above maximum)",
-        "category": "flow_tolerances"
+        "constant": "maximum_flow_tolerance_multiplier_50_above_maximum"
       },
       {
         "value": 75,
         "source_file": "performance_affinity.py",
         "description": "Default BEP efficiency for estimation",
-        "category": "default_values"
+        "constant": "default_bep_efficiency_for_estimation"
       },
       {
         "value": 0.7,
         "source_file": "performance_affinity.py",
         "description": "Lower flow ratio boundary for good efficiency",
-        "category": "efficiency_ranges"
+        "constant": "lower_flow_ratio_boundary_for_good_efficiency"
       },
       {
         "value": 1.2,
         "source_file": "performance_affinity.py",
         "description": "Upper flow ratio boundary for good efficiency",
-        "category": "efficiency_ranges"
+        "constant": "upper_flow_ratio_boundary_for_good_efficiency"
       },
       {
         "value": 0.1,
         "source_file": "performance_affinity.py",
         "description": "Efficiency reduction factor per unit flow ratio deviation",
-        "category": "efficiency_factors"
+        "constant": "efficiency_reduction_factor_per_unit_flow_ratio_deviation"
       },
       {
         "value": 0.85,
         "source_file": "performance_affinity.py",
         "description": "Efficiency multiplier for significant off-BEP operation",
-        "category": "efficiency_factors"
+        "constant": "efficiency_multiplier_for_significant_off_bep_operation"
       },
       {
         "value": 10,
         "source_file": "performance_affinity.py",
         "description": "Flow proximity threshold for NPSH lookup (m³/hr)",
-        "category": "lookup_thresholds"
+        "constant": "flow_proximity_threshold_for_npsh_lookup_m3hr"
       },
       {
         "value": 0.9,
         "source_file": "performance_affinity.py",
         "description": "Lower flow range tolerance for interpolation",
-        "category": "interpolation_tolerances"
+        "constant": "lower_flow_range_tolerance_for_interpolation"
       },
       {
         "value": 1.1,
         "source_file": "performance_affinity.py",
         "description": "Upper flow range tolerance for interpolation",
-        "category": "interpolation_tolerances"
+        "constant": "upper_flow_range_tolerance_for_interpolation"
       },
       {
         "value": 1.05,
         "source_file": "performance_affinity.py",
         "description": "BEP precision tolerance for head comparison",
-        "category": "bep_tolerances"
+        "constant": "bep_precision_tolerance_for_head_comparison"
       },
       {
         "value": 1.02,
         "source_file": "performance_affinity.py",
         "description": "Head safety margin for BEP calculations",
-        "category": "bep_tolerances"
+        "constant": "head_safety_margin_for_bep_calculations"
       },
       {
         "value": 0.5,
         "source_file": "performance_affinity.py",
         "description": "Exponent for trim percentage estimation",
-        "category": "calculation_factors"
+        "constant": "exponent_for_trim_percentage_estimation"
       },
       {
         "value": 5.0,
         "source_file": "performance_affinity.py",
         "description": "Small trim threshold percentage",
-        "category": "trim_thresholds"
+        "constant": "small_trim_threshold_percentage"
       },
       {
         "value": 2.9,
         "source_file": "performance_affinity.py",
         "description": "Default small trim head exponent",
-        "category": "trim_exponents"
+        "constant": "default_small_trim_head_exponent"
       },
       {
         "value": 2.1,
         "source_file": "performance_affinity.py",
         "description": "Default large trim head exponent",
-        "category": "trim_exponents"
+        "constant": "default_large_trim_head_exponent"
       },
       {
         "value": 1.0,
         "source_file": "performance_affinity.py",
         "description": "Error percent threshold for validation warning",
-        "category": "validation_thresholds"
+        "constant": "error_percent_threshold_for_validation_warning"
       },
       {
         "value": 70.0,
         "source_file": "performance_affinity.py",
         "description": "Fill value for efficiency interpolation",
-        "category": "default_values"
+        "constant": "fill_value_for_efficiency_interpolation"
       },
       {
         "value": 100,
         "source_file": "performance_affinity.py",
         "description": "Percentage conversion factor",
-        "category": "conversion_factors"
+        "constant": "percentage_conversion_factor"
       },
       {
         "value": 1000,
