@@ -741,259 +741,241 @@
         "value": 0.227124,
         "source_file": "validation.py",
         "description": "GPM to m³/hr conversion factor",
-        "category": "unit_conversions"
+        "constant": "gpm_to_m³_hr_conversion_factor"
       },
       {
         "value": 3.6,
         "source_file": "validation.py",
         "description": "LPS to m³/hr conversion factor",
-        "category": "unit_conversions"
+        "constant": "lps_to_m³_hr_conversion_factor"
       },
       {
         "value": 0.06,
         "source_file": "validation.py",
         "description": "LPM to m³/hr conversion factor",
-        "category": "unit_conversions"
+        "constant": "lpm_to_m³_hr_conversion_factor"
       },
       {
         "value": 157.725,
         "source_file": "validation.py",
         "description": "MGD to m³/hr conversion factor",
-        "category": "unit_conversions"
+        "constant": "mgd_to_m³_hr_conversion_factor"
       },
       {
         "value": 0.3048,
         "source_file": "validation.py",
         "description": "Feet to meters conversion factor",
-        "category": "unit_conversions"
+        "constant": "feet_to_meters_conversion_factor"
       },
       {
         "value": 0.70307,
         "source_file": "validation.py",
         "description": "PSI to meters conversion factor",
-        "category": "unit_conversions"
+        "constant": "psi_to_meters_conversion_factor"
       },
       {
         "value": 10.1972,
         "source_file": "validation.py",
         "description": "Bar to meters conversion factor",
-        "category": "unit_conversions"
+        "constant": "bar_to_meters_conversion_factor"
       },
       {
         "value": 0.101972,
         "source_file": "validation.py",
         "description": "kPa to meters conversion factor",
-        "category": "unit_conversions"
+        "constant": "kpa_to_meters_conversion_factor"
       },
       {
         "value": 0.745699872,
         "source_file": "validation.py",
         "description": "Horsepower to kW conversion factor",
-        "category": "unit_conversions"
+        "constant": "horsepower_to_kw_conversion_factor"
       },
       {
         "value": 0.001,
         "source_file": "validation.py",
         "description": "Watts to kW conversion factor",
-        "category": "unit_conversions"
+        "constant": "watts_to_kw_conversion_factor"
       },
       {
         "value": 25.4,
         "source_file": "validation.py",
         "description": "Inches to mm conversion factor",
-        "category": "unit_conversions"
-      },
-      {
-        "value": 0.1,
-        "source_file": "validation.py",
-        "description": "Minimum valid flow rate (m³/hr)",
-        "category": "validation_limits"
-      },
-      {
-        "value": 50000,
-        "source_file": "validation.py",
-        "description": "Maximum valid flow rate (m³/hr)",
-        "category": "validation_limits"
-      },
-      {
-        "value": 5000,
-        "source_file": "validation.py",
-        "description": "Maximum valid head (m)",
-        "category": "validation_limits"
-      },
-      {
-        "value": 10000,
-        "source_file": "validation.py",
-        "description": "Maximum valid power (kW)",
-        "category": "validation_limits"
-      },
-      {
-        "value": 100,
-        "source_file": "validation.py",
-        "description": "Maximum valid NPSH (m)",
-        "category": "validation_limits"
-      },
-      {
-        "value": 50,
-        "source_file": "validation.py",
-        "description": "Minimum impeller diameter (mm)",
-        "category": "validation_limits"
-      },
-      {
-        "value": 5000,
-        "source_file": "validation.py",
-        "description": "Maximum impeller diameter (mm)",
-        "category": "validation_limits"
-      },
-      {
-        "value": 7200,
-        "source_file": "validation.py",
-        "description": "Maximum pump speed (RPM)",
-        "category": "validation_limits"
+        "constant": "inches_to_mm_conversion_factor"
       },
       {
         "value": 10,
         "source_file": "validation.py",
         "description": "Centimeters to millimeters conversion factor",
-        "category": "unit_conversions"
+        "constant": "centimeters_to_millimeters_conversion_factor"
       },
       {
         "value": 1000,
         "source_file": "validation.py",
         "description": "Meters to millimeters conversion factor",
-        "category": "unit_conversions"
+        "constant": "meters_to_millimeters_conversion_factor"
+      },
+      {
+        "value": 0.1,
+        "source_file": "validation.py",
+        "description": "Minimum valid flow rate (m³/hr)",
+        "constant": "minimum_valid_flow_rate_m³_hr"
+      },
+      {
+        "value": 50000,
+        "source_file": "validation.py",
+        "description": "Maximum valid flow rate (m³/hr)",
+        "constant": "maximum_valid_flow_rate_m³_hr"
       },
       {
         "value": 0.1,
         "source_file": "validation.py",
         "description": "Minimum valid head (m)",
-        "category": "validation_limits"
+        "constant": "minimum_valid_head_m"
       },
       {
-        "value": 0,
+        "value": 5000,
         "source_file": "validation.py",
-        "description": "Minimum efficiency percentage",
-        "category": "validation_limits"
+        "description": "Maximum valid head (m)",
+        "constant": "maximum_valid_head_m"
+      },
+      {
+        "value": 10000,
+        "source_file": "validation.py",
+        "description": "Maximum valid power (kW)",
+        "constant": "maximum_valid_power_kw"
       },
       {
         "value": 100,
         "source_file": "validation.py",
-        "description": "Maximum efficiency percentage",
-        "category": "validation_limits"
+        "description": "Maximum valid NPSH (m)",
+        "constant": "maximum_valid_npsh_m"
       },
       {
-        "value": 0,
+        "value": 50,
         "source_file": "validation.py",
-        "description": "Minimum valid power (kW)",
-        "category": "validation_limits"
+        "description": "Minimum impeller diameter (mm)",
+        "constant": "minimum_impeller_diameter_mm"
       },
       {
-        "value": 0,
+        "value": 5000,
         "source_file": "validation.py",
-        "description": "Minimum valid NPSHR (m)",
-        "category": "validation_limits"
+        "description": "Maximum impeller diameter (mm)",
+        "constant": "maximum_impeller_diameter_mm"
       },
       {
         "value": 100,
         "source_file": "validation.py",
         "description": "Minimum pump speed (RPM)",
-        "category": "validation_limits"
+        "constant": "minimum_pump_speed_rpm"
+      },
+      {
+        "value": 7200,
+        "source_file": "validation.py",
+        "description": "Maximum pump speed (RPM)",
+        "constant": "maximum_pump_speed_rpm"
       },
       {
         "value": 10,
         "source_file": "validation.py",
         "description": "Minimum specific speed threshold",
-        "category": "specific_speed_limits"
+        "constant": "minimum_specific_speed_threshold"
       },
       {
         "value": 10000,
         "source_file": "validation.py",
         "description": "Maximum specific speed threshold",
-        "category": "specific_speed_limits"
-      },
-      {
-        "value": 100,
-        "source_file": "validation.py",
-        "description": "Initial data quality score",
-        "category": "quality_scoring"
-      },
-      {
-        "value": 20,
-        "source_file": "validation.py",
-        "description": "Quality score penalty for missing required fields",
-        "category": "quality_scoring"
-      },
-      {
-        "value": 10,
-        "source_file": "validation.py",
-        "description": "Quality score penalty for missing specifications",
-        "category": "quality_scoring"
-      },
-      {
-        "value": 15,
-        "source_file": "validation.py",
-        "description": "Quality score penalty for missing BEP data",
-        "category": "quality_scoring"
-      },
-      {
-        "value": 10,
-        "source_file": "validation.py",
-        "description": "Quality score penalty for missing impeller range",
-        "category": "quality_scoring"
-      },
-      {
-        "value": 20,
-        "source_file": "validation.py",
-        "description": "Quality score penalty for insufficient valid curves",
-        "category": "quality_scoring"
-      },
-      {
-        "value": 5,
-        "source_file": "validation.py",
-        "description": "Quality score penalty for missing NPSH data",
-        "category": "quality_scoring"
+        "constant": "maximum_specific_speed_threshold"
       },
       {
         "value": 3,
         "source_file": "validation.py",
-        "description": "Minimum curve points required for interpolation",
-        "category": "curve_validation"
+        "description": "Minimum curve points for interpolation",
+        "constant": "minimum_curve_points_for_interpolation"
       },
       {
         "value": 2,
         "source_file": "validation.py",
-        "description": "Divisor for curve validation (half curves threshold)",
-        "category": "curve_validation"
+        "description": "Curve validation divisor",
+        "constant": "curve_validation_divisor"
       },
       {
         "value": 50,
         "source_file": "validation.py",
         "description": "Minimum data quality score for validity",
-        "category": "quality_scoring"
+        "constant": "minimum_data_quality_score_for_validity"
       },
       {
-        "value": 1450,
+        "value": 100,
         "source_file": "validation.py",
-        "description": "Default pump speed for calculations (RPM)",
-        "category": "default_values"
+        "description": "Initial data quality score",
+        "constant": "initial_data_quality_score"
       },
       {
-        "value": 0.5,
+        "value": 20,
         "source_file": "validation.py",
-        "description": "Flow exponent for specific speed calculation",
-        "category": "specific_speed_factors"
+        "description": "Quality score penalty for missing required fields",
+        "constant": "quality_score_penalty_for_missing_required_fields"
       },
       {
-        "value": 0.75,
+        "value": 10,
         "source_file": "validation.py",
-        "description": "Head exponent for specific speed calculation",
-        "category": "specific_speed_factors"
+        "description": "Quality score penalty for missing specifications",
+        "constant": "quality_score_penalty_for_missing_specifications"
       },
       {
-        "value": 51.64,
+        "value": 15,
         "source_file": "validation.py",
-        "description": "Specific speed dimensionless conversion factor",
-        "category": "specific_speed_factors"
+        "description": "Quality score penalty for missing BEP data",
+        "constant": "quality_score_penalty_for_missing_bep_data"
+      },
+      {
+        "value": 10,
+        "source_file": "validation.py",
+        "description": "Quality score penalty for missing impeller range",
+        "constant": "quality_score_penalty_for_missing_impeller_range"
+      },
+      {
+        "value": 20,
+        "source_file": "validation.py",
+        "description": "Quality score penalty for insufficient valid curves",
+        "constant": "quality_score_penalty_for_insufficient_valid_curves"
+      },
+      {
+        "value": 5,
+        "source_file": "validation.py",
+        "description": "Quality score penalty for outliers",
+        "constant": "quality_score_penalty_for_outliers"
+      },
+      {
+        "value": 0,
+        "source_file": "validation.py",
+        "description": "Minimum efficiency percentage",
+        "constant": "minimum_efficiency_percentage"
+      },
+      {
+        "value": 100,
+        "source_file": "validation.py",
+        "description": "Maximum efficiency percentage",
+        "constant": "maximum_efficiency_percentage"
+      },
+      {
+        "value": 0,
+        "source_file": "validation.py",
+        "description": "Minimum valid power (kW)",
+        "constant": "minimum_valid_power_kw"
+      },
+      {
+        "value": 0,
+        "source_file": "validation.py",
+        "description": "Minimum valid NPSHR (m)",
+        "constant": "minimum_valid_npshr_m"
+      },
+      {
+        "value": 3600,
+        "source_file": "validation.py",
+        "description": "Seconds per hour for flow conversions",
+        "constant": "seconds_per_hour_for_flow_conversions"
       }
     ],
     "cache_constants": [
@@ -1001,25 +983,25 @@
         "value": 1000,
         "source_file": "cache.py",
         "description": "Maximum cache size (entries)",
-        "category": "cache_limits"
+        "constant": "maximum_cache_size_entries"
       },
       {
         "value": 300,
         "source_file": "cache.py",
         "description": "Default TTL for cache entries (seconds)",
-        "category": "cache_limits"
+        "constant": "default_ttl_for_cache_entries_seconds"
       },
       {
         "value": 100,
         "source_file": "cache.py",
         "description": "Percentage conversion factor for hit rate calculation",
-        "category": "cache_calculations"
+        "constant": "percentage_conversion_factor_for_hit_rate"
       },
       {
         "value": 2,
         "source_file": "cache.py",
         "description": "Decimal places for rounding hit rate",
-        "category": "cache_calculations"
+        "constant": "decimal_places_for_rounding_hit_rate"
       }
     ],
     "charts_constants": [
