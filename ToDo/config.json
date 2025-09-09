@@ -276,7 +276,7 @@
         "constant": "trim_dependent_large_exponent"
       },
       {
-        "value": 0.20,
+        "value": 0.2,
         "source_file": "performance_affinity.py",
         "description": "Efficiency penalty factor for volute pumps",
         "constant": "efficiency_penalty_factor_for_volute_pumps"
@@ -318,7 +318,7 @@
         "constant": "seconds_per_hour_for_flow_conversions"
       },
       {
-        "value": 0.70,
+        "value": 0.7,
         "source_file": "performance_affinity.py",
         "description": "Fallback minimum diameter ratio when no specifications available",
         "constant": "fallback_minimum_diameter_ratio_when_no_specifications_available"
@@ -477,7 +477,7 @@
         "value": 1000,
         "source_file": "performance_affinity.py",
         "description": "Watts to kilowatts conversion factor",
-        "category": "conversion_factors"
+        "constant": "watts_to_kilowatts_conversion_factor"
       }
     ],
     "performance_curves_constants": [
@@ -485,109 +485,109 @@
         "value": 40.0,
         "source_file": "performance_curves.py",
         "description": "Minimum acceptable pump efficiency percentage",
-        "category": "performance_limits"
+        "constant": "minimum_acceptable_pump_efficiency_percentage"
       },
       {
         "value": 85.0,
         "source_file": "performance_curves.py",
         "description": "Industry standard minimum trim percentage (15% max trim)",
-        "category": "performance_limits"
+        "constant": "industry_standard_minimum_trim_percentage_15_max_trim"
       },
       {
         "value": 100.0,
         "source_file": "performance_curves.py",
         "description": "Maximum trim percentage (full impeller)",
-        "category": "performance_limits"
+        "constant": "maximum_trim_percentage_full_impeller"
       },
       {
         "value": 0.9,
         "source_file": "performance_curves.py",
         "description": "Flow range minimum tolerance factor (90%)",
-        "category": "curve_tolerances"
+        "constant": "flow_range_minimum_tolerance_factor_90"
       },
       {
         "value": 1.1,
         "source_file": "performance_curves.py",
         "description": "Flow range maximum tolerance factor (110%)",
-        "category": "curve_tolerances"
+        "constant": "flow_range_maximum_tolerance_factor_110"
       },
       {
         "value": 0.98,
         "source_file": "performance_curves.py",
         "description": "Minimum head requirement factor (98%)",
-        "category": "curve_tolerances"
+        "constant": "minimum_head_requirement_factor_98"
       },
       {
-        "value": 1.10,
+        "value": 1.1,
         "source_file": "performance_curves.py",
         "description": "Maximum preferred head factor (110%)",
-        "category": "curve_tolerances"
+        "constant": "maximum_preferred_head_factor_110"
       },
       {
         "value": 0.7,
         "source_file": "performance_curves.py",
         "description": "Head match bonus factor (30% bonus)",
-        "category": "curve_scoring"
+        "constant": "head_match_bonus_factor_30_bonus"
       },
       {
         "value": 70.0,
         "source_file": "performance_curves.py",
         "description": "Conservative fallback efficiency percentage",
-        "category": "fallback_values"
+        "constant": "conservative_fallback_efficiency_percentage"
       },
       {
         "value": 1000,
         "source_file": "performance_curves.py",
         "description": "Water density (kg/m³)",
-        "category": "physical_constants"
+        "constant": "water_density_kgm3"
       },
       {
         "value": 9.81,
         "source_file": "performance_curves.py",
         "description": "Gravitational acceleration (m/s²)",
-        "category": "physical_constants"
+        "constant": "gravitational_acceleration_ms2"
       },
       {
         "value": 3600,
         "source_file": "performance_curves.py",
         "description": "Seconds per hour for flow conversions",
-        "category": "physical_constants"
+        "constant": "seconds_per_hour_for_flow_conversions"
       },
       {
         "value": 2,
         "source_file": "performance_curves.py",
         "description": "Minimum number of curve points required for interpolation",
-        "category": "curve_validation"
+        "constant": "minimum_number_of_curve_points_required_for_interpolation"
       },
       {
         "value": 0.98,
         "source_file": "performance_curves.py",
         "description": "Hard-coded head requirement factor for validation",
-        "category": "curve_tolerances"
+        "constant": "hard_coded_head_requirement_factor_for_validation"
       },
       {
         "value": 100,
         "source_file": "performance_curves.py",
         "description": "Percentage conversion factor",
-        "category": "conversion_factors"
+        "constant": "percentage_conversion_factor"
       },
       {
         "value": 1000,
         "source_file": "performance_curves.py",
         "description": "Watts to kilowatts conversion factor",
-        "category": "conversion_factors"
+        "constant": "watts_to_kilowatts_conversion_factor"
       },
       {
         "value": 0.0,
         "source_file": "performance_curves.py",
         "description": "Default power value when none available",
-        "category": "default_values"
+        "constant": "default_power_value_when_none_available"
       },
       {
         "value": 100.0,
         "source_file": "performance_curves.py",
         "description": "Full impeller trim percentage (no trimming)",
-        "category": "trim_values"
+        "constant": "full_impeller_trim_percentage_no_trimming"
       }
     ],
     "physics_models_constants": [
@@ -604,19 +604,19 @@
         "category": "pump_type_physics"
       },
       {
-        "value": 2.60,
+        "value": 2.6,
         "source_file": "physics_models.py",
         "description": "Axial flow pump power exponent",
         "category": "pump_type_physics"
       },
       {
-        "value": 1.70,
+        "value": 1.7,
         "source_file": "physics_models.py",
         "description": "Axial flow pump NPSH exponent",
         "category": "pump_type_physics"
       },
       {
-        "value": 1.00,
+        "value": 1.0,
         "source_file": "physics_models.py",
         "description": "End suction pump flow exponent",
         "category": "pump_type_physics"
@@ -640,7 +640,7 @@
         "category": "pump_type_physics"
       },
       {
-        "value": 1.00,
+        "value": 1.0,
         "source_file": "physics_models.py",
         "description": "Horizontal split case pump flow exponent",
         "category": "pump_type_physics"
@@ -652,19 +652,19 @@
         "category": "pump_type_physics"
       },
       {
-        "value": 3.00,
+        "value": 3.0,
         "source_file": "physics_models.py",
         "description": "Horizontal split case pump power exponent",
         "category": "pump_type_physics"
       },
       {
-        "value": 2.00,
+        "value": 2.0,
         "source_file": "physics_models.py",
         "description": "Horizontal split case pump NPSH exponent",
         "category": "pump_type_physics"
       },
       {
-        "value": 1.00,
+        "value": 1.0,
         "source_file": "physics_models.py",
         "description": "Multi-stage pump flow exponent",
         "category": "pump_type_physics"
@@ -682,7 +682,7 @@
         "category": "pump_type_physics"
       },
       {
-        "value": 2.00,
+        "value": 2.0,
         "source_file": "physics_models.py",
         "description": "Multi-stage pump NPSH exponent",
         "category": "pump_type_physics"
@@ -700,37 +700,37 @@
         "category": "pump_type_physics"
       },
       {
-        "value": 2.80,
+        "value": 2.8,
         "source_file": "physics_models.py",
         "description": "Vertical turbine pump power exponent",
         "category": "pump_type_physics"
       },
       {
-        "value": 1.80,
+        "value": 1.8,
         "source_file": "physics_models.py",
         "description": "Vertical turbine pump NPSH exponent",
         "category": "pump_type_physics"
       },
       {
-        "value": 1.00,
+        "value": 1.0,
         "source_file": "physics_models.py",
         "description": "Default pump flow exponent (standard affinity law)",
         "category": "pump_type_physics"
       },
       {
-        "value": 2.00,
+        "value": 2.0,
         "source_file": "physics_models.py",
         "description": "Default pump head exponent (standard affinity law)",
         "category": "pump_type_physics"
       },
       {
-        "value": 3.00,
+        "value": 3.0,
         "source_file": "physics_models.py",
         "description": "Default pump power exponent (standard affinity law)",
         "category": "pump_type_physics"
       },
       {
-        "value": 2.00,
+        "value": 2.0,
         "source_file": "physics_models.py",
         "description": "Default pump NPSH exponent (standard affinity law)",
         "category": "pump_type_physics"
@@ -768,7 +768,7 @@
         "category": "unit_conversions"
       },
       {
-        "value": 0.703070,
+        "value": 0.70307,
         "source_file": "validation.py",
         "description": "PSI to meters conversion factor",
         "category": "unit_conversions"
@@ -1522,13 +1522,13 @@
         "category": "bep_proximity_scores"
       },
       {
-        "value": 0.90,
+        "value": 0.9,
         "source_file": "pump_evaluator.py",
         "description": "BEP proximity good range lower bound",
         "category": "bep_proximity_thresholds"
       },
       {
-        "value": 1.10,
+        "value": 1.1,
         "source_file": "pump_evaluator.py",
         "description": "BEP proximity good range upper bound",
         "category": "bep_proximity_thresholds"
@@ -1540,13 +1540,13 @@
         "category": "bep_proximity_scores"
       },
       {
-        "value": 0.80,
+        "value": 0.8,
         "source_file": "pump_evaluator.py",
         "description": "BEP proximity acceptable range lower bound",
         "category": "bep_proximity_thresholds"
       },
       {
-        "value": 1.20,
+        "value": 1.2,
         "source_file": "pump_evaluator.py",
         "description": "BEP proximity acceptable range upper bound",
         "category": "bep_proximity_thresholds"
@@ -1558,13 +1558,13 @@
         "category": "bep_proximity_scores"
       },
       {
-        "value": 0.70,
+        "value": 0.7,
         "source_file": "pump_evaluator.py",
         "description": "BEP proximity marginal range lower bound",
         "category": "bep_proximity_thresholds"
       },
       {
-        "value": 1.30,
+        "value": 1.3,
         "source_file": "pump_evaluator.py",
         "description": "BEP proximity marginal range upper bound",
         "category": "bep_proximity_thresholds"
@@ -2124,7 +2124,7 @@
         "category": "calibration_factors"
       },
       {
-        "value": 0.20,
+        "value": 0.2,
         "source_file": "performance_core.py",
         "description": "Efficiency penalty volute calibration factor",
         "category": "calibration_factors"
@@ -2270,7 +2270,7 @@
         "category": "efficiency_penalties"
       },
       {
-        "value": 0.20,
+        "value": 0.2,
         "source_file": "performance_industry_standard.py",
         "description": "Efficiency penalty volute default factor",
         "category": "efficiency_penalties"
@@ -2388,37 +2388,37 @@
         "category": "bep_scoring"
       },
       {
-        "value": 0.90,
+        "value": 0.9,
         "source_file": "scoring_utils.py",
         "description": "BEP excellent range minimum factor (90%)",
         "category": "bep_ranges"
       },
       {
-        "value": 1.10,
+        "value": 1.1,
         "source_file": "scoring_utils.py",
         "description": "BEP excellent range maximum factor (110%)",
         "category": "bep_ranges"
       },
       {
-        "value": 0.80,
+        "value": 0.8,
         "source_file": "scoring_utils.py",
         "description": "BEP good range minimum factor (80%)",
         "category": "bep_ranges"
       },
       {
-        "value": 1.20,
+        "value": 1.2,
         "source_file": "scoring_utils.py",
         "description": "BEP good range maximum factor (120%)",
         "category": "bep_ranges"
       },
       {
-        "value": 0.70,
+        "value": 0.7,
         "source_file": "scoring_utils.py",
         "description": "BEP fair range minimum factor (70%)",
         "category": "bep_ranges"
       },
       {
-        "value": 1.30,
+        "value": 1.3,
         "source_file": "scoring_utils.py",
         "description": "BEP fair range maximum factor (130%)",
         "category": "bep_ranges"
@@ -2727,7 +2727,7 @@
       },
       {
         "value": 100,
-        "source_file": "performance_optimization.py", 
+        "source_file": "performance_optimization.py",
         "description": "Base score for calculations (100%)",
         "category": "algorithm_defaults"
       },
