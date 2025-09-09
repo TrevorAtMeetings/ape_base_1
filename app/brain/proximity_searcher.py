@@ -110,13 +110,17 @@ class ProximitySearcher:
             proximity_score_pct = weighted_distance * 100
             
             # Enhanced categorization with pump-type consideration
-            if proximity_score_pct < 10:
+            excellent_threshold = config.get('proximity_searcher', 'excellent_proximity_scoring_threshold')
+            good_threshold = config.get('proximity_searcher', 'good_proximity_scoring_threshold')
+            fair_threshold = config.get('proximity_searcher', 'fair_proximity_scoring_threshold')
+            
+            if proximity_score_pct < excellent_threshold:
                 proximity_category = "Excellent"
                 category_color = "#4CAF50"
-            elif proximity_score_pct < 25:
+            elif proximity_score_pct < good_threshold:
                 proximity_category = "Good"
                 category_color = "#8BC34A"
-            elif proximity_score_pct < 50:
+            elif proximity_score_pct < fair_threshold:
                 proximity_category = "Moderate"
                 category_color = "#FF9800"
             else:
@@ -140,7 +144,8 @@ class ProximitySearcher:
                     proximity_score_pct = weighted_distance * 100
             
             # Validate BEP efficiency
-            if bep_efficiency and (bep_efficiency < 30 or bep_efficiency > 95):
+            min_efficiency_floor = config.get('proximity_searcher', 'minimum_realistic_efficiency_floor_percentage')
+            if bep_efficiency and (bep_efficiency < min_efficiency_floor or bep_efficiency > 95):
                 logger.warning(f"[BEP PROXIMITY] {pump_code}: Questionable BEP efficiency {bep_efficiency}%")
             
             # Calculate trim requirement if pump BEP head is higher than required
@@ -153,7 +158,7 @@ class ProximitySearcher:
                 # Predict efficiency drop from trimming
                 trim_percent = (1 - trim_ratio) * 100
                 efficiency_drop = trim_percent * hydraulic_type['efficiency_drop_per_trim']
-                min_efficiency_floor = 30.0  # Minimum realistic efficiency floor
+                min_efficiency_floor = config.get('proximity_searcher', 'minimum_realistic_efficiency_floor_percentage')
                 predicted_efficiency = max(bep_efficiency - efficiency_drop, min_efficiency_floor)
             
             # Calculate operating range score (how well pump can handle flow variations)

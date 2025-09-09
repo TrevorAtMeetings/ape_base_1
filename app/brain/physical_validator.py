@@ -7,6 +7,7 @@ Validates pump physical capability at specific operating points
 import logging
 from typing import Dict, Any, Tuple
 from ..process_logger import process_logger
+from .config_manager import config
 
 logger = logging.getLogger(__name__)
 
@@ -56,11 +57,11 @@ class PhysicalValidator:
             curve_flows = [p['flow_m3hr'] for p in curve_points]
             curve_heads = [p['head_m'] for p in curve_points]
             
-            # Check if flow is within curve range (with 10% tolerance)
+            # Check if flow is within curve range (with configurable tolerance)
             min_flow = min(curve_flows)
             max_flow = max(curve_flows)
             
-            flow_tolerance = 0.1
+            flow_tolerance = config.get('physical_validator', 'flow_tolerance_for_curve_range_validation_10')
             if not (min_flow * (1-flow_tolerance) <= flow_m3hr <= max_flow * (1+flow_tolerance)):
                 flow_range_failures.append(f"{curve.get('impeller_diameter_mm', 0):.0f}mm impeller: flow range {min_flow:.1f}-{max_flow:.1f} m³/hr (±{flow_tolerance*100:.0f}% tolerance)")
                 continue  # Flow outside this curve's range
@@ -83,7 +84,7 @@ class PhysicalValidator:
                 delivered_head = float(head_interp(flow_m3hr))
                 
                 # Check if pump can deliver AT LEAST the required head
-                head_tolerance = 0.02
+                head_tolerance = config.get('physical_validator', 'head_tolerance_for_capability_validation_2')
                 if delivered_head >= head_m * (1-head_tolerance):
                     process_logger.log(f"    {pump_code}: PHYSICALLY CAPABLE - Can deliver {delivered_head:.1f}m at {flow_m3hr} m³/hr (±{head_tolerance*100:.0f}% tolerance)")
                     logger.debug(f"Pump {pump_code}: Can deliver {delivered_head:.1f}m at {flow_m3hr} m³/hr (required: {head_m}m) - VALID")

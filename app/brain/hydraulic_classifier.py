@@ -136,7 +136,7 @@ class HydraulicClassifier:
         Returns:
             Trim ratio (1.0 = no trim, 0.85 = 15% trim)
         """
-        MIN_TRIM_RATIO = 0.85  # 15% maximum trim limit (hardcoded constant)
+        MIN_TRIM_RATIO = config.get('hydraulic_classifier', 'minimum_trim_ratio_15_maximum_trim_limit')
         
         try:
             if current_head <= 0 or required_head <= 0:

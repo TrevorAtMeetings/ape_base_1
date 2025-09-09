@@ -141,7 +141,8 @@ class VFDCalculator:
                     best_error = error
                     best_point = {'flow': q1, 'head': h1, 'k': k_point}
             
-            if best_point is None or best_error > 0.1:  # Allow 10% error in k matching
+            error_tolerance = config.get('performance_vfd', 'error_tolerance_for_system_curve_matching')
+            if best_point is None or best_error > error_tolerance:  # Allow configurable error in k matching
                 logger.warning(f"[VFD CALC] {pump_code}: Could not find matching point on system curve (best error: {best_error:.2%})")
                 # Try alternative approach: use pump BEP as reference point
                 bep_flow = specs.get('bep_flow_m3hr', 0)
@@ -203,7 +204,7 @@ class VFDCalculator:
                     efficiency = float(eff_interp(q1))
                 else:
                     # Use a conservative estimate
-                    efficiency = 65.0  # Conservative default
+                    efficiency = config.get('performance_vfd', 'conservative_efficiency_default_percentage')
                     logger.debug(f"[VFD CALC] {pump_code}: Using default efficiency {efficiency}%")
             
             # Calculate power using affinity laws
@@ -245,7 +246,7 @@ class VFDCalculator:
                 'impeller_diameter_mm': reference_diameter,
                 'trim_percent': 100.0,  # No trimming with VFD
                 'vfd_required': True,
-                'operating_frequency_hz': round(50 * speed_ratio, 1)  # Assuming 50Hz base frequency
+                'operating_frequency_hz': round(config.get('performance_vfd', 'base_frequency_for_vfd_calculations_hz') * speed_ratio, 1)
             }
             
             logger.info(f"[VFD CALC] {pump_code}: VFD calculation successful - {required_speed:.0f} RPM ({speed_ratio*100:.1f}% speed)")

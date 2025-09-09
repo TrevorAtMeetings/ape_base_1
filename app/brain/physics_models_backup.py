@@ -21,51 +21,51 @@ from .config_manager import config
 # Each pump type has unique exponents for how performance scales with impeller diameter
 PUMP_TYPE_EXPONENTS = {
     'AXIAL_FLOW': {
-        'flow_exponent_x': config.get('physics_models', 'axial_flow_pump_flow_exponent'),
-        'head_exponent_y': config.get('physics_models', 'axial_flow_pump_head_exponent'),
-        'power_exponent_z': config.get('physics_models', 'axial_flow_pump_power_exponent'),
-        'npshr_exponent_alpha': config.get('physics_models', 'axial_flow_pump_npsh_exponent'),
+        'flow_exponent_x': config.get('physics_models_constants', 'axial_flow_pump_flow_exponent_value'),
+        'head_exponent_y': config.get('physics_models_constants', 'axial_flow_pump_head_exponent_value'),
+        'power_exponent_z': config.get('physics_models_constants', 'axial_flow_pump_power_exponent_value'),
+        'npshr_exponent_alpha': config.get('physics_models_constants', 'axial_flow_pump_npsh_exponent_value'),
         'description': 'Axial flow pumps with propeller-type impellers'
     },
     
     'END_SUCTION': {
-        'flow_exponent_x': config.get('physics_models', 'end_suction_pump_flow_exponent'),
-        'head_exponent_y': config.get('physics_models', 'end_suction_pump_head_exponent'),
-        'power_exponent_z': config.get('physics_models', 'end_suction_pump_power_exponent'),
-        'npshr_exponent_alpha': config.get('physics_models', 'end_suction_pump_npsh_exponent'),
+        'flow_exponent_x': config.get('physics_models_constants', 'end_suction_pump_flow_exponent_value'),
+        'head_exponent_y': config.get('physics_models_constants', 'end_suction_pump_head_exponent_value'),
+        'power_exponent_z': config.get('physics_models_constants', 'end_suction_pump_power_exponent_value'),
+        'npshr_exponent_alpha': config.get('physics_models_constants', 'end_suction_pump_npsh_exponent_value'),
         'description': 'End suction radial flow centrifugal pumps'
     },
     
     'HORIZONTAL_SPLIT_CASE': {
-        'flow_exponent_x': config.get('physics_models', 'horizontal_split_case_pump_flow_exponent'),
-        'head_exponent_y': config.get('physics_models', 'horizontal_split_case_pump_head_exponent'),
-        'power_exponent_z': config.get('physics_models', 'horizontal_split_case_pump_power_exponent'),
-        'npshr_exponent_alpha': config.get('physics_models', 'horizontal_split_case_pump_npsh_exponent'),
+        'flow_exponent_x': config.get('physics_models_constants', 'horizontal_split_case_pump_flow_exponent_value'),
+        'head_exponent_y': config.get('physics_models_constants', 'horizontal_split_case_pump_head_exponent_value'),
+        'power_exponent_z': config.get('physics_models_constants', 'horizontal_split_case_pump_power_exponent_value'),
+        'npshr_exponent_alpha': config.get('physics_models_constants', 'horizontal_split_case_pump_npsh_exponent_value'),
         'description': 'Horizontal split case pumps (HSC)'
     },
     
     'MULTI_STAGE': {
-        'flow_exponent_x': config.get('physics_models', 'multistage_pump_flow_exponent'),
-        'head_exponent_y': config.get('physics_models', 'multistage_pump_head_exponent'),
-        'power_exponent_z': config.get('physics_models', 'multistage_pump_power_exponent'),
-        'npshr_exponent_alpha': config.get('physics_models', 'multistage_pump_npsh_exponent'),
+        'flow_exponent_x': config.get('physics_models_constants', 'multi_stage_pump_flow_exponent_value'),
+        'head_exponent_y': config.get('physics_models_constants', 'multi_stage_pump_head_exponent_value'),
+        'power_exponent_z': config.get('physics_models_constants', 'multi_stage_pump_power_exponent_value'),
+        'npshr_exponent_alpha': config.get('physics_models_constants', 'multi_stage_pump_npsh_exponent_value'),
         'description': 'Multi-stage radial flow pumps'
     },
     
     'VERTICAL_TURBINE': {
-        'flow_exponent_x': config.get('physics_models', 'vertical_turbine_pump_flow_exponent'),
-        'head_exponent_y': config.get('physics_models', 'vertical_turbine_pump_head_exponent'),
-        'power_exponent_z': config.get('physics_models', 'vertical_turbine_pump_power_exponent'),
-        'npshr_exponent_alpha': config.get('physics_models', 'vertical_turbine_pump_npsh_exponent'),
+        'flow_exponent_x': config.get('physics_models_constants', 'vertical_turbine_pump_flow_exponent_value'),
+        'head_exponent_y': config.get('physics_models_constants', 'vertical_turbine_pump_head_exponent_value'),
+        'power_exponent_z': config.get('physics_models_constants', 'vertical_turbine_pump_power_exponent_value'),
+        'npshr_exponent_alpha': config.get('physics_models_constants', 'vertical_turbine_pump_npsh_exponent_value'),
         'description': 'Vertical turbine pumps with mixed-flow bowls'
     },
     
     # Default fallback for unknown pump types - standard affinity laws
     'DEFAULT': {
-        'flow_exponent_x': config.get('physics_models', 'default_pump_flow_exponent_standard_affinity_law'),
-        'head_exponent_y': config.get('physics_models', 'default_pump_head_exponent_standard_affinity_law'),
-        'power_exponent_z': config.get('physics_models', 'default_pump_power_exponent_standard_affinity_law'),
-        'npshr_exponent_alpha': config.get('physics_models', 'default_pump_npsh_exponent_standard_affinity_law'),
+        'flow_exponent_x': config.get('physics_models_constants', 'default_pump_flow_exponent_value'),
+        'head_exponent_y': config.get('physics_models_constants', 'default_pump_head_exponent_value'),
+        'power_exponent_z': config.get('physics_models_constants', 'default_pump_power_exponent_value'),
+        'npshr_exponent_alpha': config.get('physics_models_constants', 'default_pump_npsh_exponent_value'),
         'description': 'Standard affinity laws for general centrifugal pumps'
     }
 }

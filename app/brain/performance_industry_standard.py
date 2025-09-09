@@ -9,6 +9,7 @@ import numpy as np
 from typing import Dict, Any, Optional
 from scipy import interpolate
 from .physics_models import get_exponents_for_pump_type
+from .config_manager import config
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +29,20 @@ class IndustryStandardCalculator:
         self.brain = brain
         self.validator = validator
         self.optimizer = optimizer
+        
+        # Load configuration values for industry standard calculations
+        self.flow_range_min = config.get('performance_industry_standard', 'flow_range_tolerance_minimum_multiplier_90')
+        self.flow_range_max = config.get('performance_industry_standard', 'flow_range_tolerance_maximum_multiplier_110')
+        self.bep_flow_threshold = config.get('performance_industry_standard', 'flow_deviation_threshold_for_authentic_bep_efficiency_15')
+        self.head_capability_threshold = config.get('performance_industry_standard', 'head_capability_threshold_multiplier_115_above_target')
+        self.min_head_delivery = config.get('performance_industry_standard', 'minimum_head_delivery_factor_98_of_required')
+        self.severe_shortfall_threshold = config.get('performance_industry_standard', 'severe_head_shortfall_threshold_70_of_target')
+        # Trim percentage is not in performance_industry_standard section, use fallback from performance_affinity
+        self.min_trim_percent = config.get('performance_affinity', 'industry_standard_minimum_trim_percentage_15_max_trim')
+        self.qbp_penalty_threshold = config.get('performance_industry_standard', 'qbp_efficiency_penalty_threshold_percentage')
+        self.qbp_penalty_base = config.get('performance_industry_standard', 'qbp_efficiency_penalty_base_factor_10')
+        self.qbp_penalty_divisor = config.get('performance_industry_standard', 'qbp_efficiency_penalty_divisor_for_calculations')
+        self.qbp_penalty_lower_bound = config.get('performance_industry_standard', 'qbp_efficiency_penalty_lower_bound_percentage')
 
     def calculate_at_point_industry_standard(self, pump_data: Dict[str, Any], flow: float, 
                           head: float, impeller_trim: Optional[float] = None) -> Optional[Dict[str, Any]]:
@@ -130,10 +145,10 @@ class IndustryStandardCalculator:
             min_flow, max_flow = min(flows), max(flows)
             logger.debug(f"[INDUSTRY] {pump_code}: Checking flow range: {min_flow:.1f} - {max_flow:.1f} vs required {flow}")
             
-            if not (min_flow * 0.9 <= flow <= max_flow * 1.1):
-                logger.debug(f"[INDUSTRY] {pump_code}: Flow {flow} outside curve range {min_flow*0.9:.1f} - {max_flow*1.1:.1f}")
+            if not (min_flow * self.flow_range_min <= flow <= max_flow * self.flow_range_max):
+                logger.debug(f"[INDUSTRY] {pump_code}: Flow {flow} outside curve range {min_flow*self.flow_range_min:.1f} - {max_flow*self.flow_range_max:.1f}")
                 if pump_code and "8/8 DME" in str(pump_code):
-                    logger.error(f"[8/8 DME DEBUG] Flow {flow} outside range {min_flow*0.9:.1f} - {max_flow*1.1:.1f}")
+                    logger.error(f"[8/8 DME DEBUG] Flow {flow} outside range {min_flow*self.flow_range_min:.1f} - {max_flow*self.flow_range_max:.1f}")
                 return None
                 
             logger.debug(f"[INDUSTRY] {pump_code}: Starting interpolation on largest curve...")
@@ -169,7 +184,7 @@ class IndustryStandardCalculator:
                 # If operating near BEP flow and authentic efficiency is available, use it
                 if authentic_bep_efficiency > 0 and bep_flow > 0:
                     flow_deviation = abs(flow - bep_flow) / bep_flow
-                    if flow_deviation < 0.15:  # Within 15% of BEP flow
+                    if flow_deviation < self.bep_flow_threshold:  # Within configured threshold of BEP flow
                         base_efficiency = authentic_bep_efficiency
                         logger.debug(f"[INDUSTRY] {pump_code}: Using authentic BEP efficiency {base_efficiency:.1f}% (near BEP flow)")
                     else:
@@ -213,7 +228,7 @@ class IndustryStandardCalculator:
                 # STEP 2: ALWAYS USE LARGEST IMPELLER AS REFERENCE (Industry Standard)
                 # Even if target head is below the largest curve's capability,
                 # we should trim from the largest impeller for best hydraulic design
-                if delivered_head > head * 1.15:  # Target head is significantly below largest curve capability
+                if delivered_head > head * self.head_capability_threshold:  # Target head is significantly below largest curve capability
                     logger.debug(f"[INDUSTRY] {pump_code}: Target head {head:.2f}m below largest curve {delivered_head:.2f}m - will trim from largest impeller")
                     
                     if pump_code:
@@ -224,13 +239,13 @@ class IndustryStandardCalculator:
                     # Industry best practice is to use the largest impeller and trim down
                     logger.debug(f"[INDUSTRY] {pump_code}: Using largest impeller {largest_diameter}mm as reference")
                 
-                # Allow some tolerance - pump should deliver at least 98% of required head  
-                if delivered_head < head * 0.98:
-                    logger.warning(f"[INDUSTRY] {pump_code}: Insufficient head capability - base curve gives {delivered_head:.2f}m < required {head*0.98:.2f}m")
+                # Allow some tolerance - pump should deliver at least configured percentage of required head
+                if delivered_head < head * self.min_head_delivery:
+                    logger.warning(f"[INDUSTRY] {pump_code}: Insufficient head capability - base curve gives {delivered_head:.2f}m < required {head*self.min_head_delivery:.2f}m")
                     # Only provide capability estimate if the pump could theoretically work with reasonable trim
                     # Check if using maximum impeller would require impossible trim to reach target
                     max_possible_head = delivered_head  # This is what pump can deliver at full impeller
-                    if max_possible_head < head * 0.7:  # If pump can't even get close (70% of target)
+                    if max_possible_head < head * self.severe_shortfall_threshold:  # If pump can't even get close
                         logger.warning(f"[PHYSICAL LIMIT] {pump_code}: Head shortfall too severe ({max_possible_head:.1f}m vs {head:.1f}m required) - pump rejected")
                         return None
                     
@@ -275,9 +290,8 @@ class IndustryStandardCalculator:
                 logger.debug(f"[INDUSTRY] {pump_code}: Affinity law result - required diameter: {required_diameter:.1f}mm (trim: {trim_percent:.1f}%)")
                 
                 # STEP 4: Check trim limits - use configured minimum
-                min_trim_percent = 85.0  # Industry standard - 15% maximum trim, non-negotiable
-                if trim_percent is not None and trim_percent < min_trim_percent:
-                    logger.warning(f"[INDUSTRY] {pump_code}: Excessive trim required ({trim_percent:.1f}% < {min_trim_percent}%) - beyond safe limits")
+                if trim_percent is not None and trim_percent < self.min_trim_percent:
+                    logger.warning(f"[INDUSTRY] {pump_code}: Excessive trim required ({trim_percent:.1f}% < {self.min_trim_percent}%) - beyond safe limits")
                     # CRITICAL DIAGNOSIS: Log the exact values causing excessive trim
                     logger.error(f"[TRIM DEBUG] {pump_code}: Required {head}m but delivered {delivered_head:.1f}m at {flow} m³/hr")
                     # Calculate these values for debugging (they're needed for the error message)
@@ -415,11 +429,11 @@ class IndustryStandardCalculator:
                     
                     # Apply performance corrections based on curve rotation
                     # The curve "rotates" counterclockwise, affecting efficiency more at higher flows
-                    if true_qbp_percent > 110:  # Operating significantly above shifted BEP
+                    if true_qbp_percent > self.qbp_penalty_threshold:  # Operating significantly above shifted BEP
                         # Efficiency correction factor from tunable physics engine
-                        efficiency_correction_factor = self.validator.get_calibration_factor('efficiency_correction_exponent', 0.1)
-                        qbp_efficiency_penalty = min(5, (true_qbp_percent - 110) * efficiency_correction_factor)
-                        final_efficiency = max(40, final_efficiency - qbp_efficiency_penalty)
+                        efficiency_correction_factor = self.validator.get_calibration_factor('efficiency_correction_exponent', self.qbp_penalty_base)
+                        qbp_efficiency_penalty = min(self.qbp_penalty_divisor, (true_qbp_percent - self.qbp_penalty_threshold) * efficiency_correction_factor)
+                        final_efficiency = max(self.qbp_penalty_lower_bound, final_efficiency - qbp_efficiency_penalty)
                         logger.info(f"[BEP MIGRATION] {pump_code}: Applied {qbp_efficiency_penalty:.1f}% efficiency penalty for QBP {true_qbp_percent:.1f}% (factor: {efficiency_correction_factor})")
                     
                                     

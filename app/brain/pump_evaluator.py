@@ -41,12 +41,12 @@ class PumpEvaluator:
         # Operating constraints
         self.min_trim_percent = 85.0
         self.max_trim_percent = 100.0
-        self.npsh_safety_factor = 1.5
+        self.npsh_safety_factor = config.get('pump_evaluator', 'npsh_safety_factor_for_required_margin')
         
         # More realistic QBP ranges for industrial applications
         # The old 60-130% range was too restrictive for practical pump selection
-        self.qbp_min_percent = 50.0  # Allow pumps running at 50% of BEP (more realistic)
-        self.qbp_max_percent = 200.0  # Allow pumps running at 200% of BEP (more realistic)
+        self.qbp_min_percent = config.get('pump_evaluator', 'minimum_realistic_qbp_range_percentage')  # Allow pumps running at 50% of BEP (more realistic)
+        self.qbp_max_percent = config.get('pump_evaluator', 'maximum_realistic_qbp_range_percentage')  # Allow pumps running at 200% of BEP (more realistic)
         
         # FIXED: Head oversizing constraints - much more realistic thresholds
         self.head_oversizing_threshold = config.get('pump_evaluator', 'head_oversizing_threshold_percentage')  # % above requirement triggers penalty (was 40%)
@@ -169,7 +169,10 @@ class PumpEvaluator:
                 qbp = (flow / bep_flow) * 100
                 
                 # TIERED evaluation - NO REJECTIONS (show all pumps categorized by performance)
-                if 80 <= qbp <= 110:
+                preferred_min = config.get('pump_evaluator', 'preferred_operating_zone_minimum_qbp_percentage')
+                preferred_max = config.get('pump_evaluator', 'preferred_operating_zone_maximum_qbp_percentage')
+                
+                if preferred_min <= qbp <= preferred_max:
                     operating_zone = 'preferred'  # Optimal operating range
                     tier = 1
                     qbp_reasoning = "Sweet spot - optimal pump efficiency and performance"
@@ -378,7 +381,7 @@ class PumpEvaluator:
                     evaluation['bep_migration_corrected'] = True
                     
                     # Recalculate operating zone with TRUE QBP - TIERED APPROACH
-                    if 80 <= true_qbp <= 110:
+                    if preferred_min <= true_qbp <= preferred_max:
                         operating_zone = 'preferred'
                         tier = 1
                     elif 60 <= true_qbp < 80 or 110 < true_qbp <= 140:
@@ -425,16 +428,22 @@ class PumpEvaluator:
                 
                 # Efficiency score (Legacy v6.0 - 35 points max)
                 efficiency = performance.get('efficiency_pct', 0)
-                if efficiency >= 85:
+                excellent_eff = config.get('pump_evaluator', 'excellent_efficiency_scoring_threshold_percentage')
+                good_eff = config.get('pump_evaluator', 'good_efficiency_scoring_threshold_percentage')
+                fair_eff = config.get('pump_evaluator', 'fair_efficiency_scoring_threshold_percentage')
+                poor_eff = config.get('pump_evaluator', 'poor_efficiency_scoring_threshold_percentage')
+                min_eff = config.get('pump_evaluator', 'minimum_acceptable_efficiency_threshold_percentage')
+                
+                if efficiency >= excellent_eff:
                     eff_score = 35
-                elif efficiency >= 75:
-                    eff_score = 30 + (efficiency - 75) * 0.5
-                elif efficiency >= 65:
-                    eff_score = 25 + (efficiency - 65) * 0.5
-                elif efficiency >= 45:
-                    eff_score = 10 + (efficiency - 45) * 0.75
-                else:  # 40-45%
-                    eff_score = max(0, (efficiency - 40) * 2)
+                elif efficiency >= good_eff:
+                    eff_score = 30 + (efficiency - good_eff) * 0.5
+                elif efficiency >= fair_eff:
+                    eff_score = 25 + (efficiency - fair_eff) * 0.5
+                elif efficiency >= poor_eff:
+                    eff_score = 10 + (efficiency - poor_eff) * 0.75
+                else:  # min_eff to poor_eff
+                    eff_score = max(0, (efficiency - min_eff) * 2)
                 
                 evaluation['score_components']['efficiency'] = eff_score
                 evaluation['efficiency_pct'] = efficiency

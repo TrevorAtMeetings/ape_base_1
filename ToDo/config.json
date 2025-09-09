@@ -290,6 +290,114 @@
         "source_file": "physics_models.py",
         "description": "End suction pump head exponent",
         "category": "pump_type_physics"
+      },
+      {
+        "value": 2.93,
+        "source_file": "physics_models.py",
+        "description": "End suction pump power exponent",
+        "category": "pump_type_physics"
+      },
+      {
+        "value": 1.95,
+        "source_file": "physics_models.py",
+        "description": "End suction pump NPSH exponent",
+        "category": "pump_type_physics"
+      },
+      {
+        "value": 1.00,
+        "source_file": "physics_models.py",
+        "description": "Horizontal split case pump flow exponent",
+        "category": "pump_type_physics"
+      },
+      {
+        "value": 2.01,
+        "source_file": "physics_models.py",
+        "description": "Horizontal split case pump head exponent",
+        "category": "pump_type_physics"
+      },
+      {
+        "value": 3.00,
+        "source_file": "physics_models.py",
+        "description": "Horizontal split case pump power exponent",
+        "category": "pump_type_physics"
+      },
+      {
+        "value": 2.00,
+        "source_file": "physics_models.py",
+        "description": "Horizontal split case pump NPSH exponent",
+        "category": "pump_type_physics"
+      },
+      {
+        "value": 1.00,
+        "source_file": "physics_models.py",
+        "description": "Multi-stage pump flow exponent",
+        "category": "pump_type_physics"
+      },
+      {
+        "value": 1.97,
+        "source_file": "physics_models.py",
+        "description": "Multi-stage pump head exponent",
+        "category": "pump_type_physics"
+      },
+      {
+        "value": 2.95,
+        "source_file": "physics_models.py",
+        "description": "Multi-stage pump power exponent",
+        "category": "pump_type_physics"
+      },
+      {
+        "value": 2.00,
+        "source_file": "physics_models.py",
+        "description": "Multi-stage pump NPSH exponent",
+        "category": "pump_type_physics"
+      },
+      {
+        "value": 0.97,
+        "source_file": "physics_models.py",
+        "description": "Vertical turbine pump flow exponent",
+        "category": "pump_type_physics"
+      },
+      {
+        "value": 1.85,
+        "source_file": "physics_models.py",
+        "description": "Vertical turbine pump head exponent",
+        "category": "pump_type_physics"
+      },
+      {
+        "value": 2.80,
+        "source_file": "physics_models.py",
+        "description": "Vertical turbine pump power exponent",
+        "category": "pump_type_physics"
+      },
+      {
+        "value": 1.80,
+        "source_file": "physics_models.py",
+        "description": "Vertical turbine pump NPSH exponent",
+        "category": "pump_type_physics"
+      },
+      {
+        "value": 1.00,
+        "source_file": "physics_models.py",
+        "description": "Default pump flow exponent (standard affinity law)",
+        "category": "pump_type_physics"
+      },
+      {
+        "value": 2.00,
+        "source_file": "physics_models.py",
+        "description": "Default pump head exponent (standard affinity law)",
+        "category": "pump_type_physics"
+      },
+      {
+        "value": 3.00,
+        "source_file": "physics_models.py",
+        "description": "Default pump power exponent (standard affinity law)",
+        "category": "pump_type_physics"
+      },
+      {
+        "value": 2.00,
+        "source_file": "physics_models.py",
+        "description": "Default pump NPSH exponent (standard affinity law)",
+        "category": "pump_type_physics"
       }
     ],
     "validation_constants": [
@@ -472,6 +580,12 @@
         "source_file": "hydraulic_classifier.py",
         "description": "High specific speed threshold for mixed flow pumps",
         "category": "hydraulic_classification"
+      },
+      {
+        "value": 0.85,
+        "source_file": "hydraulic_classifier.py",
+        "description": "Minimum trim ratio (15% maximum trim limit)",
+        "category": "hydraulic_limits"
       }
     ],
     "proximity_searcher_constants": [
@@ -492,6 +606,30 @@
         "source_file": "proximity_searcher.py",
         "description": "Number of top pumps to return from proximity search",
         "category": "search_limits"
+      },
+      {
+        "value": 30.0,
+        "source_file": "proximity_searcher.py",
+        "description": "Minimum realistic efficiency floor percentage",
+        "category": "search_limits"
+      },
+      {
+        "value": 10,
+        "source_file": "proximity_searcher.py",
+        "description": "Excellent proximity scoring threshold",
+        "category": "proximity_scoring"
+      },
+      {
+        "value": 25,
+        "source_file": "proximity_searcher.py",
+        "description": "Good proximity scoring threshold",
+        "category": "proximity_scoring"
+      },
+      {
+        "value": 50,
+        "source_file": "proximity_searcher.py",
+        "description": "Fair proximity scoring threshold",
+        "category": "proximity_scoring"
       }
     ],
     "pump_evaluator_constants": [
@@ -524,6 +662,66 @@
         "source_file": "pump_evaluator.py",
         "description": "Severe head oversizing threshold percentage",
         "category": "scoring_thresholds"
+      },
+      {
+        "value": 1.5,
+        "source_file": "pump_evaluator.py",
+        "description": "NPSH safety factor for required margin",
+        "category": "scoring_thresholds"
+      },
+      {
+        "value": 50.0,
+        "source_file": "pump_evaluator.py",
+        "description": "Minimum realistic QBP range percentage",
+        "category": "scoring_thresholds"
+      },
+      {
+        "value": 200.0,
+        "source_file": "pump_evaluator.py",
+        "description": "Maximum realistic QBP range percentage",
+        "category": "scoring_thresholds"
+      },
+      {
+        "value": 80,
+        "source_file": "pump_evaluator.py",
+        "description": "Preferred operating zone minimum QBP percentage",
+        "category": "operating_zones"
+      },
+      {
+        "value": 110,
+        "source_file": "pump_evaluator.py",
+        "description": "Preferred operating zone maximum QBP percentage",
+        "category": "operating_zones"
+      },
+      {
+        "value": 85,
+        "source_file": "pump_evaluator.py",
+        "description": "Excellent efficiency scoring threshold percentage",
+        "category": "efficiency_scoring"
+      },
+      {
+        "value": 75,
+        "source_file": "pump_evaluator.py",
+        "description": "Good efficiency scoring threshold percentage",
+        "category": "efficiency_scoring"
+      },
+      {
+        "value": 65,
+        "source_file": "pump_evaluator.py",
+        "description": "Fair efficiency scoring threshold percentage",
+        "category": "efficiency_scoring"
+      },
+      {
+        "value": 45,
+        "source_file": "pump_evaluator.py",
+        "description": "Poor efficiency scoring threshold percentage",
+        "category": "efficiency_scoring"
+      },
+      {
+        "value": 40,
+        "source_file": "pump_evaluator.py",
+        "description": "Minimum acceptable efficiency threshold percentage",
+        "category": "efficiency_scoring"
       }
     ],
     "performance_vfd_constants": [
@@ -556,25 +754,592 @@
         "source_file": "performance_vfd.py",
         "description": "Base frequency for VFD calculations (Hz)",
         "category": "vfd_defaults"
+      },
+      {
+        "value": 65.0,
+        "source_file": "performance_vfd.py",
+        "description": "Conservative efficiency default percentage",
+        "category": "vfd_defaults"
+      },
+      {
+        "value": 0.1,
+        "source_file": "performance_vfd.py",
+        "description": "Error tolerance for system curve matching",
+        "category": "vfd_tolerances"
+      }
+    ],
+    "selection_core_constants": [
+      {
+        "value": 45,
+        "source_file": "selection_core.py",
+        "description": "BEP proximity scoring weight (maximum points)",
+        "category": "scoring_weights"
+      },
+      {
+        "value": 35,
+        "source_file": "selection_core.py",
+        "description": "Efficiency scoring weight (maximum points)",
+        "category": "scoring_weights"
+      },
+      {
+        "value": 20,
+        "source_file": "selection_core.py",
+        "description": "Head margin scoring weight (maximum points)",
+        "category": "scoring_weights"
+      },
+      {
+        "value": 0,
+        "source_file": "selection_core.py",
+        "description": "NPSH margin scoring weight (maximum points)",
+        "category": "scoring_weights"
+      },
+      {
+        "value": 0.4,
+        "source_file": "selection_core.py",
+        "description": "Flow pre-filtering minimum range (40%)",
+        "category": "selection_ranges"
+      },
+      {
+        "value": 3.0,
+        "source_file": "selection_core.py",
+        "description": "Flow pre-filtering maximum range (300%)",
+        "category": "selection_ranges"
+      },
+      {
+        "value": 0.3,
+        "source_file": "selection_core.py",
+        "description": "Head pre-filtering minimum range (30%)",
+        "category": "selection_ranges"
+      },
+      {
+        "value": 2.0,
+        "source_file": "selection_core.py",
+        "description": "Head pre-filtering maximum range (200%)",
+        "category": "selection_ranges"
+      },
+      {
+        "value": 0.9,
+        "source_file": "selection_core.py",
+        "description": "Flow range tolerance minimum multiplier (90%)",
+        "category": "selection_tolerances"
+      },
+      {
+        "value": 1.1,
+        "source_file": "selection_core.py",
+        "description": "Flow range tolerance maximum multiplier (110%)",
+        "category": "selection_tolerances"
+      }
+    ],
+    "physical_validator_constants": [
+      {
+        "value": 0.1,
+        "source_file": "physical_validator.py",
+        "description": "Flow tolerance for curve range validation (10%)",
+        "category": "validation_tolerances"
+      },
+      {
+        "value": 0.02,
+        "source_file": "physical_validator.py",
+        "description": "Head tolerance for capability validation (2%)",
+        "category": "validation_tolerances"
+      }
+    ],
+    "performance_core_constants": [
+      {
+        "value": 40.0,
+        "source_file": "performance_core.py",
+        "description": "Minimum acceptable efficiency percentage",
+        "category": "performance_thresholds"
+      },
+      {
+        "value": 1.0,
+        "source_file": "performance_core.py",
+        "description": "Default flow exponent for affinity laws",
+        "category": "affinity_exponents"
+      },
+      {
+        "value": 2.0,
+        "source_file": "performance_core.py",
+        "description": "Default head exponent for affinity laws",
+        "category": "affinity_exponents"
+      },
+      {
+        "value": 3.0,
+        "source_file": "performance_core.py",
+        "description": "Default power exponent for affinity laws",
+        "category": "affinity_exponents"
+      },
+      {
+        "value": 0.8,
+        "source_file": "performance_core.py",
+        "description": "Default efficiency exponent for affinity laws",
+        "category": "affinity_exponents"
+      }
+    ],
+    "performance_industry_standard_constants": [
+      {
+        "value": 0.9,
+        "source_file": "performance_industry_standard.py",
+        "description": "Flow range tolerance minimum multiplier (90%)",
+        "category": "curve_tolerances"
+      },
+      {
+        "value": 1.1,
+        "source_file": "performance_industry_standard.py",
+        "description": "Flow range tolerance maximum multiplier (110%)",
+        "category": "curve_tolerances"
+      },
+      {
+        "value": 0.15,
+        "source_file": "performance_industry_standard.py",
+        "description": "Flow deviation threshold for authentic BEP efficiency (15%)",
+        "category": "bep_thresholds"
+      },
+      {
+        "value": 1.15,
+        "source_file": "performance_industry_standard.py",
+        "description": "Head capability threshold multiplier (115% above target)",
+        "category": "capability_thresholds"
+      },
+      {
+        "value": 0.98,
+        "source_file": "performance_industry_standard.py",
+        "description": "Minimum head delivery factor (98% of required)",
+        "category": "capability_thresholds"
+      },
+      {
+        "value": 0.7,
+        "source_file": "performance_industry_standard.py",
+        "description": "Severe head shortfall threshold (70% of target)",
+        "category": "capability_thresholds"
+      },
+      {
+        "value": 110,
+        "source_file": "performance_industry_standard.py",
+        "description": "QBP efficiency penalty threshold percentage",
+        "category": "efficiency_penalties"
+      },
+      {
+        "value": 0.1,
+        "source_file": "performance_industry_standard.py",
+        "description": "QBP efficiency penalty base factor (10%)",
+        "category": "efficiency_penalties"
+      },
+      {
+        "value": 5,
+        "source_file": "performance_industry_standard.py",
+        "description": "QBP efficiency penalty divisor for calculations",
+        "category": "efficiency_penalties"
+      },
+      {
+        "value": 40,
+        "source_file": "performance_industry_standard.py",
+        "description": "QBP efficiency penalty lower bound percentage",
+        "category": "efficiency_penalties"
+      }
+    ],
+    "performance_validation_constants": [
+      {
+        "value": 60,
+        "source_file": "performance_validation.py",
+        "description": "BEP proximity warning minimum threshold percentage",
+        "category": "bep_warnings"
+      },
+      {
+        "value": 130,
+        "source_file": "performance_validation.py",
+        "description": "BEP proximity warning maximum threshold percentage",
+        "category": "bep_warnings"
+      },
+      {
+        "value": 95,
+        "source_file": "performance_validation.py",
+        "description": "Optimal BEP range minimum percentage",
+        "category": "optimal_ranges"
+      },
+      {
+        "value": 105,
+        "source_file": "performance_validation.py",
+        "description": "Optimal BEP range maximum percentage",
+        "category": "optimal_ranges"
+      },
+      {
+        "value": 0.9,
+        "source_file": "performance_validation.py",
+        "description": "Maximum head/flow safety factor (90%)",
+        "category": "safety_factors"
+      }
+    ],
+    "scoring_utils_constants": [
+      {
+        "value": 45,
+        "source_file": "scoring_utils.py",
+        "description": "Maximum BEP proximity score (excellent range)",
+        "category": "bep_scoring"
+      },
+      {
+        "value": 40,
+        "source_file": "scoring_utils.py",
+        "description": "High BEP proximity score (good range)",
+        "category": "bep_scoring"
+      },
+      {
+        "value": 30,
+        "source_file": "scoring_utils.py",
+        "description": "Medium BEP proximity score (fair range)",
+        "category": "bep_scoring"
+      },
+      {
+        "value": 20,
+        "source_file": "scoring_utils.py",
+        "description": "Low BEP proximity score (acceptable range)",
+        "category": "bep_scoring"
+      },
+      {
+        "value": 0.90,
+        "source_file": "scoring_utils.py",
+        "description": "BEP excellent range minimum factor (90%)",
+        "category": "bep_ranges"
+      },
+      {
+        "value": 1.10,
+        "source_file": "scoring_utils.py",
+        "description": "BEP excellent range maximum factor (110%)",
+        "category": "bep_ranges"
+      },
+      {
+        "value": 0.80,
+        "source_file": "scoring_utils.py",
+        "description": "BEP good range minimum factor (80%)",
+        "category": "bep_ranges"
+      },
+      {
+        "value": 1.20,
+        "source_file": "scoring_utils.py",
+        "description": "BEP good range maximum factor (120%)",
+        "category": "bep_ranges"
+      },
+      {
+        "value": 0.70,
+        "source_file": "scoring_utils.py",
+        "description": "BEP fair range minimum factor (70%)",
+        "category": "bep_ranges"
+      },
+      {
+        "value": 1.30,
+        "source_file": "scoring_utils.py",
+        "description": "BEP fair range maximum factor (130%)",
+        "category": "bep_ranges"
+      },
+      {
+        "value": 35,
+        "source_file": "scoring_utils.py",
+        "description": "Maximum efficiency score (excellent efficiency)",
+        "category": "efficiency_scoring"
+      },
+      {
+        "value": 30,
+        "source_file": "scoring_utils.py",
+        "description": "High efficiency score (good efficiency)",
+        "category": "efficiency_scoring"
+      },
+      {
+        "value": 25,
+        "source_file": "scoring_utils.py",
+        "description": "Medium efficiency score (fair efficiency)",
+        "category": "efficiency_scoring"
+      },
+      {
+        "value": 10,
+        "source_file": "scoring_utils.py",
+        "description": "Low efficiency score (poor efficiency)",
+        "category": "efficiency_scoring"
+      },
+      {
+        "value": 20,
+        "source_file": "scoring_utils.py",
+        "description": "Maximum head margin score",
+        "category": "head_margin_scoring"
+      },
+      {
+        "value": 15,
+        "source_file": "scoring_utils.py",
+        "description": "High head margin score",
+        "category": "head_margin_scoring"
+      },
+      {
+        "value": 5,
+        "source_file": "scoring_utils.py",
+        "description": "Low head margin score",
+        "category": "head_margin_scoring"
+      },
+      {
+        "value": 5,
+        "source_file": "scoring_utils.py",
+        "description": "Head margin excellent threshold percentage",
+        "category": "head_margin_thresholds"
+      },
+      {
+        "value": 10,
+        "source_file": "scoring_utils.py",
+        "description": "Head margin good threshold percentage",
+        "category": "head_margin_thresholds"
+      },
+      {
+        "value": 15,
+        "source_file": "scoring_utils.py",
+        "description": "Head margin fair threshold percentage",
+        "category": "head_margin_thresholds"
+      },
+      {
+        "value": -50,
+        "source_file": "scoring_utils.py",
+        "description": "Physical limitation penalty score",
+        "category": "penalty_scores"
+      },
+      {
+        "value": -2,
+        "source_file": "scoring_utils.py",
+        "description": "Light trim penalty score (90-95% range)",
+        "category": "trim_penalties"
+      },
+      {
+        "value": -5,
+        "source_file": "scoring_utils.py",
+        "description": "Moderate trim penalty score (85-90% range)",
+        "category": "trim_penalties"
+      },
+      {
+        "value": -10,
+        "source_file": "scoring_utils.py",
+        "description": "Heavy trim penalty score (below 85% range)",
+        "category": "trim_penalties"
+      },
+      {
+        "value": 90,
+        "source_file": "scoring_utils.py",
+        "description": "Light trim threshold percentage",
+        "category": "trim_thresholds"
+      },
+      {
+        "value": 95,
+        "source_file": "scoring_utils.py",
+        "description": "Minimal trim threshold percentage",
+        "category": "trim_thresholds"
+      },
+      {
+        "value": 95,
+        "source_file": "scoring_utils.py",
+        "description": "BEP optimal range minimum percentage",
+        "category": "bep_optimal_ranges"
+      },
+      {
+        "value": 105,
+        "source_file": "scoring_utils.py",
+        "description": "BEP optimal range maximum percentage",
+        "category": "bep_optimal_ranges"
+      },
+      {
+        "value": 85,
+        "source_file": "scoring_utils.py",
+        "description": "Excellent efficiency threshold percentage",
+        "category": "efficiency_thresholds"
+      },
+      {
+        "value": 75,
+        "source_file": "scoring_utils.py",
+        "description": "Good efficiency threshold percentage",
+        "category": "efficiency_thresholds"
+      },
+      {
+        "value": 65,
+        "source_file": "scoring_utils.py",
+        "description": "Fair efficiency threshold percentage",
+        "category": "efficiency_thresholds"
+      },
+      {
+        "value": 45,
+        "source_file": "scoring_utils.py",
+        "description": "Poor efficiency threshold percentage",
+        "category": "efficiency_thresholds"
+      },
+      {
+        "value": -15,
+        "source_file": "scoring_utils.py",
+        "description": "Moderate oversizing penalty threshold",
+        "category": "penalty_scores"
+      }
+    ],
+    "performance_optimization_constants": [
+      {
+        "value": 40.0,
+        "source_file": "performance_optimization.py",
+        "description": "Minimum acceptable efficiency percentage",
+        "category": "algorithm_thresholds"
+      },
+      {
+        "value": 85.0,
+        "source_file": "performance_optimization.py",
+        "description": "Industry standard minimum trim percentage (15% max trim)",
+        "category": "algorithm_thresholds"
+      },
+      {
+        "value": 100.0,
+        "source_file": "performance_optimization.py",
+        "description": "Maximum trim percentage (full impeller)",
+        "category": "algorithm_thresholds"
+      },
+      {
+        "value": 1.05,
+        "source_file": "performance_optimization.py",
+        "description": "BEP precision tolerance factor (5% tolerance)",
+        "category": "optimization_tolerances"
+      },
+      {
+        "value": 1.02,
+        "source_file": "performance_optimization.py",
+        "description": "Head safety margin factor (2% safety margin)",
+        "category": "optimization_tolerances"
+      },
+      {
+        "value": 0.98,
+        "source_file": "performance_optimization.py",
+        "description": "Head requirement tolerance factor (98% minimum)",
+        "category": "optimization_tolerances"
+      },
+      {
+        "value": 2.0,
+        "source_file": "performance_optimization.py",
+        "description": "Trim test start increment percentage",
+        "category": "algorithm_tuning"
+      },
+      {
+        "value": 3.0,
+        "source_file": "performance_optimization.py",
+        "description": "Trim test increment percentage",
+        "category": "algorithm_tuning"
+      },
+      {
+        "value": 85.0,
+        "source_file": "performance_optimization.py",
+        "description": "Baseline modern pump efficiency percentage",
+        "category": "efficiency_baselines"
+      },
+      {
+        "value": 80.0,
+        "source_file": "performance_optimization.py",
+        "description": "Conservative fallback efficiency percentage",
+        "category": "efficiency_baselines"
+      },
+      {
+        "value": 40.0,
+        "source_file": "performance_optimization.py",
+        "description": "Minimum efficiency floor percentage",
+        "category": "efficiency_baselines"
+      },
+      {
+        "value": 0.2,
+        "source_file": "performance_optimization.py",
+        "description": "Trim efficiency penalty per percent (0.2% per 1% trim)",
+        "category": "penalty_factors"
+      },
+      {
+        "value": 15.0,
+        "source_file": "performance_optimization.py",
+        "description": "BEP deviation threshold percentage",
+        "category": "penalty_factors"
+      },
+      {
+        "value": 10.0,
+        "source_file": "performance_optimization.py",
+        "description": "Maximum BEP penalty percentage",
+        "category": "penalty_factors"
+      },
+      {
+        "value": 0.3,
+        "source_file": "performance_optimization.py",
+        "description": "BEP deviation penalty factor",
+        "category": "penalty_factors"
+      },
+      {
+        "value": 0.5,
+        "source_file": "performance_optimization.py",
+        "description": "Efficiency score weight (50% weight)",
+        "category": "scoring_weights"
+      },
+      {
+        "value": 0.3,
+        "source_file": "performance_optimization.py",
+        "description": "BEP proximity score weight (30% weight)",
+        "category": "scoring_weights"
+      },
+      {
+        "value": 0.2,
+        "source_file": "performance_optimization.py",
+        "description": "Head margin score weight (20% weight)",
+        "category": "scoring_weights"
+      },
+      {
+        "value": 2.0,
+        "source_file": "performance_optimization.py",
+        "description": "Head margin score factor",
+        "category": "scoring_weights"
+      },
+      {
+        "value": 0.85,
+        "source_file": "performance_optimization.py",
+        "description": "Default minimum diameter ratio fallback",
+        "category": "algorithm_thresholds"
+      },
+      {
+        "value": 0.7,
+        "source_file": "performance_optimization.py",
+        "description": "BEP proximity minimum efficiency factor",
+        "category": "efficiency_baselines"
+      },
+      {
+        "value": 0.5,
+        "source_file": "performance_optimization.py",
+        "description": "Default flow deviation from BEP fallback",
+        "category": "algorithm_defaults"
+      },
+      {
+        "value": 1.0,
+        "source_file": "performance_optimization.py",
+        "description": "BEP proximity maximum efficiency factor",
+        "category": "efficiency_baselines"
+      },
+      {
+        "value": 100,
+        "source_file": "performance_optimization.py", 
+        "description": "Base score for calculations (100%)",
+        "category": "algorithm_defaults"
       }
     ]
   },
   "configuration_summary": {
-    "total_constants": 87,
-    "total_files_analyzed": 12,
+    "total_constants": 181,
+    "total_files_analyzed": 19,
     "sections_by_source_file": {
       "ai_analysis.py": 8,
       "ai_analyst.py": 3,
       "performance_affinity.py": 18,
       "performance_curves.py": 12,
-      "physics_models.py": 6,
+      "physics_models.py": 24,
       "validation.py": 19,
       "cache.py": 2,
       "charts.py": 3,
-      "hydraulic_classifier.py": 5,
-      "proximity_searcher.py": 3,
-      "pump_evaluator.py": 5,
-      "performance_vfd.py": 5
+      "hydraulic_classifier.py": 6,
+      "proximity_searcher.py": 7,
+      "pump_evaluator.py": 15,
+      "performance_vfd.py": 7,
+      "selection_core.py": 10,
+      "physical_validator.py": 2,
+      "performance_core.py": 5,
+      "performance_industry_standard.py": 10,
+      "performance_validation.py": 5,
+      "scoring_utils.py": 27,
+      "performance_optimization.py": 19
     },
     "usage_pattern": "Each brain module queries its own section using: brain_repo.get_config('[filename]_constants'). Each section contains only the constants used within that specific file."
   }

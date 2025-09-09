@@ -147,9 +147,9 @@ class PerformanceCoreCalculator:
             process_logger.log(f"  Physics Model: {physics_exponents.get('description', 'Unknown')}")
             process_logger.log(f"  Affinity Law Formulas:")
             # Default physics exponents for affinity laws
-            default_flow_exp = 1.0
-            default_head_exp = 2.0  
-            default_power_exp = 3.0
+            default_flow_exp = self.affinity_flow_exp
+            default_head_exp = self.affinity_head_exp
+            default_power_exp = self.affinity_power_exp
             default_npshr_exp = 2.0
             
             process_logger.log(f"    Flow: Q₂ = Q₁ × (D₂/D₁)^{physics_exponents.get('flow_exponent_x', default_flow_exp)}")

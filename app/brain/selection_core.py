@@ -12,6 +12,7 @@ from ..data_models import SiteRequirements, PumpEvaluation, ExclusionReason
 from ..process_logger import process_logger
 from .pump_evaluator import PumpEvaluator
 from .proximity_searcher import ProximitySearcher
+from .config_manager import config
 
 logger = logging.getLogger(__name__)
 
@@ -35,10 +36,10 @@ class SelectionIntelligence:
         # Brain system selection parameters
         # Legacy uses point-based scoring, not percentage weights
         self.scoring_weights = {
-            'bep_proximity': 45,  # Max points (was 40% weight)
-            'efficiency': 35,     # Max points (was 30% weight)
-            'head_margin': 20,    # Max points (was 15% weight)
-            'npsh_margin': 0      # Removed in v6.0 (informational only, no gates)
+            'bep_proximity': config.get('selection_core', 'bep_proximity_scoring_weight_maximum_points'),
+            'efficiency': config.get('selection_core', 'efficiency_scoring_weight_maximum_points'),
+            'head_margin': config.get('selection_core', 'head_margin_scoring_weight_maximum_points'),
+            'npsh_margin': config.get('selection_core', 'npsh_margin_scoring_weight_maximum_points')
         }
         
         # Operating constraints
@@ -131,14 +132,18 @@ class SelectionIntelligence:
         # INTELLIGENT PRE-FILTERING: Only evaluate pumps in reasonable flow AND head range
         # This prevents evaluating 0.1 m³/hr pumps for 350 m³/hr applications
         # AND prevents 100m+ head pumps for 50m applications (excessive trim)
-        min_flow_threshold = max(flow * 0.4, 5.0)  # At least 40% of required flow, minimum 5 m³/hr
-        max_flow_threshold = flow * 3.0  # Maximum 300% of required flow
+        flow_min_range = config.get('selection_core', 'flow_prefiltering_minimum_range_40')
+        flow_max_range = config.get('selection_core', 'flow_prefiltering_maximum_range_300')
+        min_flow_threshold = max(flow * flow_min_range, 5.0)  # At least 40% of required flow, minimum 5 m³/hr
+        max_flow_threshold = flow * flow_max_range  # Maximum 300% of required flow
         
         # CRITICAL FIX: Add head-based pre-filtering to prevent excessive trim
         # ADJUSTED: More permissive thresholds to allow for impeller trimming effects
         # Trimming can increase head output, so lower BEP heads can still meet requirements
-        min_head_threshold = head * 0.3   # Minimum 30% of required head (was 80% - too restrictive!)
-        max_head_threshold = head * 2.0   # Maximum 200% of required head (increased from 160%)
+        head_min_range = config.get('selection_core', 'head_prefiltering_minimum_range_30')
+        head_max_range = config.get('selection_core', 'head_prefiltering_maximum_range_200')
+        min_head_threshold = head * head_min_range   # Minimum 30% of required head (was 80% - too restrictive!)
+        max_head_threshold = head * head_max_range   # Maximum 200% of required head (increased from 160%)
         
         process_logger.log_separator()
         process_logger.log("PRE-FILTERING STAGE")
