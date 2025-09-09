@@ -2,7 +2,7 @@
 Configuration Manager
 ======================
 Singleton class for centralized configuration management.
-Loads configuration from todo/config.json and provides typed access to all constants.
+Loads configuration from app/brain/brain_config/config.json and provides typed access to all constants.
 """
 
 import json
@@ -26,8 +26,8 @@ class ConfigManager:
         return cls._instance
     
     def _load_config(self):
-        """Load configuration from todo/config.json"""
-        config_path = Path(__file__).parent.parent.parent / 'todo' / 'config.json'
+        """Load configuration from app/brain/brain_config/config.json"""
+        config_path = Path(__file__).parent / 'brain_config' / 'config.json'
         
         try:
             if not config_path.exists():
@@ -47,14 +47,14 @@ class ConfigManager:
             # Critical error - config file must exist
             print(f"CRITICAL ERROR: Configuration file not found at {config_path}")
             print("The application cannot start without config.json")
-            print("Please ensure todo/config.json exists with proper configuration")
+            print("Please ensure app/brain/brain_config/config.json exists with proper configuration")
             self._set_defaults()  # Use emergency defaults
             print("WARNING: Using emergency default values - system may not function correctly")
             
         except json.JSONDecodeError as e:
             # Critical error - config file is corrupted
             print(f"CRITICAL ERROR: Configuration file is corrupted: {e}")
-            print("Please fix the JSON syntax in todo/config.json")
+            print("Please fix the JSON syntax in app/brain/brain_config/config.json")
             self._set_defaults()  # Use emergency defaults
             print("WARNING: Using emergency default values - system may not function correctly")
             
