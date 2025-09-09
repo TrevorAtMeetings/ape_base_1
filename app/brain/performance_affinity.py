@@ -45,6 +45,9 @@ class AffinityCalculator:
         """
         Load BEP migration calibration factors from configuration service.
         This allows for tunable physics model parameters.
+        
+        NOTE: This method now serves as fallback for static factors.
+        Dynamic physics factors are calculated per-pump in get_dynamic_physics_factors().
         """
         self.calibration_factors = {}
         
@@ -57,7 +60,7 @@ class AffinityCalculator:
                 logger.debug(f"Could not load calibration factors: {e}")
                 self.calibration_factors = {}
         
-        # Set defaults for critical factors
+        # Set defaults for critical factors (LEGACY - used as fallback only)
         default_factors = {
             'bep_shift_flow_exponent': config.get('performance_affinity', 'bep_shift_flow_exponent_calibration_factor'),
             'bep_shift_head_exponent': config.get('performance_affinity', 'bep_shift_head_exponent_calibration_factor'),
@@ -73,7 +76,8 @@ class AffinityCalculator:
             if factor not in self.calibration_factors:
                 self.calibration_factors[factor] = default
                 
-        logger.debug(f"Calibration factors loaded: {list(self.calibration_factors.keys())}")
+        logger.debug(f"Static calibration factors loaded as fallback: {list(self.calibration_factors.keys())}")
+        logger.info(f"[DYNAMIC PHYSICS] Intelligent physics system active - static factors used as fallback only")
 
     def calculate_specific_speed(self, rpm: float, bep_flow_m3hr: float, bep_head_m: float) -> float:
         """
@@ -192,17 +196,41 @@ class AffinityCalculator:
         
         return epsilon
 
-    def get_calibration_factor(self, factor_name: str, default_value: float = 1.0) -> float:
+    def get_calibration_factor(self, factor_name: str, default_value: float = 1.0, 
+                              pump_data: Optional[Dict[str, Any]] = None) -> float:
         """
-        Get a calibration factor by name with fallback to default.
+        Get a calibration factor by name with intelligent dynamic selection when pump_data is provided.
         
         Args:
             factor_name: Name of calibration factor
             default_value: Default value if factor not found
+            pump_data: Optional pump data for dynamic factor selection
             
         Returns:
-            Calibration factor value
+            Calibration factor value (dynamic if pump_data provided, static otherwise)
         """
+        # DYNAMIC PHYSICS: If pump_data is provided, use intelligent factor selection
+        if pump_data is not None:
+            try:
+                dynamic_factors = self.get_dynamic_physics_factors(pump_data)
+                
+                # Map factor names to dynamic equivalents
+                if factor_name == 'bep_shift_flow_exponent':
+                    factor_value = dynamic_factors.get('bep_shift_flow_exponent', default_value)
+                    pump_code = pump_data.get('pump_code', 'Unknown')
+                    logger.debug(f"[DYNAMIC FACTOR] {pump_code}: {factor_name} = {factor_value} (vs static {self.calibration_factors.get(factor_name, 'N/A')})")
+                    return factor_value
+                elif factor_name == 'bep_shift_head_exponent':
+                    return dynamic_factors.get('bep_shift_head_exponent', default_value)
+                # For other factors, fall back to static values for now
+                else:
+                    return self.calibration_factors.get(factor_name, default_value)
+            except Exception as e:
+                logger.warning(f"[DYNAMIC PHYSICS] Failed to get dynamic factor {factor_name}: {e}")
+                # Fall back to static calibration factors
+                return self.calibration_factors.get(factor_name, default_value)
+        
+        # Static fallback (legacy behavior)
         return self.calibration_factors.get(factor_name, default_value)
 
     def calculate_performance_at_flow(self, pump_data: Dict[str, Any], 
@@ -429,7 +457,7 @@ class AffinityCalculator:
             return None
 
     def calculate_required_diameter_direct(self, flows_sorted, heads_sorted, 
-                                          largest_diameter, target_flow, target_head, pump_code, physics_exponents=None):
+                                          largest_diameter, target_flow, target_head, pump_code, physics_exponents=None, pump_data=None):
         """
         ENHANCED: Calculate required impeller diameter using direct affinity law formula.
         
@@ -507,12 +535,12 @@ class AffinityCalculator:
                 
                 if estimated_trim_pct < small_trim_threshold_pct:
                     # Small trim: Use higher exponent (research: 2.8-3.0)
-                    head_exponent = self.get_calibration_factor('trim_dependent_small_exponent', default_small_exponent)
+                    head_exponent = self.get_calibration_factor('trim_dependent_small_exponent', default_small_exponent, pump_data)
                     small_trim_threshold = "small"  # Reference to classification logic
                     process_logger.log(f"    {small_trim_threshold.title()} trim (~{estimated_trim_pct:.1f}%): Using exponent {head_exponent}")
                 else:
                     # Larger trim: Use standard exponent (research: 2.0-2.2)
-                    head_exponent = self.get_calibration_factor('trim_dependent_large_exponent', default_large_exponent)
+                    head_exponent = self.get_calibration_factor('trim_dependent_large_exponent', default_large_exponent, pump_data)
                     large_trim_threshold = "large"  # Reference to classification logic  
                     process_logger.log(f"    {large_trim_threshold.title()} trim (~{estimated_trim_pct:.1f}%): Using exponent {head_exponent}")
             

@@ -193,12 +193,12 @@ class PerformanceCoreCalculator:
         return result
 
     def _calculate_required_diameter_direct(self, flows_sorted, heads_sorted, 
-                                          largest_diameter, target_flow, target_head, pump_code, physics_exponents=None):
+                                          largest_diameter, target_flow, target_head, pump_code, physics_exponents=None, pump_data=None):
         """
         Delegate to affinity calculator for direct diameter calculations.
         """
         return self.affinity_calculator.calculate_required_diameter_direct(
-            flows_sorted, heads_sorted, largest_diameter, target_flow, target_head, pump_code, physics_exponents
+            flows_sorted, heads_sorted, largest_diameter, target_flow, target_head, pump_code, physics_exponents, pump_data
         )
 
     def _find_best_impeller_curve_for_head(self, pump_data, flow, head, pump_code):
