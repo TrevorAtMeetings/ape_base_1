@@ -217,23 +217,18 @@ class IndustryStandardCalculator:
                 # STEP 1: Get performance at target flow on largest curve
                 delivered_head = float(head_interp(flow))
                 
-                # CRITICAL FIX: Use authentic BEP efficiency from specifications when available
+                # CRITICAL FIX: Always use authentic BEP efficiency as baseline when available
                 specs = pump_data.get('specifications', {})
                 authentic_bep_efficiency = specs.get('bep_efficiency', 0)
                 bep_flow = specs.get('bep_flow_m3hr', 0)
                 
-                # If operating near BEP flow and authentic efficiency is available, use it
-                if authentic_bep_efficiency > 0 and bep_flow > 0:
-                    flow_deviation = abs(flow - bep_flow) / bep_flow
-                    if flow_deviation < self.bep_flow_threshold:  # Within configured threshold of BEP flow
-                        base_efficiency = authentic_bep_efficiency
-                        logger.debug(f"[INDUSTRY] {pump_code}: Using authentic BEP efficiency {base_efficiency:.1f}% (near BEP flow)")
-                    else:
-                        # Interpolate efficiency at target flow (industry standard)
-                        base_efficiency = float(eff_interp(flow))
-                        logger.debug(f"[INDUSTRY] {pump_code}: Using interpolated efficiency {base_efficiency:.1f}% (away from BEP)")
+                # REFINED LOGIC: Use original BEP efficiency as baseline (per your analysis)
+                if authentic_bep_efficiency > 0:
+                    # Use the original BEP efficiency as the starting point
+                    base_efficiency = authentic_bep_efficiency
+                    logger.info(f"[REFINED EFFICIENCY] {pump_code}: Using original BEP efficiency {base_efficiency:.1f}% as baseline")
                 else:
-                    # Fallback to interpolation when no authentic data
+                    # Only fallback to interpolation when no authentic BEP data exists
                     base_efficiency = float(eff_interp(flow))
                     logger.debug(f"[INDUSTRY] {pump_code}: Using interpolated efficiency {base_efficiency:.1f}% (no authentic BEP data)")
                 

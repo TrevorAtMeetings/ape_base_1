@@ -34,28 +34,53 @@ class CurveAnalyzer:
 
     def get_exponents_for_pump(self, pump_data: Dict[str, Any]) -> Dict[str, float]:
         """
-        Get the pump-type-specific physics model exponents.
+        ENHANCED: Get dynamic physics model exponents based on specific speed calculations.
         
-        This method implements the Polymorphic Physics Model by selecting
-        the correct set of affinity law exponents based on the pump type.
-        Different pump types (axial, radial, mixed flow) have different
-        scaling behaviors when their impellers are trimmed.
+        This method implements the Dynamic Physics Model by calculating
+        specific speed and selecting appropriate exponents based on pump
+        hydraulic characteristics, not just pump type classification.
         
         Args:
-            pump_data: Pump data dictionary containing pump_type
+            pump_data: Pump data dictionary containing specifications
             
         Returns:
-            Dictionary of physics exponents for this pump type
+            Dictionary of physics exponents optimized for this specific pump
         """
-        pump_type = pump_data.get('pump_type', '')
         pump_code = pump_data.get('pump_code', 'Unknown')
+        specs = pump_data.get('specifications', {})
         
-        # Get pump-type-specific exponents from physics model
+        # Try dynamic physics first (preferred method)
+        try:
+            from .performance_affinity import AffinityCalculator
+            
+            # Create affinity calculator to access dynamic physics
+            affinity_calc = AffinityCalculator()
+            
+            # Calculate dynamic physics factors based on specific speed
+            dynamic_factors = affinity_calc.get_dynamic_physics_factors(pump_data)
+            
+            if dynamic_factors and 'flow_exponent' in dynamic_factors:
+                # Use dynamic physics results
+                exponents = {
+                    'flow_exponent_x': dynamic_factors['flow_exponent'],
+                    'head_exponent_y': 2.01,  # Use refined head exponent for BEP migration
+                    'power_exponent_z': 3.0,
+                    'npshr_exponent_alpha': 1.7,
+                    'efficiency_exponent_beta': 0.8,
+                    'description': f'Dynamic Physics (Ns-based: {dynamic_factors["flow_exponent"]})'
+                }
+                
+                logger.info(f"[DYNAMIC PHYSICS] {pump_code}: Using dynamic exponents - flow: {dynamic_factors['flow_exponent']}")
+                return exponents
+                
+        except Exception as e:
+            logger.warning(f"[PHYSICS] {pump_code}: Dynamic physics calculation failed: {e}")
+        
+        # Fallback to static pump type classification
+        pump_type = pump_data.get('pump_type', '')
         exponents = get_exponents_for_pump_type(pump_type)
         
-        # Log which physics model is being used
-        model_type = exponents.get('description', 'Unknown model')
-        
+        logger.debug(f"[PHYSICS] {pump_code}: Using static pump type exponents")
         return exponents
 
     def find_best_impeller_curve_for_head(self, pump_data, flow, head, pump_code):
