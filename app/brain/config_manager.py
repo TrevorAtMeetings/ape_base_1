@@ -85,6 +85,9 @@ class ConfigManager:
         # Selection core constants (to be added when found)
         self.selection_core = self._extract_values('selection_core_constants')
         
+        # Dynamic physics constants for intelligent pump classification
+        self.dynamic_physics = self._extract_values('dynamic_physics_constants')
+        
         # Physical validator constants (to be added when found)
         self.physical_validator = self._extract_values('physical_validator_constants')
         
@@ -112,7 +115,7 @@ class ConfigManager:
     def _validate_required_keys(self):
         """Validate that all required configuration keys are present"""
         # Basic validation - check that main sections exist and have some content
-        required_sections = ['pump_evaluator', 'performance_vfd', 'validation', 'performance_affinity', 'physics_models']
+        required_sections = ['pump_evaluator', 'performance_vfd', 'validation', 'performance_affinity', 'physics_models', 'dynamic_physics']
         
         for section_name in required_sections:
             section = getattr(self, section_name, {})
@@ -297,6 +300,7 @@ class ConfigManager:
         
         # Initialize empty sections for files not in config yet
         self.selection_core = {}
+        self.dynamic_physics = {}
         self.physical_validator = {}
         self.performance_core = {}
         self.performance_advanced = {}
