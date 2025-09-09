@@ -1,0 +1,137 @@
+This guide is designed for a developer to follow. It translates our analytical insights into a concrete logical flow with pseudo-code examples.
+Objective: Evolve from a Static to a Dynamic Physics Engine
+The goal is to replace this section of your log...
+code
+Code
+download
+content_copy
+expand_less
+INFO |   Calibration Factors:
+INFO |     bep_shift_flow_exponent: 1.2
+INFO |     efficiency_penalty_volute: 0.2
+... (etc. - same values loaded for every pump)
+...with a dynamic block that calculates the correct physical parameters for each specific pump based on our data-driven rules.
+New Core Logic Flow for Pump Evaluation
+Here is the new sequence your evaluate_single_pump function should follow after a pump has passed the initial pre-filtering stage:
+Load Base Data: Get the full-diameter performance curve and BEP data for the pump.
+Calculate Specific Speed (Ns): Use the full-diameter BEP data to classify the pump's hydraulic type.
+Determine Required Trim: Calculate the required impeller diameter to meet the target head at the target flow. Check if this trim is within the allowable 15% limit.
+Select Calibrated Physics: Based on the Ns and the required trim %, select the correct, data-driven exponents and penalty factors.
+Calculate Final Performance: Apply the affinity laws using these calibrated factors to determine the final efficiency, power, and NPSHr.
+Score and Rank: Feed these accurate performance numbers into your existing scoring system.
+Detailed Step-by-Step Implementation
+Step 1: Calculate Specific Speed (Ns)
+This is the first and most crucial step for classification. This should be a new function in your calculation module.
+Purpose: To determine if the pump is a Low or High Specific Speed design.
+When to Call: Immediately after loading a pump's full-diameter BEP data.
+Formula (US Customary Units): Ns = (RPM * (Flow in GPM)^0.5) / (Head in ft)^0.75
+Pseudo-code Implementation:
+code
+Python
+download
+content_copy
+expand_less
+IGNORE_WHEN_COPYING_START
+IGNORE_WHEN_COPYING_END
+def calculate_specific_speed(rpm, bep_flow_gpm, bep_head_ft):
+"""Calculates the specific speed in US customary units."""
+if bep_head_ft <= 0:
+return 0
+code
+Code
+# The formula for specific speed
+ns = (rpm * (bep_flow_gpm ** 0.5)) / (bep_head_ft ** 0.75)
+return ns
+--- In your main evaluation logic ---
+Load pump's full-diameter BEP data
+base_bep_flow = pump.bep_flow_gpm  # e.g., 1750 GPM for the "8 K" pump
+base_bep_head = pump.bep_head_ft    # e.g., 158 ft for the "8 K" pump
+pump_rpm = pump.rpm                 # e.g., 1450 RPM
+Calculate Ns to classify the pump
+pump_specific_speed = calculate_specific_speed(pump_rpm, base_bep_flow, base_bep_head)
+Step 2: Select bep_shift_flow_exponent based on Ns
+Now, use the calculated pump_specific_speed to select the correct flow exponent.
+Purpose: To accurately predict how the BEP flow will shift after trimming.
+When to Call: Immediately after Step 1.
+Pseudo-code Implementation:
+code
+Python
+download
+content_copy
+expand_less
+IGNORE_WHEN_COPYING_START
+IGNORE_WHEN_COPYING_END
+--- Continuing in your main evaluation logic ---
+if pump_specific_speed < 1200:
+# This is a Low Specific Speed (Radial Flow) pump
+bep_shift_flow_exponent = 1.0
+else:
+# This is a High Specific Speed (Mixed Flow) pump
+bep_shift_flow_exponent = 1.4
+This bep_shift_flow_exponent variable now holds the correct, data-driven value instead of the static 1.2 you were using previously.
+Step 3: Calculate the Required Trim Percentage
+This logic likely already exists in your code but must be executed before Step 4.
+Purpose: To find the impeller diameter that meets the target head.
+Formula: Diameter Ratio = (Target Head / Head on Full-Size Curve) ^ 0.5
+Pseudo-code Implementation:
+code
+Python
+download
+content_copy
+expand_less
+IGNORE_WHEN_COPYING_START
+IGNORE_WHEN_COPYING_END
+Get the head the full-size impeller produces at the target flow
+head_on_full_diameter_curve = pump.get_head_at_flow(target_flow_m3hr)
+if target_head > head_on_full_diameter_curve:
+# Cannot trim up, this pump is not suitable
+return "INSUFFICIENT_HEAD"
+Calculate the required diameter ratio using the standard head affinity law
+diameter_ratio = (target_head / head_on_full_diameter_curve) ** 0.5
+required_diameter = pump.max_diameter * diameter_ratio
+trim_percentage = (1 - diameter_ratio) * 100
+Enforce the 15% industry limit
+if trim_percentage > 15.0:
+return "EXCEEDS_MAX_TRIM_LIMIT"
+Step 4: Select Epsilon (ε) for Efficiency Penalty
+Use the trim_percentage from Step 3 to decide if a penalty should be applied.
+Purpose: To accurately model efficiency changes based on the severity of the trim.
+When to Call: Immediately after Step 3.
+Pseudo-code Implementation:
+code
+Python
+download
+content_copy
+expand_less
+IGNORE_WHEN_COPYING_START
+IGNORE_WHEN_COPYING_END
+Based on our analysis of all data within the 0-15% trim range
+if trim_percentage <= 15.0:
+# For all practical trims, the data shows zero penalty
+epsilon = 0.0
+else:
+# This logic applies only if you decide to allow trims > 15%
+# based on the extended dataset
+if trim_percentage < 20.0:
+epsilon = 0.0
+else:
+epsilon = 0.30
+Now calculate the actual efficiency loss
+Note: (1 - diameter_ratio) is the same as (trim_percentage / 100)
+efficiency_loss_percentage_points = epsilon * (1 - diameter_ratio) * 100
+Get the efficiency from the full-diameter curve at the target flow
+base_efficiency = pump.get_efficiency_at_flow(target_flow_m3hr)
+Calculate the final, accurate efficiency
+final_efficiency = base_efficiency - efficiency_loss_percentage_points
+Clarification on Head Exponents: BEP Shift vs. Curve Trimming
+Your log shows you are already using different head exponents (e.g., 1.95, 2.01). Our analysis introduced a new one (2.2). It is vital to distinguish their uses:
+For Calculating Required Trim (Exponent ≈ 2.0):
+Use: To determine the required diameter to meet a specific head target at a specific flow.
+Formula: D₂ = D₁ × (H₂/H₁)^(1/2.0)
+Your Logic: Your current use of exponents like 1.95 and 2.01 in this step is correct and appropriate. These small deviations from 2.0 account for minor hydraulic variations and are a good sign of a detailed model. You should continue to use them for this calculation.
+For Predicting BEP Shift (Exponent = 2.2):
+Use: To predict where the new Best Efficiency Point will be after trimming.
+Formula: New_BEP_Head = Old_BEP_Head × (D₂/D₁)^2.2
+Your Logic: This is a more advanced step that your current log doesn't show you're using for scoring, but it's available in your calibration factors. You would use this, along with the bep_shift_flow_exponent, to predict the new BEP and could add a scoring factor based on how close this new BEP is to the duty point.
+In short: Keep using your ~2.0 head exponent for the trim calculation. The 2.2 exponent is for the separate, more advanced task of predicting the location of the new BEP.
+By integrating these data-driven, tiered steps into your calculation engine, you will align your application's logic with the proven performance of the manufacturer's equipment, resulting in a dramatic increase in the accuracy and reliability of your pump selections.

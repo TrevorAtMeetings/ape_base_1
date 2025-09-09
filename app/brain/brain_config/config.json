@@ -2739,8 +2739,64 @@
       }
     ]
   },
+  "dynamic_physics_constants": [
+    {
+      "value": 1200,
+      "source_file": "performance_affinity.py",
+      "description": "Specific speed threshold dividing radial flow (Low Ns) from mixed flow (High Ns)",
+      "constant": "specific_speed_threshold_radial_to_mixed_flow"
+    },
+    {
+      "value": 1.0,
+      "source_file": "performance_affinity.py",
+      "description": "BEP shift flow exponent for low specific speed (radial flow) pumps",
+      "constant": "bep_shift_flow_exponent_low_specific_speed_radial"
+    },
+    {
+      "value": 1.4,
+      "source_file": "performance_affinity.py",
+      "description": "BEP shift flow exponent for high specific speed (mixed flow) pumps",
+      "constant": "bep_shift_flow_exponent_high_specific_speed_mixed"
+    },
+    {
+      "value": 0.227124,
+      "source_file": "performance_affinity.py",
+      "description": "GPM to m3/hr conversion factor for specific speed calculation",
+      "constant": "gpm_to_m3hr_conversion_factor"
+    },
+    {
+      "value": 3.28084,
+      "source_file": "performance_affinity.py",
+      "description": "Meters to feet conversion factor for specific speed calculation",
+      "constant": "meters_to_feet_conversion_factor"
+    },
+    {
+      "value": 0.0,
+      "source_file": "performance_affinity.py",
+      "description": "Efficiency penalty factor for trims within 15% limit (data shows zero penalty)",
+      "constant": "efficiency_penalty_factor_for_standard_trim_range"
+    },
+    {
+      "value": 0.30,
+      "source_file": "performance_affinity.py",
+      "description": "Efficiency penalty factor for excessive trims above 20%",
+      "constant": "efficiency_penalty_factor_for_excessive_trim"
+    },
+    {
+      "value": 20.0,
+      "source_file": "performance_affinity.py",
+      "description": "Trim percentage threshold for applying efficiency penalty",
+      "constant": "trim_percentage_threshold_for_efficiency_penalty"
+    },
+    {
+      "value": 2.2,
+      "source_file": "performance_affinity.py",
+      "description": "Head exponent for BEP shift prediction (advanced physics)",
+      "constant": "bep_shift_head_exponent_for_prediction"
+    }
+  ],
   "configuration_summary": {
-    "total_constants": 418,
+    "total_constants": 427,
     "total_files_analyzed": 19,
     "sections_by_source_file": {
       "ai_analysis.py": 19,
