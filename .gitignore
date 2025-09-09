@@ -225,6 +225,7 @@ Thumbs.db
 
 # Configuration files with sensitive data
 config.json
+!app/brain/brain_config/config.json
 secrets.json
 credentials.json
 
