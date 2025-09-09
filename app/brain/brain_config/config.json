@@ -276,7 +276,7 @@
         "constant": "trim_dependent_large_exponent"
       },
       {
-        "value": 0.2,
+        "value": 0.02,
         "source_file": "performance_affinity.py",
         "description": "Efficiency penalty factor for volute pumps",
         "constant": "efficiency_penalty_factor_for_volute_pumps"
@@ -2777,7 +2777,7 @@
       "constant": "efficiency_penalty_factor_for_standard_trim_range"
     },
     {
-      "value": 0.30,
+      "value": 0.3,
       "source_file": "performance_affinity.py",
       "description": "Efficiency penalty factor for excessive trims above 20%",
       "constant": "efficiency_penalty_factor_for_excessive_trim"

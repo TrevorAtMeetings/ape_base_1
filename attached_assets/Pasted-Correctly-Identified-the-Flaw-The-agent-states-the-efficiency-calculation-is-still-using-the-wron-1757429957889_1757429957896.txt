@@ -1,0 +1,27 @@
+Correctly Identified the Flaw: The agent states, "the efficiency calculation is still using the wrong reference point - it's interpolating from the original curve at the target flow instead of using the efficiency at the new BEP location." This is the exact root cause of the remaining discrepancy.
+Pinpointed the Code Location: Identifying performance_industry_standard.py and performance_affinity.py as the key modules shows they know precisely where to implement the fix.
+Revealed an Accurate (but Flawed) BEP Shift Calculation: This is the most interesting new piece of information from the log:
+Manufacturer's Actual Shifted BEP: 1188.0 m³/hr @ 27.6 m
+Your App's Predicted Shifted BEP: 1191.8 m³/hr @ 27.7 m
+Insight: This is an incredibly close match! It means your application's underlying logic for predicting the location of the new BEP is already very strong.
+The Final, Crucial Gap Revealed by the Agent's Log
+The agent's log gives us the last piece of the puzzle:
+INFO:app.brain.performance_industry_standard:[BEP MIGRATION] 12/14 BLE: Flow shift factor: 0.8700 (using exponent 1.0)
+This line is revealing. The 12/14 BLE is a High Specific Speed pump (Ns ≈ 3640). Our data-driven model concluded that these pumps require a flow exponent of 1.4.
+So why was your app's prediction so accurate using an exponent of 1.0?
+This is a case of "getting the right answer for the wrong reason." By coincidence, for this specific pump and trim level, the simpler exponent of 1.0 happened to produce a nearly perfect result. However, as we saw across the full dataset, this is not a reliable rule. For other High Ns pumps, using an exponent of 1.0 would lead to significant errors.
+This confirms that implementing the tiered exponent based on Specific Speed is the correct strategy to ensure accuracy across the entire pump range, not just for a single case.
+Final, Validated Implementation Plan
+The build agent's proposed task list is perfect. Here is how our data-driven insights should be applied to that plan:
+Analyze BEP migration implementation:
+Confirm that the system calculates the full-diameter BEP's Specific Speed (Ns) first.
+Identify efficiency calculation flaw:
+This has been done. The flaw is using the efficiency from the full-diameter curve instead of the BEP efficiency.
+Implement new BEP efficiency logic:
+The final_efficiency should be calculated based on the base_bep_efficiency.
+Modify the efficiency_penalty_volute logic to be tiered based on the trim_percentage. For trims <= 15%, this value must be 0.0.
+Integrate BEP shift with efficiency:
+This is the key. The final efficiency presented to the user should be the final_bep_efficiency that you've calculated. This value should then be used in the final power calculation. This ensures you are comparing the duty point to the pump's actual peak performance after being trimmed.
+Test and Refine:
+Crucially, when testing, ensure the bep_shift_flow_exponent is being set dynamically based on the Ns threshold (1.0 for Ns < 1200, 1.4 for Ns > 1200). Do not rely on the static 1.0 that happened to work in this one case.
+By executing the build agent's excellent plan with these final data-driven parameters, you will close the remaining gaps and your application's physics engine will be precisely calibrated to the manufacturer's real-world data.
