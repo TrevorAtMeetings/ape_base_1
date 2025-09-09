@@ -49,7 +49,8 @@ class PhysicalValidator:
         
         for curve in sorted_curves:
             curve_points = curve.get('performance_points', [])
-            if not curve_points or len(curve_points) < 2:
+            min_curve_points = config.get('physical_validator', 'minimum_curve_points_required_for_validation')
+            if not curve_points or len(curve_points) < min_curve_points:
                 no_valid_curves += 1
                 continue
                 
@@ -63,7 +64,8 @@ class PhysicalValidator:
             
             flow_tolerance = config.get('physical_validator', 'flow_tolerance_for_curve_range_validation_10')
             if not (min_flow * (1-flow_tolerance) <= flow_m3hr <= max_flow * (1+flow_tolerance)):
-                flow_range_failures.append(f"{curve.get('impeller_diameter_mm', 0):.0f}mm impeller: flow range {min_flow:.1f}-{max_flow:.1f} m³/hr (±{flow_tolerance*100:.0f}% tolerance)")
+                percentage_factor = config.get('physical_validator', 'percentage_conversion_factor_for_tolerance_display')
+                flow_range_failures.append(f"{curve.get('impeller_diameter_mm', 0):.0f}mm impeller: flow range {min_flow:.1f}-{max_flow:.1f} m³/hr (±{flow_tolerance*percentage_factor:.0f}% tolerance)")
                 continue  # Flow outside this curve's range
             
             try:
@@ -86,7 +88,8 @@ class PhysicalValidator:
                 # Check if pump can deliver AT LEAST the required head
                 head_tolerance = config.get('physical_validator', 'head_tolerance_for_capability_validation_2')
                 if delivered_head >= head_m * (1-head_tolerance):
-                    process_logger.log(f"    {pump_code}: PHYSICALLY CAPABLE - Can deliver {delivered_head:.1f}m at {flow_m3hr} m³/hr (±{head_tolerance*100:.0f}% tolerance)")
+                    percentage_factor = config.get('physical_validator', 'percentage_conversion_factor_for_tolerance_display')
+                    process_logger.log(f"    {pump_code}: PHYSICALLY CAPABLE - Can deliver {delivered_head:.1f}m at {flow_m3hr} m³/hr (±{head_tolerance*percentage_factor:.0f}% tolerance)")
                     logger.debug(f"Pump {pump_code}: Can deliver {delivered_head:.1f}m at {flow_m3hr} m³/hr (required: {head_m}m) - VALID")
                     return True, "Physically capable"
                 else:
@@ -104,10 +107,12 @@ class PhysicalValidator:
             failure_parts.append(f"{no_valid_curves} curves have insufficient data points")
         
         if flow_range_failures:
-            failure_parts.append(f"Flow {flow_m3hr:.1f} m³/hr outside all curve ranges: " + "; ".join(flow_range_failures[:2]))
+            max_flow_failures = config.get('physical_validator', 'maximum_flow_range_failures_to_display_in_error_messages')
+            failure_parts.append(f"Flow {flow_m3hr:.1f} m³/hr outside all curve ranges: " + "; ".join(flow_range_failures[:max_flow_failures]))
         
         if head_insufficient_details:
-            failure_parts.append(f"Insufficient head delivery: " + "; ".join(head_insufficient_details[:2]))
+            max_head_details = config.get('physical_validator', 'maximum_head_insufficient_details_to_display_in_error_messages')
+            failure_parts.append(f"Insufficient head delivery: " + "; ".join(head_insufficient_details[:max_head_details]))
         
         if not failure_parts:
             failure_parts.append(f"Cannot deliver {head_m:.1f}m at {flow_m3hr:.1f} m³/hr")

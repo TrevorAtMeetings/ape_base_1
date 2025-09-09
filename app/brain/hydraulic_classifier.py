@@ -47,7 +47,7 @@ class HydraulicClassifier:
             flow_m3s = flow_m3hr / seconds_per_hour
             
             # Calculate specific speed: Ns = N√Q / H^(3/4)
-            ns = speed_rpm * math.sqrt(flow_m3s) / (head_m ** 0.75)
+            ns = speed_rpm * math.sqrt(flow_m3s) / (head_m ** config.get('hydraulic_classifier', 'head_exponent_for_specific_speed_calculation'))
             
             return ns
             
@@ -71,11 +71,11 @@ class HydraulicClassifier:
             return {
                 'type': 'unknown',
                 'description': 'Unknown hydraulic type',
-                'flow_weight': 0.5,
-                'head_weight': 0.5,
-                'trim_flow_exp': 1.0,
-                'trim_head_exp': 2.0,
-                'efficiency_drop_per_trim': 0.1  # Per percent of trim
+                'flow_weight': config.get('hydraulic_classifier', 'unknown_type_flow_weight'),
+                'head_weight': config.get('hydraulic_classifier', 'unknown_type_head_weight'),
+                'trim_flow_exp': config.get('hydraulic_classifier', 'unknown_type_trim_flow_exponent'),
+                'trim_head_exp': config.get('hydraulic_classifier', 'unknown_type_trim_head_exponent'),
+                'efficiency_drop_per_trim': config.get('hydraulic_classifier', 'unknown_type_efficiency_drop_per_percent_trim')  # Per percent of trim
             }
         
         # Based on industry standards and provided documentation
@@ -84,46 +84,46 @@ class HydraulicClassifier:
             return {
                 'type': 'radial_low',
                 'description': 'Radial - Low Ns (steep H-Q curve)',
-                'flow_weight': 0.4,  # Head more important for radial
-                'head_weight': 0.6,
-                'trim_flow_exp': 1.0,
-                'trim_head_exp': 2.0,
-                'efficiency_drop_per_trim': 0.1  # 0.5-1.5% for typical 5-15% trim
+                'flow_weight': config.get('hydraulic_classifier', 'radial_low_ns_flow_weight'),  # Head more important for radial
+                'head_weight': config.get('hydraulic_classifier', 'radial_low_ns_head_weight'),
+                'trim_flow_exp': config.get('hydraulic_classifier', 'radial_low_ns_trim_flow_exponent'),
+                'trim_head_exp': config.get('hydraulic_classifier', 'radial_low_ns_trim_head_exponent'),
+                'efficiency_drop_per_trim': config.get('hydraulic_classifier', 'radial_low_ns_efficiency_drop_per_percent_trim')  # 0.5-1.5% for typical 5-15% trim
             }
         elif specific_speed < config.get('hydraulic_classifier', 'mid_specific_speed_threshold_for_radial_pumps'):
             return {
                 'type': 'radial_mid',
                 'description': 'Radial - Mid Ns (broader curve)',
-                'flow_weight': 0.45,
-                'head_weight': 0.55,
-                'trim_flow_exp': 1.0,
-                'trim_head_exp': 1.95,
-                'efficiency_drop_per_trim': 0.15  # 0.8-2.0% for typical trim
+                'flow_weight': config.get('hydraulic_classifier', 'radial_mid_ns_flow_weight'),
+                'head_weight': config.get('hydraulic_classifier', 'radial_mid_ns_head_weight'),
+                'trim_flow_exp': config.get('hydraulic_classifier', 'radial_mid_ns_trim_flow_exponent'),
+                'trim_head_exp': config.get('hydraulic_classifier', 'radial_mid_ns_trim_head_exponent'),
+                'efficiency_drop_per_trim': config.get('hydraulic_classifier', 'radial_mid_ns_efficiency_drop_per_percent_trim')  # 0.8-2.0% for typical trim
             }
         elif specific_speed < config.get('hydraulic_classifier', 'high_specific_speed_threshold_for_mixed_flow_pumps'):
             return {
                 'type': 'mixed_flow',
                 'description': 'Mixed-flow',
-                'flow_weight': 0.5,
-                'head_weight': 0.5,
-                'trim_flow_exp': 0.97,
-                'trim_head_exp': 1.85,
-                'efficiency_drop_per_trim': 0.25  # 1.5-3.0% for typical trim
+                'flow_weight': config.get('hydraulic_classifier', 'mixed_flow_flow_weight'),
+                'head_weight': config.get('hydraulic_classifier', 'mixed_flow_head_weight'),
+                'trim_flow_exp': config.get('hydraulic_classifier', 'mixed_flow_trim_flow_exponent'),
+                'trim_head_exp': config.get('hydraulic_classifier', 'mixed_flow_trim_head_exponent'),
+                'efficiency_drop_per_trim': config.get('hydraulic_classifier', 'mixed_flow_efficiency_drop_per_percent_trim')  # 1.5-3.0% for typical trim
             }
         else:  # specific_speed >= 120
             return {
                 'type': 'axial_flow',
                 'description': 'Axial-flow (propeller)',
-                'flow_weight': 0.55,  # Flow more important for axial
-                'head_weight': 0.45,
-                'trim_flow_exp': 0.95,
-                'trim_head_exp': 1.65,
-                'efficiency_drop_per_trim': 0.35  # 2.0-4.0% for typical trim
+                'flow_weight': config.get('hydraulic_classifier', 'axial_flow_flow_weight'),  # Flow more important for axial
+                'head_weight': config.get('hydraulic_classifier', 'axial_flow_head_weight'),
+                'trim_flow_exp': config.get('hydraulic_classifier', 'axial_flow_trim_flow_exponent'),
+                'trim_head_exp': config.get('hydraulic_classifier', 'axial_flow_trim_head_exponent'),
+                'efficiency_drop_per_trim': config.get('hydraulic_classifier', 'axial_flow_efficiency_drop_per_percent_trim')  # 2.0-4.0% for typical trim
             }
     
     @staticmethod
     def calculate_trim_requirement(current_head: float, required_head: float, 
-                                 trim_head_exp: float = 2.0) -> float:
+                                 trim_head_exp: float = None) -> float:
         """
         Calculate required trim percentage to achieve target head
         Using D2/D1 = (H2/H1)^(1/exp) where exp is pump-type specific
@@ -146,11 +146,16 @@ class HydraulicClassifier:
                 return 1.0  # Cannot trim up
             
             # Calculate trim ratio: D2/D1 = (H2/H1)^(1/exp)
-            trim_ratio = math.pow(required_head / current_head, 1.0 / trim_head_exp)
+            # Use default trim head exponent if not provided
+            if trim_head_exp is None:
+                trim_head_exp = config.get('hydraulic_classifier', 'default_trim_head_exponent')
+            
+            trim_ratio = math.pow(required_head / current_head, config.get('hydraulic_classifier', 'default_trim_ratio_no_trim') / trim_head_exp)
             
             # Enforce maximum trim limit
             if trim_ratio < MIN_TRIM_RATIO:
-                logger.debug(TRIM_LIMIT_EXCEEDED_MSG.format((1-trim_ratio)*100, (1-MIN_TRIM_RATIO)*100))
+                percentage_factor = config.get('hydraulic_classifier', 'percentage_conversion_factor')
+                logger.debug(TRIM_LIMIT_EXCEEDED_MSG.format((1-trim_ratio)*percentage_factor, (1-MIN_TRIM_RATIO)*percentage_factor))
                 return MIN_TRIM_RATIO
             
             return trim_ratio

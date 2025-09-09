@@ -12,6 +12,7 @@ from .physics_models import get_exponents_for_pump_type
 from ..process_logger import process_logger
 from .performance_curves import CurveAnalyzer
 from .performance_affinity import AffinityCalculator
+from .config_manager import config
 
 logger = logging.getLogger(__name__)
 
@@ -34,15 +35,15 @@ class PerformanceCoreCalculator:
         self.brain = brain
         
         # Performance thresholds
-        self.min_efficiency = 40.0
-        self.min_trim_percent = 85.0  # Industry standard - 15% maximum trim, non-negotiable
-        self.max_trim_percent = 100.0
+        self.min_efficiency = config.get('performance_core', 'minimum_acceptable_efficiency_percentage')
+        self.min_trim_percent = config.get('performance_core', 'minimum_trim_percentage_industry_standard')  # Industry standard - 15% maximum trim, non-negotiable
+        self.max_trim_percent = config.get('performance_core', 'maximum_trim_percentage')
         
         # Industry standard affinity law exponents
-        self.affinity_flow_exp = 1.0      # Q2/Q1 = (D2/D1)^1
-        self.affinity_head_exp = 2.0      # H2/H1 = (D2/D1)^2  
-        self.affinity_power_exp = 3.0     # P2/P1 = (D2/D1)^3
-        self.affinity_efficiency_exp = 0.8 # η2/η1 ≈ (D2/D1)^0.8 (industry standard)
+        self.affinity_flow_exp = config.get('performance_core', 'default_flow_exponent_for_affinity_laws')      # Q2/Q1 = (D2/D1)^1
+        self.affinity_head_exp = config.get('performance_core', 'default_head_exponent_for_affinity_laws')      # H2/H1 = (D2/D1)^2  
+        self.affinity_power_exp = config.get('performance_core', 'default_power_exponent_for_affinity_laws')     # P2/P1 = (D2/D1)^3
+        self.affinity_efficiency_exp = config.get('performance_core', 'default_efficiency_exponent_for_affinity_laws') # η2/η1 ≈ (D2/D1)^0.8 (industry standard)
         
         # Initialize specialized calculators
         self.curve_analyzer = CurveAnalyzer(brain)
@@ -69,14 +70,14 @@ class PerformanceCoreCalculator:
         
         # Set defaults for critical factors
         default_factors = {
-            'bep_shift_flow_exponent': 1.2,
-            'bep_shift_head_exponent': 2.2,
-            'trim_dependent_small_exponent': 2.9,
-            'trim_dependent_large_exponent': 2.1,
-            'efficiency_penalty_volute': 0.20,
-            'efficiency_penalty_diffuser': 0.45,
-            'npsh_degradation_threshold': 10.0,
-            'npsh_degradation_factor': 1.15
+            'bep_shift_flow_exponent': config.get('performance_core', 'bep_shift_flow_exponent_calibration_factor'),
+            'bep_shift_head_exponent': config.get('performance_core', 'bep_shift_head_exponent_calibration_factor'),
+            'trim_dependent_small_exponent': config.get('performance_core', 'trim_dependent_small_exponent_calibration_factor'),
+            'trim_dependent_large_exponent': config.get('performance_core', 'trim_dependent_large_exponent_calibration_factor'),
+            'efficiency_penalty_volute': config.get('performance_core', 'efficiency_penalty_volute_calibration_factor'),
+            'efficiency_penalty_diffuser': config.get('performance_core', 'efficiency_penalty_diffuser_calibration_factor'),
+            'npsh_degradation_threshold': config.get('performance_core', 'npsh_degradation_threshold'),
+            'npsh_degradation_factor': config.get('performance_core', 'npsh_degradation_factor')
         }
         
         for factor, default in default_factors.items():
@@ -85,7 +86,7 @@ class PerformanceCoreCalculator:
                 
         logger.debug(f"Calibration factors loaded: {list(self.calibration_factors.keys())}")
 
-    def get_calibration_factor(self, factor_name: str, default_value: float = 1.0) -> float:
+    def get_calibration_factor(self, factor_name: str, default_value: float = None) -> float:
         """
         Get a calibration factor by name with fallback to default.
         
@@ -96,6 +97,8 @@ class PerformanceCoreCalculator:
         Returns:
             Calibration factor value
         """
+        if default_value is None:
+            default_value = config.get('performance_core', 'default_calibration_factor_value')
         return self.calibration_factors.get(factor_name, default_value)
     
     def _get_exponents_for_pump(self, pump_data: Dict[str, Any]) -> Dict[str, float]:
@@ -150,7 +153,7 @@ class PerformanceCoreCalculator:
             default_flow_exp = self.affinity_flow_exp
             default_head_exp = self.affinity_head_exp
             default_power_exp = self.affinity_power_exp
-            default_npshr_exp = 2.0
+            default_npshr_exp = config.get('performance_core', 'default_npshr_exponent')
             
             process_logger.log(f"    Flow: Q₂ = Q₁ × (D₂/D₁)^{physics_exponents.get('flow_exponent_x', default_flow_exp)}")
             process_logger.log(f"    Head: H₂ = H₁ × (D₂/D₁)^{physics_exponents.get('head_exponent_y', default_head_exp)}")

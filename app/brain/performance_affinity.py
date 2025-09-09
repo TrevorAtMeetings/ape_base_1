@@ -25,6 +25,7 @@ class AffinityCalculator:
         Args:
             brain: Parent PumpBrain instance
         """
+        logger.info("Entering performance_affinity.py file")
         self.brain = brain
         
         # Performance thresholds
@@ -143,8 +144,8 @@ class AffinityCalculator:
                     max_diameter = max(all_diameters)  # Use actual maximum from specifications
                 else:
                     # Fallback calculation if no diameter data available
-                    min_diameter = largest_diameter * 0.70  
-                    max_diameter = largest_diameter * 1.15
+                    min_diameter = largest_diameter * config.get('performance_affinity', 'fallback_minimum_diameter_ratio_when_no_specifications_available')  
+                    max_diameter = largest_diameter * config.get('performance_affinity', 'fallback_maximum_diameter_ratio_when_no_specifications_available')
                 
                 if forced_diameter < min_diameter or forced_diameter > max_diameter:
                     logger.error(f"[FORCED CONSTRAINT] {pump_code}: Forced diameter {forced_diameter}mm is outside calibration range [{min_diameter:.0f}-{max_diameter:.0f}mm]")
@@ -184,12 +185,15 @@ class AffinityCalculator:
                                                      bounds_error=False, fill_value=0.0)
                     base_efficiency = float(eff_interp(flow))
                 else:
-                    base_efficiency = 75.0  # Default
+                    base_efficiency = config.get('performance_affinity', 'default_base_efficiency_when_interpolation_unavailable')  # Default
                 
                 # Apply efficiency degradation for excessive trimming
-                if diameter_ratio < 0.85:  # More than 15% trim
-                    efficiency_penalty = (0.85 - diameter_ratio) * 20
-                    efficiency = max(base_efficiency - efficiency_penalty, 40)
+                trim_threshold = config.get('performance_affinity', 'trim_ratio_threshold_for_efficiency_degradation_15_trim')
+                if diameter_ratio < trim_threshold:  # More than 15% trim
+                    penalty_multiplier = config.get('performance_affinity', 'efficiency_penalty_multiplier_for_excessive_trimming')
+                    efficiency_penalty = (trim_threshold - diameter_ratio) * penalty_multiplier
+                    min_efficiency_floor = config.get('performance_affinity', 'minimum_efficiency_floor_after_trim_penalty')
+                    efficiency = max(base_efficiency - efficiency_penalty, min_efficiency_floor)
                 else:
                     efficiency = base_efficiency
                 
@@ -207,10 +211,11 @@ class AffinityCalculator:
                 # Calculate trim percentage
                 trim_percent = (1 - diameter_ratio) * 100
                 
+                absolute_min_efficiency = config.get('performance_affinity', 'absolute_minimum_efficiency_floor')
                 return {
                     'flow_m3hr': flow,
                     'head_m': delivered_head,
-                    'efficiency_pct': max(efficiency, 30),
+                    'efficiency_pct': max(efficiency, absolute_min_efficiency),
                     'power_kw': power_kw,
                     'npsh_r': 0,  # Would need more complex calculation
                     'diameter_mm': forced_diameter,
@@ -232,8 +237,10 @@ class AffinityCalculator:
                 return None
             
             # Check if flow is within pump's range (with some tolerance)
-            min_flow = min(flows) * 0.5  # Allow 50% below minimum
-            max_flow = max(flows) * 1.5  # Allow 50% above maximum
+            min_tolerance = config.get('performance_affinity', 'minimum_flow_tolerance_multiplier_50_below_minimum')
+            max_tolerance = config.get('performance_affinity', 'maximum_flow_tolerance_multiplier_50_above_maximum')
+            min_flow = min(flows) * min_tolerance  # Allow 50% below minimum
+            max_flow = max(flows) * max_tolerance  # Allow 50% above maximum
             
             if not allow_excessive_trim and (flow < min_flow or flow > max_flow):
                 return None
@@ -253,15 +260,21 @@ class AffinityCalculator:
             else:
                 # Estimate efficiency based on BEP
                 specs = pump_data.get('specifications', {})
-                bep_efficiency = specs.get('bep_efficiency_pct', 75)
+                default_bep_efficiency = config.get('performance_affinity', 'default_bep_efficiency_for_estimation')
+                bep_efficiency = specs.get('bep_efficiency_pct', default_bep_efficiency)
                 bep_flow = specs.get('bep_flow_m3hr', flow)
                 
                 # Simple efficiency curve estimation
                 flow_ratio = flow / bep_flow if bep_flow > 0 else 1.0
-                if 0.7 <= flow_ratio <= 1.2:
-                    efficiency = bep_efficiency * (1 - 0.1 * abs(1 - flow_ratio))
+                lower_boundary = config.get('performance_affinity', 'lower_flow_ratio_boundary_for_good_efficiency')
+                upper_boundary = config.get('performance_affinity', 'upper_flow_ratio_boundary_for_good_efficiency')
+                efficiency_reduction_factor = config.get('performance_affinity', 'efficiency_reduction_factor_per_unit_flow_ratio_deviation')
+                off_bep_multiplier = config.get('performance_affinity', 'efficiency_multiplier_for_significant_off_bep_operation')
+                
+                if lower_boundary <= flow_ratio <= upper_boundary:
+                    efficiency = bep_efficiency * (1 - efficiency_reduction_factor * abs(1 - flow_ratio))
                 else:
-                    efficiency = bep_efficiency * 0.85  # Significant drop off-BEP
+                    efficiency = bep_efficiency * off_bep_multiplier  # Significant drop off-BEP
             
             # Calculate power
             if efficiency > 0:
@@ -275,15 +288,17 @@ class AffinityCalculator:
             
             # Get NPSH if available
             npsh_r = 0
+            flow_proximity_threshold = config.get('performance_affinity', 'flow_proximity_threshold_for_npsh_lookup_m3hr')
             for point in sorted_points:
-                if abs(point.get('flow_m3hr', 0) - flow) < 10:  # Close to our flow
+                if abs(point.get('flow_m3hr', 0) - flow) < flow_proximity_threshold:  # Close to our flow
                     npsh_r = point.get('npsh_r', 0)
                     break
             
+            absolute_min_efficiency = config.get('performance_affinity', 'absolute_minimum_efficiency_floor')
             return {
                 'flow_m3hr': flow,
                 'head_m': delivered_head,
-                'efficiency_pct': max(efficiency, 30),  # Floor at 30%
+                'efficiency_pct': max(efficiency, absolute_min_efficiency),  # Floor at configurable minimum
                 'power_kw': power_kw,
                 'npsh_r': npsh_r,
                 'diameter_mm': largest_curve.get('impeller_diameter_mm', 0),
@@ -324,7 +339,9 @@ class AffinityCalculator:
             
             # Check flow range coverage
             min_flow, max_flow = min(flows_sorted), max(flows_sorted)
-            if not (min_flow * 0.9 <= target_flow <= max_flow * 1.1):
+            lower_tolerance = config.get('performance_affinity', 'lower_flow_range_tolerance_for_interpolation')
+            upper_tolerance = config.get('performance_affinity', 'upper_flow_range_tolerance_for_interpolation')
+            if not (min_flow * lower_tolerance <= target_flow <= max_flow * upper_tolerance):
                 return None, None
             
             # Get head delivered by largest impeller at target flow (H₁)
@@ -343,14 +360,15 @@ class AffinityCalculator:
             # FIXED: Trimming REDUCES head, so we can only trim if target < base head
             # We cannot achieve a head higher than what the full-diameter impeller delivers
             # Special tolerance for BEP testing - allow small precision differences
-            tolerance = 1.05  # 5% tolerance for BEP precision issues
-            if target_head > base_head_at_flow * tolerance:
-                logger.debug(f"[AFFINITY] Target {target_head:.2f}m > max {base_head_at_flow * tolerance:.2f}m - returning None")
+            bep_tolerance = config.get('performance_affinity', 'bep_precision_tolerance_for_head_comparison')  # 5% tolerance for BEP precision issues
+            safety_margin = config.get('performance_affinity', 'head_safety_margin_for_bep_calculations')
+            if target_head > base_head_at_flow * bep_tolerance:
+                logger.debug(f"[AFFINITY] Target {target_head:.2f}m > max {base_head_at_flow * bep_tolerance:.2f}m - returning None")
                 return None, None
-            elif target_head > base_head_at_flow * 1.02:
+            elif target_head > base_head_at_flow * safety_margin:
                 logger.info(f"[BEP TOLERANCE] {pump_code}: Allowing BEP precision difference - target {target_head:.2f}m vs base {base_head_at_flow:.2f}m")
             
-            logger.debug(f"[AFFINITY] Head check passed: {target_head:.2f}m <= {base_head_at_flow * 1.02:.2f}m")
+            logger.debug(f"[AFFINITY] Head check passed: {target_head:.2f}m <= {base_head_at_flow * safety_margin:.2f}m")
             
             # Good case: target_head < base_head_at_flow means we can trim to reduce head
             
@@ -362,16 +380,21 @@ class AffinityCalculator:
                 process_logger.log(f"    Using physics model exponent: {head_exponent}")
             else:
                 # Fallback to trim-dependent exponents if physics model not provided
-                estimated_trim_pct = (1.0 - (target_head / base_head_at_flow) ** 0.5) * 100
+                trim_exponent = config.get('performance_affinity', 'exponent_for_trim_percentage_estimation')
+                estimated_trim_pct = (1.0 - (target_head / base_head_at_flow) ** trim_exponent) * config.get('performance_affinity', 'percentage_conversion_factor')
                 
-                if estimated_trim_pct < 5.0:
+                small_trim_threshold_pct = config.get('performance_affinity', 'small_trim_threshold_percentage')
+                default_small_exponent = config.get('performance_affinity', 'default_small_trim_head_exponent')
+                default_large_exponent = config.get('performance_affinity', 'default_large_trim_head_exponent')
+                
+                if estimated_trim_pct < small_trim_threshold_pct:
                     # Small trim: Use higher exponent (research: 2.8-3.0)
-                    head_exponent = self.get_calibration_factor('trim_dependent_small_exponent', 2.9)
+                    head_exponent = self.get_calibration_factor('trim_dependent_small_exponent', default_small_exponent)
                     small_trim_threshold = "small"  # Reference to classification logic
                     process_logger.log(f"    {small_trim_threshold.title()} trim (~{estimated_trim_pct:.1f}%): Using exponent {head_exponent}")
                 else:
                     # Larger trim: Use standard exponent (research: 2.0-2.2)
-                    head_exponent = self.get_calibration_factor('trim_dependent_large_exponent', 2.1)
+                    head_exponent = self.get_calibration_factor('trim_dependent_large_exponent', default_large_exponent)
                     large_trim_threshold = "large"  # Reference to classification logic  
                     process_logger.log(f"    {large_trim_threshold.title()} trim (~{estimated_trim_pct:.1f}%): Using exponent {head_exponent}")
             
@@ -392,7 +415,7 @@ class AffinityCalculator:
             
             diameter_ratio = np.power(target_head_float / base_head_float, 1.0 / head_exponent_float)
             required_diameter = largest_diameter_float * diameter_ratio
-            trim_percent = diameter_ratio * 100
+            trim_percent = diameter_ratio * config.get('performance_affinity', 'percentage_conversion_factor')
             
             process_logger.log(f"      Result: D₂ = {largest_diameter_float:.1f} × {diameter_ratio:.4f} = {required_diameter:.1f} mm")
             process_logger.log(f"      Trim: {trim_percent:.2f}%")
@@ -420,7 +443,8 @@ class AffinityCalculator:
             error_percent = abs(verification_head - target_head) / target_head * 100
             
             
-            if error_percent > 1.0:  # Should be essentially zero for direct calculation
+            error_threshold = config.get('performance_affinity', 'error_percent_threshold_for_validation_warning')
+            if error_percent > error_threshold:  # Should be essentially zero for direct calculation
                 logger.warning(f"[DIRECT AFFINITY] {pump_code}: Unexpected calculation error: {error_percent:.2f}%")
             
             # Enhanced logging for calculations
@@ -493,11 +517,12 @@ class AffinityCalculator:
             # Get base efficiency
             efficiencies = [p.get('efficiency_pct', 0) for p in sorted_points if 'efficiency_pct' in p]
             if efficiencies and len(efficiencies) == len(flows):
+                fill_value = config.get('performance_affinity', 'fill_value_for_efficiency_interpolation')
                 eff_interp = interpolate.interp1d(flows, efficiencies, kind='linear',
-                                                 bounds_error=False, fill_value=70.0)
+                                                 bounds_error=False, fill_value=fill_value)
                 base_efficiency = float(eff_interp(base_equivalent_flow))
             else:
-                base_efficiency = 75.0  # Default
+                base_efficiency = config.get('performance_affinity', 'default_base_efficiency_when_interpolation_unavailable')  # Default
             
             # Apply affinity laws
             scaled_head = base_head * (diameter_ratio ** self.affinity_head_exp)

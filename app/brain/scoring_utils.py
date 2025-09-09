@@ -66,6 +66,14 @@ class ScoringUtils:
         # Trim thresholds
         self.trim_light_threshold = config.get('scoring_utils', 'light_trim_threshold_percentage')
         self.trim_minimal_threshold = config.get('scoring_utils', 'minimal_trim_threshold_percentage')
+        self.trim_penalty_threshold = config.get('scoring_utils', 'trim_penalty_threshold_reference_85')
+        
+        # Conversion factors
+        self.percentage_conversion = config.get('scoring_utils', 'percentage_conversion_factor_for_bep_range_calculations')
+        
+        # Default values
+        self.default_trim_percentage = config.get('scoring_utils', 'default_trim_percentage_value')
+        self.no_oversizing_penalty_score = config.get('scoring_utils', 'default_score_for_no_oversizing_penalty')
     
     def get_scoring_reason(self, component: str, score: float, evaluation: dict) -> str:
         """
@@ -85,11 +93,11 @@ class ScoringUtils:
                 if score >= self.bep_score_excellent:
                     return f"Perfect BEP match: {qbp:.1f}% ({self.bep_optimal_min}-{self.bep_optimal_max}% optimal)"
                 elif score >= self.bep_score_high:
-                    return f"Excellent BEP match: {qbp:.1f}% ({self.bep_excellent_min*100:.0f}-{self.bep_excellent_max*100:.0f}% range)"
+                    return f"Excellent BEP match: {qbp:.1f}% ({self.bep_excellent_min*self.percentage_conversion:.0f}-{self.bep_excellent_max*self.percentage_conversion:.0f}% range)"
                 elif score >= self.bep_score_medium:
-                    return f"Good BEP match: {qbp:.1f}% ({self.bep_good_min*100:.0f}-{self.bep_good_max*100:.0f}% range)"
+                    return f"Good BEP match: {qbp:.1f}% ({self.bep_good_min*self.percentage_conversion:.0f}-{self.bep_good_max*self.percentage_conversion:.0f}% range)"
                 elif score >= self.bep_score_low:
-                    return f"Acceptable BEP match: {qbp:.1f}% ({self.bep_fair_min*100:.0f}-{self.bep_fair_max*100:.0f}% range)"
+                    return f"Acceptable BEP match: {qbp:.1f}% ({self.bep_fair_min*self.percentage_conversion:.0f}-{self.bep_fair_max*self.percentage_conversion:.0f}% range)"
                 else:
                     return f"Poor BEP match: {qbp:.1f}% (outside optimal ranges)"
             
@@ -119,7 +127,7 @@ class ScoringUtils:
             
             elif component == 'head_oversizing_penalty':
                 oversizing_pct = evaluation.get('bep_head_oversizing_pct', 0)
-                if score == 0:
+                if score == self.no_oversizing_penalty_score:
                     return f"No oversizing penalty: BEP head appropriately sized ({oversizing_pct:.1f}%)"
                 elif score >= self.oversizing_moderate_penalty:
                     return f"Moderate oversizing penalty: BEP head {oversizing_pct:.1f}% above requirement"
@@ -134,13 +142,13 @@ class ScoringUtils:
                     return "Physical capability verified"
             
             elif component == 'trim_penalty':
-                trim_pct = evaluation.get('trim_percent', 100)
+                trim_pct = evaluation.get('trim_percent', self.default_trim_percentage)
                 if score == self.trim_light_penalty:
                     return f"Small trim penalty: {trim_pct:.1f}% impeller ({self.trim_light_threshold}-{self.trim_minimal_threshold}%)"
                 elif score == self.trim_moderate_penalty:
-                    return f"Moderate trim penalty: {trim_pct:.1f}% impeller (85-{self.trim_light_threshold}%)"
+                    return f"Moderate trim penalty: {trim_pct:.1f}% impeller ({self.trim_penalty_threshold}-{self.trim_light_threshold}%)"
                 elif score == self.trim_heavy_penalty:
-                    return f"Large trim penalty: {trim_pct:.1f}% impeller (<85%)"
+                    return f"Large trim penalty: {trim_pct:.1f}% impeller (<{self.trim_penalty_threshold}%)"
                 else:
                     return f"Full impeller: {trim_pct:.1f}%"
             

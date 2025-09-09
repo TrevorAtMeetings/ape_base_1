@@ -30,6 +30,10 @@ class PerformanceValidator:
         self.optimal_bep_min = config.get('performance_validation', 'optimal_bep_range_minimum_percentage')
         self.optimal_bep_max = config.get('performance_validation', 'optimal_bep_range_maximum_percentage')
         self.safety_factor = config.get('performance_validation', 'maximum_head_flow_safety_factor_90')
+        
+        # Additional configuration values
+        self.default_calibration_factor = config.get('performance_validation', 'default_calibration_factor_value')
+        self.percentage_conversion = config.get('performance_validation', 'percentage_conversion_factor_for_qbp_calculation')
 
     def get_exponents_for_pump(self, pump_data: Dict[str, Any]) -> Dict[str, float]:
         """
@@ -38,8 +42,12 @@ class PerformanceValidator:
         pump_type = pump_data.get('pump_type', '')
         return get_exponents_for_pump_type(pump_type)
 
-    def get_calibration_factor(self, factor_name: str, default_value: float = 1.0) -> float:
-        """Get calibration factor with fallback to default."""
+    def get_calibration_factor(self, factor_name: str, default_value: float = None) -> float:
+        """Get calibration factor with fallback to config default."""
+        # Use config default if no specific default provided
+        if default_value is None:
+            default_value = self.default_calibration_factor
+        
         # Try to get from brain's calibration factors
         if hasattr(self.brain, 'get_config_service'):
             try:
@@ -74,7 +82,7 @@ class PerformanceValidator:
             # Check BEP proximity
             bep_flow = specs.get('bep_flow_m3hr', 0)
             if bep_flow > 0:
-                qbp = (flow / bep_flow) * 100
+                qbp = (flow / bep_flow) * self.percentage_conversion
                 
                 if qbp < self.bep_warning_min:
                     validation['warnings'].append(f'Operating at {qbp:.0f}% of BEP - risk of recirculation')

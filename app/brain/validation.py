@@ -44,19 +44,19 @@ class DataValidator:
             
             # Diameter conversions to mm
             'in_to_mm': config.get('validation', 'inches_to_mm_conversion_factor'),
-            'cm_to_mm': 10,
-            'm_to_mm': 1000
+            'cm_to_mm': config.get('validation', 'centimeters_to_millimeters_conversion_factor'),
+            'm_to_mm': config.get('validation', 'meters_to_millimeters_conversion_factor')
         }
         
         # Validation rules
         self.validation_rules = {
             'flow_m3hr': {'min': config.get('validation', 'minimum_valid_flow_rate_mâ³_hr'), 'max': config.get('validation', 'maximum_valid_flow_rate_mâ³_hr')},
-            'head_m': {'min': 0.1, 'max': config.get('validation', 'maximum_valid_head_m')},
+            'head_m': {'min': config.get('validation', 'minimum_valid_head_m'), 'max': config.get('validation', 'maximum_valid_head_m')},
             'efficiency_pct': {'min': 0, 'max': 100},
             'power_kw': {'min': 0, 'max': config.get('validation', 'maximum_valid_power_kw')},
             'npshr_m': {'min': 0, 'max': config.get('validation', 'maximum_valid_npsh_m')},
             'impeller_diameter_mm': {'min': config.get('validation', 'minimum_impeller_diameter_mm'), 'max': config.get('validation', 'maximum_impeller_diameter_mm')},
-            'speed_rpm': {'min': 100, 'max': config.get('validation', 'maximum_pump_speed_rpm')}
+            'speed_rpm': {'min': config.get('validation', 'minimum_pump_speed_rpm'), 'max': config.get('validation', 'maximum_pump_speed_rpm')}
         }
     
     def validate_operating_point(self, flow: float, head: float) -> Dict[str, Any]:
@@ -97,9 +97,9 @@ class DataValidator:
             
             # Check for unrealistic combinations
             specific_speed = self._calculate_specific_speed(flow, head)
-            if specific_speed < 10:
+            if specific_speed < config.get('validation', 'minimum_specific_speed_threshold'):
                 validation['warnings'].append('Very low specific speed - unusual combination')
-            elif specific_speed > 10000:
+            elif specific_speed > config.get('validation', 'maximum_specific_speed_threshold'):
                 validation['warnings'].append('Very high specific speed - unusual combination')
             
         except Exception as e:
@@ -160,14 +160,14 @@ class DataValidator:
                 valid_curves = 0
                 for curve in curves:
                     points = curve.get('performance_points', [])
-                    if len(points) >= 3:  # Minimum for interpolation
+                    if len(points) >= config.get('validation', 'minimum_curve_points_for_interpolation'):  # Minimum for interpolation
                         valid_curves += 1
                 
                 if valid_curves == 0:
                     validation['valid'] = False
                     validation['issues'].append('No valid curves (need ≥3 points)')
                     validation['data_quality_score'] = 0
-                elif valid_curves < len(curves) / 2:
+                elif valid_curves < len(curves) / config.get('validation', 'curve_validation_divisor'):
                     validation['issues'].append(f'Only {valid_curves}/{len(curves)} curves valid')
                     validation['data_quality_score'] -= 20
             
@@ -184,7 +184,7 @@ class DataValidator:
                 validation['data_quality_score'] -= 5
             
             # Set overall validity
-            if validation['data_quality_score'] < 50:
+            if validation['data_quality_score'] < config.get('validation', 'minimum_data_quality_score_for_validity'):
                 validation['valid'] = False
             
         except Exception as e:

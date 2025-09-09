@@ -24,6 +24,7 @@ class CurveAnalyzer:
         Args:
             brain: Parent PumpBrain instance
         """
+        logger.info("Entering performance_curves.py file")
         self.brain = brain
         
         # Performance thresholds
@@ -93,7 +94,8 @@ class CurveAnalyzer:
                     continue
                     
                 curve_points = curve.get('performance_points', [])
-                if not curve_points or len(curve_points) < 2:
+                min_points_required = config.get('performance_curves', 'minimum_number_of_curve_points_required_for_interpolation')
+                if not curve_points or len(curve_points) < min_points_required:
                     logger.debug(f"[CURVE FINDER] {pump_code}: Curve {diameter}mm has insufficient points")
                     continue
                 
@@ -101,7 +103,8 @@ class CurveAnalyzer:
                 flows = [p.get('flow_m3hr', 0) for p in curve_points if p.get('flow_m3hr') is not None and p.get('head_m') is not None]
                 heads = [p.get('head_m', 0) for p in curve_points if p.get('flow_m3hr') is not None and p.get('head_m') is not None]
                 
-                if len(flows) < 2 or len(heads) < 2:
+                min_points_required = config.get('performance_curves', 'minimum_number_of_curve_points_required_for_interpolation')
+                if len(flows) < min_points_required or len(heads) < min_points_required:
                     logger.debug(f"[CURVE FINDER] {pump_code}: Curve {diameter}mm has insufficient valid data")
                     continue
                 
@@ -147,7 +150,8 @@ class CurveAnalyzer:
                             best_curve = curve
                             best_diameter = diameter
                     else:
-                        logger.debug(f"[CURVE FINDER] {pump_code}: Curve {diameter}mm delivers {delivered_head:.1f}m < required {head*0.98:.1f}m")
+                        min_head_factor = config.get('performance_curves', 'hard_coded_head_requirement_factor_for_validation')
+                        logger.debug(f"[CURVE FINDER] {pump_code}: Curve {diameter}mm delivers {delivered_head:.1f}m < required {head*min_head_factor:.1f}m")
                 
                 except Exception as e:
                     logger.debug(f"[CURVE FINDER] {pump_code}: Error evaluating curve {diameter}mm: {e}")
@@ -219,7 +223,9 @@ class CurveAnalyzer:
                 gravity = config.get('performance_curves', 'gravitational_acceleration_ms2')
                 seconds_per_hour = config.get('performance_curves', 'seconds_per_hour_for_flow_conversions')
                 flow_m3s = flow / seconds_per_hour  # Convert to m³/s
-                power = (water_density * gravity * flow_m3s * head) / (efficiency / 100) / 1000  # kW
+                watts_to_kw = config.get('performance_curves', 'watts_to_kilowatts_conversion_factor')
+                percentage_factor = config.get('performance_curves', 'percentage_conversion_factor')
+                power = (water_density * gravity * flow_m3s * head) / (efficiency / percentage_factor) / watts_to_kw  # kW
             
             # Get NPSH data
             npsh_values = [p.get('npshr_m') for p in curve_points if p.get('npshr_m') is not None]
@@ -240,10 +246,10 @@ class CurveAnalyzer:
                 'flow_m3hr': flow,
                 'head_m': delivered_head,  # What this curve actually delivers
                 'efficiency_pct': max(self.min_efficiency, efficiency),
-                'power_kw': power if power else 0.0,
+                'power_kw': power if power else config.get('performance_curves', 'default_power_value_when_none_available'),
                 'npshr_m': npshr,
                 'impeller_diameter_mm': diameter,
-                'trim_percent': 100.0,  # No trimming - using curve as-is
+                'trim_percent': config.get('performance_curves', 'percentage_conversion_factor'),  # No trimming - using curve as-is
                 'meets_requirements': delivered_head >= head * config.get('performance_curves', 'minimum_head_requirement_factor_98'),  # Does it meet 98% of target head?
                 'head_margin_m': delivered_head - head,  # Excess head available
                 'curve_match': True  # This is a direct curve match, not trimmed

@@ -129,7 +129,14 @@ def get_feature_status():
         toggles = service.get_feature_toggles()
         
         # Convert to simple key-value mapping
-        status = {key: feature.get('enabled', False) for key, feature in toggles.items()}
+        status = {}
+        for key, feature in toggles.items():
+            if isinstance(feature, bool):
+                status[key] = feature
+            elif isinstance(feature, dict):
+                status[key] = feature.get('enabled', False)
+            else:
+                status[key] = False
         
         return jsonify({
             'success': True,

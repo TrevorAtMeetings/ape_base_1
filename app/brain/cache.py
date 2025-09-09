@@ -117,14 +117,14 @@ class BrainCache:
             Cache statistics dictionary
         """
         total_requests = self._stats['hits'] + self._stats['misses']
-        hit_rate = (self._stats['hits'] / total_requests * 100) if total_requests > 0 else 0
+        hit_rate = (self._stats['hits'] / total_requests * config.get('cache', 'percentage_conversion_factor_for_hit_rate')) if total_requests > 0 else 0
         
         return {
             'size': len(self._cache),
             'max_size': self.max_size,
             'hits': self._stats['hits'],
             'misses': self._stats['misses'],
-            'hit_rate': round(hit_rate, 2),
+            'hit_rate': round(hit_rate, config.get('cache', 'decimal_places_for_rounding_hit_rate')),
             'evictions': self._stats['evictions'],
             'expirations': self._stats['expirations']
         }

@@ -43,6 +43,47 @@ class IndustryStandardCalculator:
         self.qbp_penalty_base = config.get('performance_industry_standard', 'qbp_efficiency_penalty_base_factor_10')
         self.qbp_penalty_divisor = config.get('performance_industry_standard', 'qbp_efficiency_penalty_divisor_for_calculations')
         self.qbp_penalty_lower_bound = config.get('performance_industry_standard', 'qbp_efficiency_penalty_lower_bound_percentage')
+        
+        # Physical constants and conversion factors - access by finding keys dynamically to avoid Unicode issues
+        section = config.performance_industry_standard
+        
+        # Find water density key (contains special characters)
+        water_key = None
+        for key in section.keys():
+            if key.startswith('water_density') and 'hydraulic' in key and key.endswith('_value'):
+                water_key = key[:-6]  # Remove '_value' suffix
+                break
+        
+        # Find gravitational acceleration key (contains special characters)
+        gravity_key = None
+        for key in section.keys():
+            if key.startswith('gravitational') and key.endswith('_value'):
+                gravity_key = key[:-6]  # Remove '_value' suffix
+                break
+        
+        # Set values using found keys
+        self.water_density = config.get('performance_industry_standard', water_key) if water_key else 1000
+        self.gravitational_acceleration = config.get('performance_industry_standard', gravity_key) if gravity_key else 9.81
+        self.seconds_per_hour = config.get('performance_industry_standard', 'seconds_per_hour_conversion')
+        self.percentage_conversion = config.get('performance_industry_standard', 'percentage_conversion_factor')
+        
+        # Manufacturer reference values - using actual available keys
+        self.manufacturer_diameter_ratio = config.get('performance_industry_standard', 'manufacturer_diameter_ratio_reference_8835')
+        self.expected_delivered_head = config.get('performance_industry_standard', 'expected_delivered_head_for_manufacturer_analysis_m')
+        self.trim_analysis_reference = config.get('performance_industry_standard', 'trim_analysis_reference_value')
+        self.manufacturer_trim_reference = config.get('performance_industry_standard', 'manufacturer_trim_reference_percentage')
+        
+        # Efficiency calculation factors - using actual available keys
+        self.efficiency_drop_base_factor = config.get('performance_industry_standard', 'efficiency_drop_calculation_base_factor')
+        self.efficiency_penalty_diffuser_default = config.get('performance_industry_standard', 'efficiency_penalty_diffuser_default_factor')
+        self.efficiency_penalty_volute_default = config.get('performance_industry_standard', 'efficiency_penalty_volute_default_factor')
+        
+        # NPSH calculations - using actual available keys
+        self.npsh_degradation_threshold = config.get('performance_industry_standard', 'npsh_degradation_threshold_default')
+        self.npsh_degradation_factor = config.get('performance_industry_standard', 'npsh_degradation_factor_default')
+        
+        # QBP calculations - using actual available keys  
+        self.default_true_qbp_percentage = config.get('performance_industry_standard', 'default_true_qbp_percentage')
 
     def calculate_at_point_industry_standard(self, pump_data: Dict[str, Any], flow: float, 
                           head: float, impeller_trim: Optional[float] = None) -> Optional[Dict[str, Any]]:
@@ -211,14 +252,13 @@ class IndustryStandardCalculator:
                     # Manufacturer shows 11.65% trim, which means 88.35% diameter
                     # This corresponds to head ratio: (88.35/100)² = 0.781
                     # Expected delivered head: 50m / 0.781 = 64.0m
-                    manufacturer_diameter_ratio = 0.8835  # 88.35%
-                    manufacturer_head_ratio = manufacturer_diameter_ratio ** 2
+                    manufacturer_head_ratio = self.manufacturer_diameter_ratio ** 2
                     expected_delivered_head = head / manufacturer_head_ratio
-                    logger.error(f"[TRIM ANALYSIS] Manufacturer expects: 64.0m delivered head for 11.65% trim")
+                    logger.error(f"[TRIM ANALYSIS] Manufacturer expects: {self.expected_delivered_head}m delivered head for {self.manufacturer_trim_reference}% trim")
                     logger.error(f"[TRIM ANALYSIS] Our data shows: {delivered_head:.2f}m delivered head")
-                    logger.error(f"[TRIM ANALYSIS] Difference: {delivered_head - 64.0:.2f}m higher than expected")
-                    trim_diff = 16.5 - 11.65
-                    logger.error(f"[TRIM ANALYSIS] This explains why our trim is {trim_diff + 11.65:.1f}% vs manufacturer's 11.65%")
+                    logger.error(f"[TRIM ANALYSIS] Difference: {delivered_head - self.expected_delivered_head:.2f}m higher than expected")
+                    trim_diff = self.trim_analysis_reference - self.manufacturer_trim_reference
+                    logger.error(f"[TRIM ANALYSIS] This explains why our trim is {trim_diff + self.manufacturer_trim_reference:.1f}% vs manufacturer's {self.manufacturer_trim_reference}%")
                 
                 # Check for NaN values (NO FALLBACKS EVER)
                 if np.isnan(delivered_head) or np.isnan(base_efficiency):
@@ -317,16 +357,16 @@ class IndustryStandardCalculator:
                 
                 if 'diffuser' in pump_type or 'turbine' in pump_type:
                     # Diffuser pumps: Higher efficiency penalty (research: 0.4-0.5)
-                    efficiency_penalty_factor = self.validator.get_calibration_factor('efficiency_penalty_diffuser', 0.45)
+                    efficiency_penalty_factor = self.validator.get_calibration_factor('efficiency_penalty_diffuser', self.efficiency_penalty_diffuser_default)
                     pump_type_classification = "diffuser"
                 else:
                     # Volute pumps (default): Lower efficiency penalty (research: 0.15-0.25)
-                    efficiency_penalty_factor = self.validator.get_calibration_factor('efficiency_penalty_volute', 0.20)
+                    efficiency_penalty_factor = self.validator.get_calibration_factor('efficiency_penalty_volute', self.efficiency_penalty_volute_default)
                     pump_type_classification = "volute"
                 
                 # Calculate efficiency drop: Δη = ε × (1 - D_trim/D_full)
                 trim_ratio = diameter_ratio  # D_trim/D_full
-                efficiency_drop_percentage = efficiency_penalty_factor * (1.0 - trim_ratio) * 100
+                efficiency_drop_percentage = efficiency_penalty_factor * (self.efficiency_drop_base_factor - trim_ratio) * self.percentage_conversion
                 final_efficiency = base_efficiency - efficiency_drop_percentage
                 
                 logger.debug(f"[EFFICIENCY PENALTY] {pump_code}: {pump_type_classification} pump, trim ratio {trim_ratio:.3f}")
@@ -338,11 +378,9 @@ class IndustryStandardCalculator:
                     # Calculate power hydraulically from manufacturer data
                     # CRITICAL: Use the actual operating head, not the pump's capability
                     if final_efficiency > 0:
-                        density = 1000  # kg/m³ for water
-                        gravity = 9.81  # m/s²
                         # Use the required head (operating point), not final_head (pump capability)
                         actual_operating_head = head  # The head we're actually operating at
-                        final_power = (flow * actual_operating_head * density * gravity) / (3600 * final_efficiency / 100 * 1000)
+                        final_power = (flow * actual_operating_head * self.water_density * self.gravitational_acceleration) / (self.seconds_per_hour * final_efficiency / self.percentage_conversion * 1000)
                         logger.debug(f"[INDUSTRY] {pump_code}: Power calculated hydraulically at {actual_operating_head:.1f}m (operating point): {final_power:.2f}kW")
                     else:
                         final_power = 0
@@ -359,7 +397,7 @@ class IndustryStandardCalculator:
                         # Fallback to hydraulic calculation
                         # CRITICAL: Use the actual operating head, not the pump's capability
                         actual_operating_head = head  # The head we're actually operating at
-                        final_power = (flow * actual_operating_head * 1000 * 9.81) / (3600 * final_efficiency / 100 * 1000)
+                        final_power = (flow * actual_operating_head * self.water_density * self.gravitational_acceleration) / (self.seconds_per_hour * final_efficiency / self.percentage_conversion * 1000)
                 
                 # NPSH calculation with affinity laws
                 interpolated_npshr = None
@@ -374,12 +412,12 @@ class IndustryStandardCalculator:
                             interpolated_npshr = base_npshr * (diameter_ratio ** physics_exponents['npshr_exponent_alpha'])
                             
                             # Research-based NPSH degradation for heavy trimming (>10%)
-                            npsh_threshold = self.validator.get_calibration_factor('npsh_degradation_threshold', 10.0)
-                            if trim_percent is not None and trim_percent < (100 - npsh_threshold):  # More than 10% trim
-                                npsh_degradation_factor = self.validator.get_calibration_factor('npsh_degradation_factor', 1.15)
+                            npsh_threshold = self.validator.get_calibration_factor('npsh_degradation_threshold', self.npsh_degradation_threshold)
+                            if trim_percent is not None and trim_percent < (self.percentage_conversion - npsh_threshold):  # More than 10% trim
+                                npsh_degradation_factor = self.validator.get_calibration_factor('npsh_degradation_factor', self.npsh_degradation_factor)
                                 interpolated_npshr *= npsh_degradation_factor
-                                actual_trim_amount = 100 - trim_percent if trim_percent is not None else 0
-                                logger.warning(f"[NPSH DEGRADATION] {pump_code}: Heavy trim ({actual_trim_amount:.1f}%) - NPSH increased by {(npsh_degradation_factor-1)*100:.1f}%")
+                                actual_trim_amount = self.percentage_conversion - trim_percent if trim_percent is not None else 0
+                                logger.warning(f"[NPSH DEGRADATION] {pump_code}: Heavy trim ({actual_trim_amount:.1f}%) - NPSH increased by {(npsh_degradation_factor-1)*self.percentage_conversion:.1f}%")
                 except:
                     pass
                 
@@ -395,7 +433,7 @@ class IndustryStandardCalculator:
                 
                 shifted_bep_flow = original_bep_flow
                 shifted_bep_head = original_bep_head
-                true_qbp_percent = 100.0
+                true_qbp_percent = self.default_true_qbp_percentage
                 
                 if original_bep_flow > 0 and original_bep_head > 0 and diameter_ratio < 1.0:
                     logger.info(f"[BEP MIGRATION] {pump_code}: Calculating shifted BEP for {trim_percent:.1f}% trim")
@@ -420,8 +458,8 @@ class IndustryStandardCalculator:
                     logger.info(f"[BEP MIGRATION] {pump_code}: Shifted BEP: {shifted_bep_flow:.1f} m³/hr @ {shifted_bep_head:.1f}m")
                     
                     # Calculate TRUE QBP (operating flow as % of SHIFTED BEP flow)
-                    true_qbp_percent = (flow / shifted_bep_flow) * 100 if shifted_bep_flow > 0 else 100
-                    simple_qbp_percent = (flow / original_bep_flow) * 100 if original_bep_flow > 0 else 100
+                    true_qbp_percent = (flow / shifted_bep_flow) * self.percentage_conversion if shifted_bep_flow > 0 else self.percentage_conversion
+                    simple_qbp_percent = (flow / original_bep_flow) * self.percentage_conversion if original_bep_flow > 0 else self.percentage_conversion
                     
                     logger.info(f"[BEP MIGRATION] {pump_code}: Simple QBP (ignoring shift): {simple_qbp_percent:.1f}%")
                     logger.info(f"[BEP MIGRATION] {pump_code}: TRUE QBP (with BEP shift): {true_qbp_percent:.1f}%")
@@ -440,7 +478,7 @@ class IndustryStandardCalculator:
                 else:
                     # No trimming or no BEP data - use original values
                     if original_bep_flow > 0:
-                        true_qbp_percent = (flow / original_bep_flow) * 100
+                        true_qbp_percent = (flow / original_bep_flow) * self.percentage_conversion
                     logger.debug(f"[BEP MIGRATION] {pump_code}: No trimming or BEP data - using original values")
                 
                 # Return industry-standard performance calculation with BEP migration data

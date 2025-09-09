@@ -20,6 +20,7 @@ class AIAnalyst:
     
     def __init__(self):
         self.logger = logging.getLogger(__name__)
+        logger.info("Entering ai_analyst.py file")
         # the newest OpenAI model is "gpt-4o" which was released May 13, 2024.
         # do not change this unless explicitly requested by the user
         self.model = config.get('ai_analyst', 'openai_model_for_calibration_analysis')
@@ -94,7 +95,7 @@ class AIAnalyst:
             insights = result.get('insights', [])
             
             # Add calibration factor recommendations if significant deviations exist
-            if metrics.get('efficiency', {}).get('mean_delta', 0) > 3:
+            if metrics.get('efficiency', {}).get('mean_delta', 0) > config.get('ai_analyst', 'significant_deviation_threshold_for_calibration_adjustment'):
                 insights.append(self._suggest_calibration_factors(metrics))
                 
             self.logger.info(f"Generated {len(insights)} AI insights for calibration analysis")
@@ -118,7 +119,7 @@ class AIAnalyst:
         
         for point in points:
             prompt += f"""
-        Flow: {point['flow']:.2f} m³/hr
+        Flow: {point['flow']:.2f} m3/h
         - Manufacturer Efficiency: {point['truth_efficiency']:.1f}%
         - Brain Efficiency: {point['brain_efficiency']:.1f}%
         - Delta: {point['delta_efficiency']:.1f}%
@@ -155,11 +156,11 @@ class AIAnalyst:
         
         suggestions = []
         
-        if abs(eff_delta) > 3:
+        if abs(eff_delta) > config.get('ai_analyst', 'significant_deviation_threshold_for_calibration_adjustment'):
             direction = "increase" if eff_delta < 0 else "decrease"
-            suggestions.append(f"Consider {direction} in efficiency_correction_exponent by ~{abs(eff_delta)/10:.3f}")
+            suggestions.append(f"Consider {direction} in efficiency_correction_exponent by ~{abs(eff_delta)/config.get('ai_analyst', 'divisor_for_efficiency_correction_exponent_calculation'):.3f}")
             
-        if abs(power_delta) > 3:
+        if abs(power_delta) > config.get('ai_analyst', 'significant_deviation_threshold_for_calibration_adjustment'):
             direction = "increase" if power_delta < 0 else "decrease"
             suggestions.append(f"Consider {direction} in power calculation factors")
             
@@ -174,9 +175,9 @@ class AIAnalyst:
         
         # Overall accuracy assessment
         overall_acc = metrics.get('overall_accuracy', 0)
-        if overall_acc >= 98:
+        if overall_acc >= config.get('ai_analyst', 'excellent_accuracy_threshold_percentage'):
             insights.append("Excellent accuracy: Brain predictions are highly reliable")
-        elif overall_acc >= 95:
+        elif overall_acc >= config.get('ai_analyst', 'good_accuracy_threshold_percentage'):
             insights.append("Good accuracy: Minor calibration may improve predictions")
         else:
             insights.append("Significant deviations detected: Calibration recommended")
@@ -185,26 +186,27 @@ class AIAnalyst:
         eff_mean = metrics.get('efficiency', {}).get('mean_delta', 0)
         eff_rmse = metrics.get('efficiency', {}).get('rmse', 0)
         
-        if abs(eff_mean) > 2:
+        if abs(eff_mean) > config.get('ai_analyst', 'consistent_prediction_deviation_threshold'):
             direction = "over-predicting" if eff_mean > 0 else "under-predicting"
             insights.append(f"Brain consistently {direction} efficiency by {abs(eff_mean):.1f}%")
             
-        if eff_rmse > 5:
+        if eff_rmse > config.get('ai_analyst', 'high_rmse_variation_threshold'):
             insights.append(f"High efficiency variation (RMSE: {eff_rmse:.1f}%) suggests non-linear deviation")
             
         # Power analysis
         power_mean = metrics.get('power', {}).get('mean_delta', 0)
         power_rmse = metrics.get('power', {}).get('rmse', 0)
         
-        if abs(power_mean) > 2:
+        if abs(power_mean) > config.get('ai_analyst', 'consistent_prediction_deviation_threshold'):
             direction = "over-predicting" if power_mean > 0 else "under-predicting"
             insights.append(f"Brain consistently {direction} power by {abs(power_mean):.1f}%")
             
-        if power_rmse > 5:
+        if power_rmse > config.get('ai_analyst', 'high_rmse_variation_threshold'):
             insights.append(f"High power variation (RMSE: {power_rmse:.1f}%) may indicate model limitations")
             
         # Provide actionable recommendations
-        if abs(eff_mean) > 5 or abs(power_mean) > 5:
+        review_threshold = config.get('ai_analyst', 'threshold_for_recommending_physics_model_review')
+        if abs(eff_mean) > review_threshold or abs(power_mean) > review_threshold:
             insights.append("Recommendation: Review physics model parameters for this pump type")
             
         return insights
@@ -296,7 +298,7 @@ class AIAnalyst:
         prompt = f"""Analyze this pump performance for a technical report:
 
 Site Requirements:
-- Flow Rate: {flow} m³/hr  
+- Flow Rate: {flow} m3/h  
 - Head: {head} m
 - Application: Water pumping
 
@@ -323,27 +325,31 @@ Keep response concise and engineering-focused."""
         qbp = evaluation_result.get('qbp_pct', 0)
         
         # Generate basic assessment
-        if efficiency > 75:
+        if efficiency > config.get('ai_analyst', 'excellent_pump_efficiency_threshold_for_analysis'):
             eff_assessment = "excellent efficiency"
-        elif efficiency > 65:
+        elif efficiency > config.get('ai_analyst', 'good_pump_efficiency_threshold_for_analysis'):
             eff_assessment = "good efficiency"  
-        elif efficiency > 55:
+        elif efficiency > config.get('ai_analyst', 'acceptable_pump_efficiency_threshold_for_analysis'):
             eff_assessment = "acceptable efficiency"
         else:
             eff_assessment = "low efficiency"
             
-        if qbp <= 110:
+        if qbp <= config.get('ai_analyst', 'qbp_threshold_for_operating_close_to_bep'):
             bep_assessment = "operating close to Best Efficiency Point"
-        elif qbp <= 130:
+        elif qbp <= config.get('ai_analyst', 'qbp_threshold_for_reasonably_close_to_bep'):
             bep_assessment = "operating reasonably close to BEP"
         else:
             bep_assessment = "operating away from optimal BEP"
             
-        analysis = f"""Performance Assessment: This pump demonstrates {eff_assessment} ({efficiency}%) for the specified duty point of {flow} m³/hr at {head}m head.
+        close_to_bep = config.get('ai_analyst', 'qbp_threshold_for_operating_close_to_bep')
+        reasonably_close_to_bep = config.get('ai_analyst', 'qbp_threshold_for_reasonably_close_to_bep')
+        good_efficiency = config.get('ai_analyst', 'good_pump_efficiency_threshold_for_analysis')
+        
+        analysis = f"""Performance Assessment: This pump demonstrates {eff_assessment} ({efficiency}%) for the specified duty point of {flow} m3/h at {head}m head.
 
-Operating Characteristics: The pump is {bep_assessment} (QBP: {qbp}%), indicating {'optimal' if qbp <= 110 else 'acceptable' if qbp <= 130 else 'suboptimal'} hydraulic matching for this application.
+Operating Characteristics: The pump is {bep_assessment} (QBP: {qbp}%), indicating {'optimal' if qbp <= close_to_bep else 'acceptable' if qbp <= reasonably_close_to_bep else 'suboptimal'} hydraulic matching for this application.
 
-Technical Recommendations: {'Continue with current selection - performance is well-suited for the application.' if efficiency > 65 and qbp <= 130 else 'Consider alternative pump sizes or impeller adjustments to improve efficiency and reduce operating costs.'}"""
+Technical Recommendations: {'Continue with current selection - performance is well-suited for the application.' if efficiency > good_efficiency and qbp <= reasonably_close_to_bep else 'Consider alternative pump sizes or impeller adjustments to improve efficiency and reduce operating costs.'}"""
 
         return {
             'success': True,

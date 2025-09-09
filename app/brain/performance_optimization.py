@@ -63,6 +63,12 @@ class PerformanceOptimizer:
         self.head_weight = config.get('performance_optimization', 'head_margin_score_weight_20_weight')
         self.head_score_factor = config.get('performance_optimization', 'head_margin_score_factor')
         self.base_score = config.get('performance_optimization', 'base_score_for_calculations_100')
+        
+        # Default physics values
+        self.default_head_exponent = config.get('performance_optimization', 'default_head_exponent_for_physics_calculations')
+        self.default_bep_shift_flow_exponent = config.get('performance_optimization', 'default_bep_shift_flow_exponent_calibration_factor')
+        self.default_bep_shift_head_exponent = config.get('performance_optimization', 'default_bep_shift_head_exponent_calibration_factor')
+        self.fill_value_interpolation = config.get('performance_optimization', 'fill_value_for_interpolation_functions')
 
     def calculate_efficiency_optimized_trim(self, flows_sorted: List[float], heads_sorted: List[float], 
                                            largest_diameter: float, target_flow: float, target_head: float,
@@ -79,7 +85,7 @@ class PerformanceOptimizer:
             
             # Step 1: Calculate minimum diameter needed to meet head requirements
             head_interp = interpolate.interp1d(flows_sorted, heads_sorted, 
-                                            kind='linear', bounds_error=False, fill_value=0.0)
+                                            kind='linear', bounds_error=False, fill_value=self.fill_value_interpolation)
             deliverable_head = float(head_interp(target_flow))
             
             # Special tolerance for BEP testing - allow small precision differences
@@ -94,7 +100,7 @@ class PerformanceOptimizer:
             min_head_ratio = (target_head * self.head_safety_margin) / deliverable_head  # Add safety margin
             min_diameter_ratio = np.sqrt(min_head_ratio) if min_head_ratio > 0 else self.default_diameter_ratio
             min_diameter = largest_diameter * min_diameter_ratio
-            min_trim_for_head = min_diameter_ratio * 100
+            min_trim_for_head = min_diameter_ratio * self.base_score
             
             # Ensure minimum diameter respects physical limits - but if impossible, fall back to minimum allowed
             if min_trim_for_head < self.min_trim_percent:
@@ -111,7 +117,7 @@ class PerformanceOptimizer:
             
             # Add incremental trims up to 100%
             current_trim = max(self.min_trim_percent, min_trim_for_head + self.trim_test_start_increment)  # Start increment above minimum
-            while current_trim <= 100.0:
+            while current_trim <= self.max_trim_percent:
                 test_trims.append(current_trim)
                 current_trim += self.trim_test_increment  # Test in configured increments
                 
@@ -125,11 +131,11 @@ class PerformanceOptimizer:
             trim_evaluations = []
             
             for trim_percent in test_trims:
-                diameter_ratio = trim_percent / 100.0
+                diameter_ratio = trim_percent / self.base_score
                 test_diameter = largest_diameter * diameter_ratio
                 
                 # Calculate performance at this trim level using pump-type-specific exponent
-                head_exponent = physics_exponents['head_exponent_y'] if physics_exponents else 2.0
+                head_exponent = physics_exponents['head_exponent_y'] if physics_exponents else self.default_head_exponent
                 test_head = deliverable_head * (diameter_ratio ** head_exponent)
                 
                 # Skip if this trim doesn't meet head requirements
@@ -140,16 +146,16 @@ class PerformanceOptimizer:
                 # Calculate BEP migration for this trim level
                 shifted_bep_flow = original_bep_flow
                 shifted_bep_head = original_bep_head
-                true_qbp_percent = 100.0
+                true_qbp_percent = self.base_score
                 
                 if original_bep_flow > 0 and original_bep_head > 0 and diameter_ratio < 1.0:
                     # Apply BEP shift using pump-type-specific physics engine
-                    flow_exponent = physics_exponents['flow_exponent_x'] if physics_exponents else self.validator.get_calibration_factor('bep_shift_flow_exponent', 1.2)
-                    head_exponent = physics_exponents['head_exponent_y'] if physics_exponents else self.validator.get_calibration_factor('bep_shift_head_exponent', 2.2)
+                    flow_exponent = physics_exponents['flow_exponent_x'] if physics_exponents else self.validator.get_calibration_factor('bep_shift_flow_exponent', self.default_bep_shift_flow_exponent)
+                    head_exponent = physics_exponents['head_exponent_y'] if physics_exponents else self.validator.get_calibration_factor('bep_shift_head_exponent', self.default_bep_shift_head_exponent)
                     
                     shifted_bep_flow = original_bep_flow * (diameter_ratio ** flow_exponent)
                     shifted_bep_head = original_bep_head * (diameter_ratio ** head_exponent)
-                    true_qbp_percent = (target_flow / shifted_bep_flow) * 100 if shifted_bep_flow > 0 else 100
+                    true_qbp_percent = (target_flow / shifted_bep_flow) * self.base_score if shifted_bep_flow > 0 else self.base_score
                 
                 # Calculate efficiency at this operating point
                 try:

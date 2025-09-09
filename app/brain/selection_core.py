@@ -42,19 +42,37 @@ class SelectionIntelligence:
             'npsh_margin': config.get('selection_core', 'npsh_margin_scoring_weight_maximum_points')
         }
         
-        # Operating constraints
-        self.min_trim_percent = 85.0
-        self.max_trim_percent = 100.0
-        self.npsh_safety_factor = 1.5
+        # Operating constraints - using config values
+        self.min_trim_percent = config.get('selection_core', 'minimum_trim_percentage')
+        self.max_trim_percent = config.get('selection_core', 'maximum_trim_percentage')
+        self.npsh_safety_factor = config.get('selection_core', 'npsh_safety_factor')
         
-        # More realistic QBP ranges for industrial applications
+        # More realistic QBP ranges for industrial applications - using config values
         # The old 60-130% range was too restrictive for practical pump selection
-        self.qbp_min_percent = 50.0  # Allow pumps running at 50% of BEP (more realistic)
-        self.qbp_max_percent = 200.0  # Allow pumps running at 200% of BEP (more realistic)
+        self.qbp_min_percent = config.get('selection_core', 'qbp_minimum_percentage')  # Allow pumps running at 50% of BEP (more realistic)
+        self.qbp_max_percent = config.get('selection_core', 'qbp_maximum_percentage')  # Allow pumps running at 200% of BEP (more realistic)
         
-        # FIXED: Head oversizing constraints - much more realistic thresholds
-        self.head_oversizing_threshold = 150.0  # % above requirement triggers penalty (was 40%)
-        self.severe_oversizing_threshold = 300.0  # % above requirement for severe penalty (was 70%)
+        # FIXED: Head oversizing constraints - much more realistic thresholds - using config values
+        self.head_oversizing_threshold = config.get('selection_core', 'head_oversizing_threshold_percentage')  # % above requirement triggers penalty (was 40%)
+        self.severe_oversizing_threshold = config.get('selection_core', 'severe_head_oversizing_threshold_percentage')  # % above requirement for severe penalty (was 70%)
+        
+        # Additional config constants - handle Unicode characters dynamically
+        # Find minimum flow threshold key (contains special characters)
+        section = config.selection_core
+        minimum_flow_key = None
+        for key in section.keys():
+            if key.startswith('minimum_flow_threshold') and 'hr' in key and key.endswith('_value'):
+                minimum_flow_key = key[:-6]  # Remove '_value' suffix
+                break
+        
+        self.minimum_flow_threshold = config.get('selection_core', minimum_flow_key) if minimum_flow_key else 5.0
+        self.default_max_results = config.get('selection_core', 'default_maximum_results_to_return')
+        self.top_excluded_pumps_limit = config.get('selection_core', 'top_excluded_pumps_for_analysis')
+        self.separator_line_length = config.get('selection_core', 'separator_line_length_for_pump_evaluations')
+        self.percentage_conversion = config.get('selection_core', 'percentage_conversion_factor')
+        self.debug_sample_pumps = config.get('selection_core', 'number_of_sample_pumps_to_log_for_debugging')
+        self.max_excluded_display = config.get('selection_core', 'maximum_excluded_pumps_to_display_in_logs')
+        self.sample_excluded_show = config.get('selection_core', 'number_of_sample_excluded_pumps_to_show')
     
     def find_best_pumps(self, flow: float, head: float, 
                        constraints: Optional[Dict[str, Any]] = None, 
@@ -98,13 +116,13 @@ class SelectionIntelligence:
         # Log all pumps loaded from repository
         process_logger.log_separator()
         process_logger.log(f"REPOSITORY: Loaded {len(all_pumps)} pumps")
-        for pump in all_pumps[:10]:  # Log first 10 pumps as sample
+        for pump in all_pumps[:self.debug_sample_pumps]:  # Log first 10 pumps as sample
             specs = pump.get('specifications', {})
             process_logger.log(f"  - {pump.get('pump_code', 'N/A')}: "
                              f"BEP={specs.get('bep_flow_m3hr', 0):.1f}@{specs.get('bep_head_m', 0):.1f}m, "
                              f"Type={pump.get('pump_type', 'N/A')}")
-        if len(all_pumps) > 10:
-            process_logger.log(f"  ... and {len(all_pumps) - 10} more pumps")
+        if len(all_pumps) > self.debug_sample_pumps:
+            process_logger.log(f"  ... and {len(all_pumps) - self.debug_sample_pumps} more pumps")
         
         # COMPREHENSIVE HC PUMP PIPELINE ANALYSIS
         logger.error(f"🔍 [PIPELINE STEP 1] Repository loaded {len(all_pumps)} total pumps")
@@ -113,7 +131,7 @@ class SelectionIntelligence:
         logger.debug(f"[PIPELINE] Repository loaded {len(all_pumps)} total pumps")
         
         # Sample pump analysis - show first 10 for debugging
-        sample_pumps = all_pumps[:10]
+        sample_pumps = all_pumps[:self.debug_sample_pumps]
         for pump in sample_pumps:
             specs = pump.get('specifications', {})
             curves = pump.get('curves', [])
@@ -134,7 +152,7 @@ class SelectionIntelligence:
         # AND prevents 100m+ head pumps for 50m applications (excessive trim)
         flow_min_range = config.get('selection_core', 'flow_prefiltering_minimum_range_40')
         flow_max_range = config.get('selection_core', 'flow_prefiltering_maximum_range_300')
-        min_flow_threshold = max(flow * flow_min_range, 5.0)  # At least 40% of required flow, minimum 5 m³/hr
+        min_flow_threshold = max(flow * flow_min_range, self.minimum_flow_threshold)  # At least 40% of required flow, minimum 5 m³/hr
         max_flow_threshold = flow * flow_max_range  # Maximum 300% of required flow
         
         # CRITICAL FIX: Add head-based pre-filtering to prevent excessive trim
@@ -178,9 +196,9 @@ class SelectionIntelligence:
                 if bep_flow <= 0:
                     process_logger.log(f"  → EXCLUSION REASON: Invalid BEP flow data (≤0)")
                 elif bep_flow < min_flow_threshold:
-                    process_logger.log(f"  → EXCLUSION REASON: Pump too small - BEP flow {bep_flow:.1f} < {min_flow_threshold:.1f} m³/hr ({0.4*100:.0f}% of target)")
+                    process_logger.log(f"  → EXCLUSION REASON: Pump too small - BEP flow {bep_flow:.1f} < {min_flow_threshold:.1f} m³/hr ({flow_min_range*self.percentage_conversion:.0f}% of target)")
                 else:
-                    process_logger.log(f"  → EXCLUSION REASON: Pump too large - BEP flow {bep_flow:.1f} > {max_flow_threshold:.1f} m³/hr ({3.0*100:.0f}% of target)")
+                    process_logger.log(f"  → EXCLUSION REASON: Pump too large - BEP flow {bep_flow:.1f} > {max_flow_threshold:.1f} m³/hr ({flow_max_range*self.percentage_conversion:.0f}% of target)")
                 
                 flow_filtered_count += 1
                 flow_excluded_list.append(f"{pump_code}: BEP={bep_flow:.1f} m³/hr")
@@ -195,9 +213,9 @@ class SelectionIntelligence:
                 logger.debug(f"[HEAD PRE-FILTER] {pump_code}: Required head {head}m, thresholds: {min_head_threshold:.1f}-{max_head_threshold:.1f}m")
                 
                 if bep_head < min_head_threshold:
-                    process_logger.log(f"  → EXCLUSION REASON: Insufficient head - BEP head {bep_head:.1f} < {min_head_threshold:.1f} m ({0.3*100:.0f}% of target)")
+                    process_logger.log(f"  → EXCLUSION REASON: Insufficient head - BEP head {bep_head:.1f} < {min_head_threshold:.1f} m ({head_min_range*self.percentage_conversion:.0f}% of target)")
                 else:
-                    process_logger.log(f"  → EXCLUSION REASON: Excessive head - BEP head {bep_head:.1f} > {max_head_threshold:.1f} m ({2.0*100:.0f}% of target)")
+                    process_logger.log(f"  → EXCLUSION REASON: Excessive head - BEP head {bep_head:.1f} > {max_head_threshold:.1f} m ({head_max_range*self.percentage_conversion:.0f}% of target)")
                 
                 head_filtered_count += 1
                 head_excluded_list.append(f"{pump_code}: BEP={bep_head:.1f} m")
@@ -229,22 +247,22 @@ class SelectionIntelligence:
         process_logger.log("PRE-FILTERING RESULTS:")
         process_logger.log(f"  Total Repository Pumps: {len(all_pumps)}")
         process_logger.log(f"  Flow Range Excluded: {flow_filtered_count} pumps")
-        if flow_excluded_list and len(flow_excluded_list) <= 10:
+        if flow_excluded_list and len(flow_excluded_list) <= self.max_excluded_display:
             for pump_info in flow_excluded_list:
                 process_logger.log(f"    - {pump_info}")
         elif flow_excluded_list:
-            for pump_info in flow_excluded_list[:5]:
+            for pump_info in flow_excluded_list[:self.sample_excluded_show]:
                 process_logger.log(f"    - {pump_info}")
-            process_logger.log(f"    ... and {len(flow_excluded_list) - 5} more")
+            process_logger.log(f"    ... and {len(flow_excluded_list) - self.sample_excluded_show} more")
         
         process_logger.log(f"  Head Range Excluded: {head_filtered_count} pumps")
-        if head_excluded_list and len(head_excluded_list) <= 10:
+        if head_excluded_list and len(head_excluded_list) <= self.max_excluded_display:
             for pump_info in head_excluded_list:
                 process_logger.log(f"    - {pump_info}")
         elif head_excluded_list:
-            for pump_info in head_excluded_list[:5]:
+            for pump_info in head_excluded_list[:self.sample_excluded_show]:
                 process_logger.log(f"    - {pump_info}")
-            process_logger.log(f"    ... and {len(head_excluded_list) - 5} more")
+            process_logger.log(f"    ... and {len(head_excluded_list) - self.sample_excluded_show} more")
         
         process_logger.log(f"  Pumps Remaining for Evaluation: {len(pump_models)}")
         
@@ -348,7 +366,7 @@ class SelectionIntelligence:
                 # Log feasible pump evaluation with detailed logging
                 process_logger.log_pump_evaluation(pump_code, pump_data, flow, head, evaluation)
                 # Add separator after each pump evaluation
-                process_logger.log("." * 80)
+                process_logger.log("." * self.separator_line_length)
             else:
                 # Track exclusions with authentic Brain reasons
                 if include_exclusions:
@@ -367,13 +385,13 @@ class SelectionIntelligence:
                 # Log excluded pump evaluation with detailed logging
                 process_logger.log_pump_evaluation(pump_code, pump_data, flow, head, evaluation)
                 # Add separator after each pump evaluation
-                process_logger.log("." * 80)
+                process_logger.log("." * self.separator_line_length)
         
         # Sort by score (descending)
         feasible_pumps.sort(key=lambda x: x.get('total_score', 0), reverse=True)
         
         # Prepare result structure
-        max_results = constraints.get('max_results', 5)
+        max_results = constraints.get('max_results', self.default_max_results)
         result = {
             'ranked_pumps': feasible_pumps[:max_results]
         }
@@ -384,7 +402,7 @@ class SelectionIntelligence:
             excluded_pumps.sort(key=lambda x: sum(x.get('score_components', {}).values()), reverse=True)
             
             exclusion_details = {
-                'excluded_pumps': excluded_pumps[:20],  # Top 20 excluded for analysis
+                'excluded_pumps': excluded_pumps[:self.top_excluded_pumps_limit],  # Top 20 excluded for analysis
                 'exclusion_summary': exclusion_summary,
                 'total_evaluated': len(all_pumps),
                 'feasible_count': len(feasible_pumps),

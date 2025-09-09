@@ -39,8 +39,8 @@ class PumpEvaluator:
         }
         
         # Operating constraints
-        self.min_trim_percent = 85.0
-        self.max_trim_percent = 100.0
+        self.min_trim_percent = config.get('pump_evaluator', 'minimum_trim_percentage')
+        self.max_trim_percent = config.get('pump_evaluator', 'maximum_trim_percentage')
         self.npsh_safety_factor = config.get('pump_evaluator', 'npsh_safety_factor_for_required_margin')
         
         # More realistic QBP ranges for industrial applications
@@ -171,29 +171,33 @@ class PumpEvaluator:
                 # TIERED evaluation - NO REJECTIONS (show all pumps categorized by performance)
                 preferred_min = config.get('pump_evaluator', 'preferred_operating_zone_minimum_qbp_percentage')
                 preferred_max = config.get('pump_evaluator', 'preferred_operating_zone_maximum_qbp_percentage')
+                allowable_min = config.get('pump_evaluator', 'qbp_lower_threshold_for_allowable_range')
+                allowable_min_upper = config.get('pump_evaluator', 'qbp_upper_threshold_for_preferred_range_lower_bound')
+                allowable_max_lower = config.get('pump_evaluator', 'qbp_lower_threshold_for_allowable_range_upper_bound')
+                allowable_max = config.get('pump_evaluator', 'qbp_upper_threshold_for_allowable_range')
                 
                 if preferred_min <= qbp <= preferred_max:
                     operating_zone = 'preferred'  # Optimal operating range
                     tier = 1
                     qbp_reasoning = "Sweet spot - optimal pump efficiency and performance"
-                elif 60 <= qbp < 80 or 110 < qbp <= 140:
+                elif allowable_min <= qbp < allowable_min_upper or allowable_max_lower < qbp <= allowable_max:
                     operating_zone = 'allowable'  # Good operating range
                     tier = 2
                     if qbp < 80:
                         qbp_reasoning = "Light loading - pump runs below optimal but efficient"
                     else:
                         qbp_reasoning = "Moderate overload - pump handles higher flow acceptably"
-                elif 50 <= qbp < 60 or 140 < qbp <= 200:
+                elif config.get('pump_evaluator', 'qbp_lower_threshold_for_acceptable_range') <= qbp < allowable_min or allowable_max < qbp <= config.get('pump_evaluator', 'qbp_upper_threshold_for_acceptable_range'):
                     operating_zone = 'acceptable'  # Acceptable for industrial use
                     tier = 3
-                    if qbp < 60:
+                    if qbp < allowable_min:
                         qbp_reasoning = "Significant under-loading - consider smaller pump"
                     else:
                         qbp_reasoning = "Heavy overload - monitor for cavitation and efficiency drop"
                 else:
                     operating_zone = 'marginal'  # Outside typical range but still usable
                     tier = 4
-                    if qbp < 50:
+                    if qbp < config.get('pump_evaluator', 'qbp_lower_threshold_for_acceptable_range'):
                         qbp_reasoning = "Severe under-loading - pump running far below design point"
                     else:
                         qbp_reasoning = "Extreme overload - high risk of cavitation and mechanical stress"
@@ -219,16 +223,25 @@ class PumpEvaluator:
                 # BEP proximity score (Legacy v6.0 tiered scoring - 45 points max)
                 flow_ratio = flow / bep_flow
                 
-                if 0.95 <= flow_ratio <= 1.05:  # Sweet spot
-                    bep_score = 45
-                elif 0.90 <= flow_ratio < 0.95 or 1.05 < flow_ratio <= 1.10:
-                    bep_score = 40
-                elif 0.80 <= flow_ratio < 0.90 or 1.10 < flow_ratio <= 1.20:
-                    bep_score = 30
-                elif 0.70 <= flow_ratio < 0.80 or 1.20 < flow_ratio <= 1.30:
-                    bep_score = 20
-                else:  # 0.60-0.70 or 1.30-1.40
-                    bep_score = 10
+                sweet_spot_lower = config.get('pump_evaluator', 'bep_proximity_sweet_spot_lower_bound')
+                sweet_spot_upper = config.get('pump_evaluator', 'bep_proximity_sweet_spot_upper_bound')
+                good_lower = config.get('pump_evaluator', 'bep_proximity_good_range_lower_bound')
+                good_upper = config.get('pump_evaluator', 'bep_proximity_good_range_upper_bound')
+                acceptable_lower = config.get('pump_evaluator', 'bep_proximity_acceptable_range_lower_bound')
+                acceptable_upper = config.get('pump_evaluator', 'bep_proximity_acceptable_range_upper_bound')
+                marginal_lower = config.get('pump_evaluator', 'bep_proximity_marginal_range_lower_bound')
+                marginal_upper = config.get('pump_evaluator', 'bep_proximity_marginal_range_upper_bound')
+                
+                if sweet_spot_lower <= flow_ratio <= sweet_spot_upper:  # Sweet spot
+                    bep_score = config.get('pump_evaluator', 'bep_proximity_sweet_spot_score')
+                elif good_lower <= flow_ratio < sweet_spot_lower or sweet_spot_upper < flow_ratio <= good_upper:
+                    bep_score = config.get('pump_evaluator', 'bep_proximity_good_range_score')
+                elif acceptable_lower <= flow_ratio < good_lower or good_upper < flow_ratio <= acceptable_upper:
+                    bep_score = config.get('pump_evaluator', 'bep_proximity_acceptable_range_score')
+                elif marginal_lower <= flow_ratio < acceptable_lower or acceptable_upper < flow_ratio <= marginal_upper:
+                    bep_score = config.get('pump_evaluator', 'bep_proximity_marginal_range_score')
+                else:  # Outside all ranges
+                    bep_score = config.get('pump_evaluator', 'bep_proximity_poor_range_score')
                 
                 evaluation['score_components']['bep_proximity'] = bep_score
                 evaluation['qbp_percent'] = qbp
@@ -241,11 +254,11 @@ class PumpEvaluator:
                 if head_ratio_pct > self.head_oversizing_threshold:
                     if head_ratio_pct > self.severe_oversizing_threshold:
                         # Severe oversizing (>300% above requirement) - massive penalty
-                        oversizing_penalty = -30  # Heavy penalty but not elimination
+                        oversizing_penalty = config.get('pump_evaluator', 'severe_oversizing_penalty')  # Heavy penalty but not elimination
                         logger.info(f"Pump {pump_data.get('pump_code')}: SEVERE head oversizing {head_ratio_pct:.1f}% (>{self.severe_oversizing_threshold:.0f}%) - BEP {bep_head}m vs required {head}m")
                     else:
                         # Moderate oversizing (150-300% above requirement) - moderate penalty
-                        oversizing_penalty = -15 - (head_ratio_pct - self.head_oversizing_threshold) * 0.1
+                        oversizing_penalty = config.get('pump_evaluator', 'moderate_oversizing_base_penalty') - (head_ratio_pct - self.head_oversizing_threshold) * config.get('pump_evaluator', 'oversizing_penalty_multiplier')
                         logger.info(f"Pump {pump_data.get('pump_code')}: Head oversizing {head_ratio_pct:.1f}% ({self.head_oversizing_threshold:.0f}-{self.severe_oversizing_threshold:.0f}%) - BEP {bep_head}m vs required {head}m")
                     
                     evaluation['score_components']['head_oversizing_penalty'] = oversizing_penalty
@@ -257,7 +270,7 @@ class PumpEvaluator:
             physical_capable, capability_reason = self.physical_validator.validate_physical_capability_at_point(pump_data, flow, head)
             if not physical_capable:
                 # Apply severe scoring penalty but keep pump in results
-                evaluation['score_components']['physical_limitation_penalty'] = -50
+                evaluation['score_components']['physical_limitation_penalty'] = config.get('pump_evaluator', 'physical_limitation_penalty')
                 evaluation['operating_zone'] = 'marginal'  # Force to marginal tier
                 evaluation['tier'] = 4
                 evaluation['physical_limitation_detail'] = capability_reason
@@ -384,10 +397,10 @@ class PumpEvaluator:
                     if preferred_min <= true_qbp <= preferred_max:
                         operating_zone = 'preferred'
                         tier = 1
-                    elif 60 <= true_qbp < 80 or 110 < true_qbp <= 140:
+                    elif allowable_min <= true_qbp < allowable_min_upper or allowable_max_lower < true_qbp <= allowable_max:
                         operating_zone = 'allowable'
                         tier = 2
-                    elif 50 <= true_qbp < 60 or 140 < true_qbp <= 200:
+                    elif config.get('pump_evaluator', 'qbp_lower_threshold_for_acceptable_range') <= true_qbp < allowable_min or allowable_max < true_qbp <= config.get('pump_evaluator', 'qbp_upper_threshold_for_acceptable_range'):
                         operating_zone = 'acceptable'
                         tier = 3
                     else:
@@ -406,16 +419,16 @@ class PumpEvaluator:
                     # Recalculate BEP proximity score with TRUE QBP
                     flow_ratio = true_qbp / 100  # Convert back to ratio
                     
-                    if 0.95 <= flow_ratio <= 1.05:  # Sweet spot
-                        bep_score = 45
-                    elif 0.90 <= flow_ratio < 0.95 or 1.05 < flow_ratio <= 1.10:
-                        bep_score = 40
-                    elif 0.80 <= flow_ratio < 0.90 or 1.10 < flow_ratio <= 1.20:
-                        bep_score = 30
-                    elif 0.70 <= flow_ratio < 0.80 or 1.20 < flow_ratio <= 1.30:
-                        bep_score = 20
-                    else:  # 0.60-0.70 or 1.30-1.40
-                        bep_score = 10
+                    if sweet_spot_lower <= flow_ratio <= sweet_spot_upper:  # Sweet spot
+                        bep_score = config.get('pump_evaluator', 'bep_proximity_sweet_spot_score')
+                    elif good_lower <= flow_ratio < sweet_spot_lower or sweet_spot_upper < flow_ratio <= good_upper:
+                        bep_score = config.get('pump_evaluator', 'bep_proximity_good_range_score')
+                    elif acceptable_lower <= flow_ratio < good_lower or good_upper < flow_ratio <= acceptable_upper:
+                        bep_score = config.get('pump_evaluator', 'bep_proximity_acceptable_range_score')
+                    elif marginal_lower <= flow_ratio < acceptable_lower or acceptable_upper < flow_ratio <= marginal_upper:
+                        bep_score = config.get('pump_evaluator', 'bep_proximity_marginal_range_score')
+                    else:  # Outside all ranges
+                        bep_score = config.get('pump_evaluator', 'bep_proximity_poor_range_score')
                     
                     evaluation['score_components']['bep_proximity'] = bep_score
                     
@@ -435,15 +448,15 @@ class PumpEvaluator:
                 min_eff = config.get('pump_evaluator', 'minimum_acceptable_efficiency_threshold_percentage')
                 
                 if efficiency >= excellent_eff:
-                    eff_score = 35
+                    eff_score = config.get('pump_evaluator', 'maximum_efficiency_score')
                 elif efficiency >= good_eff:
-                    eff_score = 30 + (efficiency - good_eff) * 0.5
+                    eff_score = config.get('pump_evaluator', 'base_efficiency_score_for_good_range') + (efficiency - good_eff) * config.get('pump_evaluator', 'efficiency_score_multiplier_for_good_range')
                 elif efficiency >= fair_eff:
-                    eff_score = 25 + (efficiency - fair_eff) * 0.5
+                    eff_score = config.get('pump_evaluator', 'base_efficiency_score_for_fair_range') + (efficiency - fair_eff) * config.get('pump_evaluator', 'efficiency_score_multiplier_for_good_range')
                 elif efficiency >= poor_eff:
-                    eff_score = 10 + (efficiency - poor_eff) * 0.75
+                    eff_score = config.get('pump_evaluator', 'base_efficiency_score_for_poor_range') + (efficiency - poor_eff) * config.get('pump_evaluator', 'efficiency_score_multiplier_for_poor_range')
                 else:  # min_eff to poor_eff
-                    eff_score = max(0, (efficiency - min_eff) * 2)
+                    eff_score = max(0, (efficiency - min_eff) * config.get('pump_evaluator', 'efficiency_score_multiplier_for_minimum_range'))
                 
                 evaluation['score_components']['efficiency'] = eff_score
                 evaluation['efficiency_pct'] = efficiency
@@ -463,14 +476,18 @@ class PumpEvaluator:
                 head_margin_m = performance.get('head_margin_m', 0)
                 head_margin_pct = (head_margin_m / head) * 100 if head > 0 else 0
                 
-                if head_margin_pct <= 5:  # Perfect sizing
-                    margin_score = 20
-                elif 5 < head_margin_pct <= 10:  # Good sizing
-                    margin_score = 20 - (head_margin_pct - 5) * 2
-                elif 10 < head_margin_pct <= 15:  # Acceptable sizing
-                    margin_score = 10 - (head_margin_pct - 10) * 1
+                perfect_threshold = config.get('pump_evaluator', 'perfect_head_margin_threshold_percentage')
+                good_threshold = config.get('pump_evaluator', 'good_head_margin_threshold_percentage')
+                acceptable_threshold = config.get('pump_evaluator', 'acceptable_head_margin_threshold_percentage')
+                
+                if head_margin_pct <= perfect_threshold:  # Perfect sizing
+                    margin_score = config.get('pump_evaluator', 'perfect_head_margin_score')
+                elif perfect_threshold < head_margin_pct <= good_threshold:  # Good sizing
+                    margin_score = config.get('pump_evaluator', 'perfect_head_margin_score') - (head_margin_pct - perfect_threshold) * 2
+                elif good_threshold < head_margin_pct <= acceptable_threshold:  # Acceptable sizing
+                    margin_score = 10 - (head_margin_pct - good_threshold) * 1
                 else:  # 15-20%
-                    margin_score = 5 - (head_margin_pct - 15) * 2
+                    margin_score = 5 - (head_margin_pct - acceptable_threshold) * 2
                     margin_score = max(0, margin_score)
                 
                 evaluation['score_components']['head_margin'] = margin_score
@@ -498,13 +515,17 @@ class PumpEvaluator:
                     evaluation['trim_percent'] = trim_percent
                     
                     # Apply trim penalty
-                    if trim_percent < 95:
-                        if trim_percent >= 90:
-                            trim_penalty = -2  # Small penalty
-                        elif trim_percent >= 85:
-                            trim_penalty = -5  # Moderate penalty
+                    trim_threshold = config.get('pump_evaluator', 'trim_penalty_threshold_percentage')
+                    small_penalty_threshold = config.get('pump_evaluator', 'small_trim_penalty_threshold_percentage')
+                    moderate_penalty_threshold = config.get('pump_evaluator', 'moderate_trim_penalty_threshold_percentage')
+                    
+                    if trim_percent < trim_threshold:
+                        if trim_percent >= small_penalty_threshold:
+                            trim_penalty = config.get('pump_evaluator', 'small_trim_penalty_value')  # Small penalty
+                        elif trim_percent >= moderate_penalty_threshold:
+                            trim_penalty = config.get('pump_evaluator', 'moderate_trim_penalty_value')  # Moderate penalty
                         else:
-                            trim_penalty = -10  # Large penalty
+                            trim_penalty = config.get('pump_evaluator', 'large_trim_penalty_value')  # Large penalty
                         evaluation['score_components']['trim_penalty'] = trim_penalty
                 
             else:
@@ -530,8 +551,9 @@ class PumpEvaluator:
                     failure_reasons.append("No performance curves available")
                 else:
                     valid_curves = 0
+                    min_curve_points = config.get('pump_evaluator', 'minimum_curve_points_required_for_validation')
                     for curve in curves:
-                        if curve.get('performance_points') and len(curve.get('performance_points', [])) >= 2:
+                        if curve.get('performance_points') and len(curve.get('performance_points', [])) >= min_curve_points:
                             valid_curves += 1
                     
                     if valid_curves == 0:

@@ -73,7 +73,8 @@ class VFDCalculator:
             reference_diameter = reference_curve.get('impeller_diameter_mm', 0)
             curve_points = reference_curve.get('performance_points', [])
             
-            if not curve_points or len(curve_points) < 2:
+            min_curve_points = config.get('performance_vfd', 'minimum_valid_points_on_reference_curve')
+            if not curve_points or len(curve_points) < min_curve_points:
                 logger.warning(f"[VFD CALC] {pump_code}: Insufficient curve points")
                 return None
             
@@ -86,7 +87,8 @@ class VFDCalculator:
             reference_flows = [p['flow_m3hr'] for p in sorted_points if 'flow_m3hr' in p and 'head_m' in p]
             reference_heads = [p['head_m'] for p in sorted_points if 'flow_m3hr' in p and 'head_m' in p]
             
-            if len(reference_flows) < 2:
+            min_curve_points = config.get('performance_vfd', 'minimum_valid_points_on_reference_curve')
+            if len(reference_flows) < min_curve_points:
                 logger.warning(f"[VFD CALC] {pump_code}: Insufficient valid points on reference curve")
                 return None
             
@@ -117,11 +119,13 @@ class VFDCalculator:
             
             # Create interpolation function for the reference curve
             head_interp = interpolate.interp1d(reference_flows, reference_heads, 
-                                             kind='cubic' if len(reference_flows) > 3 else 'linear',
+                                             kind='cubic' if len(reference_flows) > config.get('performance_vfd', 'threshold_for_cubic_interpolation') else 'linear',
                                              bounds_error=False, fill_value='extrapolate')
             
             # Search for the best matching point
-            search_flows = np.linspace(flow_min * 0.5, flow_max * 1.5, 100)
+            search_flows = np.linspace(flow_min * config.get('performance_vfd', 'search_flow_range_lower_multiplier'), 
+                                     flow_max * config.get('performance_vfd', 'search_flow_range_upper_multiplier'), 
+                                     config.get('performance_vfd', 'number_of_search_flow_samples'))
             
             for q1 in search_flows:
                 if q1 <= 0:
@@ -189,8 +193,9 @@ class VFDCalculator:
             # Get efficiency at reference point (efficiency remains approximately constant)
             # Find efficiency at Q₁ on the reference curve
             efficiency = None
+            flow_tolerance = config.get('performance_vfd', 'flow_proximity_tolerance_5_percent_of_range')
             for point in sorted_points:
-                if abs(point.get('flow_m3hr', 0) - q1) < (flow_max - flow_min) * 0.05:  # Within 5% of range
+                if abs(point.get('flow_m3hr', 0) - q1) < (flow_max - flow_min) * flow_tolerance:  # Within tolerance of range
                     efficiency = point.get('efficiency_pct')
                     break
             
@@ -210,19 +215,24 @@ class VFDCalculator:
             # Calculate power using affinity laws
             # First get power at reference point using correct formula: P = ρ × g × Q × H / η
             if efficiency > 0:
-                power_ref = (q1 * h1 * 1000 * 9.81) / (3600 * efficiency / 100 * 1000)
+                water_density = config.get('performance_vfd', 'water_density_for_power_calculation_kg_per_m3')
+                gravity = config.get('performance_vfd', 'gravitational_acceleration_m_per_s2')
+                seconds_per_hour = config.get('performance_vfd', 'seconds_per_hour_conversion')
+                percentage_conversion = config.get('performance_vfd', 'percentage_conversion_factor')
+                watts_to_kw = config.get('performance_vfd', 'watts_to_kilowatts_conversion')
+                power_ref = (q1 * h1 * water_density * gravity) / (seconds_per_hour * efficiency / percentage_conversion * watts_to_kw)
                 # Power scales with speed cubed: P₂ = P₁ * (n₂/n₁)³
-                operating_power = power_ref * (speed_ratio ** 3)
+                operating_power = power_ref * (speed_ratio ** config.get('performance_vfd', 'speed_ratio_exponent_for_power_scaling'))
             else:
                 operating_power = 0
             
             # Calculate NPSH at new conditions (scales with speed squared)
             npshr = None
             for point in sorted_points:
-                if abs(point.get('flow_m3hr', 0) - q1) < (flow_max - flow_min) * 0.05:
+                if abs(point.get('flow_m3hr', 0) - q1) < (flow_max - flow_min) * flow_tolerance:
                     ref_npshr = point.get('npshr_m')
                     if ref_npshr:
-                        npshr = ref_npshr * (speed_ratio ** 2)
+                        npshr = ref_npshr * (speed_ratio ** config.get('performance_vfd', 'speed_ratio_exponent_for_npsh_scaling'))
                     break
             
             # Build complete performance dictionary
@@ -230,21 +240,21 @@ class VFDCalculator:
                 'meets_requirements': True,
                 'flow_m3hr': operating_flow,
                 'head_m': operating_head,
-                'efficiency_pct': max(efficiency, 30),  # Floor at 30%
+                'efficiency_pct': max(efficiency, config.get('performance_vfd', 'minimum_efficiency_floor_percentage')),  # Floor at minimum efficiency
                 'power_kw': operating_power,
                 'npshr_m': npshr,
                 'sizing_method': 'Speed Variation',
                 'required_speed_rpm': round(required_speed),
                 'reference_speed_rpm': test_speed_rpm,
-                'speed_ratio': round(speed_ratio * 100, 1),  # As percentage
+                'speed_ratio': round(speed_ratio * config.get('performance_vfd', 'percentage_conversion_factor'), config.get('performance_vfd', 'rounding_precision_for_flow_and_head_display')),  # As percentage
                 'reference_point': {
-                    'flow_m3hr': round(q1, 1),
-                    'head_m': round(h1, 1)
+                    'flow_m3hr': round(q1, config.get('performance_vfd', 'rounding_precision_for_flow_and_head_display')),
+                    'head_m': round(h1, config.get('performance_vfd', 'rounding_precision_for_flow_and_head_display'))
                 },
                 'system_curve_k': k_system,
                 'h_static': h_static,
                 'impeller_diameter_mm': reference_diameter,
-                'trim_percent': 100.0,  # No trimming with VFD
+                'trim_percent': config.get('performance_vfd', 'full_trim_percentage_no_trimming_with_vfd'),  # No trimming with VFD
                 'vfd_required': True,
                 'operating_frequency_hz': round(config.get('performance_vfd', 'base_frequency_for_vfd_calculations_hz') * speed_ratio, 1)
             }

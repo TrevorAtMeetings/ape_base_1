@@ -177,7 +177,7 @@ class AdminConfigService:
     def get_feature_stats(self) -> Dict:
         """Returns statistics about feature toggles."""
         toggles = self._load_feature_toggles()
-        enabled_count = sum(1 for f in toggles.values() if f.get('enabled', False))
+        enabled_count = sum(1 for f in toggles.values() if (f if isinstance(f, bool) else f.get('enabled', False)))
         total_count = len(toggles)
         
         return {

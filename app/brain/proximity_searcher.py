@@ -89,7 +89,7 @@ class ProximitySearcher:
                 continue
             
             # Get speed from specifications or use default
-            default_motor_speed = 2960  # Default 2-pole motor at 50Hz (hardcoded)
+            default_motor_speed = config.get('proximity_searcher', 'default_2pole_motor_speed_at_50hz_rpm')
             speed_rpm = specs.get('speed_rpm', default_motor_speed)
             
             # Calculate specific speed for pump classification
@@ -107,7 +107,7 @@ class ProximitySearcher:
             )
             
             # Convert to percentage for display
-            proximity_score_pct = weighted_distance * 100
+            proximity_score_pct = weighted_distance * config.get('proximity_searcher', 'percentage_conversion_factor')
             
             # Enhanced categorization with pump-type consideration
             excellent_threshold = config.get('proximity_searcher', 'excellent_proximity_scoring_threshold')
@@ -141,35 +141,38 @@ class ProximitySearcher:
                         hydraulic_type['flow_weight'] * (flow_delta ** 2) + 
                         hydraulic_type['head_weight'] * (head_delta ** 2)
                     )
-                    proximity_score_pct = weighted_distance * 100
+                    proximity_score_pct = weighted_distance * config.get('proximity_searcher', 'percentage_conversion_factor')
             
             # Validate BEP efficiency
             min_efficiency_floor = config.get('proximity_searcher', 'minimum_realistic_efficiency_floor_percentage')
-            if bep_efficiency and (bep_efficiency < min_efficiency_floor or bep_efficiency > 95):
+            max_efficiency_ceiling = config.get('proximity_searcher', 'maximum_realistic_bep_efficiency_percentage')
+            if bep_efficiency and (bep_efficiency < min_efficiency_floor or bep_efficiency > max_efficiency_ceiling):
                 logger.warning(f"[BEP PROXIMITY] {pump_code}: Questionable BEP efficiency {bep_efficiency}%")
             
             # Calculate trim requirement if pump BEP head is higher than required
-            trim_ratio = 1.0
+            trim_ratio = config.get('proximity_searcher', 'default_trim_ratio_no_trim')
             predicted_efficiency = bep_efficiency
             if bep_head > head:
                 trim_ratio = self.hydraulic_classifier.calculate_trim_requirement(
                     bep_head, head, hydraulic_type['trim_head_exp']
                 )
                 # Predict efficiency drop from trimming
-                trim_percent = (1 - trim_ratio) * 100
+                trim_percent = (1 - trim_ratio) * config.get('proximity_searcher', 'percentage_conversion_factor')
                 efficiency_drop = trim_percent * hydraulic_type['efficiency_drop_per_trim']
                 min_efficiency_floor = config.get('proximity_searcher', 'minimum_realistic_efficiency_floor_percentage')
                 predicted_efficiency = max(bep_efficiency - efficiency_drop, min_efficiency_floor)
             
             # Calculate operating range score (how well pump can handle flow variations)
             # Wider operating range is better for variable conditions
-            operating_range_score = 100.0
-            if specific_speed < 60:  # Radial pumps have wider stable range
-                operating_range_score = 100.0
-            elif specific_speed < 120:  # Mixed flow moderate range
-                operating_range_score = 85.0
+            radial_threshold = config.get('proximity_searcher', 'specific_speed_threshold_for_radial_pumps')
+            mixed_flow_threshold = config.get('proximity_searcher', 'specific_speed_threshold_for_mixed_flow_pumps')
+            
+            if specific_speed < radial_threshold:  # Radial pumps have wider stable range
+                operating_range_score = config.get('proximity_searcher', 'operating_range_score_for_radial_pumps')
+            elif specific_speed < mixed_flow_threshold:  # Mixed flow moderate range
+                operating_range_score = config.get('proximity_searcher', 'operating_range_score_for_mixed_flow_pumps')
             else:  # Axial narrow stable range
-                operating_range_score = 70.0
+                operating_range_score = config.get('proximity_searcher', 'operating_range_score_for_axial_pumps')
             
             candidate_pumps.append({
                 'pump_code': pump_code,
@@ -182,13 +185,13 @@ class ProximitySearcher:
                 'predicted_efficiency': predicted_efficiency,  # After trimming
                 'bep_flow': bep_flow,
                 'bep_head': bep_head,
-                'flow_delta_pct': flow_delta * 100,
-                'head_delta_pct': head_delta * 100,
+                'flow_delta_pct': flow_delta * config.get('proximity_searcher', 'percentage_conversion_factor'),
+                'head_delta_pct': head_delta * config.get('proximity_searcher', 'percentage_conversion_factor'),
                 'specific_speed': specific_speed,
                 'hydraulic_type': hydraulic_type['type'],
                 'hydraulic_description': hydraulic_type['description'],
                 'trim_ratio': trim_ratio,
-                'trim_percent': (1 - trim_ratio) * 100,
+                'trim_percent': (1 - trim_ratio) * config.get('proximity_searcher', 'percentage_conversion_factor'),
                 'operating_range_score': operating_range_score,
                 'flow_weight': hydraulic_type['flow_weight'],
                 'head_weight': hydraulic_type['head_weight']
@@ -208,7 +211,8 @@ class ProximitySearcher:
         num_top_pumps = config.get('proximity_searcher', 'number_of_top_pumps_to_return_from_proximity_search')
         top_pumps = candidate_pumps[:num_top_pumps]
         
-        logger.info(f"[BEP PROXIMITY] Found {len(candidate_pumps)} pumps with BEP data, returning top 20")
+        top_pump_count = config.get('proximity_searcher', 'number_of_top_pumps_to_return_from_proximity_search')
+        logger.info(f"[BEP PROXIMITY] Found {len(candidate_pumps)} pumps with BEP data, returning top {top_pump_count}")
         if top_pumps:
             best = top_pumps[0]
             logger.info(f"[BEP PROXIMITY] Best match: {best['pump_code']} - "

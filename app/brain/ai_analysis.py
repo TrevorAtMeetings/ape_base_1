@@ -46,6 +46,7 @@ class AIAnalysisIntelligence:
         Args:
             brain: Parent PumpBrain instance
         """
+        logger.info("Entering ai_analysis.py file")
         self.brain = brain
         
         # Check AI service availability
@@ -69,7 +70,7 @@ class AIAnalysisIntelligence:
             logger.debug(f"[AI Analysis] Generating {request.topic} analysis for {request.pump_code}")
             
             # Validate request - no fallbacks for invalid data
-            if not request.pump_code or request.flow_m3hr <= 0 or request.head_m <= 0:
+            if not request.pump_code or request.flow_m3hr <= config.get('ai_analysis', 'minimum_flow_threshold') or request.head_m <= config.get('ai_analysis', 'minimum_head_threshold'):
                 raise AnalysisError(f"Invalid analysis parameters: pump_code={request.pump_code}, flow={request.flow_m3hr}, head={request.head_m}")
             
             # Generate analysis prompt based on topic
@@ -101,13 +102,14 @@ class AIAnalysisIntelligence:
         
         base_context = f"""
         Pump: {request.pump_code}
-        Operating Point: {request.flow_m3hr} m³/hr @ {request.head_m}m
+        Operating Point: {request.flow_m3hr} m3/h @ {request.head_m}m
         Performance: {request.efficiency_pct}% efficiency, {request.power_kw} kW power
         NPSHr: {request.npshr_m}m
         Application: {request.application}
         """
         
         if request.topic == 'general':
+            word_limit = config.get('ai_analysis', 'word_limit_for_general_analysis_responses')
             return f"""
             As a professional pump engineer, provide a comprehensive technical analysis for the following pump selection:
             
@@ -119,11 +121,11 @@ class AIAnalysisIntelligence:
             3. Key engineering considerations and potential issues
             4. Operational recommendations and optimization opportunities
             
-            Use professional engineering language, be concise (under {} words), and focus on actionable insights.
-            """.format(config.get('ai_analysis', 'word_limit_for_general_analysis_responses'))
+            Use professional engineering language, be concise (under {word_limit} words), and focus on actionable insights.
             """
             
         elif request.topic == 'efficiency':
+            word_limit = config.get('ai_analysis', 'word_limit_for_efficiency_analysis_responses')
             return f"""
             As a pump efficiency expert, analyze the energy performance:
             
@@ -135,10 +137,11 @@ class AIAnalysisIntelligence:
             3. Comparison to optimal efficiency ranges for this pump type
             4. Energy optimization recommendations
             
-            Keep response focused and under 200 words.
+            Keep response focused and under {word_limit} words.
             """
             
         elif request.topic == 'application':
+            word_limit = config.get('ai_analysis', 'word_limit_for_application_analysis_responses')
             return f"""
             As an application engineer, evaluate pump suitability:
             
@@ -146,21 +149,22 @@ class AIAnalysisIntelligence:
             
             Address:
             1. Application-specific suitability and compatibility
-            2. Operating point assessment relative to pump's BEP
+            2. Operating point assessment relative to pump BEP
             3. Reliability and maintenance considerations
             4. Installation and system integration recommendations
             
-            Provide practical guidance in under 250 words.
+            Provide practical guidance in under {word_limit} words.
             """
             
         else:
+            word_limit = config.get('ai_analysis', 'word_limit_for_other_topic_analysis_responses')
             return f"""
             Provide technical assessment for {request.topic} aspects of this pump selection:
             
             {base_context}
             
             Focus specifically on {request.topic} considerations and provide actionable engineering insights.
-            Keep response under 200 words.
+            Keep response under {word_limit} words.
             """
     
     def _call_ai_service(self, prompt: str) -> Optional[str]:
@@ -231,11 +235,25 @@ class AIAnalysisIntelligence:
             efficiency_note = "Consider efficiency improvement opportunities"
         
         # Power assessment
-        power_density = request.power_kw / request.flow_m3hr if request.flow_m3hr > 0 else 0
+        power_density = request.power_kw / request.flow_m3hr if request.flow_m3hr > config.get('ai_analysis', 'minimum_flow_threshold') else config.get('ai_analysis', 'default_power_density')
         
+        # Power rating assessment
+        acceptable_threshold = config.get('ai_analysis', 'power_density_threshold_for_acceptable_ranges_kw_per_m3hr')
+        moderate_threshold = config.get('ai_analysis', 'power_density_threshold_for_moderate_ranges_kw_per_m3hr')
+        power_rating = "within acceptable ranges" if power_density < acceptable_threshold else "moderate" if power_density < moderate_threshold else "high"
+        
+        # Application recommendations
+        energy_threshold = config.get('ai_analysis', 'efficiency_threshold_for_energy_conscious_applications')
+        standard_threshold = config.get('ai_analysis', 'efficiency_threshold_for_standard_applications')
+        maintenance_threshold = config.get('ai_analysis', 'efficiency_threshold_for_maintenance_recommendations')
+        
+        app_recommendation = "Excellent choice for energy-conscious applications" if request.efficiency_pct >= energy_threshold else "Suitable for standard applications" if request.efficiency_pct >= standard_threshold else "Consider alternatives if efficiency is critical"
+        maintenance_recommendation = "Regular maintenance recommended for optimal performance" if request.efficiency_pct < maintenance_threshold else "Standard maintenance schedule appropriate"
+        
+        power_density_str = f"{power_density:.2f}"
         analysis = f"""**Engineering Analysis - {request.pump_code}**
 
-**Operating Conditions:** {request.flow_m3hr} m³/hr @ {request.head_m}m
+**Operating Conditions:** {request.flow_m3hr} m3/h @ {request.head_m}m
 
 **Performance Assessment:**
 - Efficiency: {request.efficiency_pct}% ({efficiency_rating})
@@ -244,12 +262,12 @@ class AIAnalysisIntelligence:
 - {efficiency_note}
 
 **Technical Evaluation:**
-This pump demonstrates {efficiency_rating} performance characteristics for the specified duty point. The power density of {power_density:.2f} kW per m³/hr is {"within acceptable ranges" if power_density < 0.5 else "moderate" if power_density < 1.0 else "high"} for this application type.
+This pump demonstrates {efficiency_rating} performance characteristics for the specified duty point. The power density of {power_density_str} kW per cubic meter per hour is {power_rating} for this application type.
 
 **Engineering Recommendations:**
-- {"Excellent choice for energy-conscious applications" if request.efficiency_pct >= 80 else "Suitable for standard applications" if request.efficiency_pct >= 70 else "Consider alternatives if efficiency is critical"}
+- {app_recommendation}
 - Monitor NPSH available vs required ({request.npshr_m}m) to prevent cavitation
-- {"Regular maintenance recommended for optimal performance" if request.efficiency_pct < 75 else "Standard maintenance schedule appropriate"}
+- {maintenance_recommendation}
 
 *Professional AI analysis available with API key configuration.*"""
         
@@ -259,7 +277,7 @@ This pump demonstrates {efficiency_rating} performance characteristics for the s
         """Generate basic fallback analysis when other methods fail"""
         return f"""**Analysis for {request.pump_code}**
 
-**Operating Point:** {request.flow_m3hr} m³/hr @ {request.head_m}m
+**Operating Point:** {request.flow_m3hr} m3/h @ {request.head_m}m
 
 **Performance Summary:**
 - Efficiency: {request.efficiency_pct}%
