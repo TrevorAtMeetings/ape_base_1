@@ -75,6 +75,123 @@ class AffinityCalculator:
                 
         logger.debug(f"Calibration factors loaded: {list(self.calibration_factors.keys())}")
 
+    def calculate_specific_speed(self, rpm: float, bep_flow_m3hr: float, bep_head_m: float) -> float:
+        """
+        Calculate specific speed in US customary units for pump classification.
+        Formula: Ns = (RPM * (Flow_GPM)^0.5) / (Head_ft)^0.75
+        
+        Args:
+            rpm: Pump rotational speed
+            bep_flow_m3hr: BEP flow rate in m³/hr
+            bep_head_m: BEP head in meters
+            
+        Returns:
+            Specific speed (dimensionless, US units)
+        """
+        if bep_head_m <= 0:
+            logger.warning(f"[SPECIFIC SPEED] Invalid head value: {bep_head_m}m - returning 0")
+            return 0
+        
+        # Convert to US units for standard Ns calculation
+        gpm_conversion = config.get('dynamic_physics', 'gpm_to_m3hr_conversion_factor')
+        ft_conversion = config.get('dynamic_physics', 'meters_to_feet_conversion_factor')
+        
+        bep_flow_gpm = bep_flow_m3hr / gpm_conversion
+        bep_head_ft = bep_head_m * ft_conversion
+        
+        # Standard specific speed formula
+        ns = (rpm * (bep_flow_gpm ** 0.5)) / (bep_head_ft ** 0.75)
+        
+        logger.debug(f"[SPECIFIC SPEED] RPM: {rpm}, Flow: {bep_flow_gpm:.1f} GPM, Head: {bep_head_ft:.1f} ft → Ns: {ns:.0f}")
+        
+        return ns
+
+    def get_dynamic_physics_factors(self, pump_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Get pump-specific physics factors based on specific speed classification.
+        This replaces static calibration factors with intelligent, data-driven selection.
+        
+        Args:
+            pump_data: Pump data dictionary
+            
+        Returns:
+            Dictionary of dynamic physics factors for this specific pump
+        """
+        specs = pump_data.get('specifications', {})
+        pump_code = pump_data.get('pump_code', 'Unknown')
+        
+        # Get BEP data and RPM
+        bep_flow = specs.get('bep_flow_m3hr', 0)
+        bep_head = specs.get('bep_head_m', 0)
+        rpm = specs.get('speed_rpm', 1450)  # Default if missing
+        
+        # Calculate specific speed for classification
+        ns = self.calculate_specific_speed(rpm, bep_flow, bep_head)
+        
+        # Dynamic factor selection based on Ns threshold
+        ns_threshold = config.get('dynamic_physics', 'specific_speed_threshold_radial_to_mixed_flow')
+        
+        if ns < ns_threshold:
+            # Low Specific Speed - Radial Flow Pump
+            bep_shift_flow_exponent = config.get('dynamic_physics', 'bep_shift_flow_exponent_low_specific_speed_radial')
+            pump_classification = 'RADIAL_FLOW'
+            hydraulic_characteristics = 'Low specific speed - radial flow impeller design'
+        else:
+            # High Specific Speed - Mixed Flow Pump
+            bep_shift_flow_exponent = config.get('dynamic_physics', 'bep_shift_flow_exponent_high_specific_speed_mixed')
+            pump_classification = 'MIXED_FLOW'
+            hydraulic_characteristics = 'High specific speed - mixed flow impeller design'
+        
+        # Get BEP prediction exponent (advanced physics)
+        bep_shift_head_exponent = config.get('dynamic_physics', 'bep_shift_head_exponent_for_prediction')
+        
+        logger.info(f"[DYNAMIC PHYSICS] {pump_code}: Ns={ns:.0f} → {pump_classification} (threshold: {ns_threshold})")
+        logger.info(f"[DYNAMIC PHYSICS] {pump_code}: Flow exponent: {bep_shift_flow_exponent} (vs static 1.2)")
+        
+        return {
+            'bep_shift_flow_exponent': bep_shift_flow_exponent,
+            'bep_shift_head_exponent': bep_shift_head_exponent,
+            'specific_speed': ns,
+            'pump_classification': pump_classification,
+            'hydraulic_characteristics': hydraulic_characteristics,
+            'ns_threshold': ns_threshold,
+            'physics_source': 'DYNAMIC_DATA_DRIVEN'
+        }
+
+    def get_dynamic_efficiency_penalty(self, trim_percent: float) -> float:
+        """
+        Calculate efficiency penalty based on data-driven trim analysis.
+        Replaces static penalty factors with trim-dependent logic.
+        
+        Args:
+            trim_percent: Trim percentage (100 = full impeller, 85 = 15% trim)
+            
+        Returns:
+            Efficiency penalty factor (epsilon)
+        """
+        # Convert to trim amount (how much was removed)
+        trim_amount = 100 - trim_percent
+        
+        # Get thresholds from config
+        penalty_threshold = config.get('dynamic_physics', 'trim_percentage_threshold_for_efficiency_penalty')
+        
+        if trim_amount <= 15.0:
+            # For all practical trims, data shows zero penalty
+            epsilon = config.get('dynamic_physics', 'efficiency_penalty_factor_for_standard_trim_range')
+            rationale = "Within industry standard 15% trim limit - no penalty"
+        elif trim_amount < penalty_threshold:
+            # Extended range - still no penalty
+            epsilon = config.get('dynamic_physics', 'efficiency_penalty_factor_for_standard_trim_range')
+            rationale = f"Extended trim {trim_amount:.1f}% - no penalty below {penalty_threshold}%"
+        else:
+            # Excessive trim - apply penalty
+            epsilon = config.get('dynamic_physics', 'efficiency_penalty_factor_for_excessive_trim')
+            rationale = f"Excessive trim {trim_amount:.1f}% - applying penalty factor {epsilon}"
+        
+        logger.debug(f"[EFFICIENCY PENALTY] Trim: {trim_percent:.1f}% → Penalty: {epsilon} ({rationale})")
+        
+        return epsilon
+
     def get_calibration_factor(self, factor_name: str, default_value: float = 1.0) -> float:
         """
         Get a calibration factor by name with fallback to default.
