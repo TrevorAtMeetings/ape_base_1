@@ -59,8 +59,10 @@ body main .container .tier-section .pump-results-list .pump-card-compact {
     background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
     color: var(--text-on-primary);
     padding: var(--spacing-xl) 0;
-    margin-bottom: var(--spacing-xl);
+    margin: 0 auto var(--spacing-md) auto;
     box-shadow: var(--elevation-3);
+    max-width: 1200px;
+    border-radius: var(--radius-lg);
 }
 
 .results-title {
@@ -88,7 +90,7 @@ body main .container .tier-section .pump-results-list .pump-card-compact {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
     gap: var(--spacing-md);
-    margin-bottom: var(--spacing-xxl);
+    margin-bottom: var(--spacing-md);
 }
 
 .summary-card {
@@ -125,9 +127,9 @@ body main .container .tier-section .pump-results-list .pump-card-compact {
 
 /* Pump Results Section */
 .pump-results-section {
-    background: var(--bg-secondary);
-    padding: var(--spacing-xl) 0;
-    margin-top: var(--spacing-lg);
+    background: var(--bg-primary);
+    padding: var(--spacing-sm) 0;
+    margin-top: var(--spacing-md);
 }
 
 .section-header {
@@ -376,7 +378,7 @@ body main .container .tier-section .pump-results-list .pump-card-compact {
 
 /* Tier Sections - Override Materialize */
 .tier-section {
-    margin-bottom: var(--spacing-xxl) !important;
+    margin-bottom: var(--spacing-lg) !important;
     background: var(--bg-card) !important;
     border-radius: var(--radius-lg) !important;
     padding: var(--spacing-lg) !important;
