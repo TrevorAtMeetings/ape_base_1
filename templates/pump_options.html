@@ -13,20 +13,27 @@
 <div class="results-header">
     <div class="container">
         <div style="max-width: 1200px; margin: 0 auto;">
-            <h1 class="results-title">
-                <i class="material-icons-round">verified</i>
-                Pump Selection Results
-            </h1>
-            <div class="results-subtitle">
-                <strong>{{ (preferred_pumps|length + allowable_pumps|length + acceptable_pumps|length + marginal_pumps|length) }}</strong> suitable pumps found for 
-                <span style="color: #1565C0; font-weight: 600;">{{ "%.1f"|format(site_requirements['flow_m3hr']) }} m³/hr</span> at 
-                <span style="color: #1565C0; font-weight: 600;">{{ "%.1f"|format(site_requirements['head_m']) }} m</span> head
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-sm);">
+                <h1 class="results-title" style="margin: 0 !important;">
+                    <!-- CACHE BUST 2025-01-10-15-30-45 -->
+                    <i class="material-icons">check_circle</i>
+                    Pump Selection Results
+                </h1>
                 {% if preferred_pumps %}
-                    <span class="tier-summary">
-                        <i class="material-icons-round" style="font-size: 14px; vertical-align: middle; margin-right: 4px;">star</i>
-                        {{ preferred_pumps|length }} preferred, {{ allowable_pumps|length }} allowable, {{ acceptable_pumps|length }} acceptable, {{ marginal_pumps|length }} marginal
+                <div style="text-align: right;">
+                    <span style="color: #ffffff; font-weight: 600; background: rgba(0,0,0,0.3); padding: 4px 8px; border-radius: 6px; display: inline-block;">
+                        <i class="material-icons" style="font-size: 14px; vertical-align: middle; margin-right: 4px; color: #ffd700;">star</i>{{ preferred_pumps|length }} preferred, 
+                        <i class="material-icons" style="font-size: 14px; vertical-align: middle; margin: 0 2px; color: #ff9800;">warning</i>{{ allowable_pumps|length }} allowable, 
+                        <i class="material-icons" style="font-size: 14px; vertical-align: middle; margin: 0 2px; color: #ff5722;">info</i>{{ acceptable_pumps|length }} acceptable, 
+                        <i class="material-icons" style="font-size: 14px; vertical-align: middle; margin: 0 2px; color: #9e9e9e;">report_problem</i>{{ marginal_pumps|length }} marginal
                     </span>
+                </div>
                 {% endif %}
+            </div>
+            <div class="results-subtitle" style="text-align: left; margin-left: calc(var(--font-size-3xl) + var(--spacing-sm));">
+                <strong>{{ (preferred_pumps|length + allowable_pumps|length + acceptable_pumps|length + marginal_pumps|length) }}</strong> suitable pumps found for 
+                <span style="color: #1565C0; font-weight: 700; background: #4caf50; padding: 3px 6px; border-radius: 4px;">{{ "%.1f"|format(site_requirements['flow_m3hr']) }} m³/hr</span> at 
+                <span style="color: #1565C0; font-weight: 700; background: #4caf50; padding: 3px 6px; border-radius: 4px;">{{ "%.1f"|format(site_requirements['head_m']) }} m</span> head
             </div>
         </div>
     </div>
